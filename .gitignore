@@ -8,6 +8,8 @@ backend/*.pyc
 *.egg-info/
 .env
 
+backend/utils/*.txt
+
 # Node
 frontend/node_modules/
 frontend/dist/
