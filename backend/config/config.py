@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # from backend.config.api_prefix import ApiPrefix
 # from backend.config.auth_jwt import AuthJWT
 from backend.config.cors_config import CORSConfig
-from backend.config.database import TalentDatabaseConfig
+from backend.database.database import TalentDatabaseConfig
 from backend.config.ldap import LdapConfig
 from backend.config.log_config import LogConfig
 from backend.config.run_config import RunConfig
@@ -21,8 +21,19 @@ from backend.config.email_param_config import (
 # BACKEND_DIR = Path(__file__).resolve().parents[1]
 BASE_DIR = Path(__file__).resolve().parents[2]
 
+class AuthJwtSettings(BaseSettings):
+    private_key_path: Path = Path("backend/auth/keys/private_key.pem")
+    public_key_path: Path = Path("backend/auth/keys/public_key.pem")
+    algorithm: str = "RS256"
+    access_token_expire_minutes: int = 30
+    expire_minutes: int = 300  # Add this field
+    max_cookies_age: int = 10000000  # Add this field
+    
+    class Config:
+        extra = "ignore"  # This will ignore any extra fields
 
 class Settings(BaseSettings):
+        
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",
         case_sensitive=False,
@@ -30,6 +41,7 @@ class Settings(BaseSettings):
         env_prefix="APP_CONFIG__",
         extra="ignore",
     )
+    auth_jwt: AuthJwtSettings = AuthJwtSettings()
     api_v1_prefix: str = "/api/v1"
     run: RunConfig
     db: TalentDatabaseConfig

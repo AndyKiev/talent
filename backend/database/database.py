@@ -6,17 +6,15 @@ class BaseDatabaseConfig(BaseModel):
     host: str
     port: int
     password: str
-    sid: str
+    name: str  # was: sid
 
     @property
     def url(self) -> str:
-        return f"oracle+oracledb://{self.user}:{self.password}@{self.host}:{self.port}/{self.sid}"
+        return f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
+
 
 
 class TalentDatabaseConfig(BaseDatabaseConfig):
-    debug: bool
-    user_test: str
-    password_test: str
     echo: bool = False
     echo_pool: bool = False
 

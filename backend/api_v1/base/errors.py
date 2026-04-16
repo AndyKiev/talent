@@ -2,7 +2,7 @@ from typing import Any
 
 
 class DomainError(Exception):
-    """Base for all domain-level errors."""
+    pass
 
 
 class NotFoundError(DomainError):
@@ -23,12 +23,10 @@ class AlreadyExistsError(DomainError):
 
 
 class RelationshipError(DomainError):
-    """Raised when a relationship constraint is violated."""
+    pass
 
 
 class DeleteSuccess(DomainError):
-    """Generic successful-deletion signal."""
-
     message_key = "essenceDeleteSuccess"
 
     def __init__(self, model: str, name: str) -> None:
@@ -38,8 +36,6 @@ class DeleteSuccess(DomainError):
 
 
 class DeleteError(DomainError):
-    """Generic deletion-blocked signal (FK constraint etc.)."""
-
     message_key = "essenceDeleteError"
 
     def __init__(self, model: str, name: str) -> None:
