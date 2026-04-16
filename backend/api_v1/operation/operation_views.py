@@ -1,0 +1,129 @@
+from fastapi import APIRouter, Depends, status
+from fastapi.security import HTTPBearer
+from typing import Annotated, List, Optional
+from pydantic import BaseModel
+
+from backend.api_v1.operation.operation_schema import (
+    Operation as OperationSchema,
+    OperationCreate,
+    OperationUpdate,
+)
+from backend.api_v1.operation.operation_dependency import (
+    get_operation_service,
+    operation_by_id,
+)
+from backend.api_v1.operation.operation_service import OperationService
+from backend.auth.jwt_auth import require_operation
+from backend.api_v1.user.user_schema import User as UserSchema
+from backend.utils.enums import OperationTypes
+
+router = APIRouter(
+    prefix="/operations",
+    tags=["Operations"],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
+)
+
+
+@router.get("", response_model=List[OperationSchema])
+async def get_operations(
+    service: Annotated[OperationService, Depends(get_operation_service)],
+    name: Optional[str] = None,
+):
+    return await service.get_operations(name=name)
+
+
+@router.get("/{operation_id}", response_model=OperationSchema)
+async def get_operation(operation: OperationSchema = Depends(operation_by_id)):
+    return operation
+
+
+@router.post("", response_model=OperationSchema, status_code=status.HTTP_201_CREATED)
+async def create_operation(
+    operation_in: OperationCreate,
+    service: Annotated[OperationService, Depends(get_operation_service)],
+    _auth_user: Annotated[
+        UserSchema,
+        Depends(require_operation(OperationTypes.CREATE_OPERATION)),
+    ] = None,
+):
+    return await service.create_operation(operation_in)
+
+
+@router.patch("/{operation_id}", response_model=OperationSchema)
+async def update_operation(
+    operation_update: OperationUpdate,
+    operation: OperationSchema = Depends(operation_by_id),
+    service: Annotated[OperationService, Depends(get_operation_service)] = None,
+    _auth_user: Annotated[
+        UserSchema,
+        Depends(require_operation(OperationTypes.MODIFY_OPERATION)),
+    ] = None,
+):
+    return await service.update_operation(operation.id, operation_update)
+
+
+@router.delete("/{operation_id}", status_code=status.HTTP_200_OK)
+async def delete_operation(
+    operation_id: int,
+    service: Annotated[OperationService, Depends(get_operation_service)],
+    _auth_user: Annotated[
+        UserSchema,
+        Depends(require_operation(OperationTypes.DELETE_OPERATION)),
+    ] = None,
+):
+    await service.delete_operation(operation_id)
+
+
+@router.get("/{operation_id}/user_groups", response_model=List[str])
+async def get_operation_user_groups(
+    operation: OperationSchema = Depends(operation_by_id),
+):
+    return operation.user_groups
+
+
+class OperationUserGroupsUpdate(BaseModel):
+    user_group_ids: List[int]
+
+
+@router.post(
+    "/{operation_id}/user_groups/{user_group_id}",
+    response_model=OperationSchema,
+)
+async def add_operation_to_user_group(
+    user_group_id: int,
+    operation: Annotated[OperationSchema, Depends(operation_by_id)],
+    service: Annotated[OperationService, Depends(get_operation_service)],
+    _auth_user: Annotated[
+        UserSchema,
+        Depends(require_operation(OperationTypes.LINK_USER_GROUP_TO_OPERATION)),
+    ] = None,
+):
+    return await service.add_to_group(operation.id, user_group_id)
+
+
+@router.delete(
+    "/{operation_id}/user_groups/{user_group_id}", response_model=OperationSchema
+)
+async def remove_operation_from_user_group(
+    user_group_id: int,
+    operation: Annotated[OperationSchema, Depends(operation_by_id)],
+    service: Annotated[OperationService, Depends(get_operation_service)],
+    _auth_user: Annotated[
+        UserSchema,
+        Depends(require_operation(OperationTypes.REMOVE_OPERATION_FROM_USER_GROUP)),
+    ] = None,
+):
+    return await service.remove_from_group(operation.id, user_group_id)
+
+
+@router.put("/{operation_id}/user_groups", response_model=OperationSchema)
+async def set_operation_user_groups(
+    groups_update: OperationUserGroupsUpdate,
+    operation: OperationSchema = Depends(operation_by_id),
+    service: OperationService = Depends(get_operation_service),
+    _auth_user: Annotated[
+        UserSchema,
+        Depends(require_operation(OperationTypes.SET_OPERATION_USER_GROUPS)),
+    ] = None,
+):
+    return await service.set_groups(operation.id, groups_update.user_group_ids)
