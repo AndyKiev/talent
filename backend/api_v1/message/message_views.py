@@ -86,7 +86,7 @@ async def get_all_langs(
 async def create_lang(
     request: Request,
     lang_in: LangCreate,
-    current_user: CurrentUser,
+    # current_user: CurrentUser,
     crud: LangCRUD = Depends(get_lang_crud),
 ):
     """Create a new language"""
@@ -99,7 +99,7 @@ async def create_lang(
 )
 async def delete_lang(
     request: Request,
-    current_user: CurrentUser,
+    # current_user: CurrentUser,
     lang: dict = Depends(lang_by_id),
     crud: LangCRUD = Depends(get_lang_crud),
 ):
