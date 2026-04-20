@@ -4,4 +4,5 @@ run-backend:
 
 # run npm
 run-frontend:
-	cd frontend && set VITE_BACKEND_API_URL=http://127.0.0.1:8002 && npm run dev -- --host 127.0.0.1
+# 	cd frontend npx run dev -- --host 127.0.0.1 --mode development
+	cd frontend && set VITE_BACKEND_API_URL=http://127.0.0.1:8002 && npm run dev -- --host 127.0.0.1 --mode development
