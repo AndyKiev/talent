@@ -41,6 +41,7 @@ def register_exception_handlers(app: FastAPI):
 
 def create_app() -> FastAPI:
     app = FastAPI(
+        # redirect_slashes=False,
         default_response_class=JSONResponse,
         lifespan=lifespan,
         title="EDI API",
