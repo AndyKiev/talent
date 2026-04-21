@@ -1,0 +1,62 @@
+services:
+
+  # ─── PostgreSQL ────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: talent
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin26
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d talent"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ─── Backend (FastAPI) ─────────────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      APP_CONFIG__RUN__HOST: "0.0.0.0"
+      APP_CONFIG__RUN__PORT: "8002"
+      APP_CONFIG__RUN__RELOAD: "false"
+      APP_CONFIG__DB__HOST: "db"
+      APP_CONFIG__CORS__ORIGINS: '["http://localhost:4002","http://127.0.0.1:4002"]'
+    volumes:
+      - jwt_keys:/app/backend/auth/keys
+      - ./backend:/app/backend
+    ports:
+      - "8002:8002"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ─── Frontend (Vite dev server) ────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../Dockerfile.frontend
+    restart: unless-stopped
+    environment:
+      VITE_BACKEND_API_URL: "http://backend:8002"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "4002:4002"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  jwt_keys:
