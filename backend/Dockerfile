@@ -26,7 +26,8 @@ COPY . .
 
 # Copy entrypoint scripts and make them executable
 COPY entrypoint.sh /entrypoint.sh
-COPY backend/generate_keys.sh /app/backend/generate_keys.sh
+# COPY backend/generate_keys.sh /app/backend/generate_keys.sh
+COPY generate_keys.sh /app/backend/generate_keys.sh
 RUN chmod +x /entrypoint.sh /app/backend/generate_keys.sh
 
 EXPOSE 8002

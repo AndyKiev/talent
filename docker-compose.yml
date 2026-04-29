@@ -21,8 +21,8 @@ services:
   # ─── Backend (FastAPI) ─────────────────────────────────────────────────────
   backend:
     build:
-      context: .
-      dockerfile: Dockerfile.backend
+      context: ./backend
+      dockerfile: Dockerfile
     restart: unless-stopped
     env_file:
       - .env
@@ -45,7 +45,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: ../Dockerfile.frontend
+      dockerfile: Dockerfile
     restart: unless-stopped
     environment:
       VITE_BACKEND_API_URL: "http://backend:8002"
