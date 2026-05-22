@@ -1,3 +1,6 @@
+@import "ag-grid-community/styles/ag-grid.css";
+@import "ag-grid-community/styles/ag-theme-alpine.css";
+
 .counter {
   font-size: 16px;
   padding: 5px 10px;
@@ -16,6 +19,7 @@
     outline-offset: 2px;
   }
 }
+
 
 .hero {
   position: relative;
