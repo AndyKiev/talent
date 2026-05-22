@@ -1,0 +1,3 @@
+.venv\Scripts\activate
+make run-backend
+make run-frontend

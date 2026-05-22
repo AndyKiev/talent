@@ -2,19 +2,20 @@ from fastapi import APIRouter, Depends, status, Query
 from fastapi.security import HTTPBearer
 from typing import Annotated, Optional, List
 
+from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.user_group_type.user_group_type_schema import (
     UserGroupType as UserGroupTypeSchema,
     UserGroupTypeCreate,
     UserGroupTypeUpdate,
 )
-from backend.api_v1.user_group_type.user_group_type_dependency import (
+from backend.api_v1.user_group_type.user_group_type_dependencies import (
     get_user_group_type_service,
     user_group_type_by_id,
 )
 from backend.api_v1.user_group_type.user_group_type_service import UserGroupTypeService
 
 router = APIRouter(
-    prefix="/user_group_types",
+    prefix="/admin/user_group_types",
     tags=["User Group Types"],
     dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
@@ -40,7 +41,9 @@ async def get_user_group_type(
 
 
 @router.post(
-    "", response_model=UserGroupTypeSchema, status_code=status.HTTP_201_CREATED
+    "",
+    response_model=MutationResponse[UserGroupTypeSchema],
+    status_code=status.HTTP_201_CREATED,
 )
 async def create_user_group_type(
     type_in: UserGroupTypeCreate,
@@ -49,7 +52,10 @@ async def create_user_group_type(
     return await service.create_user_group_type(type_in)
 
 
-@router.patch("/{user_group_type_id}", response_model=UserGroupTypeSchema)
+@router.patch(
+    "/{user_group_type_id}",
+    response_model=MutationResponse[UserGroupTypeSchema],
+)
 async def update_user_group_type(
     type_update: UserGroupTypeUpdate,
     record: UserGroupTypeSchema = Depends(user_group_type_by_id),
@@ -65,10 +71,4 @@ async def delete_user_group_type(
     user_group_type_id: int,
     service: Annotated[UserGroupTypeService, Depends(get_user_group_type_service)],
 ):
-    """
-    Delegates entirely to the service.
-    On success the service raises HTTPException(200, detail=<translated msg>).
-    On error (not found / integrity) the service raises a typed DomainError
-    which the global handler converts to the appropriate HTTP response.
-    """
     await service.delete_user_group_type(user_group_type_id)

@@ -1,12 +1,77 @@
-from backend.config.config import settings
-from backend.routers.start_router import router as start_router
-from backend.api_v1.message.message_views import router as message_router
-from backend.routers.health_router import router as health_router
- 
 from fastapi import APIRouter
- 
+
+from backend.config.config import settings
+from backend.auth.jwt_auth import router as auth_router
+from backend.api_v1.lang.lang_views import router as lang_router
+from backend.api_v1.msg_key.msg_key_views import router as msg_key_router
+from backend.api_v1.msg_pg.msg_views import router as msg_router
+from backend.api_v1.msg_full.msg_full_views import router as msg_full_router
+from backend.api_v1.job.job_views import router as job_router
+from backend.api_v1.department.department_views import router as department_router
+from backend.api_v1.department_type.department_type_views import router as department_type_router
+
+from backend.api_v1.department_type_parental_links import router as dept_type_parental_link_router
+
+from backend.api_v1.department_type_job_link.department_type_job_link_views import router as department_type_job_link_router
+
+from backend.api_v1.department_category.department_category_views import router as department_category_router
+from backend.api_v1.employee_status.employee_status_views import router as employee_status_router
+from backend.api_v1.operation.operation_views import router as operation_router
+from backend.api_v1.user_group_type.user_group_type_views import router as user_group_type_router
+from backend.api_v1.user_group.user_group_views import router as user_group_router
+from backend.api_v1.employee.employee_views import router as employee_router
+from backend.api_v1.talent_status_period_link.talent_status_period_link_views import router as talent_status_period_link_router
+from backend.api_v1.talent_status.talent_status_views import router as talent_status_router
+from backend.api_v1.talent_period.talent_period_views import router as talent_period_router
+from backend.api_v1.employee_department.employee_department_views import router as employee_department_router
+from backend.api_v1.talent_audit_status.talent_audit_status_views import router as talent_audit_status_router
+from backend.api_v1.talent_audit.talent_audit_views import router as talent_audit_router
+from backend.api_v1.talent_audit_job_status.talent_audit_job_status_views import router as talent_audit_job_status_router
+from backend.api_v1.talent_audit_job.talent_audit_job_views import router as talent_audit_job_router
+from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_views import router as talent_audit_interview_status_router
+from backend.api_v1.talent_audit_interview.talent_audit_interview_views import router as talent_audit_interview_router
+
+from backend.api_v1.employee_events.employee_event_status.employee_event_status_views import router as employee_event_status_router
+from backend.api_v1.employee_events.employee_event_type.employee_event_type_views import router as employee_event_type_router
+from backend.api_v1.employee_events.employee_event_direction_type.employee_event_direction_type_views import router as employee_event_direction_type_router
+from backend.api_v1.employee_events.employee_event_change_dept_type.employee_event_change_dept_type_views import router as employee_event_change_dept_type_router
+from backend.api_v1.employee_events.employee_event.employee_event_views import router as employee_event_router
+from backend.api_v1.employee_events.employee_event_change.employee_event_change_views import router as employee_event_change_router
+from backend.api_v1.employee_events.employee_event_type_direction.employee_event_type_direction_views import router as employee_event_type_direction_router
+
+
 router = APIRouter(prefix=settings.api_v1_prefix)
-router.include_router(start_router)
-router.include_router(health_router)
-router.include_router(message_router)
- 
+
+router.include_router(auth_router)
+router.include_router(lang_router)
+router.include_router(talent_status_router)
+router.include_router(talent_period_router)
+router.include_router(talent_status_period_link_router)
+router.include_router(talent_audit_status_router)
+router.include_router(talent_audit_router)
+router.include_router(talent_audit_job_status_router)
+router.include_router(talent_audit_job_router)
+router.include_router(talent_audit_interview_status_router)
+router.include_router(talent_audit_interview_router)
+router.include_router(department_router)
+router.include_router(department_type_router)
+router.include_router(dept_type_parental_link_router)
+router.include_router(department_type_job_link_router)
+router.include_router(department_category_router)
+router.include_router(job_router)
+router.include_router(employee_router)
+router.include_router(employee_department_router)
+router.include_router(employee_status_router)
+router.include_router(operation_router)
+router.include_router(user_group_router)
+router.include_router(user_group_type_router)
+router.include_router(msg_key_router)
+router.include_router(msg_router)
+router.include_router(msg_full_router)
+router.include_router(employee_event_status_router)
+router.include_router(employee_event_type_router)
+router.include_router(employee_event_direction_type_router)
+router.include_router(employee_event_change_dept_type_router)
+router.include_router(employee_event_router)
+router.include_router(employee_event_change_router)
+router.include_router(employee_event_type_direction_router)

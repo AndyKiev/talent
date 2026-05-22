@@ -1,3 +1,4 @@
+# db_helper.py
 from typing import AsyncGenerator, Any, Generator
 import asyncio
 from sqlalchemy.ext.asyncio import (
@@ -8,7 +9,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
-from backend.config.config import settings
+from backend.config import settings
 
 
 class DatabaseHelper:
@@ -71,7 +72,7 @@ class DatabaseHelper:
 
 
 db_helper = DatabaseHelper(
-    url=settings.db.url,
+    url=settings.db.active_url,
     echo=settings.db.echo,
     echo_pool=settings.db.echo_pool,
 )

@@ -1,11 +1,11 @@
 from sqlalchemy import MetaData
 from sqlalchemy.orm import (
     DeclarativeBase,
-    declared_attr,
+    declared_attr, mapped_column, Mapped,
 )
 
-from backend.config.config import settings
-from backend.api_v1.base.models.utils.case_converter import camel_case_to_snake_case
+from backend.config import settings
+from backend.api_v1.base.models.utils import camel_case_to_snake_case
 
 
 class Base(DeclarativeBase):

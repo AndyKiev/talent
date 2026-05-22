@@ -1,0 +1,1 @@
+from .department_type_parental_link_views import router

@@ -4,6 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
+from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.user_group_type.user_group_type_repository import (
     UserGroupTypeRepository,
 )
@@ -12,23 +13,25 @@ from backend.api_v1.user_group_type.user_group_type_schema import (
     UserGroupTypeCreate,
     UserGroupTypeUpdate,
 )
-from backend.api_v1.user.user_schema import User as UserSchema
+from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.user_group_type.user_group_type_errors import (
     UserGroupTypeNotFound,
     UserGroupTypeNameTaken,
     UserGroupTypeDeleteError,
     UserGroupTypeNotFoundByName,
-    UserGroupTypeDeleteSuccess,
 )
-
-# from backend.domain.errors import DomainError
+from backend.api_v1.user_group_type.user_group_type_success import (
+    UserGroupTypeDeleteSuccess,
+    UserGroupTypeCreateSuccess,
+    UserGroupTypeUpdateSuccess,
+)
 
 
 class UserGroupTypeService(BaseService):
     def __init__(
         self,
         repository: UserGroupTypeRepository,
-        user: Optional[UserSchema] = None,
+        user: Optional[EmployeeSchema] = None,
         session: Optional[AsyncSession] = None,
     ):
         super().__init__(repository, user=user, session=session)
@@ -55,19 +58,23 @@ class UserGroupTypeService(BaseService):
 
     async def create_user_group_type(
         self, type_in: UserGroupTypeCreate
-    ) -> UserGroupTypeSchema:
+    ) -> MutationResponse[UserGroupTypeSchema]:
         await self.exists_by_name(
             type_in.name, already_exists_exc=UserGroupTypeNameTaken
         )
         try:
             record = await self.create(type_in)
-            return UserGroupTypeSchema.model_validate(record)
+            schema = UserGroupTypeSchema.model_validate(record)
+            detail = await self._resolve_domain_success(
+                UserGroupTypeCreateSuccess(schema.name)
+            )
+            return MutationResponse(detail=detail, data=schema)
         except IntegrityError:
             raise await self._resolve_domain_error(UserGroupTypeNameTaken(type_in.name))
 
     async def update_user_group_type(
         self, type_id: int, type_update: UserGroupTypeUpdate
-    ) -> UserGroupTypeSchema:
+    ) -> MutationResponse[UserGroupTypeSchema]:
         if type_update.name:
             await self.exists_by_name(
                 type_update.name, already_exists_exc=UserGroupTypeNameTaken
@@ -75,64 +82,21 @@ class UserGroupTypeService(BaseService):
         try:
             orm_record = await self.get_by_id(type_id)
             updated = await self.update(orm_record, type_update, partial=True)
-            return UserGroupTypeSchema.model_validate(updated)
+            schema = UserGroupTypeSchema.model_validate(updated)
+            detail = await self._resolve_domain_success(
+                UserGroupTypeUpdateSuccess(schema.name)
+            )
+            return MutationResponse(detail=detail, data=schema)
         except IntegrityError:
             raise await self._resolve_domain_error(
                 UserGroupTypeNameTaken(type_update.name)
             )
 
     async def delete_user_group_type(self, type_id: int) -> None:
-        record = await self.get_by_id(
-            type_id
-        )  # raises UserGroupTypeNotFound if missing
+        record = await self.get_by_id(type_id)
         await self.delete_by_id(
             type_id,
             name=record.name,
             delete_error_exc=UserGroupTypeDeleteError,
             delete_success_exc=UserGroupTypeDeleteSuccess,
         )
-
-    # async def create_user_group_type(
-    #     self, type_in: UserGroupTypeCreate
-    # ) -> UserGroupTypeSchema:
-    #     if await self.repository.get_by_field("name", type_in.name):
-    #         exc = UserGroupTypeNameTaken(type_in.name)
-    #         raise await self._resolve_domain_error(exc)
-    #     try:
-    #         record = await self.create(type_in)
-    #         return UserGroupTypeSchema.model_validate(record)
-    #     except IntegrityError:
-    #         exc = UserGroupTypeNameTaken(type_in.name)
-    #         raise await self._resolve_domain_error(exc)
-    #
-    # async def update_user_group_type(
-    #     self, type_id: int, type_update: UserGroupTypeUpdate
-    # ) -> UserGroupTypeSchema:
-    #     if type_update.name and await self.repository.get_by_field(
-    #         "name", type_update.name
-    #     ):
-    #         exc = UserGroupTypeNameTaken(type_update.name)
-    #         raise await self._resolve_domain_error(exc)
-    #     try:
-    #         orm_record = await self.get_by_id(type_id)
-    #         updated = await self.update(orm_record, type_update, partial=True)
-    #         return UserGroupTypeSchema.model_validate(updated)
-    #     except IntegrityError:
-    #         exc = UserGroupTypeNameTaken(type_update.name)
-    #         raise await self._resolve_domain_error(exc)
-
-    # async def delete_user_group_type(self, type_id: int) -> None:
-    #     record = await self.get_by_id(
-    #         type_id
-    #     )  # raises UserGroupTypeNotFound if missing
-    #     try:
-    #         await self.delete_by_id(type_id)
-    #     except IntegrityError:
-    #         exc = UserGroupTypeDeleteError(record.name)
-    #         raise await self._resolve_domain_error(exc)
-    #
-    #     await self._raise_success(
-    #         message_key="userGroupTypeDeleteSuccess",
-    #         variables={"name": record.name},
-    #         fallback=f"User group type '{record.name}' successfully deleted",
-    #     )

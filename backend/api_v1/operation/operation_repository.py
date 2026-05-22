@@ -1,7 +1,7 @@
 from sqlalchemy import select, delete
 from backend.api_v1.operation.operation_model import Operation
 from backend.api_v1.user_group.user_group_model import UserGroup
-from backend.api_v1.base.models.links.operation_user_group_link_model import (
+from backend.api_v1.table_relationship_links.operation_user_group_link_model import (
     OperationUserGroupLink,
 )
 from backend.api_v1.base.base_repository import BaseRepository
@@ -83,7 +83,7 @@ class OperationRepository(BaseRepository):
     async def set_operation_user_groups(
         self, operation_id: int, user_group_ids: list[int]
     ) -> Operation:
-        """Replace all group links for an operation."""
+        """Replace all group table_relationship_links for an operation."""
         if not await self.get_by_id(operation_id):
             raise OperationNotFound(operation_id)
 

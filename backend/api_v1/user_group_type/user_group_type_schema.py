@@ -4,8 +4,8 @@ from datetime import datetime
 
 
 class UserGroupTypeBase(BaseModel):
-    name: str = Field(..., max_length=100)
-    description: Optional[str] = Field(None, max_length=200)
+    name: str = Field(..., max_length=128)
+    description: Optional[str] = Field(None, max_length=256)
 
 
 class UserGroupTypeCreate(UserGroupTypeBase):
@@ -13,8 +13,8 @@ class UserGroupTypeCreate(UserGroupTypeBase):
 
 
 class UserGroupTypeUpdate(BaseModel):
-    name: Optional[str] = Field(None, max_length=100)
-    description: Optional[str] = Field(None, max_length=200)
+    name: Optional[str] = Field(None, max_length=128)
+    description: Optional[str] = Field(None, max_length=256)
 
 
 class UserGroupType(UserGroupTypeBase):

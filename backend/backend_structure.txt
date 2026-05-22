@@ -1,0 +1,477 @@
+backend/
+├── api_v1/
+│   ├── aa__process_descriptions/
+│   │   ├── department_targets_design_revised.md
+│   │   ├── employee_crud_design.md
+│   │   ├── employee_event_history_design.md
+│   │   └── employee_events_frontend_architecture.md
+│   ├── base/
+│   │   ├── models/
+│   │   │   ├── utils/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── json_encode_dict.py
+│   │   │   │   └── mixins.py
+│   │   │   └── __init__.py
+│   │   ├── __init__.py
+│   │   ├── base_model.py
+│   │   ├── base_model_oracle.py
+│   │   ├── base_repository.py
+│   │   ├── base_service.py
+│   │   ├── errors.py
+│   │   ├── mutation_response.py
+│   │   └── success.py
+│   ├── department/
+│   │   ├── __init__.py
+│   │   ├── department_dependencies.py
+│   │   ├── department_errors.py
+│   │   ├── department_model.py
+│   │   ├── department_repository.py
+│   │   ├── department_schema.py
+│   │   ├── department_service.py
+│   │   ├── department_success.py
+│   │   └── department_views.py
+│   ├── department_category/
+│   │   ├── __init__.py
+│   │   ├── department_category_dependencies.py
+│   │   ├── department_category_errors.py
+│   │   ├── department_category_model.py
+│   │   ├── department_category_repository.py
+│   │   ├── department_category_schema.py
+│   │   ├── department_category_service.py
+│   │   ├── department_category_success.py
+│   │   └── department_category_views.py
+│   ├── department_type/
+│   │   ├── __init__.py
+│   │   ├── department_type_dependencies.py
+│   │   ├── department_type_errors.py
+│   │   ├── department_type_model.py
+│   │   ├── department_type_repository.py
+│   │   ├── department_type_schema.py
+│   │   ├── department_type_service.py
+│   │   ├── department_type_success.py
+│   │   └── department_type_views.py
+│   ├── department_type_job_link/
+│   │   ├── __init__.py
+│   │   ├── department_type_job_link_dependencies.py
+│   │   ├── department_type_job_link_errors.py
+│   │   ├── department_type_job_link_model.py
+│   │   ├── department_type_job_link_repository.py
+│   │   ├── department_type_job_link_schema.py
+│   │   ├── department_type_job_link_service.py
+│   │   ├── department_type_job_link_success.py
+│   │   └── department_type_job_link_views.py
+│   ├── department_type_parental_links/
+│   │   ├── __init__.py
+│   │   ├── department_type_parental_link_dependencies.py
+│   │   ├── department_type_parental_link_errors.py
+│   │   ├── department_type_parental_link_model.py
+│   │   ├── department_type_parental_link_repository.py
+│   │   ├── department_type_parental_link_schema.py
+│   │   ├── department_type_parental_link_service.py
+│   │   ├── department_type_parental_link_success.py
+│   │   └── department_type_parental_link_views.py
+│   ├── employee/
+│   │   ├── __init__.py
+│   │   ├── employee_dependencies.py
+│   │   ├── employee_errors.py
+│   │   ├── employee_model.py
+│   │   ├── employee_repository.py
+│   │   ├── employee_schema.py
+│   │   ├── employee_service.py
+│   │   ├── employee_success.py
+│   │   └── employee_views.py
+│   ├── employee_department/
+│   │   ├── __init__.py
+│   │   ├── employee_department_dependencies.py
+│   │   ├── employee_department_errors.py
+│   │   ├── employee_department_model.py
+│   │   ├── employee_department_repository.py
+│   │   ├── employee_department_schema.py
+│   │   ├── employee_department_service.py
+│   │   ├── employee_department_success.py
+│   │   └── employee_department_views.py
+│   ├── employee_events/
+│   │   ├── employee_event/
+│   │   │   ├── __init__.py
+│   │   │   ├── employee_event_dependencies.py
+│   │   │   ├── employee_event_errors.py
+│   │   │   ├── employee_event_model.py
+│   │   │   ├── employee_event_repository.py
+│   │   │   ├── employee_event_schema.py
+│   │   │   ├── employee_event_service.py
+│   │   │   ├── employee_event_success.py
+│   │   │   └── employee_event_views.py
+│   │   ├── employee_event_change/
+│   │   │   ├── __init__.py
+│   │   │   ├── employee_event_change_dependencies.py
+│   │   │   ├── employee_event_change_errors.py
+│   │   │   ├── employee_event_change_model.py
+│   │   │   ├── employee_event_change_repository.py
+│   │   │   ├── employee_event_change_schema.py
+│   │   │   ├── employee_event_change_service.py
+│   │   │   ├── employee_event_change_success.py
+│   │   │   └── employee_event_change_views.py
+│   │   ├── employee_event_change_department/
+│   │   │   ├── __init__.py
+│   │   │   ├── employee_event_change_department_dependencies.py
+│   │   │   ├── employee_event_change_department_errors.py
+│   │   │   ├── employee_event_change_department_model.py
+│   │   │   ├── employee_event_change_department_repository.py
+│   │   │   ├── employee_event_change_department_schema.py
+│   │   │   ├── employee_event_change_department_service.py
+│   │   │   └── employee_event_change_department_views.py
+│   │   ├── employee_event_change_dept_type/
+│   │   │   ├── __init__.py
+│   │   │   ├── employee_event_change_dept_type_dependencies.py
+│   │   │   ├── employee_event_change_dept_type_errors.py
+│   │   │   ├── employee_event_change_dept_type_model.py
+│   │   │   ├── employee_event_change_dept_type_repository.py
+│   │   │   ├── employee_event_change_dept_type_schema.py
+│   │   │   ├── employee_event_change_dept_type_service.py
+│   │   │   ├── employee_event_change_dept_type_success.py
+│   │   │   └── employee_event_change_dept_type_views.py
+│   │   ├── employee_event_direction_type/
+│   │   │   ├── __init__.py
+│   │   │   ├── employee_event_direction_type_dependencies.py
+│   │   │   ├── employee_event_direction_type_errors.py
+│   │   │   ├── employee_event_direction_type_model.py
+│   │   │   ├── employee_event_direction_type_repository.py
+│   │   │   ├── employee_event_direction_type_schema.py
+│   │   │   ├── employee_event_direction_type_service.py
+│   │   │   ├── employee_event_direction_type_success.py
+│   │   │   └── employee_event_direction_type_views.py
+│   │   ├── employee_event_status/
+│   │   │   ├── __init__.py
+│   │   │   ├── employee_event_status_dependencies.py
+│   │   │   ├── employee_event_status_errors.py
+│   │   │   ├── employee_event_status_model.py
+│   │   │   ├── employee_event_status_repository.py
+│   │   │   ├── employee_event_status_schema.py
+│   │   │   ├── employee_event_status_service.py
+│   │   │   ├── employee_event_status_success.py
+│   │   │   ├── employee_event_status_translations.json
+│   │   │   └── employee_event_status_views.py
+│   │   ├── employee_event_type/
+│   │   │   ├── __init__.py
+│   │   │   ├── employee_event_type_dependencies.py
+│   │   │   ├── employee_event_type_errors.py
+│   │   │   ├── employee_event_type_model.py
+│   │   │   ├── employee_event_type_repository.py
+│   │   │   ├── employee_event_type_schema.py
+│   │   │   ├── employee_event_type_service.py
+│   │   │   ├── employee_event_type_success.py
+│   │   │   └── employee_event_type_views.py
+│   │   ├── employee_event_type_direction/
+│   │   │   ├── __init__.py
+│   │   │   ├── employee_event_type_direction_dependencies.py
+│   │   │   ├── employee_event_type_direction_errors.py
+│   │   │   ├── employee_event_type_direction_model.py
+│   │   │   ├── employee_event_type_direction_repository.py
+│   │   │   ├── employee_event_type_direction_schema.py
+│   │   │   ├── employee_event_type_direction_service.py
+│   │   │   ├── employee_event_type_direction_success.py
+│   │   │   ├── employee_event_type_direction_translations.json
+│   │   │   └── employee_event_type_direction_views.py
+│   │   └── __init__.py
+│   ├── employee_status/
+│   │   ├── __init__.py
+│   │   ├── employee_status_dependencies.py
+│   │   ├── employee_status_errors.py
+│   │   ├── employee_status_model.py
+│   │   ├── employee_status_repository.py
+│   │   ├── employee_status_schema.py
+│   │   ├── employee_status_service.py
+│   │   ├── employee_status_success.py
+│   │   └── employee_status_views.py
+│   ├── job/
+│   │   ├── __init__.py
+│   │   ├── job_dependencies.py
+│   │   ├── job_errors.py
+│   │   ├── job_model.py
+│   │   ├── job_repository.py
+│   │   ├── job_schema.py
+│   │   ├── job_service.py
+│   │   ├── job_success.py
+│   │   └── job_views.py
+│   ├── job_group/
+│   │   ├── __init__.py
+│   │   ├── job_group_dependencies.py
+│   │   ├── job_group_errors.py
+│   │   ├── job_group_model.py
+│   │   ├── job_group_repository.py
+│   │   ├── job_group_schema.py
+│   │   ├── job_group_service.py
+│   │   ├── job_group_success.py
+│   │   └── job_group_views.py
+│   ├── job_group_type/
+│   │   └── __init__.py
+│   ├── lang/
+│   │   ├── __init__.py
+│   │   ├── lang_dependencies.py
+│   │   ├── lang_errors.py
+│   │   ├── lang_model.py
+│   │   ├── lang_repository.py
+│   │   ├── lang_schema.py
+│   │   ├── lang_service.py
+│   │   └── lang_views.py
+│   ├── msg_bulk/
+│   │   ├── __init__.py
+│   │   ├── msg_bulk_dependencies.py
+│   │   ├── msg_bulk_schema.py
+│   │   ├── msg_bulk_service.py
+│   │   └── msg_bulk_views.py
+│   ├── msg_full/
+│   │   ├── __init__.py
+│   │   ├── msg_full_dependencies.py
+│   │   ├── msg_full_errors.py
+│   │   ├── msg_full_repository.py
+│   │   ├── msg_full_schema.py
+│   │   ├── msg_full_service.py
+│   │   └── msg_full_views.py
+│   ├── msg_key/
+│   │   ├── __init__.py
+│   │   ├── msg_key_dependencies.py
+│   │   ├── msg_key_errors.py
+│   │   ├── msg_key_model.py
+│   │   ├── msg_key_repository.py
+│   │   ├── msg_key_schema.py
+│   │   ├── msg_key_service.py
+│   │   └── msg_key_views.py
+│   ├── msg_pg/
+│   │   ├── __init__.py
+│   │   ├── msg_dependencies.py
+│   │   ├── msg_errors.py
+│   │   ├── msg_model.py
+│   │   ├── msg_repository.py
+│   │   ├── msg_schema.py
+│   │   ├── msg_service.py
+│   │   └── msg_views.py
+│   ├── operation/
+│   │   ├── __init__.py
+│   │   ├── operation_dependency.py
+│   │   ├── operation_errors.py
+│   │   ├── operation_model.py
+│   │   ├── operation_repository.py
+│   │   ├── operation_schema.py
+│   │   ├── operation_service.py
+│   │   ├── operation_success.py
+│   │   └── operation_views.py
+│   ├── table_relationship_links/
+│   │   ├── __init__.py
+│   │   ├── employee_user_group_link_model.py
+│   │   ├── job_user_group_link_model.py
+│   │   └── operation_user_group_link_model.py
+│   ├── talent_audit/
+│   │   ├── __init__.py
+│   │   ├── talent_audit_dependencies.py
+│   │   ├── talent_audit_errors.py
+│   │   ├── talent_audit_model.py
+│   │   ├── talent_audit_repository.py
+│   │   ├── talent_audit_schema.py
+│   │   ├── talent_audit_service.py
+│   │   ├── talent_audit_success.py
+│   │   └── talent_audit_views.py
+│   ├── talent_audit_interview/
+│   │   ├── __init__.py
+│   │   ├── talent_audit_interview_dependencies.py
+│   │   ├── talent_audit_interview_errors.py
+│   │   ├── talent_audit_interview_model.py
+│   │   ├── talent_audit_interview_repository.py
+│   │   ├── talent_audit_interview_schema.py
+│   │   ├── talent_audit_interview_service.py
+│   │   ├── talent_audit_interview_success.py
+│   │   └── talent_audit_interview_views.py
+│   ├── talent_audit_interview_status/
+│   │   ├── __init__.py
+│   │   ├── talent_audit_interview_status_dependencies.py
+│   │   ├── talent_audit_interview_status_errors.py
+│   │   ├── talent_audit_interview_status_model.py
+│   │   ├── talent_audit_interview_status_repository.py
+│   │   ├── talent_audit_interview_status_schema.py
+│   │   ├── talent_audit_interview_status_service.py
+│   │   ├── talent_audit_interview_status_success.py
+│   │   └── talent_audit_interview_status_views.py
+│   ├── talent_audit_job/
+│   │   ├── __init__.py
+│   │   ├── talent_audit_job_dependencies.py
+│   │   ├── talent_audit_job_errors.py
+│   │   ├── talent_audit_job_model.py
+│   │   ├── talent_audit_job_repository.py
+│   │   ├── talent_audit_job_schema.py
+│   │   ├── talent_audit_job_service.py
+│   │   ├── talent_audit_job_success.py
+│   │   └── talent_audit_job_views.py
+│   ├── talent_audit_job_status/
+│   │   ├── __init__.py
+│   │   ├── talent_audit_job_status_dependencies.py
+│   │   ├── talent_audit_job_status_errors.py
+│   │   ├── talent_audit_job_status_model.py
+│   │   ├── talent_audit_job_status_repository.py
+│   │   ├── talent_audit_job_status_schema.py
+│   │   ├── talent_audit_job_status_service.py
+│   │   ├── talent_audit_job_status_success.py
+│   │   └── talent_audit_job_status_views.py
+│   ├── talent_audit_status/
+│   │   ├── __init__.py
+│   │   ├── talent_audit_status_dependencies.py
+│   │   ├── talent_audit_status_errors.py
+│   │   ├── talent_audit_status_model.py
+│   │   ├── talent_audit_status_repository.py
+│   │   ├── talent_audit_status_schema.py
+│   │   ├── talent_audit_status_service.py
+│   │   ├── talent_audit_status_success.py
+│   │   └── talent_audit_status_views.py
+│   ├── talent_period/
+│   │   ├── __init__.py
+│   │   ├── talent_period_dependencies.py
+│   │   ├── talent_period_errors.py
+│   │   ├── talent_period_model.py
+│   │   ├── talent_period_repository.py
+│   │   ├── talent_period_schema.py
+│   │   ├── talent_period_service.py
+│   │   ├── talent_period_success.py
+│   │   └── talent_period_views.py
+│   ├── talent_status/
+│   │   ├── __init__.py
+│   │   ├── talent_status_dependencies.py
+│   │   ├── talent_status_errors.py
+│   │   ├── talent_status_model.py
+│   │   ├── talent_status_repository.py
+│   │   ├── talent_status_schema.py
+│   │   ├── talent_status_service.py
+│   │   ├── talent_status_success.py
+│   │   └── talent_status_views.py
+│   ├── talent_status_period_link/
+│   │   ├── __init__.py
+│   │   ├── talent_status_period_link_dependencies.py
+│   │   ├── talent_status_period_link_errors.py
+│   │   ├── talent_status_period_link_model.py
+│   │   ├── talent_status_period_link_repository.py
+│   │   ├── talent_status_period_link_schema.py
+│   │   ├── talent_status_period_link_service.py
+│   │   ├── talent_status_period_link_success.py
+│   │   └── talent_status_period_link_views.py
+│   ├── user_group/
+│   │   ├── __init__.py
+│   │   ├── user_group_dependencies.py
+│   │   ├── user_group_errors.py
+│   │   ├── user_group_model.py
+│   │   ├── user_group_repository.py
+│   │   ├── user_group_schema.py
+│   │   ├── user_group_service.py
+│   │   ├── user_group_success.py
+│   │   └── user_group_views.py
+│   ├── user_group_type/
+│   │   ├── __init__.py
+│   │   ├── user_group_type_dependencies.py
+│   │   ├── user_group_type_errors.py
+│   │   ├── user_group_type_model.py
+│   │   ├── user_group_type_repository.py
+│   │   ├── user_group_type_schema.py
+│   │   ├── user_group_type_service.py
+│   │   ├── user_group_type_success.py
+│   │   └── user_group_type_views.py
+│   └── __init__.py
+├── auth/
+│   ├── keys/
+│   │   ├── jwt-private.pem
+│   │   └── jwt-public.pem
+│   ├── __init__.py
+│   ├── auth_dependencies.py
+│   ├── auth_schemas.py
+│   ├── auth_utils.py
+│   ├── jwt_auth.py
+│   └── ldap_connection.py
+├── config/
+│   ├── __init__.py
+│   ├── api_prefix.py
+│   ├── auth_jwt.py
+│   ├── config.py
+│   ├── cors_config.py
+│   ├── database.py
+│   ├── email_param_config.py
+│   ├── exception_config.py
+│   ├── exception_descriptions.py
+│   ├── ldap.py
+│   ├── log_config.py
+│   ├── logger.py
+│   ├── redis_client.py
+│   ├── run_config.py
+│   └── ssh_tunnel.py
+├── database/
+│   ├── drivers/
+│   │   ├── jt400-9.4.jar
+│   │   └── ojdbc8.jar
+│   ├── __init__.py
+│   ├── AneeConnection.py
+│   ├── db_helper.py
+│   ├── driver_finder.py
+│   ├── example_usage.py
+│   ├── manager.py
+│   ├── manager_patched.py
+│   ├── query_executor.py
+│   └── supplier_query.py
+├── migrations/
+│   ├── versions/
+│   │   ├── 2026_05_02_1443-5b2978ad6780_create_langs_table.py
+│   │   ├── 2026_05_02_2017-d822390f8972_create_msg_keys_table.py
+│   │   ├── 2026_05_07_1908-dd523421ce99_create_msg_table_and_links.py
+│   │   ├── 2026_05_08_2002-bc8d66e6e979_employee_related_tables.py
+│   │   ├── 2026_05_12_1312-d96aac1c9a1f_operations_field_alter.py
+│   │   ├── 2026_05_12_1314-2c3bc030fab1_talentstatusperiodlink_talentstatus_.py
+│   │   ├── 2026_05_12_1316-f50365178777_add_tables_department_departmenttype_.py
+│   │   ├── 2026_05_12_1317-e8a38e952fe6_add_tables_employeedepartment.py
+│   │   ├── 2026_05_12_1318-f035c5d24c0b_add_tables_related_to_talentaudit.py
+│   │   ├── 2026_05_12_1344-7ec50039cf2b_add_is_main_to_employee_department.py
+│   │   ├── 2026_05_15_1139-060a3389f2a1_employee_events_tables.py
+│   │   ├── 2026_05_15_1315-831dd487e19a_employee_events_status.py
+│   │   ├── 2026_05_18_2022-307351b26ddb_add_department_type_parental_link_table_.py
+│   │   ├── 2026_05_19_1444-16fa6da945bc_add_department_type_job_link_table_and_.py
+│   │   ├── 2026_05_21_1019-0c247b48f174_add_key_field_to_department_categories.py
+│   │   ├── 2026_05_21_1024-30355878249f_make_key_unique_for_department_.py
+│   │   ├── 2026_05_21_1038-8df4cfcf1022_add_is_main_property_to_department_.py
+│   │   └── 2026_05_21_1039-d7439cc54970_make_is_main_property_to_department_.py
+│   ├── env.py
+│   ├── README
+│   └── script.py.mako
+├── routers/
+│   ├── __init__.py
+│   └── main_router.py
+├── seeds/
+│   ├── __init__.py
+│   ├── seed_employee.py
+│   ├── seed_employee_statuses.py
+│   ├── seed_jobs.py
+│   └── seed_langs.py
+├── utils/
+│   ├── assets/
+│   │   ├── swagger-ui-bundle.js
+│   │   └── swagger-ui.css
+│   ├── hr_excel_builder/
+│   │   ├── __init__.py
+│   │   ├── output.xlsx
+│   │   ├── render_snapshot_excel.py
+│   │   └── snapshot_v2.json
+│   ├── __init__.py
+│   ├── case_converter.py
+│   ├── commands_helper
+│   ├── create_fastapi_app.py
+│   ├── date_formatter.py
+│   ├── date_utils.py
+│   ├── enums.py
+│   ├── msg_key_backend_audit.py
+│   ├── msg_key_backend_translation_prompt.md
+│   ├── msg_key_frontend_audit.py
+│   ├── msg_key_frontend_translation_prompt.md
+│   ├── reorder_migration_ids.py
+│   ├── send_mail.py
+│   ├── structure_scanner.py
+│   └── util_commands
+├── __init__.py
+├── alembic.ini
+├── backend_structure.txt
+├── Dockerfile
+├── entrypoint.sh
+├── main.py
+├── poetry.lock
+└── pyproject.toml

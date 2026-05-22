@@ -1,2 +1,3 @@
 # talent
-App to supervise company personnel talent status
+
+Система відстеження талантів персоналу

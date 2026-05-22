@@ -1,0 +1,7 @@
+-- build structure to file
+
+# Frontend to custom file
+python backend/utils/structure_scanner.py frontend /home/andry/Projects/talent/frontend/frontend_structure.txt
+
+# Backend to custom file
+python backend/utils/structure_scanner.py backend /home/andry/Projects/talent/backend/backend_structure.txt

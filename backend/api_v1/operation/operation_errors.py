@@ -4,7 +4,6 @@ from backend.api_v1.base.errors import (
     RelationshipError,
     DomainError,
     DeleteError,
-    DeleteSuccess,
 )
 
 
@@ -110,10 +109,3 @@ class OperationDeleteError(DeleteError):
         DomainError.__init__(self, self.fallback)
 
 
-class OperationDeleteSuccess(DeleteSuccess):
-    message_key = "operationDeleteSuccess"
-
-    def __init__(self, name: str) -> None:
-        self.template_vars = {"name": name}
-        self.fallback = f"Operation '{name}' successfully deleted"
-        DomainError.__init__(self, self.fallback)

@@ -1,7 +1,9 @@
-__all__ = (
-    "IntIdPkMixin",
-    "TimestampMixin",
-)
+__all__ = [
+    "db_helper",
+    "DatabaseHelper",
+    # Основні класи
 
-from backend.database.mixins import IntIdPkMixin
-from backend.database.mixins import TimestampMixin
+]
+
+
+from backend.database.db_helper import db_helper, DatabaseHelper

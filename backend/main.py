@@ -7,10 +7,10 @@ from backend.config.config import settings
 from backend.routers.main_router import router
 
 logging.basicConfig(level=settings.log_config.log_level)
-
-app = create_app()
+app = create_app(
+    create_custom_static_urls=True,
+)
 app.include_router(router)
-
 if __name__ == "__main__":
     uvicorn.run(
         app="main:app",
@@ -18,12 +18,3 @@ if __name__ == "__main__":
         port=settings.run.port,
         reload=settings.run.reload,
     )
-
-
-# from fastapi import FastAPI
-
-# app = FastAPI()
-
-# @app.get("/")
-# def root():
-#     return {"message": "Talent APi is running"}

@@ -9,27 +9,534 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as EmployeesIndexRouteImport } from './routes/employees/index'
+import { Route as DeveloperIndexRouteImport } from './routes/developer/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as EmployeesNewRouteImport } from './routes/employees/new'
+import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as DeveloperTranslationsIndexRouteImport } from './routes/developer/translations/index'
+import { Route as AdminUserGroupsIndexRouteImport } from './routes/admin/user-groups/index'
+import { Route as AdminUserGroupTypesIndexRouteImport } from './routes/admin/user-group-types/index'
+import { Route as AdminTalentStatusesIndexRouteImport } from './routes/admin/talent-statuses/index'
+import { Route as AdminTalentStatusPeriodLinksIndexRouteImport } from './routes/admin/talent-status-period-links/index'
+import { Route as AdminTalentPeriodsIndexRouteImport } from './routes/admin/talent-periods/index'
+import { Route as AdminStructureIndexRouteImport } from './routes/admin/structure/index'
+import { Route as AdminJobsIndexRouteImport } from './routes/admin/jobs/index'
+import { Route as AdminEmployee_eventsIndexRouteImport } from './routes/admin/employee_events/index'
+import { Route as AdminDepartment_typesIndexRouteImport } from './routes/admin/department_types/index'
+import { Route as AdminDepartment_categoriesIndexRouteImport } from './routes/admin/department_categories/index'
+import { Route as EmployeesEmployeeIdEditRouteImport } from './routes/employees/$employeeId/edit'
+import { Route as AdminStructureDepartmentIdRouteImport } from './routes/admin/structure/$departmentId'
+import { Route as AdminEmployee_eventsEmployee_event_typesIndexRouteImport } from './routes/admin/employee_events/employee_event_types/index'
+import { Route as AdminEmployee_eventsEmployee_event_statusesIndexRouteImport } from './routes/admin/employee_events/employee_event_statuses/index'
+import { Route as AdminEmployee_eventsEmployee_event_direction_typesIndexRouteImport } from './routes/admin/employee_events/employee_event_direction_types/index'
+import { Route as AdminEmployee_eventsEmployee_event_change_dept_typesIndexRouteImport } from './routes/admin/employee_events/employee_event_change_dept_types/index'
 
-export interface FileRoutesByFullPath {}
-export interface FileRoutesByTo {}
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmployeesIndexRoute = EmployeesIndexRouteImport.update({
+  id: '/employees/',
+  path: '/employees/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeveloperIndexRoute = DeveloperIndexRouteImport.update({
+  id: '/developer/',
+  path: '/developer/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmployeesNewRoute = EmployeesNewRouteImport.update({
+  id: '/employees/new',
+  path: '/employees/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthLoginRoute = AuthLoginRouteImport.update({
+  id: '/auth/login',
+  path: '/auth/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeveloperTranslationsIndexRoute =
+  DeveloperTranslationsIndexRouteImport.update({
+    id: '/developer/translations/',
+    path: '/developer/translations/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AdminUserGroupsIndexRoute = AdminUserGroupsIndexRouteImport.update({
+  id: '/admin/user-groups/',
+  path: '/admin/user-groups/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminUserGroupTypesIndexRoute =
+  AdminUserGroupTypesIndexRouteImport.update({
+    id: '/admin/user-group-types/',
+    path: '/admin/user-group-types/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AdminTalentStatusesIndexRoute =
+  AdminTalentStatusesIndexRouteImport.update({
+    id: '/admin/talent-statuses/',
+    path: '/admin/talent-statuses/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AdminTalentStatusPeriodLinksIndexRoute =
+  AdminTalentStatusPeriodLinksIndexRouteImport.update({
+    id: '/admin/talent-status-period-links/',
+    path: '/admin/talent-status-period-links/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AdminTalentPeriodsIndexRoute = AdminTalentPeriodsIndexRouteImport.update({
+  id: '/admin/talent-periods/',
+  path: '/admin/talent-periods/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminStructureIndexRoute = AdminStructureIndexRouteImport.update({
+  id: '/admin/structure/',
+  path: '/admin/structure/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminJobsIndexRoute = AdminJobsIndexRouteImport.update({
+  id: '/admin/jobs/',
+  path: '/admin/jobs/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminEmployee_eventsIndexRoute =
+  AdminEmployee_eventsIndexRouteImport.update({
+    id: '/admin/employee_events/',
+    path: '/admin/employee_events/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AdminDepartment_typesIndexRoute =
+  AdminDepartment_typesIndexRouteImport.update({
+    id: '/admin/department_types/',
+    path: '/admin/department_types/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AdminDepartment_categoriesIndexRoute =
+  AdminDepartment_categoriesIndexRouteImport.update({
+    id: '/admin/department_categories/',
+    path: '/admin/department_categories/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const EmployeesEmployeeIdEditRoute = EmployeesEmployeeIdEditRouteImport.update({
+  id: '/employees/$employeeId/edit',
+  path: '/employees/$employeeId/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminStructureDepartmentIdRoute =
+  AdminStructureDepartmentIdRouteImport.update({
+    id: '/admin/structure/$departmentId',
+    path: '/admin/structure/$departmentId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AdminEmployee_eventsEmployee_event_typesIndexRoute =
+  AdminEmployee_eventsEmployee_event_typesIndexRouteImport.update({
+    id: '/admin/employee_events/employee_event_types/',
+    path: '/admin/employee_events/employee_event_types/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AdminEmployee_eventsEmployee_event_statusesIndexRoute =
+  AdminEmployee_eventsEmployee_event_statusesIndexRouteImport.update({
+    id: '/admin/employee_events/employee_event_statuses/',
+    path: '/admin/employee_events/employee_event_statuses/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AdminEmployee_eventsEmployee_event_direction_typesIndexRoute =
+  AdminEmployee_eventsEmployee_event_direction_typesIndexRouteImport.update({
+    id: '/admin/employee_events/employee_event_direction_types/',
+    path: '/admin/employee_events/employee_event_direction_types/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute =
+  AdminEmployee_eventsEmployee_event_change_dept_typesIndexRouteImport.update({
+    id: '/admin/employee_events/employee_event_change_dept_types/',
+    path: '/admin/employee_events/employee_event_change_dept_types/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+
+export interface FileRoutesByFullPath {
+  '/': typeof IndexRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/employees/new': typeof EmployeesNewRoute
+  '/admin': typeof AdminIndexRoute
+  '/developer': typeof DeveloperIndexRoute
+  '/employees': typeof EmployeesIndexRoute
+  '/admin/structure/$departmentId': typeof AdminStructureDepartmentIdRoute
+  '/employees/$employeeId/edit': typeof EmployeesEmployeeIdEditRoute
+  '/admin/department_categories': typeof AdminDepartment_categoriesIndexRoute
+  '/admin/department_types': typeof AdminDepartment_typesIndexRoute
+  '/admin/employee_events': typeof AdminEmployee_eventsIndexRoute
+  '/admin/jobs': typeof AdminJobsIndexRoute
+  '/admin/structure': typeof AdminStructureIndexRoute
+  '/admin/talent-periods': typeof AdminTalentPeriodsIndexRoute
+  '/admin/talent-status-period-links': typeof AdminTalentStatusPeriodLinksIndexRoute
+  '/admin/talent-statuses': typeof AdminTalentStatusesIndexRoute
+  '/admin/user-group-types': typeof AdminUserGroupTypesIndexRoute
+  '/admin/user-groups': typeof AdminUserGroupsIndexRoute
+  '/developer/translations': typeof DeveloperTranslationsIndexRoute
+  '/admin/employee_events/employee_event_change_dept_types': typeof AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute
+  '/admin/employee_events/employee_event_direction_types': typeof AdminEmployee_eventsEmployee_event_direction_typesIndexRoute
+  '/admin/employee_events/employee_event_statuses': typeof AdminEmployee_eventsEmployee_event_statusesIndexRoute
+  '/admin/employee_events/employee_event_types': typeof AdminEmployee_eventsEmployee_event_typesIndexRoute
+}
+export interface FileRoutesByTo {
+  '/': typeof IndexRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/employees/new': typeof EmployeesNewRoute
+  '/admin': typeof AdminIndexRoute
+  '/developer': typeof DeveloperIndexRoute
+  '/employees': typeof EmployeesIndexRoute
+  '/admin/structure/$departmentId': typeof AdminStructureDepartmentIdRoute
+  '/employees/$employeeId/edit': typeof EmployeesEmployeeIdEditRoute
+  '/admin/department_categories': typeof AdminDepartment_categoriesIndexRoute
+  '/admin/department_types': typeof AdminDepartment_typesIndexRoute
+  '/admin/employee_events': typeof AdminEmployee_eventsIndexRoute
+  '/admin/jobs': typeof AdminJobsIndexRoute
+  '/admin/structure': typeof AdminStructureIndexRoute
+  '/admin/talent-periods': typeof AdminTalentPeriodsIndexRoute
+  '/admin/talent-status-period-links': typeof AdminTalentStatusPeriodLinksIndexRoute
+  '/admin/talent-statuses': typeof AdminTalentStatusesIndexRoute
+  '/admin/user-group-types': typeof AdminUserGroupTypesIndexRoute
+  '/admin/user-groups': typeof AdminUserGroupsIndexRoute
+  '/developer/translations': typeof DeveloperTranslationsIndexRoute
+  '/admin/employee_events/employee_event_change_dept_types': typeof AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute
+  '/admin/employee_events/employee_event_direction_types': typeof AdminEmployee_eventsEmployee_event_direction_typesIndexRoute
+  '/admin/employee_events/employee_event_statuses': typeof AdminEmployee_eventsEmployee_event_statusesIndexRoute
+  '/admin/employee_events/employee_event_types': typeof AdminEmployee_eventsEmployee_event_typesIndexRoute
+}
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/employees/new': typeof EmployeesNewRoute
+  '/admin/': typeof AdminIndexRoute
+  '/developer/': typeof DeveloperIndexRoute
+  '/employees/': typeof EmployeesIndexRoute
+  '/admin/structure/$departmentId': typeof AdminStructureDepartmentIdRoute
+  '/employees/$employeeId/edit': typeof EmployeesEmployeeIdEditRoute
+  '/admin/department_categories/': typeof AdminDepartment_categoriesIndexRoute
+  '/admin/department_types/': typeof AdminDepartment_typesIndexRoute
+  '/admin/employee_events/': typeof AdminEmployee_eventsIndexRoute
+  '/admin/jobs/': typeof AdminJobsIndexRoute
+  '/admin/structure/': typeof AdminStructureIndexRoute
+  '/admin/talent-periods/': typeof AdminTalentPeriodsIndexRoute
+  '/admin/talent-status-period-links/': typeof AdminTalentStatusPeriodLinksIndexRoute
+  '/admin/talent-statuses/': typeof AdminTalentStatusesIndexRoute
+  '/admin/user-group-types/': typeof AdminUserGroupTypesIndexRoute
+  '/admin/user-groups/': typeof AdminUserGroupsIndexRoute
+  '/developer/translations/': typeof DeveloperTranslationsIndexRoute
+  '/admin/employee_events/employee_event_change_dept_types/': typeof AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute
+  '/admin/employee_events/employee_event_direction_types/': typeof AdminEmployee_eventsEmployee_event_direction_typesIndexRoute
+  '/admin/employee_events/employee_event_statuses/': typeof AdminEmployee_eventsEmployee_event_statusesIndexRoute
+  '/admin/employee_events/employee_event_types/': typeof AdminEmployee_eventsEmployee_event_typesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: never
+  fullPaths:
+    | '/'
+    | '/auth/login'
+    | '/employees/new'
+    | '/admin'
+    | '/developer'
+    | '/employees'
+    | '/admin/structure/$departmentId'
+    | '/employees/$employeeId/edit'
+    | '/admin/department_categories'
+    | '/admin/department_types'
+    | '/admin/employee_events'
+    | '/admin/jobs'
+    | '/admin/structure'
+    | '/admin/talent-periods'
+    | '/admin/talent-status-period-links'
+    | '/admin/talent-statuses'
+    | '/admin/user-group-types'
+    | '/admin/user-groups'
+    | '/developer/translations'
+    | '/admin/employee_events/employee_event_change_dept_types'
+    | '/admin/employee_events/employee_event_direction_types'
+    | '/admin/employee_events/employee_event_statuses'
+    | '/admin/employee_events/employee_event_types'
   fileRoutesByTo: FileRoutesByTo
-  to: never
-  id: '__root__'
+  to:
+    | '/'
+    | '/auth/login'
+    | '/employees/new'
+    | '/admin'
+    | '/developer'
+    | '/employees'
+    | '/admin/structure/$departmentId'
+    | '/employees/$employeeId/edit'
+    | '/admin/department_categories'
+    | '/admin/department_types'
+    | '/admin/employee_events'
+    | '/admin/jobs'
+    | '/admin/structure'
+    | '/admin/talent-periods'
+    | '/admin/talent-status-period-links'
+    | '/admin/talent-statuses'
+    | '/admin/user-group-types'
+    | '/admin/user-groups'
+    | '/developer/translations'
+    | '/admin/employee_events/employee_event_change_dept_types'
+    | '/admin/employee_events/employee_event_direction_types'
+    | '/admin/employee_events/employee_event_statuses'
+    | '/admin/employee_events/employee_event_types'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth/login'
+    | '/employees/new'
+    | '/admin/'
+    | '/developer/'
+    | '/employees/'
+    | '/admin/structure/$departmentId'
+    | '/employees/$employeeId/edit'
+    | '/admin/department_categories/'
+    | '/admin/department_types/'
+    | '/admin/employee_events/'
+    | '/admin/jobs/'
+    | '/admin/structure/'
+    | '/admin/talent-periods/'
+    | '/admin/talent-status-period-links/'
+    | '/admin/talent-statuses/'
+    | '/admin/user-group-types/'
+    | '/admin/user-groups/'
+    | '/developer/translations/'
+    | '/admin/employee_events/employee_event_change_dept_types/'
+    | '/admin/employee_events/employee_event_direction_types/'
+    | '/admin/employee_events/employee_event_statuses/'
+    | '/admin/employee_events/employee_event_types/'
   fileRoutesById: FileRoutesById
 }
-export interface RootRouteChildren {}
-
-declare module '@tanstack/react-router' {
-  interface FileRoutesByPath {}
+export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
+  AuthLoginRoute: typeof AuthLoginRoute
+  EmployeesNewRoute: typeof EmployeesNewRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+  DeveloperIndexRoute: typeof DeveloperIndexRoute
+  EmployeesIndexRoute: typeof EmployeesIndexRoute
+  AdminStructureDepartmentIdRoute: typeof AdminStructureDepartmentIdRoute
+  EmployeesEmployeeIdEditRoute: typeof EmployeesEmployeeIdEditRoute
+  AdminDepartment_categoriesIndexRoute: typeof AdminDepartment_categoriesIndexRoute
+  AdminDepartment_typesIndexRoute: typeof AdminDepartment_typesIndexRoute
+  AdminEmployee_eventsIndexRoute: typeof AdminEmployee_eventsIndexRoute
+  AdminJobsIndexRoute: typeof AdminJobsIndexRoute
+  AdminStructureIndexRoute: typeof AdminStructureIndexRoute
+  AdminTalentPeriodsIndexRoute: typeof AdminTalentPeriodsIndexRoute
+  AdminTalentStatusPeriodLinksIndexRoute: typeof AdminTalentStatusPeriodLinksIndexRoute
+  AdminTalentStatusesIndexRoute: typeof AdminTalentStatusesIndexRoute
+  AdminUserGroupTypesIndexRoute: typeof AdminUserGroupTypesIndexRoute
+  AdminUserGroupsIndexRoute: typeof AdminUserGroupsIndexRoute
+  DeveloperTranslationsIndexRoute: typeof DeveloperTranslationsIndexRoute
+  AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute: typeof AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute
+  AdminEmployee_eventsEmployee_event_direction_typesIndexRoute: typeof AdminEmployee_eventsEmployee_event_direction_typesIndexRoute
+  AdminEmployee_eventsEmployee_event_statusesIndexRoute: typeof AdminEmployee_eventsEmployee_event_statusesIndexRoute
+  AdminEmployee_eventsEmployee_event_typesIndexRoute: typeof AdminEmployee_eventsEmployee_event_typesIndexRoute
 }
 
-const rootRouteChildren: RootRouteChildren = {}
+declare module '@tanstack/react-router' {
+  interface FileRoutesByPath {
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/employees/': {
+      id: '/employees/'
+      path: '/employees'
+      fullPath: '/employees'
+      preLoaderRoute: typeof EmployeesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/developer/': {
+      id: '/developer/'
+      path: '/developer'
+      fullPath: '/developer'
+      preLoaderRoute: typeof DeveloperIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/employees/new': {
+      id: '/employees/new'
+      path: '/employees/new'
+      fullPath: '/employees/new'
+      preLoaderRoute: typeof EmployeesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/login': {
+      id: '/auth/login'
+      path: '/auth/login'
+      fullPath: '/auth/login'
+      preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/developer/translations/': {
+      id: '/developer/translations/'
+      path: '/developer/translations'
+      fullPath: '/developer/translations'
+      preLoaderRoute: typeof DeveloperTranslationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/user-groups/': {
+      id: '/admin/user-groups/'
+      path: '/admin/user-groups'
+      fullPath: '/admin/user-groups'
+      preLoaderRoute: typeof AdminUserGroupsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/user-group-types/': {
+      id: '/admin/user-group-types/'
+      path: '/admin/user-group-types'
+      fullPath: '/admin/user-group-types'
+      preLoaderRoute: typeof AdminUserGroupTypesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/talent-statuses/': {
+      id: '/admin/talent-statuses/'
+      path: '/admin/talent-statuses'
+      fullPath: '/admin/talent-statuses'
+      preLoaderRoute: typeof AdminTalentStatusesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/talent-status-period-links/': {
+      id: '/admin/talent-status-period-links/'
+      path: '/admin/talent-status-period-links'
+      fullPath: '/admin/talent-status-period-links'
+      preLoaderRoute: typeof AdminTalentStatusPeriodLinksIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/talent-periods/': {
+      id: '/admin/talent-periods/'
+      path: '/admin/talent-periods'
+      fullPath: '/admin/talent-periods'
+      preLoaderRoute: typeof AdminTalentPeriodsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/structure/': {
+      id: '/admin/structure/'
+      path: '/admin/structure'
+      fullPath: '/admin/structure'
+      preLoaderRoute: typeof AdminStructureIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/jobs/': {
+      id: '/admin/jobs/'
+      path: '/admin/jobs'
+      fullPath: '/admin/jobs'
+      preLoaderRoute: typeof AdminJobsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/employee_events/': {
+      id: '/admin/employee_events/'
+      path: '/admin/employee_events'
+      fullPath: '/admin/employee_events'
+      preLoaderRoute: typeof AdminEmployee_eventsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/department_types/': {
+      id: '/admin/department_types/'
+      path: '/admin/department_types'
+      fullPath: '/admin/department_types'
+      preLoaderRoute: typeof AdminDepartment_typesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/department_categories/': {
+      id: '/admin/department_categories/'
+      path: '/admin/department_categories'
+      fullPath: '/admin/department_categories'
+      preLoaderRoute: typeof AdminDepartment_categoriesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/employees/$employeeId/edit': {
+      id: '/employees/$employeeId/edit'
+      path: '/employees/$employeeId/edit'
+      fullPath: '/employees/$employeeId/edit'
+      preLoaderRoute: typeof EmployeesEmployeeIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/structure/$departmentId': {
+      id: '/admin/structure/$departmentId'
+      path: '/admin/structure/$departmentId'
+      fullPath: '/admin/structure/$departmentId'
+      preLoaderRoute: typeof AdminStructureDepartmentIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/employee_events/employee_event_types/': {
+      id: '/admin/employee_events/employee_event_types/'
+      path: '/admin/employee_events/employee_event_types'
+      fullPath: '/admin/employee_events/employee_event_types'
+      preLoaderRoute: typeof AdminEmployee_eventsEmployee_event_typesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/employee_events/employee_event_statuses/': {
+      id: '/admin/employee_events/employee_event_statuses/'
+      path: '/admin/employee_events/employee_event_statuses'
+      fullPath: '/admin/employee_events/employee_event_statuses'
+      preLoaderRoute: typeof AdminEmployee_eventsEmployee_event_statusesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/employee_events/employee_event_direction_types/': {
+      id: '/admin/employee_events/employee_event_direction_types/'
+      path: '/admin/employee_events/employee_event_direction_types'
+      fullPath: '/admin/employee_events/employee_event_direction_types'
+      preLoaderRoute: typeof AdminEmployee_eventsEmployee_event_direction_typesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/employee_events/employee_event_change_dept_types/': {
+      id: '/admin/employee_events/employee_event_change_dept_types/'
+      path: '/admin/employee_events/employee_event_change_dept_types'
+      fullPath: '/admin/employee_events/employee_event_change_dept_types'
+      preLoaderRoute: typeof AdminEmployee_eventsEmployee_event_change_dept_typesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+  }
+}
+
+const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
+  AuthLoginRoute: AuthLoginRoute,
+  EmployeesNewRoute: EmployeesNewRoute,
+  AdminIndexRoute: AdminIndexRoute,
+  DeveloperIndexRoute: DeveloperIndexRoute,
+  EmployeesIndexRoute: EmployeesIndexRoute,
+  AdminStructureDepartmentIdRoute: AdminStructureDepartmentIdRoute,
+  EmployeesEmployeeIdEditRoute: EmployeesEmployeeIdEditRoute,
+  AdminDepartment_categoriesIndexRoute: AdminDepartment_categoriesIndexRoute,
+  AdminDepartment_typesIndexRoute: AdminDepartment_typesIndexRoute,
+  AdminEmployee_eventsIndexRoute: AdminEmployee_eventsIndexRoute,
+  AdminJobsIndexRoute: AdminJobsIndexRoute,
+  AdminStructureIndexRoute: AdminStructureIndexRoute,
+  AdminTalentPeriodsIndexRoute: AdminTalentPeriodsIndexRoute,
+  AdminTalentStatusPeriodLinksIndexRoute:
+    AdminTalentStatusPeriodLinksIndexRoute,
+  AdminTalentStatusesIndexRoute: AdminTalentStatusesIndexRoute,
+  AdminUserGroupTypesIndexRoute: AdminUserGroupTypesIndexRoute,
+  AdminUserGroupsIndexRoute: AdminUserGroupsIndexRoute,
+  DeveloperTranslationsIndexRoute: DeveloperTranslationsIndexRoute,
+  AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute:
+    AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute,
+  AdminEmployee_eventsEmployee_event_direction_typesIndexRoute:
+    AdminEmployee_eventsEmployee_event_direction_typesIndexRoute,
+  AdminEmployee_eventsEmployee_event_statusesIndexRoute:
+    AdminEmployee_eventsEmployee_event_statusesIndexRoute,
+  AdminEmployee_eventsEmployee_event_typesIndexRoute:
+    AdminEmployee_eventsEmployee_event_typesIndexRoute,
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()

@@ -1,0 +1,2122 @@
+{
+  "departmentCategoryCreateSuccess": {
+    "ukr": "Категорію підрозділу «${name}» успішно створено",
+    "eng": "Department category «${name}» created successfully"
+  },
+  "departmentCategoryDeleteError": {
+    "ukr": "Неможливо видалити категорію підрозділу «${name}»",
+    "eng": "Cannot delete department category «${name}»"
+  },
+  "departmentCategoryDeleteSuccess": {
+    "ukr": "Категорію підрозділу «${name}» успішно видалено",
+    "eng": "Department category «${name}» deleted successfully"
+  },
+  "departmentCategoryKeyTaken": {
+    "ukr": "Ключ «${key}» вже використовується",
+    "eng": "Key «${key}» is already taken"
+  },
+  "departmentCategoryNameTaken": {
+    "ukr": "Назва «${name}» вже використовується",
+    "eng": "Name «${name}» is already taken"
+  },
+  "departmentCategoryNotFound": {
+    "ukr": "Категорію підрозділу з id ${categoryId} не знайдено",
+    "eng": "Department category with id ${categoryId} not found"
+  },
+  "departmentCategoryNotFoundByName": {
+    "ukr": "Категорію підрозділу з назвою «${name}» не знайдено",
+    "eng": "Department category with name «${name}» not found"
+  },
+  "departmentCategoryUpdateSuccess": {
+    "ukr": "Категорію підрозділу «${name}» успішно оновлено",
+    "eng": "Department category «${name}» updated successfully"
+  },
+  "departmentCircularReference": {
+    "ukr": "Кругове посилання: підрозділ «${name}» не може бути своїм батьківським",
+    "eng": "Circular reference: department «${name}» cannot be its own parent"
+  },
+  "departmentCreateSuccess": {
+    "ukr": "Підрозділ «${name}» успішно створено",
+    "eng": "Department «${name}» created successfully"
+  },
+  "departmentDeleteError": {
+    "ukr": "Неможливо видалити підрозділ «${name}»",
+    "eng": "Cannot delete department «${name}»"
+  },
+  "departmentDeleteSuccess": {
+    "ukr": "Підрозділ «${name}» успішно видалено",
+    "eng": "Department «${name}» deleted successfully"
+  },
+  "departmentNotFound": {
+    "ukr": "Підрозділ з id ${departmentId} не знайдено",
+    "eng": "Department with id ${departmentId} not found"
+  },
+  "departmentNotFoundByName": {
+    "ukr": "Підрозділ з назвою «${name}» не знайдено",
+    "eng": "Department with name «${name}» not found"
+  },
+  "departmentTypeCreateSuccess": {
+    "ukr": "Тип підрозділу «${name}» успішно створено",
+    "eng": "Department type «${name}» created successfully"
+  },
+  "departmentTypeDeleteError": {
+    "ukr": "Неможливо видалити тип підрозділу «${name}»",
+    "eng": "Cannot delete department type «${name}»"
+  },
+  "departmentTypeDeleteSuccess": {
+    "ukr": "Тип підрозділу «${name}» успішно видалено",
+    "eng": "Department type «${name}» deleted successfully"
+  },
+  "departmentTypeJobLinkAlreadyExists": {
+    "ukr": "Зв'язок типу підрозділу ${departmentTypeId} з посадою ${jobId} вже існує",
+    "eng": "Link between department type ${departmentTypeId} and job ${jobId} already exists"
+  },
+  "departmentTypeJobLinkCreateSuccess": {
+    "ukr": "Зв'язок «${name}» успішно створено",
+    "eng": "Link «${name}» created successfully"
+  },
+  "departmentTypeJobLinkDeleteError": {
+    "ukr": "Неможливо видалити зв'язок ${linkId}",
+    "eng": "Cannot delete link ${linkId}"
+  },
+  "departmentTypeJobLinkDeleteSuccess": {
+    "ukr": "Зв'язок «${name}» успішно видалено",
+    "eng": "Link «${name}» deleted successfully"
+  },
+  "departmentTypeJobLinkNotFound": {
+    "ukr": "Зв'язок з id ${linkId} не знайдено",
+    "eng": "Link with id ${linkId} not found"
+  },
+  "departmentTypeJobLinkNotFoundByCompositeKey": {
+    "ukr": "Зв'язок типу підрозділу ${departmentTypeId} з посадою ${jobId} не знайдено",
+    "eng": "Link between department type ${departmentTypeId} and job ${jobId} not found"
+  },
+  "departmentTypeJobLinkUpdateSuccess": {
+    "ukr": "Зв'язок «${name}» успішно оновлено",
+    "eng": "Link «${name}» updated successfully"
+  },
+  "departmentTypeNameTaken": {
+    "ukr": "Назва типу підрозділу «${name}» вже використовується",
+    "eng": "Department type name «${name}» is already taken"
+  },
+  "departmentTypeNotFound": {
+    "ukr": "Тип підрозділу з id ${typeId} не знайдено",
+    "eng": "Department type with id ${typeId} not found"
+  },
+  "departmentTypeNotFoundByName": {
+    "ukr": "Тип підрозділу з назвою «${name}» не знайдено",
+    "eng": "Department type with name «${name}» not found"
+  },
+  "departmentTypeParentalLinkAlreadyExists": {
+    "ukr": "Батьківський зв'язок між типами ${childId} та ${parentId} вже існує",
+    "eng": "Parental link between types ${childId} and ${parentId} already exists"
+  },
+  "departmentTypeParentalLinkCreateSuccess": {
+    "ukr": "Батьківський зв'язок «${name}» успішно створено",
+    "eng": "Parental link «${name}» created successfully"
+  },
+  "departmentTypeParentalLinkDeleteError": {
+    "ukr": "Неможливо видалити батьківський зв'язок «${name}»",
+    "eng": "Cannot delete parental link «${name}»"
+  },
+  "departmentTypeParentalLinkDeleteSuccess": {
+    "ukr": "Батьківський зв'язок «${name}» успішно видалено",
+    "eng": "Parental link «${name}» deleted successfully"
+  },
+  "departmentTypeParentalLinkNotFound": {
+    "ukr": "Батьківський зв'язок з id ${linkId} не знайдено",
+    "eng": "Parental link with id ${linkId} not found"
+  },
+  "departmentTypeParentalLinkUpdateSuccess": {
+    "ukr": "Батьківський зв'язок «${name}» успішно оновлено",
+    "eng": "Parental link «${name}» updated successfully"
+  },
+  "departmentTypeUpdateSuccess": {
+    "ukr": "Тип підрозділу «${name}» успішно оновлено",
+    "eng": "Department type «${name}» updated successfully"
+  },
+  "departmentUpdateSuccess": {
+    "ukr": "Підрозділ «${name}» успішно оновлено",
+    "eng": "Department «${name}» updated successfully"
+  },
+  "employeeAlreadyInGroup": {
+    "ukr": "Працівник ${employeeCode} вже входить до групи ${groupName}",
+    "eng": "Employee ${employeeCode} is already in group ${groupName}"
+  },
+  "employeeCodeTaken": {
+    "ukr": "Код ${code} вже використовується",
+    "eng": "Code ${code} is already taken"
+  },
+  "employeeDeleteError": {
+    "ukr": "Неможливо видалити працівника ${code}",
+    "eng": "Cannot delete employee ${code}"
+  },
+  "employeeDeleteSuccess": {
+    "ukr": "Працівника «${name}» успішно видалено",
+    "eng": "Employee «${name}» deleted successfully"
+  },
+  "employeeDepartmentAlreadyExists": {
+    "ukr": "Призначення працівника ${employeeId} до підрозділу ${departmentId} вже існує",
+    "eng": "Employee ${employeeId} assignment to department ${departmentId} already exists"
+  },
+  "employeeDepartmentDeleteError": {
+    "ukr": "Неможливо видалити призначення «${name}»",
+    "eng": "Cannot delete assignment «${name}»"
+  },
+  "employeeDepartmentMainAlreadyExists": {
+    "ukr": "Для працівника ${employeeId} вже існує основне призначення ${existingMainId}",
+    "eng": "Employee ${employeeId} already has a main assignment ${existingMainId}"
+  },
+  "employeeDepartmentMainDeleteError": {
+    "ukr": "Неможливо видалити основне призначення ${linkId}",
+    "eng": "Cannot delete main assignment ${linkId}"
+  },
+  "employeeEmailTaken": {
+    "ukr": "Електронна пошта ${email} вже використовується",
+    "eng": "Email ${email} is already taken"
+  },
+  "employeeEventAlreadyApplied": {
+    "ukr": "Подія ${eventId} вже застосована",
+    "eng": "Event ${eventId} is already applied"
+  },
+  "employeeEventApplySuccess": {
+    "ukr": "Подію ${eventId} успішно застосовано",
+    "eng": "Event ${eventId} applied successfully"
+  },
+  "employeeEventChangeCreateSuccess": {
+    "ukr": "Зміну ${changeId} успішно створено",
+    "eng": "Change ${changeId} created successfully"
+  },
+  "employeeEventChangeDeleteError": {
+    "ukr": "Неможливо видалити зміну ${changeId}",
+    "eng": "Cannot delete change ${changeId}"
+  },
+  "employeeEventChangeDeleteSuccess": {
+    "ukr": "Зміну ${changeId} успішно видалено",
+    "eng": "Change ${changeId} deleted successfully"
+  },
+  "employeeEventChangeDepartmentNotFound": {
+    "ukr": "Запис підрозділу ${recordId} не знайдено",
+    "eng": "Department record ${recordId} not found"
+  },
+  "employeeEventChangeDeptTypeCodeTaken": {
+    "ukr": "Код типу «${code}» вже використовується",
+    "eng": "Department type code «${code}» is already taken"
+  },
+  "employeeEventChangeDeptTypeCreateSuccess": {
+    "ukr": "Тип зміни підрозділу «${code}» успішно створено",
+    "eng": "Department change type «${code}» created successfully"
+  },
+  "employeeEventChangeDeptTypeDeleteError": {
+    "ukr": "Неможливо видалити тип «${code}»",
+    "eng": "Cannot delete type «${code}»"
+  },
+  "employeeEventChangeDeptTypeDeleteSuccess": {
+    "ukr": "Тип зміни підрозділу «${code}» успішно видалено",
+    "eng": "Department change type «${code}» deleted successfully"
+  },
+  "employeeEventChangeDeptTypeNotFound": {
+    "ukr": "Тип зміни підрозділу з id ${typeId} не знайдено",
+    "eng": "Department change type with id ${typeId} not found"
+  },
+  "employeeEventChangeDeptTypeNotFoundByCode": {
+    "ukr": "Тип зміни підрозділу з кодом «${code}» не знайдено",
+    "eng": "Department change type with code «${code}» not found"
+  },
+  "employeeEventChangeDeptTypeUpdateSuccess": {
+    "ukr": "Тип зміни підрозділу «${code}» успішно оновлено",
+    "eng": "Department change type «${code}» updated successfully"
+  },
+  "employeeEventChangeDirectionDuplicate": {
+    "ukr": "Напрямок ${directionTypeId} для події ${eventId} вже існує",
+    "eng": "Direction ${directionTypeId} for event ${eventId} already exists"
+  },
+  "employeeEventChangeEventNotDraft": {
+    "ukr": "Подія ${eventId} не є чернеткою",
+    "eng": "Event ${eventId} is not in draft status"
+  },
+  "employeeEventChangeNotFound": {
+    "ukr": "Зміну з id ${changeId} не знайдено",
+    "eng": "Change with id ${changeId} not found"
+  },
+  "employeeEventChangeUpdateSuccess": {
+    "ukr": "Зміну ${changeId} успішно оновлено",
+    "eng": "Change ${changeId} updated successfully"
+  },
+  "employeeEventCreateSuccess": {
+    "ukr": "Подію ${eventId} успішно створено",
+    "eng": "Event ${eventId} created successfully"
+  },
+  "employeeEventDeleteError": {
+    "ukr": "Неможливо видалити подію ${eventId}",
+    "eng": "Cannot delete event ${eventId}"
+  },
+  "employeeEventDeleteSuccess": {
+    "ukr": "Подію ${eventId} успішно видалено",
+    "eng": "Event ${eventId} deleted successfully"
+  },
+  "employeeEventDirectionTypeCodeTaken": {
+    "ukr": "Код напрямку «${code}» вже використовується",
+    "eng": "Direction type code «${code}» is already taken"
+  },
+  "employeeEventDirectionTypeCreateSuccess": {
+    "ukr": "Тип напрямку «${code}» успішно створено",
+    "eng": "Direction type «${code}» created successfully"
+  },
+  "employeeEventDirectionTypeDeleteError": {
+    "ukr": "Неможливо видалити тип напрямку «${code}»",
+    "eng": "Cannot delete direction type «${code}»"
+  },
+  "employeeEventDirectionTypeDeleteSuccess": {
+    "ukr": "Тип напрямку «${code}» успішно видалено",
+    "eng": "Direction type «${code}» deleted successfully"
+  },
+  "employeeEventDirectionTypeNotFound": {
+    "ukr": "Тип напрямку з id ${typeId} не знайдено",
+    "eng": "Direction type with id ${typeId} not found"
+  },
+  "employeeEventDirectionTypeNotFoundByCode": {
+    "ukr": "Тип напрямку з кодом «${code}» не знайдено",
+    "eng": "Direction type with code «${code}» not found"
+  },
+  "employeeEventDirectionTypeUpdateSuccess": {
+    "ukr": "Тип напрямку «${code}» успішно оновлено",
+    "eng": "Direction type «${code}» updated successfully"
+  },
+  "employeeEventNotDraft": {
+    "ukr": "Подія ${eventId} не є чернеткою",
+    "eng": "Event ${eventId} is not in draft status"
+  },
+  "employeeEventNotFound": {
+    "ukr": "Подію з id ${eventId} не знайдено",
+    "eng": "Event with id ${eventId} not found"
+  },
+  "employeeEventStatusCreateSuccess": {
+    "ukr": "Статус події «${name}» успішно створено",
+    "eng": "Event status «${name}» created successfully"
+  },
+  "employeeEventStatusDeleteError": {
+    "ukr": "Неможливо видалити статус події «${name}»",
+    "eng": "Cannot delete event status «${name}»"
+  },
+  "employeeEventStatusDeleteSuccess": {
+    "ukr": "Статус події «${name}» успішно видалено",
+    "eng": "Event status «${name}» deleted successfully"
+  },
+  "employeeEventStatusNameTaken": {
+    "ukr": "Назва статусу «${name}» вже використовується",
+    "eng": "Event status name «${name}» is already taken"
+  },
+  "employeeEventStatusNotFound": {
+    "ukr": "Статус події з id ${statusId} не знайдено",
+    "eng": "Event status with id ${statusId} not found"
+  },
+  "employeeEventStatusNotFoundByName": {
+    "ukr": "Статус події з назвою «${name}» не знайдено",
+    "eng": "Event status with name «${name}» not found"
+  },
+  "employeeEventStatusUpdateSuccess": {
+    "ukr": "Статус події «${name}» успішно оновлено",
+    "eng": "Event status «${name}» updated successfully"
+  },
+  "employeeEventTypeCreateSuccess": {
+    "ukr": "Тип події «${name}» успішно створено",
+    "eng": "Event type «${name}» created successfully"
+  },
+  "employeeEventTypeDeleteError": {
+    "ukr": "Неможливо видалити тип події «${name}»",
+    "eng": "Cannot delete event type «${name}»"
+  },
+  "employeeEventTypeDeleteSuccess": {
+    "ukr": "Тип події «${name}» успішно видалено",
+    "eng": "Event type «${name}» deleted successfully"
+  },
+  "employeeEventTypeDirectionCreateSuccess": {
+    "ukr": "Напрямок ${directionId} успішно додано до типу події",
+    "eng": "Direction ${directionId} added to event type successfully"
+  },
+  "employeeEventTypeDirectionDeleteError": {
+    "ukr": "Неможливо видалити напрямок ${directionId}",
+    "eng": "Cannot delete direction ${directionId}"
+  },
+  "employeeEventTypeDirectionDeleteSuccess": {
+    "ukr": "Напрямок ${directionId} успішно видалено",
+    "eng": "Direction ${directionId} deleted successfully"
+  },
+  "employeeEventTypeDirectionDuplicate": {
+    "ukr": "Напрямок ${directionTypeId} вже пов'язаний з типом події ${eventTypeId}",
+    "eng": "Direction ${directionTypeId} is already linked to event type ${eventTypeId}"
+  },
+  "employeeEventTypeDirectionNotFound": {
+    "ukr": "Напрямок з id ${directionId} не знайдено",
+    "eng": "Direction with id ${directionId} not found"
+  },
+  "employeeEventTypeDirectionUpdateSuccess": {
+    "ukr": "Напрямок ${directionId} успішно оновлено",
+    "eng": "Direction ${directionId} updated successfully"
+  },
+  "employeeEventTypeNameTaken": {
+    "ukr": "Назва типу події «${name}» вже використовується",
+    "eng": "Event type name «${name}» is already taken"
+  },
+  "employeeEventTypeNotFound": {
+    "ukr": "Тип події з id ${typeId} не знайдено",
+    "eng": "Event type with id ${typeId} not found"
+  },
+  "employeeEventTypeNotFoundByName": {
+    "ukr": "Тип події з назвою «${name}» не знайдено",
+    "eng": "Event type with name «${name}» not found"
+  },
+  "employeeEventTypeUpdateSuccess": {
+    "ukr": "Тип події «${name}» успішно оновлено",
+    "eng": "Event type «${name}» updated successfully"
+  },
+  "employeeEventUpdateSuccess": {
+    "ukr": "Подію ${eventId} успішно оновлено",
+    "eng": "Event ${eventId} updated successfully"
+  },
+  "employeeNotFound": {
+    "ukr": "Працівника з id ${employeeId} не знайдено",
+    "eng": "Employee with id ${employeeId} not found"
+  },
+  "employeeNotFoundByCode": {
+    "ukr": "Працівника з кодом ${code} не знайдено",
+    "eng": "Employee with code ${code} not found"
+  },
+  "employeeNotInGroup": {
+    "ukr": "Працівник ${employeeCode} не входить до групи ${groupName}",
+    "eng": "Employee ${employeeCode} is not in group ${groupName}"
+  },
+  "employeeOrgUnitDepartmentCreateSuccess": {
+    "ukr": "Призначення до підрозділу «${name}» успішно створено",
+    "eng": "Department assignment «${name}» created successfully"
+  },
+  "employeeOrgUnitDepartmentDeleteSuccess": {
+    "ukr": "Призначення до підрозділу «${name}» успішно видалено",
+    "eng": "Department assignment «${name}» deleted successfully"
+  },
+  "employeeOrgUnitDepartmentNotFound": {
+    "ukr": "Призначення до підрозділу з id ${linkId} не знайдено",
+    "eng": "Department assignment with id ${linkId} not found"
+  },
+  "employeeOrgUnitDepartmentUpdateSuccess": {
+    "ukr": "Призначення до підрозділу «${name}» успішно оновлено",
+    "eng": "Department assignment «${name}» updated successfully"
+  },
+  "employeeStatusCreateSuccess": {
+    "ukr": "Статус «${name}» успішно створено",
+    "eng": "Status «${name}» created successfully"
+  },
+  "employeeStatusDeleteError": {
+    "ukr": "Неможливо видалити статус «${name}»",
+    "eng": "Cannot delete status «${name}»"
+  },
+  "employeeStatusDeleteSuccess": {
+    "ukr": "Статус «${name}» успішно видалено",
+    "eng": "Status «${name}» deleted successfully"
+  },
+  "employeeStatusNameTaken": {
+    "ukr": "Назва статусу «${name}» вже використовується",
+    "eng": "Status name «${name}» is already taken"
+  },
+  "employeeStatusNotFound": {
+    "ukr": "Статус з id ${typeId} не знайдено",
+    "eng": "Status with id ${typeId} not found"
+  },
+  "employeeStatusNotFoundByName": {
+    "ukr": "Статус з назвою «${name}» не знайдено",
+    "eng": "Status with name «${name}» not found"
+  },
+  "employeeStatusUpdateSuccess": {
+    "ukr": "Статус «${name}» успішно оновлено",
+    "eng": "Status «${name}» updated successfully"
+  },
+  "groupNotFound": {
+    "ukr": "Групу з id ${groupId} не знайдено",
+    "eng": "Group with id ${groupId} not found"
+  },
+  "groupsNotFound": {
+    "ukr": "Групи з id ${ids} не знайдено",
+    "eng": "Groups with ids ${ids} not found"
+  },
+  "jobAlreadyInGroup": {
+    "ukr": "Посада «${jobName}» вже входить до групи «${groupName}»",
+    "eng": "Job «${jobName}» is already in group «${groupName}»"
+  },
+  "jobAlreadyInJobGroup": {
+    "ukr": "Посада «${jobName}» вже входить до групи посад «${groupName}»",
+    "eng": "Job «${jobName}» is already in job group «${groupName}»"
+  },
+  "jobCreateSuccess": {
+    "ukr": "Посаду «${name}» успішно створено",
+    "eng": "Job «${name}» created successfully"
+  },
+  "jobDeleteError": {
+    "ukr": "Неможливо видалити посаду «${name}»",
+    "eng": "Cannot delete job «${name}»"
+  },
+  "jobDeleteSuccess": {
+    "ukr": "Посаду «${name}» успішно видалено",
+    "eng": "Job «${name}» deleted successfully"
+  },
+  "jobGroupCreateSuccess": {
+    "ukr": "Групу посад «${name}» успішно створено",
+    "eng": "Job group «${name}» created successfully"
+  },
+  "jobGroupDeleteError": {
+    "ukr": "Неможливо видалити групу посад «${name}»",
+    "eng": "Cannot delete job group «${name}»"
+  },
+  "jobGroupDeleteSuccess": {
+    "ukr": "Групу посад «${name}» успішно видалено",
+    "eng": "Job group «${name}» deleted successfully"
+  },
+  "jobGroupNameTaken": {
+    "ukr": "Назва групи посад «${name}» вже використовується",
+    "eng": "Job group name «${name}» is already taken"
+  },
+  "jobGroupNotFound": {
+    "ukr": "Групу посад з id ${jobGroupId} не знайдено",
+    "eng": "Job group with id ${jobGroupId} not found"
+  },
+  "jobGroupTypeSingletonViolation": {
+    "ukr": "Посада «${jobName}» вже має групу типу «${typeName}»: «${existingGroupName}»",
+    "eng": "Job «${jobName}» already has a group of type «${typeName}»: «${existingGroupName}»"
+  },
+  "jobGroupUpdateSuccess": {
+    "ukr": "Групу посад «${name}» успішно оновлено",
+    "eng": "Job group «${name}» updated successfully"
+  },
+  "jobJobGroupNotFound": {
+    "ukr": "Групу посад з id ${jobGroupId} не знайдено",
+    "eng": "Job group with id ${jobGroupId} not found"
+  },
+  "jobJobGroupsNotFound": {
+    "ukr": "Групи посад з id ${ids} не знайдено",
+    "eng": "Job groups with ids ${ids} not found"
+  },
+  "jobNameTaken": {
+    "ukr": "Назва посади «${name}» вже використовується",
+    "eng": "Job name «${name}» is already taken"
+  },
+  "jobNotFound": {
+    "ukr": "Посаду з id ${jobId} не знайдено",
+    "eng": "Job with id ${jobId} not found"
+  },
+  "jobNotFoundByName": {
+    "ukr": "Посаду з назвою «${name}» не знайдено",
+    "eng": "Job with name «${name}» not found"
+  },
+  "jobNotInGroup": {
+    "ukr": "Посада «${jobName}» не входить до групи «${groupName}»",
+    "eng": "Job «${jobName}» is not in group «${groupName}»"
+  },
+  "jobNotInJobGroup": {
+    "ukr": "Посада «${jobName}» не входить до групи посад «${groupName}»",
+    "eng": "Job «${jobName}» is not in job group «${groupName}»"
+  },
+  "jobUpdateSuccess": {
+    "ukr": "Посаду «${name}» успішно оновлено",
+    "eng": "Job «${name}» updated successfully"
+  },
+  "langNotFound": {
+    "ukr": "Мову з id ${langId} не знайдено",
+    "eng": "Language with id ${langId} not found"
+  },
+  "langNotFoundByName": {
+    "ukr": "Мову з назвою «${name}» не знайдено",
+    "eng": "Language with name «${name}» not found"
+  },
+  "msgAlreadyExists": {
+    "ukr": "Переклад для ключа ${msgKeyId} мовою ${langId} вже існує",
+    "eng": "Translation for key ${msgKeyId} in language ${langId} already exists"
+  },
+  "msgFullAlreadyExists": {
+    "ukr": "Повідомлення «${name}» вже існує",
+    "eng": "Message «${name}» already exists"
+  },
+  "msgFullDeleteError": {
+    "ukr": "Неможливо видалити повідомлення",
+    "eng": "Cannot delete message"
+  },
+  "msgFullDeleteSuccess": {
+    "ukr": "Повідомлення успішно видалено",
+    "eng": "Message deleted successfully"
+  },
+  "msgFullNotFound": {
+    "ukr": "Повідомлення з ключем ${msgKeyId} не знайдено",
+    "eng": "Message with key ${msgKeyId} not found"
+  },
+  "msgKeyNotFound": {
+    "ukr": "Ключ повідомлення з id ${msgKeyId} не знайдено",
+    "eng": "Message key with id ${msgKeyId} not found"
+  },
+  "msgKeyNotFoundByName": {
+    "ukr": "Ключ повідомлення «${name}» не знайдено",
+    "eng": "Message key «${name}» not found"
+  },
+  "msgNotFound": {
+    "ukr": "Повідомлення з id ${msgId} не знайдено",
+    "eng": "Message with id ${msgId} not found"
+  },
+  "operationAlreadyInGroup": {
+    "ukr": "Операція «${operationName}» вже входить до групи «${groupName}»",
+    "eng": "Operation «${operationName}» is already in group «${groupName}»"
+  },
+  "operationCreateSuccess": {
+    "ukr": "Операцію «${name}» успішно створено",
+    "eng": "Operation «${name}» created successfully"
+  },
+  "operationDeleteError": {
+    "ukr": "Неможливо видалити операцію «${name}»",
+    "eng": "Cannot delete operation «${name}»"
+  },
+  "operationDeleteSuccess": {
+    "ukr": "Операцію «${name}» успішно видалено",
+    "eng": "Operation «${name}» deleted successfully"
+  },
+  "operationGroupNotFound": {
+    "ukr": "Групу операцій з id ${groupId} не знайдено",
+    "eng": "Operation group with id ${groupId} not found"
+  },
+  "operationGroupsNotFound": {
+    "ukr": "Групи операцій з id ${ids} не знайдено",
+    "eng": "Operation groups with ids ${ids} not found"
+  },
+  "operationHasGroups": {
+    "ukr": "Операція «${name}» використовується в групах: ${groups}",
+    "eng": "Operation «${name}» is used in groups: ${groups}"
+  },
+  "operationNameTaken": {
+    "ukr": "Назва операції «${name}» вже використовується",
+    "eng": "Operation name «${name}» is already taken"
+  },
+  "operationNotFound": {
+    "ukr": "Операцію з id ${operationId} не знайдено",
+    "eng": "Operation with id ${operationId} not found"
+  },
+  "operationNotFoundByName": {
+    "ukr": "Операцію з назвою «${name}» не знайдено",
+    "eng": "Operation with name «${name}» not found"
+  },
+  "operationNotInGroup": {
+    "ukr": "Операція «${operationName}» не входить до групи «${groupName}»",
+    "eng": "Operation «${operationName}» is not in group «${groupName}»"
+  },
+  "operationUpdateSuccess": {
+    "ukr": "Операцію «${name}» успішно оновлено",
+    "eng": "Operation «${name}» updated successfully"
+  },
+  "talentAuditAlreadyExists": {
+    "ukr": "Аудит таланту для працівника ${employeeId} вже існує",
+    "eng": "Talent audit for employee ${employeeId} already exists"
+  },
+  "talentAuditCreateSuccess": {
+    "ukr": "Аудит таланту для працівника ${employeeId} успішно створено",
+    "eng": "Talent audit for employee ${employeeId} created successfully"
+  },
+  "talentAuditDeleteError": {
+    "ukr": "Неможливо видалити аудит ${auditId}",
+    "eng": "Cannot delete audit ${auditId}"
+  },
+  "talentAuditDeleteSuccess": {
+    "ukr": "Аудит ${auditId} успішно видалено",
+    "eng": "Audit ${auditId} deleted successfully"
+  },
+  "talentAuditInterviewCreateSuccess": {
+    "ukr": "Співбесіду ${interviewId} успішно створено",
+    "eng": "Interview ${interviewId} created successfully"
+  },
+  "talentAuditInterviewDeleteError": {
+    "ukr": "Неможливо видалити співбесіду ${interviewId}",
+    "eng": "Cannot delete interview ${interviewId}"
+  },
+  "talentAuditInterviewDeleteSuccess": {
+    "ukr": "Співбесіду ${interviewId} успішно видалено",
+    "eng": "Interview ${interviewId} deleted successfully"
+  },
+  "talentAuditInterviewNotFound": {
+    "ukr": "Співбесіду з id ${interviewId} не знайдено",
+    "eng": "Interview with id ${interviewId} not found"
+  },
+  "talentAuditInterviewStatusCreateSuccess": {
+    "ukr": "Статус співбесіди «${name}» успішно створено",
+    "eng": "Interview status «${name}» created successfully"
+  },
+  "talentAuditInterviewStatusDeleteError": {
+    "ukr": "Неможливо видалити статус співбесіди «${name}»",
+    "eng": "Cannot delete interview status «${name}»"
+  },
+  "talentAuditInterviewStatusDeleteSuccess": {
+    "ukr": "Статус співбесіди «${name}» успішно видалено",
+    "eng": "Interview status «${name}» deleted successfully"
+  },
+  "talentAuditInterviewStatusNameTaken": {
+    "ukr": "Назва статусу «${name}» вже використовується",
+    "eng": "Interview status name «${name}» is already taken"
+  },
+  "talentAuditInterviewStatusNotFound": {
+    "ukr": "Статус співбесіди з id ${statusId} не знайдено",
+    "eng": "Interview status with id ${statusId} not found"
+  },
+  "talentAuditInterviewStatusNotFoundByName": {
+    "ukr": "Статус співбесіди з назвою «${name}» не знайдено",
+    "eng": "Interview status with name «${name}» not found"
+  },
+  "talentAuditInterviewStatusUpdateSuccess": {
+    "ukr": "Статус співбесіди «${name}» успішно оновлено",
+    "eng": "Interview status «${name}» updated successfully"
+  },
+  "talentAuditInterviewUpdateSuccess": {
+    "ukr": "Співбесіду ${interviewId} успішно оновлено",
+    "eng": "Interview ${interviewId} updated successfully"
+  },
+  "talentAuditJobCreateSuccess": {
+    "ukr": "Посаду ${jobId} успішно додано до аудиту",
+    "eng": "Job ${jobId} added to audit successfully"
+  },
+  "talentAuditJobDeleteError": {
+    "ukr": "Неможливо видалити посаду ${jobId} з аудиту",
+    "eng": "Cannot delete job ${jobId} from audit"
+  },
+  "talentAuditJobDeleteSuccess": {
+    "ukr": "Посаду ${jobId} успішно видалено з аудиту",
+    "eng": "Job ${jobId} removed from audit successfully"
+  },
+  "talentAuditJobNotFound": {
+    "ukr": "Посаду з id ${jobId} в аудиті не знайдено",
+    "eng": "Job with id ${jobId} not found in audit"
+  },
+  "talentAuditJobStatusCreateSuccess": {
+    "ukr": "Статус «${name}» успішно створено",
+    "eng": "Status «${name}» created successfully"
+  },
+  "talentAuditJobStatusDeleteError": {
+    "ukr": "Неможливо видалити статус «${name}»",
+    "eng": "Cannot delete status «${name}»"
+  },
+  "talentAuditJobStatusDeleteSuccess": {
+    "ukr": "Статус «${name}» успішно видалено",
+    "eng": "Status «${name}» deleted successfully"
+  },
+  "talentAuditJobStatusNameTaken": {
+    "ukr": "Назва статусу «${name}» вже використовується",
+    "eng": "Status name «${name}» is already taken"
+  },
+  "talentAuditJobStatusNotFound": {
+    "ukr": "Статус аудиту з id ${statusId} не знайдено",
+    "eng": "Audit status with id ${statusId} not found"
+  },
+  "talentAuditJobStatusNotFoundByName": {
+    "ukr": "Статус аудиту з назвою «${name}» не знайдено",
+    "eng": "Audit status with name «${name}» not found"
+  },
+  "talentAuditJobStatusUpdateSuccess": {
+    "ukr": "Статус «${name}» успішно оновлено",
+    "eng": "Status «${name}» updated successfully"
+  },
+  "talentAuditJobUpdateSuccess": {
+    "ukr": "Посаду ${jobId} в аудиті успішно оновлено",
+    "eng": "Job ${jobId} in audit updated successfully"
+  },
+  "talentAuditNotFound": {
+    "ukr": "Аудит з id ${auditId} не знайдено",
+    "eng": "Audit with id ${auditId} not found"
+  },
+  "talentAuditStatusCreateSuccess": {
+    "ukr": "Статус аудиту «${name}» успішно створено",
+    "eng": "Audit status «${name}» created successfully"
+  },
+  "talentAuditStatusDeleteError": {
+    "ukr": "Неможливо видалити статус аудиту «${name}»",
+    "eng": "Cannot delete audit status «${name}»"
+  },
+  "talentAuditStatusDeleteSuccess": {
+    "ukr": "Статус аудиту «${name}» успішно видалено",
+    "eng": "Audit status «${name}» deleted successfully"
+  },
+  "talentAuditStatusNameTaken": {
+    "ukr": "Назва статусу аудиту «${name}» вже використовується",
+    "eng": "Audit status name «${name}» is already taken"
+  },
+  "talentAuditStatusNotFound": {
+    "ukr": "Статус аудиту з id ${statusId} не знайдено",
+    "eng": "Audit status with id ${statusId} not found"
+  },
+  "talentAuditStatusNotFoundByName": {
+    "ukr": "Статус аудиту з назвою «${name}» не знайдено",
+    "eng": "Audit status with name «${name}» not found"
+  },
+  "talentAuditStatusUpdateSuccess": {
+    "ukr": "Статус аудиту «${name}» успішно оновлено",
+    "eng": "Audit status «${name}» updated successfully"
+  },
+  "talentAuditUpdateSuccess": {
+    "ukr": "Аудит ${auditId} успішно оновлено",
+    "eng": "Audit ${auditId} updated successfully"
+  },
+  "talentPeriodCreateSuccess": {
+    "ukr": "Період «${name}» успішно створено",
+    "eng": "Period «${name}» created successfully"
+  },
+  "talentPeriodDeleteError": {
+    "ukr": "Неможливо видалити період «${name}»",
+    "eng": "Cannot delete period «${name}»"
+  },
+  "talentPeriodDeleteSuccess": {
+    "ukr": "Період «${name}» успішно видалено",
+    "eng": "Period «${name}» deleted successfully"
+  },
+  "talentPeriodNameTaken": {
+    "ukr": "Назва «${name}» вже використовується",
+    "eng": "Period name «${name}» is already taken"
+  },
+  "talentPeriodNotFound": {
+    "ukr": "Період з id ${periodId} не знайдено",
+    "eng": "Period with id ${periodId} not found"
+  },
+  "talentPeriodNotFoundByName": {
+    "ukr": "Період з назвою «${name}» не знайдено",
+    "eng": "Period with name «${name}» not found"
+  },
+  "talentPeriodUpdateSuccess": {
+    "ukr": "Період «${name}» успішно оновлено",
+    "eng": "Period «${name}» updated successfully"
+  },
+  "talentStatusCreateSuccess": {
+    "ukr": "Статус таланту «${name}» успішно створено",
+    "eng": "Talent status «${name}» created successfully"
+  },
+  "talentStatusDeleteError": {
+    "ukr": "Неможливо видалити статус таланту «${name}»",
+    "eng": "Cannot delete talent status «${name}»"
+  },
+  "talentStatusDeleteSuccess": {
+    "ukr": "Статус таланту «${name}» успішно видалено",
+    "eng": "Talent status «${name}» deleted successfully"
+  },
+  "talentStatusKeyTaken": {
+    "ukr": "Ключ «${key}» вже використовується",
+    "eng": "Key «${key}» is already taken"
+  },
+  "talentStatusNameTaken": {
+    "ukr": "Назва «${name}» вже використовується",
+    "eng": "Talent status name «${name}» is already taken"
+  },
+  "talentStatusNotFound": {
+    "ukr": "Статус таланту з id ${statusId} не знайдено",
+    "eng": "Talent status with id ${statusId} not found"
+  },
+  "talentStatusNotFoundByName": {
+    "ukr": "Статус таланту з назвою «${name}» не знайдено",
+    "eng": "Talent status with name «${name}» not found"
+  },
+  "talentStatusPeriodLinkAlreadyExists": {
+    "ukr": "Зв'язок між статусом ${statusId} та періодом ${periodId} вже існує",
+    "eng": "Link between status ${statusId} and period ${periodId} already exists"
+  },
+  "talentStatusPeriodLinkCreateSuccess": {
+    "ukr": "Зв'язок «${name}» успішно створено",
+    "eng": "Link «${name}» created successfully"
+  },
+  "talentStatusPeriodLinkDeleteError": {
+    "ukr": "Неможливо видалити зв'язок ${linkId}",
+    "eng": "Cannot delete link ${linkId}"
+  },
+  "talentStatusPeriodLinkDeleteSuccess": {
+    "ukr": "Зв'язок «${name}» успішно видалено",
+    "eng": "Link «${name}» deleted successfully"
+  },
+  "talentStatusPeriodLinkNotFound": {
+    "ukr": "Зв'язок з id ${linkId} не знайдено",
+    "eng": "Link with id ${linkId} not found"
+  },
+  "talentStatusPeriodLinkNotFoundByCompositeKey": {
+    "ukr": "Зв'язок між статусом ${statusId} та періодом ${periodId} не знайдено",
+    "eng": "Link between status ${statusId} and period ${periodId} not found"
+  },
+  "talentStatusPeriodLinkUpdateSuccess": {
+    "ukr": "Зв'язок «${name}» успішно оновлено",
+    "eng": "Link «${name}» updated successfully"
+  },
+  "talentStatusUpdateSuccess": {
+    "ukr": "Статус таланту «${name}» успішно оновлено",
+    "eng": "Talent status «${name}» updated successfully"
+  },
+  "userAlreadyInGroup": {
+    "ukr": "Користувач ${userCode} вже входить до групи «${groupName}»",
+    "eng": "User ${userCode} is already in group «${groupName}»"
+  },
+  "userCodeTaken": {
+    "ukr": "Код ${code} вже використовується",
+    "eng": "Code ${code} is already taken"
+  },
+  "userDeleteError": {
+    "ukr": "Неможливо видалити користувача ${code}",
+    "eng": "Cannot delete user ${code}"
+  },
+  "userEmailTaken": {
+    "ukr": "Електронна пошта ${email} вже використовується",
+    "eng": "Email ${email} is already taken"
+  },
+  "userGroupCreateSuccess": {
+    "ukr": "Групу «${name}» успішно створено",
+    "eng": "Group «${name}» created successfully"
+  },
+  "userGroupDeleteError": {
+    "ukr": "Неможливо видалити групу «${name}»",
+    "eng": "Cannot delete group «${name}»"
+  },
+  "userGroupDeleteSuccess": {
+    "ukr": "Групу «${name}» успішно видалено",
+    "eng": "Group «${name}» deleted successfully"
+  },
+  "userGroupNameTaken": {
+    "ukr": "Назва групи «${name}» вже використовується",
+    "eng": "Group name «${name}» is already taken"
+  },
+  "userGroupNotFound": {
+    "ukr": "Групу з id ${groupId} не знайдено",
+    "eng": "Group with id ${groupId} not found"
+  },
+  "userGroupTypeCreateSuccess": {
+    "ukr": "Тип групи «${name}» успішно створено",
+    "eng": "Group type «${name}» created successfully"
+  },
+  "userGroupTypeDeleteError": {
+    "ukr": "Неможливо видалити тип групи «${name}»",
+    "eng": "Cannot delete group type «${name}»"
+  },
+  "userGroupTypeDeleteSuccess": {
+    "ukr": "Тип групи «${name}» успішно видалено",
+    "eng": "Group type «${name}» deleted successfully"
+  },
+  "userGroupTypeNameTaken": {
+    "ukr": "Назва типу групи «${name}» вже використовується",
+    "eng": "Group type name «${name}» is already taken"
+  },
+  "userGroupTypeNotFound": {
+    "ukr": "Тип групи з id ${typeId} не знайдено",
+    "eng": "Group type with id ${typeId} not found"
+  },
+  "userGroupTypeNotFoundByName": {
+    "ukr": "Тип групи з назвою «${name}» не знайдено",
+    "eng": "Group type with name «${name}» not found"
+  },
+  "userGroupTypeUpdateSuccess": {
+    "ukr": "Тип групи «${name}» успішно оновлено",
+    "eng": "Group type «${name}» updated successfully"
+  },
+  "userGroupUpdateSuccess": {
+    "ukr": "Групу «${name}» успішно оновлено",
+    "eng": "Group «${name}» updated successfully"
+  },
+  "userGroupsNotFound": {
+    "ukr": "Групи з id ${missingGroupIds} не знайдено",
+    "eng": "Groups with ids ${missingGroupIds} not found"
+  },
+  "userNotFound": {
+    "ukr": "Користувача з id ${userId} не знайдено",
+    "eng": "User with id ${userId} not found"
+  },
+  "userNotFoundByCode": {
+    "ukr": "Користувача з кодом ${code} не знайдено",
+    "eng": "User with code ${code} not found"
+  },
+  "userNotInGroup": {
+    "ukr": "Користувач ${userCode} не входить до групи «${groupName}»",
+    "eng": "User ${userCode} is not in group «${groupName}»"
+  },
+  "actions": {
+    "ukr": "Дії",
+    "eng": "Actions"
+  },
+  "active": {
+    "ukr": "Активний",
+    "eng": "Active"
+  },
+  "activeUsers": {
+    "ukr": "Активні користувачі",
+    "eng": "Active users"
+  },
+  "addAnyway": {
+    "ukr": "Додати все одно",
+    "eng": "Add anyway"
+  },
+  "addChildDepartment": {
+    "ukr": "Додати дочірній підрозділ",
+    "eng": "Add child department"
+  },
+  "addChildDepartmentType": {
+    "ukr": "Додати дочірній тип підрозділу",
+    "eng": "Add child department type"
+  },
+  "addDepartment": {
+    "ukr": "Додати підрозділ",
+    "eng": "Add department"
+  },
+  "addDepartmentCategory": {
+    "ukr": "Додати категорію підрозділу",
+    "eng": "Add department category"
+  },
+  "addDepartmentHint": {
+    "ukr": "Виберіть категорію та батьківський підрозділ",
+    "eng": "Select a category and parent department"
+  },
+  "addDepartmentType": {
+    "ukr": "Додати тип підрозділу",
+    "eng": "Add department type"
+  },
+  "addEmployee": {
+    "ukr": "Додати працівника",
+    "eng": "Add employee"
+  },
+  "addEmployeeEventChangeDeptType": {
+    "ukr": "Додати тип зміни підрозділу",
+    "eng": "Add department change type"
+  },
+  "addEmployeeEventDirectionType": {
+    "ukr": "Додати тип напрямку події",
+    "eng": "Add event direction type"
+  },
+  "addEmployeeEventStatus": {
+    "ukr": "Додати статус події",
+    "eng": "Add event status"
+  },
+  "addEmployeeEventType": {
+    "ukr": "Додати тип події",
+    "eng": "Add event type"
+  },
+  "addJob": {
+    "ukr": "Додати посаду",
+    "eng": "Add job"
+  },
+  "addJobLink": {
+    "ukr": "Додати зв'язок з посадою",
+    "eng": "Add job link"
+  },
+  "addJobToDepartmentType": {
+    "ukr": "Додати посаду до типу підрозділу",
+    "eng": "Add job to department type"
+  },
+  "addLink": {
+    "ukr": "Додати зв'язок",
+    "eng": "Add link"
+  },
+  "addNewTranslation": {
+    "ukr": "Додати новий переклад",
+    "eng": "Add new translation"
+  },
+  "addRootDepartment": {
+    "ukr": "Додати кореневий підрозділ",
+    "eng": "Add root department"
+  },
+  "addTalentPeriod": {
+    "ukr": "Додати період",
+    "eng": "Add talent period"
+  },
+  "addTalentStatus": {
+    "ukr": "Додати статус таланту",
+    "eng": "Add talent status"
+  },
+  "addTranslation": {
+    "ukr": "Додати переклад",
+    "eng": "Add translation"
+  },
+  "addUserGroup": {
+    "ukr": "Додати групу користувачів",
+    "eng": "Add user group"
+  },
+  "addUserGroupType": {
+    "ukr": "Додати тип групи користувачів",
+    "eng": "Add user group type"
+  },
+  "adding": {
+    "ukr": "Додавання...",
+    "eng": "Adding..."
+  },
+  "admin": {
+    "ukr": "Адміністратор",
+    "eng": "Admin"
+  },
+  "adminPanel": {
+    "ukr": "Панель адміністратора",
+    "eng": "Admin panel"
+  },
+  "applyChange": {
+    "ukr": "Застосувати зміну",
+    "eng": "Apply change"
+  },
+  "areYouSureDelete": {
+    "ukr": "Ви впевнені, що хочете видалити?",
+    "eng": "Are you sure you want to delete?"
+  },
+  "areYouSureDeleteDepartment": {
+    "ukr": "Ви впевнені, що хочете видалити підрозділ?",
+    "eng": "Are you sure you want to delete this department?"
+  },
+  "areYouSureDeleteDepartmentCategory": {
+    "ukr": "Ви впевнені, що хочете видалити категорію підрозділу?",
+    "eng": "Are you sure you want to delete this department category?"
+  },
+  "areYouSureDeleteDepartmentType": {
+    "ukr": "Ви впевнені, що хочете видалити тип підрозділу?",
+    "eng": "Are you sure you want to delete this department type?"
+  },
+  "areYouSureDeleteDeptAssignment": {
+    "ukr": "Ви впевнені, що хочете видалити призначення до підрозділу?",
+    "eng": "Are you sure you want to delete this department assignment?"
+  },
+  "areYouSureDeleteEmployee": {
+    "ukr": "Ви впевнені, що хочете видалити працівника?",
+    "eng": "Are you sure you want to delete this employee?"
+  },
+  "areYouSureDeleteEmployeeEventChangeDeptType": {
+    "ukr": "Ви впевнені, що хочете видалити тип зміни підрозділу?",
+    "eng": "Are you sure you want to delete this department change type?"
+  },
+  "areYouSureDeleteEmployeeEventDirectionType": {
+    "ukr": "Ви впевнені, що хочете видалити тип напрямку?",
+    "eng": "Are you sure you want to delete this direction type?"
+  },
+  "areYouSureDeleteEmployeeEventType": {
+    "ukr": "Ви впевнені, що хочете видалити тип події?",
+    "eng": "Are you sure you want to delete this event type?"
+  },
+  "areYouSureDeleteJob": {
+    "ukr": "Ви впевнені, що хочете видалити посаду?",
+    "eng": "Are you sure you want to delete this job?"
+  },
+  "areYouSureDeleteTalentPeriod": {
+    "ukr": "Ви впевнені, що хочете видалити період?",
+    "eng": "Are you sure you want to delete this talent period?"
+  },
+  "areYouSureDeleteTalentStatus": {
+    "ukr": "Ви впевнені, що хочете видалити статус таланту?",
+    "eng": "Are you sure you want to delete this talent status?"
+  },
+  "areYouSureDeleteTalentStatusPeriodLink": {
+    "ukr": "Ви впевнені, що хочете видалити зв'язок?",
+    "eng": "Are you sure you want to delete this link?"
+  },
+  "areYouSureDeleteUserGroup": {
+    "ukr": "Ви впевнені, що хочете видалити групу?",
+    "eng": "Are you sure you want to delete this user group?"
+  },
+  "areYouSureDeleteUserGroupType": {
+    "ukr": "Ви впевнені, що хочете видалити тип групи?",
+    "eng": "Are you sure you want to delete this user group type?"
+  },
+  "areYouSureYouWantToDeleteThisTranslation": {
+    "ukr": "Ви впевнені, що хочете видалити цей переклад?",
+    "eng": "Are you sure you want to delete this translation?"
+  },
+  "assignGroups": {
+    "ukr": "Призначити групи",
+    "eng": "Assign groups"
+  },
+  "autoPopulateHint": {
+    "ukr": "Натисніть для автозаповнення",
+    "eng": "Click to auto-populate"
+  },
+  "cancel": {
+    "ukr": "Скасувати",
+    "eng": "Cancel"
+  },
+  "changeGroupType": {
+    "ukr": "Змінити тип групи",
+    "eng": "Change group type"
+  },
+  "changeJob": {
+    "ukr": "Змінити посаду",
+    "eng": "Change job"
+  },
+  "changeJobAndDepartment": {
+    "ukr": "Змінити посаду та підрозділ",
+    "eng": "Change job and department"
+  },
+  "changeJobHint": {
+    "ukr": "Зміна посади може вплинути на підрозділ",
+    "eng": "Changing the job may affect the department"
+  },
+  "changeUserGroupType": {
+    "ukr": "Змінити тип групи користувачів",
+    "eng": "Change user group type"
+  },
+  "childDepartmentType": {
+    "ukr": "Дочірній тип підрозділу",
+    "eng": "Child department type"
+  },
+  "children": {
+    "ukr": "Дочірні",
+    "eng": "Children"
+  },
+  "chooseFile": {
+    "ukr": "Оберіть файл",
+    "eng": "Choose file"
+  },
+  "close": {
+    "ukr": "Закрити",
+    "eng": "Close"
+  },
+  "code": {
+    "ukr": "Код",
+    "eng": "Code"
+  },
+  "confirm": {
+    "ukr": "Підтвердити",
+    "eng": "Confirm"
+  },
+  "confirmDelete": {
+    "ukr": "Підтвердити видалення",
+    "eng": "Confirm delete"
+  },
+  "confirmEdit": {
+    "ukr": "Підтвердити редагування",
+    "eng": "Confirm edit"
+  },
+  "contains": {
+    "ukr": "Містить",
+    "eng": "Contains"
+  },
+  "copiedToClipboard": {
+    "ukr": "Скопійовано в буфер обміну",
+    "eng": "Copied to clipboard"
+  },
+  "copyFailed": {
+    "ukr": "Помилка копіювання",
+    "eng": "Copy failed"
+  },
+  "copyKeyToClipboard": {
+    "ukr": "Копіювати ключ",
+    "eng": "Copy key to clipboard"
+  },
+  "create": {
+    "ukr": "Створити",
+    "eng": "Create"
+  },
+  "createDepartment": {
+    "ukr": "Створити підрозділ",
+    "eng": "Create department"
+  },
+  "createDepartmentCategory": {
+    "ukr": "Створити категорію підрозділу",
+    "eng": "Create department category"
+  },
+  "createDepartmentType": {
+    "ukr": "Створити тип підрозділу",
+    "eng": "Create department type"
+  },
+  "createEmployee": {
+    "ukr": "Створити працівника",
+    "eng": "Create employee"
+  },
+  "createEmployeeEventChangeDeptType": {
+    "ukr": "Створити тип зміни підрозділу",
+    "eng": "Create department change type"
+  },
+  "createEmployeeEventDirectionType": {
+    "ukr": "Створити тип напрямку події",
+    "eng": "Create event direction type"
+  },
+  "createEmployeeEventStatus": {
+    "ukr": "Створити статус події",
+    "eng": "Create event status"
+  },
+  "createEmployeeEventType": {
+    "ukr": "Створити тип події",
+    "eng": "Create event type"
+  },
+  "createJob": {
+    "ukr": "Створити посаду",
+    "eng": "Create job"
+  },
+  "createTalentPeriod": {
+    "ukr": "Створити період",
+    "eng": "Create talent period"
+  },
+  "createTalentStatus": {
+    "ukr": "Створити статус таланту",
+    "eng": "Create talent status"
+  },
+  "createTalentStatusPeriodLink": {
+    "ukr": "Створити зв'язок статусу з періодом",
+    "eng": "Create talent status-period link"
+  },
+  "createUserGroup": {
+    "ukr": "Створити групу користувачів",
+    "eng": "Create user group"
+  },
+  "createUserGroupType": {
+    "ukr": "Створити тип групи користувачів",
+    "eng": "Create user group type"
+  },
+  "createdAt": {
+    "ukr": "Дата створення",
+    "eng": "Created at"
+  },
+  "currentJob": {
+    "ukr": "Поточна посада",
+    "eng": "Current job"
+  },
+  "currentJobKept": {
+    "ukr": "Поточна посада збережена",
+    "eng": "Current job kept"
+  },
+  "currentType": {
+    "ukr": "Поточний тип",
+    "eng": "Current type"
+  },
+  "customFilename": {
+    "ukr": "Власна назва файлу",
+    "eng": "Custom filename"
+  },
+  "dark": {
+    "ukr": "Темна",
+    "eng": "Dark"
+  },
+  "delete": {
+    "ukr": "Видалити",
+    "eng": "Delete"
+  },
+  "deleteDepartment": {
+    "ukr": "Видалити підрозділ",
+    "eng": "Delete department"
+  },
+  "deleteDepartmentAssignment": {
+    "ukr": "Видалити призначення",
+    "eng": "Delete department assignment"
+  },
+  "deleteDepartmentCategory": {
+    "ukr": "Видалити категорію підрозділу",
+    "eng": "Delete department category"
+  },
+  "deleteDepartmentType": {
+    "ukr": "Видалити тип підрозділу",
+    "eng": "Delete department type"
+  },
+  "deleteEmployee": {
+    "ukr": "Видалити працівника",
+    "eng": "Delete employee"
+  },
+  "deleteEmployeeEventChangeDeptType": {
+    "ukr": "Видалити тип зміни підрозділу",
+    "eng": "Delete department change type"
+  },
+  "deleteEmployeeEventDirectionType": {
+    "ukr": "Видалити тип напрямку",
+    "eng": "Delete direction type"
+  },
+  "deleteEmployeeEventStatus": {
+    "ukr": "Видалити статус події",
+    "eng": "Delete event status"
+  },
+  "deleteEmployeeEventType": {
+    "ukr": "Видалити тип події",
+    "eng": "Delete event type"
+  },
+  "deleteJob": {
+    "ukr": "Видалити посаду",
+    "eng": "Delete job"
+  },
+  "deleteMainDeptTitle": {
+    "ukr": "Видалення основного підрозділу",
+    "eng": "Delete main department"
+  },
+  "deleteMainDeptWarning": {
+    "ukr": "Увага: це основне призначення до підрозділу",
+    "eng": "Warning: this is the main department assignment"
+  },
+  "deleteTalentPeriod": {
+    "ukr": "Видалити період",
+    "eng": "Delete talent period"
+  },
+  "deleteTalentStatus": {
+    "ukr": "Видалити статус таланту",
+    "eng": "Delete talent status"
+  },
+  "deleteTalentStatusPeriodLink": {
+    "ukr": "Видалити зв'язок",
+    "eng": "Delete talent status-period link"
+  },
+  "deleteUserGroup": {
+    "ukr": "Видалити групу",
+    "eng": "Delete user group"
+  },
+  "deleteUserGroupType": {
+    "ukr": "Видалити тип групи",
+    "eng": "Delete user group type"
+  },
+  "deleting": {
+    "ukr": "Видалення...",
+    "eng": "Deleting..."
+  },
+  "department": {
+    "ukr": "Підрозділ",
+    "eng": "Department"
+  },
+  "departmentAdded": {
+    "ukr": "Підрозділ додано",
+    "eng": "Department added"
+  },
+  "departmentAndJob": {
+    "ukr": "Підрозділ та посада",
+    "eng": "Department and job"
+  },
+  "departmentCategories": {
+    "ukr": "Категорії підрозділів",
+    "eng": "Department categories"
+  },
+  "departmentCategory": {
+    "ukr": "Категорія підрозділу",
+    "eng": "Department category"
+  },
+  "departmentHasChildren": {
+    "ukr": "Підрозділ має дочірні підрозділи",
+    "eng": "Department has child departments"
+  },
+  "departmentType": {
+    "ukr": "Тип підрозділу",
+    "eng": "Department type"
+  },
+  "departmentTypes": {
+    "ukr": "Типи підрозділів",
+    "eng": "Department types"
+  },
+  "departments": {
+    "ukr": "Підрозділи",
+    "eng": "Departments"
+  },
+  "deptTypeJobMismatch": {
+    "ukr": "Посада не відповідає типу підрозділу",
+    "eng": "Job does not match department type"
+  },
+  "description": {
+    "ukr": "Опис",
+    "eng": "Description"
+  },
+  "devPanel": {
+    "ukr": "Панель розробника",
+    "eng": "Dev panel"
+  },
+  "developer": {
+    "ukr": "Розробник",
+    "eng": "Developer"
+  },
+  "downloadExcel": {
+    "ukr": "Завантажити Excel",
+    "eng": "Download Excel"
+  },
+  "downloadJson": {
+    "ukr": "Завантажити JSON",
+    "eng": "Download JSON"
+  },
+  "edit": {
+    "ukr": "Редагувати",
+    "eng": "Edit"
+  },
+  "editDescription": {
+    "ukr": "Редагувати опис",
+    "eng": "Edit description"
+  },
+  "editEmployee": {
+    "ukr": "Редагувати працівника",
+    "eng": "Edit employee"
+  },
+  "editKey": {
+    "ukr": "Редагувати ключ",
+    "eng": "Edit key"
+  },
+  "editName": {
+    "ukr": "Редагувати назву",
+    "eng": "Edit name"
+  },
+  "editTranslation": {
+    "ukr": "Редагувати переклад",
+    "eng": "Edit translation"
+  },
+  "edit_name": {
+    "ukr": "Редагувати назву",
+    "eng": "Edit name"
+  },
+  "email": {
+    "ukr": "Електронна пошта",
+    "eng": "Email"
+  },
+  "employeeEventChangeDeptTypes": {
+    "ukr": "Типи змін підрозділу",
+    "eng": "Department change types"
+  },
+  "employeeEventDirectionTypes": {
+    "ukr": "Типи напрямків події",
+    "eng": "Event direction types"
+  },
+  "employeeEventStatuses": {
+    "ukr": "Статуси подій",
+    "eng": "Event statuses"
+  },
+  "employeeEventTypes": {
+    "ukr": "Типи подій",
+    "eng": "Event types"
+  },
+  "employeeEvents": {
+    "ukr": "Події працівників",
+    "eng": "Employee events"
+  },
+  "employeeEventsDesc": {
+    "ukr": "Управління подіями та змінами працівників",
+    "eng": "Manage employee events and changes"
+  },
+  "employees": {
+    "ukr": "Працівники",
+    "eng": "Employees"
+  },
+  "empty": {
+    "ukr": "Порожньо",
+    "eng": "Empty"
+  },
+  "errorCopyingToClipboard": {
+    "ukr": "Помилка копіювання в буфер обміну",
+    "eng": "Error copying to clipboard"
+  },
+  "errorLoadingTranslations": {
+    "ukr": "Помилка завантаження перекладів: ${errorMessage}",
+    "eng": "Error loading translations: ${errorMessage}"
+  },
+  "errors": {
+    "ukr": "Помилки",
+    "eng": "Errors"
+  },
+  "exact": {
+    "ukr": "Точно",
+    "eng": "Exact"
+  },
+  "excelExportDescription": {
+    "ukr": "Експортувати всі переклади в Excel",
+    "eng": "Export all translations to Excel"
+  },
+  "excelExportedSuccessfully": {
+    "ukr": "Excel успішно експортовано",
+    "eng": "Excel exported successfully"
+  },
+  "excelImportedSuccessfully": {
+    "ukr": "Excel успішно імпортовано",
+    "eng": "Excel imported successfully"
+  },
+  "exportExcel": {
+    "ukr": "Експортувати Excel",
+    "eng": "Export Excel"
+  },
+  "exportFailed": {
+    "ukr": "Помилка експорту: ${errorMessage}",
+    "eng": "Export failed: ${errorMessage}"
+  },
+  "exportJson": {
+    "ukr": "Експортувати JSON",
+    "eng": "Export JSON"
+  },
+  "exportTranslationsToExcel": {
+    "ukr": "Експортувати переклади в Excel",
+    "eng": "Export translations to Excel"
+  },
+  "exportTranslationsToJson": {
+    "ukr": "Експортувати переклади в JSON",
+    "eng": "Export translations to JSON"
+  },
+  "exporting": {
+    "ukr": "Експортування...",
+    "eng": "Exporting..."
+  },
+  "extraDepartments": {
+    "ukr": "Додаткові підрозділи",
+    "eng": "Extra departments"
+  },
+  "failedToAddTranslation": {
+    "ukr": "Не вдалося додати переклад",
+    "eng": "Failed to add translation"
+  },
+  "failedToDeleteTranslation": {
+    "ukr": "Не вдалося видалити переклад",
+    "eng": "Failed to delete translation"
+  },
+  "failedToUpdateTranslation": {
+    "ukr": "Не вдалося оновити переклад",
+    "eng": "Failed to update translation"
+  },
+  "filenameOptions": {
+    "ukr": "Параметри назви файлу",
+    "eng": "Filename options"
+  },
+  "firstSelectCategory": {
+    "ukr": "Спочатку оберіть категорію",
+    "eng": "First select a category"
+  },
+  "firstSelectDepartment": {
+    "ukr": "Спочатку оберіть підрозділ",
+    "eng": "First select a department"
+  },
+  "groupType": {
+    "ukr": "Тип групи",
+    "eng": "Group type"
+  },
+  "groups": {
+    "ukr": "Групи",
+    "eng": "Groups"
+  },
+  "hierarchy": {
+    "ukr": "Ієрархія",
+    "eng": "Hierarchy"
+  },
+  "home": {
+    "ukr": "Головна",
+    "eng": "Home"
+  },
+  "iUnderstandJobChange": {
+    "ukr": "Я розумію, що посада зміниться",
+    "eng": "I understand the job will change"
+  },
+  "import": {
+    "ukr": "Імпорт",
+    "eng": "Import"
+  },
+  "importErrors": {
+    "ukr": "Помилок при імпорті: ${count}",
+    "eng": "Import errors: ${count}"
+  },
+  "importExcel": {
+    "ukr": "Імпортувати Excel",
+    "eng": "Import Excel"
+  },
+  "importFailed": {
+    "ukr": "Помилка імпорту: ${errorMessage}",
+    "eng": "Import failed: ${errorMessage}"
+  },
+  "importJson": {
+    "ukr": "Імпортувати JSON",
+    "eng": "Import JSON"
+  },
+  "importJsonFile": {
+    "ukr": "Імпортувати JSON-файл",
+    "eng": "Import JSON file"
+  },
+  "importJsonFromText": {
+    "ukr": "Імпортувати JSON з тексту",
+    "eng": "Import JSON from text"
+  },
+  "importJsonText": {
+    "ukr": "JSON текст",
+    "eng": "JSON text"
+  },
+  "importJsonTextDescription": {
+    "ukr": "Вставте JSON з перекладами",
+    "eng": "Paste JSON with translations"
+  },
+  "importResult": {
+    "ukr": "Імпортовано: ${success} з ${total}",
+    "eng": "Imported: ${success} of ${total}"
+  },
+  "importing": {
+    "ukr": "Імпортування...",
+    "eng": "Importing..."
+  },
+  "importingTranslations": {
+    "ukr": "Імпортування перекладів...",
+    "eng": "Importing translations..."
+  },
+  "inactive": {
+    "ukr": "Неактивний",
+    "eng": "Inactive"
+  },
+  "inactiveUsers": {
+    "ukr": "Неактивні користувачі",
+    "eng": "Inactive users"
+  },
+  "includeJsonExtension": {
+    "ukr": "Включити розширення .json",
+    "eng": "Include .json extension"
+  },
+  "includeXlsxExtension": {
+    "ukr": "Включити розширення .xlsx",
+    "eng": "Include .xlsx extension"
+  },
+  "inputLoginAndPasswordPlease": {
+    "ukr": "Будь ласка, введіть логін та пароль",
+    "eng": "Please enter your login and password"
+  },
+  "invalidJsonFormat": {
+    "ukr": "Невірний формат JSON",
+    "eng": "Invalid JSON format"
+  },
+  "invalidJsonText": {
+    "ukr": "Невірний JSON текст",
+    "eng": "Invalid JSON text"
+  },
+  "isActive": {
+    "ukr": "Активний",
+    "eng": "Is active"
+  },
+  "isMain": {
+    "ukr": "Основний",
+    "eng": "Is main"
+  },
+  "isProtected": {
+    "ukr": "Захищений",
+    "eng": "Is protected"
+  },
+  "job": {
+    "ukr": "Посада",
+    "eng": "Job"
+  },
+  "jobChangeViaEvents": {
+    "ukr": "Зміна посади через події",
+    "eng": "Job change via events"
+  },
+  "jobFromDeptType": {
+    "ukr": "Посада з типу підрозділу",
+    "eng": "Job from department type"
+  },
+  "jobLinks": {
+    "ukr": "Зв'язки посад",
+    "eng": "Job links"
+  },
+  "jobWillChange": {
+    "ukr": "Посада буде змінена",
+    "eng": "Job will change"
+  },
+  "jobs": {
+    "ukr": "Посади",
+    "eng": "Jobs"
+  },
+  "jsonExportDescription": {
+    "ukr": "Експортувати всі переклади у форматі JSON",
+    "eng": "Export all translations in JSON format"
+  },
+  "jsonExportFailed": {
+    "ukr": "Помилка експорту JSON: ${errorMessage}",
+    "eng": "JSON export failed: ${errorMessage}"
+  },
+  "jsonExportedSuccessfully": {
+    "ukr": "JSON успішно експортовано",
+    "eng": "JSON exported successfully"
+  },
+  "jsonImportFailed": {
+    "ukr": "Помилка імпорту JSON: ${errorMessage}",
+    "eng": "JSON import failed: ${errorMessage}"
+  },
+  "jsonImportedSuccessfully": {
+    "ukr": "JSON успішно імпортовано: ${successCount} записів",
+    "eng": "JSON imported successfully: ${successCount} records"
+  },
+  "jsonTextImportDescription": {
+    "ukr": "Вставте JSON-текст для імпорту перекладів",
+    "eng": "Paste JSON text to import translations"
+  },
+  "jsonTextImportedSuccessfully": {
+    "ukr": "JSON текст успішно імпортовано: ${successCount} записів",
+    "eng": "JSON text imported successfully: ${successCount} records"
+  },
+  "jsonTextInput": {
+    "ukr": "Введіть JSON",
+    "eng": "Enter JSON"
+  },
+  "key": {
+    "ukr": "Ключ",
+    "eng": "Key"
+  },
+  "keyCopiedToClipboard": {
+    "ukr": "Ключ скопійовано",
+    "eng": "Key copied to clipboard"
+  },
+  "keyName": {
+    "ukr": "Назва ключа",
+    "eng": "Key name"
+  },
+  "keyNameIsRequired": {
+    "ukr": "Назва ключа обов'язкова",
+    "eng": "Key name is required"
+  },
+  "light": {
+    "ukr": "Світла",
+    "eng": "Light"
+  },
+  "linkActive": {
+    "ukr": "Зв'язок активний",
+    "eng": "Link active"
+  },
+  "linkInactive": {
+    "ukr": "Зв'язок неактивний",
+    "eng": "Link inactive"
+  },
+  "linkedGroups": {
+    "ukr": "Пов'язані групи",
+    "eng": "Linked groups"
+  },
+  "list": {
+    "ukr": "Список",
+    "eng": "List"
+  },
+  "loading": {
+    "ukr": "Завантаження...",
+    "eng": "Loading..."
+  },
+  "main": {
+    "ukr": "Основний",
+    "eng": "Main"
+  },
+  "mainDepartment": {
+    "ukr": "Основний підрозділ",
+    "eng": "Main department"
+  },
+  "mainDepartments": {
+    "ukr": "Основні підрозділи",
+    "eng": "Main departments"
+  },
+  "manageDepartments": {
+    "ukr": "Управління підрозділами",
+    "eng": "Manage departments"
+  },
+  "moreThan": {
+    "ukr": "Більше ніж",
+    "eng": "More than"
+  },
+  "multipleMainDeptsHint": {
+    "ukr": "Є кілька основних підрозділів",
+    "eng": "Multiple main departments exist"
+  },
+  "multipleMainDeptsTitle": {
+    "ukr": "Кілька основних підрозділів",
+    "eng": "Multiple main departments"
+  },
+  "multipleMainDeptsWarning": {
+    "ukr": "Увага: знайдено кілька основних призначень",
+    "eng": "Warning: multiple main assignments found"
+  },
+  "name": {
+    "ukr": "Назва",
+    "eng": "Name"
+  },
+  "noActivePeriods": {
+    "ukr": "Немає активних періодів",
+    "eng": "No active periods"
+  },
+  "noActiveStatuses": {
+    "ukr": "Немає активних статусів",
+    "eng": "No active statuses"
+  },
+  "noAllowedTypesForParent": {
+    "ukr": "Немає дозволених типів для батьківського елементу",
+    "eng": "No allowed types for parent"
+  },
+  "noAvailableChildTypes": {
+    "ukr": "Немає доступних дочірніх типів",
+    "eng": "No available child types"
+  },
+  "noAvailableJobs": {
+    "ukr": "Немає доступних посад",
+    "eng": "No available jobs"
+  },
+  "noCategories": {
+    "ukr": "Немає категорій",
+    "eng": "No categories"
+  },
+  "noChildTypes": {
+    "ukr": "Немає дочірніх типів",
+    "eng": "No child types"
+  },
+  "noDepartmentTypes": {
+    "ukr": "Немає типів підрозділів",
+    "eng": "No department types"
+  },
+  "noDepartmentsAssigned": {
+    "ukr": "Немає призначених підрозділів",
+    "eng": "No departments assigned"
+  },
+  "noDepartmentsInCategory": {
+    "ukr": "Немає підрозділів у категорії",
+    "eng": "No departments in category"
+  },
+  "noDepartmentsYet": {
+    "ukr": "Підрозділів ще немає",
+    "eng": "No departments yet"
+  },
+  "noDocumentsFound": {
+    "ukr": "Документів не знайдено",
+    "eng": "No documents found"
+  },
+  "noGroups": {
+    "ukr": "Немає груп",
+    "eng": "No groups"
+  },
+  "noGroupsFound": {
+    "ukr": "Групи не знайдено",
+    "eng": "No groups found"
+  },
+  "noJobsForDepartmentType": {
+    "ukr": "Немає посад для цього типу підрозділу",
+    "eng": "No jobs for this department type"
+  },
+  "noJobsWarning": {
+    "ukr": "Немає доступних посад",
+    "eng": "No jobs available"
+  },
+  "noLinkedJobs": {
+    "ukr": "Немає пов'язаних посад",
+    "eng": "No linked jobs"
+  },
+  "noMainCategories": {
+    "ukr": "Немає основних категорій",
+    "eng": "No main categories"
+  },
+  "noTranslationsFound": {
+    "ukr": "Перекладів не знайдено",
+    "eng": "No translations found"
+  },
+  "of": {
+    "ukr": "з",
+    "eng": "of"
+  },
+  "organizationStructure": {
+    "ukr": "Організаційна структура",
+    "eng": "Organization structure"
+  },
+  "parentDepartment": {
+    "ukr": "Батьківський підрозділ",
+    "eng": "Parent department"
+  },
+  "parentType": {
+    "ukr": "Батьківський тип",
+    "eng": "Parent type"
+  },
+  "password": {
+    "ukr": "Пароль",
+    "eng": "Password"
+  },
+  "pasteJsonHere": {
+    "ukr": "Вставте JSON тут",
+    "eng": "Paste JSON here"
+  },
+  "personalInfo": {
+    "ukr": "Особиста інформація",
+    "eng": "Personal info"
+  },
+  "pleaseFixTheErrorToViewAndEditTranslations": {
+    "ukr": "Будь ласка, виправте помилку для перегляду та редагування перекладів",
+    "eng": "Please fix the error to view and edit translations"
+  },
+  "pleaseSelectAJsonFile": {
+    "ukr": "Будь ласка, оберіть JSON-файл",
+    "eng": "Please select a JSON file"
+  },
+  "pleaseSelectAnExcelFile": {
+    "ukr": "Будь ласка, оберіть Excel-файл",
+    "eng": "Please select an Excel file"
+  },
+  "preparingYourExcelFile": {
+    "ukr": "Підготовка Excel-файлу...",
+    "eng": "Preparing your Excel file..."
+  },
+  "preparingYourJsonFile": {
+    "ukr": "Підготовка JSON-файлу...",
+    "eng": "Preparing your JSON file..."
+  },
+  "processing": {
+    "ukr": "Обробка...",
+    "eng": "Processing..."
+  },
+  "protectedGroupHint": {
+    "ukr": "Захищена група не може бути видалена",
+    "eng": "Protected group cannot be deleted"
+  },
+  "removeLink": {
+    "ukr": "Видалити зв'язок",
+    "eng": "Remove link"
+  },
+  "responsibilityDept": {
+    "ukr": "Відповідальний підрозділ",
+    "eng": "Responsibility department"
+  },
+  "rootDepartment": {
+    "ukr": "Кореневий підрозділ",
+    "eng": "Root department"
+  },
+  "rootDepartmentAlreadyExists": {
+    "ukr": "Кореневий підрозділ вже існує",
+    "eng": "Root department already exists"
+  },
+  "rowSelected": {
+    "ukr": "рядок вибрано",
+    "eng": "row selected"
+  },
+  "rowsPerPage": {
+    "ukr": "Рядків на сторінці",
+    "eng": "Rows per page"
+  },
+  "rowsSelected": {
+    "ukr": "рядки вибрано",
+    "eng": "rows selected"
+  },
+  "save": {
+    "ukr": "Зберегти",
+    "eng": "Save"
+  },
+  "search": {
+    "ukr": "Пошук",
+    "eng": "Search"
+  },
+  "searchTranslations": {
+    "ukr": "Пошук перекладів",
+    "eng": "Search translations"
+  },
+  "selectTypeForGroup": {
+    "ukr": "Виберіть тип для групи",
+    "eng": "Select type for group"
+  },
+  "signIn": {
+    "ukr": "Увійти",
+    "eng": "Sign in"
+  },
+  "signUpToTalentHRM": {
+    "ukr": "Вхід до Talent HRM",
+    "eng": "Sign in to Talent HRM"
+  },
+  "status": {
+    "ukr": "Статус",
+    "eng": "Status"
+  },
+  "structure": {
+    "ukr": "Структура",
+    "eng": "Structure"
+  },
+  "talentPeriod": {
+    "ukr": "Період таланту",
+    "eng": "Talent period"
+  },
+  "talentPeriods": {
+    "ukr": "Періоди таланту",
+    "eng": "Talent periods"
+  },
+  "talentStatus": {
+    "ukr": "Статус таланту",
+    "eng": "Talent status"
+  },
+  "talentStatusPeriodLinks": {
+    "ukr": "Зв'язки статус-період",
+    "eng": "Talent status-period links"
+  },
+  "talentStatuses": {
+    "ukr": "Статуси таланту",
+    "eng": "Talent statuses"
+  },
+  "toggleActive": {
+    "ukr": "Переключити активність",
+    "eng": "Toggle active"
+  },
+  "tooltipContainsSearch": {
+    "ukr": "Пошук за входженням",
+    "eng": "Contains search"
+  },
+  "tooltipExactSearch": {
+    "ukr": "Точний пошук",
+    "eng": "Exact search"
+  },
+  "tooltipExportToExcel": {
+    "ukr": "Експортувати в Excel",
+    "eng": "Export to Excel"
+  },
+  "tooltipExportToJson": {
+    "ukr": "Експортувати в JSON",
+    "eng": "Export to JSON"
+  },
+  "tooltipImportFromExcel": {
+    "ukr": "Імпортувати з Excel",
+    "eng": "Import from Excel"
+  },
+  "tooltipImportFromJson": {
+    "ukr": "Імпортувати з JSON-файлу",
+    "eng": "Import from JSON file"
+  },
+  "tooltipImportJsonFromText": {
+    "ukr": "Імпортувати JSON з тексту",
+    "eng": "Import JSON from text"
+  },
+  "translation": {
+    "ukr": "Переклад",
+    "eng": "Translation"
+  },
+  "translationAddedSuccessfully": {
+    "ukr": "Переклад успішно додано",
+    "eng": "Translation added successfully"
+  },
+  "translationDeletedSuccessfully": {
+    "ukr": "Переклад успішно видалено",
+    "eng": "Translation deleted successfully"
+  },
+  "translationUpdatedSuccessfully": {
+    "ukr": "Переклад успішно оновлено",
+    "eng": "Translation updated successfully"
+  },
+  "translations": {
+    "ukr": "Переклади",
+    "eng": "Translations"
+  },
+  "unprotectedGroupHint": {
+    "ukr": "Незахищена група може бути видалена",
+    "eng": "Unprotected group can be deleted"
+  },
+  "updateTranslation": {
+    "ukr": "Оновити переклад",
+    "eng": "Update translation"
+  },
+  "updating": {
+    "ukr": "Оновлення...",
+    "eng": "Updating..."
+  },
+  "upload": {
+    "ukr": "Завантажити",
+    "eng": "Upload"
+  },
+  "useCustomFilename": {
+    "ukr": "Власна назва файлу",
+    "eng": "Use custom filename"
+  },
+  "useDefaultFilename": {
+    "ukr": "Стандартна назва файлу",
+    "eng": "Use default filename"
+  },
+  "userGroupDeleteSuccess": {
+    "ukr": "Групу успішно видалено",
+    "eng": "User group deleted successfully"
+  },
+  "userGroupType": {
+    "ukr": "Тип групи користувачів",
+    "eng": "User group type"
+  },
+  "userGroupTypeHasGroups": {
+    "ukr": "Тип групи має пов'язані групи",
+    "eng": "User group type has linked groups"
+  },
+  "userGroupTypes": {
+    "ukr": "Типи груп користувачів",
+    "eng": "User group types"
+  },
+  "userGroups": {
+    "ukr": "Групи користувачів",
+    "eng": "User groups"
+  },
+  "username": {
+    "ukr": "Ім'я користувача",
+    "eng": "Username"
+  },
+  "usersQty": {
+    "ukr": "Кількість користувачів",
+    "eng": "Users quantity"
+  },
+  "welcomeBack": {
+    "ukr": "З поверненням",
+    "eng": "Welcome back"
+  },
+  "youAreAboutToChange": {
+    "ukr": "Ви збираєтесь змінити",
+    "eng": "You are about to change"
+  }
+}

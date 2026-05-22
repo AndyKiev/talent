@@ -12,15 +12,18 @@ from backend.api_v1.base.base_repository import ModelType, SortSpec
 from backend.utils.enums import MoveDirection
 from typing import TypeVar, Generic
 
-from backend.api_v1.user.user_schema import User as UserSchema
-from backend.api_v1.message.message_model import MsgKey, Msg
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+
+from backend.api_v1.msg_key.msg_key_model import MsgKey
+from backend.api_v1.msg_pg.msg_model import Msg
+
 from backend.api_v1.base.errors import (
     NotFoundError,
     AlreadyExistsError,
     DomainError,
     DeleteError,
-    DeleteSuccess,
 )
+from backend.api_v1.base.success import DeleteSuccess
 
 RepositoryType = TypeVar("RepositoryType", bound=BaseRepository)
 
@@ -29,7 +32,7 @@ class BaseService(Generic[RepositoryType]):
     def __init__(
         self,
         repository: RepositoryType,
-        user: Optional[UserSchema] = None,
+        user: Optional[EmployeeSchema] = None,
         session: Optional[AsyncSession] = None,
     ) -> None:
         self.repository: RepositoryType = repository
@@ -49,9 +52,9 @@ class BaseService(Generic[RepositoryType]):
         fallback: str = "",
     ) -> str:
         """
-        Resolve a message key for the current user's language.
+        Resolve a message key for the current employee's language.
         Interpolates ${variable} placeholders with the supplied variables dict.
-        Returns fallback when the session/user is unavailable or key not found.
+        Returns fallback when the session/employee is unavailable or key not found.
         """
         if not self.session or not self.user:
             return fallback
@@ -59,7 +62,7 @@ class BaseService(Generic[RepositoryType]):
             stmt = (
                 select(Msg.value)
                 .join(MsgKey)
-                .where(MsgKey.key_name == message_key, Msg.lang_id == self.user.lang_id)
+                .where(MsgKey.name == message_key, Msg.lang_id == self.user.lang_id)
             )
             result = await self.session.execute(stmt)
             message_template = result.scalar_one_or_none()
@@ -612,3 +615,28 @@ class BaseService(Generic[RepositoryType]):
         if not items:
             return 0
         return getattr(items[0], sort_field)
+    
+
+    async def _resolve_domain_success(self, success) -> str:
+        """
+        Translate a domain success object and return the resolved message string.
+
+        Unlike _resolve_domain_error (which returns the exception so the caller
+        can `raise` it), this returns a plain string — because on create/update
+        we need to return BOTH the message AND the data, not raise an exception.
+
+        Usage in a service method:
+            record = await self.create(status_in)
+            schema = EmployeeStatusSchema.model_validate(record)
+            detail = await self._resolve_domain_success(
+                EmployeeStatusCreateSuccess(schema.name)
+            )
+            return MutationResponse(detail=detail, data=schema)
+        """
+        message_key = getattr(success, "message_key", None)
+        template_vars = getattr(success, "template_vars", None)
+        fallback = getattr(success, "fallback", str(success))
+
+        if message_key:
+            return await self._translate(message_key, template_vars, fallback)
+        return fallback

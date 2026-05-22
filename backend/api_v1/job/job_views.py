@@ -3,10 +3,11 @@ from fastapi.security import HTTPBearer
 from typing import Annotated, Optional, List
 from pydantic import BaseModel
 
+from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.job.job_schema import Job as JobSchema, JobCreate, JobUpdate
-from backend.api_v1.job.job_dependency import get_job_service, job_by_id
+from backend.api_v1.job.job_dependencies import get_job_service, job_by_id
 from backend.api_v1.job.job_service import JobService
-from backend.api_v1.user.user_service import SyncJobResult
+from backend.api_v1.employee.employee_service import SyncJobResult
 
 router = APIRouter(
     prefix="/jobs",
@@ -32,7 +33,11 @@ async def get_job(job: JobSchema = Depends(job_by_id)):
     return job
 
 
-@router.post("", response_model=JobSchema, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=MutationResponse[JobSchema],
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_job(
     job_in: JobCreate,
     service: Annotated[JobService, Depends(get_job_service)],
@@ -40,7 +45,7 @@ async def create_job(
     return await service.create_job(job_in)
 
 
-@router.patch("/{job_id}", response_model=JobSchema)
+@router.patch("/{job_id}", response_model=MutationResponse[JobSchema])
 async def update_job(
     job_update: JobUpdate,
     job: JobSchema = Depends(job_by_id),
@@ -98,9 +103,9 @@ async def set_job_groups(
     response_model=SyncJobResult,
     summary="Sync groups for all users of a job",
     description=(
-        "Full two-way sync: loops through every user assigned to this job and "
+        "Full two-way sync: loops through every employee assigned to this job and "
         "makes their group memberships exactly match the job's groups — "
-        "adding missing links and removing stale ones."
+        "adding missing table_relationship_links and removing stale ones."
     ),
 )
 async def sync_job_users_groups(

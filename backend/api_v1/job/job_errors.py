@@ -3,17 +3,8 @@ from backend.api_v1.base.errors import (
     AlreadyExistsError,
     RelationshipError,
     DomainError,
-    DeleteSuccess,
     DeleteError,
 )
-
-
-# ---------------------------------------------------------------------------
-# Each error carries:
-#   - a message_key  → looked up in the DB by BaseService._translate()
-#   - template_vars  → injected into the message template (e.g. ${jobId})
-#   - fallback       → plain-English string used when DB lookup fails
-# ---------------------------------------------------------------------------
 
 
 class JobNotFound(NotFoundError):
@@ -80,19 +71,10 @@ class GroupsNotFound(NotFoundError):
         super().__init__("UserGroup", "ids", ids_str)
 
 
-class JobDeleteError(DeleteError):  # was DomainError
+class JobDeleteError(DeleteError):
     message_key = "jobDeleteError"
 
     def __init__(self, job_name: str) -> None:
         self.template_vars = {"name": job_name}
         self.fallback = f"Job '{job_name}' cannot be deleted because it is referenced by other records"
-        DomainError.__init__(self, self.fallback)
-
-
-class JobDeleteSuccess(DeleteSuccess):
-    message_key = "jobDeleteSuccess"
-
-    def __init__(self, name: str) -> None:
-        self.template_vars = {"name": name}
-        self.fallback = f"Job '{name}' successfully deleted"
         DomainError.__init__(self, self.fallback)

@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pkill -f \"poetry.*uvicorn\\\\|uvicorn.*backend\")",
+      "Bash(BYPASS_LDAP=true PYTHONPATH=/c/Users/andre/Projects/talent poetry -C /c/Users/andre/Projects/talent/backend run uvicorn backend.main:app --host 127.0.0.1 --port 8004)",
+      "Bash(echo \"New PID: $!\")",
+      "Read(//tmp/**)",
+      "Bash(curl -s -X OPTIONS http://127.0.0.1:8004/api/v1/jwt/login -H 'Origin: http://localhost:4004' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type' -D -)",
+      "Bash(echo \"PID: $!\")",
+      "Bash(curl -s -X POST http://127.0.0.1:8004/api/v1/jwt/login -H 'Origin: http://localhost:4004' -H 'Content-Type: application/x-www-form-urlencoded' -d 'username=UKR7101004&password=anything' -D -)",
+      "Bash(PYTHONPATH=/c/Users/andre/Projects/talent poetry -C backend run python backend/utils/msg_key_backend_audit.py --no-db --json-stub)",
+      "Bash(PYTHONPATH=/c/Users/andre/Projects/talent poetry run python utils/msg_key_backend_audit.py --no-db --json-stub)",
+      "Bash(docker exec *)",
+      "Bash(curl -s -X POST http://127.0.0.1:8004/api/v1/jwt/login -H 'Content-Type: application/x-www-form-urlencoded' -d 'username=UKR7101004&password=x')"
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "employeeEventStatusNotFound": {
+    "ukr": "Статус події співробітника з ID ${statusId} не знайдено",
+    "eng": "Employee event status with ID ${statusId} not found"
+  },
+  "employeeEventStatusNotFoundByName": {
+    "ukr": "Статус події співробітника з назвою '${name}' не знайдено",
+    "eng": "Employee event status with name '${name}' not found"
+  },
+  "employeeEventStatusNameTaken": {
+    "ukr": "Статус події співробітника з назвою '${name}' вже існує",
+    "eng": "Employee event status with name '${name}' already exists"
+  },
+  "employeeEventStatusDeleteError": {
+    "ukr": "Статус події '${name}' не можна видалити, оскільки він використовується в інших записах",
+    "eng": "Employee event status '${name}' cannot be deleted because it is referenced by other records"
+  },
+  "employeeEventStatusCreateSuccess": {
+    "ukr": "Статус події співробітника '${name}' успішно створено",
+    "eng": "Employee event status '${name}' successfully created"
+  },
+  "employeeEventStatusUpdateSuccess": {
+    "ukr": "Статус події співробітника '${name}' успішно оновлено",
+    "eng": "Employee event status '${name}' successfully updated"
+  },
+  "employeeEventStatusDeleteSuccess": {
+    "ukr": "Статус події співробітника '${name}' успішно видалено",
+    "eng": "Employee event status '${name}' successfully deleted"
+  }
+}

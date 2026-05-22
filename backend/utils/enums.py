@@ -19,7 +19,7 @@ class ParameterDefaults(Enum):
 
 
 class OperationTypes(Enum):
-
+    VIEW_LOGS = "view_logs"
     CREATE_EDI_TASK = "create_edi_task"
     LINK_USER_GROUP_TO_OPERATION = "link_user_group_to_operation"
     REMOVE_OPERATION_FROM_USER_GROUP = "remove_operation_from_user_group"
@@ -29,7 +29,7 @@ class OperationTypes(Enum):
     SET_CONNECTION_DATE = "set_connection_date"
     SET_OPERATION_USER_GROUPS = "set_operation_user_groups"
     MODIFY_EDI_TASK = "modify_edi_task"
-    SET_GLN = "set_status"
+    SET_GLN = "set_gln"
     SET_EDI_TASK_STATUS = "set_edi_task_status"
     DELETE_EDI_TASK = "delete_edi_task"
     CREATE_EMAIL_TASK = "create_email_task"
@@ -45,14 +45,14 @@ class OperationTypes(Enum):
     DELETE_USER = "delete_user"
     CREATE_USER_GROUP = "create_user_group"
     CREATE_JOB = "create_job"
-
     CREATE_DELIVERY_TYPE = "create_delivery_type"
     MODIFY_DELIVERY_TYPE = "modify_delivery_type"
     DELETE_DELIVERY_TYPE = "delete_delivery_type"
     SET_USER_IS_ACTIVE = "set_user_is_active"
-    CLOSE_EDI_TASK = "close_edi_task"
+    EDI_TASK_SET_COMPLETED = "edi_task_set_completed"
+    EDI_TASK_SET_CANCELLED = "edi_task_set_cancelled"
+    EDI_TASK_REVERT_COMPLETED = "edi_task_revert_completed"
     DELETE_NOTIFICATIONS = "delete_notifications"
-
     MULTIPLE_PROVIDERS = "multiple_providers"
     MISSING_EDI_PROVIDER = "missing_edi_provider"
     MISSING_PROVIDER_IN_DIRECTORY = "missing_provider_in_directory"

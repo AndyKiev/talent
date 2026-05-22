@@ -3,8 +3,8 @@ from pydantic import BaseModel, Field, ConfigDict
 
 
 class UserGroupBase(BaseModel):
-    name: str = Field(..., min_length=3, max_length=100)
-    description: Optional[str] = Field(None, max_length=500)
+    name: str = Field(..., min_length=3, max_length=128)
+    description: Optional[str] = Field(None, max_length=256)
     is_protected: bool = Field(False)
     user_group_type_id: int
 
@@ -14,8 +14,8 @@ class UserGroupCreate(UserGroupBase):
 
 
 class UserGroupUpdate(BaseModel):
-    name: Optional[str] = Field(None, max_length=100)
-    description: Optional[str] = Field(None, max_length=500)
+    name: Optional[str] = Field(None, max_length=128)
+    description: Optional[str] = Field(None, max_length=256)
     is_protected: Optional[bool] = Field(None)
     user_group_type_id: Optional[int] = Field(None)
 

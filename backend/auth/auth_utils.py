@@ -31,8 +31,8 @@ def encode_jwt(
     return encoded
 
 
-# we read token with decode_jwt using public key to get all required info about current user (the
-# information that we have set to this user on our own
+# we read token with decode_jwt using public key to get all required info about current employee (the
+# information that we have set to this employee on our own
 def decode_jwt(
     token: str | bytes,
     public_key: str = settings.auth_jwt.public_key_path.read_text(),

@@ -4,8 +4,9 @@ from datetime import datetime
 
 
 class JobBase(BaseModel):
-    name: str = Field(..., max_length=100)
-    description: Optional[str] = Field(None, max_length=100)
+    name: str = Field(..., max_length=128)
+    is_active: Optional[bool] = None
+    description: Optional[str] = Field(None, max_length=256)
 
 
 class JobCreate(JobBase):
@@ -13,12 +14,13 @@ class JobCreate(JobBase):
 
 
 class JobUpdate(BaseModel):
-    name: Optional[str] = Field(None, max_length=100)
-    description: Optional[str] = Field(None, max_length=100)
+    name: Optional[str] = Field(None, max_length=128)
+    is_active: Optional[bool] = None
+    description: Optional[str] = Field(None, max_length=256)
 
 
 class Job(JobBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
     created_at: datetime
-    groups: List[str] = []  # Array of user group names linked to this job
+    groups: List[str] = []  # Array of employee group names linked to this job

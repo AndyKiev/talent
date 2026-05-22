@@ -1,76 +1,48 @@
-FROM python:3.12.4-slim
+FROM python:3.11.9-custom AS python_base
+#FROM python:3.11.9-slim AS python_base
 
-# System deps: openssl for key generation, build tools for psycopg2/ldap3
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    openssl \
-    gcc \
-    libpq-dev \
-    libldap2-dev \
-    libsasl2-dev \
-    && rm -rf /var/lib/apt/lists/*
+ARG APP_HTTP_PROXY
 
-# Install Poetry
-RUN pip install --no-cache-dir poetry==2.3.3
+ENV HTTP_PROXY=$APP_HTTP_PROXY
+ENV HTTPS_PROXY=$APP_HTTP_PROXY
+
+RUN /bin/sh -c 'echo "Acquire::http::Proxy \"${HTTP_PROXY}\";" > /etc/apt/apt.conf.d/99proxy' && \
+    /bin/sh -c 'echo "Acquire::https::Proxy \"${HTTPS_PROXY}\";" >> /etc/apt/apt.conf.d/99proxy'
+
+ENV POETRY_VERSION=2.3.2
+
+RUN pip install poetry==${POETRY_VERSION}
+
+ENV PATH="/root/.local/bin:${PATH}"
 
 WORKDIR /app
 
-# Copy dependency files first (layer cache)
-COPY pyproject.toml poetry.lock* ./
+RUN apt-get update && apt-get install -y openjdk-17-jdk
 
-# Install deps without creating a virtualenv (we're already in a container)
-RUN poetry config virtualenvs.create false \
-    && poetry install --only main --no-interaction --no-ansi
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV PATH="$JAVA_HOME/bin:$PATH"
+ENV LD_LIBRARY_PATH="$JAVA_HOME/lib/server:$LD_LIBRARY_PATH"
 
-# Copy the rest of the project
-COPY . .
+COPY ./backend/pyproject.toml ./backend/poetry.lock ./backend/
 
-# Copy entrypoint scripts and make them executable
-COPY entrypoint.sh /entrypoint.sh
-# COPY backend/generate_keys.sh /app/backend/generate_keys.sh
-COPY generate_keys.sh /app/backend/generate_keys.sh
-RUN chmod +x /entrypoint.sh /app/backend/generate_keys.sh
+WORKDIR /app/backend
+RUN poetry install --no-root --only main
+WORKDIR /app
 
-EXPOSE 8002
+#COPY ./backend ./backend
+#
+#RUN mkdir -p /app/backend/auth/keys
+#
+#RUN chmod +x /app/backend/entrypoint.sh /app/backend/generate_keys.sh
 
-ENTRYPOINT ["/entrypoint.sh"]
+COPY ./backend ./backend
+COPY ./generate_keys.sh /app/backend/generate_keys.sh
 
-# FROM python:3.11.9-custom AS python_base
+RUN mkdir -p /app/backend/auth/keys
 
-# ARG APP_HTTP_PROXY
+RUN chmod +x /app/backend/entrypoint.sh /app/backend/generate_keys.sh
 
-# ENV HTTP_PROXY=$APP_HTTP_PROXY
-# ENV HTTPS_PROXY=$APP_HTTP_PROXY
+ENV PYTHONPATH="/app:${PYTHONPATH}"
+ENTRYPOINT ["/app/backend/entrypoint.sh"]
 
-# RUN /bin/sh -c 'echo "Acquire::http::Proxy \"${HTTP_PROXY}\";" > /etc/apt/apt.conf.d/99proxy' && \
-#     /bin/sh -c 'echo "Acquire::https::Proxy \"${HTTPS_PROXY}\";" >> /etc/apt/apt.conf.d/99proxy'
-
-# ENV POETRY_VERSION=2.3.3
-
-# RUN pip install poetry==${POETRY_VERSION}
-
-# ENV PATH="/root/.local/bin:${PATH}"
-
-# WORKDIR /app
-
-# RUN apt-get update && apt-get install -y openjdk-17-jdk
-
-# ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-# ENV PATH="$JAVA_HOME/bin:$PATH"
-# ENV LD_LIBRARY_PATH="$JAVA_HOME/lib/server:$LD_LIBRARY_PATH"
-
-# #./poetry.lock
-# COPY ./pyproject.toml ./
-
-# RUN poetry install --no-root --only main
-
-# COPY ./backend ./backend
-
-# # Create keys directory and set permissions
-# RUN mkdir -p /app/backend/auth/keys
-
-# # Make scripts executable
-# RUN chmod +x /app/backend/entrypoint.sh /app/backend/generate_keys.sh
-
-# ENTRYPOINT ["/app/backend/entrypoint.sh"]
-
-# EXPOSE 8002
+EXPOSE 8004

@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 
 class LDAPUser(BaseModel):
-    """Schema for LDAP user data"""
+    """Schema for LDAP employee data"""
 
     user_ukr: str
     full_name: str
@@ -15,8 +15,8 @@ class LDAPUser(BaseModel):
 class TokenUser(BaseModel):
     """Schema for JWT token payload - maps to your database fields"""
 
-    sub: str  # This will be the user's code from your database
-    username: str  # This will be the user's name from your database
+    sub: str  # This will be the employee's code from your database
+    username: str  # This will be the employee's name from your database
     user_ukr: Optional[str] = None
     groups: Optional[List[str]] = None
     operations: Optional[List[str]] = None

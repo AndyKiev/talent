@@ -4,20 +4,25 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
+from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.operation.operation_repository import OperationRepository
 from backend.api_v1.operation.operation_schema import (
     Operation as OperationSchema,
     OperationCreate,
     OperationUpdate,
 )
-from backend.api_v1.user.user_schema import User as UserSchema
+from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
 from backend.api_v1.operation.operation_errors import (
     OperationNotFound,
     OperationNotFoundByName,
     OperationNameTaken,
     OperationHasGroups,
     OperationDeleteError,
+)
+from backend.api_v1.operation.operation_success import (
     OperationDeleteSuccess,
+    OperationCreateSuccess,
+    OperationUpdateSuccess,
 )
 from backend.api_v1.base.errors import DomainError
 
@@ -35,7 +40,7 @@ class OperationService(BaseService):
     # Read
     # ------------------------------------------------------------------
 
-    async def get_by_id(self, id: int):
+    async def get_by_id(self, id: int) -> OperationSchema:
         result = await self.repository.get_by_id(id)
         if not result:
             raise await self._resolve_domain_error(OperationNotFound(id))
@@ -57,13 +62,19 @@ class OperationService(BaseService):
     # Write
     # ------------------------------------------------------------------
 
-    async def create_operation(self, operation_in: OperationCreate) -> OperationSchema:
+    async def create_operation(
+        self, operation_in: OperationCreate
+    ) -> MutationResponse[OperationSchema]:
         await self.exists_by_name(
             operation_in.name, already_exists_exc=OperationNameTaken
         )
         try:
             operation = await self.create(operation_in)
-            return OperationSchema.model_validate(operation)
+            schema = OperationSchema.model_validate(operation)
+            detail = await self._resolve_domain_success(
+                OperationCreateSuccess(schema.name)
+            )
+            return MutationResponse(detail=detail, data=schema)
         except IntegrityError:
             raise await self._resolve_domain_error(
                 OperationNameTaken(operation_in.name)
@@ -71,7 +82,7 @@ class OperationService(BaseService):
 
     async def update_operation(
         self, operation_id: int, operation_update: OperationUpdate
-    ) -> OperationSchema:
+    ) -> MutationResponse[OperationSchema]:
         if operation_update.name:
             await self.exists_by_name(
                 operation_update.name, already_exists_exc=OperationNameTaken
@@ -79,7 +90,11 @@ class OperationService(BaseService):
         try:
             orm_operation = await self.get_by_id(operation_id)
             updated = await self.update(orm_operation, operation_update, partial=True)
-            return OperationSchema.model_validate(updated)
+            schema = OperationSchema.model_validate(updated)
+            detail = await self._resolve_domain_success(
+                OperationUpdateSuccess(schema.name)
+            )
+            return MutationResponse(detail=detail, data=schema)
         except IntegrityError:
             raise await self._resolve_domain_error(
                 OperationNameTaken(operation_update.name)
@@ -87,13 +102,10 @@ class OperationService(BaseService):
 
     async def delete_operation(self, operation_id: int) -> None:
         operation = await self.get_by_id(operation_id)
-
-        # Business rule: cannot delete while linked to user groups
         if operation.user_groups:
             raise await self._resolve_domain_error(
                 OperationHasGroups(operation.name, operation.user_groups)
             )
-
         await self.delete_by_id(
             operation_id,
             name=operation.name,

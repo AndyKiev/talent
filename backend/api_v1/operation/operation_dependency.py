@@ -6,7 +6,7 @@ from backend.api_v1.operation.operation_repository import OperationRepository
 from backend.api_v1.operation.operation_service import OperationService
 from backend.api_v1.operation.operation_schema import Operation as OperationSchema
 from backend.auth.jwt_auth import get_current_active_auth_user
-from backend.api_v1.user.user_schema import User as UserSchema
+from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
 
 
 async def get_operation_service(
@@ -14,8 +14,8 @@ async def get_operation_service(
     user: UserSchema = Depends(get_current_active_auth_user),
 ) -> OperationService:
     """
-    Build OperationService with session + user so that _translate() can resolve
-    messages in the user's preferred language.
+    Build OperationService with session + employee so that _translate() can resolve
+    messages in the employee's preferred language.
     """
     return OperationService(
         repository=OperationRepository(session=session),

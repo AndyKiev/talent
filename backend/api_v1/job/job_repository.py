@@ -5,7 +5,7 @@ from sqlalchemy import select, delete
 from backend.api_v1.base.base_repository import BaseRepository
 from backend.api_v1.job.job_model import Job
 from backend.api_v1.user_group.user_group_model import UserGroup
-from backend.api_v1.base.models.links.job_user_group_link_model import JobUserGroupLink
+from backend.api_v1.table_relationship_links.job_user_group_link_model import JobUserGroupLink
 from backend.api_v1.job.job_errors import (
     JobNotFound,
     JobAlreadyInGroup,
@@ -70,7 +70,7 @@ class JobRepository(BaseRepository):
         return await self.get_by_id(job_id)
 
     async def set_groups(self, job_id: int, user_group_ids: List[int]) -> Job:
-        """Replace all group links for a job"""
+        """Replace all group table_relationship_links for a job"""
         if not await self.get_by_id(job_id):
             raise JobNotFound(job_id)
         existing_groups = (

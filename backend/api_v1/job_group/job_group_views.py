@@ -1,0 +1,67 @@
+from fastapi import APIRouter, Depends, status, Query
+from fastapi.security import HTTPBearer
+from typing import Annotated, Optional, List
+
+from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.job_group.job_group_schema import (
+    JobGroup as JobGroupSchema,
+    JobGroupCreate,
+    JobGroupUpdate,
+)
+from backend.api_v1.job_group.job_group_dependencies import (
+    get_job_group_service,
+    job_group_by_id,
+)
+from backend.api_v1.job_group.job_group_service import JobGroupService
+
+router = APIRouter(
+    prefix="/job_groups",
+    tags=["Job Groups"],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
+)
+
+
+@router.get("", response_model=List[JobGroupSchema])
+async def get_job_groups(
+    service: Annotated[JobGroupService, Depends(get_job_group_service)],
+    job_group_type_id: Optional[int] = Query(
+        None, description="Filter job groups by job group type ID"
+    ),
+):
+    return await service.get_job_groups(job_group_type_id=job_group_type_id)
+
+
+@router.get("/{job_group_id}", response_model=JobGroupSchema)
+async def get_job_group(
+    record: JobGroupSchema = Depends(job_group_by_id),
+):
+    return record
+
+
+@router.post(
+    "",
+    response_model=MutationResponse[JobGroupSchema],
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_job_group(
+    group_in: JobGroupCreate,
+    service: Annotated[JobGroupService, Depends(get_job_group_service)],
+):
+    return await service.create_job_group(group_in)
+
+
+@router.patch("/{job_group_id}", response_model=MutationResponse[JobGroupSchema])
+async def update_job_group(
+    group_update: JobGroupUpdate,
+    record: JobGroupSchema = Depends(job_group_by_id),
+    service: Annotated[JobGroupService, Depends(get_job_group_service)] = None,
+):
+    return await service.update_job_group(record.id, group_update, partial=True)
+
+
+@router.delete("/{job_group_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_job_group(
+    job_group_id: int,
+    service: Annotated[JobGroupService, Depends(get_job_group_service)],
+):
+    await service.delete_job_group(job_group_id)

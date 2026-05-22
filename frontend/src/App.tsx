@@ -1,12 +1,13 @@
+import EmployeeList from "./components/employees/old/EmployeeList.tsx";
+import "./App.css";
+import {ThemeProvider} from "./components/theme/ThemeContext.tsx";
 
-
-import {HealthCheck} from './components/HealthCheck.tsx'
 function App() {
-  return (
-    <>
-      <HealthCheck/>
-    </>
-  )
+    return (
+        <ThemeProvider>
+            <EmployeeList />
+        </ThemeProvider>
+    );
 }
 
-export default App
+export default App;

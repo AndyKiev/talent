@@ -1,0 +1,1 @@
+export type GetStringFn = (key: string, params?: Record<string, unknown>) => string;

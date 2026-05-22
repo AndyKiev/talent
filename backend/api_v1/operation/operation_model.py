@@ -2,11 +2,11 @@
 from typing import TYPE_CHECKING
 from sqlalchemy import String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from backend.database.mixins import IntIdPkMixin
+from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
 from backend.api_v1.base.base_model import Base
 
 if TYPE_CHECKING:
-    from backend.api_v1.base.models.links.operation_user_group_link_model import (
+    from backend.api_v1.table_relationship_links.operation_user_group_link_model import (
         OperationUserGroupLink,
     )
 
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class Operation(IntIdPkMixin, Base):
     # __tablename__ = "operations"
 
-    name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     _user_groups: Mapped[list["OperationUserGroupLink"]] = relationship(

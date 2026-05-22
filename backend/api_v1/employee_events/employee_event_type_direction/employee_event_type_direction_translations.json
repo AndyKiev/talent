@@ -1,0 +1,26 @@
+{
+  "employeeEventTypeDirectionNotFound": {
+    "ukr": "Напрямок типу події співробітника з ID ${directionId} не знайдено",
+    "eng": "Employee event type direction with ID ${directionId} not found"
+  },
+  "employeeEventTypeDirectionDeleteError": {
+    "ukr": "Напрямок типу події співробітника з ID ${directionId} неможливо видалити, оскільки він використовується в інших записах",
+    "eng": "Employee event type direction with ID ${directionId} cannot be deleted because it is referenced by other records"
+  },
+  "employeeEventTypeDirectionDuplicate": {
+    "ukr": "Тип напрямку з ID ${directionTypeId} вже налаштовано для типу події з ID ${eventTypeId}",
+    "eng": "Direction type ID ${directionTypeId} is already configured for event type ID ${eventTypeId}"
+  },
+  "employeeEventTypeDirectionCreateSuccess": {
+    "ukr": "Напрямок типу події співробітника з ID ${directionId} успішно створено",
+    "eng": "Employee event type direction with ID ${directionId} successfully created"
+  },
+  "employeeEventTypeDirectionUpdateSuccess": {
+    "ukr": "Напрямок типу події співробітника з ID ${directionId} успішно оновлено",
+    "eng": "Employee event type direction with ID ${directionId} successfully updated"
+  },
+  "employeeEventTypeDirectionDeleteSuccess": {
+    "ukr": "Напрямок типу події співробітника з ID ${directionId} успішно видалено",
+    "eng": "Employee event type direction with ID ${directionId} successfully deleted"
+  }
+}

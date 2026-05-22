@@ -1,5 +1,4 @@
 import asyncio
-from backend.api_v1.base.base_model import Base
 from enum import Enum
 from typing import Annotated, Any, Sequence, TypeVar, Optional, Union, Dict, List
 
@@ -16,6 +15,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.api_v1.base.models import Base
 
 ModelType = TypeVar("ModelType", bound=Base)
 

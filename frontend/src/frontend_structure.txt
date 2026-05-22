@@ -1,0 +1,292 @@
+src/
+├── api/
+│   ├── authApi.ts
+│   ├── axiosInstance.ts
+│   ├── jobsApi.ts
+│   └── usersApi.ts
+├── assets/
+│   ├── hero.png
+│   ├── react.svg
+│   └── vite.svg
+├── components/
+│   ├── admin/
+│   │   ├── department_categories/
+│   │   │   ├── DepartmentCategoriesPage.tsx
+│   │   │   ├── departmentCategoryApi.ts
+│   │   │   ├── DepartmentCategoryCrud.tsx
+│   │   │   ├── DepartmentCategoryDeleteDialog.tsx
+│   │   │   ├── DepartmentCategoryEditDialog.tsx
+│   │   │   ├── DepartmentCategoryForm.tsx
+│   │   │   ├── useDepartmentCategoryColumns.tsx
+│   │   │   └── useDepartmentCategoryMutations.ts
+│   │   ├── department_types/
+│   │   │   ├── departmentTypeApi.ts
+│   │   │   ├── DepartmentTypeCrud.tsx
+│   │   │   ├── DepartmentTypeDeleteDialog.tsx
+│   │   │   ├── DepartmentTypeEditDialog.tsx
+│   │   │   ├── DepartmentTypeForm.tsx
+│   │   │   ├── DepartmentTypeHierarchy.tsx
+│   │   │   ├── DepartmentTypeHierarchyRow.tsx
+│   │   │   ├── departmentTypeJobLinkApi.ts
+│   │   │   ├── DepartmentTypeJobLinkDialog.tsx
+│   │   │   ├── DepartmentTypeJobLinkPanel.tsx
+│   │   │   ├── DepartmentTypeJobLinkRow.tsx
+│   │   │   ├── DepartmentTypeLinkDialog.tsx
+│   │   │   ├── departmentTypeParentalLinkApi.ts
+│   │   │   ├── DepartmentTypesPage.tsx
+│   │   │   ├── useDepartmentTypeColumns.tsx
+│   │   │   ├── useDepartmentTypeJobLinkMutations.ts
+│   │   │   ├── useDepartmentTypeLinkMutations.ts
+│   │   │   └── useDepartmentTypeMutations.ts
+│   │   ├── departments/
+│   │   │   ├── departmentApi.ts
+│   │   │   ├── DepartmentDeleteDialog.tsx
+│   │   │   ├── DepartmentDetailPage.tsx
+│   │   │   ├── DepartmentEditDialog.tsx
+│   │   │   ├── DepartmentForm.tsx
+│   │   │   ├── DepartmentTree.tsx
+│   │   │   ├── DepartmentTreeNode.tsx
+│   │   │   ├── StructurePage.tsx
+│   │   │   ├── useAllowedDepartmentTypes.ts
+│   │   │   └── useDepartmentMutations.ts
+│   │   ├── employee_events/
+│   │   │   ├── employee_event_change_dept_types/
+│   │   │   │   ├── employeeEventChangeDeptTypeApi.ts
+│   │   │   │   ├── EmployeeEventChangeDeptTypeCrud.tsx
+│   │   │   │   ├── EmployeeEventChangeDeptTypeDeleteDialog.tsx
+│   │   │   │   ├── EmployeeEventChangeDeptTypeEditDialog.tsx
+│   │   │   │   ├── EmployeeEventChangeDeptTypeForm.tsx
+│   │   │   │   ├── EmployeeEventChangeDeptTypePage.tsx
+│   │   │   │   ├── useEmployeeEventChangeDeptTypeColumns.tsx
+│   │   │   │   └── useEmployeeEventChangeDeptTypeMutations.ts
+│   │   │   ├── employee_event_direction_types/
+│   │   │   │   ├── employeeEventDirectionTypeApi.ts
+│   │   │   │   ├── EmployeeEventDirectionTypeCrud.tsx
+│   │   │   │   ├── EmployeeEventDirectionTypeDeleteDialog.tsx
+│   │   │   │   ├── EmployeeEventDirectionTypeEditDialog.tsx
+│   │   │   │   ├── EmployeeEventDirectionTypeForm.tsx
+│   │   │   │   ├── EmployeeEventDirectionTypePage.tsx
+│   │   │   │   ├── useEmployeeEventDirectionTypeColumns.tsx
+│   │   │   │   └── useEmployeeEventDirectionTypeMutations.ts
+│   │   │   ├── employee_event_statuses/
+│   │   │   │   ├── employeeEventStatusApi.ts
+│   │   │   │   ├── EmployeeEventStatusCrud.tsx
+│   │   │   │   ├── EmployeeEventStatusDeleteDialog.tsx
+│   │   │   │   ├── EmployeeEventStatusEditDialog.tsx
+│   │   │   │   ├── EmployeeEventStatusesPage.tsx
+│   │   │   │   ├── EmployeeEventStatusForm.tsx
+│   │   │   │   ├── useEmployeeEventStatusColumns.tsx
+│   │   │   │   └── useEmployeeEventStatusMutations.ts
+│   │   │   ├── employee_event_types/
+│   │   │   │   ├── employeeEventTypeApi.ts
+│   │   │   │   ├── EmployeeEventTypeCrud.tsx
+│   │   │   │   ├── EmployeeEventTypeDeleteDialog.tsx
+│   │   │   │   ├── EmployeeEventTypeEditDialog.tsx
+│   │   │   │   ├── EmployeeEventTypeForm.tsx
+│   │   │   │   ├── EmployeeEventTypePage.tsx
+│   │   │   │   ├── useEmployeeEventTypeColumns.tsx
+│   │   │   │   └── useEmployeeEventTypeMutations.ts
+│   │   │   └── EmployeeEventsPage.tsx
+│   │   ├── jobs/
+│   │   │   ├── jobApi.ts
+│   │   │   ├── JobCrud.tsx
+│   │   │   ├── JobDeleteDialog.tsx
+│   │   │   ├── JobEditDialog.tsx
+│   │   │   ├── JobForm.tsx
+│   │   │   ├── JobGroupsDialog.tsx
+│   │   │   ├── JobsPage.tsx
+│   │   │   ├── useJobColumns.tsx
+│   │   │   └── useJobMutations.ts
+│   │   ├── talent-periods/
+│   │   │   ├── talentPeriodApi.ts
+│   │   │   ├── TalentPeriodCrud.tsx
+│   │   │   ├── TalentPeriodDeleteDialog.tsx
+│   │   │   ├── TalentPeriodEditDialog.tsx
+│   │   │   ├── TalentPeriodForm.tsx
+│   │   │   ├── TalentPeriodsPage.tsx
+│   │   │   ├── useTalentPeriodColumns.tsx
+│   │   │   └── useTalentPeriodMutations.ts
+│   │   ├── talent-status-period-links/
+│   │   │   ├── talentStatusPeriodLinkApi.ts
+│   │   │   ├── TalentStatusPeriodLinkCrud.tsx
+│   │   │   ├── TalentStatusPeriodLinkDeleteDialog.tsx
+│   │   │   ├── TalentStatusPeriodLinkEditDialog.tsx
+│   │   │   ├── TalentStatusPeriodLinkForm.tsx
+│   │   │   ├── TalentStatusPeriodLinksPage.tsx
+│   │   │   ├── useTalentStatusPeriodLinkColumns.tsx
+│   │   │   └── useTalentStatusPeriodLinkMutations.ts
+│   │   ├── talent-statuses/
+│   │   │   ├── talentStatusApi.ts
+│   │   │   ├── TalentStatusCrud.tsx
+│   │   │   ├── TalentStatusDeleteDialog.tsx
+│   │   │   ├── TalentStatusEditDialog.tsx
+│   │   │   ├── TalentStatusesPage.tsx
+│   │   │   ├── TalentStatusForm.tsx
+│   │   │   ├── useTalentStatusColumns.tsx
+│   │   │   └── useTalentStatusMutations.ts
+│   │   ├── user-group-types/
+│   │   │   ├── userGroupTypeApi.ts
+│   │   │   ├── UserGroupTypeCrud.tsx
+│   │   │   ├── UserGroupTypeDeleteDialog.tsx
+│   │   │   ├── UserGroupTypeEditDialog.tsx
+│   │   │   ├── UserGroupTypeForm.tsx
+│   │   │   ├── UserGroupTypeSelectDialog.tsx
+│   │   │   ├── UserGroupTypesPage.tsx
+│   │   │   ├── useUserGroupTypeColumns.tsx
+│   │   │   └── useUserGroupTypeMutations.ts
+│   │   ├── user-groups/
+│   │   │   ├── admin.essences.config.ts
+│   │   │   ├── userGroupApi.ts
+│   │   │   ├── UserGroupCrud.tsx
+│   │   │   ├── UserGroupDeleteDialog.tsx
+│   │   │   ├── UserGroupEditDialog.tsx
+│   │   │   ├── UserGroupForm.tsx
+│   │   │   ├── UserGroupsPage.tsx
+│   │   │   ├── UserGroupTypeSelectDialog.tsx
+│   │   │   ├── useUserGroupColumns.tsx
+│   │   │   └── useUserGroupMutations.ts
+│   │   ├── admin.essences.config.ts
+│   │   ├── AdminPage.tsx
+│   │   ├── ReadonlyCell.tsx
+│   │   └── TextEditCell.tsx
+│   ├── auth/
+│   │   └── LoginPage.tsx
+│   ├── component_trial/
+│   │   ├── SnapshotGrid.tsx
+│   │   └── snapshotMockData.ts
+│   ├── developer/
+│   │   ├── translations/
+│   │   │   ├── components/
+│   │   │   │   ├── dialogs/
+│   │   │   │   │   ├── AddTranslationDialog.tsx
+│   │   │   │   │   ├── DeleteConfirmationDialog.tsx
+│   │   │   │   │   ├── EditTranslationDialog.tsx
+│   │   │   │   │   ├── ExportExcelDialog.tsx
+│   │   │   │   │   ├── ExportJsonDialog.tsx
+│   │   │   │   │   ├── ImportFileDialog.tsx
+│   │   │   │   │   ├── ImportJsonTextDialogNew.tsx
+│   │   │   │   │   └── ImportJsonTextDialogOld.tsx
+│   │   │   │   ├── BulkActionsToolbar.tsx
+│   │   │   │   ├── HeaderActions.tsx
+│   │   │   │   ├── TranslationGrid.tsx
+│   │   │   │   └── useTranslationColumns.tsx
+│   │   │   ├── LocaleAdminReduced.tsx
+│   │   │   ├── TranslationPage.tsx
+│   │   │   ├── translations.ts
+│   │   │   ├── types.ts
+│   │   │   └── useBulkTranslations.ts
+│   │   ├── developer.essences.config.ts
+│   │   └── DeveloperPage.tsx
+│   ├── employees/
+│   │   ├── old/
+│   │   │   ├── EmployeeForm.tsx
+│   │   │   ├── EmployeeList.tsx
+│   │   │   ├── EmployeesPage.tsx
+│   │   │   └── FilterBar.tsx
+│   │   ├── EmployeeAddDeptJobDialog.tsx
+│   │   ├── employeeApi.ts
+│   │   ├── EmployeeCreateDialog.tsx
+│   │   ├── EmployeeDeleteDialog.tsx
+│   │   ├── employeeDepartmentApi.ts
+│   │   ├── EmployeeDepartmentsDrawer.tsx
+│   │   ├── EmployeeEditDialog.tsx
+│   │   ├── EmployeesPage.tsx
+│   │   ├── jobsByDepartmentTypeApi.ts
+│   │   ├── useEmployeeColumns.tsx
+│   │   └── useEmployeeMutations.ts
+│   ├── layout/
+│   │   ├── AppShell.tsx
+│   │   └── Rootlayout.tsx
+│   ├── theme/
+│   │   ├── ThemeContext.tsx
+│   │   ├── themes.ts
+│   │   └── ThemeSwitch.tsx
+│   └── ui/
+│       ├── Badge.css
+│       ├── Badge.tsx
+│       ├── CopyButton.tsx
+│       ├── EssenceCard.tsx
+│       ├── Field.css
+│       ├── Field.tsx
+│       ├── GroupEssenceCard.tsx
+│       ├── Input.css
+│       ├── Input.tsx
+│       ├── Select.css
+│       ├── Select.tsx
+│       └── TreeEssenceCard.tsx
+├── hooks/
+│   ├── useClipboard.ts
+│   ├── useDataGridLocale.ts
+│   ├── useDataGridStyles.ts
+│   ├── useEssences.ts
+│   ├── useLoadTranslations.ts
+│   ├── useString.ts
+│   └── useTranslations.ts
+├── public/
+├── routes/
+│   ├── admin/
+│   │   ├── department_categories/
+│   │   │   └── index.tsx
+│   │   ├── department_types/
+│   │   │   └── index.tsx
+│   │   ├── employee_events/
+│   │   │   ├── employee_event_change_dept_types/
+│   │   │   │   └── index.tsx
+│   │   │   ├── employee_event_direction_types/
+│   │   │   │   └── index.tsx
+│   │   │   ├── employee_event_statuses/
+│   │   │   │   └── index.tsx
+│   │   │   ├── employee_event_types/
+│   │   │   │   └── index.tsx
+│   │   │   └── index.tsx
+│   │   ├── jobs/
+│   │   │   └── index.tsx
+│   │   ├── structure/
+│   │   │   ├── $departmentId.tsx
+│   │   │   └── index.tsx
+│   │   ├── talent-periods/
+│   │   │   └── index.tsx
+│   │   ├── talent-status-period-links/
+│   │   │   └── index.tsx
+│   │   ├── talent-statuses/
+│   │   │   └── index.tsx
+│   │   ├── user-group-types/
+│   │   │   └── index.tsx
+│   │   ├── user-groups/
+│   │   │   └── index.tsx
+│   │   └── index.tsx
+│   ├── auth/
+│   │   └── login.tsx
+│   ├── developer/
+│   │   ├── translations/
+│   │   │   └── index.tsx
+│   │   └── index.tsx
+│   ├── employees/
+│   │   ├── $employeeId/
+│   │   │   └── edit.tsx
+│   │   ├── index.tsx
+│   │   └── new.tsx
+│   ├── __root.tsx
+│   └── index.tsx
+├── store/
+│   ├── authStore.ts
+│   ├── employeeStore.ts
+│   ├── tableStore.ts
+│   └── useTranslationsStore.ts
+├── strings/
+│   └── str.ts
+├── types/
+│   ├── essence.ts
+│   ├── getStringFn.ts
+│   └── types.ts
+├── utils/
+│   ├── capitalizeFirstLetter.ts
+│   ├── dateFormatter.ts
+│   ├── enum.ts
+│   └── eNums.ts
+├── App.css
+├── App.tsx
+├── frontend_structure.txt
+├── index.css
+├── main.tsx
+└── routeTree.gen.ts

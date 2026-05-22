@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Text
 from backend.api_v1.base.base_model import Base
-from backend.database.mixins import IntIdPkMixin, TimestampMixin
+from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 class UserGroupType(IntIdPkMixin, TimestampMixin, Base):
 
-    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
+    name: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     user_groups: Mapped[list["UserGroup"]] = relationship(

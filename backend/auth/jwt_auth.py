@@ -2,14 +2,14 @@ from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from sqlalchemy.exc import IntegrityError
 from backend.auth.auth_dependencies import validate_auth_user_ldap
 from backend.auth import auth_utils as auth_utils
 from backend.auth.auth_schemas import LDAPUser, AuthResponse
-from backend.api_v1.user.user_service import UserService
-from backend.api_v1.user.user_repository import UserRepository
+from backend.api_v1.employee.employee_service import EmployeeService
+from backend.api_v1.employee.employee_repository import EmployeeRepository
 from backend.database.db_helper import db_helper
-from backend.api_v1.user.user_schema import User as UserSchema, UserCreate
+from backend.api_v1.employee.employee_schema import EmployeeCreate, EmployeeSchema
 from backend.utils.enums import OperationTypes
 
 # No import from user_dependency — that module imports us, so importing it
@@ -26,9 +26,9 @@ class TokenInfo(BaseModel):
     token_type: str
 
 
-def _make_service(session: AsyncSession) -> UserService:
+def _make_service(session: AsyncSession) -> EmployeeService:
     """Minimal service factory for use within jwt_auth only."""
-    return UserService(repository=UserRepository(session=session))
+    return EmployeeService(repository=EmployeeRepository(session=session))
 
 
 def get_current_token_payload(
@@ -42,7 +42,7 @@ def get_current_token_payload(
 async def get_current_auth_user(
     payload: dict = Depends(get_current_token_payload),
     session: AsyncSession = Depends(db_helper.session_getter),
-) -> UserSchema:
+) -> EmployeeSchema:
     user_code: str | None = payload.get("sub")
     if not user_code:
         raise HTTPException(
@@ -64,8 +64,8 @@ def require_operation(operation: str | OperationTypes):
     name = operation.value if isinstance(operation, OperationTypes) else operation
 
     async def operation_dependency(
-        current_user: UserSchema = Depends(get_current_active_auth_user),
-    ) -> UserSchema:
+        current_user: EmployeeSchema = Depends(get_current_active_auth_user),
+    ) -> EmployeeSchema:
         if name not in current_user.operations:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -77,15 +77,14 @@ def require_operation(operation: str | OperationTypes):
 
 
 async def get_current_active_auth_user(
-    user: UserSchema = Depends(get_current_auth_user),
-) -> UserSchema:
+    user: EmployeeSchema = Depends(get_current_auth_user),
+) -> EmployeeSchema:
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Inactive user",
+            detail="Inactive employee",
         )
     return user
-
 
 @router.post("/login", response_model=AuthResponse)
 async def auth_user_issue_jwt(
@@ -95,32 +94,66 @@ async def auth_user_issue_jwt(
     service = _make_service(session)
     orm_user = await service.repository.get_by_code(user_ldap.user_ukr)
     if not orm_user:
-        orm_user = await service.create(
-            UserCreate(
-                code=user_ldap.user_ukr,
-                name=user_ldap.full_name,
-                email=None,
-                is_active=True,
+        try:
+            orm_user = await service.create(
+                EmployeeCreate(
+                    code=user_ldap.user_ukr,
+                    name=user_ldap.full_name,
+                    email=None,
+                    is_active=True,
+                )
             )
-        )
+        except IntegrityError as e:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Login failed: employee record could not be created. "
+                       "Required reference data (job, status, lang) may be missing.",
+            ) from e
 
     user_db = await service._to_schema(orm_user)
-
     jwt_payload = {
         "sub": user_db.code,
         "username": user_db.name,
         "user_ukr": user_ldap.user_ukr,
         "groups": user_ldap.group,
     }
-
     access_token = auth_utils.encode_jwt(jwt_payload)
     return AuthResponse(access_token=access_token, token_type="Bearer")
+
+# @router.post("/login", response_model=AuthResponse)
+# async def auth_user_issue_jwt(
+#     user_ldap: LDAPUser = Depends(validate_auth_user_ldap),
+#     session: AsyncSession = Depends(db_helper.session_getter),
+# ):
+#     service = _make_service(session)
+#     orm_user = await service.repository.get_by_code(user_ldap.user_ukr)
+#     if not orm_user:
+#         orm_user = await service.create(
+#             EmployeeCreate(
+#                 code=user_ldap.user_ukr,
+#                 name=user_ldap.full_name,
+#                 email=None,
+#                 is_active=True,
+#             )
+#         )
+#
+#     user_db = await service._to_schema(orm_user)
+#
+#     jwt_payload = {
+#         "sub": user_db.code,
+#         "username": user_db.name,
+#         "user_ukr": user_ldap.user_ukr,
+#         "groups": user_ldap.group,
+#     }
+#
+#     access_token = auth_utils.encode_jwt(jwt_payload)
+#     return AuthResponse(access_token=access_token, token_type="Bearer")
 
 
 @router.get("/users/me")
 async def auth_user_check_self_info(
     payload: dict = Depends(get_current_token_payload),
-    user: UserSchema = Depends(get_current_active_auth_user),
+    user: EmployeeSchema = Depends(get_current_active_auth_user),
 ):
     return {
         "id": user.id,

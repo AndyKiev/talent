@@ -1,6 +1,6 @@
 from ldap3 import ALL, Connection, Server
 
-from backend.config.config import settings
+from backend.config import settings
 
 
 def authenticate_ldap(

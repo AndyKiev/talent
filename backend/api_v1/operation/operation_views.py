@@ -3,6 +3,7 @@ from fastapi.security import HTTPBearer
 from typing import Annotated, List, Optional
 from pydantic import BaseModel
 
+from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.operation.operation_schema import (
     Operation as OperationSchema,
     OperationCreate,
@@ -14,7 +15,7 @@ from backend.api_v1.operation.operation_dependency import (
 )
 from backend.api_v1.operation.operation_service import OperationService
 from backend.auth.jwt_auth import require_operation
-from backend.api_v1.user.user_schema import User as UserSchema
+from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
 from backend.utils.enums import OperationTypes
 
 router = APIRouter(
@@ -37,7 +38,11 @@ async def get_operation(operation: OperationSchema = Depends(operation_by_id)):
     return operation
 
 
-@router.post("", response_model=OperationSchema, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=MutationResponse[OperationSchema],
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_operation(
     operation_in: OperationCreate,
     service: Annotated[OperationService, Depends(get_operation_service)],
@@ -49,7 +54,7 @@ async def create_operation(
     return await service.create_operation(operation_in)
 
 
-@router.patch("/{operation_id}", response_model=OperationSchema)
+@router.patch("/{operation_id}", response_model=MutationResponse[OperationSchema])
 async def update_operation(
     operation_update: OperationUpdate,
     operation: OperationSchema = Depends(operation_by_id),
