@@ -13,6 +13,7 @@ import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import FlagIcon from '@mui/icons-material/Flag';
 import type { RawEssenceConfig } from '../../types/essence';
 import DomainIcon from "@mui/icons-material/Domain";
+import RateReviewIcon from "@mui/icons-material/RateReview";
 
 export const ESSENCES: RawEssenceConfig[] = [
   {
@@ -86,6 +87,14 @@ export const ESSENCES: RawEssenceConfig[] = [
     descriptionKey: 'departmentTypesDesc',
     Icon: AccountTreeIcon,
     color: '#14b8a6',
+  },
+  {
+    parent: 'admin',
+    key: 'review-dimensions',
+    labelKey: 'reviewDimensions',
+    descriptionKey: 'reviewDimensionsDesc',
+    Icon: RateReviewIcon,
+    color: '#e91e63',
   },
   // NEW: Employee Events Group Container
   {

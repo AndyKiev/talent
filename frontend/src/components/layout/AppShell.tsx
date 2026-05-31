@@ -13,7 +13,7 @@ import {
     IconButton,
 } from "@mui/material";
 import CodeIcon from '@mui/icons-material/Code';
-import { LogoutRounded, PeopleAltRounded, AdminPanelSettingsRounded } from "@mui/icons-material";
+import { LogoutRounded, PeopleAltRounded, AdminPanelSettingsRounded, RateReviewRounded } from "@mui/icons-material";
 import { useTheme } from "../theme/ThemeContext";
 import { useAuthStore } from "../../store/authStore";
 import ThemeSwitch from "../theme/ThemeSwitch";
@@ -124,6 +124,7 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
                     {/* Nav items */}
                     <Stack direction="row" spacing={0.5} flexGrow={1}>
                         {navBtn("employees", "/employees", <PeopleAltRounded sx={{ fontSize: 16 }} />)}
+                        {navBtn("peopleReview", "/people-review", <RateReviewRounded sx={{ fontSize: 16 }} />)}
                         {navBtn("admin", "/admin", <AdminPanelSettingsRounded sx={{ fontSize: 16 }} />)}
                         {navBtn("developer", "/developer", <CodeIcon sx={{ fontSize: 16 }} />)}
                         {/*{isAdmin && navBtn("Admin", "/admin", <AdminPanelSettingsRounded sx={{ fontSize: 16 }} />)}*/}

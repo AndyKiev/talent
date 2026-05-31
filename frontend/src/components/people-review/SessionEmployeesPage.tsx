@@ -1,0 +1,304 @@
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useParams } from '@tanstack/react-router';
+import {
+    Alert,
+    Box,
+    Breadcrumbs,
+    Button,
+    Chip,
+    CircularProgress,
+    Paper,
+    Snackbar,
+    Stack,
+    Tooltip,
+    Typography,
+} from '@mui/material';
+import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import CheckIcon from '@mui/icons-material/Check';
+import LockIcon from '@mui/icons-material/Lock';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import ReplayIcon from '@mui/icons-material/Replay';
+import StopIcon from '@mui/icons-material/Stop';
+import { DataGrid, type GridColDef } from '@mui/x-data-grid';
+import { Link } from '@tanstack/react-router';
+import AppShell from '../layout/AppShell.tsx';
+import {
+    fetchSessionEmployees,
+    fetchReviewSessions,
+    markReviewed,
+    closeRSE,
+    revertRSE,
+    reopenRSE,
+    closeReviewSession,
+    type ReviewSessionEmployeeList,
+} from './peopleReviewApi';
+import { useDataGridLocale } from '../../hooks/useDataGridLocale';
+import { useTheme } from '../theme/ThemeContext';
+
+const RSE_STATUS_COLORS: Record<string, 'info' | 'warning' | 'success' | 'error'> = {
+    open: 'info',
+    reviewed: 'warning',
+    closed: 'success',
+};
+
+export function SessionEmployeesPage() {
+    const { sessionId } = useParams({ strict: false }) as { sessionId: string };
+    const navigate = useNavigate();
+    const qc = useQueryClient();
+    const localeText = useDataGridLocale();
+    const { t } = useTheme();
+    const sid = Number(sessionId);
+
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+    const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
+
+    const qk = ['session_employees', sid] as const;
+    const sessQk = ['review_sessions'] as const;
+
+    const { data: rows = [], isLoading, error } = useQuery({
+        queryKey: qk,
+        queryFn: () => fetchSessionEmployees(sid),
+        staleTime: 30_000,
+        enabled: !!sid,
+    });
+
+    // Need session info for status + name
+    const { data: sessions = [] } = useQuery({ queryKey: sessQk, queryFn: fetchReviewSessions, staleTime: 60_000 });
+    const session = sessions.find(s => s.id === sid);
+    const sessionStatus = session?.status ?? 'open';
+    const sessionName = session?.name ?? `Session #${sid}`;
+    const isSessionClosed = sessionStatus === 'closed';
+
+    // Close-session eligibility: no employee in "open" status
+    const openCount = rows.filter(r => r.status === 'open').length;
+    const canCloseSession = openCount === 0 && rows.length > 0 && sessionStatus === 'open';
+
+    const onError = (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' });
+
+    const reviewedMut = useMutation({
+        mutationFn: markReviewed,
+        onSuccess: async (res) => { await qc.invalidateQueries({ queryKey: qk }); setSnackbar({ open: true, message: res.detail, severity: 'success' }); },
+        onError,
+    });
+
+    const closeMut = useMutation({
+        mutationFn: closeRSE,
+        onSuccess: async (res) => { await qc.invalidateQueries({ queryKey: qk }); setSnackbar({ open: true, message: res.detail, severity: 'success' }); },
+        onError,
+    });
+
+    const revertMut = useMutation({
+        mutationFn: revertRSE,
+        onSuccess: async (res) => { await qc.invalidateQueries({ queryKey: qk }); setSnackbar({ open: true, message: res.detail, severity: 'success' }); },
+        onError,
+    });
+
+    const reopenMut = useMutation({
+        mutationFn: reopenRSE,
+        onSuccess: async (res) => { await qc.invalidateQueries({ queryKey: qk }); setSnackbar({ open: true, message: res.detail, severity: 'success' }); },
+        onError,
+    });
+
+    const closeSessionMut = useMutation({
+        mutationFn: closeReviewSession,
+        onSuccess: async (res) => {
+            await qc.invalidateQueries({ queryKey: sessQk });
+            await qc.invalidateQueries({ queryKey: qk });
+            setSnackbar({ open: true, message: res.detail, severity: 'success' });
+        },
+        onError,
+    });
+
+    const columns: GridColDef<ReviewSessionEmployeeList>[] = [
+        { field: 'employee_code', headerName: 'Code', width: 100 },
+        { field: 'employee_name', headerName: 'Employee', flex: 1, minWidth: 180 },
+        {
+            field: 'status',
+            headerName: 'Status',
+            width: 110,
+            renderCell: (params) => (
+                <Chip label={params.row.status} color={RSE_STATUS_COLORS[params.row.status] ?? 'default'} size="small" variant="outlined" />
+            ),
+        },
+        {
+            field: 'progress',
+            headerName: 'Progress',
+            width: 160,
+            sortable: false,
+            renderCell: (params) => {
+                const { scored_count = 0, total_dimensions = 0 } = params.row;
+                const pct = total_dimensions > 0 ? (scored_count / total_dimensions) * 100 : 0;
+                const full = scored_count === total_dimensions && total_dimensions > 0;
+                const color = full ? '#2E7D32' : '#1565C0';
+                return (
+                    <Stack spacing={0.4} justifyContent="center" sx={{ height: '100%', width: '100%', py: 0.5 }}>
+                        <Typography fontSize={11} fontWeight={600} color={color}>{scored_count}/{total_dimensions} dimensions</Typography>
+                        <Box sx={{ height: 6, borderRadius: 3, bgcolor: `${color}22`, width: '100%' }}>
+                            <Box sx={{ height: '100%', borderRadius: 3, width: `${pct}%`, bgcolor: color, transition: 'width 0.3s' }} />
+                        </Box>
+                    </Stack>
+                );
+            },
+        },
+        {
+            field: 'actions',
+            headerName: 'Actions',
+            width: 340,
+            sortable: false,
+            renderCell: (params) => {
+                const row = params.row;
+                const allFilled = row.scored_count === row.total_dimensions && row.total_dimensions > 0;
+                return (
+                    <Stack direction="row" spacing={0.5} alignItems="center" height="100%">
+                        <Button
+                            size="small" variant="outlined" startIcon={<VisibilityIcon />}
+                            onClick={() => navigate({ to: '/people-review/evaluation/$rseId' as any, params: { rseId: String(row.id) } })}
+                        >
+                            View
+                        </Button>
+
+                        {row.status === 'open' && !isSessionClosed && (
+                            <Tooltip title={allFilled ? 'Mark as reviewed' : `Fill all ${row.total_dimensions} dimensions (${row.scored_count}/${row.total_dimensions})`} placement="top">
+                                <span>
+                                    <Button size="small" variant="contained" color="warning"
+                                        startIcon={allFilled ? <CheckIcon /> : <LockIcon />}
+                                        onClick={() => reviewedMut.mutate(row.id)}
+                                        disabled={!allFilled || reviewedMut.isPending}>
+                                        Mark Reviewed
+                                    </Button>
+                                </span>
+                            </Tooltip>
+                        )}
+
+                        {row.status === 'reviewed' && !isSessionClosed && (
+                            <>
+                                <Button size="small" variant="contained" color="success"
+                                    startIcon={<LockIcon />}
+                                    onClick={() => closeMut.mutate(row.id)}
+                                    disabled={closeMut.isPending}>
+                                    Close
+                                </Button>
+                                <Tooltip title="Revert to open (allow editing)">
+                                    <Button size="small" variant="outlined" startIcon={<ReplayIcon />}
+                                        onClick={() => revertMut.mutate(row.id)}
+                                        disabled={revertMut.isPending}
+                                        sx={{ minWidth: 0, px: 1 }}>
+                                        Revert
+                                    </Button>
+                                </Tooltip>
+                            </>
+                        )}
+
+                        {row.status === 'closed' && !isSessionClosed && (
+                            <>
+                                <Tooltip title="Revert to reviewed">
+                                    <Button size="small" variant="outlined" color="warning" startIcon={<ReplayIcon />}
+                                        onClick={() => revertMut.mutate(row.id)}
+                                        disabled={revertMut.isPending}>
+                                        Revert
+                                    </Button>
+                                </Tooltip>
+                                <Tooltip title="Set directly to open (skip reviewed)">
+                                    <Button size="small" variant="outlined" startIcon={<ReplayIcon />}
+                                        onClick={() => reopenMut.mutate(row.id)}
+                                        disabled={reopenMut.isPending}
+                                        sx={{ minWidth: 0, px: 1 }}>
+                                        Set Open
+                                    </Button>
+                                </Tooltip>
+                            </>
+                        )}
+                    </Stack>
+                );
+            },
+        },
+    ];
+
+    return (
+        <AppShell>
+            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1300, mx: 'auto' }}>
+                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
+                    <Link to="/people-review" style={{ textDecoration: 'none', color: 'inherit' }}>
+                        <Typography variant="body2" color="text.secondary">People Review</Typography>
+                    </Link>
+                    <Typography variant="body2" color="text.primary" fontWeight={600}>
+                        {sessionName}
+                    </Typography>
+                </Breadcrumbs>
+
+                {/* Session header */}
+                <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2} flexWrap="wrap" gap={1.5}>
+                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                        <Typography variant="h6" fontWeight={700} color={t.text}>{sessionName}</Typography>
+                        <Chip
+                            label={sessionStatus}
+                            size="small"
+                            color={sessionStatus === 'open' ? 'success' : sessionStatus === 'closed' ? 'error' : 'default'}
+                            variant="outlined"
+                        />
+                        {isSessionClosed && (
+                            <Chip icon={<VisibilityIcon sx={{ fontSize: 13 }} />} label="View only" size="small" variant="outlined" />
+                        )}
+                    </Stack>
+
+                    {/* Close session button */}
+                    {sessionStatus === 'open' && (
+                        <Tooltip title={canCloseSession ? 'Close this session' : `${openCount} employee(s) still open — all must be reviewed first`}>
+                            <span>
+                                <Button
+                                    variant="contained" color="error" size="small"
+                                    startIcon={canCloseSession ? <StopIcon /> : <LockIcon />}
+                                    onClick={() => closeSessionMut.mutate(sid)}
+                                    disabled={!canCloseSession || closeSessionMut.isPending}
+                                    sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
+                                >
+                                    {closeSessionMut.isPending ? 'Closing…' : 'Close Session'}
+                                </Button>
+                            </span>
+                        </Tooltip>
+                    )}
+                </Stack>
+
+                {isSessionClosed && (
+                    <Alert severity="info" icon={<VisibilityIcon />} sx={{ mb: 2, borderRadius: '10px' }}>
+                        This session is <strong>closed</strong> — view-only mode. Revert the session from the Sessions list to re-open.
+                    </Alert>
+                )}
+
+                {openCount > 0 && sessionStatus === 'open' && (
+                    <Alert severity="warning" sx={{ mb: 2, borderRadius: '10px' }}>
+                        {openCount} employee(s) are still <strong>open</strong>. All must be reviewed before the session can be closed.
+                    </Alert>
+                )}
+
+                {isLoading && <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>}
+                {!isLoading && error && <Alert severity="error">{(error as Error).message}</Alert>}
+
+                {!isLoading && !error && (
+                    <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+                        <DataGrid
+                            rows={rows} columns={columns}
+                            paginationModel={paginationModel}
+                            onPaginationModelChange={setPaginationModel}
+                            pageSizeOptions={[10, 25, 50]}
+                            disableRowSelectionOnClick
+                            getRowId={row => row.id}
+                            localeText={localeText}
+                            hideFooterSelectedRowCount
+                            sx={{ '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
+                        />
+                    </Paper>
+                )}
+
+                <Snackbar open={snackbar.open} autoHideDuration={6000}
+                    onClose={() => setSnackbar(p => ({ ...p, open: false }))}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+                    <Alert severity={snackbar.severity} onClose={() => setSnackbar(p => ({ ...p, open: false }))} sx={{ width: '100%' }}>
+                        {snackbar.message}
+                    </Alert>
+                </Snackbar>
+            </Box>
+        </AppShell>
+    );
+}

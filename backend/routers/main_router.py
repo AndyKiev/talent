@@ -40,6 +40,12 @@ from backend.api_v1.employee_events.employee_event_change.employee_event_change_
 from backend.api_v1.employee_events.employee_event_type_direction.employee_event_type_direction_views import router as employee_event_type_direction_router
 from backend.api_v1.notifications.notification_views import router as notifications_router
 
+from backend.api_v1.review_dimension.review_dimension_views import router as review_dimension_router
+from backend.api_v1.review_dimension_criteria.review_dimension_criteria_views import router as review_dimension_criteria_router
+from backend.api_v1.review_session.review_session_views import router as review_session_router
+from backend.api_v1.review_session_employee.review_session_employee_views import router as review_session_employee_router
+from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_views import router as review_evaluation_router
+
 
 router = APIRouter(prefix=settings.api_v1_prefix)
 
@@ -77,3 +83,8 @@ router.include_router(employee_event_router)
 router.include_router(employee_event_change_router)
 router.include_router(employee_event_type_direction_router)
 router.include_router(notifications_router)
+router.include_router(review_dimension_router)
+router.include_router(review_dimension_criteria_router)
+router.include_router(review_session_router)
+router.include_router(review_session_employee_router)
+router.include_router(review_evaluation_router)

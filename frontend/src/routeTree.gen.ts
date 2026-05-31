@@ -10,9 +10,12 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PeopleReviewIndexRouteImport } from './routes/people-review/index'
 import { Route as EmployeesIndexRouteImport } from './routes/employees/index'
 import { Route as DeveloperIndexRouteImport } from './routes/developer/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as PeopleReviewMyRouteImport } from './routes/people-review/my'
+import { Route as PeopleReviewSessionIdRouteImport } from './routes/people-review/$sessionId'
 import { Route as EmployeesNewRouteImport } from './routes/employees/new'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as DeveloperTranslationsIndexRouteImport } from './routes/developer/translations/index'
@@ -22,10 +25,12 @@ import { Route as AdminTalentStatusesIndexRouteImport } from './routes/admin/tal
 import { Route as AdminTalentStatusPeriodLinksIndexRouteImport } from './routes/admin/talent-status-period-links/index'
 import { Route as AdminTalentPeriodsIndexRouteImport } from './routes/admin/talent-periods/index'
 import { Route as AdminStructureIndexRouteImport } from './routes/admin/structure/index'
+import { Route as AdminReviewDimensionsIndexRouteImport } from './routes/admin/review-dimensions/index'
 import { Route as AdminJobsIndexRouteImport } from './routes/admin/jobs/index'
 import { Route as AdminEmployee_eventsIndexRouteImport } from './routes/admin/employee_events/index'
 import { Route as AdminDepartment_typesIndexRouteImport } from './routes/admin/department_types/index'
 import { Route as AdminDepartment_categoriesIndexRouteImport } from './routes/admin/department_categories/index'
+import { Route as PeopleReviewEvaluationRseIdRouteImport } from './routes/people-review/evaluation/$rseId'
 import { Route as EmployeesEmployeeIdEditRouteImport } from './routes/employees/$employeeId/edit'
 import { Route as AdminStructureDepartmentIdRouteImport } from './routes/admin/structure/$departmentId'
 import { Route as AdminEmployee_eventsEmployee_event_typesIndexRouteImport } from './routes/admin/employee_events/employee_event_types/index'
@@ -36,6 +41,11 @@ import { Route as AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PeopleReviewIndexRoute = PeopleReviewIndexRouteImport.update({
+  id: '/people-review/',
+  path: '/people-review/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EmployeesIndexRoute = EmployeesIndexRouteImport.update({
@@ -51,6 +61,16 @@ const DeveloperIndexRoute = DeveloperIndexRouteImport.update({
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PeopleReviewMyRoute = PeopleReviewMyRouteImport.update({
+  id: '/people-review/my',
+  path: '/people-review/my',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PeopleReviewSessionIdRoute = PeopleReviewSessionIdRouteImport.update({
+  id: '/people-review/$sessionId',
+  path: '/people-review/$sessionId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EmployeesNewRoute = EmployeesNewRouteImport.update({
@@ -102,6 +122,12 @@ const AdminStructureIndexRoute = AdminStructureIndexRouteImport.update({
   path: '/admin/structure/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminReviewDimensionsIndexRoute =
+  AdminReviewDimensionsIndexRouteImport.update({
+    id: '/admin/review-dimensions/',
+    path: '/admin/review-dimensions/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminJobsIndexRoute = AdminJobsIndexRouteImport.update({
   id: '/admin/jobs/',
   path: '/admin/jobs/',
@@ -123,6 +149,12 @@ const AdminDepartment_categoriesIndexRoute =
   AdminDepartment_categoriesIndexRouteImport.update({
     id: '/admin/department_categories/',
     path: '/admin/department_categories/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const PeopleReviewEvaluationRseIdRoute =
+  PeopleReviewEvaluationRseIdRouteImport.update({
+    id: '/people-review/evaluation/$rseId',
+    path: '/people-review/evaluation/$rseId',
     getParentRoute: () => rootRouteImport,
   } as any)
 const EmployeesEmployeeIdEditRoute = EmployeesEmployeeIdEditRouteImport.update({
@@ -165,15 +197,20 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth/login': typeof AuthLoginRoute
   '/employees/new': typeof EmployeesNewRoute
+  '/people-review/$sessionId': typeof PeopleReviewSessionIdRoute
+  '/people-review/my': typeof PeopleReviewMyRoute
   '/admin': typeof AdminIndexRoute
   '/developer': typeof DeveloperIndexRoute
   '/employees': typeof EmployeesIndexRoute
+  '/people-review': typeof PeopleReviewIndexRoute
   '/admin/structure/$departmentId': typeof AdminStructureDepartmentIdRoute
   '/employees/$employeeId/edit': typeof EmployeesEmployeeIdEditRoute
+  '/people-review/evaluation/$rseId': typeof PeopleReviewEvaluationRseIdRoute
   '/admin/department_categories': typeof AdminDepartment_categoriesIndexRoute
   '/admin/department_types': typeof AdminDepartment_typesIndexRoute
   '/admin/employee_events': typeof AdminEmployee_eventsIndexRoute
   '/admin/jobs': typeof AdminJobsIndexRoute
+  '/admin/review-dimensions': typeof AdminReviewDimensionsIndexRoute
   '/admin/structure': typeof AdminStructureIndexRoute
   '/admin/talent-periods': typeof AdminTalentPeriodsIndexRoute
   '/admin/talent-status-period-links': typeof AdminTalentStatusPeriodLinksIndexRoute
@@ -190,15 +227,20 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth/login': typeof AuthLoginRoute
   '/employees/new': typeof EmployeesNewRoute
+  '/people-review/$sessionId': typeof PeopleReviewSessionIdRoute
+  '/people-review/my': typeof PeopleReviewMyRoute
   '/admin': typeof AdminIndexRoute
   '/developer': typeof DeveloperIndexRoute
   '/employees': typeof EmployeesIndexRoute
+  '/people-review': typeof PeopleReviewIndexRoute
   '/admin/structure/$departmentId': typeof AdminStructureDepartmentIdRoute
   '/employees/$employeeId/edit': typeof EmployeesEmployeeIdEditRoute
+  '/people-review/evaluation/$rseId': typeof PeopleReviewEvaluationRseIdRoute
   '/admin/department_categories': typeof AdminDepartment_categoriesIndexRoute
   '/admin/department_types': typeof AdminDepartment_typesIndexRoute
   '/admin/employee_events': typeof AdminEmployee_eventsIndexRoute
   '/admin/jobs': typeof AdminJobsIndexRoute
+  '/admin/review-dimensions': typeof AdminReviewDimensionsIndexRoute
   '/admin/structure': typeof AdminStructureIndexRoute
   '/admin/talent-periods': typeof AdminTalentPeriodsIndexRoute
   '/admin/talent-status-period-links': typeof AdminTalentStatusPeriodLinksIndexRoute
@@ -216,15 +258,20 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth/login': typeof AuthLoginRoute
   '/employees/new': typeof EmployeesNewRoute
+  '/people-review/$sessionId': typeof PeopleReviewSessionIdRoute
+  '/people-review/my': typeof PeopleReviewMyRoute
   '/admin/': typeof AdminIndexRoute
   '/developer/': typeof DeveloperIndexRoute
   '/employees/': typeof EmployeesIndexRoute
+  '/people-review/': typeof PeopleReviewIndexRoute
   '/admin/structure/$departmentId': typeof AdminStructureDepartmentIdRoute
   '/employees/$employeeId/edit': typeof EmployeesEmployeeIdEditRoute
+  '/people-review/evaluation/$rseId': typeof PeopleReviewEvaluationRseIdRoute
   '/admin/department_categories/': typeof AdminDepartment_categoriesIndexRoute
   '/admin/department_types/': typeof AdminDepartment_typesIndexRoute
   '/admin/employee_events/': typeof AdminEmployee_eventsIndexRoute
   '/admin/jobs/': typeof AdminJobsIndexRoute
+  '/admin/review-dimensions/': typeof AdminReviewDimensionsIndexRoute
   '/admin/structure/': typeof AdminStructureIndexRoute
   '/admin/talent-periods/': typeof AdminTalentPeriodsIndexRoute
   '/admin/talent-status-period-links/': typeof AdminTalentStatusPeriodLinksIndexRoute
@@ -243,15 +290,20 @@ export interface FileRouteTypes {
     | '/'
     | '/auth/login'
     | '/employees/new'
+    | '/people-review/$sessionId'
+    | '/people-review/my'
     | '/admin'
     | '/developer'
     | '/employees'
+    | '/people-review'
     | '/admin/structure/$departmentId'
     | '/employees/$employeeId/edit'
+    | '/people-review/evaluation/$rseId'
     | '/admin/department_categories'
     | '/admin/department_types'
     | '/admin/employee_events'
     | '/admin/jobs'
+    | '/admin/review-dimensions'
     | '/admin/structure'
     | '/admin/talent-periods'
     | '/admin/talent-status-period-links'
@@ -268,15 +320,20 @@ export interface FileRouteTypes {
     | '/'
     | '/auth/login'
     | '/employees/new'
+    | '/people-review/$sessionId'
+    | '/people-review/my'
     | '/admin'
     | '/developer'
     | '/employees'
+    | '/people-review'
     | '/admin/structure/$departmentId'
     | '/employees/$employeeId/edit'
+    | '/people-review/evaluation/$rseId'
     | '/admin/department_categories'
     | '/admin/department_types'
     | '/admin/employee_events'
     | '/admin/jobs'
+    | '/admin/review-dimensions'
     | '/admin/structure'
     | '/admin/talent-periods'
     | '/admin/talent-status-period-links'
@@ -293,15 +350,20 @@ export interface FileRouteTypes {
     | '/'
     | '/auth/login'
     | '/employees/new'
+    | '/people-review/$sessionId'
+    | '/people-review/my'
     | '/admin/'
     | '/developer/'
     | '/employees/'
+    | '/people-review/'
     | '/admin/structure/$departmentId'
     | '/employees/$employeeId/edit'
+    | '/people-review/evaluation/$rseId'
     | '/admin/department_categories/'
     | '/admin/department_types/'
     | '/admin/employee_events/'
     | '/admin/jobs/'
+    | '/admin/review-dimensions/'
     | '/admin/structure/'
     | '/admin/talent-periods/'
     | '/admin/talent-status-period-links/'
@@ -319,15 +381,20 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthLoginRoute: typeof AuthLoginRoute
   EmployeesNewRoute: typeof EmployeesNewRoute
+  PeopleReviewSessionIdRoute: typeof PeopleReviewSessionIdRoute
+  PeopleReviewMyRoute: typeof PeopleReviewMyRoute
   AdminIndexRoute: typeof AdminIndexRoute
   DeveloperIndexRoute: typeof DeveloperIndexRoute
   EmployeesIndexRoute: typeof EmployeesIndexRoute
+  PeopleReviewIndexRoute: typeof PeopleReviewIndexRoute
   AdminStructureDepartmentIdRoute: typeof AdminStructureDepartmentIdRoute
   EmployeesEmployeeIdEditRoute: typeof EmployeesEmployeeIdEditRoute
+  PeopleReviewEvaluationRseIdRoute: typeof PeopleReviewEvaluationRseIdRoute
   AdminDepartment_categoriesIndexRoute: typeof AdminDepartment_categoriesIndexRoute
   AdminDepartment_typesIndexRoute: typeof AdminDepartment_typesIndexRoute
   AdminEmployee_eventsIndexRoute: typeof AdminEmployee_eventsIndexRoute
   AdminJobsIndexRoute: typeof AdminJobsIndexRoute
+  AdminReviewDimensionsIndexRoute: typeof AdminReviewDimensionsIndexRoute
   AdminStructureIndexRoute: typeof AdminStructureIndexRoute
   AdminTalentPeriodsIndexRoute: typeof AdminTalentPeriodsIndexRoute
   AdminTalentStatusPeriodLinksIndexRoute: typeof AdminTalentStatusPeriodLinksIndexRoute
@@ -350,6 +417,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/people-review/': {
+      id: '/people-review/'
+      path: '/people-review'
+      fullPath: '/people-review'
+      preLoaderRoute: typeof PeopleReviewIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/employees/': {
       id: '/employees/'
       path: '/employees'
@@ -369,6 +443,20 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/people-review/my': {
+      id: '/people-review/my'
+      path: '/people-review/my'
+      fullPath: '/people-review/my'
+      preLoaderRoute: typeof PeopleReviewMyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/people-review/$sessionId': {
+      id: '/people-review/$sessionId'
+      path: '/people-review/$sessionId'
+      fullPath: '/people-review/$sessionId'
+      preLoaderRoute: typeof PeopleReviewSessionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/employees/new': {
@@ -434,6 +522,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminStructureIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/review-dimensions/': {
+      id: '/admin/review-dimensions/'
+      path: '/admin/review-dimensions'
+      fullPath: '/admin/review-dimensions'
+      preLoaderRoute: typeof AdminReviewDimensionsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/jobs/': {
       id: '/admin/jobs/'
       path: '/admin/jobs'
@@ -460,6 +555,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/department_categories'
       fullPath: '/admin/department_categories'
       preLoaderRoute: typeof AdminDepartment_categoriesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/people-review/evaluation/$rseId': {
+      id: '/people-review/evaluation/$rseId'
+      path: '/people-review/evaluation/$rseId'
+      fullPath: '/people-review/evaluation/$rseId'
+      preLoaderRoute: typeof PeopleReviewEvaluationRseIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/employees/$employeeId/edit': {
@@ -511,15 +613,20 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthLoginRoute: AuthLoginRoute,
   EmployeesNewRoute: EmployeesNewRoute,
+  PeopleReviewSessionIdRoute: PeopleReviewSessionIdRoute,
+  PeopleReviewMyRoute: PeopleReviewMyRoute,
   AdminIndexRoute: AdminIndexRoute,
   DeveloperIndexRoute: DeveloperIndexRoute,
   EmployeesIndexRoute: EmployeesIndexRoute,
+  PeopleReviewIndexRoute: PeopleReviewIndexRoute,
   AdminStructureDepartmentIdRoute: AdminStructureDepartmentIdRoute,
   EmployeesEmployeeIdEditRoute: EmployeesEmployeeIdEditRoute,
+  PeopleReviewEvaluationRseIdRoute: PeopleReviewEvaluationRseIdRoute,
   AdminDepartment_categoriesIndexRoute: AdminDepartment_categoriesIndexRoute,
   AdminDepartment_typesIndexRoute: AdminDepartment_typesIndexRoute,
   AdminEmployee_eventsIndexRoute: AdminEmployee_eventsIndexRoute,
   AdminJobsIndexRoute: AdminJobsIndexRoute,
+  AdminReviewDimensionsIndexRoute: AdminReviewDimensionsIndexRoute,
   AdminStructureIndexRoute: AdminStructureIndexRoute,
   AdminTalentPeriodsIndexRoute: AdminTalentPeriodsIndexRoute,
   AdminTalentStatusPeriodLinksIndexRoute:
