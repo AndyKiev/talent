@@ -17,6 +17,7 @@ import { LogoutRounded, PeopleAltRounded, AdminPanelSettingsRounded } from "@mui
 import { useTheme } from "../theme/ThemeContext";
 import { useAuthStore } from "../../store/authStore";
 import ThemeSwitch from "../theme/ThemeSwitch";
+import { NotificationBell } from "../notifications/NotificationBell";
 import cfl from "../../utils/capitalizeFirstLetter.ts";
 import useString from "../../hooks/useString.ts";
 import str from "../../strings/str.ts";
@@ -148,6 +149,8 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
                                 }}
                             />
                         )}
+
+                        <NotificationBell />
 
                         <Tooltip title="Sign out">
                             <IconButton

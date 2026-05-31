@@ -38,6 +38,7 @@ from backend.api_v1.employee_events.employee_event_change_dept_type.employee_eve
 from backend.api_v1.employee_events.employee_event.employee_event_views import router as employee_event_router
 from backend.api_v1.employee_events.employee_event_change.employee_event_change_views import router as employee_event_change_router
 from backend.api_v1.employee_events.employee_event_type_direction.employee_event_type_direction_views import router as employee_event_type_direction_router
+from backend.api_v1.notifications.notification_views import router as notifications_router
 
 
 router = APIRouter(prefix=settings.api_v1_prefix)
@@ -75,3 +76,4 @@ router.include_router(employee_event_change_dept_type_router)
 router.include_router(employee_event_router)
 router.include_router(employee_event_change_router)
 router.include_router(employee_event_type_direction_router)
+router.include_router(notifications_router)

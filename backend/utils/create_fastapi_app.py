@@ -1,10 +1,13 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import ORJSONResponse, JSONResponse
-from fastapi.openapi.docs import get_swagger_ui_html
+import asyncio
+import logging
+from contextlib import asynccontextmanager
 from pathlib import Path
+
+from fastapi import FastAPI, Request
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.responses import ORJSONResponse, JSONResponse
 from starlette.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
-from contextlib import asynccontextmanager
 
 from backend.config.config import settings
 from backend.api_v1.base.errors import (
@@ -14,10 +17,31 @@ from backend.api_v1.base.errors import (
     DomainError,
 )
 
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    yield
+    # Start RabbitMQ consumer in background
+    from backend.utils.rabbitmq import start_consumer
+    from backend.api_v1.notifications.notification_store import add_and_broadcast
+
+    async def on_notification(payload: dict) -> None:
+        user_code = payload.get("user_code", "")
+        message = payload.get("message", "")
+        if user_code and message:
+            await add_and_broadcast(user_code, message)
+
+    consumer_task = asyncio.create_task(start_consumer(on_notification))
+    logger.info("RabbitMQ notification consumer started.")
+    try:
+        yield
+    finally:
+        consumer_task.cancel()
+        try:
+            await consumer_task
+        except asyncio.CancelledError:
+            pass
 
 
 def register_static_docs_routes(app: FastAPI):
