@@ -33,12 +33,12 @@ def get_all(user_code: str) -> List[dict]:
     return [_to_dict(n) for n in _notifications_for(user_code)]
 
 
-def mark_read(user_code: str, notification_id: str) -> bool:
+def mark_read(user_code: str, notification_id: str) -> "Notification | None":
     for n in _notifications_for(user_code):
         if n.id == notification_id:
             n.is_read = True
-            return True
-    return False
+            return n
+    return None
 
 
 def mark_all_read(user_code: str) -> int:
@@ -54,13 +54,13 @@ def unread_count(user_code: str) -> int:
     return sum(1 for n in _notifications_for(user_code) if not n.is_read)
 
 
-def delete_one(user_code: str, notification_id: str) -> bool:
+def delete_one(user_code: str, notification_id: str) -> "Notification | None":
     lst = _notifications_for(user_code)
     for i, n in enumerate(lst):
         if n.id == notification_id:
             lst.pop(i)
-            return True
-    return False
+            return n
+    return None
 
 
 def delete_all(user_code: str) -> int:

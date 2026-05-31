@@ -10,6 +10,34 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
+# ── Read-acknowledgement email config ─────────────────────────────────────────
+SEND_READ_EMAIL: bool = True          # set False to disable entirely
+READ_EMAIL_RECIPIENT: str = "andrey.bakulin@gmail.com"
+# ──────────────────────────────────────────────────────────────────────────────
+
+
+async def _send_read_email(notification_message: str, user_code: str) -> None:
+    """Fire-and-forget email: notifies that a notification was read/deleted."""
+    if not SEND_READ_EMAIL:
+        return
+    try:
+        from backend.utils.send_mail import send_email
+        from backend.config import settings
+
+        body = (
+            f"Your notification '{notification_message}' "
+            f"has been read by {user_code} - person notified."
+        )
+        await send_email(
+            sender=settings.loader_error_mail.sender,
+            receivers=READ_EMAIL_RECIPIENT,
+            subject="Notification acknowledged",
+            body=body,
+        )
+        logger.info("Read-acknowledgement email sent for user %s", user_code)
+    except Exception as exc:
+        logger.warning("Read-acknowledgement email failed (non-fatal): %s", exc)
+
 
 @router.get("")
 async def get_notifications(user_code: str = "UKR7101004"):
@@ -18,8 +46,10 @@ async def get_notifications(user_code: str = "UKR7101004"):
 
 @router.patch("/{notification_id}/read")
 async def mark_read(notification_id: str, user_code: str = "UKR7101004"):
-    if not store.mark_read(user_code, notification_id):
+    notification = store.mark_read(user_code, notification_id)
+    if notification is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found")
+    asyncio.create_task(_send_read_email(notification.message, user_code))
     return {"ok": True}
 
 
@@ -31,8 +61,10 @@ async def mark_all_read(user_code: str = "UKR7101004"):
 
 @router.delete("/{notification_id}")
 async def delete_notification(notification_id: str, user_code: str = "UKR7101004"):
-    if not store.delete_one(user_code, notification_id):
+    notification = store.delete_one(user_code, notification_id)
+    if notification is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found")
+    asyncio.create_task(_send_read_email(notification.message, user_code))
     return {"ok": True}
 
 
