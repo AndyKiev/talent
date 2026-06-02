@@ -21,6 +21,10 @@ from backend.api_v1.employee.employee_errors import (
 )
 from backend.api_v1.employee.employee_success import EmployeeDeleteSuccess
 from backend.api_v1.base.errors import DomainError
+from backend.auth.permission_resolvers import (
+    resolve_user_permissions,
+    resolve_user_permission_sets,
+)
 
 
 class EmployeeService(BaseService):
@@ -41,6 +45,10 @@ class EmployeeService(BaseService):
         operations = await self.repository.get_user_operations(orm_employee.id)
         schema = EmployeeSchema.model_validate(orm_employee)
         schema.operations = operations
+
+        # Resolve essence-set access grants from the selectin-loaded user_groups.
+        schema.permissions = resolve_user_permissions(orm_employee)
+        schema.permission_sets = resolve_user_permission_sets(orm_employee)
 
         # Populate main_departments from the already selectin-loaded relationship.
         # Filter to is_main=True only; map to the slim MainDepartmentSchema.

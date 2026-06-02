@@ -14,6 +14,7 @@ class TalentAuditJobStatus(IntIdPkMixin, Base):
     __tablename__ = "talent_audit_job_statuses"
 
     name: Mapped[str] = mapped_column(String(32), nullable=False, unique=True)
+    key: Mapped[str] = mapped_column(String(32), nullable=False, unique=True)
     description: Mapped[str | None] = mapped_column(String(128), nullable=True)
 
     # Relationships
@@ -23,4 +24,4 @@ class TalentAuditJobStatus(IntIdPkMixin, Base):
     )
 
     def __repr__(self) -> str:
-        return f"<TalentAuditJobStatus(id={self.id}, name='{self.name}')>"
+        return f"<TalentAuditJobStatus(id={self.id}, key='{self.key}', name='{self.name}')>"

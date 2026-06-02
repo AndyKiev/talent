@@ -46,6 +46,9 @@ class BaseRepository:
         await self.session.refresh(instance)
         return instance
 
+    async def create_from_dict(self, data: dict) -> ModelType:
+        return await self.create(self.model(**data))
+
     async def get_by_field(
         self,
         field_name: str,
@@ -109,6 +112,33 @@ class BaseRepository:
 
         if exclude_ids:
             stmt = stmt.where(self.model.id.not_in(exclude_ids))
+
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def get_id_by_field(
+        self,
+        field_name: str,
+        value: Any,
+        case_insensitive: bool = False,
+    ) -> Optional[int]:
+        """
+        Return the `id` of the single row where field_name == value, else None.
+
+        Lightweight directory helper (e.g. resolve a status id from its stable
+        key/name) — selects only the id column, expects at most one match.
+        """
+        if not hasattr(self.model, field_name):
+            raise AttributeError(
+                f"Model {self.model.__name__} has no attribute '{field_name}'"
+            )
+
+        field = getattr(self.model, field_name)
+
+        if case_insensitive and isinstance(value, str):
+            stmt = select(self.model.id).where(func.lower(field) == func.lower(value))
+        else:
+            stmt = select(self.model.id).where(field == value)
 
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()

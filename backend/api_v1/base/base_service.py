@@ -136,6 +136,9 @@ class BaseService(Generic[RepositoryType]):
         model = self.repository.model(**model.model_dump())
         return await self.repository.create(instance=model)
 
+    async def create_from_dict(self, data: dict) -> ModelType:
+        return await self.repository.create_from_dict(data)
+
     async def create_instance(self, model: BaseModel) -> ModelType:
         model = self.repository.model(**model.model_dump())
         try:
@@ -172,6 +175,35 @@ class BaseService(Generic[RepositoryType]):
                 }
                 exc.fallback = (
                     f"{self.repository.model.__name__} with name '{name}' not found"
+                )
+            raise await self._resolve_domain_error(exc)
+        return result
+
+    async def get_by_code(
+        self,
+        code: str,
+        not_found_exc: type[NotFoundError] | None = None,
+        case_insensitive: bool = False,
+        is_unique: bool = True,
+    ) -> ModelType | List[ModelType]:
+        result = await self.repository.get_by_field(
+            "code",
+            code,
+            case_insensitive=case_insensitive,
+            is_unique=is_unique,
+        )
+        if not result:
+            if not_found_exc is not None:
+                exc = not_found_exc(code)
+            else:
+                exc = NotFoundError(self.repository.model.__name__, "code", code)
+                exc.message_key = "essenceNotFoundByCode"
+                exc.template_vars = {
+                    "essence": self.repository.model.__name__,
+                    "code": code,
+                }
+                exc.fallback = (
+                    f"{self.repository.model.__name__} with code '{code}' not found"
                 )
             raise await self._resolve_domain_error(exc)
         return result

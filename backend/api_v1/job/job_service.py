@@ -23,6 +23,14 @@ from backend.api_v1.employee.employee_repository import EmployeeRepository
 from backend.api_v1.employee.employee_service import EmployeeService, SyncJobResult
 from backend.api_v1.base.errors import DomainError
 
+import io
+from openpyxl import load_workbook
+from openpyxl.utils.exceptions import InvalidFileException
+from fastapi import UploadFile
+from backend.api_v1.job.job_schema import JobBulkRow, JobBulkUploadResult
+from backend.api_v1.job.job_errors import JobBulkUploadNothingToInsert, JobBulkUploadInvalidFile
+from backend.api_v1.job.job_success import JobBulkUploadSuccess
+
 
 class JobService(BaseService):
     def __init__(
@@ -52,7 +60,7 @@ class JobService(BaseService):
         if name:
             job = await self.get_by_name(name, not_found_exc=JobNotFoundByName)
             return [JobSchema.model_validate(job)]
-        jobs = await self.get_all(sort_json=sort)
+        jobs = await self.repository.get_all_with_dept_type_links()
         return [JobSchema.model_validate(j) for j in jobs]
 
     # ------------------------------------------------------------------
@@ -128,3 +136,133 @@ class JobService(BaseService):
             session=self.session,
         )
         return await user_service.sync_job_users_groups(job_id)
+
+
+    async def bulk_upload_jobs(self, file: "UploadFile") -> "JobBulkUploadResult":
+        """
+        Parse an Excel file with columns [name, description], filter out rows
+        whose name or description already exist in the DB, insert the rest.
+
+        Skipping rules
+        --------------
+        A row is skipped if **either** condition holds:
+          - A job with the same ``name`` (case-insensitive strip) already exists.
+          - A job with the same ``description`` (case-insensitive strip) already exists
+            AND that description is non-empty.
+
+        Returns
+        -------
+        JobBulkUploadResult with inserted jobs + skip details.
+        Raises JobBulkUploadInvalidFile (→ 422) when the file cannot be parsed.
+        Raises JobBulkUploadNothingToInsert (→ 409) when every row is a duplicate.
+        """
+        # ── 1. Parse the Excel file ───────────────────────────────────────────
+        raw = await file.read()
+        try:
+            wb = load_workbook(io.BytesIO(raw), read_only=True, data_only=True)
+        except Exception:
+            raise await self._resolve_domain_error(
+                JobBulkUploadInvalidFile("Cannot open file as an Excel workbook.")
+            )
+
+        ws = wb.active
+        rows_iter = ws.iter_rows(values_only=True)
+
+        # Expect first row to be a header containing "name" and "description"
+        try:
+            header = [str(c).strip().lower() if c is not None else "" for c in next(rows_iter)]
+        except StopIteration:
+            raise await self._resolve_domain_error(
+                JobBulkUploadInvalidFile("File is empty.")
+            )
+
+        if "name" not in header:
+            raise await self._resolve_domain_error(
+                JobBulkUploadInvalidFile(
+                    f"Missing required column 'name'. Found columns: {header}"
+                )
+            )
+
+        name_idx = header.index("name")
+        desc_idx = header.index("description") if "description" in header else None
+
+        # Collect valid rows from the file
+        file_rows: list[JobBulkRow] = []
+        for raw_row in rows_iter:
+            name_val = raw_row[name_idx] if name_idx < len(raw_row) else None
+            if name_val is None:
+                continue
+            name_str = str(name_val).strip()
+            if not name_str:
+                continue
+            desc_str: str | None = None
+            if desc_idx is not None:
+                d = raw_row[desc_idx] if desc_idx < len(raw_row) else None
+                desc_str = str(d).strip() if d is not None else None
+
+            file_rows.append(JobBulkRow(name=name_str, description=desc_str or None))
+
+        if not file_rows:
+            raise await self._resolve_domain_error(
+                JobBulkUploadInvalidFile("No data rows found after the header.")
+            )
+
+        # ── 2. Fetch existing jobs from the DB ────────────────────────────────
+        existing_jobs = await self.get_all()          # returns list of ORM Job objects
+        existing_names: set[str] = {j.name.strip().lower() for j in existing_jobs}
+        existing_descs: set[str] = {
+            j.description.strip().lower()
+            for j in existing_jobs
+            if j.description and j.description.strip()
+        }
+
+        # ── 3. Partition: to-insert vs. skipped ──────────────────────────────
+        to_insert: list[JobBulkRow] = []
+        skipped_by_name: list[str] = []
+        skipped_by_desc: list[str] = []
+
+        for row in file_rows:
+            if row.name.lower() in existing_names:
+                skipped_by_name.append(row.name)
+                continue
+            if (
+                row.description
+                and row.description.strip().lower() in existing_descs
+            ):
+                skipped_by_desc.append(row.name)
+                continue
+            to_insert.append(row)
+
+        if not to_insert:
+            raise await self._resolve_domain_error(
+                JobBulkUploadNothingToInsert(skipped=len(file_rows))
+            )
+
+        # ── 4. Insert the new jobs ────────────────────────────────────────────
+        inserted_schemas: list[JobSchema] = []
+        for row in to_insert:
+            job_create = JobCreate(
+                name=row.name,
+                description=row.description,
+                is_active=True,
+            )
+            orm_job = await self.create(job_create)
+            inserted_schemas.append(JobSchema.model_validate(orm_job))
+
+        # ── 5. Build response ─────────────────────────────────────────────────
+        skipped_total = len(skipped_by_name) + len(skipped_by_desc)
+        detail = await self._resolve_domain_success(
+            JobBulkUploadSuccess(
+                inserted=len(inserted_schemas),
+                skipped=skipped_total,
+            )
+        )
+
+        return JobBulkUploadResult(
+            detail=detail,
+            inserted=inserted_schemas,
+            skipped_names=skipped_by_name,
+            skipped_descriptions=skipped_by_desc,
+            inserted_count=len(inserted_schemas),
+            skipped_count=skipped_total,
+        )

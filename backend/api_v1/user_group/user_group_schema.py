@@ -1,4 +1,4 @@
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from pydantic import BaseModel, Field, ConfigDict
 
 
@@ -24,3 +24,7 @@ class UserGroup(UserGroupBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
     users_qty: Optional[Dict[str, int]] = None
+    # Exposed via ORM properties — populated automatically by model_validate
+    user_group_type_name: Optional[str] = None
+    oel_ids: List[int] = []          # legacy single-essence grants
+    oesl_ids: List[int] = []         # set-grain grants

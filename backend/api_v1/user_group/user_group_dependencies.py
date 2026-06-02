@@ -1,7 +1,7 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.database import db_helper
+from backend.database.db_helper import db_helper
 from backend.api_v1.user_group.user_group_repository import UserGroupRepository
 from backend.api_v1.user_group.user_group_service import UserGroupService
 from backend.auth.jwt_auth import get_current_active_auth_user

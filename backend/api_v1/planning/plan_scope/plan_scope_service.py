@@ -1,0 +1,87 @@
+from typing import Optional, List
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from backend.api_v1.base.base_service import BaseService
+from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.utils.enums import PlanSessionStatusKey
+
+from backend.api_v1.planning.plan_scope.plan_scope_repository import PlanScopeRepository
+from backend.api_v1.planning.plan_scope.plan_scope_schema import (
+    PlanScope as PlanScopeSchema,
+    PlanScopeUpdate,
+)
+from backend.api_v1.planning.plan_scope.plan_scope_errors import (
+    PlanScopeNotFound,
+    PlanScopeSessionPending,
+    PlanScopeSessionClosed,
+)
+from backend.api_v1.planning.plan_scope.plan_scope_success import PlanScopeUpdateSuccess
+
+from backend.api_v1.planning.plan_session.plan_session_repository import (
+    PlanSessionRepository,
+)
+from backend.api_v1.planning.plan_session_status.plan_session_status_repository import (
+    PlanSessionStatusRepository,
+)
+
+
+def _scope_label(schema: PlanScopeSchema) -> str:
+    dept = schema.department.name if schema.department else str(schema.department_id)
+    jg = schema.job_group.name if schema.job_group else str(schema.job_group_id)
+    ts = schema.talent_status.key if schema.talent_status else "all"
+    return f"{dept} / {jg} / {ts}"
+
+
+class PlanScopeService(BaseService):
+    def __init__(
+        self,
+        repository: PlanScopeRepository,
+        user: Optional[EmployeeSchema] = None,
+        session: Optional[AsyncSession] = None,
+    ):
+        super().__init__(repository, user=user, session=session)
+        # Sibling repositories share the same AsyncSession
+        self.session_repo = PlanSessionRepository(session=session)
+        self.status_repo = PlanSessionStatusRepository(session=session)
+
+    async def get_by_id(self, id: int) -> PlanScopeSchema:
+        result = await self.repository.get_by_id(id)
+        if not result:
+            raise await self._resolve_domain_error(PlanScopeNotFound(id))
+        return result
+
+    async def get_scopes_by_session(
+        self, plan_session_id: int
+    ) -> List[PlanScopeSchema]:
+        records = await self.repository.get_by_session(plan_session_id)
+        return [PlanScopeSchema.model_validate(r) for r in records]
+
+    async def _guard_session_open(self, plan_session_id: int) -> None:
+        """Allow edits only when the parent session status key == 'open'."""
+        session_row = await self.session_repo.get_by_id(plan_session_id)
+        status_row = await self.status_repo.get_by_id(
+            session_row.plan_session_status_id
+        )
+        session_name = session_row.name
+        if status_row.key == PlanSessionStatusKey.PENDING.value:
+            raise await self._resolve_domain_error(
+                PlanScopeSessionPending(session_name)
+            )
+        if status_row.key == PlanSessionStatusKey.CLOSED.value:
+            raise await self._resolve_domain_error(
+                PlanScopeSessionClosed(session_name)
+            )
+
+    async def update_plan_scope(
+        self, scope_id: int, scope_update: PlanScopeUpdate
+    ) -> MutationResponse[PlanScopeSchema]:
+        orm_record = await self.get_by_id(scope_id)
+        await self._guard_session_open(orm_record.plan_session_id)
+        updated = await self.update(orm_record, scope_update, partial=True)
+        schema = PlanScopeSchema.model_validate(updated)
+        detail = await self._resolve_domain_success(
+            PlanScopeUpdateSuccess(_scope_label(schema))
+        )
+        return MutationResponse(detail=detail, data=schema)

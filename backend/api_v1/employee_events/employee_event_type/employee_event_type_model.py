@@ -25,6 +25,7 @@ class EmployeeEventType(IntIdPkMixin, TimestampMixin, Base):
     __tablename__ = "employee_event_types"
 
     name: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
+    code: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     type_directions: Mapped[list["EmployeeEventTypeDirection"]] = relationship(

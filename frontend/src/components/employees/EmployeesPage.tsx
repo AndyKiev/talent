@@ -19,7 +19,8 @@ import PeopleIcon from '@mui/icons-material/People';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ApartmentIcon from '@mui/icons-material/Apartment';
-import { Link } from '@tanstack/react-router';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import { Link, useNavigate } from '@tanstack/react-router';
 import AppShell from '../layout/AppShell';
 import { fetchEmployees, type Employee } from './employeeApi';
 import { useEmployeeColumns } from './useEmployeeColumns';
@@ -38,6 +39,7 @@ export function EmployeesPage() {
     const getString = useString({ str });
     const dataGridSx = useDataGridStyles();
     const localeText = useDataGridLocale();
+    const navigate = useNavigate();
 
     // ── Dialog / drawer state ─────────────────────────────────────────────────
     const [createOpen, setCreateOpen] = useState(false);
@@ -78,11 +80,25 @@ export function EmployeesPage() {
     const actionsColumn: GridColDef<Employee> = {
         field: '_actions',
         headerName: '',
-        width: 110,
+        width: 150,
         sortable: false,
         disableColumnMenu: true,
         renderCell: ({ row }) => (
             <Box sx={{ display: 'flex', gap: 0.25, alignItems: 'center', height: '100%' }}>
+                <Tooltip title={cfl(getString('talentAudit') || 'Talent Audit')}>
+                    <IconButton
+                        size="small"
+                        color="secondary"
+                        onClick={() =>
+                            navigate({
+                                to: '/employees/$employeeId/talent_audit',
+                                params: { employeeId: String(row.id) },
+                            })
+                        }
+                    >
+                        <AssessmentIcon fontSize="small" />
+                    </IconButton>
+                </Tooltip>
                 <Tooltip title={getString('manageDepartments') || 'Manage Departments'}>
                     <IconButton
                         size="small"

@@ -1,7 +1,7 @@
 """add people review tables
 
 Revision ID: a1b2c3d4e5f6
-Revises: d7439cc54970
+Revises: 0e829a8df7aa
 Create Date: 2026-05-31 15:00:00.000000
 
 """
@@ -10,17 +10,24 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import inspect
 
 
 # revision identifiers, used by Alembic.
 revision: str = "a1b2c3d4e5f6"
-down_revision: Union[str, Sequence[str], None] = "d7439cc54970"
+down_revision: Union[str, Sequence[str], None] = "0e829a8df7aa"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # review_dimensions — directory of evaluation dimensions (TEMPO)
+    # Guard: if tables already exist (DB was at this revision before the chain was
+    # restructured), skip gracefully so re-running upgrade head is idempotent.
+    bind = op.get_bind()
+    existing_tables = inspect(bind).get_table_names()
+    if "review_dimensions" in existing_tables:
+        return
+
     op.create_table(
         "review_dimensions",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
@@ -39,7 +46,6 @@ def upgrade() -> None:
         sa.UniqueConstraint("key", name="uq_review_dimensions_key"),
     )
 
-    # review_dimension_criterias — explanation items per dimension
     op.create_table(
         "review_dimension_criterias",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
@@ -60,7 +66,6 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
 
-    # review_sessions — one record per review campaign
     op.create_table(
         "review_sessions",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
@@ -83,7 +88,6 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
 
-    # review_session_employees — one record per employee per session
     op.create_table(
         "review_session_employees",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
@@ -101,20 +105,11 @@ def upgrade() -> None:
             server_default=sa.text("now()"),
             nullable=False,
         ),
-        sa.ForeignKeyConstraint(
-            ["session_id"],
-            ["review_sessions.id"],
-            name="fk_rse_session",
-        ),
-        sa.ForeignKeyConstraint(
-            ["employee_id"],
-            ["employees.id"],
-            name="fk_rse_employee",
-        ),
+        sa.ForeignKeyConstraint(["session_id"], ["review_sessions.id"], name="fk_rse_session"),
+        sa.ForeignKeyConstraint(["employee_id"], ["employees.id"], name="fk_rse_employee"),
         sa.PrimaryKeyConstraint("id"),
     )
 
-    # review_session_employee_evaluations — score per dimension per employee
     op.create_table(
         "review_session_employee_evaluations",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),

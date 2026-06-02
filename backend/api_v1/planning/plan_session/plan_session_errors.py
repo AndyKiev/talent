@@ -1,0 +1,114 @@
+from backend.api_v1.base.errors import (
+    NotFoundError,
+    AlreadyExistsError,
+    DomainError,
+    DeleteError,
+)
+
+
+class PlanSessionNotFound(NotFoundError):
+    message_key = "planSessionNotFound"
+
+    def __init__(self, session_id: int) -> None:
+        self.template_vars = {"sessionId": session_id}
+        self.fallback = f"Plan session with ID {session_id} not found"
+        super().__init__("PlanSession", "id", session_id)
+
+
+class PlanSessionNameTaken(AlreadyExistsError):
+    message_key = "planSessionNameTaken"
+
+    def __init__(self, name: str) -> None:
+        self.template_vars = {"name": name}
+        self.fallback = f"Plan session with name '{name}' already exists"
+        super().__init__("PlanSession", "name", name)
+
+
+class PlanSessionPeriodOverlap(DomainError):
+    """New/updated date range overlaps an existing session."""
+
+    message_key = "planSessionPeriodOverlap"
+
+    def __init__(self, conflict_name: str) -> None:
+        self.template_vars = {"conflictName": conflict_name}
+        self.fallback = (
+            f"The selected period overlaps with existing session '{conflict_name}'"
+        )
+        super().__init__(self.fallback)
+
+
+class PlanSessionPendingExists(DomainError):
+    """Only one pending session is allowed at a time."""
+
+    message_key = "planSessionPendingExists"
+
+    def __init__(self) -> None:
+        self.template_vars = {}
+        self.fallback = "There is already a pending session. Only one is allowed."
+        super().__init__(self.fallback)
+
+
+class PlanSessionActiveLimit(DomainError):
+    """No more than two active (pending + open) sessions at a time."""
+
+    message_key = "planSessionActiveLimit"
+
+    def __init__(self) -> None:
+        self.template_vars = {}
+        self.fallback = (
+            "The maximum of two active sessions is already reached."
+        )
+        super().__init__(self.fallback)
+
+
+class PlanSessionRevertBlocked(DomainError):
+    """Reverting to 'open' would exceed the active-session limit."""
+
+    message_key = "planSessionRevertBlocked"
+
+    def __init__(self) -> None:
+        self.template_vars = {}
+        self.fallback = (
+            "Cannot revert: this would exceed the maximum of two active sessions."
+        )
+        super().__init__(self.fallback)
+
+
+class PlanSessionNotClosed(DomainError):
+    """Revert is only valid on a closed session."""
+
+    message_key = "planSessionNotClosed"
+
+    def __init__(self, name: str) -> None:
+        self.template_vars = {"name": name}
+        self.fallback = f"Session '{name}' is not closed; nothing to revert."
+        super().__init__(self.fallback)
+
+
+class PlanSessionNoMatchingScopes(DomainError):
+    """No department/job-group combination matched, so no plan rows would exist."""
+
+    message_key = "planSessionNoMatchingScopes"
+
+    def __init__(self, detail: str | None = None) -> None:
+        self.template_vars = {"detail": detail or ""}
+        base = (
+            "No plan could be created: none of the default job groups fully match "
+            "the jobs available in the selected departments. Check that every job "
+            "in a planning job group is held by a department (or a descendant "
+            "department) under the chosen department categories."
+        )
+        self.fallback = f"{base} {detail}".strip() if detail else base
+        super().__init__(self.fallback)
+
+
+class PlanSessionDeleteError(DeleteError):
+    message_key = "planSessionDeleteError"
+
+    def __init__(self, name: str) -> None:
+        self.template_vars = {"name": name}
+        self.fallback = (
+            f"Plan session '{name}' cannot be deleted "
+            f"because it is referenced by other records"
+        )
+        DomainError.__init__(self, self.fallback)

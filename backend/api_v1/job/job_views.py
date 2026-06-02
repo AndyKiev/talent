@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status, Query
+from fastapi import APIRouter, Depends, status, Query, UploadFile, File
 from fastapi.security import HTTPBearer
 from typing import Annotated, Optional, List
 from pydantic import BaseModel
@@ -8,6 +8,7 @@ from backend.api_v1.job.job_schema import Job as JobSchema, JobCreate, JobUpdate
 from backend.api_v1.job.job_dependencies import get_job_service, job_by_id
 from backend.api_v1.job.job_service import JobService
 from backend.api_v1.employee.employee_service import SyncJobResult
+from backend.api_v1.job.job_schema import JobBulkUploadResult
 
 router = APIRouter(
     prefix="/jobs",
@@ -113,3 +114,22 @@ async def sync_job_users_groups(
     service: JobService = Depends(get_job_service),
 ) -> SyncJobResult:
     return await service.sync_job_users_groups(job.id)
+
+
+@router.post(
+    "/bulk_upload",
+    response_model=JobBulkUploadResult,
+    status_code=status.HTTP_200_OK,
+    summary="Bulk-upload jobs from an Excel file",
+    description=(
+        "Accepts an `.xlsx` file with columns **name** and **description**. "
+        "Rows whose name or description already exist in the database are silently "
+        "skipped. The remaining rows are inserted and returned in the response. "
+        "Returns 409 if every row is a duplicate."
+    ),
+)
+async def bulk_upload_jobs(
+    service: Annotated[JobService, Depends(get_job_service)],
+    file: UploadFile = File(..., description="Excel (.xlsx) file with columns: name, description"),
+) -> JobBulkUploadResult:
+    return await service.bulk_upload_jobs(file)

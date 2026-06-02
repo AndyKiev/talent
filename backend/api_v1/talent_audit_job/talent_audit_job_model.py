@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from backend.api_v1.employee.employee_model import Employee
     from backend.api_v1.job.job_model import Job
     from backend.api_v1.talent_audit.talent_audit_model import TalentAudit
-    from backend.api_v1.talent_audit_interview.talent_audit_interview_model import TalentAuditInterview
+    from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_model import TalentAuditInterviewJob
     from backend.api_v1.talent_audit_job_status.talent_audit_job_status_model import TalentAuditJobStatus
     from backend.api_v1.talent_status_period_link.talent_status_period_link_model import TalentStatusPeriodLink
 
@@ -53,7 +53,7 @@ class TalentAuditJob(IntIdPkMixin, Base):
         foreign_keys=[created_by],
         lazy="selectin",
     )
-    interviews: Mapped[list["TalentAuditInterview"]] = relationship(
+    interview_jobs: Mapped[list["TalentAuditInterviewJob"]] = relationship(
         back_populates="talent_audit_job",
         lazy="selectin",
     )

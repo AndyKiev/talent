@@ -26,5 +26,7 @@ class OperationUserGroupLink(IntIdPkMixin, Base):
         back_populates="_user_groups", lazy="selectin"
     )
     user_group: Mapped["UserGroup"] = relationship(
-        back_populates="operations", lazy="selectin"
+        # UserGroup no longer exposes an `operations` relationship — access is
+        # now modelled via essence / essence-set links. One-directional only.
+        lazy="selectin",
     )

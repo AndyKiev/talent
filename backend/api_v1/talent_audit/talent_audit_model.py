@@ -9,6 +9,7 @@ from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
 
 if TYPE_CHECKING:
     from backend.api_v1.employee.employee_model import Employee
+    from backend.api_v1.talent_audit_interview.talent_audit_interview_model import TalentAuditInterview
     from backend.api_v1.talent_audit_status.talent_audit_status_model import TalentAuditStatus
     from backend.api_v1.talent_audit_job.talent_audit_job_model import TalentAuditJob
 
@@ -43,6 +44,10 @@ class TalentAudit(IntIdPkMixin, Base):
         lazy="selectin",
     )
     jobs: Mapped[list["TalentAuditJob"]] = relationship(
+        back_populates="talent_audit",
+        lazy="selectin",
+    )
+    interviews: Mapped[list["TalentAuditInterview"]] = relationship(
         back_populates="talent_audit",
         lazy="selectin",
     )

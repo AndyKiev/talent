@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PlanningRouteRouteImport } from './routes/planning/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PeopleReviewIndexRouteImport } from './routes/people-review/index'
 import { Route as EmployeesIndexRouteImport } from './routes/employees/index'
@@ -18,26 +19,61 @@ import { Route as PeopleReviewMyRouteImport } from './routes/people-review/my'
 import { Route as PeopleReviewSessionIdRouteImport } from './routes/people-review/$sessionId'
 import { Route as EmployeesNewRouteImport } from './routes/employees/new'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as EmployeesEmployeeIdRouteRouteImport } from './routes/employees/$employeeId/route'
+import { Route as AdminPlanning_setupRouteRouteImport } from './routes/admin/planning_setup/route'
+import { Route as AdminJobs_groupRouteRouteImport } from './routes/admin/jobs_group/route'
+import { Route as AdminDepartments_groupRouteRouteImport } from './routes/admin/departments_group/route'
+import { Route as EmployeesEmployeeIdIndexRouteImport } from './routes/employees/$employeeId/index'
 import { Route as DeveloperTranslationsIndexRouteImport } from './routes/developer/translations/index'
+import { Route as AdminUser_groups_groupIndexRouteImport } from './routes/admin/user_groups_group/index'
 import { Route as AdminUserGroupsIndexRouteImport } from './routes/admin/user-groups/index'
 import { Route as AdminUserGroupTypesIndexRouteImport } from './routes/admin/user-group-types/index'
+import { Route as AdminTalentIndexRouteImport } from './routes/admin/talent/index'
 import { Route as AdminTalentStatusesIndexRouteImport } from './routes/admin/talent-statuses/index'
 import { Route as AdminTalentStatusPeriodLinksIndexRouteImport } from './routes/admin/talent-status-period-links/index'
 import { Route as AdminTalentPeriodsIndexRouteImport } from './routes/admin/talent-periods/index'
 import { Route as AdminStructureIndexRouteImport } from './routes/admin/structure/index'
 import { Route as AdminReviewDimensionsIndexRouteImport } from './routes/admin/review-dimensions/index'
+import { Route as AdminPlanning_setupIndexRouteImport } from './routes/admin/planning_setup/index'
+import { Route as AdminJobs_groupIndexRouteImport } from './routes/admin/jobs_group/index'
 import { Route as AdminJobsIndexRouteImport } from './routes/admin/jobs/index'
+import { Route as AdminJob_groupsIndexRouteImport } from './routes/admin/job_groups/index'
+import { Route as AdminJob_group_typesIndexRouteImport } from './routes/admin/job_group_types/index'
 import { Route as AdminEmployee_eventsIndexRouteImport } from './routes/admin/employee_events/index'
+import { Route as AdminDepartments_groupIndexRouteImport } from './routes/admin/departments_group/index'
 import { Route as AdminDepartment_typesIndexRouteImport } from './routes/admin/department_types/index'
 import { Route as AdminDepartment_categoriesIndexRouteImport } from './routes/admin/department_categories/index'
 import { Route as PeopleReviewEvaluationRseIdRouteImport } from './routes/people-review/evaluation/$rseId'
 import { Route as EmployeesEmployeeIdEditRouteImport } from './routes/employees/$employeeId/edit'
 import { Route as AdminStructureDepartmentIdRouteImport } from './routes/admin/structure/$departmentId'
+import { Route as AdminDepartments_groupDepartment_typesRouteRouteImport } from './routes/admin/departments_group/department_types/route'
+import { Route as EmployeesEmployeeIdTalent_auditIndexRouteImport } from './routes/employees/$employeeId/talent_audit/index'
+import { Route as EmployeesEmployeeIdSummaryIndexRouteImport } from './routes/employees/$employeeId/summary/index'
+import { Route as EmployeesEmployeeIdEventsIndexRouteImport } from './routes/employees/$employeeId/events/index'
+import { Route as EmployeesEmployeeIdDr_historyIndexRouteImport } from './routes/employees/$employeeId/dr_history/index'
+import { Route as EmployeesEmployeeIdDepartmentsIndexRouteImport } from './routes/employees/$employeeId/departments/index'
+import { Route as AdminPlanning_setupPlan_session_statusIndexRouteImport } from './routes/admin/planning_setup/plan_session_status/index'
+import { Route as AdminPlanning_setupPlan_scope_defaultsIndexRouteImport } from './routes/admin/planning_setup/plan_scope_defaults/index'
+import { Route as AdminPlanning_setupPlan_category_defaultsIndexRouteImport } from './routes/admin/planning_setup/plan_category_defaults/index'
+import { Route as AdminJobs_groupJobsIndexRouteImport } from './routes/admin/jobs_group/jobs/index'
+import { Route as AdminJobs_groupJob_groupsIndexRouteImport } from './routes/admin/jobs_group/job_groups/index'
+import { Route as AdminJobs_groupJob_group_typesIndexRouteImport } from './routes/admin/jobs_group/job_group_types/index'
 import { Route as AdminEmployee_eventsEmployee_event_typesIndexRouteImport } from './routes/admin/employee_events/employee_event_types/index'
 import { Route as AdminEmployee_eventsEmployee_event_statusesIndexRouteImport } from './routes/admin/employee_events/employee_event_statuses/index'
 import { Route as AdminEmployee_eventsEmployee_event_direction_typesIndexRouteImport } from './routes/admin/employee_events/employee_event_direction_types/index'
 import { Route as AdminEmployee_eventsEmployee_event_change_dept_typesIndexRouteImport } from './routes/admin/employee_events/employee_event_change_dept_types/index'
+import { Route as AdminDepartments_groupStructureIndexRouteImport } from './routes/admin/departments_group/structure/index'
+import { Route as AdminDepartments_groupDepartment_typesIndexRouteImport } from './routes/admin/departments_group/department_types/index'
+import { Route as AdminDepartments_groupDepartment_categoriesIndexRouteImport } from './routes/admin/departments_group/department_categories/index'
+import { Route as AdminDepartments_groupDepartment_typesListIndexRouteImport } from './routes/admin/departments_group/department_types/list/index'
+import { Route as AdminDepartments_groupDepartment_typesJob_linksIndexRouteImport } from './routes/admin/departments_group/department_types/job_links/index'
+import { Route as AdminDepartments_groupDepartment_typesHierarchyIndexRouteImport } from './routes/admin/departments_group/department_types/hierarchy/index'
 
+const PlanningRouteRoute = PlanningRouteRouteImport.update({
+  id: '/planning',
+  path: '/planning',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -83,10 +119,45 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EmployeesEmployeeIdRouteRoute =
+  EmployeesEmployeeIdRouteRouteImport.update({
+    id: '/employees/$employeeId',
+    path: '/employees/$employeeId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AdminPlanning_setupRouteRoute =
+  AdminPlanning_setupRouteRouteImport.update({
+    id: '/admin/planning_setup',
+    path: '/admin/planning_setup',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AdminJobs_groupRouteRoute = AdminJobs_groupRouteRouteImport.update({
+  id: '/admin/jobs_group',
+  path: '/admin/jobs_group',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminDepartments_groupRouteRoute =
+  AdminDepartments_groupRouteRouteImport.update({
+    id: '/admin/departments_group',
+    path: '/admin/departments_group',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const EmployeesEmployeeIdIndexRoute =
+  EmployeesEmployeeIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => EmployeesEmployeeIdRouteRoute,
+  } as any)
 const DeveloperTranslationsIndexRoute =
   DeveloperTranslationsIndexRouteImport.update({
     id: '/developer/translations/',
     path: '/developer/translations/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AdminUser_groups_groupIndexRoute =
+  AdminUser_groups_groupIndexRouteImport.update({
+    id: '/admin/user_groups_group/',
+    path: '/admin/user_groups_group/',
     getParentRoute: () => rootRouteImport,
   } as any)
 const AdminUserGroupsIndexRoute = AdminUserGroupsIndexRouteImport.update({
@@ -100,6 +171,11 @@ const AdminUserGroupTypesIndexRoute =
     path: '/admin/user-group-types/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AdminTalentIndexRoute = AdminTalentIndexRouteImport.update({
+  id: '/admin/talent/',
+  path: '/admin/talent/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminTalentStatusesIndexRoute =
   AdminTalentStatusesIndexRouteImport.update({
     id: '/admin/talent-statuses/',
@@ -128,16 +204,44 @@ const AdminReviewDimensionsIndexRoute =
     path: '/admin/review-dimensions/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AdminPlanning_setupIndexRoute =
+  AdminPlanning_setupIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AdminPlanning_setupRouteRoute,
+  } as any)
+const AdminJobs_groupIndexRoute = AdminJobs_groupIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminJobs_groupRouteRoute,
+} as any)
 const AdminJobsIndexRoute = AdminJobsIndexRouteImport.update({
   id: '/admin/jobs/',
   path: '/admin/jobs/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminJob_groupsIndexRoute = AdminJob_groupsIndexRouteImport.update({
+  id: '/admin/job_groups/',
+  path: '/admin/job_groups/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminJob_group_typesIndexRoute =
+  AdminJob_group_typesIndexRouteImport.update({
+    id: '/admin/job_group_types/',
+    path: '/admin/job_group_types/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminEmployee_eventsIndexRoute =
   AdminEmployee_eventsIndexRouteImport.update({
     id: '/admin/employee_events/',
     path: '/admin/employee_events/',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const AdminDepartments_groupIndexRoute =
+  AdminDepartments_groupIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AdminDepartments_groupRouteRoute,
   } as any)
 const AdminDepartment_typesIndexRoute =
   AdminDepartment_typesIndexRouteImport.update({
@@ -158,15 +262,87 @@ const PeopleReviewEvaluationRseIdRoute =
     getParentRoute: () => rootRouteImport,
   } as any)
 const EmployeesEmployeeIdEditRoute = EmployeesEmployeeIdEditRouteImport.update({
-  id: '/employees/$employeeId/edit',
-  path: '/employees/$employeeId/edit',
-  getParentRoute: () => rootRouteImport,
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => EmployeesEmployeeIdRouteRoute,
 } as any)
 const AdminStructureDepartmentIdRoute =
   AdminStructureDepartmentIdRouteImport.update({
     id: '/admin/structure/$departmentId',
     path: '/admin/structure/$departmentId',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const AdminDepartments_groupDepartment_typesRouteRoute =
+  AdminDepartments_groupDepartment_typesRouteRouteImport.update({
+    id: '/department_types',
+    path: '/department_types',
+    getParentRoute: () => AdminDepartments_groupRouteRoute,
+  } as any)
+const EmployeesEmployeeIdTalent_auditIndexRoute =
+  EmployeesEmployeeIdTalent_auditIndexRouteImport.update({
+    id: '/talent_audit/',
+    path: '/talent_audit/',
+    getParentRoute: () => EmployeesEmployeeIdRouteRoute,
+  } as any)
+const EmployeesEmployeeIdSummaryIndexRoute =
+  EmployeesEmployeeIdSummaryIndexRouteImport.update({
+    id: '/summary/',
+    path: '/summary/',
+    getParentRoute: () => EmployeesEmployeeIdRouteRoute,
+  } as any)
+const EmployeesEmployeeIdEventsIndexRoute =
+  EmployeesEmployeeIdEventsIndexRouteImport.update({
+    id: '/events/',
+    path: '/events/',
+    getParentRoute: () => EmployeesEmployeeIdRouteRoute,
+  } as any)
+const EmployeesEmployeeIdDr_historyIndexRoute =
+  EmployeesEmployeeIdDr_historyIndexRouteImport.update({
+    id: '/dr_history/',
+    path: '/dr_history/',
+    getParentRoute: () => EmployeesEmployeeIdRouteRoute,
+  } as any)
+const EmployeesEmployeeIdDepartmentsIndexRoute =
+  EmployeesEmployeeIdDepartmentsIndexRouteImport.update({
+    id: '/departments/',
+    path: '/departments/',
+    getParentRoute: () => EmployeesEmployeeIdRouteRoute,
+  } as any)
+const AdminPlanning_setupPlan_session_statusIndexRoute =
+  AdminPlanning_setupPlan_session_statusIndexRouteImport.update({
+    id: '/plan_session_status/',
+    path: '/plan_session_status/',
+    getParentRoute: () => AdminPlanning_setupRouteRoute,
+  } as any)
+const AdminPlanning_setupPlan_scope_defaultsIndexRoute =
+  AdminPlanning_setupPlan_scope_defaultsIndexRouteImport.update({
+    id: '/plan_scope_defaults/',
+    path: '/plan_scope_defaults/',
+    getParentRoute: () => AdminPlanning_setupRouteRoute,
+  } as any)
+const AdminPlanning_setupPlan_category_defaultsIndexRoute =
+  AdminPlanning_setupPlan_category_defaultsIndexRouteImport.update({
+    id: '/plan_category_defaults/',
+    path: '/plan_category_defaults/',
+    getParentRoute: () => AdminPlanning_setupRouteRoute,
+  } as any)
+const AdminJobs_groupJobsIndexRoute =
+  AdminJobs_groupJobsIndexRouteImport.update({
+    id: '/jobs/',
+    path: '/jobs/',
+    getParentRoute: () => AdminJobs_groupRouteRoute,
+  } as any)
+const AdminJobs_groupJob_groupsIndexRoute =
+  AdminJobs_groupJob_groupsIndexRouteImport.update({
+    id: '/job_groups/',
+    path: '/job_groups/',
+    getParentRoute: () => AdminJobs_groupRouteRoute,
+  } as any)
+const AdminJobs_groupJob_group_typesIndexRoute =
+  AdminJobs_groupJob_group_typesIndexRouteImport.update({
+    id: '/job_group_types/',
+    path: '/job_group_types/',
+    getParentRoute: () => AdminJobs_groupRouteRoute,
   } as any)
 const AdminEmployee_eventsEmployee_event_typesIndexRoute =
   AdminEmployee_eventsEmployee_event_typesIndexRouteImport.update({
@@ -192,9 +368,50 @@ const AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute =
     path: '/admin/employee_events/employee_event_change_dept_types/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AdminDepartments_groupStructureIndexRoute =
+  AdminDepartments_groupStructureIndexRouteImport.update({
+    id: '/structure/',
+    path: '/structure/',
+    getParentRoute: () => AdminDepartments_groupRouteRoute,
+  } as any)
+const AdminDepartments_groupDepartment_typesIndexRoute =
+  AdminDepartments_groupDepartment_typesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AdminDepartments_groupDepartment_typesRouteRoute,
+  } as any)
+const AdminDepartments_groupDepartment_categoriesIndexRoute =
+  AdminDepartments_groupDepartment_categoriesIndexRouteImport.update({
+    id: '/department_categories/',
+    path: '/department_categories/',
+    getParentRoute: () => AdminDepartments_groupRouteRoute,
+  } as any)
+const AdminDepartments_groupDepartment_typesListIndexRoute =
+  AdminDepartments_groupDepartment_typesListIndexRouteImport.update({
+    id: '/list/',
+    path: '/list/',
+    getParentRoute: () => AdminDepartments_groupDepartment_typesRouteRoute,
+  } as any)
+const AdminDepartments_groupDepartment_typesJob_linksIndexRoute =
+  AdminDepartments_groupDepartment_typesJob_linksIndexRouteImport.update({
+    id: '/job_links/',
+    path: '/job_links/',
+    getParentRoute: () => AdminDepartments_groupDepartment_typesRouteRoute,
+  } as any)
+const AdminDepartments_groupDepartment_typesHierarchyIndexRoute =
+  AdminDepartments_groupDepartment_typesHierarchyIndexRouteImport.update({
+    id: '/hierarchy/',
+    path: '/hierarchy/',
+    getParentRoute: () => AdminDepartments_groupDepartment_typesRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/planning': typeof PlanningRouteRoute
+  '/admin/departments_group': typeof AdminDepartments_groupRouteRouteWithChildren
+  '/admin/jobs_group': typeof AdminJobs_groupRouteRouteWithChildren
+  '/admin/planning_setup': typeof AdminPlanning_setupRouteRouteWithChildren
+  '/employees/$employeeId': typeof EmployeesEmployeeIdRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/employees/new': typeof EmployeesNewRoute
   '/people-review/$sessionId': typeof PeopleReviewSessionIdRoute
@@ -203,28 +420,55 @@ export interface FileRoutesByFullPath {
   '/developer': typeof DeveloperIndexRoute
   '/employees': typeof EmployeesIndexRoute
   '/people-review': typeof PeopleReviewIndexRoute
+  '/admin/departments_group/department_types': typeof AdminDepartments_groupDepartment_typesRouteRouteWithChildren
   '/admin/structure/$departmentId': typeof AdminStructureDepartmentIdRoute
   '/employees/$employeeId/edit': typeof EmployeesEmployeeIdEditRoute
   '/people-review/evaluation/$rseId': typeof PeopleReviewEvaluationRseIdRoute
   '/admin/department_categories': typeof AdminDepartment_categoriesIndexRoute
   '/admin/department_types': typeof AdminDepartment_typesIndexRoute
+  '/admin/departments_group/': typeof AdminDepartments_groupIndexRoute
   '/admin/employee_events': typeof AdminEmployee_eventsIndexRoute
+  '/admin/job_group_types': typeof AdminJob_group_typesIndexRoute
+  '/admin/job_groups': typeof AdminJob_groupsIndexRoute
   '/admin/jobs': typeof AdminJobsIndexRoute
+  '/admin/jobs_group/': typeof AdminJobs_groupIndexRoute
+  '/admin/planning_setup/': typeof AdminPlanning_setupIndexRoute
   '/admin/review-dimensions': typeof AdminReviewDimensionsIndexRoute
   '/admin/structure': typeof AdminStructureIndexRoute
   '/admin/talent-periods': typeof AdminTalentPeriodsIndexRoute
   '/admin/talent-status-period-links': typeof AdminTalentStatusPeriodLinksIndexRoute
   '/admin/talent-statuses': typeof AdminTalentStatusesIndexRoute
+  '/admin/talent': typeof AdminTalentIndexRoute
   '/admin/user-group-types': typeof AdminUserGroupTypesIndexRoute
   '/admin/user-groups': typeof AdminUserGroupsIndexRoute
+  '/admin/user_groups_group': typeof AdminUser_groups_groupIndexRoute
   '/developer/translations': typeof DeveloperTranslationsIndexRoute
+  '/employees/$employeeId/': typeof EmployeesEmployeeIdIndexRoute
+  '/admin/departments_group/department_categories': typeof AdminDepartments_groupDepartment_categoriesIndexRoute
+  '/admin/departments_group/department_types/': typeof AdminDepartments_groupDepartment_typesIndexRoute
+  '/admin/departments_group/structure': typeof AdminDepartments_groupStructureIndexRoute
   '/admin/employee_events/employee_event_change_dept_types': typeof AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute
   '/admin/employee_events/employee_event_direction_types': typeof AdminEmployee_eventsEmployee_event_direction_typesIndexRoute
   '/admin/employee_events/employee_event_statuses': typeof AdminEmployee_eventsEmployee_event_statusesIndexRoute
   '/admin/employee_events/employee_event_types': typeof AdminEmployee_eventsEmployee_event_typesIndexRoute
+  '/admin/jobs_group/job_group_types': typeof AdminJobs_groupJob_group_typesIndexRoute
+  '/admin/jobs_group/job_groups': typeof AdminJobs_groupJob_groupsIndexRoute
+  '/admin/jobs_group/jobs': typeof AdminJobs_groupJobsIndexRoute
+  '/admin/planning_setup/plan_category_defaults': typeof AdminPlanning_setupPlan_category_defaultsIndexRoute
+  '/admin/planning_setup/plan_scope_defaults': typeof AdminPlanning_setupPlan_scope_defaultsIndexRoute
+  '/admin/planning_setup/plan_session_status': typeof AdminPlanning_setupPlan_session_statusIndexRoute
+  '/employees/$employeeId/departments': typeof EmployeesEmployeeIdDepartmentsIndexRoute
+  '/employees/$employeeId/dr_history': typeof EmployeesEmployeeIdDr_historyIndexRoute
+  '/employees/$employeeId/events': typeof EmployeesEmployeeIdEventsIndexRoute
+  '/employees/$employeeId/summary': typeof EmployeesEmployeeIdSummaryIndexRoute
+  '/employees/$employeeId/talent_audit': typeof EmployeesEmployeeIdTalent_auditIndexRoute
+  '/admin/departments_group/department_types/hierarchy': typeof AdminDepartments_groupDepartment_typesHierarchyIndexRoute
+  '/admin/departments_group/department_types/job_links': typeof AdminDepartments_groupDepartment_typesJob_linksIndexRoute
+  '/admin/departments_group/department_types/list': typeof AdminDepartments_groupDepartment_typesListIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/planning': typeof PlanningRouteRoute
   '/auth/login': typeof AuthLoginRoute
   '/employees/new': typeof EmployeesNewRoute
   '/people-review/$sessionId': typeof PeopleReviewSessionIdRoute
@@ -238,24 +482,54 @@ export interface FileRoutesByTo {
   '/people-review/evaluation/$rseId': typeof PeopleReviewEvaluationRseIdRoute
   '/admin/department_categories': typeof AdminDepartment_categoriesIndexRoute
   '/admin/department_types': typeof AdminDepartment_typesIndexRoute
+  '/admin/departments_group': typeof AdminDepartments_groupIndexRoute
   '/admin/employee_events': typeof AdminEmployee_eventsIndexRoute
+  '/admin/job_group_types': typeof AdminJob_group_typesIndexRoute
+  '/admin/job_groups': typeof AdminJob_groupsIndexRoute
   '/admin/jobs': typeof AdminJobsIndexRoute
+  '/admin/jobs_group': typeof AdminJobs_groupIndexRoute
+  '/admin/planning_setup': typeof AdminPlanning_setupIndexRoute
   '/admin/review-dimensions': typeof AdminReviewDimensionsIndexRoute
   '/admin/structure': typeof AdminStructureIndexRoute
   '/admin/talent-periods': typeof AdminTalentPeriodsIndexRoute
   '/admin/talent-status-period-links': typeof AdminTalentStatusPeriodLinksIndexRoute
   '/admin/talent-statuses': typeof AdminTalentStatusesIndexRoute
+  '/admin/talent': typeof AdminTalentIndexRoute
   '/admin/user-group-types': typeof AdminUserGroupTypesIndexRoute
   '/admin/user-groups': typeof AdminUserGroupsIndexRoute
+  '/admin/user_groups_group': typeof AdminUser_groups_groupIndexRoute
   '/developer/translations': typeof DeveloperTranslationsIndexRoute
+  '/employees/$employeeId': typeof EmployeesEmployeeIdIndexRoute
+  '/admin/departments_group/department_categories': typeof AdminDepartments_groupDepartment_categoriesIndexRoute
+  '/admin/departments_group/department_types': typeof AdminDepartments_groupDepartment_typesIndexRoute
+  '/admin/departments_group/structure': typeof AdminDepartments_groupStructureIndexRoute
   '/admin/employee_events/employee_event_change_dept_types': typeof AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute
   '/admin/employee_events/employee_event_direction_types': typeof AdminEmployee_eventsEmployee_event_direction_typesIndexRoute
   '/admin/employee_events/employee_event_statuses': typeof AdminEmployee_eventsEmployee_event_statusesIndexRoute
   '/admin/employee_events/employee_event_types': typeof AdminEmployee_eventsEmployee_event_typesIndexRoute
+  '/admin/jobs_group/job_group_types': typeof AdminJobs_groupJob_group_typesIndexRoute
+  '/admin/jobs_group/job_groups': typeof AdminJobs_groupJob_groupsIndexRoute
+  '/admin/jobs_group/jobs': typeof AdminJobs_groupJobsIndexRoute
+  '/admin/planning_setup/plan_category_defaults': typeof AdminPlanning_setupPlan_category_defaultsIndexRoute
+  '/admin/planning_setup/plan_scope_defaults': typeof AdminPlanning_setupPlan_scope_defaultsIndexRoute
+  '/admin/planning_setup/plan_session_status': typeof AdminPlanning_setupPlan_session_statusIndexRoute
+  '/employees/$employeeId/departments': typeof EmployeesEmployeeIdDepartmentsIndexRoute
+  '/employees/$employeeId/dr_history': typeof EmployeesEmployeeIdDr_historyIndexRoute
+  '/employees/$employeeId/events': typeof EmployeesEmployeeIdEventsIndexRoute
+  '/employees/$employeeId/summary': typeof EmployeesEmployeeIdSummaryIndexRoute
+  '/employees/$employeeId/talent_audit': typeof EmployeesEmployeeIdTalent_auditIndexRoute
+  '/admin/departments_group/department_types/hierarchy': typeof AdminDepartments_groupDepartment_typesHierarchyIndexRoute
+  '/admin/departments_group/department_types/job_links': typeof AdminDepartments_groupDepartment_typesJob_linksIndexRoute
+  '/admin/departments_group/department_types/list': typeof AdminDepartments_groupDepartment_typesListIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/planning': typeof PlanningRouteRoute
+  '/admin/departments_group': typeof AdminDepartments_groupRouteRouteWithChildren
+  '/admin/jobs_group': typeof AdminJobs_groupRouteRouteWithChildren
+  '/admin/planning_setup': typeof AdminPlanning_setupRouteRouteWithChildren
+  '/employees/$employeeId': typeof EmployeesEmployeeIdRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/employees/new': typeof EmployeesNewRoute
   '/people-review/$sessionId': typeof PeopleReviewSessionIdRoute
@@ -264,30 +538,61 @@ export interface FileRoutesById {
   '/developer/': typeof DeveloperIndexRoute
   '/employees/': typeof EmployeesIndexRoute
   '/people-review/': typeof PeopleReviewIndexRoute
+  '/admin/departments_group/department_types': typeof AdminDepartments_groupDepartment_typesRouteRouteWithChildren
   '/admin/structure/$departmentId': typeof AdminStructureDepartmentIdRoute
   '/employees/$employeeId/edit': typeof EmployeesEmployeeIdEditRoute
   '/people-review/evaluation/$rseId': typeof PeopleReviewEvaluationRseIdRoute
   '/admin/department_categories/': typeof AdminDepartment_categoriesIndexRoute
   '/admin/department_types/': typeof AdminDepartment_typesIndexRoute
+  '/admin/departments_group/': typeof AdminDepartments_groupIndexRoute
   '/admin/employee_events/': typeof AdminEmployee_eventsIndexRoute
+  '/admin/job_group_types/': typeof AdminJob_group_typesIndexRoute
+  '/admin/job_groups/': typeof AdminJob_groupsIndexRoute
   '/admin/jobs/': typeof AdminJobsIndexRoute
+  '/admin/jobs_group/': typeof AdminJobs_groupIndexRoute
+  '/admin/planning_setup/': typeof AdminPlanning_setupIndexRoute
   '/admin/review-dimensions/': typeof AdminReviewDimensionsIndexRoute
   '/admin/structure/': typeof AdminStructureIndexRoute
   '/admin/talent-periods/': typeof AdminTalentPeriodsIndexRoute
   '/admin/talent-status-period-links/': typeof AdminTalentStatusPeriodLinksIndexRoute
   '/admin/talent-statuses/': typeof AdminTalentStatusesIndexRoute
+  '/admin/talent/': typeof AdminTalentIndexRoute
   '/admin/user-group-types/': typeof AdminUserGroupTypesIndexRoute
   '/admin/user-groups/': typeof AdminUserGroupsIndexRoute
+  '/admin/user_groups_group/': typeof AdminUser_groups_groupIndexRoute
   '/developer/translations/': typeof DeveloperTranslationsIndexRoute
+  '/employees/$employeeId/': typeof EmployeesEmployeeIdIndexRoute
+  '/admin/departments_group/department_categories/': typeof AdminDepartments_groupDepartment_categoriesIndexRoute
+  '/admin/departments_group/department_types/': typeof AdminDepartments_groupDepartment_typesIndexRoute
+  '/admin/departments_group/structure/': typeof AdminDepartments_groupStructureIndexRoute
   '/admin/employee_events/employee_event_change_dept_types/': typeof AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute
   '/admin/employee_events/employee_event_direction_types/': typeof AdminEmployee_eventsEmployee_event_direction_typesIndexRoute
   '/admin/employee_events/employee_event_statuses/': typeof AdminEmployee_eventsEmployee_event_statusesIndexRoute
   '/admin/employee_events/employee_event_types/': typeof AdminEmployee_eventsEmployee_event_typesIndexRoute
+  '/admin/jobs_group/job_group_types/': typeof AdminJobs_groupJob_group_typesIndexRoute
+  '/admin/jobs_group/job_groups/': typeof AdminJobs_groupJob_groupsIndexRoute
+  '/admin/jobs_group/jobs/': typeof AdminJobs_groupJobsIndexRoute
+  '/admin/planning_setup/plan_category_defaults/': typeof AdminPlanning_setupPlan_category_defaultsIndexRoute
+  '/admin/planning_setup/plan_scope_defaults/': typeof AdminPlanning_setupPlan_scope_defaultsIndexRoute
+  '/admin/planning_setup/plan_session_status/': typeof AdminPlanning_setupPlan_session_statusIndexRoute
+  '/employees/$employeeId/departments/': typeof EmployeesEmployeeIdDepartmentsIndexRoute
+  '/employees/$employeeId/dr_history/': typeof EmployeesEmployeeIdDr_historyIndexRoute
+  '/employees/$employeeId/events/': typeof EmployeesEmployeeIdEventsIndexRoute
+  '/employees/$employeeId/summary/': typeof EmployeesEmployeeIdSummaryIndexRoute
+  '/employees/$employeeId/talent_audit/': typeof EmployeesEmployeeIdTalent_auditIndexRoute
+  '/admin/departments_group/department_types/hierarchy/': typeof AdminDepartments_groupDepartment_typesHierarchyIndexRoute
+  '/admin/departments_group/department_types/job_links/': typeof AdminDepartments_groupDepartment_typesJob_linksIndexRoute
+  '/admin/departments_group/department_types/list/': typeof AdminDepartments_groupDepartment_typesListIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/planning'
+    | '/admin/departments_group'
+    | '/admin/jobs_group'
+    | '/admin/planning_setup'
+    | '/employees/$employeeId'
     | '/auth/login'
     | '/employees/new'
     | '/people-review/$sessionId'
@@ -296,28 +601,55 @@ export interface FileRouteTypes {
     | '/developer'
     | '/employees'
     | '/people-review'
+    | '/admin/departments_group/department_types'
     | '/admin/structure/$departmentId'
     | '/employees/$employeeId/edit'
     | '/people-review/evaluation/$rseId'
     | '/admin/department_categories'
     | '/admin/department_types'
+    | '/admin/departments_group/'
     | '/admin/employee_events'
+    | '/admin/job_group_types'
+    | '/admin/job_groups'
     | '/admin/jobs'
+    | '/admin/jobs_group/'
+    | '/admin/planning_setup/'
     | '/admin/review-dimensions'
     | '/admin/structure'
     | '/admin/talent-periods'
     | '/admin/talent-status-period-links'
     | '/admin/talent-statuses'
+    | '/admin/talent'
     | '/admin/user-group-types'
     | '/admin/user-groups'
+    | '/admin/user_groups_group'
     | '/developer/translations'
+    | '/employees/$employeeId/'
+    | '/admin/departments_group/department_categories'
+    | '/admin/departments_group/department_types/'
+    | '/admin/departments_group/structure'
     | '/admin/employee_events/employee_event_change_dept_types'
     | '/admin/employee_events/employee_event_direction_types'
     | '/admin/employee_events/employee_event_statuses'
     | '/admin/employee_events/employee_event_types'
+    | '/admin/jobs_group/job_group_types'
+    | '/admin/jobs_group/job_groups'
+    | '/admin/jobs_group/jobs'
+    | '/admin/planning_setup/plan_category_defaults'
+    | '/admin/planning_setup/plan_scope_defaults'
+    | '/admin/planning_setup/plan_session_status'
+    | '/employees/$employeeId/departments'
+    | '/employees/$employeeId/dr_history'
+    | '/employees/$employeeId/events'
+    | '/employees/$employeeId/summary'
+    | '/employees/$employeeId/talent_audit'
+    | '/admin/departments_group/department_types/hierarchy'
+    | '/admin/departments_group/department_types/job_links'
+    | '/admin/departments_group/department_types/list'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/planning'
     | '/auth/login'
     | '/employees/new'
     | '/people-review/$sessionId'
@@ -331,23 +663,53 @@ export interface FileRouteTypes {
     | '/people-review/evaluation/$rseId'
     | '/admin/department_categories'
     | '/admin/department_types'
+    | '/admin/departments_group'
     | '/admin/employee_events'
+    | '/admin/job_group_types'
+    | '/admin/job_groups'
     | '/admin/jobs'
+    | '/admin/jobs_group'
+    | '/admin/planning_setup'
     | '/admin/review-dimensions'
     | '/admin/structure'
     | '/admin/talent-periods'
     | '/admin/talent-status-period-links'
     | '/admin/talent-statuses'
+    | '/admin/talent'
     | '/admin/user-group-types'
     | '/admin/user-groups'
+    | '/admin/user_groups_group'
     | '/developer/translations'
+    | '/employees/$employeeId'
+    | '/admin/departments_group/department_categories'
+    | '/admin/departments_group/department_types'
+    | '/admin/departments_group/structure'
     | '/admin/employee_events/employee_event_change_dept_types'
     | '/admin/employee_events/employee_event_direction_types'
     | '/admin/employee_events/employee_event_statuses'
     | '/admin/employee_events/employee_event_types'
+    | '/admin/jobs_group/job_group_types'
+    | '/admin/jobs_group/job_groups'
+    | '/admin/jobs_group/jobs'
+    | '/admin/planning_setup/plan_category_defaults'
+    | '/admin/planning_setup/plan_scope_defaults'
+    | '/admin/planning_setup/plan_session_status'
+    | '/employees/$employeeId/departments'
+    | '/employees/$employeeId/dr_history'
+    | '/employees/$employeeId/events'
+    | '/employees/$employeeId/summary'
+    | '/employees/$employeeId/talent_audit'
+    | '/admin/departments_group/department_types/hierarchy'
+    | '/admin/departments_group/department_types/job_links'
+    | '/admin/departments_group/department_types/list'
   id:
     | '__root__'
     | '/'
+    | '/planning'
+    | '/admin/departments_group'
+    | '/admin/jobs_group'
+    | '/admin/planning_setup'
+    | '/employees/$employeeId'
     | '/auth/login'
     | '/employees/new'
     | '/people-review/$sessionId'
@@ -356,29 +718,60 @@ export interface FileRouteTypes {
     | '/developer/'
     | '/employees/'
     | '/people-review/'
+    | '/admin/departments_group/department_types'
     | '/admin/structure/$departmentId'
     | '/employees/$employeeId/edit'
     | '/people-review/evaluation/$rseId'
     | '/admin/department_categories/'
     | '/admin/department_types/'
+    | '/admin/departments_group/'
     | '/admin/employee_events/'
+    | '/admin/job_group_types/'
+    | '/admin/job_groups/'
     | '/admin/jobs/'
+    | '/admin/jobs_group/'
+    | '/admin/planning_setup/'
     | '/admin/review-dimensions/'
     | '/admin/structure/'
     | '/admin/talent-periods/'
     | '/admin/talent-status-period-links/'
     | '/admin/talent-statuses/'
+    | '/admin/talent/'
     | '/admin/user-group-types/'
     | '/admin/user-groups/'
+    | '/admin/user_groups_group/'
     | '/developer/translations/'
+    | '/employees/$employeeId/'
+    | '/admin/departments_group/department_categories/'
+    | '/admin/departments_group/department_types/'
+    | '/admin/departments_group/structure/'
     | '/admin/employee_events/employee_event_change_dept_types/'
     | '/admin/employee_events/employee_event_direction_types/'
     | '/admin/employee_events/employee_event_statuses/'
     | '/admin/employee_events/employee_event_types/'
+    | '/admin/jobs_group/job_group_types/'
+    | '/admin/jobs_group/job_groups/'
+    | '/admin/jobs_group/jobs/'
+    | '/admin/planning_setup/plan_category_defaults/'
+    | '/admin/planning_setup/plan_scope_defaults/'
+    | '/admin/planning_setup/plan_session_status/'
+    | '/employees/$employeeId/departments/'
+    | '/employees/$employeeId/dr_history/'
+    | '/employees/$employeeId/events/'
+    | '/employees/$employeeId/summary/'
+    | '/employees/$employeeId/talent_audit/'
+    | '/admin/departments_group/department_types/hierarchy/'
+    | '/admin/departments_group/department_types/job_links/'
+    | '/admin/departments_group/department_types/list/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PlanningRouteRoute: typeof PlanningRouteRoute
+  AdminDepartments_groupRouteRoute: typeof AdminDepartments_groupRouteRouteWithChildren
+  AdminJobs_groupRouteRoute: typeof AdminJobs_groupRouteRouteWithChildren
+  AdminPlanning_setupRouteRoute: typeof AdminPlanning_setupRouteRouteWithChildren
+  EmployeesEmployeeIdRouteRoute: typeof EmployeesEmployeeIdRouteRouteWithChildren
   AuthLoginRoute: typeof AuthLoginRoute
   EmployeesNewRoute: typeof EmployeesNewRoute
   PeopleReviewSessionIdRoute: typeof PeopleReviewSessionIdRoute
@@ -388,19 +781,22 @@ export interface RootRouteChildren {
   EmployeesIndexRoute: typeof EmployeesIndexRoute
   PeopleReviewIndexRoute: typeof PeopleReviewIndexRoute
   AdminStructureDepartmentIdRoute: typeof AdminStructureDepartmentIdRoute
-  EmployeesEmployeeIdEditRoute: typeof EmployeesEmployeeIdEditRoute
   PeopleReviewEvaluationRseIdRoute: typeof PeopleReviewEvaluationRseIdRoute
   AdminDepartment_categoriesIndexRoute: typeof AdminDepartment_categoriesIndexRoute
   AdminDepartment_typesIndexRoute: typeof AdminDepartment_typesIndexRoute
   AdminEmployee_eventsIndexRoute: typeof AdminEmployee_eventsIndexRoute
+  AdminJob_group_typesIndexRoute: typeof AdminJob_group_typesIndexRoute
+  AdminJob_groupsIndexRoute: typeof AdminJob_groupsIndexRoute
   AdminJobsIndexRoute: typeof AdminJobsIndexRoute
   AdminReviewDimensionsIndexRoute: typeof AdminReviewDimensionsIndexRoute
   AdminStructureIndexRoute: typeof AdminStructureIndexRoute
   AdminTalentPeriodsIndexRoute: typeof AdminTalentPeriodsIndexRoute
   AdminTalentStatusPeriodLinksIndexRoute: typeof AdminTalentStatusPeriodLinksIndexRoute
   AdminTalentStatusesIndexRoute: typeof AdminTalentStatusesIndexRoute
+  AdminTalentIndexRoute: typeof AdminTalentIndexRoute
   AdminUserGroupTypesIndexRoute: typeof AdminUserGroupTypesIndexRoute
   AdminUserGroupsIndexRoute: typeof AdminUserGroupsIndexRoute
+  AdminUser_groups_groupIndexRoute: typeof AdminUser_groups_groupIndexRoute
   DeveloperTranslationsIndexRoute: typeof DeveloperTranslationsIndexRoute
   AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute: typeof AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute
   AdminEmployee_eventsEmployee_event_direction_typesIndexRoute: typeof AdminEmployee_eventsEmployee_event_direction_typesIndexRoute
@@ -410,6 +806,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/planning': {
+      id: '/planning'
+      path: '/planning'
+      fullPath: '/planning'
+      preLoaderRoute: typeof PlanningRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -473,11 +876,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/employees/$employeeId': {
+      id: '/employees/$employeeId'
+      path: '/employees/$employeeId'
+      fullPath: '/employees/$employeeId'
+      preLoaderRoute: typeof EmployeesEmployeeIdRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/planning_setup': {
+      id: '/admin/planning_setup'
+      path: '/admin/planning_setup'
+      fullPath: '/admin/planning_setup'
+      preLoaderRoute: typeof AdminPlanning_setupRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/jobs_group': {
+      id: '/admin/jobs_group'
+      path: '/admin/jobs_group'
+      fullPath: '/admin/jobs_group'
+      preLoaderRoute: typeof AdminJobs_groupRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/departments_group': {
+      id: '/admin/departments_group'
+      path: '/admin/departments_group'
+      fullPath: '/admin/departments_group'
+      preLoaderRoute: typeof AdminDepartments_groupRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/employees/$employeeId/': {
+      id: '/employees/$employeeId/'
+      path: '/'
+      fullPath: '/employees/$employeeId/'
+      preLoaderRoute: typeof EmployeesEmployeeIdIndexRouteImport
+      parentRoute: typeof EmployeesEmployeeIdRouteRoute
+    }
     '/developer/translations/': {
       id: '/developer/translations/'
       path: '/developer/translations'
       fullPath: '/developer/translations'
       preLoaderRoute: typeof DeveloperTranslationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/user_groups_group/': {
+      id: '/admin/user_groups_group/'
+      path: '/admin/user_groups_group'
+      fullPath: '/admin/user_groups_group'
+      preLoaderRoute: typeof AdminUser_groups_groupIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/user-groups/': {
@@ -492,6 +937,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/user-group-types'
       fullPath: '/admin/user-group-types'
       preLoaderRoute: typeof AdminUserGroupTypesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/talent/': {
+      id: '/admin/talent/'
+      path: '/admin/talent'
+      fullPath: '/admin/talent'
+      preLoaderRoute: typeof AdminTalentIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/talent-statuses/': {
@@ -529,11 +981,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminReviewDimensionsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/planning_setup/': {
+      id: '/admin/planning_setup/'
+      path: '/'
+      fullPath: '/admin/planning_setup/'
+      preLoaderRoute: typeof AdminPlanning_setupIndexRouteImport
+      parentRoute: typeof AdminPlanning_setupRouteRoute
+    }
+    '/admin/jobs_group/': {
+      id: '/admin/jobs_group/'
+      path: '/'
+      fullPath: '/admin/jobs_group/'
+      preLoaderRoute: typeof AdminJobs_groupIndexRouteImport
+      parentRoute: typeof AdminJobs_groupRouteRoute
+    }
     '/admin/jobs/': {
       id: '/admin/jobs/'
       path: '/admin/jobs'
       fullPath: '/admin/jobs'
       preLoaderRoute: typeof AdminJobsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/job_groups/': {
+      id: '/admin/job_groups/'
+      path: '/admin/job_groups'
+      fullPath: '/admin/job_groups'
+      preLoaderRoute: typeof AdminJob_groupsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/job_group_types/': {
+      id: '/admin/job_group_types/'
+      path: '/admin/job_group_types'
+      fullPath: '/admin/job_group_types'
+      preLoaderRoute: typeof AdminJob_group_typesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/employee_events/': {
@@ -542,6 +1022,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/employee_events'
       preLoaderRoute: typeof AdminEmployee_eventsIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/departments_group/': {
+      id: '/admin/departments_group/'
+      path: '/'
+      fullPath: '/admin/departments_group/'
+      preLoaderRoute: typeof AdminDepartments_groupIndexRouteImport
+      parentRoute: typeof AdminDepartments_groupRouteRoute
     }
     '/admin/department_types/': {
       id: '/admin/department_types/'
@@ -566,10 +1053,10 @@ declare module '@tanstack/react-router' {
     }
     '/employees/$employeeId/edit': {
       id: '/employees/$employeeId/edit'
-      path: '/employees/$employeeId/edit'
+      path: '/edit'
       fullPath: '/employees/$employeeId/edit'
       preLoaderRoute: typeof EmployeesEmployeeIdEditRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof EmployeesEmployeeIdRouteRoute
     }
     '/admin/structure/$departmentId': {
       id: '/admin/structure/$departmentId'
@@ -577,6 +1064,90 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/structure/$departmentId'
       preLoaderRoute: typeof AdminStructureDepartmentIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/departments_group/department_types': {
+      id: '/admin/departments_group/department_types'
+      path: '/department_types'
+      fullPath: '/admin/departments_group/department_types'
+      preLoaderRoute: typeof AdminDepartments_groupDepartment_typesRouteRouteImport
+      parentRoute: typeof AdminDepartments_groupRouteRoute
+    }
+    '/employees/$employeeId/talent_audit/': {
+      id: '/employees/$employeeId/talent_audit/'
+      path: '/talent_audit'
+      fullPath: '/employees/$employeeId/talent_audit'
+      preLoaderRoute: typeof EmployeesEmployeeIdTalent_auditIndexRouteImport
+      parentRoute: typeof EmployeesEmployeeIdRouteRoute
+    }
+    '/employees/$employeeId/summary/': {
+      id: '/employees/$employeeId/summary/'
+      path: '/summary'
+      fullPath: '/employees/$employeeId/summary'
+      preLoaderRoute: typeof EmployeesEmployeeIdSummaryIndexRouteImport
+      parentRoute: typeof EmployeesEmployeeIdRouteRoute
+    }
+    '/employees/$employeeId/events/': {
+      id: '/employees/$employeeId/events/'
+      path: '/events'
+      fullPath: '/employees/$employeeId/events'
+      preLoaderRoute: typeof EmployeesEmployeeIdEventsIndexRouteImport
+      parentRoute: typeof EmployeesEmployeeIdRouteRoute
+    }
+    '/employees/$employeeId/dr_history/': {
+      id: '/employees/$employeeId/dr_history/'
+      path: '/dr_history'
+      fullPath: '/employees/$employeeId/dr_history'
+      preLoaderRoute: typeof EmployeesEmployeeIdDr_historyIndexRouteImport
+      parentRoute: typeof EmployeesEmployeeIdRouteRoute
+    }
+    '/employees/$employeeId/departments/': {
+      id: '/employees/$employeeId/departments/'
+      path: '/departments'
+      fullPath: '/employees/$employeeId/departments'
+      preLoaderRoute: typeof EmployeesEmployeeIdDepartmentsIndexRouteImport
+      parentRoute: typeof EmployeesEmployeeIdRouteRoute
+    }
+    '/admin/planning_setup/plan_session_status/': {
+      id: '/admin/planning_setup/plan_session_status/'
+      path: '/plan_session_status'
+      fullPath: '/admin/planning_setup/plan_session_status'
+      preLoaderRoute: typeof AdminPlanning_setupPlan_session_statusIndexRouteImport
+      parentRoute: typeof AdminPlanning_setupRouteRoute
+    }
+    '/admin/planning_setup/plan_scope_defaults/': {
+      id: '/admin/planning_setup/plan_scope_defaults/'
+      path: '/plan_scope_defaults'
+      fullPath: '/admin/planning_setup/plan_scope_defaults'
+      preLoaderRoute: typeof AdminPlanning_setupPlan_scope_defaultsIndexRouteImport
+      parentRoute: typeof AdminPlanning_setupRouteRoute
+    }
+    '/admin/planning_setup/plan_category_defaults/': {
+      id: '/admin/planning_setup/plan_category_defaults/'
+      path: '/plan_category_defaults'
+      fullPath: '/admin/planning_setup/plan_category_defaults'
+      preLoaderRoute: typeof AdminPlanning_setupPlan_category_defaultsIndexRouteImport
+      parentRoute: typeof AdminPlanning_setupRouteRoute
+    }
+    '/admin/jobs_group/jobs/': {
+      id: '/admin/jobs_group/jobs/'
+      path: '/jobs'
+      fullPath: '/admin/jobs_group/jobs'
+      preLoaderRoute: typeof AdminJobs_groupJobsIndexRouteImport
+      parentRoute: typeof AdminJobs_groupRouteRoute
+    }
+    '/admin/jobs_group/job_groups/': {
+      id: '/admin/jobs_group/job_groups/'
+      path: '/job_groups'
+      fullPath: '/admin/jobs_group/job_groups'
+      preLoaderRoute: typeof AdminJobs_groupJob_groupsIndexRouteImport
+      parentRoute: typeof AdminJobs_groupRouteRoute
+    }
+    '/admin/jobs_group/job_group_types/': {
+      id: '/admin/jobs_group/job_group_types/'
+      path: '/job_group_types'
+      fullPath: '/admin/jobs_group/job_group_types'
+      preLoaderRoute: typeof AdminJobs_groupJob_group_typesIndexRouteImport
+      parentRoute: typeof AdminJobs_groupRouteRoute
     }
     '/admin/employee_events/employee_event_types/': {
       id: '/admin/employee_events/employee_event_types/'
@@ -606,11 +1177,176 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminEmployee_eventsEmployee_event_change_dept_typesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/departments_group/structure/': {
+      id: '/admin/departments_group/structure/'
+      path: '/structure'
+      fullPath: '/admin/departments_group/structure'
+      preLoaderRoute: typeof AdminDepartments_groupStructureIndexRouteImport
+      parentRoute: typeof AdminDepartments_groupRouteRoute
+    }
+    '/admin/departments_group/department_types/': {
+      id: '/admin/departments_group/department_types/'
+      path: '/'
+      fullPath: '/admin/departments_group/department_types/'
+      preLoaderRoute: typeof AdminDepartments_groupDepartment_typesIndexRouteImport
+      parentRoute: typeof AdminDepartments_groupDepartment_typesRouteRoute
+    }
+    '/admin/departments_group/department_categories/': {
+      id: '/admin/departments_group/department_categories/'
+      path: '/department_categories'
+      fullPath: '/admin/departments_group/department_categories'
+      preLoaderRoute: typeof AdminDepartments_groupDepartment_categoriesIndexRouteImport
+      parentRoute: typeof AdminDepartments_groupRouteRoute
+    }
+    '/admin/departments_group/department_types/list/': {
+      id: '/admin/departments_group/department_types/list/'
+      path: '/list'
+      fullPath: '/admin/departments_group/department_types/list'
+      preLoaderRoute: typeof AdminDepartments_groupDepartment_typesListIndexRouteImport
+      parentRoute: typeof AdminDepartments_groupDepartment_typesRouteRoute
+    }
+    '/admin/departments_group/department_types/job_links/': {
+      id: '/admin/departments_group/department_types/job_links/'
+      path: '/job_links'
+      fullPath: '/admin/departments_group/department_types/job_links'
+      preLoaderRoute: typeof AdminDepartments_groupDepartment_typesJob_linksIndexRouteImport
+      parentRoute: typeof AdminDepartments_groupDepartment_typesRouteRoute
+    }
+    '/admin/departments_group/department_types/hierarchy/': {
+      id: '/admin/departments_group/department_types/hierarchy/'
+      path: '/hierarchy'
+      fullPath: '/admin/departments_group/department_types/hierarchy'
+      preLoaderRoute: typeof AdminDepartments_groupDepartment_typesHierarchyIndexRouteImport
+      parentRoute: typeof AdminDepartments_groupDepartment_typesRouteRoute
+    }
   }
 }
 
+interface AdminDepartments_groupDepartment_typesRouteRouteChildren {
+  AdminDepartments_groupDepartment_typesIndexRoute: typeof AdminDepartments_groupDepartment_typesIndexRoute
+  AdminDepartments_groupDepartment_typesHierarchyIndexRoute: typeof AdminDepartments_groupDepartment_typesHierarchyIndexRoute
+  AdminDepartments_groupDepartment_typesJob_linksIndexRoute: typeof AdminDepartments_groupDepartment_typesJob_linksIndexRoute
+  AdminDepartments_groupDepartment_typesListIndexRoute: typeof AdminDepartments_groupDepartment_typesListIndexRoute
+}
+
+const AdminDepartments_groupDepartment_typesRouteRouteChildren: AdminDepartments_groupDepartment_typesRouteRouteChildren =
+  {
+    AdminDepartments_groupDepartment_typesIndexRoute:
+      AdminDepartments_groupDepartment_typesIndexRoute,
+    AdminDepartments_groupDepartment_typesHierarchyIndexRoute:
+      AdminDepartments_groupDepartment_typesHierarchyIndexRoute,
+    AdminDepartments_groupDepartment_typesJob_linksIndexRoute:
+      AdminDepartments_groupDepartment_typesJob_linksIndexRoute,
+    AdminDepartments_groupDepartment_typesListIndexRoute:
+      AdminDepartments_groupDepartment_typesListIndexRoute,
+  }
+
+const AdminDepartments_groupDepartment_typesRouteRouteWithChildren =
+  AdminDepartments_groupDepartment_typesRouteRoute._addFileChildren(
+    AdminDepartments_groupDepartment_typesRouteRouteChildren,
+  )
+
+interface AdminDepartments_groupRouteRouteChildren {
+  AdminDepartments_groupDepartment_typesRouteRoute: typeof AdminDepartments_groupDepartment_typesRouteRouteWithChildren
+  AdminDepartments_groupIndexRoute: typeof AdminDepartments_groupIndexRoute
+  AdminDepartments_groupDepartment_categoriesIndexRoute: typeof AdminDepartments_groupDepartment_categoriesIndexRoute
+  AdminDepartments_groupStructureIndexRoute: typeof AdminDepartments_groupStructureIndexRoute
+}
+
+const AdminDepartments_groupRouteRouteChildren: AdminDepartments_groupRouteRouteChildren =
+  {
+    AdminDepartments_groupDepartment_typesRouteRoute:
+      AdminDepartments_groupDepartment_typesRouteRouteWithChildren,
+    AdminDepartments_groupIndexRoute: AdminDepartments_groupIndexRoute,
+    AdminDepartments_groupDepartment_categoriesIndexRoute:
+      AdminDepartments_groupDepartment_categoriesIndexRoute,
+    AdminDepartments_groupStructureIndexRoute:
+      AdminDepartments_groupStructureIndexRoute,
+  }
+
+const AdminDepartments_groupRouteRouteWithChildren =
+  AdminDepartments_groupRouteRoute._addFileChildren(
+    AdminDepartments_groupRouteRouteChildren,
+  )
+
+interface AdminJobs_groupRouteRouteChildren {
+  AdminJobs_groupIndexRoute: typeof AdminJobs_groupIndexRoute
+  AdminJobs_groupJob_group_typesIndexRoute: typeof AdminJobs_groupJob_group_typesIndexRoute
+  AdminJobs_groupJob_groupsIndexRoute: typeof AdminJobs_groupJob_groupsIndexRoute
+  AdminJobs_groupJobsIndexRoute: typeof AdminJobs_groupJobsIndexRoute
+}
+
+const AdminJobs_groupRouteRouteChildren: AdminJobs_groupRouteRouteChildren = {
+  AdminJobs_groupIndexRoute: AdminJobs_groupIndexRoute,
+  AdminJobs_groupJob_group_typesIndexRoute:
+    AdminJobs_groupJob_group_typesIndexRoute,
+  AdminJobs_groupJob_groupsIndexRoute: AdminJobs_groupJob_groupsIndexRoute,
+  AdminJobs_groupJobsIndexRoute: AdminJobs_groupJobsIndexRoute,
+}
+
+const AdminJobs_groupRouteRouteWithChildren =
+  AdminJobs_groupRouteRoute._addFileChildren(AdminJobs_groupRouteRouteChildren)
+
+interface AdminPlanning_setupRouteRouteChildren {
+  AdminPlanning_setupIndexRoute: typeof AdminPlanning_setupIndexRoute
+  AdminPlanning_setupPlan_category_defaultsIndexRoute: typeof AdminPlanning_setupPlan_category_defaultsIndexRoute
+  AdminPlanning_setupPlan_scope_defaultsIndexRoute: typeof AdminPlanning_setupPlan_scope_defaultsIndexRoute
+  AdminPlanning_setupPlan_session_statusIndexRoute: typeof AdminPlanning_setupPlan_session_statusIndexRoute
+}
+
+const AdminPlanning_setupRouteRouteChildren: AdminPlanning_setupRouteRouteChildren =
+  {
+    AdminPlanning_setupIndexRoute: AdminPlanning_setupIndexRoute,
+    AdminPlanning_setupPlan_category_defaultsIndexRoute:
+      AdminPlanning_setupPlan_category_defaultsIndexRoute,
+    AdminPlanning_setupPlan_scope_defaultsIndexRoute:
+      AdminPlanning_setupPlan_scope_defaultsIndexRoute,
+    AdminPlanning_setupPlan_session_statusIndexRoute:
+      AdminPlanning_setupPlan_session_statusIndexRoute,
+  }
+
+const AdminPlanning_setupRouteRouteWithChildren =
+  AdminPlanning_setupRouteRoute._addFileChildren(
+    AdminPlanning_setupRouteRouteChildren,
+  )
+
+interface EmployeesEmployeeIdRouteRouteChildren {
+  EmployeesEmployeeIdEditRoute: typeof EmployeesEmployeeIdEditRoute
+  EmployeesEmployeeIdIndexRoute: typeof EmployeesEmployeeIdIndexRoute
+  EmployeesEmployeeIdDepartmentsIndexRoute: typeof EmployeesEmployeeIdDepartmentsIndexRoute
+  EmployeesEmployeeIdDr_historyIndexRoute: typeof EmployeesEmployeeIdDr_historyIndexRoute
+  EmployeesEmployeeIdEventsIndexRoute: typeof EmployeesEmployeeIdEventsIndexRoute
+  EmployeesEmployeeIdSummaryIndexRoute: typeof EmployeesEmployeeIdSummaryIndexRoute
+  EmployeesEmployeeIdTalent_auditIndexRoute: typeof EmployeesEmployeeIdTalent_auditIndexRoute
+}
+
+const EmployeesEmployeeIdRouteRouteChildren: EmployeesEmployeeIdRouteRouteChildren =
+  {
+    EmployeesEmployeeIdEditRoute: EmployeesEmployeeIdEditRoute,
+    EmployeesEmployeeIdIndexRoute: EmployeesEmployeeIdIndexRoute,
+    EmployeesEmployeeIdDepartmentsIndexRoute:
+      EmployeesEmployeeIdDepartmentsIndexRoute,
+    EmployeesEmployeeIdDr_historyIndexRoute:
+      EmployeesEmployeeIdDr_historyIndexRoute,
+    EmployeesEmployeeIdEventsIndexRoute: EmployeesEmployeeIdEventsIndexRoute,
+    EmployeesEmployeeIdSummaryIndexRoute: EmployeesEmployeeIdSummaryIndexRoute,
+    EmployeesEmployeeIdTalent_auditIndexRoute:
+      EmployeesEmployeeIdTalent_auditIndexRoute,
+  }
+
+const EmployeesEmployeeIdRouteRouteWithChildren =
+  EmployeesEmployeeIdRouteRoute._addFileChildren(
+    EmployeesEmployeeIdRouteRouteChildren,
+  )
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PlanningRouteRoute: PlanningRouteRoute,
+  AdminDepartments_groupRouteRoute:
+    AdminDepartments_groupRouteRouteWithChildren,
+  AdminJobs_groupRouteRoute: AdminJobs_groupRouteRouteWithChildren,
+  AdminPlanning_setupRouteRoute: AdminPlanning_setupRouteRouteWithChildren,
+  EmployeesEmployeeIdRouteRoute: EmployeesEmployeeIdRouteRouteWithChildren,
   AuthLoginRoute: AuthLoginRoute,
   EmployeesNewRoute: EmployeesNewRoute,
   PeopleReviewSessionIdRoute: PeopleReviewSessionIdRoute,
@@ -620,11 +1356,12 @@ const rootRouteChildren: RootRouteChildren = {
   EmployeesIndexRoute: EmployeesIndexRoute,
   PeopleReviewIndexRoute: PeopleReviewIndexRoute,
   AdminStructureDepartmentIdRoute: AdminStructureDepartmentIdRoute,
-  EmployeesEmployeeIdEditRoute: EmployeesEmployeeIdEditRoute,
   PeopleReviewEvaluationRseIdRoute: PeopleReviewEvaluationRseIdRoute,
   AdminDepartment_categoriesIndexRoute: AdminDepartment_categoriesIndexRoute,
   AdminDepartment_typesIndexRoute: AdminDepartment_typesIndexRoute,
   AdminEmployee_eventsIndexRoute: AdminEmployee_eventsIndexRoute,
+  AdminJob_group_typesIndexRoute: AdminJob_group_typesIndexRoute,
+  AdminJob_groupsIndexRoute: AdminJob_groupsIndexRoute,
   AdminJobsIndexRoute: AdminJobsIndexRoute,
   AdminReviewDimensionsIndexRoute: AdminReviewDimensionsIndexRoute,
   AdminStructureIndexRoute: AdminStructureIndexRoute,
@@ -632,8 +1369,10 @@ const rootRouteChildren: RootRouteChildren = {
   AdminTalentStatusPeriodLinksIndexRoute:
     AdminTalentStatusPeriodLinksIndexRoute,
   AdminTalentStatusesIndexRoute: AdminTalentStatusesIndexRoute,
+  AdminTalentIndexRoute: AdminTalentIndexRoute,
   AdminUserGroupTypesIndexRoute: AdminUserGroupTypesIndexRoute,
   AdminUserGroupsIndexRoute: AdminUserGroupsIndexRoute,
+  AdminUser_groups_groupIndexRoute: AdminUser_groups_groupIndexRoute,
   DeveloperTranslationsIndexRoute: DeveloperTranslationsIndexRoute,
   AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute:
     AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute,

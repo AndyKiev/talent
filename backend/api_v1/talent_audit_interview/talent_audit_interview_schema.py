@@ -1,23 +1,31 @@
 import datetime
+from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict
 
+from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_schema import (
+    TalentAuditInterviewJob as TalentAuditInterviewJobSchema,
+    TalentAuditInterviewJobCreate,
+)
+
 
 class TalentAuditInterviewBase(BaseModel):
-    talent_audit_job_id: int
+    talent_audit_id: int
     status_id: int
     interview_date: datetime.date
-    talent_status_period_link_id: int
 
 
 class TalentAuditInterviewCreate(TalentAuditInterviewBase):
-    # created_by injected from the authenticated user in the service
-    pass
+    """
+    Payload from the frontend: interview header + per-job assessments.
+    The service creates the interview, then bulk-creates interview_job rows.
+    """
+    job_assessments: List[TalentAuditInterviewJobCreate]
 
 
 class TalentAuditInterviewUpdate(BaseModel):
-    status_id: int
-    interview_date: datetime.date
+    status_id: Optional[int] = None
+    interview_date: Optional[datetime.date] = None
 
 
 class TalentAuditInterview(TalentAuditInterviewBase):
@@ -26,3 +34,4 @@ class TalentAuditInterview(TalentAuditInterviewBase):
     id: int
     created_by: int
     created_at: datetime.datetime
+    interview_jobs: List[TalentAuditInterviewJobSchema] = []

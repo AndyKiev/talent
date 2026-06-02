@@ -34,6 +34,27 @@ __all__ = {
     "EmployeeEventChangeDeptType",
     "EmployeeEventChangeDepartment",
     "DepartmentTypeParentalLink",
+    # Essence-set access control
+    "Essence",
+    "OperationEssenceLink",
+    "UserGroupOperationEssenceLink",
+    "EssenceSet",
+    "EssenceSetMember",
+    "OperationEssenceSetLink",
+    "UserGroupOperationEssenceSetLink",
+    # Jobs / talent audit additions
+    "TalentAuditInterviewJob",
+    "JobGroupType",
+    "JobGroup",
+    "JobJobGroupLink",
+    "JobResponsibilityCategoryLink",
+    # Planning
+    "PlanSessionStatus",
+    "PlanSession",
+    "PlanCategoryDefault",
+    "PlanSessionCategory",
+    "PlanScopeDefault",
+    "PlanScope",
 }
 
 from backend.api_v1.lang.lang_model import Lang
@@ -94,3 +115,32 @@ from backend.api_v1.employee_events.employee_event_change_dept_type.employee_eve
 from backend.api_v1.employee_events.employee_event_change_department.employee_event_change_department_model import (
     EmployeeEventChangeDepartment,
 )
+
+# ── Essence-set access control & job/audit additions ──────────────────────────
+from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_model import TalentAuditInterviewJob
+from backend.api_v1.job_group_type.job_group_type_model import JobGroupType
+from backend.api_v1.job_group.job_group_model import JobGroup
+from backend.api_v1.job_job_group_link.job_job_group_link_model import JobJobGroupLink
+
+from backend.api_v1.operation_essence_link.operation_essence_link_model import OperationEssenceLink
+from backend.api_v1.essence.essence_model import Essence
+from backend.api_v1.table_relationship_links.user_group_operation_essence_link_model import UserGroupOperationEssenceLink
+from backend.api_v1.job_responsibility_category_link.job_responsibility_category_link_model import JobResponsibilityCategoryLink
+
+from backend.api_v1.essence_set.essence_set_model import EssenceSet
+from backend.api_v1.essence_set.essence_set_member_model import EssenceSetMember
+from backend.api_v1.operation_essence_set_link.operation_essence_set_link_model import (
+    OperationEssenceSetLink,
+)
+from backend.api_v1.table_relationship_links.user_group_operation_essence_set_link_model import (
+    UserGroupOperationEssenceSetLink,
+)
+
+# Planning — import order matters: status (lookup) first, then the session,
+# then defaults, then the per-session snapshot tables that FK into them.
+from backend.api_v1.planning.plan_session_status.plan_session_status_model import PlanSessionStatus
+from backend.api_v1.planning.plan_session.plan_session_model import PlanSession
+from backend.api_v1.planning.plan_category_default.plan_category_default_model import PlanCategoryDefault
+from backend.api_v1.planning.plan_session_category.plan_session_category_model import PlanSessionCategory
+from backend.api_v1.planning.plan_scope_default.plan_scope_default_model import PlanScopeDefault
+from backend.api_v1.planning.plan_scope.plan_scope_model import PlanScope

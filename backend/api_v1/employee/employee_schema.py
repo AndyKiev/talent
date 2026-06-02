@@ -1,6 +1,6 @@
 # backend/api_v1/employee/employee_schema.py
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional, List
+from typing import Optional, List, FrozenSet, Tuple
 from datetime import datetime
 
 
@@ -30,7 +30,16 @@ class EmployeeSchema(EmployeeBase):
     id: int
     created_at: datetime
     groups: List[str] = []           # populated via Employee.groups @property
-    operations: List[str] = []       # populated by EmployeeService (async repo query)
+    operations: List[str] = []       # DEPRECATED — kept during transition window
+
+    # Resolved access-control grants, populated by EmployeeService._to_schema.
+    # Excluded from serialization — used only by the has_access dependencies.
+    permissions: FrozenSet[Tuple[str, str]] = Field(
+        default_factory=frozenset, exclude=True
+    )
+    permission_sets: FrozenSet[Tuple[str, FrozenSet[str]]] = Field(
+        default_factory=frozenset, exclude=True
+    )
     job: Optional["Job"] = None
     lang: Optional["Lang"] = None
     # Populated by EmployeeService._to_schema from the selectin-loaded relationship.

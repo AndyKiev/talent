@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, status, Query
 from typing import List, Optional, Annotated
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.auth.jwt_auth import require_operation
 from backend.api_v1.user_group.user_group_service import UserGroupService
 from backend.api_v1.user_group.user_group_schema import (
     UserGroup as UserGroupSchema,
@@ -10,7 +9,7 @@ from backend.api_v1.user_group.user_group_schema import (
     UserGroupUpdate,
 )
 from backend.api_v1.user_group.user_group_dependencies import get_user_group_service
-from backend.utils.enums import OperationTypes
+# from backend.utils.enums import OperationTypes
 
 router = APIRouter(prefix="/admin/user_groups", tags=["User Groups"])
 
@@ -67,7 +66,7 @@ async def get_user_group_by_name(
 
 async def create_user_group(
     user_group_in: UserGroupCreate,
-# current_user=Depends(require_operation(OperationTypes.CREATE_USER_GROUP.value)),
+
     service: UserGroupService = Depends(get_user_group_service),
 ):
     return await service.create_user_group(user_group_in)

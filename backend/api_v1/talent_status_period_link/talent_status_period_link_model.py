@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from backend.api_v1.talent_status.talent_status_model import TalentStatus
     from backend.api_v1.talent_period.talent_period_model import TalentPeriod
     from backend.api_v1.talent_audit_job.talent_audit_job_model import TalentAuditJob
-    from backend.api_v1.talent_audit_interview.talent_audit_interview_model import TalentAuditInterview
+
 
 
 class TalentStatusPeriodLink(IntIdPkMixin, Base):
@@ -54,10 +54,7 @@ class TalentStatusPeriodLink(IntIdPkMixin, Base):
         back_populates="talent_status_period_link",
         lazy="noload",
     )
-    talent_audit_interviews: Mapped[list["TalentAuditInterview"]] = relationship(
-        back_populates="talent_status_period_link",
-        lazy="noload",
-    )
+
 
     def __repr__(self) -> str:
         return (

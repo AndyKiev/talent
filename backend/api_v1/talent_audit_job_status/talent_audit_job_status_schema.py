@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class TalentAuditJobStatusBase(BaseModel):
     name: str = Field(..., max_length=32)
+    key: str = Field(..., max_length=32)
     description: Optional[str] = Field(None, max_length=128)
 
 
@@ -14,6 +15,7 @@ class TalentAuditJobStatusCreate(TalentAuditJobStatusBase):
 
 class TalentAuditJobStatusUpdate(BaseModel):
     name: Optional[str] = Field(None, max_length=32)
+    key: Optional[str] = Field(None, max_length=32)
     description: Optional[str] = Field(None, max_length=128)
 
 

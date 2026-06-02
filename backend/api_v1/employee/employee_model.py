@@ -17,6 +17,8 @@ if TYPE_CHECKING:
     from backend.api_v1.employee_department.employee_department_model import (
         EmployeeDepartment,
     )
+    from backend.api_v1.employee_events.employee_event.employee_event_model import (EmployeeEvent)
+
 
 class Employee(IntIdPkMixin, TimestampMixin, Base):
     # __tablename__ = "employees"
@@ -27,8 +29,8 @@ class Employee(IntIdPkMixin, TimestampMixin, Base):
     status_id: Mapped[int] = mapped_column(
         ForeignKey("employee_statuses.id"), nullable=False, default=1
     )
-    job_id: Mapped[int] = mapped_column(
-        ForeignKey("jobs.id"), nullable=False, default=1
+    job_id: Mapped[int | None] = mapped_column(
+        ForeignKey("jobs.id"), nullable=True, default=None
     )
     lang_id: Mapped[int] = mapped_column(
         ForeignKey("langs.id"), nullable=False, default=3
@@ -78,4 +80,3 @@ class Employee(IntIdPkMixin, TimestampMixin, Base):
     # NOTE: `operations` cannot be a property because it requires an
     # async multi-join query (UserRepository.get_user_operations).
     # It is populated by UserService after every ORM fetch.
-

@@ -46,6 +46,24 @@ from backend.api_v1.review_session.review_session_views import router as review_
 from backend.api_v1.review_session_employee.review_session_employee_views import router as review_session_employee_router
 from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_views import router as review_evaluation_router
 
+# New modules from talent-work
+from backend.api_v1.job_group_type.job_group_type_views import router as job_group_type_router
+from backend.api_v1.job_group.job_group_views import router as job_group_router
+from backend.api_v1.job_job_group_link.job_job_group_link_views import router as job_job_group_link_router
+from backend.api_v1.essence.essence_views import router as essence_router
+from backend.api_v1.job_responsibility_category_link.job_responsibility_category_link_views import router as job_responsibility_category_link_router
+from backend.api_v1.operation_essence_set_link.operation_essence_set_link_views import (
+    router as operation_essence_set_link_router,
+)
+from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_views import router as talent_audit_interview_job_router
+
+# Planning
+from backend.api_v1.planning.plan_session_status.plan_session_status_views import router as plan_session_status_router
+from backend.api_v1.planning.plan_session.plan_session_views import router as plan_session_router
+from backend.api_v1.planning.plan_category_default.plan_category_default_views import router as plan_category_default_router
+from backend.api_v1.planning.plan_scope_default.plan_scope_default_views import router as plan_scope_default_router
+from backend.api_v1.planning.plan_scope.plan_scope_views import router as plan_scope_router
+
 
 router = APIRouter(prefix=settings.api_v1_prefix)
 
@@ -88,3 +106,19 @@ router.include_router(review_dimension_criteria_router)
 router.include_router(review_session_router)
 router.include_router(review_session_employee_router)
 router.include_router(review_evaluation_router)
+
+# New modules from talent-work
+router.include_router(job_group_type_router)
+router.include_router(job_group_router)
+router.include_router(job_job_group_link_router)
+router.include_router(essence_router)
+router.include_router(operation_essence_set_link_router)
+router.include_router(job_responsibility_category_link_router)
+router.include_router(talent_audit_interview_job_router)
+
+# Planning
+router.include_router(plan_session_status_router)
+router.include_router(plan_session_router)
+router.include_router(plan_category_default_router)
+router.include_router(plan_scope_default_router)
+router.include_router(plan_scope_router)

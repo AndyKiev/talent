@@ -37,7 +37,17 @@ class UserGroupService(BaseService):
     # ------------------------------------------------------------------
 
     async def _user_group_to_schema(self, user_group) -> UserGroupSchema:
-        """Convert ORM UserGroup to UserGroupSchema enriched with user counts."""
+        """
+        Convert ORM UserGroup → UserGroupSchema.
+
+        Fields populated automatically via model_validate (from_attributes=True):
+          - all mapped columns (name, description, is_protected, user_group_type_id, id)
+          - oel_ids          — from UserGroup.oel_ids property (selectin-loaded)
+          - user_group_type_name — from UserGroup.user_group_type_name property
+
+        Fields enriched manually (require a separate DB query):
+          - users_qty        — active/inactive employee counts
+        """
         user_group_data = UserGroupSchema.model_validate(user_group)
         user_counts = await self.repository._get_user_counts_for_group(user_group.id)
         user_group_data.users_qty = user_counts
@@ -113,7 +123,6 @@ class UserGroupService(BaseService):
             user_group_update: UserGroupUpdate,
             partial: bool = False,
     ) -> MutationResponse[UserGroupSchema]:
-        # Fetch ORM instance, not schema
         orm_group = await self.repository.get_user_group_by_id(user_group_id)
         if not orm_group:
             raise UserGroupNotFound(group_id=user_group_id)

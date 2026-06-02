@@ -1,16 +1,21 @@
+from typing import Callable
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from backend.auth.auth_dependencies import validate_auth_user_ldap
 from backend.auth import auth_utils as auth_utils
 from backend.auth.auth_schemas import LDAPUser, AuthResponse
+from backend.auth.permission_errors import PermissionDeniedSet
 from backend.api_v1.employee.employee_service import EmployeeService
 from backend.api_v1.employee.employee_repository import EmployeeRepository
+from backend.api_v1.msg_key.msg_key_model import MsgKey
+from backend.api_v1.msg_pg.msg_model import Msg
 from backend.database.db_helper import db_helper
 from backend.api_v1.employee.employee_schema import EmployeeCreate, EmployeeSchema
-from backend.utils.enums import OperationTypes
+from backend.utils.enums import OperationTypes, OperationVerb, EssenceName
 
 # No import from user_dependency — that module imports us, so importing it
 # here would create a circular dependency.
@@ -170,3 +175,93 @@ async def auth_user_check_self_info(
         "iat": payload.get("iat"),
         "exp": payload.get("exp"),
     }
+
+
+# ── Access control: set-grain ─────────────────────────────────────────────────
+
+
+async def _translate_permission_denied(
+    exc: PermissionDeniedSet, lang_id: int, session: AsyncSession
+) -> str:
+    """
+    Resolve the translated message for a PermissionDeniedSet exception.
+
+    Mirrors BaseService._translate exactly:
+      - join Msg → MsgKey by name, filter by lang_id
+      - substitute ${var} placeholders with template_vars
+      - fall back to the English string on any failure
+    """
+    try:
+        stmt = (
+            select(Msg.value)
+            .join(MsgKey)
+            .where(MsgKey.name == exc.message_key, Msg.lang_id == lang_id)
+        )
+        result = await session.execute(stmt)
+        template = result.scalar_one_or_none()
+
+        if not template:
+            return exc.fallback
+
+        for k, v in exc.template_vars.items():
+            template = template.replace(f"${{{k}}}", str(v))
+        return template
+    except Exception:
+        return exc.fallback
+
+
+def has_access_set(
+    operation: "str | OperationVerb",
+    *essences: "str | EssenceName",
+) -> Callable:
+    """
+    Set-grain FastAPI dependency factory.
+
+    Usage:
+        Depends(has_access_set(OperationVerb.LINK,
+                               EssenceName.TALENT_STATUS,
+                               EssenceName.TALENT_PERIOD))
+
+    A grant for {A, B} is atomic — it does NOT satisfy a guard for {A} alone.
+    A single essence is just a set of size one.
+
+    On denial, raises HTTP 403 with the message translated into the user's
+    language via the same Msg/MsgKey table used by domain errors.
+    """
+    op_name = operation.value if isinstance(operation, OperationVerb) else operation
+    required_set = frozenset(
+        e.value if isinstance(e, EssenceName) else e for e in essences
+    )
+
+    if not required_set:
+        raise ValueError("has_access_set requires at least one essence.")
+
+    async def _dependency(
+        current_user: EmployeeSchema = Depends(get_current_active_auth_user),
+        session: AsyncSession = Depends(db_helper.session_getter),
+    ) -> EmployeeSchema:
+        if (op_name, required_set) in current_user.permission_sets:
+            return current_user
+
+        exc = PermissionDeniedSet(op_name, sorted(required_set))
+        translated = await _translate_permission_denied(
+            exc, current_user.lang_id, session
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=translated,
+        )
+
+    return _dependency
+
+
+# ── Backwards-compatibility shim ──────────────────────────────────────────────
+# `has_access(verb, essence)` is the legacy single-essence API. We forward to
+# has_access_set with a singleton set — semantics are identical.
+
+def has_access(
+    operation: "str | OperationVerb",
+    essence: "str | EssenceName",
+) -> Callable:
+    """Legacy single-essence access guard. Forwards to has_access_set."""
+    return has_access_set(operation, essence)

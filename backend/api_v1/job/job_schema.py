@@ -5,6 +5,8 @@ from datetime import datetime
 
 class JobBase(BaseModel):
     name: str = Field(..., max_length=128)
+    short_name: Optional[str] = Field(None, max_length=64)
+    key: Optional[str] = Field(None, max_length=64)
     is_active: Optional[bool] = None
     description: Optional[str] = Field(None, max_length=256)
 
@@ -15,12 +17,39 @@ class JobCreate(JobBase):
 
 class JobUpdate(BaseModel):
     name: Optional[str] = Field(None, max_length=128)
+    short_name: Optional[str] = Field(None, max_length=64)
+    key: Optional[str] = Field(None, max_length=64)
     is_active: Optional[bool] = None
     description: Optional[str] = Field(None, max_length=256)
+
+
+class DepartmentTypeLinkInfo(BaseModel):
+    """A department type linked to a job, with the link's own is_active flag."""
+    model_config = ConfigDict(from_attributes=True)
+    name: str
+    is_active: bool
 
 
 class Job(JobBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
     created_at: datetime
-    groups: List[str] = []  # Array of employee group names linked to this job
+    groups: List[str] = []           # user group names linked to this job
+    job_group_names: List[str] = []  # job group names linked to this job
+    department_type_links: List[DepartmentTypeLinkInfo] = []  # dept types + link is_active
+
+
+class JobBulkRow(BaseModel):
+    """One row from the uploaded Excel file."""
+    name: str
+    description: Optional[str] = None
+
+
+class JobBulkUploadResult(BaseModel):
+    """Response body for POST /jobs/bulk_upload."""
+    detail: str                   # human-readable success message (i18n-resolved)
+    inserted: List[Job] = []      # jobs that were actually created
+    skipped_names: List[str] = [] # names skipped because name already existed in DB
+    skipped_descriptions: List[str] = []  # names skipped because description already existed in DB
+    inserted_count: int = 0
+    skipped_count: int = 0

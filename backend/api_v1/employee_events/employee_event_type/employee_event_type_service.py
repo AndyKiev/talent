@@ -17,7 +17,9 @@ from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.employee_events.employee_event_type.employee_event_type_errors import (
     EmployeeEventTypeNotFound,
     EmployeeEventTypeNotFoundByName,
+    EmployeeEventTypeNotFoundByCode,
     EmployeeEventTypeNameTaken,
+    EmployeeEventTypeCodeTaken,
     EmployeeEventTypeDeleteError,
 )
 from backend.api_v1.employee_events.employee_event_type.employee_event_type_success import (
@@ -61,6 +63,12 @@ class EmployeeEventTypeService(BaseService):
         await self.exists_by_name(
             type_in.name, already_exists_exc=EmployeeEventTypeNameTaken
         )
+        await self.exists_by_field_excluding(
+            field_name="code",
+            value=type_in.code,
+            exclude_ids=[],
+            already_exists_exc=EmployeeEventTypeCodeTaken,
+        )
         try:
             record = await self.create(type_in)
             schema = EmployeeEventTypeSchema.model_validate(record)
@@ -77,8 +85,17 @@ class EmployeeEventTypeService(BaseService):
         self, type_id: int, type_update: EmployeeEventTypeUpdate
     ) -> MutationResponse[EmployeeEventTypeSchema]:
         if type_update.name:
-            await self.exists_by_name(
-                type_update.name, already_exists_exc=EmployeeEventTypeNameTaken
+            await self.exists_by_name_excluding(
+                type_update.name,
+                exclude_ids=[type_id],
+                already_exists_exc=EmployeeEventTypeNameTaken,
+            )
+        if type_update.code:
+            await self.exists_by_field_excluding(
+                field_name="code",
+                value=type_update.code,
+                exclude_ids=[type_id],
+                already_exists_exc=EmployeeEventTypeCodeTaken,
             )
         try:
             orm_record = await self.get_by_id(type_id)

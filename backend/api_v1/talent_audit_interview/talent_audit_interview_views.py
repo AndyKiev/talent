@@ -35,15 +35,33 @@ async def get_talent_audit_interviews(
     return await service.get_talent_audit_interviews(sort=sort)
 
 
+# ── Static path segments before dynamic /{id} ────────────────────────────────
+
 @router.get(
-    "/by_talent_audit_job/{talent_audit_job_id}",
+    "/by_talent_audit/{talent_audit_id}",
     response_model=List[TalentAuditInterviewSchema],
 )
-async def get_talent_audit_interviews_by_job(
-    talent_audit_job_id: int,
+async def get_interviews_by_audit(
+    talent_audit_id: int,
     service: Annotated[TalentAuditInterviewService, Depends(get_talent_audit_interview_service)],
 ):
-    return await service.get_by_talent_audit_job_id(talent_audit_job_id)
+    return await service.get_by_talent_audit_id(talent_audit_id)
+
+
+@router.get(
+    "/free_jobs/{talent_audit_id}",
+    response_model=List[dict],
+    summary="Get audit jobs eligible for a new interview",
+    description=(
+        "Returns talent_audit_job records that have 'created' status "
+        "and are not yet linked to any interview."
+    ),
+)
+async def get_free_audit_jobs(
+    talent_audit_id: int,
+    service: Annotated[TalentAuditInterviewService, Depends(get_talent_audit_interview_service)],
+):
+    return await service.get_free_audit_jobs_for_audit(talent_audit_id)
 
 
 @router.get("/{talent_audit_interview_id}", response_model=TalentAuditInterviewSchema)

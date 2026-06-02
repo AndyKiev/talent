@@ -6,6 +6,7 @@ from datetime import datetime
 
 
 class EmployeeEventTypeBase(BaseModel):
+    code: str = Field(..., max_length=64)
     name: str = Field(..., max_length=128)
     description: Optional[str] = Field(None, max_length=512)
 
@@ -15,6 +16,7 @@ class EmployeeEventTypeCreate(EmployeeEventTypeBase):
 
 
 class EmployeeEventTypeUpdate(BaseModel):
+    code: Optional[str] = Field(None, max_length=64)
     name: Optional[str] = Field(None, max_length=128)
     description: Optional[str] = Field(None, max_length=512)
 

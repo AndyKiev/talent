@@ -26,3 +26,15 @@ class JobUpdateSuccess(UpdateSuccess):
         self.template_vars = {"name": name}
         self.fallback = f"Job '{name}' successfully updated"
         DomainSuccess.__init__(self, self.fallback)
+
+class JobBulkUploadSuccess(DomainSuccess):
+    """Some or all rows were inserted; zero or more were skipped."""
+    message_key = "jobBulkUploadSuccess"
+
+    def __init__(self, inserted: int, skipped: int) -> None:
+        self.template_vars = {"inserted": inserted, "skipped": skipped}
+        self.fallback = (
+            f"Bulk upload complete: {inserted} job(s) inserted, "
+            f"{skipped} skipped (duplicates by name or description)."
+        )
+        DomainSuccess.__init__(self, self.fallback)

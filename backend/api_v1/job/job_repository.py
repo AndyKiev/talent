@@ -1,11 +1,15 @@
 from typing import List, Tuple
 
 from sqlalchemy import select, delete
+from sqlalchemy.orm import selectinload
 
 from backend.api_v1.base.base_repository import BaseRepository
 from backend.api_v1.job.job_model import Job
 from backend.api_v1.user_group.user_group_model import UserGroup
 from backend.api_v1.table_relationship_links.job_user_group_link_model import JobUserGroupLink
+from backend.api_v1.department_type_job_link.department_type_job_link_model import (
+    DepartmentTypeJobLink,
+)
 from backend.api_v1.job.job_errors import (
     JobNotFound,
     JobAlreadyInGroup,
@@ -17,6 +21,24 @@ from backend.api_v1.job.job_errors import (
 
 class JobRepository(BaseRepository):
     model = Job
+
+    async def get_all_with_dept_type_links(self) -> List[Job]:
+        """
+        Like get_all, but eager-loads the department-type links (and each
+        link's department_type) so Job.department_type_links is populated.
+        The base relationship is lazy='noload', hence the explicit load here.
+        """
+        stmt = (
+            select(Job)
+            .options(
+                selectinload(Job._department_types).selectinload(
+                    DepartmentTypeJobLink.department_type
+                )
+            )
+            .order_by(Job.id)
+        )
+        result = await self.session.scalars(stmt)
+        return result.all()
 
     async def _get_job_and_group(
         self, job_id: int, group_id: int

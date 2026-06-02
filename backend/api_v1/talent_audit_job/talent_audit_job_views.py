@@ -33,6 +33,7 @@ async def get_talent_audit_jobs(
     return await service.get_talent_audit_jobs(sort=sort)
 
 
+# Static path before dynamic
 @router.get("/by_talent_audit/{talent_audit_id}", response_model=List[TalentAuditJobSchema])
 async def get_talent_audit_jobs_by_audit(
     talent_audit_id: int,

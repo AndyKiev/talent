@@ -79,3 +79,46 @@ class MoveDirection(str, Enum):
     DOWN = "down"
     TOP = "top"
     BOTTOM = "bottom"
+
+
+class OperationVerb(str, Enum):
+    VIEW    = "view"
+    CREATE  = "create"
+    COPY    = "copy"
+    MODIFY  = "modify"
+    DELETE  = "delete"
+    EXPORT  = "export"
+    APPROVE = "approve"
+    ASSIGN  = "assign"
+    LINK    = "link"
+
+
+class EssenceName(str, Enum):
+    USER_GROUP          = "user_group"
+    OPERATION           = "operation"
+    ESSENCE             = "essence"
+    EMPLOYEE            = "employee"
+    DEPARTMENT          = "department"
+    DEPARTMENT_TYPE     = "department_type"
+    JOB                 = "job"
+    JOB_GROUP           = "job_group"
+    EMPLOYEE_EVENT      = "employee_event"
+    TALENT_AUDIT        = "talent_audit"
+    TALENT_AUDIT_JOB    = "talent_audit_job"
+    TALENT_PERIOD       = "talent_period"
+    TALENT_STATUS       = "talent_status"
+
+
+class PlanSessionStatusKey(str, Enum):
+    PENDING = "pending"
+    OPEN    = "open"
+    CLOSED  = "closed"
+
+
+PLAN_SESSION_ACTIVE_STATUS_KEYS = frozenset(
+    {PlanSessionStatusKey.PENDING.value, PlanSessionStatusKey.OPEN.value}
+)
+
+
+class PlanningJobGroupName(str, Enum):
+    PLANNING = "planning"

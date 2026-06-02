@@ -31,15 +31,14 @@ class JobGroupService(BaseService):
         session: Optional[AsyncSession] = None,
     ):
         super().__init__(repository, user=user, session=session)
-        self.current_user = user
 
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _to_schema(self, orm_group: object) -> JobGroupSchema:
+    def _to_schema(self, orm_group) -> JobGroupSchema:
+        """Validate ORM → schema and denormalise type fields."""
         schema = JobGroupSchema.model_validate(orm_group)
-        # Enrich with denormalised type fields if the relationship was loaded
         jgt = getattr(orm_group, "job_group_type", None)
         if jgt is not None:
             schema.job_group_type_name = jgt.name
@@ -53,20 +52,14 @@ class JobGroupService(BaseService):
     async def get_job_groups(
         self, job_group_type_id: Optional[int] = None
     ) -> List[JobGroupSchema]:
-        groups = await self.repository.get_all_job_groups(
-            job_group_type_id=job_group_type_id
-        )
-        return [self._to_schema(g) for g in groups]
+        filters = {"job_group_type_id": job_group_type_id} if job_group_type_id else None
+        records = await self.get_all(params=filters)
+        return [self._to_schema(r) for r in records]
 
     async def get_job_group_by_id(self, job_group_id: int) -> JobGroupSchema:
-        record = await self.repository.get_by_id(job_group_id)
-        if not record:
-            raise await self._resolve_domain_error(JobGroupNotFound(job_group_id))
+        # BaseService.get_by_id raises a translated NotFoundError automatically
+        record = await self.get_by_id(job_group_id)
         return self._to_schema(record)
-
-    async def get_job_group_by_name(self, name: str) -> Optional[JobGroupSchema]:
-        record = await self.repository.get_by_name(name)
-        return self._to_schema(record) if record else None
 
     # ------------------------------------------------------------------
     # Write
@@ -75,14 +68,11 @@ class JobGroupService(BaseService):
     async def create_job_group(
         self, group_in: JobGroupCreate
     ) -> MutationResponse[JobGroupSchema]:
-        existing = await self.repository.get_by_name(group_in.name)
-        if existing:
-            raise await self._resolve_domain_error(JobGroupNameTaken(group_in.name))
-        orm_group = self.repository.model(**group_in.model_dump())
-        created = await self.repository.create(orm_group)
-        # Re-fetch to load the relationship (needed for _to_schema)
-        created = await self.repository.get_by_id(created.id)
-        schema = self._to_schema(created)
+        await self.exists_by_name(group_in.name, already_exists_exc=JobGroupNameTaken)
+        record = await self.create(group_in)
+        # Re-fetch so the selectin relationship is populated
+        record = await self.repository.get_by_id(record.id)
+        schema = self._to_schema(record)
         detail = await self._resolve_domain_success(JobGroupCreateSuccess(schema.name))
         return MutationResponse(detail=detail, data=schema)
 
@@ -92,27 +82,22 @@ class JobGroupService(BaseService):
         group_update: JobGroupUpdate,
         partial: bool = True,
     ) -> MutationResponse[JobGroupSchema]:
-        orm_group = await self.repository.get_by_id(job_group_id)
-        if not orm_group:
-            raise await self._resolve_domain_error(JobGroupNotFound(job_group_id))
+        orm_group = await self.get_by_id(job_group_id)
         if group_update.name and group_update.name != orm_group.name:
-            existing = await self.repository.get_by_name(group_update.name)
-            if existing:
-                raise await self._resolve_domain_error(
-                    JobGroupNameTaken(group_update.name)
-                )
-        update_data = group_update.model_dump(exclude_unset=partial)
-        updated = await self.repository.update(orm_group, update_data)
+            await self.exists_by_name(
+                group_update.name, already_exists_exc=JobGroupNameTaken
+            )
+        updated = await self.update(orm_group, group_update, partial=partial)
         updated = await self.repository.get_by_id(updated.id)
         schema = self._to_schema(updated)
         detail = await self._resolve_domain_success(JobGroupUpdateSuccess(schema.name))
         return MutationResponse(detail=detail, data=schema)
 
     async def delete_job_group(self, job_group_id: int) -> None:
-        group = await self.get_job_group_by_id(job_group_id)
+        record = await self.get_job_group_by_id(job_group_id)
         await self.delete_by_id(
             job_group_id,
-            name=group.name,
+            name=record.name,
             delete_error_exc=JobGroupDeleteError,
             delete_success_exc=JobGroupDeleteSuccess,
         )

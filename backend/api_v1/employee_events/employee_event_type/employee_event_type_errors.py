@@ -24,6 +24,15 @@ class EmployeeEventTypeNotFoundByName(NotFoundError):
         super().__init__("EmployeeEventType", "name", name)
 
 
+class EmployeeEventTypeNotFoundByCode(NotFoundError):
+    message_key = "employeeEventTypeNotFoundByCode"
+
+    def __init__(self, code: str) -> None:
+        self.template_vars = {"code": code}
+        self.fallback = f"Employee event type with code '{code}' not found"
+        super().__init__("EmployeeEventType", "code", code)
+
+
 class EmployeeEventTypeNameTaken(AlreadyExistsError):
     message_key = "employeeEventTypeNameTaken"
 
@@ -31,6 +40,15 @@ class EmployeeEventTypeNameTaken(AlreadyExistsError):
         self.template_vars = {"name": name}
         self.fallback = f"Employee event type with name '{name}' already exists"
         super().__init__("EmployeeEventType", "name", name)
+
+
+class EmployeeEventTypeCodeTaken(AlreadyExistsError):
+    message_key = "employeeEventTypeCodeTaken"
+
+    def __init__(self, code: str) -> None:
+        self.template_vars = {"code": code}
+        self.fallback = f"Employee event type with code '{code}' already exists"
+        super().__init__("EmployeeEventType", "code", code)
 
 
 class EmployeeEventTypeDeleteError(DeleteError):

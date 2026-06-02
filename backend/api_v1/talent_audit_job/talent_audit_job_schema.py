@@ -1,6 +1,7 @@
 import datetime
+from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, computed_field
 
 
 class TalentAuditJobBase(BaseModel):
@@ -25,3 +26,16 @@ class TalentAuditJob(TalentAuditJobBase):
     id: int
     created_by: int
     created_at: datetime.datetime
+
+    # Enriched fields — populated from ORM relationships via from_attributes
+    job_name: Optional[str] = None
+    status_name: Optional[str] = None
+    hrm_status_period_label: Optional[str] = None
+
+
+class TalentAuditJobEnriched(TalentAuditJob):
+    """
+    Extended schema with enriched names resolved from ORM relationships.
+    Used by the views layer — the service populates these before returning.
+    """
+    pass
