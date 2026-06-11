@@ -72,7 +72,10 @@ class EmployeeLanguageProfileService(BaseService):
                 )
 
         await self.session.commit()
-        await self.session.refresh(profile)
+        # Re-fetch via a fresh query so the selectin loaders chain through
+        # languages -> level. session.refresh() does not nest selectin, which
+        # would leave lang.level lazy and blow up (MissingGreenlet) in async.
+        profile = await self.repository.get_by_field("employee_id", employee_id)
 
         detail = await self._resolve_domain_success(EmployeeLanguagesSaveSuccess())
         return MutationResponse(detail=detail, data=self._to_schema(profile))
