@@ -55,6 +55,16 @@ __all__ = {
     "PlanSessionCategory",
     "PlanScopeDefault",
     "PlanScope",
+    # People review
+    "ReviewDimension",
+    "ReviewDimensionCriteria",
+    "ReviewSession",
+    "ReviewSessionEmployee",
+    "ReviewSessionEmployeeEvaluation",
+    # Foreign languages
+    "LanguageLevel",
+    "EmployeeLanguageProfile",
+    "EmployeeLanguage",
 }
 
 from backend.api_v1.lang.lang_model import Lang
@@ -144,3 +154,23 @@ from backend.api_v1.planning.plan_category_default.plan_category_default_model i
 from backend.api_v1.planning.plan_session_category.plan_session_category_model import PlanSessionCategory
 from backend.api_v1.planning.plan_scope_default.plan_scope_default_model import PlanScopeDefault
 from backend.api_v1.planning.plan_scope.plan_scope_model import PlanScope
+
+# People review — dimension (lookup) + criteria, session, per-employee, evaluation.
+from backend.api_v1.review_dimension.review_dimension_model import ReviewDimension
+from backend.api_v1.review_dimension_criteria.review_dimension_criteria_model import (
+    ReviewDimensionCriteria,
+)
+from backend.api_v1.review_session.review_session_model import ReviewSession
+from backend.api_v1.review_session_employee.review_session_employee_model import (
+    ReviewSessionEmployee,
+)
+from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_model import (
+    ReviewSessionEmployeeEvaluation,
+)
+
+# Foreign languages — lookup first, then the one-to-one profile, then the leaf rows.
+from backend.api_v1.language_level.language_level_model import LanguageLevel
+from backend.api_v1.employee_language_profile.employee_language_profile_model import (
+    EmployeeLanguageProfile,
+)
+from backend.api_v1.employee_language.employee_language_model import EmployeeLanguage

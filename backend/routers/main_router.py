@@ -65,6 +65,12 @@ from backend.api_v1.planning.plan_category_default.plan_category_default_views i
 from backend.api_v1.planning.plan_scope_default.plan_scope_default_views import router as plan_scope_default_router
 from backend.api_v1.planning.plan_scope.plan_scope_views import router as plan_scope_router
 
+# Foreign languages
+from backend.api_v1.language_level.language_level_views import router as language_level_router
+from backend.api_v1.employee_language_profile.employee_language_profile_views import (
+    router as employee_language_profile_router,
+)
+
 
 router = APIRouter(prefix=settings.api_v1_prefix)
 
@@ -124,3 +130,7 @@ router.include_router(plan_session_router)
 router.include_router(plan_category_default_router)
 router.include_router(plan_scope_default_router)
 router.include_router(plan_scope_router)
+
+# Foreign languages
+router.include_router(language_level_router)
+router.include_router(employee_language_profile_router)

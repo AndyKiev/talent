@@ -1,4 +1,202 @@
 {
+  "scoredProgress": {
+    "ukr": "★ ${count}/${total} оцінено",
+    "eng": "★ ${count}/${total} scored"
+  },
+  "factsProgress": {
+    "ukr": "✎ ${count}/${total} фактів",
+    "eng": "✎ ${count}/${total} facts"
+  },
+  "factsAndAchievements": {
+    "ukr": "Факти та досягнення",
+    "eng": "Facts & achievements"
+  },
+  "areasForImprovement": {
+    "ukr": "Напрями для розвитку (необов'язково)",
+    "eng": "Areas for improvement (optional)"
+  },
+  "typeFactPlaceholder": {
+    "ukr": "Введіть факт…",
+    "eng": "Type a fact…"
+  },
+  "addFact": {
+    "ukr": "Додати",
+    "eng": "Add"
+  },
+  "deleteFact": {
+    "ukr": "Видалити факт",
+    "eng": "Delete fact"
+  },
+  "foreignLanguages": {
+    "ukr": "Іноземні мови",
+    "eng": "Foreign languages"
+  },
+  "foreignLanguagesHint": {
+    "ukr": "Вкажіть рівень володіння англійською чи французькою",
+    "eng": "Specify your level of English or French"
+  },
+  "english": {
+    "ukr": "Англійська",
+    "eng": "English"
+  },
+  "french": {
+    "ukr": "Французька",
+    "eng": "French"
+  },
+  "selectLevel": {
+    "ukr": "Оберіть рівень",
+    "eng": "Select level"
+  },
+  "langLevelLabelA1": { "ukr": "Початковий", "eng": "Beginner" },
+  "langLevelLabelA2": { "ukr": "Елементарний", "eng": "Elementary" },
+  "langLevelLabelB1": { "ukr": "Середній", "eng": "Intermediate" },
+  "langLevelLabelB2": { "ukr": "Вище середнього", "eng": "Upper-Intermediate" },
+  "langLevelLabelC1": { "ukr": "Просунутий", "eng": "Advanced" },
+  "langLevelLabelC2": { "ukr": "Досконале володіння", "eng": "Proficiency" },
+  "langLevelHintA1": {
+    "ukr": "Розуміє і вживає знайомі повсякденні вирази та елементарні фрази для задоволення конкретних потреб.",
+    "eng": "Can understand and use familiar everyday expressions and very basic phrases."
+  },
+  "langLevelHintA2": {
+    "ukr": "Спілкується у простих повсякденних ситуаціях на знайомі теми; описує простими словами своє оточення.",
+    "eng": "Can communicate in simple, routine tasks on familiar topics."
+  },
+  "langLevelHintB1": {
+    "ukr": "Дає раду в більшості ситуацій під час подорожей; описує події та досвід, коротко обґрунтовує думки.",
+    "eng": "Can deal with most situations while travelling; can describe experiences and events."
+  },
+  "langLevelHintB2": {
+    "ukr": "Спілкується досить вільно й невимушено; створює чіткий, детальний текст із широкого кола тем.",
+    "eng": "Can interact with a degree of fluency and spontaneity; can produce clear, detailed text on a wide range of subjects."
+  },
+  "langLevelHintC1": {
+    "ukr": "Гнучко й ефективно використовує мову в соціальних, навчальних і професійних цілях; висловлюється вільно.",
+    "eng": "Can use language flexibly and effectively for social, academic and professional purposes."
+  },
+  "langLevelHintC2": {
+    "ukr": "Легко розуміє практично все почуте чи прочитане; висловлюється спонтанно, дуже вільно й точно.",
+    "eng": "Can understand with ease virtually everything heard or read; expresses very fluently and precisely."
+  },
+  "employeeFeedback": {
+    "ukr": "Відгук співробітника",
+    "eng": "Employee feedback"
+  },
+  "managerFeedback": {
+    "ukr": "Відгук керівника",
+    "eng": "Manager feedback"
+  },
+  "resultsAchievements": {
+    "ukr": "Результати та досягнення",
+    "eng": "Results & achievements"
+  },
+  "developmentPlan": {
+    "ukr": "Індивідуальний план розвитку",
+    "eng": "Individual development plan"
+  },
+  "requiredTrainings": {
+    "ukr": "Необхідні тренінги, навчання, стажування тощо",
+    "eng": "Required trainings, courses, internships, etc."
+  },
+  "mission": {
+    "ukr": "Місія ${num}",
+    "eng": "Mission ${num}"
+  },
+  "competenceTransformation": {
+    "ukr": "Трансформація і результативність",
+    "eng": "Transformation & Performance"
+  },
+  "competenceEthics": {
+    "ukr": "Етика та зразковість",
+    "eng": "Ethics & Exemplarity"
+  },
+  "competenceMobilization": {
+    "ukr": "Мобілізація і можливості",
+    "eng": "Mobilization & Empowerment"
+  },
+  "competencePeoplePlanet": {
+    "ukr": "Люди та планета",
+    "eng": "People & Planet"
+  },
+  "competenceOpenness": {
+    "ukr": "Відкритість і інновації",
+    "eng": "Openness & Innovation"
+  },
+  "competenceCustomerResults": {
+    "ukr": "Клієнти та результати",
+    "eng": "Customer & Results"
+  },
+  "competenceHintTransformation": {
+    "ukr": "• Постійно націлений на досягнення результатів з урахуванням ризиків та можливостей\n• Покращує існуючі практики та процеси, мислить можливостями, а не обмеженнями\n• Приймає чіткі та зрозумілі рішення, незважаючи на невизначеність і беручи на себе відповідальність",
+    "eng": "• Consistently focused on delivering results, weighing risks and opportunities\n• Improves existing practices and processes; thinks in opportunities, not limitations\n• Makes clear, transparent decisions despite uncertainty, taking ownership"
+  },
+  "competenceHintEthics": {
+    "ukr": "• Демонструє етичність у своїх діях, дотримується взятих зобов'язань, процедур та політик компанії\n• Демонструє стійкість та самовладання у будь-якій ситуації\n• Підтримує управлінські рішення, навіть якщо вони відрізняються від власної думки, є амбасадором бренду",
+    "eng": "• Acts ethically; honours commitments and follows company procedures and policies\n• Shows resilience and self-control in any situation\n• Supports management decisions even when they differ from their own view; is a brand ambassador"
+  },
+  "competenceHintMobilization": {
+    "ukr": "• Створює умови для співпраці, створюючи мережі контактів та об'єднуючи всіх «гравців» навколо спільного орієнтиру\n• Надає регулярний зворотний зв'язок, заснований на спостереженнях і об'єктивних даних\n• Демонструє вимогливість, здатність впливати та залучатися підтримкою своїх ініціатив",
+    "eng": "• Fosters collaboration by building networks and uniting all players around a common goal\n• Gives regular feedback based on observations and objective data\n• Shows high standards, the ability to influence and to win support for their initiatives"
+  },
+  "competenceHintPeoplePlanet": {
+    "ukr": "• Втілює переконання компанії щодо соціальних ініціатив і заохочує до цього команду / колег\n• Ставить внутрішнього та/або зовнішнього клієнта в центр усіх своїх рішень\n• Ділиться знаннями з іншими з метою їх розвитку, допомагає та підтримує за потреби",
+    "eng": "• Embodies the company's beliefs on social initiatives and encourages the team/colleagues to do the same\n• Puts the internal and/or external customer at the centre of all decisions\n• Shares knowledge to develop others; helps and supports when needed"
+  },
+  "competenceHintOpenness": {
+    "ukr": "• Самовдосконалюється, гнучко адаптується до обставин і є активним учасником свого розвитку\n• Приймає зворотний зв'язок 360 та у результаті демонструє готовність змінити поведінку\n• Демонструє допитливість, черпає натхнення з внутрішніх і зовнішніх кращих практик і ділиться ними з іншими",
+    "eng": "• Continuously self-improves, adapts flexibly to circumstances, and actively drives their own development\n• Accepts 360 feedback and, as a result, shows readiness to change behaviour\n• Demonstrates curiosity, draws inspiration from internal and external best practices and shares them with others"
+  },
+  "scoresOverview": {
+    "ukr": "Огляд оцінок",
+    "eng": "Scores overview"
+  },
+  "competencesSummary": {
+    "ukr": "Підсумок компетенцій",
+    "eng": "Competences summary"
+  },
+  "strongCompetences": {
+    "ukr": "Сильні компетенції",
+    "eng": "Strong competences"
+  },
+  "competencesToDevelop": {
+    "ukr": "Компетенції до розвитку",
+    "eng": "Competences to develop"
+  },
+  "selectCompetence": {
+    "ukr": "Оберіть компетенцію",
+    "eng": "Select competence"
+  },
+  "addComment": {
+    "ukr": "Додати",
+    "eng": "Add"
+  },
+  "typeCommentPlaceholder": {
+    "ukr": "Введіть коментар…",
+    "eng": "Type a comment…"
+  },
+  "deleteComment": {
+    "ukr": "Видалити коментар",
+    "eng": "Delete comment"
+  },
+  "removeOption": {
+    "ukr": "Видалити компетенцію",
+    "eng": "Remove competence"
+  },
+  "fillAllCompetencesFirst": {
+    "ukr": "Спочатку оцініть усі компетенції",
+    "eng": "Score all competences first"
+  },
+  "copyToSummaryComment": {
+    "ukr": "Скопіювати до коментаря підсумку",
+    "eng": "Copy to summary comment"
+  },
+  "reviewSessionCannotClose": {
+    "ukr": "Неможливо закрити сесію: ${count} відгук(ів) співробітників ще не закрито",
+    "eng": "Cannot close session: ${count} employee review(s) are not yet closed"
+  },
+  "employeeLanguagesSaveSuccess": {
+    "ukr": "Іноземні мови збережено",
+    "eng": "Foreign languages saved"
+  },
   "departmentCategoryCreateSuccess": {
     "ukr": "Категорію підрозділу «${name}» успішно створено",
     "eng": "Department category «${name}» created successfully"

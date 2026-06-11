@@ -44,6 +44,7 @@ class ReviewSessionEmployeeEvaluationService(BaseService):
             schema.dimension_name = record.dimension.name
             schema.dimension_key = record.dimension.key
             schema.dimension_description = record.dimension.description
+            schema.dimension_is_active = record.dimension.is_active
         return schema
 
     async def get_evaluations(

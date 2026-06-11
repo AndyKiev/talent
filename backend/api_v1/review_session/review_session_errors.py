@@ -36,5 +36,8 @@ class ReviewSessionCannotCloseError(DomainError):
 
     def __init__(self, pending_count: int) -> None:
         self.template_vars = {"count": pending_count}
-        self.fallback = f"Cannot close session: {pending_count} employee(s) are not yet reviewed"
+        self.fallback = (
+            f"Cannot close session: {pending_count} employee review(s) "
+            f"are not yet closed"
+        )
         super().__init__(self.fallback)

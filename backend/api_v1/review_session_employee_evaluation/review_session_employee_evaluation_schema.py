@@ -22,6 +22,7 @@ class Evaluation(EvaluationBase):
     dimension_name: str = ""
     dimension_key: str = ""
     dimension_description: Optional[str] = None
+    dimension_is_active: bool = True
 
 
 class EvaluationBulkUpdate(BaseModel):

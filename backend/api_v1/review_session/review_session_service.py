@@ -160,15 +160,15 @@ class ReviewSessionService(BaseService):
             exc = ReviewSessionStatusError(orm_record.status, "closed")
             raise await self._resolve_domain_error(exc)
 
-        # Validate all employees are at least "reviewed"
-        not_reviewed_stmt = sa_select(RSEModel).where(
+        # A session can only close once every employee review is "closed".
+        not_closed_stmt = sa_select(RSEModel).where(
             RSEModel.session_id == rs_id,
-            RSEModel.status == "open",
+            RSEModel.status != "closed",
         )
-        result = await self.session.execute(not_reviewed_stmt)
-        open_employees = result.scalars().all()
-        if open_employees:
-            exc = ReviewSessionCannotCloseError(len(open_employees))
+        result = await self.session.execute(not_closed_stmt)
+        not_closed_employees = result.scalars().all()
+        if not_closed_employees:
+            exc = ReviewSessionCannotCloseError(len(not_closed_employees))
             raise await self._resolve_domain_error(exc)
 
         orm_record.status = "closed"

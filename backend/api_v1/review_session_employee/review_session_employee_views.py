@@ -6,6 +6,7 @@ from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.review_session_employee.review_session_employee_schema import (
     ReviewSessionEmployee as RSESchema,
     ReviewSessionEmployeeList as RSEListSchema,
+    ReviewSessionEmployeeFieldsUpdate,
 )
 from backend.api_v1.review_session_employee.review_session_employee_dependencies import (
     get_review_session_employee_service,
@@ -58,6 +59,18 @@ async def get_review_session_employee(
     ],
 ):
     return await service.get_rse_detail(rse_id)
+
+
+@router.patch("/{rse_id}/fields", response_model=RSESchema)
+async def update_rse_fields(
+    rse_id: int,
+    payload: ReviewSessionEmployeeFieldsUpdate,
+    service: Annotated[
+        ReviewSessionEmployeeService,
+        Depends(get_review_session_employee_service),
+    ],
+):
+    return await service.update_fields(rse_id, payload)
 
 
 @router.post(

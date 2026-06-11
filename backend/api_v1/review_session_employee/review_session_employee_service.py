@@ -10,6 +10,7 @@ from backend.api_v1.review_session_employee.review_session_employee_repository i
 from backend.api_v1.review_session_employee.review_session_employee_schema import (
     ReviewSessionEmployee as RSESchema,
     ReviewSessionEmployeeList as RSEListSchema,
+    ReviewSessionEmployeeFieldsUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.review_session_employee.review_session_employee_errors import (
@@ -66,6 +67,7 @@ class ReviewSessionEmployeeService(BaseService):
             schema.employee_code = record.employee.code
         evals = getattr(record, "evaluations", []) or []
         schema.scored_count = sum(1 for e in evals if e.score is not None and e.score > 0)
+        schema.facts_count = sum(1 for e in evals if e.facts and e.facts.strip())
         schema.total_dimensions = len(evals)
         return schema
 
@@ -95,6 +97,16 @@ class ReviewSessionEmployeeService(BaseService):
 
     async def get_rse_detail(self, rse_id: int) -> RSESchema:
         record = await self.get_by_id(rse_id)
+        return self._to_schema(record)
+
+    async def update_fields(
+        self, rse_id: int, payload: ReviewSessionEmployeeFieldsUpdate
+    ) -> RSESchema:
+        record = await self.get_by_id(rse_id)
+        for field, value in payload.model_dump(exclude_unset=True).items():
+            setattr(record, field, value)
+        await self.session.commit()
+        await self.session.refresh(record)
         return self._to_schema(record)
 
     async def change_status(

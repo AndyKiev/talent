@@ -35,6 +35,8 @@ import {
 } from './peopleReviewApi';
 import { useDataGridLocale } from '../../hooks/useDataGridLocale';
 import { useTheme } from '../theme/ThemeContext';
+import useString from '../../hooks/useString';
+import { str } from '../../strings/str';
 
 const RSE_STATUS_COLORS: Record<string, 'info' | 'warning' | 'success' | 'error'> = {
     open: 'info',
@@ -48,6 +50,7 @@ export function SessionEmployeesPage() {
     const qc = useQueryClient();
     const localeText = useDataGridLocale();
     const { t } = useTheme();
+    const getString = useString({ str });
     const sid = Number(sessionId);
 
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
@@ -124,18 +127,33 @@ export function SessionEmployeesPage() {
         {
             field: 'progress',
             headerName: 'Progress',
-            width: 160,
+            width: 210,
             sortable: false,
             renderCell: (params) => {
-                const { scored_count = 0, total_dimensions = 0 } = params.row;
-                const pct = total_dimensions > 0 ? (scored_count / total_dimensions) * 100 : 0;
-                const full = scored_count === total_dimensions && total_dimensions > 0;
-                const color = full ? '#2E7D32' : '#1565C0';
+                const { scored_count = 0, facts_count = 0, total_dimensions = 0 } = params.row;
+                const scorePct = total_dimensions > 0 ? (scored_count / total_dimensions) * 100 : 0;
+                const factsPct = total_dimensions > 0 ? (facts_count / total_dimensions) * 100 : 0;
+                const scoreFull = scored_count === total_dimensions && total_dimensions > 0;
+                const factsFull = facts_count === total_dimensions && total_dimensions > 0;
+                const scoreColor = scoreFull ? '#2E7D32' : '#1565C0';
+                const factsColor = factsFull ? '#EF6C00' : '#FB8C00';
                 return (
-                    <Stack spacing={0.4} justifyContent="center" sx={{ height: '100%', width: '100%', py: 0.5 }}>
-                        <Typography fontSize={11} fontWeight={600} color={color}>{scored_count}/{total_dimensions} dimensions</Typography>
-                        <Box sx={{ height: 6, borderRadius: 3, bgcolor: `${color}22`, width: '100%' }}>
-                            <Box sx={{ height: '100%', borderRadius: 3, width: `${pct}%`, bgcolor: color, transition: 'width 0.3s' }} />
+                    <Stack spacing={0.6} justifyContent="center" sx={{ height: '100%', width: '100%', py: 0.5 }}>
+                        <Box>
+                            <Typography fontSize={10.5} fontWeight={600} color={scoreColor}>
+                                {getString('scoredProgress', { count: scored_count, total: total_dimensions })}
+                            </Typography>
+                            <Box sx={{ height: 5, borderRadius: 3, bgcolor: `${scoreColor}22`, width: '100%' }}>
+                                <Box sx={{ height: '100%', borderRadius: 3, width: `${scorePct}%`, bgcolor: scoreColor, transition: 'width 0.3s' }} />
+                            </Box>
+                        </Box>
+                        <Box>
+                            <Typography fontSize={10.5} fontWeight={600} color={factsColor}>
+                                {getString('factsProgress', { count: facts_count, total: total_dimensions })}
+                            </Typography>
+                            <Box sx={{ height: 5, borderRadius: 3, bgcolor: `${factsColor}22`, width: '100%' }}>
+                                <Box sx={{ height: '100%', borderRadius: 3, width: `${factsPct}%`, bgcolor: factsColor, transition: 'width 0.3s' }} />
+                            </Box>
                         </Box>
                     </Stack>
                 );
@@ -283,6 +301,7 @@ export function SessionEmployeesPage() {
                             onPaginationModelChange={setPaginationModel}
                             pageSizeOptions={[10, 25, 50]}
                             disableRowSelectionOnClick
+                            rowHeight={64}
                             getRowId={row => row.id}
                             localeText={localeText}
                             hideFooterSelectedRowCount

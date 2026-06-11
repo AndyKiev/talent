@@ -4,6 +4,8 @@ import { BASE_URL } from "../../utils/eNums.ts"
 const RS_BASE = `${BASE_URL}/review_sessions`;
 const RSE_BASE = `${BASE_URL}/review_session_employees`;
 const EVAL_BASE = `${BASE_URL}/review_evaluations`;
+const LANG_LEVEL_BASE = `${BASE_URL}/language_levels`;
+const ELP_BASE = `${BASE_URL}/employee_language_profiles`;
 
 // --- Review Session types ---
 export interface ReviewSession {
@@ -37,6 +39,7 @@ export interface ReviewSessionEmployeeList {
     employee_name: string;
     employee_code: string;
     scored_count: number;
+    facts_count: number;
     total_dimensions: number;
 }
 
@@ -50,6 +53,7 @@ export interface Evaluation {
     dimension_name: string;
     dimension_key: string;
     dimension_description: string | null;
+    dimension_is_active: boolean;
 }
 
 export interface ReviewSessionEmployee {
@@ -61,7 +65,22 @@ export interface ReviewSessionEmployee {
     employee_code: string;
     session_name: string;
     session_status: string;
+    employee_feedback: string | null;
+    manager_feedback: string | null;
+    results_achievements: string | null;
+    development_plan: string | null;
+    trainings: string | null;
+    competence_summary: string | null;
     evaluations: Evaluation[];
+}
+
+export interface RSEFieldsUpdate {
+    employee_feedback?: string | null;
+    manager_feedback?: string | null;
+    results_achievements?: string | null;
+    development_plan?: string | null;
+    trainings?: string | null;
+    competence_summary?: string | null;
 }
 
 // --- Review Session API ---
@@ -117,6 +136,17 @@ export const fetchRSEDetail = async (rseId: number): Promise<ReviewSessionEmploy
     return res.data;
 };
 
+export const saveRSEFields = async (
+    rseId: number,
+    fields: RSEFieldsUpdate,
+): Promise<ReviewSessionEmployee> => {
+    const res = await axiosInstance.patch<ReviewSessionEmployee>(
+        `${RSE_BASE}/${rseId}/fields`,
+        fields,
+    );
+    return res.data;
+};
+
 export const markReviewed = async (rseId: number): Promise<MutationResponse<ReviewSessionEmployee>> => {
     const res = await axiosInstance.post<MutationResponse<ReviewSessionEmployee>>(
         `${RSE_BASE}/${rseId}/reviewed`,
@@ -164,5 +194,58 @@ export const bulkUpdateEvaluations = async (
     updates: EvaluationBulkUpdate[],
 ): Promise<MutationResponse<Evaluation[]>> => {
     const res = await axiosInstance.put<MutationResponse<Evaluation[]>>(`${EVAL_BASE}/bulk`, updates);
+    return res.data;
+};
+
+// --- Foreign languages ---
+export interface LanguageLevel {
+    id: number;
+    code: string;
+    label: string;
+    hint: string;
+    sort_order: number;
+}
+
+export interface EmployeeLanguageItem {
+    id: number;
+    language: string;
+    level_id: number | null;
+    level_code: string | null;
+    level_hint: string | null;
+}
+
+export interface EmployeeLanguageProfile {
+    id: number;
+    employee_id: number;
+    languages: EmployeeLanguageItem[];
+}
+
+export interface EmployeeLanguageInput {
+    language: string;
+    level_id: number | null;
+}
+
+export const fetchLanguageLevels = async (): Promise<LanguageLevel[]> => {
+    const res = await axiosInstance.get<LanguageLevel[]>(LANG_LEVEL_BASE);
+    return res.data ?? [];
+};
+
+export const fetchEmployeeLanguageProfile = async (
+    employeeId: number,
+): Promise<EmployeeLanguageProfile> => {
+    const res = await axiosInstance.get<EmployeeLanguageProfile>(
+        `${ELP_BASE}/by_employee/${employeeId}`,
+    );
+    return res.data;
+};
+
+export const saveEmployeeLanguageProfile = async (
+    employeeId: number,
+    languages: EmployeeLanguageInput[],
+): Promise<MutationResponse<EmployeeLanguageProfile>> => {
+    const res = await axiosInstance.put<MutationResponse<EmployeeLanguageProfile>>(
+        `${ELP_BASE}/by_employee/${employeeId}`,
+        { languages },
+    );
     return res.data;
 };

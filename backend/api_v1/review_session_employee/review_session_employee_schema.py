@@ -24,6 +24,17 @@ class ReviewSessionEmployeeUpdate(BaseModel):
     status: Optional[str] = None
 
 
+class ReviewSessionEmployeeFieldsUpdate(BaseModel):
+    """Employee-filled free-text fields for a review (feedback + results)."""
+
+    employee_feedback: Optional[str] = None
+    manager_feedback: Optional[str] = None
+    results_achievements: Optional[str] = None
+    development_plan: Optional[str] = None
+    trainings: Optional[str] = None
+    competence_summary: Optional[str] = None
+
+
 class ReviewSessionEmployee(ReviewSessionEmployeeBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
@@ -32,6 +43,12 @@ class ReviewSessionEmployee(ReviewSessionEmployeeBase):
     employee_code: str = ""
     session_name: str = ""
     session_status: str = "open"
+    employee_feedback: Optional[str] = None
+    manager_feedback: Optional[str] = None
+    results_achievements: Optional[str] = None
+    development_plan: Optional[str] = None
+    trainings: Optional[str] = None
+    competence_summary: Optional[str] = None
     evaluations: List[EvaluationInRSE] = []
 
 
@@ -44,4 +61,5 @@ class ReviewSessionEmployeeList(BaseModel):
     employee_name: str = ""
     employee_code: str = ""
     scored_count: int = 0
+    facts_count: int = 0
     total_dimensions: int = 0
