@@ -2683,6 +2683,82 @@
     "ukr": "Запропонований рівень збережено",
     "eng": "Proposed level saved successfully"
   },
+  "evaluationSaveSuccess": {
+    "ukr": "Оцінювання збережено",
+    "eng": "Evaluations saved successfully"
+  },
+  "reviewSessionCreateSuccess": {
+    "ukr": "Сесію оцінювання «${name}» створено",
+    "eng": "Review session «${name}» created"
+  },
+  "reviewSessionUpdateSuccess": {
+    "ukr": "Сесію оцінювання «${name}» оновлено",
+    "eng": "Review session «${name}» updated"
+  },
+  "reviewSessionDeleteSuccess": {
+    "ukr": "Сесію оцінювання «${name}» видалено",
+    "eng": "Review session «${name}» deleted"
+  },
+  "reviewSessionOpenSuccess": {
+    "ukr": "Сесію «${name}» відкрито",
+    "eng": "Review session «${name}» opened"
+  },
+  "reviewSessionCloseSuccess": {
+    "ukr": "Сесію «${name}» закрито",
+    "eng": "Review session «${name}» closed"
+  },
+  "employee": {
+    "ukr": "Співробітник",
+    "eng": "Employee"
+  },
+  "progress": {
+    "ukr": "Прогрес",
+    "eng": "Progress"
+  },
+  "view": {
+    "ukr": "Переглянути",
+    "eng": "View"
+  },
+  "revert": {
+    "ukr": "Повернути",
+    "eng": "Revert"
+  },
+  "setOpen": {
+    "ukr": "Відкрити",
+    "eng": "Set open"
+  },
+  "closing": {
+    "ukr": "Закриття…",
+    "eng": "Closing…"
+  },
+  "setDirectlyToOpen": {
+    "ukr": "Відкрити напряму (без перегляду)",
+    "eng": "Set directly to open (skip reviewed)"
+  },
+  "closeThisSession": {
+    "ukr": "Закрити цю сесію",
+    "eng": "Close this session"
+  },
+  "sessionClosedViewOnly": {
+    "ukr": "Цю сесію закрито — режим лише для перегляду. Поверніть сесію зі списку сесій, щоб відкрити знову.",
+    "eng": "This session is closed — view-only mode. Revert the session from the Sessions list to re-open."
+  },
+  "employeesStillOpenWarning": {
+    "ukr": "${count} співробітник(ів) ще відкрито. Усіх потрібно переглянути, перш ніж закрити сесію.",
+    "eng": "${count} employee(s) are still open. All must be reviewed before the session can be closed."
+  },
+  "employeesStillOpenTip": {
+    "ukr": "${count} співробітник(ів) ще відкрито — спершу потрібно переглянути всіх",
+    "eng": "${count} employee(s) still open — all must be reviewed first"
+  },
+  "statusReviewed": {
+    "ukr": "Переглянуто",
+    "eng": "Reviewed"
+  },
+  "sessionNumber": {
+    "ukr": "Сесія №${id}",
+    "eng": "Session #${id}"
+  },
   "reviewLevelCreateSuccess": {
     "ukr": "Рівень «${name}» створено",
     "eng": "Review level '${name}' successfully created"

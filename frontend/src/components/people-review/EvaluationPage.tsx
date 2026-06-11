@@ -798,7 +798,7 @@ export function EvaluationPage() {
                 {/* Breadcrumbs */}
                 <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
                     <Link to="/people-review" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">People Review</Typography>
+                        <Typography variant="body2" color="text.secondary">{getString('peopleReview')}</Typography>
                     </Link>
                     {rseDetail && (
                         <Link

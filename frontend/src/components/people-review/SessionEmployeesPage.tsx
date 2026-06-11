@@ -36,12 +36,19 @@ import {
 import { useDataGridLocale } from '../../hooks/useDataGridLocale';
 import { useTheme } from '../theme/ThemeContext';
 import useString from '../../hooks/useString';
-import { str } from '../../strings/str';
 
 const RSE_STATUS_COLORS: Record<string, 'info' | 'warning' | 'success' | 'error'> = {
     open: 'info',
     reviewed: 'warning',
     closed: 'success',
+};
+
+// status value → translation key (session: pending/open/closed; employee: open/reviewed/closed)
+const STATUS_LABEL_KEYS: Record<string, string> = {
+    pending: 'statusPending',
+    open: 'statusOpen',
+    reviewed: 'statusReviewed',
+    closed: 'statusClosed',
 };
 
 export function SessionEmployeesPage() {
@@ -50,7 +57,7 @@ export function SessionEmployeesPage() {
     const qc = useQueryClient();
     const localeText = useDataGridLocale();
     const { t } = useTheme();
-    const getString = useString({ str });
+    const getString = useString();
     const sid = Number(sessionId);
 
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
@@ -70,7 +77,7 @@ export function SessionEmployeesPage() {
     const { data: sessions = [] } = useQuery({ queryKey: sessQk, queryFn: fetchReviewSessions, staleTime: 60_000 });
     const session = sessions.find(s => s.id === sid);
     const sessionStatus = session?.status ?? 'open';
-    const sessionName = session?.name ?? `Session #${sid}`;
+    const sessionName = session?.name ?? getString('sessionNumber', { id: sid });
     const isSessionClosed = sessionStatus === 'closed';
 
     // Close-session eligibility: no employee in "open" status
@@ -114,19 +121,19 @@ export function SessionEmployeesPage() {
     });
 
     const columns: GridColDef<ReviewSessionEmployeeList>[] = [
-        { field: 'employee_code', headerName: 'Code', width: 100 },
-        { field: 'employee_name', headerName: 'Employee', flex: 1, minWidth: 180 },
+        { field: 'employee_code', headerName: getString('code'), width: 100 },
+        { field: 'employee_name', headerName: getString('employee'), flex: 1, minWidth: 180 },
         {
             field: 'status',
-            headerName: 'Status',
+            headerName: getString('status'),
             width: 110,
             renderCell: (params) => (
-                <Chip label={params.row.status} color={RSE_STATUS_COLORS[params.row.status] ?? 'default'} size="small" variant="outlined" />
+                <Chip label={getString(STATUS_LABEL_KEYS[params.row.status] ?? params.row.status)} color={RSE_STATUS_COLORS[params.row.status] ?? 'default'} size="small" variant="outlined" />
             ),
         },
         {
             field: 'progress',
-            headerName: 'Progress',
+            headerName: getString('progress'),
             width: 210,
             sortable: false,
             renderCell: (params) => {
@@ -161,7 +168,7 @@ export function SessionEmployeesPage() {
         },
         {
             field: 'actions',
-            headerName: 'Actions',
+            headerName: getString('actions'),
             width: 340,
             sortable: false,
             renderCell: (params) => {
@@ -173,17 +180,17 @@ export function SessionEmployeesPage() {
                             size="small" variant="outlined" startIcon={<VisibilityIcon />}
                             onClick={() => navigate({ to: '/people-review/evaluation/$rseId' as any, params: { rseId: String(row.id) } })}
                         >
-                            View
+                            {getString('view')}
                         </Button>
 
                         {row.status === 'open' && !isSessionClosed && (
-                            <Tooltip title={allFilled ? 'Mark as reviewed' : `Fill all ${row.total_dimensions} dimensions (${row.scored_count}/${row.total_dimensions})`} placement="top">
+                            <Tooltip title={allFilled ? getString('markAsReviewed') : getString('fillAllDimensions', { filled: row.scored_count, total: row.total_dimensions })} placement="top">
                                 <span>
                                     <Button size="small" variant="contained" color="warning"
                                         startIcon={allFilled ? <CheckIcon /> : <LockIcon />}
                                         onClick={() => reviewedMut.mutate(row.id)}
                                         disabled={!allFilled || reviewedMut.isPending}>
-                                        Mark Reviewed
+                                        {getString('markReviewed')}
                                     </Button>
                                 </span>
                             </Tooltip>
@@ -195,14 +202,14 @@ export function SessionEmployeesPage() {
                                     startIcon={<LockIcon />}
                                     onClick={() => closeMut.mutate(row.id)}
                                     disabled={closeMut.isPending}>
-                                    Close
+                                    {getString('close')}
                                 </Button>
-                                <Tooltip title="Revert to open (allow editing)">
+                                <Tooltip title={getString('revertToOpen')}>
                                     <Button size="small" variant="outlined" startIcon={<ReplayIcon />}
                                         onClick={() => revertMut.mutate(row.id)}
                                         disabled={revertMut.isPending}
                                         sx={{ minWidth: 0, px: 1 }}>
-                                        Revert
+                                        {getString('revert')}
                                     </Button>
                                 </Tooltip>
                             </>
@@ -210,19 +217,19 @@ export function SessionEmployeesPage() {
 
                         {row.status === 'closed' && !isSessionClosed && (
                             <>
-                                <Tooltip title="Revert to reviewed">
+                                <Tooltip title={getString('revertToReviewed')}>
                                     <Button size="small" variant="outlined" color="warning" startIcon={<ReplayIcon />}
                                         onClick={() => revertMut.mutate(row.id)}
                                         disabled={revertMut.isPending}>
-                                        Revert
+                                        {getString('revert')}
                                     </Button>
                                 </Tooltip>
-                                <Tooltip title="Set directly to open (skip reviewed)">
+                                <Tooltip title={getString('setDirectlyToOpen')}>
                                     <Button size="small" variant="outlined" startIcon={<ReplayIcon />}
                                         onClick={() => reopenMut.mutate(row.id)}
                                         disabled={reopenMut.isPending}
                                         sx={{ minWidth: 0, px: 1 }}>
-                                        Set Open
+                                        {getString('setOpen')}
                                     </Button>
                                 </Tooltip>
                             </>
@@ -238,7 +245,7 @@ export function SessionEmployeesPage() {
             <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1300, mx: 'auto' }}>
                 <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
                     <Link to="/people-review" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">People Review</Typography>
+                        <Typography variant="body2" color="text.secondary">{getString('peopleReview')}</Typography>
                     </Link>
                     <Typography variant="body2" color="text.primary" fontWeight={600}>
                         {sessionName}
@@ -250,19 +257,19 @@ export function SessionEmployeesPage() {
                     <Stack direction="row" alignItems="center" spacing={1.5}>
                         <Typography variant="h6" fontWeight={700} color={t.text}>{sessionName}</Typography>
                         <Chip
-                            label={sessionStatus}
+                            label={getString(STATUS_LABEL_KEYS[sessionStatus] ?? sessionStatus)}
                             size="small"
                             color={sessionStatus === 'open' ? 'success' : sessionStatus === 'closed' ? 'error' : 'default'}
                             variant="outlined"
                         />
                         {isSessionClosed && (
-                            <Chip icon={<VisibilityIcon sx={{ fontSize: 13 }} />} label="View only" size="small" variant="outlined" />
+                            <Chip icon={<VisibilityIcon sx={{ fontSize: 13 }} />} label={getString('viewOnly')} size="small" variant="outlined" />
                         )}
                     </Stack>
 
                     {/* Close session button */}
                     {sessionStatus === 'open' && (
-                        <Tooltip title={canCloseSession ? 'Close this session' : `${openCount} employee(s) still open — all must be reviewed first`}>
+                        <Tooltip title={canCloseSession ? getString('closeThisSession') : getString('employeesStillOpenTip', { count: openCount })}>
                             <span>
                                 <Button
                                     variant="contained" color="error" size="small"
@@ -271,7 +278,7 @@ export function SessionEmployeesPage() {
                                     disabled={!canCloseSession || closeSessionMut.isPending}
                                     sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
                                 >
-                                    {closeSessionMut.isPending ? 'Closing…' : 'Close Session'}
+                                    {closeSessionMut.isPending ? getString('closing') : getString('closeSession')}
                                 </Button>
                             </span>
                         </Tooltip>
@@ -280,13 +287,13 @@ export function SessionEmployeesPage() {
 
                 {isSessionClosed && (
                     <Alert severity="info" icon={<VisibilityIcon />} sx={{ mb: 2, borderRadius: '10px' }}>
-                        This session is <strong>closed</strong> — view-only mode. Revert the session from the Sessions list to re-open.
+                        {getString('sessionClosedViewOnly')}
                     </Alert>
                 )}
 
                 {openCount > 0 && sessionStatus === 'open' && (
                     <Alert severity="warning" sx={{ mb: 2, borderRadius: '10px' }}>
-                        {openCount} employee(s) are still <strong>open</strong>. All must be reviewed before the session can be closed.
+                        {getString('employeesStillOpenWarning', { count: openCount })}
                     </Alert>
                 )}
 
