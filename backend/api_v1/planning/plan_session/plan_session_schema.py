@@ -27,8 +27,16 @@ class PlanSessionCreate(PlanSessionBase):
 
     Frontend defaults: start_date = Jan 1 of current year,
     end_date = Dec 31 of current year (set in the React Hook Form).
+
+    department_category_ids: optional explicit category selection. When empty
+    or omitted, the service falls back to plan_category_defaults.
     """
-    pass
+    department_category_ids: Optional[List[int]] = None
+
+
+class PlanSessionResyncRequest(BaseModel):
+    """Optional category ids to ADD to the session before reconciling."""
+    add_category_ids: Optional[List[int]] = None
 
 
 class PlanSessionUpdate(BaseModel):

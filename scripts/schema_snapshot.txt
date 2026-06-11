@@ -1,0 +1,492 @@
+# TALENT schema snapshot
+# host=127.0.0.1:5433 db=talent generated=2026-06-02T16:42:12.893924+00:00
+# sorted alphabetically; diff this file between TL and TLW.
+
+## COLUMNS (table|column|type|null|default)
+alembic_version|version_num|character varying|null=NO|default=
+department_categories|created_at|timestamp with time zone|null=NO|default=now()
+department_categories|description|text|null=YES|default=
+department_categories|id|integer|null=NO|default=nextval('department_categories_id_seq'::regclass)
+department_categories|is_active|boolean|null=NO|default=
+department_categories|is_main|boolean|null=NO|default=
+department_categories|key|character varying|null=YES|default=
+department_categories|name|character varying|null=NO|default=
+department_type_job_links|created_at|timestamp with time zone|null=NO|default=now()
+department_type_job_links|department_type_id|integer|null=NO|default=
+department_type_job_links|id|integer|null=NO|default=nextval('department_type_job_links_id_seq'::regclass)
+department_type_job_links|is_active|boolean|null=NO|default=
+department_type_job_links|job_id|integer|null=NO|default=
+department_type_parental_links|child_id|integer|null=NO|default=
+department_type_parental_links|created_at|timestamp with time zone|null=NO|default=now()
+department_type_parental_links|id|integer|null=NO|default=nextval('department_type_parental_links_id_seq'::regclass)
+department_type_parental_links|is_active|boolean|null=NO|default=
+department_type_parental_links|parent_id|integer|null=NO|default=
+department_types|created_at|timestamp with time zone|null=NO|default=now()
+department_types|description|text|null=YES|default=
+department_types|id|integer|null=NO|default=nextval('department_types_id_seq'::regclass)
+department_types|is_active|boolean|null=NO|default=
+department_types|name|character varying|null=NO|default=
+departments|created_at|timestamp with time zone|null=NO|default=now()
+departments|department_category_id|integer|null=NO|default=
+departments|department_type_id|integer|null=NO|default=
+departments|id|integer|null=NO|default=nextval('departments_id_seq'::regclass)
+departments|is_active|boolean|null=NO|default=
+departments|name|character varying|null=NO|default=
+departments|parent_id|integer|null=YES|default=
+employee_departments|created_at|timestamp with time zone|null=NO|default=now()
+employee_departments|department_id|integer|null=NO|default=
+employee_departments|employee_id|integer|null=NO|default=
+employee_departments|id|integer|null=NO|default=nextval('employee_departments_id_seq'::regclass)
+employee_departments|is_main|boolean|null=NO|default=
+employee_event_change_departments|change_dept_type_id|integer|null=NO|default=
+employee_event_change_departments|department_id|integer|null=NO|default=
+employee_event_change_departments|event_change_id|integer|null=NO|default=
+employee_event_change_departments|id|integer|null=NO|default=nextval('employee_event_change_departments_id_seq'::regclass)
+employee_event_change_dept_types|code|character varying|null=NO|default=
+employee_event_change_dept_types|id|integer|null=NO|default=nextval('employee_event_change_dept_types_id_seq'::regclass)
+employee_event_change_dept_types|name|character varying|null=NO|default=
+employee_event_changes|direction_type_id|integer|null=NO|default=
+employee_event_changes|event_id|integer|null=NO|default=
+employee_event_changes|id|integer|null=NO|default=nextval('employee_event_changes_id_seq'::regclass)
+employee_event_changes|new_department_id|integer|null=YES|default=
+employee_event_changes|new_job_id|integer|null=YES|default=
+employee_event_changes|new_status_id|integer|null=YES|default=
+employee_event_changes|prev_department_id|integer|null=YES|default=
+employee_event_changes|prev_job_id|integer|null=YES|default=
+employee_event_changes|prev_status_id|integer|null=YES|default=
+employee_event_direction_types|code|character varying|null=NO|default=
+employee_event_direction_types|id|integer|null=NO|default=nextval('employee_event_direction_types_id_seq'::regclass)
+employee_event_direction_types|name|character varying|null=NO|default=
+employee_event_statuses|description|text|null=YES|default=
+employee_event_statuses|id|integer|null=NO|default=nextval('employee_event_statuses_id_seq'::regclass)
+employee_event_statuses|name|character varying|null=NO|default=
+employee_event_type_directions|direction_type_id|integer|null=NO|default=
+employee_event_type_directions|event_type_id|integer|null=NO|default=
+employee_event_type_directions|id|integer|null=NO|default=nextval('employee_event_type_directions_id_seq'::regclass)
+employee_event_type_directions|is_required|boolean|null=NO|default=
+employee_event_type_directions|sort_order|integer|null=NO|default=
+employee_event_types|code|character varying|null=NO|default=
+employee_event_types|created_at|timestamp with time zone|null=NO|default=now()
+employee_event_types|description|text|null=YES|default=
+employee_event_types|id|integer|null=NO|default=nextval('employee_event_types_id_seq'::regclass)
+employee_event_types|name|character varying|null=NO|default=
+employee_events|created_at|timestamp with time zone|null=NO|default=now()
+employee_events|created_by|integer|null=NO|default=
+employee_events|description|text|null=YES|default=
+employee_events|effective_date|date|null=NO|default=
+employee_events|employee_id|integer|null=NO|default=
+employee_events|event_type_id|integer|null=NO|default=
+employee_events|id|integer|null=NO|default=nextval('employee_events_id_seq'::regclass)
+employee_events|status_id|integer|null=NO|default=
+employee_statuses|created_at|timestamp with time zone|null=NO|default=now()
+employee_statuses|description|text|null=YES|default=
+employee_statuses|id|integer|null=NO|default=nextval('employee_statuses_id_seq'::regclass)
+employee_statuses|name|character varying|null=NO|default=
+employee_user_group_links|created_at|timestamp with time zone|null=NO|default=now()
+employee_user_group_links|employee_id|integer|null=NO|default=
+employee_user_group_links|id|integer|null=NO|default=nextval('employee_user_group_links_id_seq'::regclass)
+employee_user_group_links|user_group_id|integer|null=NO|default=
+employees|code|character varying|null=NO|default=
+employees|created_at|timestamp with time zone|null=NO|default=now()
+employees|email|character varying|null=YES|default=
+employees|id|integer|null=NO|default=nextval('employees_id_seq'::regclass)
+employees|is_active|boolean|null=NO|default=
+employees|job_id|integer|null=YES|default=
+employees|lang_id|integer|null=NO|default=
+employees|name|character varying|null=NO|default=
+employees|status_id|integer|null=NO|default=
+essence_set_members|essence_id|integer|null=NO|default=
+essence_set_members|essence_set_id|integer|null=NO|default=
+essence_set_members|id|integer|null=NO|default=nextval('essence_set_members_id_seq'::regclass)
+essence_sets|fingerprint|character varying|null=NO|default=
+essence_sets|id|integer|null=NO|default=nextval('essence_sets_id_seq'::regclass)
+essences|created_at|timestamp with time zone|null=NO|default=now()
+essences|description|text|null=YES|default=
+essences|id|integer|null=NO|default=nextval('essences_id_seq'::regclass)
+essences|name|character varying|null=NO|default=
+job_group_types|allow_multiple|boolean|null=NO|default=
+job_group_types|created_at|timestamp with time zone|null=NO|default=now()
+job_group_types|description|text|null=YES|default=
+job_group_types|id|integer|null=NO|default=nextval('job_group_types_id_seq'::regclass)
+job_group_types|key|character varying|null=NO|default=
+job_group_types|name|character varying|null=NO|default=
+job_groups|description|text|null=YES|default=
+job_groups|id|integer|null=NO|default=nextval('job_groups_id_seq'::regclass)
+job_groups|job_group_type_id|integer|null=NO|default=
+job_groups|key|character varying|null=YES|default=
+job_groups|name|character varying|null=NO|default=
+job_job_group_links|created_at|timestamp with time zone|null=NO|default=now()
+job_job_group_links|id|integer|null=NO|default=nextval('job_job_group_links_id_seq'::regclass)
+job_job_group_links|job_group_id|integer|null=NO|default=
+job_job_group_links|job_id|integer|null=NO|default=
+job_responsibility_category_links|created_at|timestamp with time zone|null=NO|default=now()
+job_responsibility_category_links|department_category_id|integer|null=NO|default=
+job_responsibility_category_links|id|integer|null=NO|default=nextval('job_responsibility_category_links_id_seq'::regclass)
+job_responsibility_category_links|is_active|boolean|null=NO|default=
+job_responsibility_category_links|job_id|integer|null=NO|default=
+job_user_group_links|created_at|timestamp with time zone|null=NO|default=now()
+job_user_group_links|id|integer|null=NO|default=nextval('job_user_group_links_id_seq'::regclass)
+job_user_group_links|job_id|integer|null=NO|default=
+job_user_group_links|user_group_id|integer|null=NO|default=
+jobs|created_at|timestamp with time zone|null=NO|default=now()
+jobs|description|character varying|null=YES|default=
+jobs|id|integer|null=NO|default=nextval('jobs_id_seq'::regclass)
+jobs|is_active|boolean|null=NO|default=
+jobs|key|character varying|null=YES|default=
+jobs|name|character varying|null=NO|default=
+jobs|short_name|character varying|null=YES|default=
+langs|id|integer|null=NO|default=nextval('langs_id_seq'::regclass)
+langs|name|character varying|null=NO|default=
+langs|short_name|character varying|null=NO|default=
+msg_keys|id|integer|null=NO|default=nextval('msg_keys_id_seq'::regclass)
+msg_keys|name|character varying|null=NO|default=
+msgs|id|integer|null=NO|default=nextval('msgs_id_seq'::regclass)
+msgs|lang_id|integer|null=NO|default=
+msgs|msg_key_id|integer|null=NO|default=
+msgs|value|text|null=NO|default=
+operation_essence_links|essence_id|integer|null=NO|default=
+operation_essence_links|id|integer|null=NO|default=nextval('operation_essence_links_id_seq'::regclass)
+operation_essence_links|operation_id|integer|null=NO|default=
+operation_essence_set_links|essence_set_id|integer|null=NO|default=
+operation_essence_set_links|id|integer|null=NO|default=nextval('operation_essence_set_links_id_seq'::regclass)
+operation_essence_set_links|operation_id|integer|null=NO|default=
+operation_user_group_links|id|integer|null=NO|default=nextval('operation_user_group_links_id_seq'::regclass)
+operation_user_group_links|operation_id|integer|null=NO|default=
+operation_user_group_links|user_group_id|integer|null=NO|default=
+operations|description|text|null=YES|default=
+operations|id|integer|null=NO|default=nextval('operations_id_seq'::regclass)
+operations|name|character varying|null=NO|default=
+plan_category_defaults|created_at|timestamp with time zone|null=NO|default=now()
+plan_category_defaults|department_category_id|integer|null=NO|default=
+plan_category_defaults|id|integer|null=NO|default=nextval('plan_category_defaults_id_seq'::regclass)
+plan_scope_defaults|created_at|timestamp with time zone|null=NO|default=now()
+plan_scope_defaults|id|integer|null=NO|default=nextval('plan_scope_defaults_id_seq'::regclass)
+plan_scope_defaults|job_group_id|integer|null=NO|default=
+plan_scope_defaults|talent_status_id|integer|null=YES|default=
+plan_scopes|created_at|timestamp with time zone|null=NO|default=now()
+plan_scopes|department_id|integer|null=NO|default=
+plan_scopes|id|integer|null=NO|default=nextval('plan_scopes_id_seq'::regclass)
+plan_scopes|job_group_id|integer|null=NO|default=
+plan_scopes|plan_session_id|integer|null=NO|default=
+plan_scopes|talent_status_id|integer|null=YES|default=
+plan_scopes|value|integer|null=YES|default=
+plan_session_categories|created_at|timestamp with time zone|null=NO|default=now()
+plan_session_categories|department_category_id|integer|null=NO|default=
+plan_session_categories|id|integer|null=NO|default=nextval('plan_session_categories_id_seq'::regclass)
+plan_session_categories|plan_session_id|integer|null=NO|default=
+plan_session_statuses|created_at|timestamp with time zone|null=NO|default=now()
+plan_session_statuses|description|character varying|null=YES|default=
+plan_session_statuses|id|integer|null=NO|default=nextval('plan_session_statuses_id_seq'::regclass)
+plan_session_statuses|key|character varying|null=NO|default=
+plan_session_statuses|name|character varying|null=NO|default=
+plan_sessions|created_at|timestamp with time zone|null=NO|default=now()
+plan_sessions|description|character varying|null=YES|default=
+plan_sessions|end_date|date|null=NO|default=
+plan_sessions|id|integer|null=NO|default=nextval('plan_sessions_id_seq'::regclass)
+plan_sessions|name|character varying|null=NO|default=
+plan_sessions|plan_session_status_id|integer|null=NO|default=
+plan_sessions|start_date|date|null=NO|default=
+review_dimension_criterias|created_at|timestamp with time zone|null=NO|default=now()
+review_dimension_criterias|dimension_id|integer|null=NO|default=
+review_dimension_criterias|id|integer|null=NO|default=nextval('review_dimension_criterias_id_seq'::regclass)
+review_dimension_criterias|sort_order|integer|null=NO|default=0
+review_dimension_criterias|text|text|null=NO|default=
+review_dimensions|created_at|timestamp with time zone|null=NO|default=now()
+review_dimensions|description|text|null=YES|default=
+review_dimensions|id|integer|null=NO|default=nextval('review_dimensions_id_seq'::regclass)
+review_dimensions|is_active|boolean|null=NO|default=true
+review_dimensions|key|character varying|null=NO|default=
+review_dimensions|name|character varying|null=NO|default=
+review_session_employee_evaluations|created_at|timestamp with time zone|null=NO|default=now()
+review_session_employee_evaluations|dimension_id|integer|null=NO|default=
+review_session_employee_evaluations|facts|text|null=YES|default=
+review_session_employee_evaluations|id|integer|null=NO|default=nextval('review_session_employee_evaluations_id_seq'::regclass)
+review_session_employee_evaluations|improvement|text|null=YES|default=
+review_session_employee_evaluations|review_session_employee_id|integer|null=NO|default=
+review_session_employee_evaluations|score|integer|null=YES|default=
+review_session_employees|created_at|timestamp with time zone|null=NO|default=now()
+review_session_employees|employee_id|integer|null=NO|default=
+review_session_employees|id|integer|null=NO|default=nextval('review_session_employees_id_seq'::regclass)
+review_session_employees|session_id|integer|null=NO|default=
+review_session_employees|status|character varying|null=NO|default='open'::character varying
+review_sessions|created_at|timestamp with time zone|null=NO|default=now()
+review_sessions|description|text|null=YES|default=
+review_sessions|id|integer|null=NO|default=nextval('review_sessions_id_seq'::regclass)
+review_sessions|name|character varying|null=NO|default=
+review_sessions|period_end|date|null=YES|default=
+review_sessions|period_start|date|null=YES|default=
+review_sessions|status|character varying|null=NO|default='pending'::character varying
+talent_audit|created_at|timestamp with time zone|null=NO|default=now()
+talent_audit|created_by|integer|null=NO|default=
+talent_audit|employee_id|integer|null=NO|default=
+talent_audit|id|integer|null=NO|default=nextval('talent_audit_id_seq'::regclass)
+talent_audit|status_id|integer|null=NO|default=
+talent_audit_interview|created_at|timestamp with time zone|null=NO|default=now()
+talent_audit_interview|created_by|integer|null=NO|default=
+talent_audit_interview|id|integer|null=NO|default=nextval('talent_audit_interview_id_seq'::regclass)
+talent_audit_interview|interview_date|date|null=NO|default=
+talent_audit_interview|status_id|integer|null=NO|default=
+talent_audit_interview|talent_audit_id|integer|null=NO|default=
+talent_audit_interview_job|created_at|timestamp with time zone|null=NO|default=now()
+talent_audit_interview_job|created_by|integer|null=NO|default=
+talent_audit_interview_job|id|integer|null=NO|default=nextval('talent_audit_interview_job_id_seq'::regclass)
+talent_audit_interview_job|talent_audit_interview_id|integer|null=NO|default=
+talent_audit_interview_job|talent_audit_job_id|integer|null=NO|default=
+talent_audit_interview_job|talent_status_period_link_id|integer|null=NO|default=
+talent_audit_interview_statuses|description|character varying|null=YES|default=
+talent_audit_interview_statuses|id|integer|null=NO|default=nextval('talent_audit_interview_statuses_id_seq'::regclass)
+talent_audit_interview_statuses|name|character varying|null=NO|default=
+talent_audit_job|created_at|timestamp with time zone|null=NO|default=now()
+talent_audit_job|created_by|integer|null=NO|default=
+talent_audit_job|id|integer|null=NO|default=nextval('talent_audit_job_id_seq'::regclass)
+talent_audit_job|status_id|integer|null=NO|default=
+talent_audit_job|talent_audit_id|integer|null=NO|default=
+talent_audit_job|talent_status_period_link_id|integer|null=NO|default=
+talent_audit_job|target_job_id|integer|null=NO|default=
+talent_audit_job_statuses|description|character varying|null=YES|default=
+talent_audit_job_statuses|id|integer|null=NO|default=nextval('talent_audit_job_statuses_id_seq'::regclass)
+talent_audit_job_statuses|key|character varying|null=NO|default=
+talent_audit_job_statuses|name|character varying|null=NO|default=
+talent_audit_statuses|description|character varying|null=YES|default=
+talent_audit_statuses|id|integer|null=NO|default=nextval('talent_audit_statuses_id_seq'::regclass)
+talent_audit_statuses|name|character varying|null=NO|default=
+talent_periods|created_at|timestamp with time zone|null=NO|default=now()
+talent_periods|description|character varying|null=YES|default=
+talent_periods|id|integer|null=NO|default=nextval('talent_periods_id_seq'::regclass)
+talent_periods|is_active|boolean|null=NO|default=
+talent_periods|name|character varying|null=NO|default=
+talent_periods|qty_months|integer|null=NO|default=
+talent_status_period_link|created_at|timestamp with time zone|null=NO|default=now()
+talent_status_period_link|created_by|integer|null=YES|default=
+talent_status_period_link|id|integer|null=NO|default=nextval('talent_status_period_link_id_seq'::regclass)
+talent_status_period_link|is_active|boolean|null=NO|default=
+talent_status_period_link|talent_period_id|integer|null=NO|default=
+talent_status_period_link|talent_status_id|integer|null=NO|default=
+talent_statuses|created_at|timestamp with time zone|null=NO|default=now()
+talent_statuses|description|character varying|null=YES|default=
+talent_statuses|id|integer|null=NO|default=nextval('talent_statuses_id_seq'::regclass)
+talent_statuses|is_active|boolean|null=NO|default=
+talent_statuses|key|character varying|null=NO|default=
+talent_statuses|name|character varying|null=NO|default=
+user_group_operation_essence_links|id|integer|null=NO|default=nextval('user_group_operation_essence_links_id_seq'::regclass)
+user_group_operation_essence_links|operation_essence_link_id|integer|null=NO|default=
+user_group_operation_essence_links|user_group_id|integer|null=NO|default=
+user_group_operation_essence_set_links|id|integer|null=NO|default=nextval('user_group_operation_essence_set_links_id_seq'::regclass)
+user_group_operation_essence_set_links|operation_essence_set_link_id|integer|null=NO|default=
+user_group_operation_essence_set_links|user_group_id|integer|null=NO|default=
+user_group_types|created_at|timestamp with time zone|null=NO|default=now()
+user_group_types|description|text|null=YES|default=
+user_group_types|id|integer|null=NO|default=nextval('user_group_types_id_seq'::regclass)
+user_group_types|name|character varying|null=NO|default=
+user_groups|description|text|null=YES|default=
+user_groups|id|integer|null=NO|default=nextval('user_groups_id_seq'::regclass)
+user_groups|is_protected|boolean|null=NO|default=
+user_groups|name|character varying|null=NO|default=
+user_groups|user_group_type_id|integer|null=NO|default=
+
+## FOREIGN KEYS (table.col -> ref_table.ref_col)
+department_type_job_links.department_type_id -> department_types.id
+department_type_job_links.job_id -> jobs.id
+department_type_parental_links.child_id -> department_types.id
+department_type_parental_links.parent_id -> department_types.id
+departments.department_category_id -> department_categories.id
+departments.department_type_id -> department_types.id
+departments.parent_id -> departments.id
+employee_departments.department_id -> departments.id
+employee_departments.employee_id -> employees.id
+employee_event_change_departments.change_dept_type_id -> employee_event_change_dept_types.id
+employee_event_change_departments.department_id -> departments.id
+employee_event_change_departments.event_change_id -> employee_event_changes.id
+employee_event_changes.direction_type_id -> employee_event_direction_types.id
+employee_event_changes.event_id -> employee_events.id
+employee_event_changes.new_department_id -> departments.id
+employee_event_changes.new_job_id -> jobs.id
+employee_event_changes.new_status_id -> employee_statuses.id
+employee_event_changes.prev_department_id -> departments.id
+employee_event_changes.prev_job_id -> jobs.id
+employee_event_changes.prev_status_id -> employee_statuses.id
+employee_event_type_directions.direction_type_id -> employee_event_direction_types.id
+employee_event_type_directions.event_type_id -> employee_event_types.id
+employee_events.created_by -> employees.id
+employee_events.employee_id -> employees.id
+employee_events.event_type_id -> employee_event_types.id
+employee_events.status_id -> employee_event_statuses.id
+employee_user_group_links.employee_id -> employees.id
+employee_user_group_links.user_group_id -> user_groups.id
+employees.job_id -> jobs.id
+employees.lang_id -> langs.id
+employees.status_id -> employee_statuses.id
+essence_set_members.essence_id -> essences.id
+essence_set_members.essence_set_id -> essence_sets.id
+job_groups.job_group_type_id -> job_group_types.id
+job_job_group_links.job_group_id -> job_groups.id
+job_job_group_links.job_id -> jobs.id
+job_responsibility_category_links.department_category_id -> department_categories.id
+job_responsibility_category_links.job_id -> jobs.id
+job_user_group_links.job_id -> jobs.id
+job_user_group_links.user_group_id -> user_groups.id
+msgs.lang_id -> langs.id
+msgs.msg_key_id -> msg_keys.id
+operation_essence_links.essence_id -> essences.id
+operation_essence_links.operation_id -> operations.id
+operation_essence_set_links.essence_set_id -> essence_sets.id
+operation_essence_set_links.operation_id -> operations.id
+operation_user_group_links.operation_id -> operations.id
+operation_user_group_links.user_group_id -> user_groups.id
+plan_category_defaults.department_category_id -> department_categories.id
+plan_scope_defaults.job_group_id -> job_groups.id
+plan_scope_defaults.talent_status_id -> talent_statuses.id
+plan_scopes.department_id -> departments.id
+plan_scopes.job_group_id -> job_groups.id
+plan_scopes.plan_session_id -> plan_sessions.id
+plan_scopes.talent_status_id -> talent_statuses.id
+plan_session_categories.department_category_id -> department_categories.id
+plan_session_categories.plan_session_id -> plan_sessions.id
+plan_sessions.plan_session_status_id -> plan_session_statuses.id
+review_dimension_criterias.dimension_id -> review_dimensions.id
+review_session_employee_evaluations.dimension_id -> review_dimensions.id
+review_session_employee_evaluations.review_session_employee_id -> review_session_employees.id
+review_session_employees.employee_id -> employees.id
+review_session_employees.session_id -> review_sessions.id
+talent_audit.created_by -> employees.id
+talent_audit.employee_id -> employees.id
+talent_audit.status_id -> talent_audit_statuses.id
+talent_audit_interview.created_by -> employees.id
+talent_audit_interview.status_id -> talent_audit_interview_statuses.id
+talent_audit_interview.talent_audit_id -> talent_audit.id
+talent_audit_interview_job.created_by -> employees.id
+talent_audit_interview_job.talent_audit_interview_id -> talent_audit_interview.id
+talent_audit_interview_job.talent_audit_job_id -> talent_audit_job.id
+talent_audit_interview_job.talent_status_period_link_id -> talent_status_period_link.id
+talent_audit_job.created_by -> employees.id
+talent_audit_job.status_id -> talent_audit_job_statuses.id
+talent_audit_job.talent_audit_id -> talent_audit.id
+talent_audit_job.talent_status_period_link_id -> talent_status_period_link.id
+talent_audit_job.target_job_id -> jobs.id
+talent_status_period_link.created_by -> employees.id
+talent_status_period_link.talent_period_id -> talent_periods.id
+talent_status_period_link.talent_status_id -> talent_statuses.id
+user_group_operation_essence_links.operation_essence_link_id -> operation_essence_links.id
+user_group_operation_essence_links.user_group_id -> user_groups.id
+user_group_operation_essence_set_links.operation_essence_set_link_id -> operation_essence_set_links.id
+user_group_operation_essence_set_links.user_group_id -> user_groups.id
+user_groups.user_group_type_id -> user_group_types.id
+
+## INDEXES (table|index|def)
+alembic_version|alembic_version_pkc|CREATE UNIQUE INDEX alembic_version_pkc ON public.alembic_version USING btree (version_num)
+department_categories|pk_department_categories|CREATE UNIQUE INDEX pk_department_categories ON public.department_categories USING btree (id)
+department_type_job_links|idx_uq_department_type_job|CREATE UNIQUE INDEX idx_uq_department_type_job ON public.department_type_job_links USING btree (department_type_id, job_id)
+department_type_job_links|pk_department_type_job_links|CREATE UNIQUE INDEX pk_department_type_job_links ON public.department_type_job_links USING btree (id)
+department_type_parental_links|pk_department_type_parental_links|CREATE UNIQUE INDEX pk_department_type_parental_links ON public.department_type_parental_links USING btree (id)
+department_type_parental_links|uq_dept_type_parental_link_child_parent|CREATE UNIQUE INDEX uq_dept_type_parental_link_child_parent ON public.department_type_parental_links USING btree (child_id, parent_id)
+department_types|pk_department_types|CREATE UNIQUE INDEX pk_department_types ON public.department_types USING btree (id)
+departments|ix_departments_parent_id|CREATE INDEX ix_departments_parent_id ON public.departments USING btree (parent_id)
+departments|pk_departments|CREATE UNIQUE INDEX pk_departments ON public.departments USING btree (id)
+employee_departments|ix_employee_departments_employee_id|CREATE INDEX ix_employee_departments_employee_id ON public.employee_departments USING btree (employee_id)
+employee_departments|pk_employee_departments|CREATE UNIQUE INDEX pk_employee_departments ON public.employee_departments USING btree (id)
+employee_departments|uq_employee_department|CREATE UNIQUE INDEX uq_employee_department ON public.employee_departments USING btree (employee_id, department_id, is_main)
+employee_event_change_departments|ix_employee_event_change_departments_event_change_id|CREATE INDEX ix_employee_event_change_departments_event_change_id ON public.employee_event_change_departments USING btree (event_change_id)
+employee_event_change_departments|pk_employee_event_change_departments|CREATE UNIQUE INDEX pk_employee_event_change_departments ON public.employee_event_change_departments USING btree (id)
+employee_event_change_departments|uq_event_change_department|CREATE UNIQUE INDEX uq_event_change_department ON public.employee_event_change_departments USING btree (event_change_id, department_id, change_dept_type_id)
+employee_event_change_dept_types|pk_employee_event_change_dept_types|CREATE UNIQUE INDEX pk_employee_event_change_dept_types ON public.employee_event_change_dept_types USING btree (id)
+employee_event_change_dept_types|uq_employee_event_change_dept_types_code|CREATE UNIQUE INDEX uq_employee_event_change_dept_types_code ON public.employee_event_change_dept_types USING btree (code)
+employee_event_changes|ix_employee_event_changes_event_id|CREATE INDEX ix_employee_event_changes_event_id ON public.employee_event_changes USING btree (event_id)
+employee_event_changes|pk_employee_event_changes|CREATE UNIQUE INDEX pk_employee_event_changes ON public.employee_event_changes USING btree (id)
+employee_event_direction_types|pk_employee_event_direction_types|CREATE UNIQUE INDEX pk_employee_event_direction_types ON public.employee_event_direction_types USING btree (id)
+employee_event_direction_types|uq_employee_event_direction_types_code|CREATE UNIQUE INDEX uq_employee_event_direction_types_code ON public.employee_event_direction_types USING btree (code)
+employee_event_statuses|pk_employee_event_statuses|CREATE UNIQUE INDEX pk_employee_event_statuses ON public.employee_event_statuses USING btree (id)
+employee_event_statuses|uq_employee_event_statuses_name|CREATE UNIQUE INDEX uq_employee_event_statuses_name ON public.employee_event_statuses USING btree (name)
+employee_event_type_directions|ix_employee_event_type_directions_event_type_id|CREATE INDEX ix_employee_event_type_directions_event_type_id ON public.employee_event_type_directions USING btree (event_type_id)
+employee_event_type_directions|pk_employee_event_type_directions|CREATE UNIQUE INDEX pk_employee_event_type_directions ON public.employee_event_type_directions USING btree (id)
+employee_event_type_directions|uq_event_type_direction|CREATE UNIQUE INDEX uq_event_type_direction ON public.employee_event_type_directions USING btree (event_type_id, direction_type_id)
+employee_event_types|pk_employee_event_types|CREATE UNIQUE INDEX pk_employee_event_types ON public.employee_event_types USING btree (id)
+employee_event_types|uq_employee_event_types_code|CREATE UNIQUE INDEX uq_employee_event_types_code ON public.employee_event_types USING btree (code)
+employee_event_types|uq_employee_event_types_name|CREATE UNIQUE INDEX uq_employee_event_types_name ON public.employee_event_types USING btree (name)
+employee_events|ix_employee_events_employee_id|CREATE INDEX ix_employee_events_employee_id ON public.employee_events USING btree (employee_id)
+employee_events|pk_employee_events|CREATE UNIQUE INDEX pk_employee_events ON public.employee_events USING btree (id)
+employee_statuses|pk_employee_statuses|CREATE UNIQUE INDEX pk_employee_statuses ON public.employee_statuses USING btree (id)
+employee_statuses|uq_employee_statuses_name|CREATE UNIQUE INDEX uq_employee_statuses_name ON public.employee_statuses USING btree (name)
+employee_user_group_links|idx_uq_user_user_group|CREATE UNIQUE INDEX idx_uq_user_user_group ON public.employee_user_group_links USING btree (employee_id, user_group_id)
+employee_user_group_links|pk_employee_user_group_links|CREATE UNIQUE INDEX pk_employee_user_group_links ON public.employee_user_group_links USING btree (id)
+employees|pk_employees|CREATE UNIQUE INDEX pk_employees ON public.employees USING btree (id)
+employees|uq_employees_code|CREATE UNIQUE INDEX uq_employees_code ON public.employees USING btree (code)
+employees|uq_employees_email|CREATE UNIQUE INDEX uq_employees_email ON public.employees USING btree (email)
+essence_set_members|pk_essence_set_members|CREATE UNIQUE INDEX pk_essence_set_members ON public.essence_set_members USING btree (id)
+essence_set_members|uq_essence_set_member|CREATE UNIQUE INDEX uq_essence_set_member ON public.essence_set_members USING btree (essence_set_id, essence_id)
+essence_sets|ix_essence_sets_fingerprint|CREATE UNIQUE INDEX ix_essence_sets_fingerprint ON public.essence_sets USING btree (fingerprint)
+essence_sets|pk_essence_sets|CREATE UNIQUE INDEX pk_essence_sets ON public.essence_sets USING btree (id)
+essences|pk_essences|CREATE UNIQUE INDEX pk_essences ON public.essences USING btree (id)
+essences|uq_essences_name|CREATE UNIQUE INDEX uq_essences_name ON public.essences USING btree (name)
+job_group_types|pk_job_group_types|CREATE UNIQUE INDEX pk_job_group_types ON public.job_group_types USING btree (id)
+job_group_types|uq_job_group_types_key|CREATE UNIQUE INDEX uq_job_group_types_key ON public.job_group_types USING btree (key)
+job_group_types|uq_job_group_types_name|CREATE UNIQUE INDEX uq_job_group_types_name ON public.job_group_types USING btree (name)
+job_groups|pk_job_groups|CREATE UNIQUE INDEX pk_job_groups ON public.job_groups USING btree (id)
+job_groups|uq_job_groups_key|CREATE UNIQUE INDEX uq_job_groups_key ON public.job_groups USING btree (key)
+job_groups|uq_job_groups_name|CREATE UNIQUE INDEX uq_job_groups_name ON public.job_groups USING btree (name)
+job_job_group_links|pk_job_job_group_links|CREATE UNIQUE INDEX pk_job_job_group_links ON public.job_job_group_links USING btree (id)
+job_job_group_links|uq_job_job_group|CREATE UNIQUE INDEX uq_job_job_group ON public.job_job_group_links USING btree (job_id, job_group_id)
+job_responsibility_category_links|idx_uq_job_responsibility_category|CREATE UNIQUE INDEX idx_uq_job_responsibility_category ON public.job_responsibility_category_links USING btree (job_id, department_category_id)
+job_responsibility_category_links|pk_job_responsibility_category_links|CREATE UNIQUE INDEX pk_job_responsibility_category_links ON public.job_responsibility_category_links USING btree (id)
+job_user_group_links|idx_uq_job_user_group|CREATE UNIQUE INDEX idx_uq_job_user_group ON public.job_user_group_links USING btree (job_id, user_group_id)
+job_user_group_links|pk_job_user_group_links|CREATE UNIQUE INDEX pk_job_user_group_links ON public.job_user_group_links USING btree (id)
+jobs|pk_jobs|CREATE UNIQUE INDEX pk_jobs ON public.jobs USING btree (id)
+jobs|uq_jobs_name|CREATE UNIQUE INDEX uq_jobs_name ON public.jobs USING btree (name)
+langs|pk_langs|CREATE UNIQUE INDEX pk_langs ON public.langs USING btree (id)
+langs|uq_langs_short_name|CREATE UNIQUE INDEX uq_langs_short_name ON public.langs USING btree (short_name)
+msg_keys|pk_msg_keys|CREATE UNIQUE INDEX pk_msg_keys ON public.msg_keys USING btree (id)
+msg_keys|uq_msg_keys_name|CREATE UNIQUE INDEX uq_msg_keys_name ON public.msg_keys USING btree (name)
+msgs|pk_msgs|CREATE UNIQUE INDEX pk_msgs ON public.msgs USING btree (id)
+msgs|uq_msg_key_lang|CREATE UNIQUE INDEX uq_msg_key_lang ON public.msgs USING btree (lang_id, msg_key_id)
+operation_essence_links|pk_operation_essence_links|CREATE UNIQUE INDEX pk_operation_essence_links ON public.operation_essence_links USING btree (id)
+operation_essence_links|uq_oel_operation_essence|CREATE UNIQUE INDEX uq_oel_operation_essence ON public.operation_essence_links USING btree (operation_id, essence_id)
+operation_essence_set_links|pk_operation_essence_set_links|CREATE UNIQUE INDEX pk_operation_essence_set_links ON public.operation_essence_set_links USING btree (id)
+operation_essence_set_links|uq_oesl_operation_essence_set|CREATE UNIQUE INDEX uq_oesl_operation_essence_set ON public.operation_essence_set_links USING btree (operation_id, essence_set_id)
+operation_user_group_links|idx_uq_operation_user_group|CREATE UNIQUE INDEX idx_uq_operation_user_group ON public.operation_user_group_links USING btree (operation_id, user_group_id)
+operation_user_group_links|pk_operation_user_group_links|CREATE UNIQUE INDEX pk_operation_user_group_links ON public.operation_user_group_links USING btree (id)
+operations|pk_operations|CREATE UNIQUE INDEX pk_operations ON public.operations USING btree (id)
+operations|uq_operations_name|CREATE UNIQUE INDEX uq_operations_name ON public.operations USING btree (name)
+plan_category_defaults|pk_plan_category_defaults|CREATE UNIQUE INDEX pk_plan_category_defaults ON public.plan_category_defaults USING btree (id)
+plan_category_defaults|uq_plan_category_default_category|CREATE UNIQUE INDEX uq_plan_category_default_category ON public.plan_category_defaults USING btree (department_category_id)
+plan_scope_defaults|pk_plan_scope_defaults|CREATE UNIQUE INDEX pk_plan_scope_defaults ON public.plan_scope_defaults USING btree (id)
+plan_scope_defaults|uq_plan_scope_default_jg_ts|CREATE UNIQUE INDEX uq_plan_scope_default_jg_ts ON public.plan_scope_defaults USING btree (job_group_id, talent_status_id)
+plan_scopes|pk_plan_scopes|CREATE UNIQUE INDEX pk_plan_scopes ON public.plan_scopes USING btree (id)
+plan_scopes|uq_plan_scope_session_dept_jg_ts|CREATE UNIQUE INDEX uq_plan_scope_session_dept_jg_ts ON public.plan_scopes USING btree (plan_session_id, department_id, job_group_id, talent_status_id)
+plan_session_categories|pk_plan_session_categories|CREATE UNIQUE INDEX pk_plan_session_categories ON public.plan_session_categories USING btree (id)
+plan_session_categories|uq_plan_session_category|CREATE UNIQUE INDEX uq_plan_session_category ON public.plan_session_categories USING btree (plan_session_id, department_category_id)
+plan_session_statuses|pk_plan_session_statuses|CREATE UNIQUE INDEX pk_plan_session_statuses ON public.plan_session_statuses USING btree (id)
+plan_session_statuses|uq_plan_session_statuses_key|CREATE UNIQUE INDEX uq_plan_session_statuses_key ON public.plan_session_statuses USING btree (key)
+plan_sessions|pk_plan_sessions|CREATE UNIQUE INDEX pk_plan_sessions ON public.plan_sessions USING btree (id)
+review_dimension_criterias|pk_review_dimension_criterias|CREATE UNIQUE INDEX pk_review_dimension_criterias ON public.review_dimension_criterias USING btree (id)
+review_dimensions|pk_review_dimensions|CREATE UNIQUE INDEX pk_review_dimensions ON public.review_dimensions USING btree (id)
+review_dimensions|uq_review_dimensions_key|CREATE UNIQUE INDEX uq_review_dimensions_key ON public.review_dimensions USING btree (key)
+review_dimensions|uq_review_dimensions_name|CREATE UNIQUE INDEX uq_review_dimensions_name ON public.review_dimensions USING btree (name)
+review_session_employee_evaluations|pk_review_session_employee_evaluations|CREATE UNIQUE INDEX pk_review_session_employee_evaluations ON public.review_session_employee_evaluations USING btree (id)
+review_session_employees|pk_review_session_employees|CREATE UNIQUE INDEX pk_review_session_employees ON public.review_session_employees USING btree (id)
+review_sessions|pk_review_sessions|CREATE UNIQUE INDEX pk_review_sessions ON public.review_sessions USING btree (id)
+talent_audit|pk_talent_audit|CREATE UNIQUE INDEX pk_talent_audit ON public.talent_audit USING btree (id)
+talent_audit|uq_talent_audit_employee_id|CREATE UNIQUE INDEX uq_talent_audit_employee_id ON public.talent_audit USING btree (employee_id)
+talent_audit_interview|pk_talent_audit_interview|CREATE UNIQUE INDEX pk_talent_audit_interview ON public.talent_audit_interview USING btree (id)
+talent_audit_interview_job|pk_talent_audit_interview_job|CREATE UNIQUE INDEX pk_talent_audit_interview_job ON public.talent_audit_interview_job USING btree (id)
+talent_audit_interview_job|uq_interview_job|CREATE UNIQUE INDEX uq_interview_job ON public.talent_audit_interview_job USING btree (talent_audit_interview_id, talent_audit_job_id)
+talent_audit_interview_statuses|pk_talent_audit_interview_statuses|CREATE UNIQUE INDEX pk_talent_audit_interview_statuses ON public.talent_audit_interview_statuses USING btree (id)
+talent_audit_interview_statuses|uq_talent_audit_interview_statuses_name|CREATE UNIQUE INDEX uq_talent_audit_interview_statuses_name ON public.talent_audit_interview_statuses USING btree (name)
+talent_audit_job|pk_talent_audit_job|CREATE UNIQUE INDEX pk_talent_audit_job ON public.talent_audit_job USING btree (id)
+talent_audit_job_statuses|pk_talent_audit_job_statuses|CREATE UNIQUE INDEX pk_talent_audit_job_statuses ON public.talent_audit_job_statuses USING btree (id)
+talent_audit_job_statuses|uq_talent_audit_job_statuses_key|CREATE UNIQUE INDEX uq_talent_audit_job_statuses_key ON public.talent_audit_job_statuses USING btree (key)
+talent_audit_job_statuses|uq_talent_audit_job_statuses_name|CREATE UNIQUE INDEX uq_talent_audit_job_statuses_name ON public.talent_audit_job_statuses USING btree (name)
+talent_audit_statuses|pk_talent_audit_statuses|CREATE UNIQUE INDEX pk_talent_audit_statuses ON public.talent_audit_statuses USING btree (id)
+talent_audit_statuses|uq_talent_audit_statuses_name|CREATE UNIQUE INDEX uq_talent_audit_statuses_name ON public.talent_audit_statuses USING btree (name)
+talent_periods|pk_talent_periods|CREATE UNIQUE INDEX pk_talent_periods ON public.talent_periods USING btree (id)
+talent_status_period_link|idx_uq_talent_status_period|CREATE UNIQUE INDEX idx_uq_talent_status_period ON public.talent_status_period_link USING btree (talent_period_id, talent_status_id)
+talent_status_period_link|pk_talent_status_period_link|CREATE UNIQUE INDEX pk_talent_status_period_link ON public.talent_status_period_link USING btree (id)
+talent_statuses|pk_talent_statuses|CREATE UNIQUE INDEX pk_talent_statuses ON public.talent_statuses USING btree (id)
+talent_statuses|uq_talent_statuses_key|CREATE UNIQUE INDEX uq_talent_statuses_key ON public.talent_statuses USING btree (key)
+user_group_operation_essence_links|pk_user_group_operation_essence_links|CREATE UNIQUE INDEX pk_user_group_operation_essence_links ON public.user_group_operation_essence_links USING btree (id)
+user_group_operation_essence_links|uq_ugoel_group_oel|CREATE UNIQUE INDEX uq_ugoel_group_oel ON public.user_group_operation_essence_links USING btree (user_group_id, operation_essence_link_id)
+user_group_operation_essence_set_links|pk_user_group_operation_essence_set_links|CREATE UNIQUE INDEX pk_user_group_operation_essence_set_links ON public.user_group_operation_essence_set_links USING btree (id)
+user_group_operation_essence_set_links|uq_ugoesl_group_oesl|CREATE UNIQUE INDEX uq_ugoesl_group_oesl ON public.user_group_operation_essence_set_links USING btree (user_group_id, operation_essence_set_link_id)
+user_group_types|pk_user_group_types|CREATE UNIQUE INDEX pk_user_group_types ON public.user_group_types USING btree (id)
+user_group_types|uq_user_group_types_name|CREATE UNIQUE INDEX uq_user_group_types_name ON public.user_group_types USING btree (name)
+user_groups|pk_user_groups|CREATE UNIQUE INDEX pk_user_groups ON public.user_groups USING btree (id)
+
+## ENUMS (type|labels)

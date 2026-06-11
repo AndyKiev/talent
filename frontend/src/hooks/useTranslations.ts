@@ -56,7 +56,7 @@ export const useTranslations = (): UseTranslationsReturn => {
     const strings = useMemo(() => {
         const data = translationsData || []; // Handle null/undefined case
         return data.reduce((acc, item) => {
-            acc[item.name] = item.msg.reduce((translations, msg) => {
+            acc[item.name] = (item.msg || []).reduce((translations, msg) => {
                 translations[msg.lang_data.short_name] = msg.value;
                 return translations;
             }, {} as Record<string, string>);

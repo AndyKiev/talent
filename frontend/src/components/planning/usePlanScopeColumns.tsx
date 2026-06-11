@@ -1,6 +1,7 @@
 // src/components/planning/usePlanScopeColumns.tsx
 import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Chip } from '@mui/material';
+import { Box, Chip, IconButton, Tooltip } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import type { PlanScope } from './planningApi.ts';
 import { PlanValueCell } from './PlanValueCell.tsx';
@@ -18,18 +19,22 @@ interface Params {
     onActivate: (rowId: number) => void;
     onCommit: (row: PlanScope, value: string) => void;
     onCancel: () => void;
+    onDeleteClick: (row: PlanScope) => void;
     updateIsPending: boolean;
+    deleteIsPending: boolean;
 }
 
 export function usePlanScopeColumns({
-                                        getString,
-                                        editable,
-                                        editingState,
-                                        onActivate,
-                                        onCommit,
-                                        onCancel,
-                                        updateIsPending,
-                                    }: Params): GridColDef[] {
+    getString,
+    editable,
+    editingState,
+    onActivate,
+    onCommit,
+    onCancel,
+    onDeleteClick,
+    updateIsPending,
+    deleteIsPending,
+}: Params): GridColDef[] {
     return [
         {
             field: 'department',
@@ -52,7 +57,7 @@ export function usePlanScopeColumns({
         {
             field: 'talent_status',
             headerName: cfl(getString('talentStatus')) || 'Talent status',
-            width: 150,
+            width: 140,
             sortable: false,
             renderCell: (params: GridRenderCellParams<PlanScope>) => {
                 const ts = params.row.talent_status;
@@ -71,12 +76,13 @@ export function usePlanScopeColumns({
         {
             field: 'value',
             headerName: cfl(getString('planValue')) || 'Plan value',
-            width: 140,
+            width: 130,
             sortable: false,
             renderCell: (params: GridRenderCellParams<PlanScope>) => (
                 <PlanValueCell
                     row={params.row}
-                    editable={editable}
+                    // editable only when the session is open AND the row is active
+                    editable={editable && params.row.is_active}
                     isEditing={editingState.rowId === params.row.id}
                     isPending={updateIsPending}
                     onActivate={onActivate}
@@ -84,6 +90,42 @@ export function usePlanScopeColumns({
                     onCancel={onCancel}
                     hint={getString('doubleClickToEdit') || 'Double-click to edit (0–100)'}
                 />
+            ),
+        },
+        {
+            field: 'is_active',
+            headerName: cfl(getString('status')) || 'Status',
+            width: 110,
+            sortable: false,
+            renderCell: (params: GridRenderCellParams<PlanScope>) =>
+                params.row.is_active ? (
+                    <Chip label={getString('active') || 'Active'} size="small" color="success" variant="outlined" />
+                ) : (
+                    <Chip label={getString('inactive') || 'Inactive'} size="small" color="default" variant="outlined" />
+                ),
+        },
+        {
+            field: '_actions',
+            headerName: '',
+            width: 56,
+            sortable: false,
+            filterable: false,
+            disableColumnMenu: true,
+            renderCell: (params: GridRenderCellParams<PlanScope>) => (
+                <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+                    <Tooltip title={editable ? (getString('delete') || 'Delete') : (getString('sessionNotOpen') || 'Open the session to edit')}>
+                        <span>
+                            <IconButton
+                                size="small"
+                                color="error"
+                                onClick={(e) => { e.stopPropagation(); onDeleteClick(params.row); }}
+                                disabled={!editable || deleteIsPending}
+                            >
+                                <DeleteIcon fontSize="small" />
+                            </IconButton>
+                        </span>
+                    </Tooltip>
+                </Box>
             ),
         },
     ];

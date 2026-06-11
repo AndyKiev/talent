@@ -10,6 +10,8 @@ import {
     Paper,
     Snackbar,
     TextField,
+    ToggleButton,
+    ToggleButtonGroup,
     Typography,
 } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
@@ -22,6 +24,7 @@ import {
 } from './planningApi';
 import { usePlanScopeMutations } from './usePlanScopeMutations';
 import { usePlanScopeColumns, type ScopeEditingState } from './usePlanScopeColumns';
+import { PlanScopeDeleteDialog } from './PlanScopeDeleteDialog';
 import { useDataGridLocale } from '../../hooks/useDataGridLocale';
 import { PLAN_SCOPE_QK } from '../../utils/queryKeys.ts';
 import useString from '../../hooks/useString';
@@ -37,6 +40,8 @@ interface DeptOption {
     label: string;
 }
 
+type StatusFilter = 'all' | 'active' | 'inactive';
+
 export function PlanScopeGrid({ session }: Props) {
     const getString = useString({ str });
     const editable = session.status?.key === 'open';
@@ -49,6 +54,8 @@ export function PlanScopeGrid({ session }: Props) {
     const [editingState, setEditingState] = useState<ScopeEditingState>({ rowId: null });
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
     const [deptFilter, setDeptFilter] = useState<DeptOption | null>(null);
+    const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+    const [rowToDelete, setRowToDelete] = useState<PlanScope | null>(null);
 
     const { data: rows = [], isLoading, error } = useQuery({
         queryKey: [...PLAN_SCOPE_QK, session.id],
@@ -56,10 +63,12 @@ export function PlanScopeGrid({ session }: Props) {
         staleTime: 60 * 1000,
     });
 
-    const { updateMutation } = usePlanScopeMutations({
+    const { updateMutation, deleteMutation } = usePlanScopeMutations({
         planSessionId: session.id,
         setSnackbar,
         onUpdateSuccess: () => setEditingState({ rowId: null }),
+        onDeleteSuccess: () => setRowToDelete(null),
+        onDeleteError: () => setRowToDelete(null),
     });
 
     const localeText = useDataGridLocale();
@@ -77,10 +86,13 @@ export function PlanScopeGrid({ session }: Props) {
         );
     }, [rows]);
 
-    const filteredRows = useMemo(
-        () => (deptFilter ? rows.filter((r) => r.department_id === deptFilter.id) : rows),
-        [rows, deptFilter],
-    );
+    const filteredRows = useMemo(() => {
+        let r = rows;
+        if (deptFilter) r = r.filter((x) => x.department_id === deptFilter.id);
+        if (statusFilter === 'active') r = r.filter((x) => x.is_active);
+        else if (statusFilter === 'inactive') r = r.filter((x) => !x.is_active);
+        return r;
+    }, [rows, deptFilter, statusFilter]);
 
     const handleActivate = useCallback((rowId: number) => {
         setEditingState({ rowId });
@@ -89,6 +101,11 @@ export function PlanScopeGrid({ session }: Props) {
     const handleCancel = useCallback(() => {
         setEditingState({ rowId: null });
     }, []);
+
+    const handleConfirmDelete = useCallback(() => {
+        if (!rowToDelete) return;
+        deleteMutation.mutate(rowToDelete.id);
+    }, [rowToDelete, deleteMutation]);
 
     const handleCommit = useCallback(
         (row: PlanScope, newValue: string) => {
@@ -125,7 +142,9 @@ export function PlanScopeGrid({ session }: Props) {
         onActivate: handleActivate,
         onCommit: handleCommit,
         onCancel: handleCancel,
+        onDeleteClick: setRowToDelete,
         updateIsPending: updateMutation.isPending,
+        deleteIsPending: deleteMutation.isPending,
     });
 
     return (
@@ -149,8 +168,8 @@ export function PlanScopeGrid({ session }: Props) {
                 )}
             </Box>
 
-            {/* Department filter: searchable single-select */}
-            <Box sx={{ mb: 2, maxWidth: 360 }}>
+            {/* Filters: department (searchable single-select) + status toggle */}
+            <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
                 <Autocomplete<DeptOption>
                     options={departmentOptions}
                     value={deptFilter}
@@ -158,6 +177,7 @@ export function PlanScopeGrid({ session }: Props) {
                     getOptionLabel={(o) => o.label}
                     isOptionEqualToValue={(a, b) => a.id === b.id}
                     size="small"
+                    sx={{ minWidth: 320, flex: 1, maxWidth: 360 }}
                     disabled={isLoading || departmentOptions.length === 0}
                     renderInput={(params) => (
                         <TextField
@@ -167,6 +187,16 @@ export function PlanScopeGrid({ session }: Props) {
                         />
                     )}
                 />
+                <ToggleButtonGroup
+                    size="small"
+                    exclusive
+                    value={statusFilter}
+                    onChange={(_, val: StatusFilter | null) => { if (val) setStatusFilter(val); }}
+                >
+                    <ToggleButton value="all">{getString('filterAll') || 'All'}</ToggleButton>
+                    <ToggleButton value="active">{getString('active') || 'Active'}</ToggleButton>
+                    <ToggleButton value="inactive">{getString('inactive') || 'Inactive'}</ToggleButton>
+                </ToggleButtonGroup>
             </Box>
 
             {isLoading && (
@@ -207,6 +237,13 @@ export function PlanScopeGrid({ session }: Props) {
                     )}
                 </Paper>
             )}
+
+            <PlanScopeDeleteDialog
+                row={rowToDelete}
+                isPending={deleteMutation.isPending}
+                onConfirm={handleConfirmDelete}
+                onCancel={() => setRowToDelete(null)}
+            />
 
             <Snackbar
                 open={snackbar.open}

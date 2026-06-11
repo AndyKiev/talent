@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import Integer, ForeignKey, UniqueConstraint, CheckConstraint
+from sqlalchemy import Integer, ForeignKey, UniqueConstraint, CheckConstraint, Boolean
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin, TimestampMixin
 from typing import TYPE_CHECKING
@@ -62,6 +62,7 @@ class PlanScope(IntIdPkMixin, TimestampMixin, Base):
         nullable=True,
     )
     value: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     plan_session: Mapped["PlanSession"] = relationship(
         back_populates="scopes",

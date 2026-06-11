@@ -36,7 +36,7 @@ export function useBulkTranslations() {
     const queryClient = useQueryClient();
 
     const invalidateMessages = () =>
-        queryClient.invalidateQueries({ queryKey: ['fullMessages'] });
+        queryClient.invalidateQueries({ queryKey: ['translations'] });
 
     // ── Export JSON ────────────────────────────────────────────────────────
 

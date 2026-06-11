@@ -5,6 +5,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import LockIcon from '@mui/icons-material/Lock';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import SyncIcon from '@mui/icons-material/Sync';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 
 import type { PlanSession } from './planningApi.ts';
@@ -26,8 +27,10 @@ interface Params {
     onOpen: (row: PlanSession) => void;
     onClose: (row: PlanSession) => void;
     onRevert: (row: PlanSession) => void;
+    onResync: (row: PlanSession) => void;
     onDeleteClick: (row: PlanSession) => void;
     statusIsPending: boolean;
+    resyncIsPending: boolean;
     deleteIsPending: boolean;
 }
 
@@ -37,8 +40,10 @@ export function usePlanSessionColumns({
     onOpen,
     onClose,
     onRevert,
+    onResync,
     onDeleteClick,
     statusIsPending,
+    resyncIsPending,
     deleteIsPending,
 }: Params): GridColDef[] {
     return [
@@ -89,7 +94,7 @@ export function usePlanSessionColumns({
         {
             field: '_actions',
             headerName: cfl(getString('actions')) || '',
-            width: 210,
+            width: 250,
             sortable: false,
             filterable: false,
             disableColumnMenu: true,
@@ -113,6 +118,22 @@ export function usePlanSessionColumns({
                                 </IconButton>
                             </span>
                         </Tooltip>
+
+                        {/* Re-sync — only when open */}
+                        {isOpen && (
+                            <Tooltip title={getString('resyncPlanSession') || 'Re-sync with config'}>
+                                <span>
+                                    <IconButton
+                                        size="small"
+                                        color="info"
+                                        onClick={(e) => { e.stopPropagation(); onResync(params.row); }}
+                                        disabled={resyncIsPending}
+                                    >
+                                        <SyncIcon fontSize="small" />
+                                    </IconButton>
+                                </span>
+                            </Tooltip>
+                        )}
 
                         {/* Open — only when pending */}
                         {isPending && (

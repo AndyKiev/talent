@@ -19,6 +19,7 @@ class PlanScopeBase(BaseModel):
     job_group_id: int
     talent_status_id: Optional[int] = None
     value: Optional[int] = Field(None, ge=0, le=100)
+    is_active: bool = True
 
 
 class PlanScopeUpdate(BaseModel):

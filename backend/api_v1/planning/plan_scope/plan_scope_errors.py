@@ -1,6 +1,7 @@
 from backend.api_v1.base.errors import (
     NotFoundError,
     DomainError,
+    DeleteError,
 )
 
 
@@ -39,3 +40,26 @@ class PlanScopeSessionClosed(DomainError):
             f"Revert it to open first."
         )
         super().__init__(self.fallback)
+
+
+class PlanScopeInactive(DomainError):
+    """Cannot edit a value on an inactive scope row."""
+
+    message_key = "planScopeInactive"
+
+    def __init__(self, name: str) -> None:
+        self.template_vars = {"name": name}
+        self.fallback = (
+            f"'{name}' is inactive and cannot be edited. "
+            f"Re-sync the session to reactivate it."
+        )
+        super().__init__(self.fallback)
+
+
+class PlanScopeDeleteError(DeleteError):
+    message_key = "planScopeDeleteError"
+
+    def __init__(self, name: str) -> None:
+        self.template_vars = {"name": name}
+        self.fallback = f"Plan scope '{name}' cannot be deleted"
+        DomainError.__init__(self, self.fallback)

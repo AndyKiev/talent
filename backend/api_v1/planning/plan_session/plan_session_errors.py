@@ -112,3 +112,43 @@ class PlanSessionDeleteError(DeleteError):
             f"because it is referenced by other records"
         )
         DomainError.__init__(self, self.fallback)
+
+
+class PlanSessionResyncNotOpen(DomainError):
+    """Re-sync is only allowed while the session is open."""
+
+    message_key = "planSessionResyncNotOpen"
+
+    def __init__(self, name: str) -> None:
+        self.template_vars = {"name": name}
+        self.fallback = (
+            f"Session '{name}' must be open to re-sync. "
+            f"Open or revert it first."
+        )
+        super().__init__(self.fallback)
+
+
+class PlanSessionCategoryOverlap(DomainError):
+    """A department category already belongs to another session whose date
+    range overlaps this one."""
+
+    message_key = "planSessionCategoryOverlap"
+
+    def __init__(self, category_name: str, session_name: str) -> None:
+        self.template_vars = {"category": category_name, "session": session_name}
+        self.fallback = (
+            f"Category '{category_name}' is already planned in session "
+            f"'{session_name}' for an overlapping period."
+        )
+        super().__init__(self.fallback)
+
+
+class PlanSessionInvalidRange(DomainError):
+    """End date precedes start date."""
+
+    message_key = "planSessionInvalidRange"
+
+    def __init__(self, name: str) -> None:
+        self.template_vars = {"name": name}
+        self.fallback = f"Session '{name}': end date must be on or after start date."
+        super().__init__(self.fallback)

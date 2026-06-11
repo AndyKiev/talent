@@ -22,11 +22,13 @@ import {
     PlanSessionStatusActionDialog,
     type PendingStatusAction,
 } from './PlanSessionStatusActionDialog';
+
 import { useDataGridLocale } from '../../hooks/useDataGridLocale';
 import { PLAN_SESSION_QK } from '../../utils/queryKeys.ts';
 import useString from '../../hooks/useString';
 import str from '../../strings/str';
 import cfl from '../../utils/helpers.ts';
+import {PlanSessionResyncDialog} from "./PlanSessionResyncDialog.tsx";
 
 interface Props {
     onEditPlan: (session: PlanSession) => void;
@@ -43,6 +45,7 @@ export function PlanSessionsCrud({ onEditPlan }: Props) {
     const [formOpen, setFormOpen] = useState(false);
     const [rowToDelete, setRowToDelete] = useState<PlanSession | null>(null);
     const [pendingStatus, setPendingStatus] = useState<PendingStatusAction | null>(null);
+    const [resyncTarget, setResyncTarget] = useState<PlanSession | null>(null);
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
 
     const { data: rows = [], isLoading, error } = useQuery({
@@ -56,12 +59,15 @@ export function PlanSessionsCrud({ onEditPlan }: Props) {
         openMutation,
         closeMutation,
         revertMutation,
+        resyncMutation,
         deleteMutation,
     } = usePlanSessionMutations({
         setSnackbar,
         onCreateSuccess: () => setFormOpen(false),
         onStatusSuccess: () => setPendingStatus(null),
         onStatusError: () => setPendingStatus(null),
+        onResyncSuccess: () => setResyncTarget(null),
+        onResyncError: () => setResyncTarget(null),
         onDeleteSuccess: () => setRowToDelete(null),
         onDeleteError: () => setRowToDelete(null),
     });
@@ -75,6 +81,14 @@ export function PlanSessionsCrud({ onEditPlan }: Props) {
         else if (pendingStatus.action === 'close') closeMutation.mutate(id);
         else revertMutation.mutate(id);
     }, [pendingStatus, openMutation, closeMutation, revertMutation]);
+
+    const handleConfirmResync = useCallback(
+        (addCategoryIds: number[]) => {
+            if (!resyncTarget) return;
+            resyncMutation.mutate({ id: resyncTarget.id, addCategoryIds });
+        },
+        [resyncTarget, resyncMutation],
+    );
 
     const handleConfirmDelete = useCallback(() => {
         if (!rowToDelete) return;
@@ -90,8 +104,10 @@ export function PlanSessionsCrud({ onEditPlan }: Props) {
         onOpen: (row) => setPendingStatus({ session: row, action: 'open' }),
         onClose: (row) => setPendingStatus({ session: row, action: 'close' }),
         onRevert: (row) => setPendingStatus({ session: row, action: 'revert' }),
+        onResync: (row) => setResyncTarget(row),
         onDeleteClick: setRowToDelete,
         statusIsPending,
+        resyncIsPending: resyncMutation.isPending,
         deleteIsPending: deleteMutation.isPending,
     });
 
@@ -152,6 +168,13 @@ export function PlanSessionsCrud({ onEditPlan }: Props) {
                 isPending={statusIsPending}
                 onConfirm={handleConfirmStatus}
                 onCancel={() => setPendingStatus(null)}
+            />
+
+            <PlanSessionResyncDialog
+                session={resyncTarget}
+                isPending={resyncMutation.isPending}
+                onConfirm={handleConfirmResync}
+                onCancel={() => setResyncTarget(null)}
             />
 
             <PlanSessionDeleteDialog

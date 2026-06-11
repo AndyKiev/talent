@@ -2,14 +2,26 @@
 import asyncio
 import json
 import logging
+import os
 from typing import Callable, Awaitable
 
 import aio_pika
 
 logger = logging.getLogger(__name__)
 
-RABBITMQ_URL = "amqp://admin:admin12345@localhost:5672/"
+# Native run → localhost:5672 (broker container maps the port to host).
+# In-container run → set RABBITMQ_URL=amqp://admin:admin12345@rabbitmq:5672/
+RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://admin:admin12345@localhost:5672/")
 QUEUE_NAME = "notifications"
+
+# Toggle the whole RabbitMQ stack off for local dev where no broker runs.
+# Set RABBITMQ_ENABLED=false in .env to skip publish + consumer entirely.
+RABBITMQ_ENABLED = os.getenv("RABBITMQ_ENABLED", "true").strip().lower() not in (
+    "false",
+    "0",
+    "no",
+    "off",
+)
 
 
 async def _get_connection() -> aio_pika.abc.AbstractRobustConnection:
@@ -18,6 +30,9 @@ async def _get_connection() -> aio_pika.abc.AbstractRobustConnection:
 
 async def publish_notification(user_code: str, message: str) -> None:
     """Publish a notification message to the notifications queue."""
+    if not RABBITMQ_ENABLED:
+        logger.debug("RabbitMQ disabled; skipping publish for %s.", user_code)
+        return
     connection = await _get_connection()
     async with connection:
         channel = await connection.channel()
@@ -37,6 +52,9 @@ async def start_consumer(on_message: Callable[[dict], Awaitable[None]]) -> None:
     Long-running consumer. Calls on_message(payload_dict) for each message.
     Intended to run as a background asyncio task for the lifetime of the app.
     """
+    if not RABBITMQ_ENABLED:
+        logger.info("RabbitMQ disabled; consumer not started.")
+        return
     while True:
         try:
             connection = await aio_pika.connect_robust(RABBITMQ_URL)

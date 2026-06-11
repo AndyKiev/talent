@@ -45,3 +45,13 @@ async def update_plan_scope(
     service: Annotated[PlanScopeService, Depends(get_plan_scope_service)] = None,
 ):
     return await service.update_plan_scope(record.id, scope_update)
+
+
+@router.delete("/{plan_scope_id}", status_code=status.HTTP_200_OK)
+async def delete_plan_scope(
+    plan_scope_id: int,
+    service: Annotated[PlanScopeService, Depends(get_plan_scope_service)],
+):
+    """Hard-delete a single plan scope (open sessions only). If it still matches
+    the config, a later session re-sync will recreate it."""
+    await service.delete_plan_scope(plan_scope_id)

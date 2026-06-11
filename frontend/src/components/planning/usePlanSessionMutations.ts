@@ -6,6 +6,7 @@ import {
     openPlanSession,
     closePlanSession,
     revertPlanSession,
+    resyncPlanSession,
     deletePlanSession,
 } from './planningApi';
 import { PLAN_SESSION_QK } from '../../utils/queryKeys.ts';
@@ -17,6 +18,8 @@ interface Props {
     onUpdateSuccess?: () => void;
     onStatusSuccess?: () => void;
     onStatusError?: () => void;
+    onResyncSuccess?: () => void;
+    onResyncError?: () => void;
     onDeleteSuccess?: () => void;
     onDeleteError?: () => void;
 }
@@ -27,6 +30,8 @@ export function usePlanSessionMutations({
     onUpdateSuccess,
     onStatusSuccess,
     onStatusError,
+    onResyncSuccess,
+    onResyncError,
     onDeleteSuccess,
     onDeleteError,
 }: Props) {
@@ -112,12 +117,27 @@ export function usePlanSessionMutations({
         },
     });
 
+    const resyncMutation = useMutation({
+        mutationFn: ({ id, addCategoryIds }: { id: number; addCategoryIds?: number[] }) =>
+            resyncPlanSession(id, addCategoryIds),
+        onSuccess: async (res) => {
+            await invalidate();
+            setSnackbar({ open: true, message: res.detail, severity: 'success' });
+            onResyncSuccess?.();
+        },
+        onError: (err: Error) => {
+            setSnackbar({ open: true, message: err.message, severity: 'error' });
+            onResyncError?.();
+        },
+    });
+
     return {
         createMutation,
         updateMutation,
         openMutation,
         closeMutation,
         revertMutation,
+        resyncMutation,
         deleteMutation,
     };
 }

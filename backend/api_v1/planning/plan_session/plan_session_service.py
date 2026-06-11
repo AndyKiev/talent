@@ -1,4 +1,6 @@
 from typing import Optional, List
+from dataclasses import dataclass
+from collections.abc import Callable
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -14,6 +16,7 @@ from backend.utils.enums import (
 )
 
 from backend.api_v1.department.department_model import Department
+from backend.api_v1.department_category.department_category_model import DepartmentCategory
 from backend.api_v1.job.job_model import Job
 from backend.api_v1.job_job_group_link.job_job_group_link_model import JobJobGroupLink
 from backend.api_v1.department_type_job_link.department_type_job_link_model import (
@@ -31,13 +34,15 @@ from backend.api_v1.planning.plan_session.plan_session_schema import (
 from backend.api_v1.planning.plan_session.plan_session_errors import (
     PlanSessionNotFound,
     PlanSessionNameTaken,
-    PlanSessionPeriodOverlap,
+    PlanSessionCategoryOverlap,
+    PlanSessionInvalidRange,
     PlanSessionPendingExists,
     PlanSessionActiveLimit,
     PlanSessionRevertBlocked,
     PlanSessionNotClosed,
     PlanSessionDeleteError,
     PlanSessionNoMatchingScopes,
+    PlanSessionResyncNotOpen,
 )
 from backend.api_v1.planning.plan_session.plan_session_success import (
     PlanSessionCreateSuccess,
@@ -46,6 +51,7 @@ from backend.api_v1.planning.plan_session.plan_session_success import (
     PlanSessionOpenSuccess,
     PlanSessionCloseSuccess,
     PlanSessionRevertSuccess,
+    PlanSessionResyncSuccess,
 )
 
 from backend.api_v1.planning.plan_session_status.plan_session_status_repository import (
@@ -64,6 +70,16 @@ from backend.api_v1.planning.plan_session_category.plan_session_category_model i
     PlanSessionCategory,
 )
 from backend.api_v1.planning.plan_scope.plan_scope_model import PlanScope
+
+
+@dataclass
+class _MatchResult:
+    """Result of computing which scopes match the current config."""
+    matching_tuples: list[tuple[int, int, int | None]]  # (dept_id, job_group_id, talent_status_id)
+    config_departments: list[int]
+    scope_defaults: list[tuple[int, int | None]]        # (job_group_id, talent_status_id)
+    group_active_jobs: dict[int, set[int]]
+    covered_jobs_for: Callable[[int, set[int]], set[int]]
 
 
 class PlanSessionService(BaseService):
@@ -115,16 +131,37 @@ class PlanSessionService(BaseService):
     # ------------------------------------------------------------------
     # Validations
     # ------------------------------------------------------------------
-    async def _assert_no_overlap(
-        self, start_date, end_date, exclude_id: int | None = None
+    async def _assert_no_category_overlap(
+        self,
+        category_ids: list[int],
+        start_date,
+        end_date,
+        exclude_id: int | None = None,
     ) -> None:
-        conflicts = await self.repository.get_overlapping(
-            start_date, end_date, exclude_id=exclude_id
+        """A department category may not appear in two sessions whose date
+        ranges overlap. (Two sessions MAY overlap in dates if they share no
+        category.)"""
+        if not category_ids:
+            return
+        conflicts = await self.repository.get_categories_overlapping(
+            category_ids, start_date, end_date, exclude_id=exclude_id
         )
         if conflicts:
+            session_name, category_id = conflicts[0]
+            cat_name = await self._category_name(category_id)
             raise await self._resolve_domain_error(
-                PlanSessionPeriodOverlap(conflicts[0].name)
+                PlanSessionCategoryOverlap(cat_name, session_name)
             )
+
+    async def _category_name(self, category_id: int) -> str:
+        row = (
+            await self.session.execute(
+                select(DepartmentCategory.name).where(
+                    DepartmentCategory.id == category_id
+                )
+            )
+        ).scalar_one_or_none()
+        return row or str(category_id)
 
     async def _assert_pending_capacity(self) -> None:
         pending = await self.repository.count_by_status_keys(
@@ -141,46 +178,22 @@ class PlanSessionService(BaseService):
             raise await self._resolve_domain_error(PlanSessionActiveLimit())
 
     # ------------------------------------------------------------------
-    # Creation + snapshot orchestration
+    # Shared matcher (used by create + re-sync)
     # ------------------------------------------------------------------
-    async def create_plan_session(
-        self, data: PlanSessionCreate
-    ) -> MutationResponse[PlanSessionSchema]:
-        await self.exists_by_name(data.name, already_exists_exc=PlanSessionNameTaken)
-        await self._assert_no_overlap(data.start_date, data.end_date)
-        await self._assert_pending_capacity()
-        await self._assert_active_capacity(adding=1)
+    async def _compute_matching_scopes(self, category_ids: list[int]) -> _MatchResult:
+        """
+        Compute the set of (department_id, job_group_id, talent_status_id) scopes
+        that match the CURRENT config (plan_scope_defaults) for the given config
+        category ids.
 
-        pending_status_id = await self.get_status_id_by_key(
-            PlanSessionStatusKey.PENDING.value
-        )
-
-        # Build the session instance (no commit yet)
-        session_row = self.repository.model(
-            name=data.name,
-            description=data.description,
-            start_date=data.start_date,
-            end_date=data.end_date,
-            plan_session_status_id=pending_status_id,
-        )
-        self.session.add(session_row)
-        await self.session.flush()  # assign session_row.id without committing
-
-        # 1) Snapshot categories from defaults
-        category_defaults = await self.category_default_repo.get_all(sort="id")
-        category_ids = [d.department_category_id for d in category_defaults]
-        for cat_id in category_ids:
-            self.session.add(
-                PlanSessionCategory(
-                    plan_session_id=session_row.id,
-                    department_category_id=cat_id,
-                )
-            )
-
-        # 2) Resolve config-category departments (active). These are the ONLY
-        #    departments that get plan rows. Coverage is checked across each
-        #    one's whole instance subtree (descendants by parent_id).
-        config_departments: list[int] = []  # department ids
+        Rule: a config-category department matches a scope-default job group iff
+        EVERY active job in that group is "held" by some department instance in the
+        config department's subtree (itself or any active descendant via parent_id),
+        where an instance holds a job iff the job is linked (active link, active job)
+        to that instance's department_type_id.
+        """
+        # 1) Config-category departments (active) — the only row-emitting departments.
+        config_departments: list[int] = []
         if category_ids:
             dept_stmt = (
                 select(Department.id)
@@ -192,8 +205,7 @@ class PlanSessionService(BaseService):
             )
             config_departments = list((await self.session.scalars(dept_stmt)).all())
 
-        # 2a) Load the full active department-instance tree (id, parent_id, type)
-        #     so we can walk each config department's subtree in memory.
+        # 2) Active department-instance tree (id, parent_id, type) for subtree walks.
         tree_stmt = select(
             Department.id,
             Department.parent_id,
@@ -207,7 +219,6 @@ class PlanSessionService(BaseService):
                 children_by_parent.setdefault(pid, []).append(did)
 
         def subtree_dept_ids(root_id: int) -> list[int]:
-            """root_id plus all its active descendant department INSTANCES."""
             seen: set[int] = set()
             order: list[int] = []
             stack = [root_id]
@@ -220,17 +231,14 @@ class PlanSessionService(BaseService):
                 stack.extend(children_by_parent.get(cur, []))
             return order
 
-        # 3) Scope defaults
+        # 3) Scope defaults → plain tuples (rollback-safe).
         scope_default_rows = await self.scope_default_repo.get_all(sort="id")
-        # Snapshot to plain tuples NOW — these must survive a later rollback
-        # (which expires ORM instances and would trigger async lazy-loads).
         scope_defaults: list[tuple[int, int | None]] = [
             (sd.job_group_id, sd.talent_status_id) for sd in scope_default_rows
         ]
         scope_job_group_ids = {jg for jg, _ in scope_defaults}
 
-        # 3a) For each scope-default job group: its set of ACTIVE job ids.
-        #     A group with no active jobs can never match a department.
+        # 3a) Active jobs per scope-default job group.
         group_active_jobs: dict[int, set[int]] = {gid: set() for gid in scope_job_group_ids}
         if scope_job_group_ids:
             jjg_stmt = (
@@ -244,11 +252,7 @@ class PlanSessionService(BaseService):
             for gid, jid in (await self.session.execute(jjg_stmt)).all():
                 group_active_jobs[gid].add(jid)
 
-        # 3b) Active department_type_job_link → {type_id: {job_id, ...}} for every
-        #     job linked (active link, active job) to that department type.
-        #     The link is type-level (its global source of truth), but we apply it
-        #     per-instance below: an instance "holds" a job iff the job is linked to
-        #     that instance's department_type_id.
+        # 3b) type_id → {job_id} via active links to active jobs.
         type_jobs: dict[int, set[int]] = {}
         dtl_stmt = (
             select(
@@ -265,15 +269,11 @@ class PlanSessionService(BaseService):
             type_jobs.setdefault(tid, set()).add(jid)
 
         def instance_holds_job(dept_instance_id: int, job_id: int) -> bool:
-            """Instance holds job iff job is linked to the instance's own type."""
             tid = type_by_dept.get(dept_instance_id)
             if tid is None:
                 return False
             return job_id in type_jobs.get(tid, set())
 
-        # 3c) Per config department: a job is "covered" if SOME instance in its
-        #     subtree (itself or any recursive descendant via parent_id) holds it.
-        #     A group matches iff EVERY active job in the group is covered.
         def covered_jobs_for(config_dept_id: int, job_ids: set[int]) -> set[int]:
             subtree = subtree_dept_ids(config_dept_id)
             covered: set[int] = set()
@@ -288,37 +288,94 @@ class PlanSessionService(BaseService):
             group_jobs = group_active_jobs.get(job_group_id, set())
             if not group_jobs:
                 return False
-            covered = covered_jobs_for(config_dept_id, group_jobs)
-            return group_jobs.issubset(covered)
+            return group_jobs.issubset(covered_jobs_for(config_dept_id, group_jobs))
 
-        # 3d) Generate plan_scopes only for matching (config-department, scope-default) pairs
-        scope_rows_created = 0
+        matching_tuples: list[tuple[int, int, int | None]] = []
         for dept_id in config_departments:
             for job_group_id, talent_status_id in scope_defaults:
-                if not group_matches_department(job_group_id, dept_id):
-                    continue
-                self.session.add(
-                    PlanScope(
-                        plan_session_id=session_row.id,
-                        department_id=dept_id,
-                        job_group_id=job_group_id,
-                        # NULL talent_status => Option 2 (combined); else Option 1
-                        talent_status_id=talent_status_id,
-                        value=None,
-                    )
-                )
-                scope_rows_created += 1
+                if group_matches_department(job_group_id, dept_id):
+                    matching_tuples.append((dept_id, job_group_id, talent_status_id))
 
-        # No department/job-group combination matched → refuse, with a diagnostic
-        # naming the first uncovered (department, group, missing jobs) gap so the
-        # data problem is visible instead of a generic message.
-        if scope_rows_created == 0:
+        return _MatchResult(
+            matching_tuples=matching_tuples,
+            config_departments=config_departments,
+            scope_defaults=scope_defaults,
+            group_active_jobs=group_active_jobs,
+            covered_jobs_for=covered_jobs_for,
+        )
+
+    # ------------------------------------------------------------------
+    # Creation + snapshot orchestration
+    # ------------------------------------------------------------------
+    async def create_plan_session(
+        self, data: PlanSessionCreate
+    ) -> MutationResponse[PlanSessionSchema]:
+        await self.exists_by_name(data.name, already_exists_exc=PlanSessionNameTaken)
+        await self._assert_pending_capacity()
+        await self._assert_active_capacity(adding=1)
+
+        # Resolve categories: explicit selection if provided, else defaults.
+        selected = getattr(data, "department_category_ids", None)
+        if selected:
+            category_ids = list(dict.fromkeys(selected))  # de-dup, keep order
+        else:
+            category_defaults = await self.category_default_repo.get_all(sort="id")
+            category_ids = [d.department_category_id for d in category_defaults]
+
+        # A category may not appear in two sessions with overlapping dates.
+        await self._assert_no_category_overlap(
+            category_ids, data.start_date, data.end_date
+        )
+
+        pending_status_id = await self.get_status_id_by_key(
+            PlanSessionStatusKey.PENDING.value
+        )
+
+        # Build the session instance (no commit yet)
+        session_row = self.repository.model(
+            name=data.name,
+            description=data.description,
+            start_date=data.start_date,
+            end_date=data.end_date,
+            plan_session_status_id=pending_status_id,
+        )
+        self.session.add(session_row)
+        await self.session.flush()  # assign session_row.id without committing
+
+        # 1) Snapshot the resolved categories
+        for cat_id in category_ids:
+            self.session.add(
+                PlanSessionCategory(
+                    plan_session_id=session_row.id,
+                    department_category_id=cat_id,
+                )
+            )
+
+        # 2-3) Compute the set of matching (department, job_group, talent_status)
+        #      scopes using the shared matcher (also used by re-sync).
+        match = await self._compute_matching_scopes(category_ids)
+
+        # 4) Generate plan_scopes for every matching tuple (active, value=NULL)
+        for dept_id, job_group_id, talent_status_id in match.matching_tuples:
+            self.session.add(
+                PlanScope(
+                    plan_session_id=session_row.id,
+                    department_id=dept_id,
+                    job_group_id=job_group_id,
+                    talent_status_id=talent_status_id,
+                    value=None,
+                    is_active=True,
+                )
+            )
+
+        # No matching combination → refuse, with a diagnostic naming the gaps.
+        if not match.matching_tuples:
             await self.session.rollback()
             diag = await self._build_no_match_diagnostic(
-                config_departments=config_departments,
-                scope_defaults=scope_defaults,
-                group_active_jobs=group_active_jobs,
-                covered_jobs_for=covered_jobs_for,
+                config_departments=match.config_departments,
+                scope_defaults=match.scope_defaults,
+                group_active_jobs=match.group_active_jobs,
+                covered_jobs_for=match.covered_jobs_for,
             )
             raise await self._resolve_domain_error(
                 PlanSessionNoMatchingScopes(detail=diag)
@@ -451,11 +508,19 @@ class PlanSessionService(BaseService):
         new_end = data.end_date or orm_record.end_date
         if data.start_date is not None or data.end_date is not None:
             if new_end < new_start:
-                # mirror schema-level guard for partial updates
                 raise await self._resolve_domain_error(
-                    PlanSessionPeriodOverlap(orm_record.name)
+                    PlanSessionInvalidRange(orm_record.name)
                 )
-            await self._assert_no_overlap(new_start, new_end, exclude_id=session_id)
+            # Re-check per-category overlap for THIS session's categories.
+            frozen = await self.session.execute(
+                select(PlanSessionCategory.department_category_id).where(
+                    PlanSessionCategory.plan_session_id == session_id
+                )
+            )
+            session_category_ids = list(frozen.scalars().all())
+            await self._assert_no_category_overlap(
+                session_category_ids, new_start, new_end, exclude_id=session_id
+            )
 
         await self.update(orm_record, data, partial=True)
         refreshed = await self._get_with_status(session_id)
@@ -533,3 +598,104 @@ class PlanSessionService(BaseService):
             delete_error_exc=PlanSessionDeleteError,
             delete_success_exc=PlanSessionDeleteSuccess,
         )
+
+    # ------------------------------------------------------------------
+    # Re-sync: reconcile an OPEN session's scopes against current config.
+    # Adds newly-matching scopes, reactivates previously-deactivated matches,
+    # soft-deactivates scopes that no longer match. Never touches `value`.
+    # ------------------------------------------------------------------
+    async def resync_plan_session(
+        self, session_id: int, add_category_ids: list[int] | None = None
+    ) -> MutationResponse[PlanSessionSchema]:
+        session = await self.get_by_id(session_id)
+        status = await self.status_repo.get_by_id(session.plan_session_status_id)
+        if status.key != PlanSessionStatusKey.OPEN.value:
+            raise await self._resolve_domain_error(
+                PlanSessionResyncNotOpen(session.name)
+            )
+
+        # Optionally add NEW categories to this session before reconciling.
+        if add_category_ids:
+            existing = await self.session.execute(
+                select(PlanSessionCategory.department_category_id).where(
+                    PlanSessionCategory.plan_session_id == session_id
+                )
+            )
+            existing_ids = set(existing.scalars().all())
+            to_add = [c for c in dict.fromkeys(add_category_ids) if c not in existing_ids]
+            if to_add:
+                # New categories must respect the per-category overlap rule.
+                await self._assert_no_category_overlap(
+                    to_add, session.start_date, session.end_date, exclude_id=session_id
+                )
+                for cat_id in to_add:
+                    self.session.add(
+                        PlanSessionCategory(
+                            plan_session_id=session_id,
+                            department_category_id=cat_id,
+                        )
+                    )
+                await self.session.flush()
+
+        # Reconcile against the session's (now possibly updated) categories.
+        frozen = await self.session.execute(
+            select(PlanSessionCategory.department_category_id).where(
+                PlanSessionCategory.plan_session_id == session_id
+            )
+        )
+        category_ids = list(frozen.scalars().all())
+
+        match = await self._compute_matching_scopes(category_ids)
+        matching_keys: set[tuple[int, int, int | None]] = set(match.matching_tuples)
+
+        # Existing scopes for this session, keyed by (dept, group, talent_status).
+        existing_rows = list(
+            (
+                await self.session.execute(
+                    select(PlanScope).where(PlanScope.plan_session_id == session_id)
+                )
+            ).scalars().all()
+        )
+        existing_by_key: dict[tuple[int, int, int | None], PlanScope] = {
+            (r.department_id, r.job_group_id, r.talent_status_id): r
+            for r in existing_rows
+        }
+
+        added = reactivated = deactivated = 0
+
+        # Insert / reactivate matches.
+        for key in matching_keys:
+            row = existing_by_key.get(key)
+            if row is None:
+                dept_id, job_group_id, talent_status_id = key
+                self.session.add(
+                    PlanScope(
+                        plan_session_id=session_id,
+                        department_id=dept_id,
+                        job_group_id=job_group_id,
+                        talent_status_id=talent_status_id,
+                        value=None,
+                        is_active=True,
+                    )
+                )
+                added += 1
+            elif not row.is_active:
+                row.is_active = True  # keep existing value
+                reactivated += 1
+
+        # Soft-deactivate scopes that no longer match.
+        for key, row in existing_by_key.items():
+            if key not in matching_keys and row.is_active:
+                row.is_active = False  # keep existing value
+                deactivated += 1
+
+        await self.session.commit()
+
+        refreshed = await self._get_with_status(session_id)
+        schema = PlanSessionSchema.model_validate(refreshed)
+        detail = await self._resolve_domain_success(
+            PlanSessionResyncSuccess(
+                schema.name, added=added, reactivated=reactivated, deactivated=deactivated
+            )
+        )
+        return MutationResponse(detail=detail, data=schema)

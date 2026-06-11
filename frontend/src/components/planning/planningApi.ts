@@ -42,6 +42,7 @@ export interface PlanSessionCreate {
     description?: string | null;
     start_date: string;
     end_date: string;
+    department_category_ids?: number[] | null;
 }
 
 export interface PlanSessionUpdate {
@@ -76,6 +77,7 @@ export interface PlanScope {
     job_group_id: number;
     talent_status_id: number | null;
     value: number | null;
+    is_active: boolean;
     created_at: string;
     department: PlanScopeDepartment | null;
     job_group: PlanScopeJobGroup | null;
@@ -131,6 +133,22 @@ export const revertPlanSession = async (id: number): Promise<MutationResponse<Pl
     return res.data;
 };
 
+export const resyncPlanSession = async (
+    id: number,
+    addCategoryIds?: number[],
+): Promise<MutationResponse<PlanSession>> => {
+    const body = addCategoryIds && addCategoryIds.length ? { add_category_ids: addCategoryIds } : {};
+    const res = await axiosInstance.patch<MutationResponse<PlanSession>>(
+        `${SESSIONS}/${id}/resync`,
+        body,
+    );
+    return res.data;
+};
+
+// Re-use the admin ref-category fetch (single source of truth).
+export { fetchDepartmentCategoriesRef } from '../admin/planning_setup/planningSetupApi';
+export type { RefDepartmentCategory } from '../admin/planning_setup/planningSetupApi';
+
 export const deletePlanSession = async (id: number): Promise<MutationResponse<null>> => {
     const res = await axiosInstance.delete<MutationResponse<null>>(`${SESSIONS}/${id}`);
     return res.data;
@@ -153,5 +171,10 @@ export const updatePlanScope = async ({
     data: PlanScopeUpdate;
 }): Promise<MutationResponse<PlanScope>> => {
     const res = await axiosInstance.patch<MutationResponse<PlanScope>>(`${SCOPES}/${id}`, data);
+    return res.data;
+};
+
+export const deletePlanScope = async (id: number): Promise<MutationResponse<null>> => {
+    const res = await axiosInstance.delete<MutationResponse<null>>(`${SCOPES}/${id}`);
     return res.data;
 };

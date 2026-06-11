@@ -6,6 +6,7 @@ from backend.api_v1.lang.lang_views import router as lang_router
 from backend.api_v1.msg_key.msg_key_views import router as msg_key_router
 from backend.api_v1.msg_pg.msg_views import router as msg_router
 from backend.api_v1.msg_full.msg_full_views import router as msg_full_router
+from backend.api_v1.msg_bulk.msg_bulk_views import router as msg_bulk_router
 from backend.api_v1.job.job_views import router as job_router
 from backend.api_v1.department.department_views import router as department_router
 from backend.api_v1.department_type.department_type_views import router as department_type_router
@@ -93,6 +94,7 @@ router.include_router(user_group_type_router)
 router.include_router(msg_key_router)
 router.include_router(msg_router)
 router.include_router(msg_full_router)
+router.include_router(msg_bulk_router)
 router.include_router(employee_event_status_router)
 router.include_router(employee_event_type_router)
 router.include_router(employee_event_direction_type_router)

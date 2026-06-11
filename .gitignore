@@ -85,4 +85,9 @@ coverage/
 backend/auth/keys/*.pem
 backend/auth/keys/*.key
 
+# Claude Code — local only, not pushed to remote
+CLAUDE.md
+.claude/
+**/SKILL.md
+
 

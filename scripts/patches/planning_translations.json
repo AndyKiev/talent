@@ -1,0 +1,42 @@
+{
+  "addCategories": {
+    "eng": "Add categories (optional)",
+    "ukr": "Додати категорії (необов'язково)"
+  },
+  "deletePlanScope": {
+    "eng": "Delete plan row",
+    "ukr": "Видалити рядок плану"
+  },
+  "areYouSureDeletePlanScope": {
+    "eng": "Are you sure you want to delete plan row ${name}?",
+    "ukr": "Ви впевнені, що хочете видалити рядок плану ${name}?"
+  },
+  "resync": {
+    "eng": "Re-sync",
+    "ukr": "Синхронізувати"
+  },
+  "resyncPlanSession": {
+    "eng": "Re-sync session",
+    "ukr": "Повторна синхронізація сесії"
+  },
+  "areYouSureResyncPlanSession": {
+    "eng": "Are you sure you want to re-sync session ${name}?",
+    "ukr": "Ви впевнені, що хочете повторно синхронізувати сесію ${name}?"
+  },
+  "resyncCategoryHint": {
+    "eng": "Optionally add new categories before reconciling. A category cannot be planned in two sessions with overlapping dates.",
+    "ukr": "За потреби додайте нові категорії перед звіркою. Категорію не можна планувати у двох сесіях із пересічними датами."
+  },
+  "resyncNoCategoryHint": {
+    "eng": "Leave empty to only reconcile",
+    "ukr": "Залиште порожнім, щоб лише виконати звірку"
+  },
+  "filterAll": {
+    "eng": "All",
+    "ukr": "Всі"
+  },
+  "sessionNotOpen": {
+    "eng": "Open the session to edit",
+    "ukr": "Відкрийте сесію для редагування"
+  }
+}

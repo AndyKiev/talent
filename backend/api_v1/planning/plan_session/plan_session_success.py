@@ -58,3 +58,20 @@ class PlanSessionRevertSuccess(DomainSuccess):
         self.template_vars = {"name": name}
         self.fallback = f"Plan session '{name}' reverted to open"
         DomainSuccess.__init__(self, self.fallback)
+
+
+class PlanSessionResyncSuccess(DomainSuccess):
+    message_key = "planSessionResyncSuccess"
+
+    def __init__(self, name: str, added: int, reactivated: int, deactivated: int) -> None:
+        self.template_vars = {
+            "name": name,
+            "added": added,
+            "reactivated": reactivated,
+            "deactivated": deactivated,
+        }
+        self.fallback = (
+            f"Session '{name}' re-synced: {added} added, "
+            f"{reactivated} reactivated, {deactivated} deactivated"
+        )
+        DomainSuccess.__init__(self, self.fallback)

@@ -16,8 +16,13 @@ from backend.api_v1.planning.plan_scope.plan_scope_errors import (
     PlanScopeNotFound,
     PlanScopeSessionPending,
     PlanScopeSessionClosed,
+    PlanScopeInactive,
+    PlanScopeDeleteError,
 )
-from backend.api_v1.planning.plan_scope.plan_scope_success import PlanScopeUpdateSuccess
+from backend.api_v1.planning.plan_scope.plan_scope_success import (
+    PlanScopeUpdateSuccess,
+    PlanScopeDeleteSuccess,
+)
 
 from backend.api_v1.planning.plan_session.plan_session_repository import (
     PlanSessionRepository,
@@ -79,9 +84,26 @@ class PlanScopeService(BaseService):
     ) -> MutationResponse[PlanScopeSchema]:
         orm_record = await self.get_by_id(scope_id)
         await self._guard_session_open(orm_record.plan_session_id)
+        if not orm_record.is_active:
+            raise await self._resolve_domain_error(
+                PlanScopeInactive(_scope_label(PlanScopeSchema.model_validate(orm_record)))
+            )
         updated = await self.update(orm_record, scope_update, partial=True)
         schema = PlanScopeSchema.model_validate(updated)
         detail = await self._resolve_domain_success(
             PlanScopeUpdateSuccess(_scope_label(schema))
         )
         return MutationResponse(detail=detail, data=schema)
+
+    async def delete_plan_scope(self, scope_id: int) -> None:
+        """Hard-delete a single scope row (open sessions only). If it still
+        matches the config, a later re-sync will recreate it fresh."""
+        orm_record = await self.get_by_id(scope_id)
+        await self._guard_session_open(orm_record.plan_session_id)
+        schema = PlanScopeSchema.model_validate(orm_record)
+        await self.delete_by_id(
+            scope_id,
+            name=_scope_label(schema),
+            delete_error_exc=PlanScopeDeleteError,
+            delete_success_exc=PlanScopeDeleteSuccess,
+        )

@@ -90,7 +90,7 @@ export const LocaleAdminReduced: React.FC = () => {
                 id: item.id,
                 key: item.name,
             };
-            item.msg.forEach(msg => {
+            (item.msg || []).forEach(msg => {
                 const langShortName = msg.lang_data.short_name;
                 row[langShortName] = msg.value;
             });

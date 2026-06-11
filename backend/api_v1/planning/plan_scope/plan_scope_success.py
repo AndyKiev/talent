@@ -8,3 +8,12 @@ class PlanScopeUpdateSuccess(UpdateSuccess):
         self.template_vars = {"name": name}
         self.fallback = f"Plan value for '{name}' successfully updated"
         DomainSuccess.__init__(self, self.fallback)
+
+
+class PlanScopeDeleteSuccess(DomainSuccess):
+    message_key = "planScopeDeleteSuccess"
+
+    def __init__(self, name: str) -> None:
+        self.template_vars = {"name": name}
+        self.fallback = f"Plan scope '{name}' deleted"
+        DomainSuccess.__init__(self, self.fallback)

@@ -7,6 +7,7 @@ from backend.api_v1.planning.plan_session.plan_session_schema import (
     PlanSession as PlanSessionSchema,
     PlanSessionCreate,
     PlanSessionUpdate,
+    PlanSessionResyncRequest,
 )
 from backend.api_v1.planning.plan_session.plan_session_dependencies import (
     get_plan_session_service,
@@ -78,6 +79,23 @@ async def revert_plan_session(
     service: Annotated[PlanSessionService, Depends(get_plan_session_service)],
 ):
     return await service.revert_plan_session(plan_session_id)
+
+
+@router.patch(
+    "/{plan_session_id}/resync",
+    response_model=MutationResponse[PlanSessionSchema],
+)
+async def resync_plan_session(
+    plan_session_id: int,
+    service: Annotated[PlanSessionService, Depends(get_plan_session_service)],
+    body: PlanSessionResyncRequest | None = None,
+):
+    """Reconcile an open session's scopes with current config: add new matches,
+    reactivate previously-deactivated matches, soft-deactivate non-matching ones.
+    Optionally add new department categories first (body.add_category_ids).
+    Existing plan values are preserved."""
+    add_ids = body.add_category_ids if body else None
+    return await service.resync_plan_session(plan_session_id, add_category_ids=add_ids)
 
 
 @router.patch(

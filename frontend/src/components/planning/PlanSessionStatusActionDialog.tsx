@@ -9,10 +9,8 @@ import {
     CircularProgress,
 } from '@mui/material';
 import type { PlanSession } from './planningApi';
-
-import str from "../../strings/str.ts";
-import useString from "../../hooks/useString.ts";
-
+import useString from '../../hooks/useString';
+import str from '../../strings/str';
 
 export type PlanSessionAction = 'open' | 'close' | 'revert';
 

@@ -1,4 +1,12 @@
 import logging
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# Load .env into os.environ BEFORE any backend import that reads os.getenv
+# (e.g. BYPASS_LDAP, RABBITMQ_ENABLED). Pydantic-settings reads .env on its
+# own, but plain os.getenv calls do not — this bridges that gap.
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 import uvicorn
 
