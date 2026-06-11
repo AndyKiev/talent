@@ -198,12 +198,58 @@ class ReviewSessionService(BaseService):
         return MutationResponse(detail=detail, data=schema)
 
     async def delete_review_session(self, rs_id: int) -> None:
+        """
+        Cascade-delete a whole session: every employee evaluation, every
+        employee review row, then the session itself — in one transaction.
+        FKs have no ON DELETE CASCADE, so we delete children explicitly.
+        """
+        from sqlalchemy import select as sa_select, delete as sa_delete
+
         record = await self.get_by_id(rs_id)
-        await self.delete_by_id(
-            rs_id,
-            name=record.name,
-            delete_error_exc=ReviewSessionDeleteError,
-            delete_success_exc=ReviewSessionDeleteSuccess,
+        name = record.name
+
+        try:
+            # Collect employee-review ids for this session.
+            rse_ids = (
+                await self.session.execute(
+                    sa_select(ReviewSessionEmployee.id).where(
+                        ReviewSessionEmployee.session_id == rs_id
+                    )
+                )
+            ).scalars().all()
+
+            if rse_ids:
+                # 1) evaluations -> 2) employee reviews
+                await self.session.execute(
+                    sa_delete(ReviewSessionEmployeeEvaluation).where(
+                        ReviewSessionEmployeeEvaluation.review_session_employee_id.in_(
+                            rse_ids
+                        )
+                    )
+                )
+                await self.session.execute(
+                    sa_delete(ReviewSessionEmployee).where(
+                        ReviewSessionEmployee.session_id == rs_id
+                    )
+                )
+
+            # 3) the session
+            await self.session.execute(
+                sa_delete(self.repository.model).where(
+                    self.repository.model.id == rs_id
+                )
+            )
+            await self.session.commit()
+        except IntegrityError:
+            await self.session.rollback()
+            exc = ReviewSessionDeleteError(name)
+            raise await self._resolve_domain_error(exc)
+
+        success = ReviewSessionDeleteSuccess(name)
+        await self._raise_success(
+            message_key=success.message_key,
+            variables=success.template_vars,
+            fallback=success.fallback,
         )
 
     async def get_analytics(self, rs_id: int) -> list[dict]:

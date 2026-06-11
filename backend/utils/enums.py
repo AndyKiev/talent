@@ -1,6 +1,9 @@
 # backend/utils/enums.py
 from enum import Enum, auto
 
+# Canonical display date format (day.month.year), e.g. 31.12.2026.
+DATE_FORMAT = "DD.MM.YYYY"
+
 
 class ParameterDefaults(Enum):
     DELIVERY_TYPE_ANEE_CODES = "DEL1,DEL2,DEL3"

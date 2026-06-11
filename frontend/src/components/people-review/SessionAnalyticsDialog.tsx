@@ -15,6 +15,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { axiosInstance } from '../../api/axiosInstance';
 import { BASE_URL } from '../../utils/eNums';
+import { MAX_GRADE } from './peopleReviewApi';
 import { useTheme } from '../theme/ThemeContext';
 
 // ── Dimension colour palette (must match EvaluationPage) ─────────────────────
@@ -55,9 +56,9 @@ async function fetchAnalytics(sessionId: number): Promise<DimensionAnalytics[]> 
 function DimBar({ dim, idx }: { dim: DimensionAnalytics; idx: number }) {
     const color = getDimColor(dim.dimension_key, idx);
     const avg = dim.avg_score ?? 0;
-    const pct = (avg / 5) * 100;
-    const minPct = ((dim.min_score ?? 0) / 5) * 100;
-    const maxPct = ((dim.max_score ?? 0) / 5) * 100;
+    const pct = (avg / MAX_GRADE) * 100;
+    const minPct = ((dim.min_score ?? 0) / MAX_GRADE) * 100;
+    const maxPct = ((dim.max_score ?? 0) / MAX_GRADE) * 100;
     const coverage = dim.total_evaluations > 0
         ? Math.round((dim.scored_count / dim.total_evaluations) * 100)
         : 0;
@@ -86,7 +87,7 @@ function DimBar({ dim, idx }: { dim: DimensionAnalytics; idx: number }) {
                         {dim.scored_count}/{dim.total_evaluations} scored ({coverage}%)
                     </Typography>
                     <Typography fontSize={13} fontWeight={800} color={color} sx={{ minWidth: 36, textAlign: 'right' }}>
-                        {dim.avg_score !== null ? dim.avg_score.toFixed(2) : '—'}/5
+                        {dim.avg_score !== null ? dim.avg_score.toFixed(2) : '—'}/{MAX_GRADE}
                     </Typography>
                 </Stack>
             </Stack>
@@ -196,7 +197,7 @@ export function SessionAnalyticsDialog({ sessionId, sessionName, open, onClose }
                                     Overall average score
                                 </Typography>
                                 <Typography fontSize={22} fontWeight={800} color={t.accent}>
-                                    {overallAvg.toFixed(2)}/5
+                                    {overallAvg.toFixed(2)}/{MAX_GRADE}
                                 </Typography>
                             </Box>
                         )}
