@@ -20,6 +20,9 @@ from backend.api_v1.review_session_employee_evaluation.review_session_employee_e
 from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_success import (
     EvaluationSaveSuccess,
 )
+from backend.api_v1.review_session_employee_criterion_score.review_session_employee_criterion_score_model import (
+    ReviewSessionEmployeeCriterionScore,
+)
 
 
 class ReviewSessionEmployeeEvaluationService(BaseService):
@@ -85,9 +88,34 @@ class ReviewSessionEmployeeEvaluationService(BaseService):
             if rse and rse.session and rse.session.status != "open":
                 raise await self._resolve_domain_error(EvaluationNotEditable())
 
-            update_data = upd.model_dump(exclude={"id"}, exclude_unset=True)
-            for key, val in update_data.items():
-                setattr(orm_record, key, val)
+            sent = upd.model_dump(exclude_unset=True)
+            if "facts" in sent:
+                orm_record.facts = upd.facts
+            if "improvement" in sent:
+                orm_record.improvement = upd.improvement
+
+            if upd.criterion_scores is not None:
+                # Replace the descriptor scores wholesale, then recompute the
+                # competence level (fractional mean + legacy rounded int).
+                orm_record.criterion_scores.clear()
+                await self.session.flush()  # emit the deletes before re-inserting
+                values: list[int] = []
+                for cs in upd.criterion_scores:
+                    orm_record.criterion_scores.append(
+                        ReviewSessionEmployeeCriterionScore(
+                            criterion_index=cs.criterion_index,
+                            score=cs.score,
+                        )
+                    )
+                    values.append(cs.score)
+                if values:
+                    mean = sum(values) / len(values)
+                    orm_record.mean_score = round(mean, 2)
+                    orm_record.score = round(mean)
+                else:
+                    orm_record.mean_score = None
+                    orm_record.score = None
+
             results.append(orm_record)
 
         await self.session.commit()

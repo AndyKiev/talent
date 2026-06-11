@@ -49,13 +49,20 @@ export interface ReviewSessionEmployeeList {
     total_dimensions: number;
 }
 
+export interface CriterionScore {
+    criterion_index: number;
+    score: number;
+}
+
 export interface Evaluation {
     id: number;
     review_session_employee_id: number;
     dimension_id: number;
     score: number | null;
+    mean_score: number | null;
     facts: string | null;
     improvement: string | null;
+    criterion_scores: CriterionScore[];
     dimension_name: string;
     dimension_key: string;
     dimension_description: string | null;
@@ -191,9 +198,9 @@ export const fetchEvaluations = async (rseId: number): Promise<Evaluation[]> => 
 
 export interface EvaluationBulkUpdate {
     id: number;
-    score?: number | null;
     facts?: string | null;
     improvement?: string | null;
+    criterion_scores?: CriterionScore[];
 }
 
 export const bulkUpdateEvaluations = async (

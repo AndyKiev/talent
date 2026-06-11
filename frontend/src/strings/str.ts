@@ -2483,5 +2483,7 @@ export const str = {
     talentStatus: { ukr: "статус таланту", eng: "talent status" },
     talentStatusRequired: { ukr: "оберіть статус таланту", eng: "talent status is required" },
     youAreAboutToChange: { ukr: "ви збираєтесь змінити:", eng: "you are about to change:" },
+    rateEachBehaviour: { eng: "Rate each behaviour", ukr: "Оцініть кожну поведінку" },
+    competenceLevel: { eng: "Competence level", ukr: "Рівень компетенції" },
 }
 export default str

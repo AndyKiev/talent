@@ -2718,5 +2718,37 @@
   "all": {
     "ukr": "Всі",
     "eng": "All"
+  },
+  "markReviewed": {
+    "ukr": "Позначити переглянутим",
+    "eng": "Mark Reviewed"
+  },
+  "markAsReviewed": {
+    "ukr": "Позначити як переглянуте",
+    "eng": "Mark as reviewed"
+  },
+  "fillAllDimensions": {
+    "ukr": "Заповніть усі компетенції (${filled}/${total})",
+    "eng": "Fill all dimensions (${filled}/${total})"
+  },
+  "previousDimension": {
+    "ukr": "Попередня компетенція",
+    "eng": "Previous dimension"
+  },
+  "nextDimension": {
+    "ukr": "Наступна компетенція",
+    "eng": "Next dimension"
+  },
+  "saving": {
+    "ukr": "Збереження…",
+    "eng": "Saving…"
+  },
+  "competenceLevel": {
+    "ukr": "Рівень компетенції",
+    "eng": "Competence level"
+  },
+  "rateEachBehaviour": {
+    "ukr": "Оцініть кожну поведінку",
+    "eng": "Rate each behaviour"
   }
 }

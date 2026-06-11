@@ -54,6 +54,7 @@ import {
     MAX_GRADE,
     type Evaluation,
     type EvaluationBulkUpdate,
+    type CriterionScore,
     type EmployeeLanguageInput,
     type RSEFieldsUpdate,
 } from './peopleReviewApi';
@@ -121,7 +122,10 @@ interface LocalEval {
     dimension_key: string;
     dimension_description: string | null;
     dimension_is_active: boolean;
-    score: number | null;
+    // Behaviour descriptors (hint bullets) shown as children, each rated 1..MAX_GRADE.
+    descriptors: string[];
+    // criterion_index -> score (1..MAX_GRADE). Sparse: unrated descriptors are absent.
+    criterionScores: Record<number, number>;
     facts: string[];
     improvement: string;
 }
@@ -141,12 +145,36 @@ function serializeFacts(facts: string[]): string {
     return facts.map((f, i) => `${i + 1}. ${f}`).join('\n');
 }
 
+/** Split a competence hint (•-bulleted, newline-joined) into individual behaviour descriptors. */
+function parseDescriptors(hint: string): string[] {
+    if (!hint) return [];
+    return hint
+        .split('\n')
+        .map(line => line.replace(/^\s*[•\-*]\s*/, '').replace(/^\s*\d+[.)]\s*/, '').trim())
+        .filter(line => line.length > 0);
+}
+
+/** Arithmetic mean of a competence's rated behaviour scores (null when none rated). */
+function evalMean(le: LocalEval): number | null {
+    const vals = le.descriptors
+        .map((_, i) => le.criterionScores[i])
+        .filter((v): v is number => v != null);
+    if (vals.length === 0) return null;
+    return vals.reduce((a, b) => a + b, 0) / vals.length;
+}
+
+/** A competence counts as filled only once every one of its behaviour descriptors is rated. */
+function evalFilled(le: LocalEval): boolean {
+    return le.descriptors.length > 0 && le.descriptors.every((_, i) => le.criterionScores[i] != null);
+}
+
 function DimensionChart({ evals, getString }: { evals: LocalEval[]; getString: GetStringFn }) {
     return (
         <Box>
             {evals.map((e, idx) => {
                 const color = getDimColor(e.dimension_key, idx);
-                const pct = ((e.score ?? 0) / MAX_GRADE) * 100;
+                const mean = evalMean(e);
+                const pct = ((mean ?? 0) / MAX_GRADE) * 100;
                 return (
                     <Box key={e.id} sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
                         <Typography fontSize={11} fontWeight={600} sx={{ width: 180, flexShrink: 0, color }} noWrap>
@@ -159,8 +187,8 @@ function DimensionChart({ evals, getString }: { evals: LocalEval[]; getString: G
                                 transition: 'width 0.4s ease',
                             }} />
                         </Box>
-                        <Typography fontSize={11} fontWeight={700} sx={{ width: 28, textAlign: 'right', color }}>
-                            {e.score ?? '—'}/{MAX_GRADE}
+                        <Typography fontSize={11} fontWeight={700} sx={{ width: 40, textAlign: 'right', color }}>
+                            {mean != null ? mean.toFixed(2) : '—'}/{MAX_GRADE}
                         </Typography>
                     </Box>
                 );
@@ -368,11 +396,11 @@ function parseSummarySide(raw: unknown): SummaryOption[] {
 function rankedCompetences(evals: LocalEval[], direction: 'desc' | 'asc'): LocalEval[] {
     if (evals.length <= SUMMARY_MIN_OPTIONS) return [...evals];
     const sorted = [...evals].sort((a, b) =>
-        direction === 'desc' ? (b.score ?? 0) - (a.score ?? 0) : (a.score ?? 0) - (b.score ?? 0),
+        direction === 'desc' ? (evalMean(b) ?? 0) - (evalMean(a) ?? 0) : (evalMean(a) ?? 0) - (evalMean(b) ?? 0),
     );
-    const threshold = sorted[SUMMARY_MIN_OPTIONS - 1].score ?? 0;
+    const threshold = evalMean(sorted[SUMMARY_MIN_OPTIONS - 1]) ?? 0;
     return sorted.filter(e =>
-        direction === 'desc' ? (e.score ?? 0) >= threshold : (e.score ?? 0) <= threshold,
+        direction === 'desc' ? (evalMean(e) ?? 0) >= threshold : (evalMean(e) ?? 0) <= threshold,
     );
 }
 
@@ -524,18 +552,37 @@ export function EvaluationPage() {
 
     useEffect(() => {
         if (evaluations.length > 0) {
-            setLocalEvals(evaluations.map((e: Evaluation) => ({
-                id: e.id,
-                dimension_id: e.dimension_id,
-                dimension_name: e.dimension_name,
-                dimension_key: e.dimension_key,
-                dimension_description: e.dimension_description ?? null,
-                dimension_is_active: e.dimension_is_active,
-                score: e.score,
-                facts: parseFacts(e.facts),
-                improvement: e.improvement ?? '',
-            })));
+            setLocalEvals(evaluations.map((e: Evaluation) => {
+                // Behaviour descriptors come from the competence hint (•-bulleted);
+                // fall back to a single descriptor (the competence name) when there is none.
+                const hintText = competenceHint(getString, e.dimension_key, e.dimension_description ?? '');
+                let descriptors = parseDescriptors(hintText);
+                if (descriptors.length === 0) {
+                    descriptors = [competenceName(getString, e.dimension_key, e.dimension_name)];
+                }
+                const criterionScores: Record<number, number> = {};
+                for (const cs of e.criterion_scores) {
+                    if (cs.criterion_index >= 0 && cs.criterion_index < descriptors.length) {
+                        criterionScores[cs.criterion_index] = cs.score;
+                    }
+                }
+                return {
+                    id: e.id,
+                    dimension_id: e.dimension_id,
+                    dimension_name: e.dimension_name,
+                    dimension_key: e.dimension_key,
+                    dimension_description: e.dimension_description ?? null,
+                    dimension_is_active: e.dimension_is_active,
+                    descriptors,
+                    criterionScores,
+                    facts: parseFacts(e.facts),
+                    improvement: e.improvement ?? '',
+                };
+            }));
         }
+        // getString intentionally omitted: descriptors are reseeded only on data
+        // change, not on every language re-render (which would clobber edits).
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [evaluations]);
 
     const saveMut = useMutation({
@@ -597,8 +644,8 @@ export function EvaluationPage() {
     // In a closed session show every dimension; otherwise only active ones.
     const visibleEvals = isSessionClosed ? localEvals : localEvals.filter(e => e.dimension_is_active);
 
-    const allFilled = visibleEvals.length > 0 && visibleEvals.every(e => (e.score ?? 0) > 0);
-    const filledCount = visibleEvals.filter(e => (e.score ?? 0) > 0).length;
+    const allFilled = visibleEvals.length > 0 && visibleEvals.every(evalFilled);
+    const filledCount = visibleEvals.filter(evalFilled).length;
     const totalCount = visibleEvals.length;
 
     const competenceLabel = (key: string) => {
@@ -643,6 +690,8 @@ export function EvaluationPage() {
 
     const activeEval = visibleEvals[activeTab];
     const activeColor = activeEval ? getDimColor(activeEval.dimension_key, activeTab) : t.accent;
+    const activeMean = activeEval ? evalMean(activeEval) : null;
+    const activeLevelPct = ((activeMean ?? 0) / MAX_GRADE) * 100;
 
     // Jump the facts section below to the tab of the given competence
     // (used when a competence is selected in the summary above).
@@ -652,9 +701,21 @@ export function EvaluationPage() {
     };
 
     const handleSave = () => {
-        const updates: EvaluationBulkUpdate[] = localEvals.map(le => ({
-            id: le.id, score: le.score, facts: serializeFacts(le.facts) || null, improvement: le.improvement || null,
-        }));
+        const updates: EvaluationBulkUpdate[] = localEvals.map(le => {
+            // Send the per-behaviour scores; the backend derives the competence
+            // level (fractional mean + legacy rounded score) from them.
+            const criterion_scores: CriterionScore[] = [];
+            le.descriptors.forEach((_, i) => {
+                const s = le.criterionScores[i];
+                if (s != null) criterion_scores.push({ criterion_index: i, score: s });
+            });
+            return {
+                id: le.id,
+                facts: serializeFacts(le.facts) || null,
+                improvement: le.improvement || null,
+                criterion_scores,
+            };
+        });
         saveMut.mutate(updates);
         if (employeeId) {
             const languages: EmployeeLanguageInput[] = FOREIGN_LANGUAGES.map(({ key }) => ({
@@ -694,6 +755,17 @@ export function EvaluationPage() {
 
     const updateLocal = (id: number, field: keyof LocalEval, value: unknown) => {
         setLocalEvals(prev => prev.map(e => e.id === id ? { ...e, [field]: value } : e));
+    };
+
+    // Set (or clear, when value is null) the score for one behaviour descriptor.
+    const setCriterion = (evalId: number, index: number, value: number | null) => {
+        setLocalEvals(prev => prev.map(e => {
+            if (e.id !== evalId) return e;
+            const cs = { ...e.criterionScores };
+            if (value == null) delete cs[index];
+            else cs[index] = value;
+            return { ...e, criterionScores: cs };
+        }));
     };
 
     const addFact = (evalId: number, text: string) => {
@@ -827,7 +899,7 @@ export function EvaluationPage() {
                                 {/* Mark reviewed */}
                                 {isEditable && (
                                     <Tooltip
-                                        title={allFilled ? 'Mark as reviewed' : `Fill all ${totalCount} dimensions (${filledCount}/${totalCount})`}
+                                        title={allFilled ? getString('markAsReviewed') : getString('fillAllDimensions', { filled: filledCount, total: totalCount })}
                                         placement="top"
                                     >
                                         <span>
@@ -842,7 +914,7 @@ export function EvaluationPage() {
                                                     '&:hover': { bgcolor: allFilled ? '#1B5E20' : undefined },
                                                 }}
                                             >
-                                                Mark Reviewed
+                                                {getString('markReviewed')}
                                             </Button>
                                         </span>
                                     </Tooltip>
@@ -893,7 +965,7 @@ export function EvaluationPage() {
                                         onClick={handleSave} disabled={saveMut.isPending}
                                         sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, fontSize: 12 }}
                                     >
-                                        {saveMut.isPending ? 'Saving…' : 'Save'}
+                                        {saveMut.isPending ? getString('saving') : getString('save')}
                                     </Button>
                                 )}
 
@@ -1207,7 +1279,7 @@ export function EvaluationPage() {
                                 >
                                     {visibleEvals.map((e, idx) => {
                                         const color = getDimColor(e.dimension_key, idx);
-                                        const filled = (e.score ?? 0) > 0;
+                                        const filled = evalFilled(e);
                                         return (
                                             <Tab
                                                 key={e.id}
@@ -1232,38 +1304,66 @@ export function EvaluationPage() {
 
                                 {activeEval && (
                                     <Box sx={{ p: 3 }}>
-                                        {/* Dimension header + tooltip */}
+                                        {/* Dimension header */}
                                         <Stack direction="row" alignItems="center" spacing={1} mb={2.5}>
                                             <Box sx={{ width: 4, height: 26, borderRadius: 2, bgcolor: activeColor, flexShrink: 0 }} />
                                             <Typography variant="h6" fontWeight={700} color={activeColor}>
                                                 {competenceName(getString, activeEval.dimension_key, activeEval.dimension_name)}
                                             </Typography>
-                                            {competenceHint(getString, activeEval.dimension_key, activeEval.dimension_description ?? '') && (
-                                                <Tooltip
-                                                    title={competenceHint(getString, activeEval.dimension_key, activeEval.dimension_description ?? '')}
-                                                    placement="right"
-                                                    arrow
-                                                    componentsProps={{ tooltip: { sx: { maxWidth: 360, whiteSpace: 'pre-line' } } }}
-                                                >
-                                                    <InfoOutlinedIcon sx={{ fontSize: 17, color: t.textMuted, cursor: 'help' }} />
-                                                </Tooltip>
-                                            )}
                                         </Stack>
 
-                                        {/* Rating */}
+                                        {/* Per-behaviour scoring — the competence level is their average */}
                                         <Box sx={{ mb: 3 }}>
-                                            <Typography fontSize={13} fontWeight={600} color={t.textSecondary} mb={0.75}>{`Score (0–${MAX_GRADE})`}</Typography>
+                                            <Typography fontSize={13} fontWeight={600} color={t.textSecondary} mb={1}>
+                                                {`${getString('rateEachBehaviour')} (1–${MAX_GRADE})`}
+                                            </Typography>
+                                            <Stack spacing={1} mb={2}>
+                                                {activeEval.descriptors.map((desc, i) => (
+                                                    <Stack
+                                                        key={i}
+                                                        direction="row"
+                                                        alignItems="center"
+                                                        spacing={1.5}
+                                                        sx={{
+                                                            py: 0.75, px: 1.25, borderRadius: '8px',
+                                                            border: `1px solid ${activeColor}22`,
+                                                            bgcolor: activeColor + '08',
+                                                        }}
+                                                    >
+                                                        <Typography fontSize={12} fontWeight={700} color={activeColor} sx={{ minWidth: 18, pt: '1px' }}>
+                                                            {i + 1}.
+                                                        </Typography>
+                                                        <Typography fontSize={13} sx={{ flex: 1, wordBreak: 'break-word' }}>
+                                                            {desc}
+                                                        </Typography>
+                                                        <Rating
+                                                            value={activeEval.criterionScores[i] ?? 0}
+                                                            max={MAX_GRADE}
+                                                            onChange={(_, v) => { if (isEditable) setCriterion(activeEval.id, i, v); }}
+                                                            readOnly={!isEditable}
+                                                            sx={{ flexShrink: 0, '& .MuiRating-iconFilled': { color: activeColor }, '& .MuiRating-iconHover': { color: activeColor } }}
+                                                        />
+                                                        <Typography fontSize={13} fontWeight={700} color={activeColor} sx={{ width: 18, textAlign: 'right' }}>
+                                                            {activeEval.criterionScores[i] ?? '—'}
+                                                        </Typography>
+                                                    </Stack>
+                                                ))}
+                                            </Stack>
+
+                                            {/* Competence level = arithmetic mean (no stars — value is fractional) */}
                                             <Stack direction="row" alignItems="center" spacing={1.5}>
-                                                <Rating
-                                                    value={activeEval.score ?? 0}
-                                                    max={MAX_GRADE}
-                                                    onChange={(_, v) => { if (isEditable) updateLocal(activeEval.id, 'score', v); }}
-                                                    readOnly={!isEditable}
-                                                    size="large"
-                                                    sx={{ '& .MuiRating-iconFilled': { color: activeColor }, '& .MuiRating-iconHover': { color: activeColor } }}
-                                                />
-                                                <Typography fontWeight={700} color={activeColor} fontSize={15}>
-                                                    {activeEval.score !== null ? `${activeEval.score}/${MAX_GRADE}` : '—'}
+                                                <Typography fontSize={13} fontWeight={700} color={t.textSecondary} sx={{ whiteSpace: 'nowrap' }}>
+                                                    {getString('competenceLevel')}
+                                                </Typography>
+                                                <Box sx={{ flex: 1, maxWidth: 240, height: 10, borderRadius: 5, bgcolor: `${activeColor}22`, position: 'relative' }}>
+                                                    <Box sx={{
+                                                        position: 'absolute', left: 0, top: 0, bottom: 0,
+                                                        width: `${activeLevelPct}%`, borderRadius: 5, bgcolor: activeColor,
+                                                        transition: 'width 0.3s ease',
+                                                    }} />
+                                                </Box>
+                                                <Typography fontWeight={700} color={activeColor} fontSize={15} sx={{ minWidth: 64, textAlign: 'right' }}>
+                                                    {activeMean != null ? activeMean.toFixed(2) : '—'}/{MAX_GRADE}
                                                 </Typography>
                                             </Stack>
                                         </Box>
@@ -1368,12 +1468,12 @@ export function EvaluationPage() {
                                             <Button size="small" disabled={activeTab === 0}
                                                 onClick={() => setActiveTab(p => p - 1)}
                                                 sx={{ textTransform: 'none', color: t.textMuted }}>
-                                                ← Previous dimension
+                                                ← {getString('previousDimension')}
                                             </Button>
                                             <Button size="small" disabled={activeTab === visibleEvals.length - 1}
                                                 onClick={() => setActiveTab(p => p + 1)}
                                                 sx={{ textTransform: 'none', color: activeColor }}>
-                                                Next dimension →
+                                                {getString('nextDimension')} →
                                             </Button>
                                         </Stack>
                                     </Box>
