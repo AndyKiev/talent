@@ -48,11 +48,17 @@ import {
     fetchEmployeeLanguageProfile,
     saveEmployeeLanguageProfile,
     saveRSEFields,
+    fetchReviewLevels,
+    fetchEmployeeCurrentLevel,
+    setEmployeeCurrentLevel,
+    MAX_GRADE,
     type Evaluation,
     type EvaluationBulkUpdate,
     type EmployeeLanguageInput,
     type RSEFieldsUpdate,
 } from './peopleReviewApi';
+import { ProposedLevelDrawer } from './ProposedLevelDrawer';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import useString from '../../hooks/useString';
 import { str } from '../../strings/str';
 import type { GetStringFn } from '../../types/getStringFn';
@@ -140,7 +146,7 @@ function DimensionChart({ evals, getString }: { evals: LocalEval[]; getString: G
         <Box>
             {evals.map((e, idx) => {
                 const color = getDimColor(e.dimension_key, idx);
-                const pct = ((e.score ?? 0) / 5) * 100;
+                const pct = ((e.score ?? 0) / MAX_GRADE) * 100;
                 return (
                     <Box key={e.id} sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
                         <Typography fontSize={11} fontWeight={600} sx={{ width: 180, flexShrink: 0, color }} noWrap>
@@ -154,7 +160,7 @@ function DimensionChart({ evals, getString }: { evals: LocalEval[]; getString: G
                             }} />
                         </Box>
                         <Typography fontSize={11} fontWeight={700} sx={{ width: 28, textAlign: 'right', color }}>
-                            {e.score ?? '—'}/5
+                            {e.score ?? '—'}/{MAX_GRADE}
                         </Typography>
                     </Box>
                 );
@@ -166,6 +172,7 @@ function DimensionChart({ evals, getString }: { evals: LocalEval[]; getString: G
 function CompetenceSummarySection({
     title, accent, options, candidates, nameOf, colorOf, isEditable, getString,
     drafts, onDraftChange, onAddOption, onRemoveOption, onAddComment, onRemoveComment,
+    onSelectCompetence,
 }: {
     title: string;
     accent: string;
@@ -181,6 +188,7 @@ function CompetenceSummarySection({
     onRemoveOption: (key: string) => void;
     onAddComment: (key: string, text: string) => void;
     onRemoveComment: (key: string, index: number) => void;
+    onSelectCompetence: (key: string) => void;
 }) {
     const [pick, setPick] = useState('');
 
@@ -206,7 +214,7 @@ function CompetenceSummarySection({
                             labelId={`add-${title}-label`}
                             label={getString('selectCompetence')}
                             value={pick}
-                            onChange={e => setPick(e.target.value)}
+                            onChange={e => { setPick(e.target.value); onSelectCompetence(e.target.value); }}
                         >
                             {candidates.map(c => (
                                 <MenuItem key={c.key} value={c.key}>{c.name}</MenuItem>
@@ -442,6 +450,27 @@ export function EvaluationPage() {
         onError: (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' }),
     });
 
+    // --- Competency level (current + proposed) ---
+    const [proposedOpen, setProposedOpen] = useState(false);
+    const { data: allLevels = [] } = useQuery({
+        queryKey: ['review_levels', 'active'],
+        queryFn: () => fetchReviewLevels(true),
+        staleTime: 5 * 60_000,
+    });
+    const { data: empLevel } = useQuery({
+        queryKey: ['employee_current_level', employeeId],
+        queryFn: () => fetchEmployeeCurrentLevel(employeeId!),
+        enabled: !!employeeId,
+        staleTime: 30_000,
+    });
+    const currentLevelMut = useMutation({
+        mutationFn: (levelId: number) => setEmployeeCurrentLevel(employeeId!, levelId),
+        onSuccess: async () => {
+            await qc.invalidateQueries({ queryKey: ['employee_current_level', employeeId] });
+        },
+        onError: (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' }),
+    });
+
     // --- Employee data tabs (languages / feedback / results) ---
     const [dataTab, setDataTab] = useState(0);
     const [employeeFeedback, setEmployeeFeedback] = useState('');
@@ -615,6 +644,13 @@ export function EvaluationPage() {
     const activeEval = visibleEvals[activeTab];
     const activeColor = activeEval ? getDimColor(activeEval.dimension_key, activeTab) : t.accent;
 
+    // Jump the facts section below to the tab of the given competence
+    // (used when a competence is selected in the summary above).
+    const activateCompetenceTab = (key: string) => {
+        const idx = visibleEvals.findIndex(e => e.dimension_key === key);
+        if (idx >= 0) setActiveTab(idx);
+    };
+
     const handleSave = () => {
         const updates: EvaluationBulkUpdate[] = localEvals.map(le => ({
             id: le.id, score: le.score, facts: serializeFacts(le.facts) || null, improvement: le.improvement || null,
@@ -755,6 +791,38 @@ export function EvaluationPage() {
                                         }} />
                                     </Box>
                                 </Box>
+
+                                {/* Current level selector */}
+                                <FormControl size="small" sx={{ minWidth: 150 }}>
+                                    <InputLabel>{getString('currentLevel')}</InputLabel>
+                                    <Select
+                                        variant="outlined"
+                                        label={getString('currentLevel')}
+                                        value={empLevel?.current_level_id ? String(empLevel.current_level_id) : ''}
+                                        onChange={(e) => currentLevelMut.mutate(Number(e.target.value))}
+                                        disabled={!employeeId || currentLevelMut.isPending}
+                                    >
+                                        {allLevels
+                                            .slice()
+                                            .sort((a, b) => a.sort_order - b.sort_order)
+                                            .map((lvl) => (
+                                                <MenuItem key={lvl.id} value={String(lvl.id)}>
+                                                    {getString(lvl.name_key)}
+                                                </MenuItem>
+                                            ))}
+                                    </Select>
+                                </FormControl>
+
+                                {/* Proposed level (drawer) */}
+                                <Button
+                                    size="small"
+                                    variant="outlined"
+                                    startIcon={<TrendingUpIcon />}
+                                    onClick={() => setProposedOpen(true)}
+                                    sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, fontSize: 12 }}
+                                >
+                                    {getString('proposedLevel')}
+                                </Button>
 
                                 {/* Mark reviewed */}
                                 {isEditable && (
@@ -1094,6 +1162,7 @@ export function EvaluationPage() {
                                                     onRemoveOption={key => removeSummaryOption(setStrongOptions, key)}
                                                     onAddComment={(key, text) => addSummaryComment(setStrongOptions, key, text)}
                                                     onRemoveComment={(key, idx) => removeSummaryComment(setStrongOptions, key, idx)}
+                                                    onSelectCompetence={activateCompetenceTab}
                                                 />
                                                 <CompetenceSummarySection
                                                     title={getString('competencesToDevelop')}
@@ -1110,6 +1179,7 @@ export function EvaluationPage() {
                                                     onRemoveOption={key => removeSummaryOption(setDevelopOptions, key)}
                                                     onAddComment={(key, text) => addSummaryComment(setDevelopOptions, key, text)}
                                                     onRemoveComment={(key, idx) => removeSummaryComment(setDevelopOptions, key, idx)}
+                                                    onSelectCompetence={activateCompetenceTab}
                                                 />
                                             </Box>
                                         ) : (
@@ -1182,18 +1252,18 @@ export function EvaluationPage() {
 
                                         {/* Rating */}
                                         <Box sx={{ mb: 3 }}>
-                                            <Typography fontSize={13} fontWeight={600} color={t.textSecondary} mb={0.75}>Score (0–5)</Typography>
+                                            <Typography fontSize={13} fontWeight={600} color={t.textSecondary} mb={0.75}>{`Score (0–${MAX_GRADE})`}</Typography>
                                             <Stack direction="row" alignItems="center" spacing={1.5}>
                                                 <Rating
                                                     value={activeEval.score ?? 0}
-                                                    max={5}
+                                                    max={MAX_GRADE}
                                                     onChange={(_, v) => { if (isEditable) updateLocal(activeEval.id, 'score', v); }}
                                                     readOnly={!isEditable}
                                                     size="large"
                                                     sx={{ '& .MuiRating-iconFilled': { color: activeColor }, '& .MuiRating-iconHover': { color: activeColor } }}
                                                 />
                                                 <Typography fontWeight={700} color={activeColor} fontSize={15}>
-                                                    {activeEval.score !== null ? `${activeEval.score}/5` : '—'}
+                                                    {activeEval.score !== null ? `${activeEval.score}/${MAX_GRADE}` : '—'}
                                                 </Typography>
                                             </Stack>
                                         </Box>
@@ -1313,6 +1383,13 @@ export function EvaluationPage() {
                     </>
                 )}
             </Box>
+
+            <ProposedLevelDrawer
+                open={proposedOpen}
+                onClose={() => setProposedOpen(false)}
+                rseId={rid}
+                setSnackbar={setSnackbar}
+            />
 
             <Snackbar open={snackbar.open} autoHideDuration={5000}
                 onClose={() => setSnackbar(p => ({ ...p, open: false }))}

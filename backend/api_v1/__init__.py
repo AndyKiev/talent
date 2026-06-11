@@ -61,6 +61,11 @@ __all__ = {
     "ReviewSession",
     "ReviewSessionEmployee",
     "ReviewSessionEmployeeEvaluation",
+    # People review — competency levels
+    "ReviewLevel",
+    "ReviewLevelRequirement",
+    "ReviewSessionEmployeeLevel",
+    "ReviewSessionEmployeeLevelAnswer",
     # Foreign languages
     "LanguageLevel",
     "EmployeeLanguageProfile",
@@ -166,6 +171,19 @@ from backend.api_v1.review_session_employee.review_session_employee_model import
 )
 from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_model import (
     ReviewSessionEmployeeEvaluation,
+)
+
+# People review — competency levels: level (parent) + requirements (child),
+# then the per-rse registration and its per-requirement answers.
+from backend.api_v1.review_level.review_level_model import ReviewLevel
+from backend.api_v1.review_level_requirement.review_level_requirement_model import (
+    ReviewLevelRequirement,
+)
+from backend.api_v1.review_session_employee_level.review_session_employee_level_model import (
+    ReviewSessionEmployeeLevel,
+)
+from backend.api_v1.review_session_employee_level_answer.review_session_employee_level_answer_model import (
+    ReviewSessionEmployeeLevelAnswer,
 )
 
 # Foreign languages — lookup first, then the one-to-one profile, then the leaf rows.

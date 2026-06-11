@@ -46,6 +46,9 @@ from backend.api_v1.review_dimension_criteria.review_dimension_criteria_views im
 from backend.api_v1.review_session.review_session_views import router as review_session_router
 from backend.api_v1.review_session_employee.review_session_employee_views import router as review_session_employee_router
 from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_views import router as review_evaluation_router
+from backend.api_v1.review_level.review_level_views import router as review_level_router
+from backend.api_v1.review_level_requirement.review_level_requirement_views import router as review_level_requirement_router
+from backend.api_v1.review_session_employee_level.review_session_employee_level_views import router as review_session_employee_level_router
 
 # New modules from talent-work
 from backend.api_v1.job_group_type.job_group_type_views import router as job_group_type_router
@@ -114,6 +117,9 @@ router.include_router(review_dimension_criteria_router)
 router.include_router(review_session_router)
 router.include_router(review_session_employee_router)
 router.include_router(review_evaluation_router)
+router.include_router(review_level_router)
+router.include_router(review_level_requirement_router)
+router.include_router(review_session_employee_level_router)
 
 # New modules from talent-work
 router.include_router(job_group_type_router)

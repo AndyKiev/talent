@@ -11,6 +11,7 @@ class EmployeeBase(BaseModel):
     is_active: bool = True
     job_id: int = Field(default=1)
     lang_id: int = Field(default=3)
+    current_level_id: Optional[int] = None
 
 
 class EmployeeCreate(EmployeeBase):
@@ -23,6 +24,7 @@ class EmployeeUpdate(BaseModel):
     is_active: Optional[bool] = None
     job_id: Optional[int] = None
     lang_id: Optional[int] = None
+    current_level_id: Optional[int] = None
 
 
 class EmployeeSchema(EmployeeBase):

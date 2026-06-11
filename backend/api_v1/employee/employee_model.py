@@ -35,6 +35,11 @@ class Employee(IntIdPkMixin, TimestampMixin, Base):
     lang_id: Mapped[int] = mapped_column(
         ForeignKey("langs.id"), nullable=False, default=3
     )
+    # Employee's current career level (people-review). Nullable; updated from
+    # the review screen. FK only — the frontend just needs the id.
+    current_level_id: Mapped[int | None] = mapped_column(
+        ForeignKey("review_levels.id"), nullable=True, default=None
+    )
 
     # Relationships (lazy="selectin" so they're always available after a load)
     user_groups: Mapped[list["EmployeeUserGroupLink"]] = relationship(

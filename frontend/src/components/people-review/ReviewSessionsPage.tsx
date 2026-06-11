@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import {
@@ -29,6 +30,10 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
 import { SessionAnalyticsDialog } from './SessionAnalyticsDialog';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 import AppShell from '../layout/AppShell.tsx';
 import {
     fetchReviewSessions,
@@ -42,7 +47,8 @@ import {
     type MutationResponse,
 } from './peopleReviewApi';
 import { axiosInstance } from '../../api/axiosInstance';
-import { BASE_URL } from '../../utils/eNums';
+import { BASE_URL, DATE_FORMAT } from '../../utils/eNums';
+import useString from '../../hooks/useString';
 
 function formatDate(val: string | null | undefined): string {
     if (!val) return '—';
@@ -68,10 +74,17 @@ const STATUS_COLORS: Record<string, 'default' | 'warning' | 'success' | 'error'>
     closed: 'error',
 };
 
+const STATUS_LABEL_KEYS: Record<string, string> = {
+    pending: 'statusPending',
+    open: 'statusOpen',
+    closed: 'statusClosed',
+};
+
 export function ReviewSessionsPage() {
     const navigate = useNavigate();
     const qc = useQueryClient();
     const localeText = useDataGridLocale();
+    const getString = useString();
 
     const [snackbar, setSnackbar] = useState({
         open: false,
@@ -79,16 +92,20 @@ export function ReviewSessionsPage() {
         severity: 'success' as 'success' | 'error',
     });
     const [formOpen, setFormOpen] = useState(false);
-    const [formData, setFormData] = useState<ReviewSessionCreate>({
+    const EMPTY_FORM: ReviewSessionCreate = {
         name: '',
         description: '',
         period_start: null,
         period_end: null,
+    };
+    const { control, handleSubmit, reset, formState: { errors } } = useForm<ReviewSessionCreate>({
+        defaultValues: EMPTY_FORM,
     });
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
     const [analyticsSession, setAnalyticsSession] = useState<ReviewSession | null>(null);
     const [renameTarget, setRenameTarget] = useState<ReviewSession | null>(null);
     const [renameName, setRenameName] = useState('');
+    const [deleteTarget, setDeleteTarget] = useState<ReviewSession | null>(null);
 
     const { data: rows = [], isLoading, error } = useQuery({
         queryKey: RS_QK,
@@ -102,10 +119,15 @@ export function ReviewSessionsPage() {
             await qc.invalidateQueries({ queryKey: RS_QK });
             setSnackbar({ open: true, message: res.detail, severity: 'success' });
             setFormOpen(false);
-            setFormData({ name: '', description: '', period_start: null, period_end: null });
+            reset(EMPTY_FORM);
         },
         onError: (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' }),
     });
+
+    const closeForm = () => {
+        setFormOpen(false);
+        reset(EMPTY_FORM);
+    };
 
     const openMut = useMutation({
         mutationFn: openReviewSession,
@@ -130,6 +152,7 @@ export function ReviewSessionsPage() {
         onSuccess: async (res) => {
             await qc.invalidateQueries({ queryKey: RS_QK });
             setSnackbar({ open: true, message: res.detail, severity: 'success' });
+            setDeleteTarget(null);
         },
         onError: (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' }),
     });
@@ -154,10 +177,10 @@ export function ReviewSessionsPage() {
     });
 
     const columns: GridColDef<ReviewSession>[] = [
-        { field: 'id', headerName: 'ID', width: 60 },
+        { field: 'id', headerName: getString('idColumn'), width: 60 },
         {
             field: 'name',
-            headerName: 'Name',
+            headerName: getString('name'),
             flex: 1,
             minWidth: 220,
             renderCell: (params) => (
@@ -165,7 +188,7 @@ export function ReviewSessionsPage() {
                     <Typography fontSize={13} fontWeight={500} sx={{ flex: 1 }} noWrap>
                         {params.row.name}
                     </Typography>
-                    <Tooltip title="Rename session">
+                    <Tooltip title={getString('renameSession')}>
                         <IconButton
                             size="small"
                             onClick={(e) => { e.stopPropagation(); setRenameTarget(params.row); setRenameName(params.row.name); }}
@@ -179,11 +202,15 @@ export function ReviewSessionsPage() {
         },
         {
             field: 'status',
-            headerName: 'Status',
+            headerName: getString('status'),
             width: 110,
             renderCell: (params) => (
                 <Chip
-                    label={params.row.status}
+                    label={
+                        STATUS_LABEL_KEYS[params.row.status]
+                            ? getString(STATUS_LABEL_KEYS[params.row.status])
+                            : params.row.status
+                    }
                     color={STATUS_COLORS[params.row.status] ?? 'default'}
                     size="small"
                     variant="outlined"
@@ -192,25 +219,25 @@ export function ReviewSessionsPage() {
         },
         {
             field: 'period_start',
-            headerName: 'Period Start',
+            headerName: getString('periodStart'),
             width: 120,
             valueFormatter: (value) => formatDate(value as string),
         },
         {
             field: 'period_end',
-            headerName: 'Period End',
+            headerName: getString('periodEnd'),
             width: 120,
             valueFormatter: (value) => formatDate(value as string),
         },
         {
             field: 'employee_count',
-            headerName: 'Employees',
+            headerName: getString('employees'),
             width: 100,
             align: 'center',
         },
         {
             field: 'actions',
-            headerName: 'Actions',
+            headerName: getString('actions'),
             width: 260,
             sortable: false,
             renderCell: (params) => {
@@ -219,7 +246,7 @@ export function ReviewSessionsPage() {
                     <Stack direction="row" spacing={0.5} alignItems="center" height="100%">
                         {/* Analytics button — available for open and closed sessions */}
                         {(row.status === 'open' || row.status === 'closed') && (
-                            <Tooltip title="View analytics">
+                            <Tooltip title={getString('viewAnalytics')}>
                                 <IconButton
                                     size="small"
                                     onClick={() => setAnalyticsSession(row)}
@@ -238,7 +265,7 @@ export function ReviewSessionsPage() {
                                 onClick={() => openMut.mutate(row.id)}
                                 disabled={openMut.isPending}
                             >
-                                Open
+                                {getString('openAction')}
                             </Button>
                         )}
                         {row.status === 'open' && (
@@ -263,7 +290,7 @@ export function ReviewSessionsPage() {
                                     onClick={() => closeMut.mutate(row.id)}
                                     disabled={closeMut.isPending}
                                 >
-                                    Close
+                                    {getString('close')}
                                 </Button>
                             </>
                         )}
@@ -281,20 +308,20 @@ export function ReviewSessionsPage() {
                                     disabled={revertMut.isPending}
                                     sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12 }}
                                 >
-                                    Revert to Open
+                                    {getString('revertToOpen')}
                                 </Button>
                             </>
                         )}
-                        {row.status === 'pending' && (
+                        <Tooltip title={getString('deleteSessionTooltip')}>
                             <IconButton
                                 size="small"
                                 color="error"
-                                onClick={() => deleteMut.mutate(row.id)}
+                                onClick={() => setDeleteTarget(row)}
                                 disabled={deleteMut.isPending}
                             >
                                 <DeleteIcon fontSize="small" />
                             </IconButton>
-                        )}
+                        </Tooltip>
                     </Stack>
                 );
             },
@@ -306,14 +333,14 @@ export function ReviewSessionsPage() {
             <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: '100%', px: { xs: 2, sm: 4, md: 6 } }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                     <Typography variant="h5" fontWeight={600} sx={{ flex: 1 }}>
-                        People Review Sessions
+                        {getString('peopleReviewSessions')}
                     </Typography>
                     <Button
                         variant="contained"
                         startIcon={<AddIcon />}
                         onClick={() => setFormOpen(true)}
                     >
-                        New Session
+                        {getString('newSession')}
                     </Button>
                 </Box>
 
@@ -345,57 +372,77 @@ export function ReviewSessionsPage() {
                 )}
 
                 {/* Create Dialog */}
-                <Dialog open={formOpen} onClose={() => setFormOpen(false)} maxWidth="sm" fullWidth>
-                    <DialogTitle>Create Review Session</DialogTitle>
-                    <DialogContent>
-                        <Stack spacing={2} sx={{ mt: 1 }}>
-                            <TextField
-                                label="Session Name"
-                                value={formData.name}
-                                onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
-                                fullWidth
-                                required
-                            />
-                            <TextField
-                                label="Description"
-                                value={formData.description ?? ''}
-                                onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
-                                fullWidth
-                                multiline
-                                rows={2}
-                            />
-                            <TextField
-                                label="Period Start"
-                                type="date"
-                                value={formData.period_start ?? ''}
-                                onChange={(e) =>
-                                    setFormData((p) => ({ ...p, period_start: e.target.value || null }))
-                                }
-                                InputLabelProps={{ shrink: true }}
-                                fullWidth
-                            />
-                            <TextField
-                                label="Period End"
-                                type="date"
-                                value={formData.period_end ?? ''}
-                                onChange={(e) =>
-                                    setFormData((p) => ({ ...p, period_end: e.target.value || null }))
-                                }
-                                InputLabelProps={{ shrink: true }}
-                                fullWidth
-                            />
-                        </Stack>
-                    </DialogContent>
-                    <DialogActions>
-                        <Button onClick={() => setFormOpen(false)}>Cancel</Button>
-                        <Button
-                            variant="contained"
-                            onClick={() => createMut.mutate(formData)}
-                            disabled={!formData.name || createMut.isPending}
-                        >
-                            {createMut.isPending ? 'Creating...' : 'Create'}
-                        </Button>
-                    </DialogActions>
+                <Dialog open={formOpen} onClose={closeForm} maxWidth="sm" fullWidth>
+                    <form onSubmit={handleSubmit((values) => createMut.mutate(values))} noValidate>
+                        <DialogTitle>{getString('createReviewSessionTitle')}</DialogTitle>
+                        <DialogContent>
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <Stack spacing={2} sx={{ mt: 1 }}>
+                                    <Controller
+                                        name="name"
+                                        control={control}
+                                        rules={{ required: true }}
+                                        render={({ field }) => (
+                                            <TextField
+                                                {...field}
+                                                label={getString('sessionName')}
+                                                fullWidth
+                                                required
+                                                error={!!errors.name}
+                                                helperText={errors.name ? getString('fieldRequired') : ''}
+                                            />
+                                        )}
+                                    />
+                                    <Controller
+                                        name="description"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <TextField
+                                                {...field}
+                                                value={field.value ?? ''}
+                                                label={getString('description')}
+                                                fullWidth
+                                                multiline
+                                                rows={2}
+                                            />
+                                        )}
+                                    />
+                                    <Controller
+                                        name="period_start"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <DatePicker
+                                                label={getString('periodStart')}
+                                                format={DATE_FORMAT}
+                                                value={field.value ? dayjs(field.value) : null}
+                                                onChange={(d) => field.onChange(d ? dayjs(d).format('YYYY-MM-DD') : null)}
+                                                slotProps={{ textField: { fullWidth: true } }}
+                                            />
+                                        )}
+                                    />
+                                    <Controller
+                                        name="period_end"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <DatePicker
+                                                label={getString('periodEnd')}
+                                                format={DATE_FORMAT}
+                                                value={field.value ? dayjs(field.value) : null}
+                                                onChange={(d) => field.onChange(d ? dayjs(d).format('YYYY-MM-DD') : null)}
+                                                slotProps={{ textField: { fullWidth: true } }}
+                                            />
+                                        )}
+                                    />
+                                </Stack>
+                            </LocalizationProvider>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={closeForm}>{getString('cancel')}</Button>
+                            <Button type="submit" variant="contained" disabled={createMut.isPending}>
+                                {createMut.isPending ? getString('creatingEllipsis') : getString('create')}
+                            </Button>
+                        </DialogActions>
+                    </form>
                 </Dialog>
 
                 <Snackbar
@@ -416,12 +463,12 @@ export function ReviewSessionsPage() {
 
             {/* Rename dialog */}
             <Dialog open={!!renameTarget} onClose={() => setRenameTarget(null)} maxWidth="xs" fullWidth>
-                <DialogTitle>Rename session</DialogTitle>
+                <DialogTitle>{getString('renameSession')}</DialogTitle>
                 <DialogContent>
                     <TextField
                         autoFocus
                         fullWidth
-                        label="Session name"
+                        label={getString('sessionName')}
                         value={renameName}
                         onChange={(e) => setRenameName(e.target.value)}
                         onKeyDown={(e) => {
@@ -433,13 +480,38 @@ export function ReviewSessionsPage() {
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setRenameTarget(null)}>Cancel</Button>
+                    <Button onClick={() => setRenameTarget(null)}>{getString('cancel')}</Button>
                     <Button
                         variant="contained"
                         disabled={!renameName.trim() || renameMut.isPending}
                         onClick={() => renameTarget && renameMut.mutate({ id: renameTarget.id, name: renameName.trim() })}
                     >
-                        {renameMut.isPending ? 'Saving…' : 'Save'}
+                        {renameMut.isPending ? getString('savingEllipsis') : getString('save')}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Delete confirmation dialog */}
+            <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
+                <DialogTitle>{getString('deleteReviewSessionTitle')}</DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2">
+                        {getString('deleteSessionPrefix')} <strong>{deleteTarget?.name}</strong>{' '}
+                        {deleteTarget && deleteTarget.employee_count > 0
+                            ? getString('deleteSessionSuffixWithCount', { count: deleteTarget.employee_count })
+                            : getString('deleteSessionSuffixNoCount')}
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDeleteTarget(null)}>{getString('cancel')}</Button>
+                    <Button
+                        variant="contained"
+                        color="error"
+                        startIcon={<DeleteIcon />}
+                        disabled={deleteMut.isPending}
+                        onClick={() => deleteTarget && deleteMut.mutate(deleteTarget.id)}
+                    >
+                        {deleteMut.isPending ? getString('deletingEllipsis') : getString('deleteEverything')}
                     </Button>
                 </DialogActions>
             </Dialog>

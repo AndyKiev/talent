@@ -33,6 +33,8 @@ import { Route as AdminTalentStatusesIndexRouteImport } from './routes/admin/tal
 import { Route as AdminTalentStatusPeriodLinksIndexRouteImport } from './routes/admin/talent-status-period-links/index'
 import { Route as AdminTalentPeriodsIndexRouteImport } from './routes/admin/talent-periods/index'
 import { Route as AdminStructureIndexRouteImport } from './routes/admin/structure/index'
+import { Route as AdminReviewLevelsIndexRouteImport } from './routes/admin/review-levels/index'
+import { Route as AdminReviewLevelRequirementsIndexRouteImport } from './routes/admin/review-level-requirements/index'
 import { Route as AdminReviewDimensionsIndexRouteImport } from './routes/admin/review-dimensions/index'
 import { Route as AdminPlanning_setupIndexRouteImport } from './routes/admin/planning_setup/index'
 import { Route as AdminJobs_groupIndexRouteImport } from './routes/admin/jobs_group/index'
@@ -198,6 +200,17 @@ const AdminStructureIndexRoute = AdminStructureIndexRouteImport.update({
   path: '/admin/structure/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminReviewLevelsIndexRoute = AdminReviewLevelsIndexRouteImport.update({
+  id: '/admin/review-levels/',
+  path: '/admin/review-levels/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminReviewLevelRequirementsIndexRoute =
+  AdminReviewLevelRequirementsIndexRouteImport.update({
+    id: '/admin/review-level-requirements/',
+    path: '/admin/review-level-requirements/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminReviewDimensionsIndexRoute =
   AdminReviewDimensionsIndexRouteImport.update({
     id: '/admin/review-dimensions/',
@@ -434,6 +447,8 @@ export interface FileRoutesByFullPath {
   '/admin/jobs_group/': typeof AdminJobs_groupIndexRoute
   '/admin/planning_setup/': typeof AdminPlanning_setupIndexRoute
   '/admin/review-dimensions': typeof AdminReviewDimensionsIndexRoute
+  '/admin/review-level-requirements': typeof AdminReviewLevelRequirementsIndexRoute
+  '/admin/review-levels': typeof AdminReviewLevelsIndexRoute
   '/admin/structure': typeof AdminStructureIndexRoute
   '/admin/talent-periods': typeof AdminTalentPeriodsIndexRoute
   '/admin/talent-status-period-links': typeof AdminTalentStatusPeriodLinksIndexRoute
@@ -490,6 +505,8 @@ export interface FileRoutesByTo {
   '/admin/jobs_group': typeof AdminJobs_groupIndexRoute
   '/admin/planning_setup': typeof AdminPlanning_setupIndexRoute
   '/admin/review-dimensions': typeof AdminReviewDimensionsIndexRoute
+  '/admin/review-level-requirements': typeof AdminReviewLevelRequirementsIndexRoute
+  '/admin/review-levels': typeof AdminReviewLevelsIndexRoute
   '/admin/structure': typeof AdminStructureIndexRoute
   '/admin/talent-periods': typeof AdminTalentPeriodsIndexRoute
   '/admin/talent-status-period-links': typeof AdminTalentStatusPeriodLinksIndexRoute
@@ -552,6 +569,8 @@ export interface FileRoutesById {
   '/admin/jobs_group/': typeof AdminJobs_groupIndexRoute
   '/admin/planning_setup/': typeof AdminPlanning_setupIndexRoute
   '/admin/review-dimensions/': typeof AdminReviewDimensionsIndexRoute
+  '/admin/review-level-requirements/': typeof AdminReviewLevelRequirementsIndexRoute
+  '/admin/review-levels/': typeof AdminReviewLevelsIndexRoute
   '/admin/structure/': typeof AdminStructureIndexRoute
   '/admin/talent-periods/': typeof AdminTalentPeriodsIndexRoute
   '/admin/talent-status-period-links/': typeof AdminTalentStatusPeriodLinksIndexRoute
@@ -615,6 +634,8 @@ export interface FileRouteTypes {
     | '/admin/jobs_group/'
     | '/admin/planning_setup/'
     | '/admin/review-dimensions'
+    | '/admin/review-level-requirements'
+    | '/admin/review-levels'
     | '/admin/structure'
     | '/admin/talent-periods'
     | '/admin/talent-status-period-links'
@@ -671,6 +692,8 @@ export interface FileRouteTypes {
     | '/admin/jobs_group'
     | '/admin/planning_setup'
     | '/admin/review-dimensions'
+    | '/admin/review-level-requirements'
+    | '/admin/review-levels'
     | '/admin/structure'
     | '/admin/talent-periods'
     | '/admin/talent-status-period-links'
@@ -732,6 +755,8 @@ export interface FileRouteTypes {
     | '/admin/jobs_group/'
     | '/admin/planning_setup/'
     | '/admin/review-dimensions/'
+    | '/admin/review-level-requirements/'
+    | '/admin/review-levels/'
     | '/admin/structure/'
     | '/admin/talent-periods/'
     | '/admin/talent-status-period-links/'
@@ -789,6 +814,8 @@ export interface RootRouteChildren {
   AdminJob_groupsIndexRoute: typeof AdminJob_groupsIndexRoute
   AdminJobsIndexRoute: typeof AdminJobsIndexRoute
   AdminReviewDimensionsIndexRoute: typeof AdminReviewDimensionsIndexRoute
+  AdminReviewLevelRequirementsIndexRoute: typeof AdminReviewLevelRequirementsIndexRoute
+  AdminReviewLevelsIndexRoute: typeof AdminReviewLevelsIndexRoute
   AdminStructureIndexRoute: typeof AdminStructureIndexRoute
   AdminTalentPeriodsIndexRoute: typeof AdminTalentPeriodsIndexRoute
   AdminTalentStatusPeriodLinksIndexRoute: typeof AdminTalentStatusPeriodLinksIndexRoute
@@ -972,6 +999,20 @@ declare module '@tanstack/react-router' {
       path: '/admin/structure'
       fullPath: '/admin/structure'
       preLoaderRoute: typeof AdminStructureIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/review-levels/': {
+      id: '/admin/review-levels/'
+      path: '/admin/review-levels'
+      fullPath: '/admin/review-levels'
+      preLoaderRoute: typeof AdminReviewLevelsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/review-level-requirements/': {
+      id: '/admin/review-level-requirements/'
+      path: '/admin/review-level-requirements'
+      fullPath: '/admin/review-level-requirements'
+      preLoaderRoute: typeof AdminReviewLevelRequirementsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/review-dimensions/': {
@@ -1364,6 +1405,9 @@ const rootRouteChildren: RootRouteChildren = {
   AdminJob_groupsIndexRoute: AdminJob_groupsIndexRoute,
   AdminJobsIndexRoute: AdminJobsIndexRoute,
   AdminReviewDimensionsIndexRoute: AdminReviewDimensionsIndexRoute,
+  AdminReviewLevelRequirementsIndexRoute:
+    AdminReviewLevelRequirementsIndexRoute,
+  AdminReviewLevelsIndexRoute: AdminReviewLevelsIndexRoute,
   AdminStructureIndexRoute: AdminStructureIndexRoute,
   AdminTalentPeriodsIndexRoute: AdminTalentPeriodsIndexRoute,
   AdminTalentStatusPeriodLinksIndexRoute:

@@ -1,0 +1,162 @@
+[
+  {
+    "name_key": "reviewLevelName0",
+    "description_key": "reviewLevelDesc0",
+    "sort_order": 0,
+    "is_active": true,
+    "requirements": [
+      {
+        "text_key": "reviewLevelReq_0_1",
+        "sort_order": 10
+      },
+      {
+        "text_key": "reviewLevelReq_0_2",
+        "sort_order": 20
+      },
+      {
+        "text_key": "reviewLevelReq_0_3",
+        "sort_order": 30
+      },
+      {
+        "text_key": "reviewLevelReq_0_4",
+        "sort_order": 40
+      },
+      {
+        "text_key": "reviewLevelReq_0_5",
+        "sort_order": 50
+      }
+    ]
+  },
+  {
+    "name_key": "reviewLevelName1",
+    "description_key": "reviewLevelDesc1",
+    "sort_order": 10,
+    "is_active": true,
+    "requirements": [
+      {
+        "text_key": "reviewLevelReq_1_1",
+        "sort_order": 10
+      },
+      {
+        "text_key": "reviewLevelReq_1_2",
+        "sort_order": 20
+      },
+      {
+        "text_key": "reviewLevelReq_1_3",
+        "sort_order": 30
+      },
+      {
+        "text_key": "reviewLevelReq_1_4",
+        "sort_order": 40
+      },
+      {
+        "text_key": "reviewLevelReq_1_5",
+        "sort_order": 50
+      },
+      {
+        "text_key": "reviewLevelReq_1_6",
+        "sort_order": 60
+      },
+      {
+        "text_key": "reviewLevelReq_1_7",
+        "sort_order": 70
+      }
+    ]
+  },
+  {
+    "name_key": "reviewLevelName2",
+    "description_key": "reviewLevelDesc2",
+    "sort_order": 20,
+    "is_active": true,
+    "requirements": [
+      {
+        "text_key": "reviewLevelReq_2_1",
+        "sort_order": 10
+      },
+      {
+        "text_key": "reviewLevelReq_2_2",
+        "sort_order": 20
+      },
+      {
+        "text_key": "reviewLevelReq_2_3",
+        "sort_order": 30
+      },
+      {
+        "text_key": "reviewLevelReq_2_4",
+        "sort_order": 40
+      },
+      {
+        "text_key": "reviewLevelReq_2_5",
+        "sort_order": 50
+      },
+      {
+        "text_key": "reviewLevelReq_2_6",
+        "sort_order": 60
+      },
+      {
+        "text_key": "reviewLevelReq_2_7",
+        "sort_order": 70
+      },
+      {
+        "text_key": "reviewLevelReq_2_8",
+        "sort_order": 80
+      },
+      {
+        "text_key": "reviewLevelReq_2_9",
+        "sort_order": 90
+      }
+    ]
+  },
+  {
+    "name_key": "reviewLevelName3",
+    "description_key": "reviewLevelDesc3",
+    "sort_order": 30,
+    "is_active": true,
+    "requirements": [
+      {
+        "text_key": "reviewLevelReq_3_1",
+        "sort_order": 10
+      },
+      {
+        "text_key": "reviewLevelReq_3_2",
+        "sort_order": 20
+      },
+      {
+        "text_key": "reviewLevelReq_3_3",
+        "sort_order": 30
+      },
+      {
+        "text_key": "reviewLevelReq_3_4",
+        "sort_order": 40
+      },
+      {
+        "text_key": "reviewLevelReq_3_5",
+        "sort_order": 50
+      },
+      {
+        "text_key": "reviewLevelReq_3_6",
+        "sort_order": 60
+      },
+      {
+        "text_key": "reviewLevelReq_3_7",
+        "sort_order": 70
+      },
+      {
+        "text_key": "reviewLevelReq_3_8",
+        "sort_order": 80
+      },
+      {
+        "text_key": "reviewLevelReq_3_9",
+        "sort_order": 90
+      },
+      {
+        "text_key": "reviewLevelReq_3_10",
+        "sort_order": 100
+      },
+      {
+        "text_key": "reviewLevelReq_3_11",
+        "sort_order": 110
+      }
+    ]
+  }
+]

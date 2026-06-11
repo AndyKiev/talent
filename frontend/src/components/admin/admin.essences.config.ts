@@ -179,6 +179,22 @@ export const ESSENCES: RawEssenceConfig[] = [
     Icon: RateReviewIcon,
     color: '#e91e63',
   },
+  {
+    parent: 'admin',
+    key: 'review-levels',
+    labelKey: 'reviewLevels',
+    descriptionKey: 'reviewLevelsDesc',
+    Icon: RuleFolderIcon,
+    color: '#9c27b0',
+  },
+  {
+    parent: 'admin',
+    key: 'review-level-requirements',
+    labelKey: 'reviewLevelRequirements',
+    descriptionKey: 'reviewLevelRequirementsDesc',
+    Icon: PlaylistAddCheckIcon,
+    color: '#673ab7',
+  },
 
   // ── Employee Events (group) ───────────────────────────────────────────────
   {

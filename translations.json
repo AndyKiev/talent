@@ -1,4 +1,100 @@
 {
+  "deleteReviewSessionTitle": {
+    "ukr": "Видалити сесію оцінювання?",
+    "eng": "Delete review session?"
+  },
+  "deleteSessionPrefix": {
+    "ukr": "Це назавжди видалить",
+    "eng": "This permanently deletes"
+  },
+  "deleteSessionSuffixWithCount": {
+    "ukr": "разом з усіма ${count} оцінками співробітників та їхніми результатами оцінювання. Цю дію не можна скасувати.",
+    "eng": "together with all ${count} employee review(s) and their evaluations. This cannot be undone."
+  },
+  "deleteSessionSuffixNoCount": {
+    "ukr": "разом з усіма оцінками співробітників та їхніми результатами оцінювання. Цю дію не можна скасувати.",
+    "eng": "together with all employee reviews and their evaluations. This cannot be undone."
+  },
+  "deleteEverything": {
+    "ukr": "Видалити все",
+    "eng": "Delete everything"
+  },
+  "deletingEllipsis": {
+    "ukr": "Видалення…",
+    "eng": "Deleting…"
+  },
+  "deleteSessionTooltip": {
+    "ukr": "Видалити сесію та всі її оцінювання",
+    "eng": "Delete session and all its reviews"
+  },
+  "createReviewSessionTitle": {
+    "ukr": "Створити сесію оцінювання",
+    "eng": "Create Review Session"
+  },
+  "sessionName": {
+    "ukr": "Назва сесії",
+    "eng": "Session Name"
+  },
+  "fieldRequired": {
+    "ukr": "Це поле обов'язкове",
+    "eng": "This field is required"
+  },
+  "periodStart": {
+    "ukr": "Початок періоду",
+    "eng": "Period Start"
+  },
+  "periodEnd": {
+    "ukr": "Кінець періоду",
+    "eng": "Period End"
+  },
+  "creatingEllipsis": {
+    "ukr": "Створення…",
+    "eng": "Creating…"
+  },
+  "idColumn": {
+    "ukr": "ID",
+    "eng": "ID"
+  },
+  "renameSession": {
+    "ukr": "Перейменувати сесію",
+    "eng": "Rename session"
+  },
+  "viewAnalytics": {
+    "ukr": "Переглянути аналітику",
+    "eng": "View analytics"
+  },
+  "openAction": {
+    "ukr": "Відкрити",
+    "eng": "Open"
+  },
+  "revertToOpen": {
+    "ukr": "Повернути у відкритий стан",
+    "eng": "Revert to open"
+  },
+  "peopleReviewSessions": {
+    "ukr": "Сесії оцінювання персоналу",
+    "eng": "People review sessions"
+  },
+  "newSession": {
+    "ukr": "Нова сесія",
+    "eng": "New session"
+  },
+  "statusPending": {
+    "ukr": "Очікує",
+    "eng": "Pending"
+  },
+  "statusOpen": {
+    "ukr": "Відкрита",
+    "eng": "Open"
+  },
+  "statusClosed": {
+    "ukr": "Закрита",
+    "eng": "Closed"
+  },
+  "savingEllipsis": {
+    "ukr": "Збереження…",
+    "eng": "Saving…"
+  },
   "scoredProgress": {
     "ukr": "★ ${count}/${total} оцінено",
     "eng": "★ ${count}/${total} scored"
@@ -47,12 +143,30 @@
     "ukr": "Оберіть рівень",
     "eng": "Select level"
   },
-  "langLevelLabelA1": { "ukr": "Початковий", "eng": "Beginner" },
-  "langLevelLabelA2": { "ukr": "Елементарний", "eng": "Elementary" },
-  "langLevelLabelB1": { "ukr": "Середній", "eng": "Intermediate" },
-  "langLevelLabelB2": { "ukr": "Вище середнього", "eng": "Upper-Intermediate" },
-  "langLevelLabelC1": { "ukr": "Просунутий", "eng": "Advanced" },
-  "langLevelLabelC2": { "ukr": "Досконале володіння", "eng": "Proficiency" },
+  "langLevelLabelA1": {
+    "ukr": "Початковий",
+    "eng": "Beginner"
+  },
+  "langLevelLabelA2": {
+    "ukr": "Елементарний",
+    "eng": "Elementary"
+  },
+  "langLevelLabelB1": {
+    "ukr": "Середній",
+    "eng": "Intermediate"
+  },
+  "langLevelLabelB2": {
+    "ukr": "Вище середнього",
+    "eng": "Upper-Intermediate"
+  },
+  "langLevelLabelC1": {
+    "ukr": "Просунутий",
+    "eng": "Advanced"
+  },
+  "langLevelLabelC2": {
+    "ukr": "Досконале володіння",
+    "eng": "Proficiency"
+  },
   "langLevelHintA1": {
     "ukr": "Розуміє і вживає знайомі повсякденні вирази та елементарні фрази для задоволення конкретних потреб.",
     "eng": "Can understand and use familiar everyday expressions and very basic phrases."
@@ -1066,8 +1180,8 @@
     "eng": "Cannot delete group «${name}»"
   },
   "userGroupDeleteSuccess": {
-    "ukr": "Групу «${name}» успішно видалено",
-    "eng": "Group «${name}» deleted successfully"
+    "ukr": "Групу успішно видалено",
+    "eng": "User group deleted successfully"
   },
   "userGroupNameTaken": {
     "ukr": "Назва групи «${name}» вже використовується",
@@ -2281,10 +2395,6 @@
     "ukr": "Стандартна назва файлу",
     "eng": "Use default filename"
   },
-  "userGroupDeleteSuccess": {
-    "ukr": "Групу успішно видалено",
-    "eng": "User group deleted successfully"
-  },
   "userGroupType": {
     "ukr": "Тип групи користувачів",
     "eng": "User group type"
@@ -2316,5 +2426,297 @@
   "youAreAboutToChange": {
     "ukr": "Ви збираєтесь змінити",
     "eng": "You are about to change"
+  },
+  "reviewLevelName0": {
+    "ukr": "Базовий рівень",
+    "eng": "Base level"
+  },
+  "reviewLevelDesc0": {
+    "ukr": "Я вивчаю професію/інтегруюся в компанію",
+    "eng": "I am learning the profession / integrating into the company"
+  },
+  "reviewLevelReq_0_1": {
+    "ukr": "Співробітник навчається стандартам та практикам компанії, вивчає її організацію",
+    "eng": "The employee is learning the company's standards and practices and studying its organization"
+  },
+  "reviewLevelReq_0_2": {
+    "ukr": "Співробітник вивчає професію",
+    "eng": "The employee is learning the profession"
+  },
+  "reviewLevelReq_0_3": {
+    "ukr": "Співробітник знає та несе цінності підприємства",
+    "eng": "The employee knows and embodies the company's values"
+  },
+  "reviewLevelReq_0_4": {
+    "ukr": "Співробітнику необхідно розвивати ключові компетенції для його професії",
+    "eng": "The employee needs to develop the key competences for their profession"
+  },
+  "reviewLevelReq_0_5": {
+    "ukr": "Співробітник не повністю виконує функціонал, що відповідав би нинішнім потребам підприємства",
+    "eng": "The employee does not yet fully perform the functions matching the company's current needs"
+  },
+  "reviewLevelName1": {
+    "ukr": "Рівень 1",
+    "eng": "Level 1"
+  },
+  "reviewLevelDesc1": {
+    "ukr": "Я автономний у своїй професії",
+    "eng": "I am autonomous in my profession"
+  },
+  "reviewLevelReq_1_1": {
+    "ukr": "Співробітник самостійно виконує задачі своєї професії, вивчає та застосовує існуючі практики",
+    "eng": "The employee independently performs the tasks of their profession and studies and applies existing practices"
+  },
+  "reviewLevelReq_1_2": {
+    "ukr": "Бере на себе зобов’язання і дотримується їх, незважаючи на опір чи складні обставини",
+    "eng": "Takes on commitments and honours them despite resistance or difficult circumstances"
+  },
+  "reviewLevelReq_1_3": {
+    "ukr": "Співробітник розуміє результати відділу/периметру/магазину та компанії та вміє їх пояснити",
+    "eng": "The employee understands the results of the department/perimeter/store and the company and can explain them"
+  },
+  "reviewLevelReq_1_4": {
+    "ukr": "Співробітник систематично докладає зусилля для досягнення поставлених перед ним цілей та KPI",
+    "eng": "The employee systematically makes efforts to achieve the goals and KPIs set for them"
+  },
+  "reviewLevelReq_1_5": {
+    "ukr": "Знає принципи турботи про внутрішнього та зовнішнього клієнта. У постійному контакті з клієнтами, щоб зрозуміти їх індивідуальні потреби",
+    "eng": "Knows the principles of caring for the internal and external customer. Stays in constant contact with customers to understand their individual needs"
+  },
+  "reviewLevelReq_1_6": {
+    "ukr": "Співробітник втілює цінності компанії, дотримується процедур та політик",
+    "eng": "The employee embodies the company's values and follows its procedures and policies"
+  },
+  "reviewLevelReq_1_7": {
+    "ukr": "Співробітник серед своїх сильних сторін має мінімум 2 компетенції",
+    "eng": "The employee has at least 2 competences among their strengths"
+  },
+  "reviewLevelName2": {
+    "ukr": "Рівень 2",
+    "eng": "Level 2"
+  },
+  "reviewLevelDesc2": {
+    "ukr": "Я прокращую існуючий стан речей",
+    "eng": "I improve the existing state of things"
+  },
+  "reviewLevelReq_2_1": {
+    "ukr": "Автономний на своїй посаді, виконує складні та комплексні задачі, докладаючи максимум зусиль",
+    "eng": "Autonomous in their role, performs difficult and complex tasks with maximum effort"
+  },
+  "reviewLevelReq_2_2": {
+    "ukr": "У співробітника є повне розуміння пріоритетів, він знає як їх ранжувати",
+    "eng": "The employee has a full understanding of priorities and knows how to rank them"
+  },
+  "reviewLevelReq_2_3": {
+    "ukr": "Співробітник виконує місії, що виходять за рамки його професії",
+    "eng": "The employee carries out missions that go beyond their profession"
+  },
+  "reviewLevelReq_2_4": {
+    "ukr": "Співробітник впроваджує гарні практики та ділиться ними з іншими",
+    "eng": "The employee introduces good practices and shares them with others"
+  },
+  "reviewLevelReq_2_5": {
+    "ukr": "Залучений в життя компанії, беручи участь в проектах, КСВ подіях тощо",
+    "eng": "Engaged in the life of the company, taking part in projects, CSR events, etc."
+  },
+  "reviewLevelReq_2_6": {
+    "ukr": "Співробітник ділиться знаннями з іншими / є наставником для колег / допомагає з інтеграцією новим співробітникам",
+    "eng": "The employee shares knowledge with others / mentors colleagues / helps new employees integrate"
+  },
+  "reviewLevelReq_2_7": {
+    "ukr": "Бере на себе відповідальність за всі прийняті ним рішення",
+    "eng": "Takes responsibility for all the decisions they make"
+  },
+  "reviewLevelReq_2_8": {
+    "ukr": "Втілює принципи турботи про внутрішнього та зовнішнього клієнта, враховує відгуки внутрішніх і зовнішніх клієнтів перед прийняттям рішень",
+    "eng": "Embodies the principles of caring for the internal and external customer and considers their feedback before making decisions"
+  },
+  "reviewLevelReq_2_9": {
+    "ukr": "Співробітник серед своїх сильних сторін має мінімум 3 компетенції.",
+    "eng": "The employee has at least 3 competences among their strengths."
+  },
+  "reviewLevelName3": {
+    "ukr": "Рівень 3",
+    "eng": "Level 3"
+  },
+  "reviewLevelDesc3": {
+    "ukr": "Я пропоную ідеї для покращення не тільки у своєму периметрі, мотивую та надихаю колег",
+    "eng": "I propose ideas for improvement beyond my own scope, motivating and inspiring colleagues"
+  },
+  "reviewLevelReq_3_1": {
+    "ukr": "Автономний на своїй посаді, виконує складні та комплексні задачі, докладаючи максимум зусиль та шукачи нові можливості",
+    "eng": "Autonomous in their role, performs difficult and complex tasks with maximum effort while seeking new opportunities"
+  },
+  "reviewLevelReq_3_2": {
+    "ukr": "Співробітник керується стратегією підприємства у своїй діяльності. Пропонує конкретні ідеї/проекти/ рішення для покращення процесів чи результатів компанії",
+    "eng": "The employee is guided by the company's strategy in their work. Proposes concrete ideas/projects/solutions to improve the company's processes or results"
+  },
+  "reviewLevelReq_3_3": {
+    "ukr": "Співробітник самостійно ініціює свою участь у місіях, що виходять за рамки його професії",
+    "eng": "The employee independently initiates their participation in missions beyond their profession"
+  },
+  "reviewLevelReq_3_4": {
+    "ukr": "Має досвід участі в проектах чи робочих групах з привнесеним вкладом у втілення спільно прийнятих рішень",
+    "eng": "Has experience participating in projects or working groups with a real contribution to implementing jointly made decisions"
+  },
+  "reviewLevelReq_3_5": {
+    "ukr": "Залучений в життя компанії, беручи участь у подіях поза рамками свого відділу/ сектору/ департаменту (мінімум 2 події на рік)",
+    "eng": "Engaged in the life of the company, taking part in events beyond their department/sector/division (at least 2 events per year)"
+  },
+  "reviewLevelReq_3_6": {
+    "ukr": "Співробітник ділиться знаннями з іншими, є наставником для колег, допомагає з інтеграцією новим співробітникам",
+    "eng": "The employee shares knowledge with others, mentors colleagues, and helps new employees integrate"
+  },
+  "reviewLevelReq_3_7": {
+    "ukr": "Бере на себе відповідальність за всі прийняті ним рішення",
+    "eng": "Takes responsibility for all the decisions they make"
+  },
+  "reviewLevelReq_3_8": {
+    "ukr": "Бере участь у проведенні і/або розробці навчань (з позитивними відгуками)",
+    "eng": "Takes part in delivering and/or developing trainings (with positive feedback)"
+  },
+  "reviewLevelReq_3_9": {
+    "ukr": "Втілює принципи турботи про внутрішнього та зовнішнього клієнта. Пропонує найкращий досвід для внутрішніх чи зовнішніх клієнтів, ставлячи їх в основу своїх дій",
+    "eng": "Embodies the principles of caring for the internal and external customer. Offers the best experience for internal or external customers, putting them at the centre of their actions"
+  },
+  "reviewLevelReq_3_10": {
+    "ukr": "Відгуки від колег з інших департаментів чи магазинів (з якими співпрацював співробітник) є позитивними",
+    "eng": "Feedback from colleagues in other divisions or stores (with whom the employee collaborated) is positive"
+  },
+  "reviewLevelReq_3_11": {
+    "ukr": "Співробітник серед своїх сильних сторін має мінімум 4 компетенції.",
+    "eng": "The employee has at least 4 competences among their strengths."
+  },
+  "proposedLevel": {
+    "ukr": "Запропонований рівень",
+    "eng": "Proposed level"
+  },
+  "currentLevel": {
+    "ukr": "Поточний рівень",
+    "eng": "Current level"
+  },
+  "selectLevelToPropose": {
+    "ukr": "Оберіть рівень для пропозиції",
+    "eng": "Select a level to propose"
+  },
+  "requirementsToAchieve": {
+    "ukr": "Вимоги для досягнення рівня",
+    "eng": "Requirements to achieve the level"
+  },
+  "levelAddComment": {
+    "ukr": "Додати коментар",
+    "eng": "Add comment"
+  },
+  "levelTypeComment": {
+    "ukr": "Введіть коментар…",
+    "eng": "Type a comment…"
+  },
+  "levelDeleteComment": {
+    "ukr": "Видалити коментар",
+    "eng": "Delete comment"
+  },
+  "proposedLevelProgress": {
+    "ukr": "${count}/${total} вимог заповнено",
+    "eng": "${count}/${total} requirements filled"
+  },
+  "noLevelSelected": {
+    "ukr": "Рівень не обрано",
+    "eng": "No level selected"
+  },
+  "saveProposedLevel": {
+    "ukr": "Зберегти рівень",
+    "eng": "Save level"
+  },
+  "notSet": {
+    "ukr": "Не задано",
+    "eng": "Not set"
+  },
+  "reviewLevels": {
+    "ukr": "Рівні компетенцій",
+    "eng": "Competency levels"
+  },
+  "reviewLevelsDesc": {
+    "ukr": "Рівні компетенцій для оцінювання персоналу",
+    "eng": "Competency levels for people review"
+  },
+  "reviewLevelRequirements": {
+    "ukr": "Вимоги рівнів",
+    "eng": "Level requirements"
+  },
+  "reviewLevelRequirementsDesc": {
+    "ukr": "Вимоги (критерії) для кожного рівня компетенцій",
+    "eng": "Requirements (criteria) for each competency level"
+  },
+  "nameKeyCol": {
+    "ukr": "Ключ назви",
+    "eng": "Name key"
+  },
+  "descriptionKeyCol": {
+    "ukr": "Ключ опису",
+    "eng": "Description key"
+  },
+  "textKeyCol": {
+    "ukr": "Ключ тексту",
+    "eng": "Text key"
+  },
+  "sortOrderCol": {
+    "ukr": "Порядок",
+    "eng": "Sort order"
+  },
+  "isActiveCol": {
+    "ukr": "Активний",
+    "eng": "Active"
+  },
+  "levelCol": {
+    "ukr": "Рівень",
+    "eng": "Level"
+  },
+  "addReviewLevel": {
+    "ukr": "Додати рівень",
+    "eng": "Add level"
+  },
+  "addReviewLevelRequirement": {
+    "ukr": "Додати вимогу",
+    "eng": "Add requirement"
+  },
+  "proposedLevelSaveSuccess": {
+    "ukr": "Запропонований рівень збережено",
+    "eng": "Proposed level saved successfully"
+  },
+  "reviewLevelCreateSuccess": {
+    "ukr": "Рівень «${name}» створено",
+    "eng": "Review level '${name}' successfully created"
+  },
+  "reviewLevelUpdateSuccess": {
+    "ukr": "Рівень «${name}» оновлено",
+    "eng": "Review level '${name}' successfully updated"
+  },
+  "reviewLevelDeleteSuccess": {
+    "ukr": "Рівень «${name}» видалено",
+    "eng": "Review level '${name}' successfully deleted"
+  },
+  "reviewLevelRequirementCreateSuccess": {
+    "ukr": "Вимогу створено",
+    "eng": "Review level requirement successfully created"
+  },
+  "reviewLevelRequirementUpdateSuccess": {
+    "ukr": "Вимогу оновлено",
+    "eng": "Review level requirement successfully updated"
+  },
+  "reviewLevelRequirementDeleteSuccess": {
+    "ukr": "Вимогу видалено",
+    "eng": "Review level requirement successfully deleted"
+  },
+  "yes": {
+    "ukr": "Так",
+    "eng": "Yes"
+  },
+  "no": {
+    "ukr": "Ні",
+    "eng": "No"
+  },
+  "all": {
+    "ukr": "Всі",
+    "eng": "All"
   }
 }

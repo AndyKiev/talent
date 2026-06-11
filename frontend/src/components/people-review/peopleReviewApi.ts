@@ -1,11 +1,17 @@
 import { axiosInstance } from '../../api/axiosInstance';
 import { BASE_URL } from "../../utils/eNums.ts"
 
+// Maximum grade an evaluation score can take (must match the backend MAX_GRADE).
+export const MAX_GRADE = 4;
+
 const RS_BASE = `${BASE_URL}/review_sessions`;
 const RSE_BASE = `${BASE_URL}/review_session_employees`;
 const EVAL_BASE = `${BASE_URL}/review_evaluations`;
 const LANG_LEVEL_BASE = `${BASE_URL}/language_levels`;
 const ELP_BASE = `${BASE_URL}/employee_language_profiles`;
+const LEVEL_BASE = `${BASE_URL}/review_levels`;
+const LEVEL_REQ_BASE = `${BASE_URL}/review_level_requirements`;
+const EMPLOYEE_BASE = `${BASE_URL}/employees`;
 
 // --- Review Session types ---
 export interface ReviewSession {
@@ -246,6 +252,105 @@ export const saveEmployeeLanguageProfile = async (
     const res = await axiosInstance.put<MutationResponse<EmployeeLanguageProfile>>(
         `${ELP_BASE}/by_employee/${employeeId}`,
         { languages },
+    );
+    return res.data;
+};
+
+// --- Competency levels ---
+export interface ReviewLevelRequirementLite {
+    id: number;
+    level_id: number;
+    text_key: string;
+    sort_order: number;
+    is_active: boolean;
+}
+
+export interface ReviewLevelLite {
+    id: number;
+    name_key: string;
+    description_key: string | null;
+    sort_order: number;
+    is_active: boolean;
+    requirements: ReviewLevelRequirementLite[];
+}
+
+export interface ProposedLevelAnswer {
+    id: number;
+    requirement_id: number;
+    facts: string | null;
+}
+
+export interface ProposedLevel {
+    id: number;
+    review_session_employee_id: number;
+    level_id: number;
+    answers: ProposedLevelAnswer[];
+}
+
+export interface ProposedLevelAnswerInput {
+    requirement_id: number;
+    facts: string | null;
+}
+
+export interface ProposedLevelUpsert {
+    level_id: number;
+    answers: ProposedLevelAnswerInput[];
+}
+
+export const fetchReviewLevels = async (activeOnly = true): Promise<ReviewLevelLite[]> => {
+    const res = await axiosInstance.get<ReviewLevelLite[]>(LEVEL_BASE, {
+        params: activeOnly ? { is_active: true } : undefined,
+    });
+    return res.data ?? [];
+};
+
+export const fetchLevelRequirements = async (
+    levelId: number,
+    activeOnly = true,
+): Promise<ReviewLevelRequirementLite[]> => {
+    const res = await axiosInstance.get<ReviewLevelRequirementLite[]>(LEVEL_REQ_BASE, {
+        params: { level_id: levelId, ...(activeOnly ? { is_active: true } : {}) },
+    });
+    return res.data ?? [];
+};
+
+export const fetchProposedLevel = async (rseId: number): Promise<ProposedLevel | null> => {
+    const res = await axiosInstance.get<ProposedLevel | null>(
+        `${RSE_BASE}/${rseId}/proposed_level`,
+    );
+    return res.data ?? null;
+};
+
+export const saveProposedLevel = async (
+    rseId: number,
+    payload: ProposedLevelUpsert,
+): Promise<MutationResponse<ProposedLevel>> => {
+    const res = await axiosInstance.put<MutationResponse<ProposedLevel>>(
+        `${RSE_BASE}/${rseId}/proposed_level`,
+        payload,
+    );
+    return res.data;
+};
+
+// --- Employee current level ---
+export interface EmployeeCurrentLevel {
+    id: number;
+    current_level_id: number | null;
+}
+
+export const fetchEmployeeCurrentLevel = async (
+    employeeId: number,
+): Promise<EmployeeCurrentLevel> => {
+    const res = await axiosInstance.get<EmployeeCurrentLevel>(`${EMPLOYEE_BASE}/${employeeId}`);
+    return { id: res.data.id, current_level_id: res.data.current_level_id ?? null };
+};
+
+export const setEmployeeCurrentLevel = async (
+    employeeId: number,
+    levelId: number,
+): Promise<EmployeeCurrentLevel> => {
+    const res = await axiosInstance.patch<EmployeeCurrentLevel>(
+        `${EMPLOYEE_BASE}/${employeeId}/current_level/${levelId}`,
     );
     return res.data;
 };
