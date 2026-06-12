@@ -10,6 +10,7 @@ from backend.api_v1.employee.employee_schema import (
     EmployeeSchema,
     EmployeeCreate,
     EmployeeUpdate,
+    EmployeePersonalDataUpdate,
     MainDepartmentSchema,
 )
 from backend.api_v1.employee.employee_errors import (
@@ -56,7 +57,11 @@ class EmployeeService(BaseService):
             MainDepartmentSchema(
                 id=link.id,
                 department_id=link.department_id,
-                name=link.department.name if link.department else f"ID {link.department_id}",
+                name=(
+                    link.department.name
+                    if link.department
+                    else f"ID {link.department_id}"
+                ),
             )
             for link in orm_employee.departments
             if link.is_main
@@ -65,7 +70,11 @@ class EmployeeService(BaseService):
             MainDepartmentSchema(
                 id=link.id,
                 department_id=link.department_id,
-                name=link.department.name if link.department else f"ID {link.department_id}",
+                name=(
+                    link.department.name
+                    if link.department
+                    else f"ID {link.department_id}"
+                ),
             )
             for link in orm_employee.departments
             if not link.is_main
@@ -91,7 +100,9 @@ class EmployeeService(BaseService):
             raise await self._resolve_domain_error(exc)
         return await self._to_schema(result)
 
-    async def get_all(self, params: dict | None = None, **kwargs) -> List[EmployeeSchema]:
+    async def get_all(
+        self, params: dict | None = None, **kwargs
+    ) -> List[EmployeeSchema]:
         users = await self.repository.get_all(filters=params)
         return [await self._to_schema(u) for u in users]
 
@@ -113,7 +124,9 @@ class EmployeeService(BaseService):
             exc = EmployeeCodeTaken(user_in.code)
             raise await self._resolve_domain_error(exc)
 
-    async def update_user(self, user_id: int, user_update: EmployeeUpdate) -> EmployeeSchema:
+    async def update_user(
+        self, user_id: int, user_update: EmployeeUpdate
+    ) -> EmployeeSchema:
         if user_update.email:
             existing = await self.repository.get_by_field("email", user_update.email)
             if existing and existing.id != user_id:
@@ -128,6 +141,26 @@ class EmployeeService(BaseService):
             return await self._to_schema(updated)
         except IntegrityError:
             exc = EmployeeEmailTaken(user_update.email or "")
+            raise await self._resolve_domain_error(exc)
+
+    async def set_current_level(self, user_id: int, level_id: int) -> EmployeeSchema:
+        """Set the employee's current career level via the 1:1 link table."""
+        try:
+            orm_user = await self.repository.set_current_level(user_id, level_id)
+            return await self._to_schema(orm_user)
+        except DomainError as exc:
+            raise await self._resolve_domain_error(exc)
+
+    async def set_personal_data(
+        self, user_id: int, data: "EmployeePersonalDataUpdate"
+    ) -> EmployeeSchema:
+        """Upsert the employee's personal data via the 1:1 table. Partial: only
+        the fields actually provided are applied (birth_date and/or hire_date)."""
+        fields = data.model_dump(exclude_unset=True)
+        try:
+            orm_user = await self.repository.set_personal_data(user_id, fields)
+            return await self._to_schema(orm_user)
+        except DomainError as exc:
             raise await self._resolve_domain_error(exc)
 
     async def delete_user(self, user_id: int) -> None:
@@ -150,14 +183,18 @@ class EmployeeService(BaseService):
         except DomainError as exc:
             raise await self._resolve_domain_error(exc)
 
-    async def remove_from_group(self, user_id: int, user_group_id: int) -> EmployeeSchema:
+    async def remove_from_group(
+        self, user_id: int, user_group_id: int
+    ) -> EmployeeSchema:
         try:
             orm_user = await self.repository.remove_from_group(user_id, user_group_id)
             return await self._to_schema(orm_user)
         except DomainError as exc:
             raise await self._resolve_domain_error(exc)
 
-    async def set_groups(self, user_id: int, user_group_ids: List[int]) -> EmployeeSchema:
+    async def set_groups(
+        self, user_id: int, user_group_ids: List[int]
+    ) -> EmployeeSchema:
         try:
             orm_user = await self.repository.set_groups(user_id, user_group_ids)
             return await self._to_schema(orm_user)

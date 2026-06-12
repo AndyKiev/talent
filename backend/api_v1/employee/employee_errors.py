@@ -3,9 +3,8 @@ from backend.api_v1.base.errors import (
     AlreadyExistsError,
     RelationshipError,
     DomainError,
-    DeleteError
+    DeleteError,
 )
-
 
 
 # Shared group errors — message keys (groupNotFound, groupsNotFound) already in the DB.
@@ -73,13 +72,14 @@ class UserNotInGroup(RelationshipError):
         super().__init__(self.fallback)
 
 
-
 class EmployeeDeleteError(DeleteError):
     message_key = "employeeDeleteError"
+
     def __init__(self, employee_code: str) -> None:
         self.template_vars = {"code": employee_code}
         self.fallback = f"Employee '{employee_code}' cannot be deleted because it is referenced by other records"
         DomainError.__init__(self, self.fallback)
+
 
 # class UserGroupTypeDeleteError(DeleteError):  # was DomainError
 #     message_key = "userGroupTypeDeleteError"

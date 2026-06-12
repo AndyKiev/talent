@@ -7,6 +7,7 @@ from backend.api_v1.employee.employee_schema import (
     EmployeeSchema,
     EmployeeCreate,
     EmployeeUpdate,
+    EmployeePersonalDataUpdate,
 )
 from backend.api_v1.employee.employee_dependencies import (
     get_employee_service,
@@ -93,15 +94,22 @@ async def update_user_lang(
     return await service.update_user(user.id, EmployeeUpdate(lang_id=lang_id))
 
 
-@router.patch(
-    "/{employee_id}/current_level/{level_id}", response_model=EmployeeSchema
-)
+@router.patch("/{employee_id}/current_level/{level_id}", response_model=EmployeeSchema)
 async def update_user_current_level(
     level_id: int,
     user: EmployeeSchema = Depends(employee_by_id),
     service: Annotated[EmployeeService, Depends(get_employee_service)] = None,
 ):
-    return await service.update_user(user.id, EmployeeUpdate(current_level_id=level_id))
+    return await service.set_current_level(user.id, level_id)
+
+
+@router.patch("/{employee_id}/personal_data", response_model=EmployeeSchema)
+async def update_user_personal_data(
+    data: EmployeePersonalDataUpdate,
+    user: EmployeeSchema = Depends(employee_by_id),
+    service: Annotated[EmployeeService, Depends(get_employee_service)] = None,
+):
+    return await service.set_personal_data(user.id, data)
 
 
 @router.patch("/{employee_id}/job/{job_id}", response_model=EmployeeSchema)

@@ -9,6 +9,8 @@ __all__ = {
     "Operation",
     "EmployeeStatus",
     "EmployeeUserGroupLink",
+    "EmployeeCurrentLevel",
+    "EmployeePersonalData",
     "JobUserGroupLink",
     "OperationUserGroupLink",
     "Department",
@@ -71,6 +73,9 @@ __all__ = {
     "LanguageLevel",
     "EmployeeLanguageProfile",
     "EmployeeLanguage",
+    # Education
+    "EducationDegree",
+    "EmployeeEducation",
 }
 
 from backend.api_v1.lang.lang_model import Lang
@@ -103,6 +108,12 @@ from backend.api_v1.talent_audit_interview.talent_audit_interview_model import T
 
 from backend.api_v1.table_relationship_links.employee_user_group_link_model import (
     EmployeeUserGroupLink,
+)
+from backend.api_v1.table_relationship_links.employee_current_level_model import (
+    EmployeeCurrentLevel,
+)
+from backend.api_v1.table_relationship_links.employee_personal_data_model import (
+    EmployeePersonalData,
 )
 from backend.api_v1.table_relationship_links.job_user_group_link_model import (
     JobUserGroupLink,
@@ -196,3 +207,7 @@ from backend.api_v1.employee_language_profile.employee_language_profile_model im
     EmployeeLanguageProfile,
 )
 from backend.api_v1.employee_language.employee_language_model import EmployeeLanguage
+
+# Education — degree lookup first, then the per-employee education rows.
+from backend.api_v1.education_degree.education_degree_model import EducationDegree
+from backend.api_v1.employee_education.employee_education_model import EmployeeEducation

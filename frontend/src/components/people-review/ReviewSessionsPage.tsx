@@ -366,7 +366,7 @@ export function ReviewSessionsPage() {
                             getRowId={(row) => row.id}
                             localeText={localeText}
                             hideFooterSelectedRowCount
-                            sx={{ '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
+                            sx={{ '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center', py: 1 } }}
                         />
                     </Paper>
                 )}

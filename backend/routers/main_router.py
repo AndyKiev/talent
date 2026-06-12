@@ -9,67 +9,153 @@ from backend.api_v1.msg_full.msg_full_views import router as msg_full_router
 from backend.api_v1.msg_bulk.msg_bulk_views import router as msg_bulk_router
 from backend.api_v1.job.job_views import router as job_router
 from backend.api_v1.department.department_views import router as department_router
-from backend.api_v1.department_type.department_type_views import router as department_type_router
+from backend.api_v1.department_type.department_type_views import (
+    router as department_type_router,
+)
 
-from backend.api_v1.department_type_parental_links import router as dept_type_parental_link_router
+from backend.api_v1.department_type_parental_links import (
+    router as dept_type_parental_link_router,
+)
 
-from backend.api_v1.department_type_job_link.department_type_job_link_views import router as department_type_job_link_router
+from backend.api_v1.department_type_job_link.department_type_job_link_views import (
+    router as department_type_job_link_router,
+)
 
-from backend.api_v1.department_category.department_category_views import router as department_category_router
-from backend.api_v1.employee_status.employee_status_views import router as employee_status_router
+from backend.api_v1.department_category.department_category_views import (
+    router as department_category_router,
+)
+from backend.api_v1.employee_status.employee_status_views import (
+    router as employee_status_router,
+)
 from backend.api_v1.operation.operation_views import router as operation_router
-from backend.api_v1.user_group_type.user_group_type_views import router as user_group_type_router
+from backend.api_v1.user_group_type.user_group_type_views import (
+    router as user_group_type_router,
+)
 from backend.api_v1.user_group.user_group_views import router as user_group_router
 from backend.api_v1.employee.employee_views import router as employee_router
-from backend.api_v1.talent_status_period_link.talent_status_period_link_views import router as talent_status_period_link_router
-from backend.api_v1.talent_status.talent_status_views import router as talent_status_router
-from backend.api_v1.talent_period.talent_period_views import router as talent_period_router
-from backend.api_v1.employee_department.employee_department_views import router as employee_department_router
-from backend.api_v1.talent_audit_status.talent_audit_status_views import router as talent_audit_status_router
+from backend.api_v1.talent_status_period_link.talent_status_period_link_views import (
+    router as talent_status_period_link_router,
+)
+from backend.api_v1.talent_status.talent_status_views import (
+    router as talent_status_router,
+)
+from backend.api_v1.talent_period.talent_period_views import (
+    router as talent_period_router,
+)
+from backend.api_v1.employee_department.employee_department_views import (
+    router as employee_department_router,
+)
+from backend.api_v1.talent_audit_status.talent_audit_status_views import (
+    router as talent_audit_status_router,
+)
 from backend.api_v1.talent_audit.talent_audit_views import router as talent_audit_router
-from backend.api_v1.talent_audit_job_status.talent_audit_job_status_views import router as talent_audit_job_status_router
-from backend.api_v1.talent_audit_job.talent_audit_job_views import router as talent_audit_job_router
-from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_views import router as talent_audit_interview_status_router
-from backend.api_v1.talent_audit_interview.talent_audit_interview_views import router as talent_audit_interview_router
+from backend.api_v1.talent_audit_job_status.talent_audit_job_status_views import (
+    router as talent_audit_job_status_router,
+)
+from backend.api_v1.talent_audit_job.talent_audit_job_views import (
+    router as talent_audit_job_router,
+)
+from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_views import (
+    router as talent_audit_interview_status_router,
+)
+from backend.api_v1.talent_audit_interview.talent_audit_interview_views import (
+    router as talent_audit_interview_router,
+)
 
-from backend.api_v1.employee_events.employee_event_status.employee_event_status_views import router as employee_event_status_router
-from backend.api_v1.employee_events.employee_event_type.employee_event_type_views import router as employee_event_type_router
-from backend.api_v1.employee_events.employee_event_direction_type.employee_event_direction_type_views import router as employee_event_direction_type_router
-from backend.api_v1.employee_events.employee_event_change_dept_type.employee_event_change_dept_type_views import router as employee_event_change_dept_type_router
-from backend.api_v1.employee_events.employee_event.employee_event_views import router as employee_event_router
-from backend.api_v1.employee_events.employee_event_change.employee_event_change_views import router as employee_event_change_router
-from backend.api_v1.employee_events.employee_event_type_direction.employee_event_type_direction_views import router as employee_event_type_direction_router
-from backend.api_v1.notifications.notification_views import router as notifications_router
+from backend.api_v1.employee_events.employee_event_status.employee_event_status_views import (
+    router as employee_event_status_router,
+)
+from backend.api_v1.employee_events.employee_event_type.employee_event_type_views import (
+    router as employee_event_type_router,
+)
+from backend.api_v1.employee_events.employee_event_direction_type.employee_event_direction_type_views import (
+    router as employee_event_direction_type_router,
+)
+from backend.api_v1.employee_events.employee_event_change_dept_type.employee_event_change_dept_type_views import (
+    router as employee_event_change_dept_type_router,
+)
+from backend.api_v1.employee_events.employee_event.employee_event_views import (
+    router as employee_event_router,
+)
+from backend.api_v1.employee_events.employee_event_change.employee_event_change_views import (
+    router as employee_event_change_router,
+)
+from backend.api_v1.employee_events.employee_event_type_direction.employee_event_type_direction_views import (
+    router as employee_event_type_direction_router,
+)
+from backend.api_v1.notifications.notification_views import (
+    router as notifications_router,
+)
 
-from backend.api_v1.review_dimension.review_dimension_views import router as review_dimension_router
-from backend.api_v1.review_dimension_criteria.review_dimension_criteria_views import router as review_dimension_criteria_router
-from backend.api_v1.review_session.review_session_views import router as review_session_router
-from backend.api_v1.review_session_employee.review_session_employee_views import router as review_session_employee_router
-from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_views import router as review_evaluation_router
+from backend.api_v1.review_dimension.review_dimension_views import (
+    router as review_dimension_router,
+)
+from backend.api_v1.review_dimension_criteria.review_dimension_criteria_views import (
+    router as review_dimension_criteria_router,
+)
+from backend.api_v1.review_session.review_session_views import (
+    router as review_session_router,
+)
+from backend.api_v1.review_session_employee.review_session_employee_views import (
+    router as review_session_employee_router,
+)
+from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_views import (
+    router as review_evaluation_router,
+)
 from backend.api_v1.review_level.review_level_views import router as review_level_router
-from backend.api_v1.review_level_requirement.review_level_requirement_views import router as review_level_requirement_router
-from backend.api_v1.review_session_employee_level.review_session_employee_level_views import router as review_session_employee_level_router
+from backend.api_v1.review_level_requirement.review_level_requirement_views import (
+    router as review_level_requirement_router,
+)
+from backend.api_v1.review_session_employee_level.review_session_employee_level_views import (
+    router as review_session_employee_level_router,
+)
+from backend.api_v1.education_degree.education_degree_views import (
+    router as education_degree_router,
+)
+from backend.api_v1.employee_education.employee_education_views import (
+    router as employee_education_router,
+)
 
 # New modules from talent-work
-from backend.api_v1.job_group_type.job_group_type_views import router as job_group_type_router
+from backend.api_v1.job_group_type.job_group_type_views import (
+    router as job_group_type_router,
+)
 from backend.api_v1.job_group.job_group_views import router as job_group_router
-from backend.api_v1.job_job_group_link.job_job_group_link_views import router as job_job_group_link_router
+from backend.api_v1.job_job_group_link.job_job_group_link_views import (
+    router as job_job_group_link_router,
+)
 from backend.api_v1.essence.essence_views import router as essence_router
-from backend.api_v1.job_responsibility_category_link.job_responsibility_category_link_views import router as job_responsibility_category_link_router
+from backend.api_v1.job_responsibility_category_link.job_responsibility_category_link_views import (
+    router as job_responsibility_category_link_router,
+)
 from backend.api_v1.operation_essence_set_link.operation_essence_set_link_views import (
     router as operation_essence_set_link_router,
 )
-from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_views import router as talent_audit_interview_job_router
+from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_views import (
+    router as talent_audit_interview_job_router,
+)
 
 # Planning
-from backend.api_v1.planning.plan_session_status.plan_session_status_views import router as plan_session_status_router
-from backend.api_v1.planning.plan_session.plan_session_views import router as plan_session_router
-from backend.api_v1.planning.plan_category_default.plan_category_default_views import router as plan_category_default_router
-from backend.api_v1.planning.plan_scope_default.plan_scope_default_views import router as plan_scope_default_router
-from backend.api_v1.planning.plan_scope.plan_scope_views import router as plan_scope_router
+from backend.api_v1.planning.plan_session_status.plan_session_status_views import (
+    router as plan_session_status_router,
+)
+from backend.api_v1.planning.plan_session.plan_session_views import (
+    router as plan_session_router,
+)
+from backend.api_v1.planning.plan_category_default.plan_category_default_views import (
+    router as plan_category_default_router,
+)
+from backend.api_v1.planning.plan_scope_default.plan_scope_default_views import (
+    router as plan_scope_default_router,
+)
+from backend.api_v1.planning.plan_scope.plan_scope_views import (
+    router as plan_scope_router,
+)
 
 # Foreign languages
-from backend.api_v1.language_level.language_level_views import router as language_level_router
+from backend.api_v1.language_level.language_level_views import (
+    router as language_level_router,
+)
 from backend.api_v1.employee_language_profile.employee_language_profile_views import (
     router as employee_language_profile_router,
 )
@@ -119,6 +205,8 @@ router.include_router(review_session_employee_router)
 router.include_router(review_evaluation_router)
 router.include_router(review_level_router)
 router.include_router(review_level_requirement_router)
+router.include_router(education_degree_router)
+router.include_router(employee_education_router)
 router.include_router(review_session_employee_level_router)
 
 # New modules from talent-work

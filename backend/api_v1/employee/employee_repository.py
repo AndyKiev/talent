@@ -4,12 +4,23 @@ from sqlalchemy import select, delete, distinct
 
 from backend.api_v1.base.base_repository import BaseRepository
 from backend.api_v1.employee.employee_model import Employee
-from backend.api_v1.user_group.user_group_errors import UserGroupNotFound, UserGroupsNotFound
+from backend.api_v1.user_group.user_group_errors import (
+    UserGroupNotFound,
+    UserGroupsNotFound,
+)
 from backend.api_v1.user_group.user_group_model import UserGroup
 from backend.api_v1.table_relationship_links.employee_user_group_link_model import (
     EmployeeUserGroupLink,
 )
-from backend.api_v1.table_relationship_links.job_user_group_link_model import JobUserGroupLink
+from backend.api_v1.table_relationship_links.job_user_group_link_model import (
+    JobUserGroupLink,
+)
+from backend.api_v1.table_relationship_links.employee_current_level_model import (
+    EmployeeCurrentLevel,
+)
+from backend.api_v1.table_relationship_links.employee_personal_data_model import (
+    EmployeePersonalData,
+)
 from backend.api_v1.operation.operation_model import Operation
 from backend.api_v1.table_relationship_links.operation_user_group_link_model import (
     OperationUserGroupLink,
@@ -93,6 +104,73 @@ class EmployeeRepository(BaseRepository):
         await self.session.commit()
         return await self.get_by_id(user_id)
 
+    # -----------------------------------------------------------------------
+    # Current career level — 1:1 link table (people-review)
+    # -----------------------------------------------------------------------
+
+    async def set_current_level(self, user_id: int, level_id: int) -> Employee:
+        """Upsert the employee's current level in the 1:1 link table.
+
+        Re-fetches via get_by_id so the returned Employee carries the freshly
+        loaded current_level_link (selectin) — the in-memory one is stale.
+        """
+        user = await self.get_by_id(user_id)
+        if not user:
+            raise EmployeeNotFound(user_id)
+
+        existing = (
+            await self.session.execute(
+                select(EmployeeCurrentLevel).where(
+                    EmployeeCurrentLevel.employee_id == user_id
+                )
+            )
+        ).scalar_one_or_none()
+        if existing:
+            existing.level_id = level_id
+        else:
+            self.session.add(
+                EmployeeCurrentLevel(employee_id=user_id, level_id=level_id)
+            )
+        await self.session.commit()
+        # expire_on_commit is False, so the in-memory user still holds the stale
+        # (pre-insert) relationship — expire it so get_by_id reloads it.
+        self.session.expire(user, ["current_level_link"])
+        return await self.get_by_id(user_id)
+
+    # -----------------------------------------------------------------------
+    # Personal data — 1:1 link table (birth date, etc.)
+    # -----------------------------------------------------------------------
+
+    async def set_personal_data(self, user_id: int, fields: dict) -> Employee:
+        """Upsert the employee's personal data in the 1:1 table.
+
+        `fields` is a partial dict (e.g. {"birth_date": ...} or {"hire_date": ...});
+        only the keys present are applied, so setting one date never clears another.
+        Re-fetches via get_by_id so the returned Employee carries the freshly
+        loaded personal_data (selectin) — the in-memory one is stale.
+        """
+        user = await self.get_by_id(user_id)
+        if not user:
+            raise EmployeeNotFound(user_id)
+
+        existing = (
+            await self.session.execute(
+                select(EmployeePersonalData).where(
+                    EmployeePersonalData.employee_id == user_id
+                )
+            )
+        ).scalar_one_or_none()
+        if existing:
+            for key, value in fields.items():
+                setattr(existing, key, value)
+        else:
+            self.session.add(EmployeePersonalData(employee_id=user_id, **fields))
+        await self.session.commit()
+        # expire_on_commit is False, so the in-memory user still holds the stale
+        # (pre-insert) relationship — expire it so get_by_id reloads it.
+        self.session.expire(user, ["personal_data"])
+        return await self.get_by_id(user_id)
+
     async def remove_from_group(self, user_id: int, user_group_id: int) -> Employee:
         user, group = await self._get_user_and_group(user_id, user_group_id)
         association = await self._get_association(user_id, user_group_id)
@@ -122,7 +200,9 @@ class EmployeeRepository(BaseRepository):
             raise UserGroupsNotFound(missing)
 
         await self.session.execute(
-            delete(EmployeeUserGroupLink).where(EmployeeUserGroupLink.employee_id == user_id)
+            delete(EmployeeUserGroupLink).where(
+                EmployeeUserGroupLink.employee_id == user_id
+            )
         )
         self.session.add_all(
             [

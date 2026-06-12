@@ -361,3 +361,127 @@ export const setEmployeeCurrentLevel = async (
     );
     return res.data;
 };
+
+// --- Employee personal data (birth date, hire date, job-assigned date, ...) ---
+// ISO 'YYYY-MM-DD' on the wire; displayed DD.MM.YYYY.
+export interface EmployeePersonalData {
+    id: number;
+    birth_date: string | null;
+    hire_date: string | null;
+    job_assigned_date: string | null;
+    // Read-only derived facts (from employees.job_id and the main department link).
+    job_name: string | null;
+    main_department_name: string | null;
+}
+
+// Only the editable date fields can be patched.
+export type EmployeePersonalDataPatch = Partial<{
+    birth_date: string | null;
+    hire_date: string | null;
+    job_assigned_date: string | null;
+}>;
+
+// Shape of the bits we read off the full employee record.
+interface EmployeeHeaderRaw {
+    id: number;
+    birth_date: string | null;
+    hire_date: string | null;
+    job_assigned_date: string | null;
+    job: { name: string } | null;
+    main_departments: { name: string }[];
+}
+
+export const fetchEmployeePersonalData = async (
+    employeeId: number,
+): Promise<EmployeePersonalData> => {
+    const res = await axiosInstance.get<EmployeeHeaderRaw>(`${EMPLOYEE_BASE}/${employeeId}`);
+    const d = res.data;
+    return {
+        id: d.id,
+        birth_date: d.birth_date ?? null,
+        hire_date: d.hire_date ?? null,
+        job_assigned_date: d.job_assigned_date ?? null,
+        job_name: d.job?.name ?? null,
+        main_department_name: d.main_departments?.[0]?.name ?? null,
+    };
+};
+
+export const patchEmployeePersonalData = async (
+    employeeId: number,
+    patch: EmployeePersonalDataPatch,
+): Promise<EmployeePersonalData> => {
+    const res = await axiosInstance.patch<EmployeePersonalData>(
+        `${EMPLOYEE_BASE}/${employeeId}/personal_data`,
+        patch,
+    );
+    return res.data;
+};
+
+// --- Education ---
+const DEGREE_BASE = `${BASE_URL}/education_degrees`;
+const EDUCATION_BASE = `${BASE_URL}/employee_educations`;
+
+export interface EducationDegree {
+    id: number;
+    name_key: string;
+    sort_order: number;
+    is_active: boolean;
+}
+
+export interface EmployeeEducation {
+    id: number;
+    employee_id: number;
+    institution: string;
+    degree_id: number | null;
+    speciality: string | null;
+    graduation_year: number | null;
+}
+
+export interface EmployeeEducationInput {
+    institution: string;
+    degree_id: number | null;
+    speciality: string | null;
+    graduation_year: number | null;
+}
+
+export const fetchEducationDegrees = async (): Promise<EducationDegree[]> => {
+    const res = await axiosInstance.get<EducationDegree[]>(DEGREE_BASE, {
+        params: { is_active: true },
+    });
+    return res.data;
+};
+
+export const fetchEmployeeEducations = async (
+    employeeId: number,
+): Promise<EmployeeEducation[]> => {
+    const res = await axiosInstance.get<EmployeeEducation[]>(EDUCATION_BASE, {
+        params: { employee_id: employeeId },
+    });
+    return res.data;
+};
+
+export const createEmployeeEducation = async (
+    employeeId: number,
+    input: EmployeeEducationInput,
+): Promise<MutationResponse<EmployeeEducation>> => {
+    const res = await axiosInstance.post<MutationResponse<EmployeeEducation>>(
+        EDUCATION_BASE,
+        { employee_id: employeeId, ...input },
+    );
+    return res.data;
+};
+
+export const updateEmployeeEducation = async (
+    educationId: number,
+    input: EmployeeEducationInput,
+): Promise<MutationResponse<EmployeeEducation>> => {
+    const res = await axiosInstance.patch<MutationResponse<EmployeeEducation>>(
+        `${EDUCATION_BASE}/${educationId}`,
+        input,
+    );
+    return res.data;
+};
+
+export const deleteEmployeeEducation = async (educationId: number): Promise<void> => {
+    await axiosInstance.delete(`${EDUCATION_BASE}/${educationId}`);
+};

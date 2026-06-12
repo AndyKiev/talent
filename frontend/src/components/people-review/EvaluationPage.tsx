@@ -34,7 +34,16 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import CakeOutlinedIcon from '@mui/icons-material/CakeOutlined';
+import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
+import WorkOutlineIcon from '@mui/icons-material/WorkOutline';
+import ApartmentIcon from '@mui/icons-material/Apartment';
+import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
+import EditCalendarIcon from '@mui/icons-material/EditCalendar';
+import dayjs from 'dayjs';
 import { Link } from '@tanstack/react-router';
+import EmployeeDateDialog, { formatDate } from './personal-data/EmployeeDateDialog';
+import EducationBlock from './education/EducationBlock';
 import AppShell from '../layout/AppShell.tsx';
 import {
     fetchRSEDetail,
@@ -51,6 +60,7 @@ import {
     fetchReviewLevels,
     fetchEmployeeCurrentLevel,
     setEmployeeCurrentLevel,
+    fetchEmployeePersonalData,
     MAX_GRADE,
     type Evaluation,
     type EvaluationBulkUpdate,
@@ -63,7 +73,32 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import useString from '../../hooks/useString';
 import { str } from '../../strings/str';
 import type { GetStringFn } from '../../types/getStringFn';
+import { useAuthStore } from '../../store/authStore';
+import { defaultLangShortName } from '../../utils/eNums';
 import { useTheme } from '../theme/ThemeContext';
+
+// Ukrainian (and similar) need 3 plural forms; English collapses few→many.
+// Returns the key suffix used to pick the right noun-form translation key.
+function pluralCat(n: number, lang: string): 'One' | 'Few' | 'Many' {
+    if (lang !== 'ukr') return n === 1 ? 'One' : 'Many';
+    const mod10 = n % 10;
+    const mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return 'One';
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'Few';
+    return 'Many';
+}
+
+// "2 years 3 months" (localized, pluralized). Months hidden when 0 unless the
+// whole duration is under a year. `lang` is the user's short language code.
+function formatYearsMonths(iso: string, getString: GetStringFn, lang: string): string {
+    const total = dayjs().diff(dayjs(iso), 'month');
+    const years = Math.floor(total / 12);
+    const months = total % 12;
+    const parts: string[] = [];
+    if (years > 0) parts.push(getString(`durationYear${pluralCat(years, lang)}`, { n: years }));
+    if (months > 0 || years === 0) parts.push(getString(`durationMonth${pluralCat(months, lang)}`, { n: months }));
+    return parts.join(' ');
+}
 
 const DIMENSION_COLORS: Record<string, string> = {
     TRANSFORMATION:   '#1565C0',
@@ -498,6 +533,28 @@ export function EvaluationPage() {
         },
         onError: (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' }),
     });
+
+    // --- Personal data (birth date / age, hire date / tenure, job-assigned date) ---
+    const [birthDateOpen, setBirthDateOpen] = useState(false);
+    const [hireDateOpen, setHireDateOpen] = useState(false);
+    const [jobAssignedOpen, setJobAssignedOpen] = useState(false);
+    const { data: personalData } = useQuery({
+        queryKey: ['employee_personal_data', employeeId],
+        queryFn: () => fetchEmployeePersonalData(employeeId!),
+        enabled: !!employeeId,
+        staleTime: 30_000,
+    });
+    const employeeAge = personalData?.birth_date
+        ? dayjs().diff(dayjs(personalData.birth_date), 'year')
+        : null;
+    const employeeTenure = personalData?.hire_date
+        ? dayjs().diff(dayjs(personalData.hire_date), 'year')
+        : null;
+    const userLang = useAuthStore((s) => s.user?.lang?.short_name) || defaultLangShortName;
+    // Full "X years Y months" time on the current job, shown next to the job name.
+    const positionDuration = personalData?.job_assigned_date
+        ? formatYearsMonths(personalData.job_assigned_date, getString, userLang)
+        : null;
 
     // --- Employee data tabs (languages / feedback / results) ---
     const [dataTab, setDataTab] = useState(0);
@@ -1002,6 +1059,126 @@ export function EvaluationPage() {
                             </Stack>
                         </Box>
 
+                        {/* Employee facts — spread evenly across the full width */}
+                        <Box
+                            sx={{
+                                mb: 2.5,
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                justifyContent: 'space-between',
+                                alignItems: 'flex-start',
+                                gap: 2,
+                                rowGap: 1.5,
+                            }}
+                        >
+                            {/* Job */}
+                            <Stack direction="row" spacing={0.75} alignItems="center" sx={{ minWidth: 0 }}>
+                                <WorkOutlineIcon sx={{ fontSize: 18, color: t.textMuted }} />
+                                <Box sx={{ minWidth: 0 }}>
+                                    <Typography variant="caption" color={t.textMuted} sx={{ display: 'block', lineHeight: 1.1 }}>
+                                        {getString('job')}
+                                    </Typography>
+                                    <Typography variant="body2" color={t.text} fontWeight={600} noWrap>
+                                        {personalData?.job_name ?? '—'}
+                                    </Typography>
+                                </Box>
+                            </Stack>
+
+                            {/* Department (main) */}
+                            <Stack direction="row" spacing={0.75} alignItems="center" sx={{ minWidth: 0 }}>
+                                <ApartmentIcon sx={{ fontSize: 18, color: t.textMuted }} />
+                                <Box sx={{ minWidth: 0 }}>
+                                    <Typography variant="caption" color={t.textMuted} sx={{ display: 'block', lineHeight: 1.1 }}>
+                                        {getString('department')}
+                                    </Typography>
+                                    <Typography variant="body2" color={t.text} fontWeight={600} noWrap>
+                                        {personalData?.main_department_name ?? '—'}
+                                    </Typography>
+                                </Box>
+                            </Stack>
+
+                            {/* Birth date / age */}
+                            <Stack direction="row" spacing={0.75} alignItems="center" sx={{ minWidth: 0 }}>
+                                <CakeOutlinedIcon sx={{ fontSize: 18, color: t.textMuted }} />
+                                <Box sx={{ minWidth: 0 }}>
+                                    <Typography variant="caption" color={t.textMuted} sx={{ display: 'block', lineHeight: 1.1 }}>
+                                        {getString('birthDate')}
+                                    </Typography>
+                                    <Stack direction="row" spacing={0.25} alignItems="center">
+                                        <Typography variant="body2" color={t.text} fontWeight={600} noWrap>
+                                            {formatDate(personalData?.birth_date ?? null)}
+                                            {employeeAge !== null && ` · ${getString('yearsOld', { age: employeeAge })}`}
+                                        </Typography>
+                                        {employeeId && (
+                                            <Tooltip title={getString('editBirthDate')} placement="top">
+                                                <IconButton size="small" onClick={() => setBirthDateOpen(true)} sx={{ p: 0.2 }}>
+                                                    <EditCalendarIcon sx={{ fontSize: 14 }} />
+                                                </IconButton>
+                                            </Tooltip>
+                                        )}
+                                    </Stack>
+                                </Box>
+                            </Stack>
+
+                            {/* Hire date / tenure */}
+                            <Stack direction="row" spacing={0.75} alignItems="center" sx={{ minWidth: 0 }}>
+                                <BusinessOutlinedIcon sx={{ fontSize: 18, color: t.textMuted }} />
+                                <Box sx={{ minWidth: 0 }}>
+                                    <Typography variant="caption" color={t.textMuted} sx={{ display: 'block', lineHeight: 1.1 }}>
+                                        {getString('hireDate')}
+                                    </Typography>
+                                    <Stack direction="row" spacing={0.25} alignItems="center">
+                                        <Typography variant="body2" color={t.text} fontWeight={600} noWrap>
+                                            {formatDate(personalData?.hire_date ?? null)}
+                                            {employeeTenure !== null && ` · ${getString('yearsWithCompany', { years: employeeTenure })}`}
+                                        </Typography>
+                                        {employeeId && (
+                                            <Tooltip title={getString('editHireDate')} placement="top">
+                                                <IconButton size="small" onClick={() => setHireDateOpen(true)} sx={{ p: 0.2 }}>
+                                                    <EditCalendarIcon sx={{ fontSize: 14 }} />
+                                                </IconButton>
+                                            </Tooltip>
+                                        )}
+                                    </Stack>
+                                </Box>
+                            </Stack>
+
+                            {/* Job-assigned date / time in position */}
+                            <Stack direction="row" spacing={0.75} alignItems="center" sx={{ minWidth: 0 }}>
+                                <EventAvailableOutlinedIcon sx={{ fontSize: 18, color: t.textMuted }} />
+                                <Box sx={{ minWidth: 0 }}>
+                                    <Typography variant="caption" color={t.textMuted} sx={{ display: 'block', lineHeight: 1.1 }}>
+                                        {getString('jobAssignedDate')}
+                                    </Typography>
+                                    <Stack direction="row" spacing={0.25} alignItems="center">
+                                        <Typography variant="body2" color={t.text} fontWeight={600} noWrap>
+                                            {formatDate(personalData?.job_assigned_date ?? null)}
+                                            {positionDuration && ` · ${positionDuration}`}
+                                        </Typography>
+                                        {employeeId && (
+                                            <Tooltip title={getString('editJobAssignedDate')} placement="top">
+                                                <IconButton size="small" onClick={() => setJobAssignedOpen(true)} sx={{ p: 0.2 }}>
+                                                    <EditCalendarIcon sx={{ fontSize: 14 }} />
+                                                </IconButton>
+                                            </Tooltip>
+                                        )}
+                                    </Stack>
+                                </Box>
+                            </Stack>
+                        </Box>
+
+                        {/* Education block (1:N) — full width */}
+                        {employeeId && (
+                            <Box sx={{ mb: 2.5 }}>
+                                <EducationBlock
+                                    employeeId={employeeId}
+                                    getString={getString}
+                                    onSuccess={(message) => setSnackbar({ open: true, message, severity: 'success' })}
+                                    onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
+                                />
+                            </Box>
+                        )}
+
                         {/* View-only banner */}
                         {isSessionClosed && (
                             <Alert severity="info" icon={<VisibilityIcon />} sx={{ mb: 2, borderRadius: '10px' }}>
@@ -1037,54 +1214,64 @@ export function EvaluationPage() {
                                         <Typography fontSize={12} color={t.textMuted} mb={2}>
                                             {getString('foreignLanguagesHint')}
                                         </Typography>
-                                        <Stack spacing={2}>
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
                                 {FOREIGN_LANGUAGES.map(({ key, labelKey }) => {
                                     const selId = langSel[key] ?? null;
                                     const selected = langLevels.find(l => l.id === selId);
                                     return (
-                                        <Box key={key}>
-                                            <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-                                                <Typography fontSize={13} fontWeight={600} color={t.textSecondary} sx={{ width: 120, flexShrink: 0 }}>
-                                                    {getString(labelKey)}
-                                                </Typography>
-                                                <FormControl size="small" sx={{ minWidth: 260 }}>
-                                                    <InputLabel id={`lang-${key}-label`}>{getString('selectLevel')}</InputLabel>
-                                                    <Select
-                                                        variant="outlined"
-                                                        labelId={`lang-${key}-label`}
-                                                        label={getString('selectLevel')}
-                                                        value={selId == null ? '' : String(selId)}
-                                                        disabled={!isEditable}
-                                                        onChange={(e) => {
-                                                            const v = e.target.value;
-                                                            setLangSel(prev => ({ ...prev, [key]: v === '' ? null : Number(v) }));
-                                                        }}
-                                                    >
-                                                        <MenuItem value=""><em>—</em></MenuItem>
-                                                        {langLevels.map(l => {
-                                                            const label = langLevelLabel(l.code, l.label);
-                                                            return (
-                                                                <MenuItem key={l.id} value={String(l.id)}>
-                                                                    {l.code}{label ? ` · ${label}` : ''}
-                                                                </MenuItem>
-                                                            );
-                                                        })}
-                                                    </Select>
-                                                </FormControl>
-                                            </Stack>
-                                            {selected?.hint && (
-                                                <Alert
-                                                    severity="info"
-                                                    icon={<InfoOutlinedIcon fontSize="small" />}
-                                                    sx={{ mt: 1, borderRadius: '10px', py: 0.25 }}
+                                        <Stack key={key} direction="row" spacing={0.5} alignItems="center">
+                                            <FormControl size="small" sx={{ minWidth: 190 }}>
+                                                <InputLabel id={`lang-${key}-label`}>{getString(labelKey)}</InputLabel>
+                                                <Select
+                                                    variant="outlined"
+                                                    labelId={`lang-${key}-label`}
+                                                    label={getString(labelKey)}
+                                                    value={selId == null ? '' : String(selId)}
+                                                    disabled={!isEditable}
+                                                    onChange={(e) => {
+                                                        const v = e.target.value;
+                                                        setLangSel(prev => ({ ...prev, [key]: v === '' ? null : Number(v) }));
+                                                    }}
                                                 >
-                                                    <strong>{selected.code}</strong> — {langLevelHint(selected.code, selected.hint)}
-                                                </Alert>
-                                            )}
-                                        </Box>
+                                                    <MenuItem value=""><em>—</em></MenuItem>
+                                                    {langLevels.map(l => {
+                                                        const label = langLevelLabel(l.code, l.label);
+                                                        const hint = langLevelHint(l.code, l.hint);
+                                                        return (
+                                                            <MenuItem key={l.id} value={String(l.id)}>
+                                                                <Stack direction="row" alignItems="center" spacing={1} sx={{ width: '100%' }}>
+                                                                    <span>{l.code}{label ? ` · ${label}` : ''}</span>
+                                                                    {hint && (
+                                                                        <Tooltip title={hint} placement="right" arrow>
+                                                                            <InfoOutlinedIcon
+                                                                                fontSize="small"
+                                                                                sx={{ ml: 'auto', color: t.textMuted, cursor: 'help' }}
+                                                                                onClick={(e) => e.stopPropagation()}
+                                                                            />
+                                                                        </Tooltip>
+                                                                    )}
+                                                                </Stack>
+                                                            </MenuItem>
+                                                        );
+                                                    })}
+                                                </Select>
+                                            </FormControl>
+                                            <Tooltip
+                                                placement="top"
+                                                arrow
+                                                title={selected?.hint
+                                                    ? <span><strong>{selected.code}</strong> — {langLevelHint(selected.code, selected.hint)}</span>
+                                                    : getString('selectLevel')}
+                                            >
+                                                <InfoOutlinedIcon
+                                                    fontSize="small"
+                                                    sx={{ color: t.textMuted, opacity: selected ? 1 : 0.4, cursor: 'help', flexShrink: 0 }}
+                                                />
+                                            </Tooltip>
+                                        </Stack>
                                     );
                                 })}
-                                        </Stack>
+                                        </Box>
                                     </>
                                 )}
 
@@ -1490,6 +1677,44 @@ export function EvaluationPage() {
                 rseId={rid}
                 setSnackbar={setSnackbar}
             />
+
+            {employeeId && (
+                <>
+                    <EmployeeDateDialog
+                        open={birthDateOpen}
+                        onClose={() => setBirthDateOpen(false)}
+                        employeeId={employeeId}
+                        field="birth_date"
+                        value={personalData?.birth_date ?? null}
+                        titleKey="editBirthDate"
+                        labelKey="birthDate"
+                        getString={getString}
+                        onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
+                    />
+                    <EmployeeDateDialog
+                        open={hireDateOpen}
+                        onClose={() => setHireDateOpen(false)}
+                        employeeId={employeeId}
+                        field="hire_date"
+                        value={personalData?.hire_date ?? null}
+                        titleKey="editHireDate"
+                        labelKey="hireDate"
+                        getString={getString}
+                        onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
+                    />
+                    <EmployeeDateDialog
+                        open={jobAssignedOpen}
+                        onClose={() => setJobAssignedOpen(false)}
+                        employeeId={employeeId}
+                        field="job_assigned_date"
+                        value={personalData?.job_assigned_date ?? null}
+                        titleKey="editJobAssignedDate"
+                        labelKey="jobAssignedDate"
+                        getString={getString}
+                        onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
+                    />
+                </>
+            )}
 
             <Snackbar open={snackbar.open} autoHideDuration={5000}
                 onClose={() => setSnackbar(p => ({ ...p, open: false }))}
