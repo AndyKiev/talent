@@ -275,7 +275,7 @@ export function ReviewSessionsPage() {
                                     color="primary"
                                     onClick={() =>
                                         navigate({
-                                            to: '/people-review/$sessionId' as any,
+                                            to: '/people-review/$sessionId',
                                             params: { sessionId: String(row.id) },
                                         })
                                     }
@@ -298,7 +298,7 @@ export function ReviewSessionsPage() {
                             <>
                                 <IconButton
                                     size="small" color="primary"
-                                    onClick={() => navigate({ to: '/people-review/$sessionId' as any, params: { sessionId: String(row.id) } })}
+                                    onClick={() => navigate({ to: '/people-review/$sessionId', params: { sessionId: String(row.id) } })}
                                 >
                                     <PeopleIcon />
                                 </IconButton>

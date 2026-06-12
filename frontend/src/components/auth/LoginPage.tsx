@@ -53,7 +53,7 @@ const LoginPage: FC = () => {
             setUser(user);
 
             // 3. Navigate to main page
-            await navigate({ to: "/employees" });
+            await navigate({ to: "/people-review" });
         } catch (err: unknown) {
             const message =
                 err instanceof Error

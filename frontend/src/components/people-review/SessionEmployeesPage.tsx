@@ -178,7 +178,7 @@ export function SessionEmployeesPage() {
                     <Stack direction="row" spacing={0.5} alignItems="center" height="100%">
                         <Button
                             size="small" variant="outlined" startIcon={<VisibilityIcon />}
-                            onClick={() => navigate({ to: '/people-review/evaluation/$rseId' as any, params: { rseId: String(row.id) } })}
+                            onClick={() => navigate({ to: '/people-review/evaluation/$rseId', params: { rseId: String(row.id) } })}
                         >
                             {getString('view')}
                         </Button>

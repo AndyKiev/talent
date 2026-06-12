@@ -8,6 +8,11 @@ import {
     Button,
     Chip,
     CircularProgress,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
     FormControl,
     IconButton,
     InputLabel,
@@ -15,34 +20,24 @@ import {
     Select,
     Snackbar,
     Stack,
+    Switch,
     Tab,
     Tabs,
-    TextField,
     Tooltip,
     Typography,
-    Rating,
 } from '@mui/material';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import SaveIcon from '@mui/icons-material/Save';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import LockIcon from '@mui/icons-material/Lock';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ReplayIcon from '@mui/icons-material/Replay';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import AddIcon from '@mui/icons-material/Add';
-import CloseIcon from '@mui/icons-material/Close';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import CakeOutlinedIcon from '@mui/icons-material/CakeOutlined';
-import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
-import WorkOutlineIcon from '@mui/icons-material/WorkOutline';
-import ApartmentIcon from '@mui/icons-material/Apartment';
-import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
-import EditCalendarIcon from '@mui/icons-material/EditCalendar';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import dayjs from 'dayjs';
 import { Link } from '@tanstack/react-router';
-import EmployeeDateDialog, { formatDate } from './personal-data/EmployeeDateDialog';
+import EmployeeDateDialog from './personal-data/EmployeeDateDialog';
 import EducationBlock from './education/EducationBlock';
 import AppShell from '../layout/AppShell.tsx';
 import {
@@ -61,383 +56,42 @@ import {
     fetchEmployeeCurrentLevel,
     setEmployeeCurrentLevel,
     fetchEmployeePersonalData,
-    MAX_GRADE,
-    type Evaluation,
     type EvaluationBulkUpdate,
     type CriterionScore,
     type EmployeeLanguageInput,
     type RSEFieldsUpdate,
 } from './peopleReviewApi';
 import { ProposedLevelDrawer } from './ProposedLevelDrawer';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import useString from '../../hooks/useString';
 import { str } from '../../strings/str';
-import type { GetStringFn } from '../../types/getStringFn';
 import { useAuthStore } from '../../store/authStore';
 import { defaultLangShortName } from '../../utils/eNums';
 import { useTheme } from '../theme/ThemeContext';
-
-// Ukrainian (and similar) need 3 plural forms; English collapses few→many.
-// Returns the key suffix used to pick the right noun-form translation key.
-function pluralCat(n: number, lang: string): 'One' | 'Few' | 'Many' {
-    if (lang !== 'ukr') return n === 1 ? 'One' : 'Many';
-    const mod10 = n % 10;
-    const mod100 = n % 100;
-    if (mod10 === 1 && mod100 !== 11) return 'One';
-    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'Few';
-    return 'Many';
-}
-
-// "2 years 3 months" (localized, pluralized). Months hidden when 0 unless the
-// whole duration is under a year. `lang` is the user's short language code.
-function formatYearsMonths(iso: string, getString: GetStringFn, lang: string): string {
-    const total = dayjs().diff(dayjs(iso), 'month');
-    const years = Math.floor(total / 12);
-    const months = total % 12;
-    const parts: string[] = [];
-    if (years > 0) parts.push(getString(`durationYear${pluralCat(years, lang)}`, { n: years }));
-    if (months > 0 || years === 0) parts.push(getString(`durationMonth${pluralCat(months, lang)}`, { n: months }));
-    return parts.join(' ');
-}
-
-const DIMENSION_COLORS: Record<string, string> = {
-    TRANSFORMATION:   '#1565C0',
-    ETHICS:           '#2E7D32',
-    MOBILIZATION:     '#E65100',
-    PEOPLE_PLANET:    '#0097A7',
-    OPENNESS:         '#D32F2F',
-    CUSTOMER_RESULTS: '#AD1457',
-};
-const FALLBACK_COLORS = ['#1565C0','#2E7D32','#E65100','#0097A7','#6A1B9A','#AD1457','#0277BD','#558B2F'];
-
-function getDimColor(key: string, idx: number) {
-    return DIMENSION_COLORS[key] ?? FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
-}
-
-// Map a review dimension key to its translation key (key competences).
-const DIMENSION_STRING_KEYS: Record<string, string> = {
-    TRANSFORMATION:   'competenceTransformation',
-    ETHICS:           'competenceEthics',
-    MOBILIZATION:     'competenceMobilization',
-    PEOPLE_PLANET:    'competencePeoplePlanet',
-    OPENNESS:         'competenceOpenness',
-    CUSTOMER_RESULTS: 'competenceCustomerResults',
-};
-
-/** Translated competence name, falling back to the DB-provided dimension name. */
-function competenceName(getString: GetStringFn, key: string, fallback: string): string {
-    const strKey = DIMENSION_STRING_KEYS[key];
-    if (!strKey) return fallback;
-    const label = getString(strKey);
-    return label && label !== strKey ? label : fallback;
-}
-
-// Map a review dimension key to its hint translation key.
-const DIMENSION_HINT_KEYS: Record<string, string> = {
-    TRANSFORMATION:   'competenceHintTransformation',
-    ETHICS:           'competenceHintEthics',
-    MOBILIZATION:     'competenceHintMobilization',
-    PEOPLE_PLANET:    'competenceHintPeoplePlanet',
-    OPENNESS:         'competenceHintOpenness',
-    CUSTOMER_RESULTS: 'competenceHintCustomerResults',
-};
-
-/** Translated competence hint (multi-line), falling back to the DB description. */
-function competenceHint(getString: GetStringFn, key: string, fallback: string): string {
-    const strKey = DIMENSION_HINT_KEYS[key];
-    if (!strKey) return fallback;
-    const hint = getString(strKey);
-    return hint && hint !== strKey ? hint : fallback;
-}
-
-interface LocalEval {
-    id: number;
-    dimension_id: number;
-    dimension_name: string;
-    dimension_key: string;
-    dimension_description: string | null;
-    dimension_is_active: boolean;
-    // Behaviour descriptors (hint bullets) shown as children, each rated 1..MAX_GRADE.
-    descriptors: string[];
-    // criterion_index -> score (1..MAX_GRADE). Sparse: unrated descriptors are absent.
-    criterionScores: Record<number, number>;
-    facts: string[];
-    improvement: string;
-}
-
-/** Split a stored facts string (e.g. "1. fact one\n2. fact two") into an array, stripping numbering. */
-function parseFacts(raw: string | null): string[] {
-    if (!raw) return [];
-    return raw
-        .split('\n')
-        .map(line => line.replace(/^\d+\.\s*/, '').trim())
-        .filter(line => line.length > 0);
-}
-
-/** Serialize a facts array back to a numbered string for storage. */
-function serializeFacts(facts: string[]): string {
-    if (facts.length === 0) return '';
-    return facts.map((f, i) => `${i + 1}. ${f}`).join('\n');
-}
-
-/** Split a competence hint (•-bulleted, newline-joined) into individual behaviour descriptors. */
-function parseDescriptors(hint: string): string[] {
-    if (!hint) return [];
-    return hint
-        .split('\n')
-        .map(line => line.replace(/^\s*[•\-*]\s*/, '').replace(/^\s*\d+[.)]\s*/, '').trim())
-        .filter(line => line.length > 0);
-}
-
-/** Arithmetic mean of a competence's rated behaviour scores (null when none rated). */
-function evalMean(le: LocalEval): number | null {
-    const vals = le.descriptors
-        .map((_, i) => le.criterionScores[i])
-        .filter((v): v is number => v != null);
-    if (vals.length === 0) return null;
-    return vals.reduce((a, b) => a + b, 0) / vals.length;
-}
-
-/** A competence counts as filled only once every one of its behaviour descriptors is rated. */
-function evalFilled(le: LocalEval): boolean {
-    return le.descriptors.length > 0 && le.descriptors.every((_, i) => le.criterionScores[i] != null);
-}
-
-function DimensionChart({ evals, getString }: { evals: LocalEval[]; getString: GetStringFn }) {
-    return (
-        <Box>
-            {evals.map((e, idx) => {
-                const color = getDimColor(e.dimension_key, idx);
-                const mean = evalMean(e);
-                const pct = ((mean ?? 0) / MAX_GRADE) * 100;
-                return (
-                    <Box key={e.id} sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
-                        <Typography fontSize={11} fontWeight={600} sx={{ width: 180, flexShrink: 0, color }} noWrap>
-                            {competenceName(getString, e.dimension_key, e.dimension_name)}
-                        </Typography>
-                        <Box sx={{ flex: 1, height: 10, borderRadius: 5, bgcolor: `${color}22`, position: 'relative' }}>
-                            <Box sx={{
-                                position: 'absolute', left: 0, top: 0, bottom: 0,
-                                width: `${pct}%`, borderRadius: 5, bgcolor: color,
-                                transition: 'width 0.4s ease',
-                            }} />
-                        </Box>
-                        <Typography fontSize={11} fontWeight={700} sx={{ width: 40, textAlign: 'right', color }}>
-                            {mean != null ? mean.toFixed(2) : '—'}/{MAX_GRADE}
-                        </Typography>
-                    </Box>
-                );
-            })}
-        </Box>
-    );
-}
-
-function CompetenceSummarySection({
-    title, accent, options, candidates, nameOf, colorOf, isEditable, getString,
-    drafts, onDraftChange, onAddOption, onRemoveOption, onAddComment, onRemoveComment,
-    onSelectCompetence,
-}: {
-    title: string;
-    accent: string;
-    options: SummaryOption[];
-    candidates: { key: string; name: string }[];
-    nameOf: (key: string) => string;
-    colorOf: (key: string) => string;
-    isEditable: boolean;
-    getString: GetStringFn;
-    drafts: Record<string, string>;
-    onDraftChange: (key: string, value: string) => void;
-    onAddOption: (key: string) => void;
-    onRemoveOption: (key: string) => void;
-    onAddComment: (key: string, text: string) => void;
-    onRemoveComment: (key: string, index: number) => void;
-    onSelectCompetence: (key: string) => void;
-}) {
-    const [pick, setPick] = useState('');
-
-    const submitComment = (key: string) => {
-        const text = (drafts[key] ?? '').trim();
-        if (!text) return;
-        onAddComment(key, text);
-        onDraftChange(key, '');
-    };
-
-    return (
-        <Box sx={{ flex: '1 1 340px', minWidth: 300 }}>
-            <Typography fontSize={11} fontWeight={700} color={accent} mb={1.5} textTransform="uppercase" letterSpacing="0.06em">
-                {title}
-            </Typography>
-
-            {isEditable && candidates.length > 0 && (
-                <Stack direction="row" spacing={1} mb={2}>
-                    <FormControl size="small" sx={{ flex: 1, minWidth: 0 }}>
-                        <InputLabel id={`add-${title}-label`}>{getString('selectCompetence')}</InputLabel>
-                        <Select
-                            variant="outlined"
-                            labelId={`add-${title}-label`}
-                            label={getString('selectCompetence')}
-                            value={pick}
-                            onChange={e => { setPick(e.target.value); onSelectCompetence(e.target.value); }}
-                        >
-                            {candidates.map(c => (
-                                <MenuItem key={c.key} value={c.key}>{c.name}</MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                    <Button
-                        variant="outlined" size="small" startIcon={<AddIcon />}
-                        onClick={() => { if (pick) { onAddOption(pick); setPick(''); } }}
-                        disabled={!pick}
-                        sx={{ textTransform: 'none', whiteSpace: 'nowrap' }}
-                    >
-                        {getString('addFact')}
-                    </Button>
-                </Stack>
-            )}
-
-            <Stack spacing={1.5}>
-                {options.map(opt => {
-                    const color = colorOf(opt.dimension_key);
-                    return (
-                    <Box key={opt.dimension_key} sx={{ border: `1px solid ${color}33`, borderRadius: '10px', p: 1.5 }}>
-                        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
-                            <Typography fontSize={13} fontWeight={700} color={color}>
-                                {nameOf(opt.dimension_key)}
-                            </Typography>
-                            {isEditable && (
-                                <Tooltip title={getString('removeOption')}>
-                                    <IconButton size="small" onClick={() => onRemoveOption(opt.dimension_key)} sx={{ p: 0.25 }}>
-                                        <CloseIcon sx={{ fontSize: 16 }} />
-                                    </IconButton>
-                                </Tooltip>
-                            )}
-                        </Stack>
-
-                        {opt.comments.length > 0 && (
-                            <Box sx={{ mb: 1 }}>
-                                {opt.comments.map((comment, idx) => (
-                                    <Stack
-                                        key={`${opt.dimension_key}-c-${idx}`}
-                                        direction="row" alignItems="flex-start" spacing={0.5}
-                                        sx={{ mb: 0.5, py: 0.25, px: 0.5, borderRadius: '6px', '&:hover': { bgcolor: color + '10' } }}
-                                    >
-                                        <Typography fontSize={12} fontWeight={700} color={color} sx={{ minWidth: 20, pt: '2px' }}>
-                                            {idx + 1}.
-                                        </Typography>
-                                        <Typography fontSize={13} sx={{ flex: 1, pt: '2px', wordBreak: 'break-word' }}>
-                                            {comment}
-                                        </Typography>
-                                        {isEditable && (
-                                            <Tooltip title={getString('deleteComment')}>
-                                                <IconButton size="small" onClick={() => onRemoveComment(opt.dimension_key, idx)} sx={{ p: 0.25, mt: '-2px' }}>
-                                                    <CloseIcon sx={{ fontSize: 13 }} />
-                                                </IconButton>
-                                            </Tooltip>
-                                        )}
-                                    </Stack>
-                                ))}
-                            </Box>
-                        )}
-
-                        {isEditable && (
-                            <Stack direction="row" spacing={2} alignItems="flex-start">
-                                <TextField
-                                    size="small"
-                                    multiline minRows={2}
-                                    placeholder={getString('typeCommentPlaceholder')}
-                                    value={drafts[opt.dimension_key] ?? ''}
-                                    onChange={e => onDraftChange(opt.dimension_key, e.target.value)}
-                                    fullWidth
-                                />
-                                <Button
-                                    variant="outlined" size="small" startIcon={<AddIcon />}
-                                    onClick={() => submitComment(opt.dimension_key)}
-                                    disabled={!(drafts[opt.dimension_key] ?? '').trim()}
-                                    sx={{ textTransform: 'none', whiteSpace: 'nowrap', mt: 0.25 }}
-                                >
-                                    {getString('addComment')}
-                                </Button>
-                            </Stack>
-                        )}
-                    </Box>
-                    );
-                })}
-            </Stack>
-        </Box>
-    );
-}
-
-const RSE_STATUS_COLORS: Record<string, string> = {
-    open: '#1565C0',
-    reviewed: '#E65100',
-    closed: '#2E7D32',
-};
-
-// Fixed set of foreign languages the employee declares a level for.
-const FOREIGN_LANGUAGES: { key: string; labelKey: 'english' | 'french' }[] = [
-    { key: 'english', labelKey: 'english' },
-    { key: 'french', labelKey: 'french' },
-];
-
-// Individual development plan — number of mission boxes (hardcoded for now,
-// stored as a JSON array so this can grow later without a schema change).
-const MISSION_COUNT = 2;
-
-/** Parse the stored development plan (JSON array) into a string[] padded to `count`. */
-function parseMissions(raw: string | null, count: number): string[] {
-    let arr: string[] = [];
-    if (raw) {
-        try {
-            const parsed: unknown = JSON.parse(raw);
-            if (Array.isArray(parsed)) arr = parsed.map(x => (x == null ? '' : String(x)));
-        } catch {
-            /* not JSON yet — start empty */
-        }
-    }
-    const out = [...arr];
-    while (out.length < count) out.push('');
-    return out;
-}
-
-// One picked competence in the summary, with its linked comments.
-interface SummaryOption {
-    dimension_key: string;
-    comments: string[];
-}
-
-/** Minimum number of competences each summary select should offer. */
-const SUMMARY_MIN_OPTIONS = 2;
-
-/** Parse a stored {strong, develop} summary array for one side. */
-function parseSummarySide(raw: unknown): SummaryOption[] {
-    if (!Array.isArray(raw)) return [];
-    const out: SummaryOption[] = [];
-    for (const item of raw) {
-        if (item && typeof item === 'object' && 'dimension_key' in item) {
-            const key = String((item as { dimension_key: unknown }).dimension_key ?? '');
-            const rawComments = (item as { comments?: unknown }).comments;
-            const comments = Array.isArray(rawComments) ? rawComments.map(c => String(c ?? '')) : [];
-            if (key) out.push({ dimension_key: key, comments });
-        }
-    }
-    return out;
-}
-
-/**
- * Candidate competences for a summary select: the top (or bottom) scored ones.
- * Always offers at least SUMMARY_MIN_OPTIONS, plus any tied at the boundary score
- * — up to all of them when scores are equal.
- */
-function rankedCompetences(evals: LocalEval[], direction: 'desc' | 'asc'): LocalEval[] {
-    if (evals.length <= SUMMARY_MIN_OPTIONS) return [...evals];
-    const sorted = [...evals].sort((a, b) =>
-        direction === 'desc' ? (evalMean(b) ?? 0) - (evalMean(a) ?? 0) : (evalMean(a) ?? 0) - (evalMean(b) ?? 0),
-    );
-    const threshold = evalMean(sorted[SUMMARY_MIN_OPTIONS - 1]) ?? 0;
-    return sorted.filter(e =>
-        direction === 'desc' ? (evalMean(e) ?? 0) >= threshold : (evalMean(e) ?? 0) <= threshold,
-    );
-}
+import {
+    type LocalEval,
+    type SummaryOption,
+    type DraggedFact,
+    type PendingMove,
+    RSE_STATUS_COLORS,
+    FOREIGN_LANGUAGES,
+    getDimColor,
+    competenceName,
+    evalFilled,
+    serializeFacts,
+    formatYearsMonths,
+    rankedCompetences,
+} from './evaluation/evaluationHelpers';
+import {
+    usePeopleReviewStore,
+    buildEvaluationDraft,
+    EMPTY_EVAL_DRAFT,
+    type EvaluationDraft,
+} from './peopleReviewStore';
+import { DimensionChart } from './evaluation/DimensionChart';
+import { CompetenceSummarySection } from './evaluation/CompetenceSummarySection';
+import { EmployeeFactsBar } from './evaluation/EmployeeFactsBar';
+import { EmployeeDataTabs } from './evaluation/EmployeeDataTabs';
+import { DimensionPanel } from './evaluation/DimensionPanel';
 
 export function EvaluationPage() {
     const { rseId } = useParams({ strict: false }) as { rseId: string };
@@ -448,11 +102,18 @@ export function EvaluationPage() {
     const getString = useString({ str });
 
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
-    const [localEvals, setLocalEvals] = useState<LocalEval[]>([]);
     const [activeTab, setActiveTab] = useState(0);
+    // Presentation mode: hide every editing affordance for a clean read-only view
+    // even while the record is technically editable (job done, just presenting).
+    const [presentationMode, setPresentationMode] = useState(false);
+    // Drag-and-drop of a fact from the active competence onto another tab.
+    const [draggedFact, setDraggedFact] = useState<DraggedFact | null>(null);
+    const [dragOverTab, setDragOverTab] = useState<number | null>(null);
+    const [dragOverFactIndex, setDragOverFactIndex] = useState<number | null>(null);
+    const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
     const [newFactTexts, setNewFactTexts] = useState<Record<number, string>>({});
 
-    const { data: rseDetail, isLoading: rseLoading } = useQuery({
+    const { data: rseDetail, isLoading: rseLoading, isFetching: rseFetching } = useQuery({
         queryKey: ['rse_detail', rid],
         queryFn: () => fetchRSEDetail(rid),
         staleTime: 30_000,
@@ -468,7 +129,7 @@ export function EvaluationPage() {
         enabled: !!sessionId,
     });
 
-    const { data: evaluations = [], isLoading: evalLoading } = useQuery({
+    const { data: evaluations = [], isLoading: evalLoading, isFetching: evalFetching } = useQuery({
         queryKey: ['evaluations', rid],
         queryFn: () => fetchEvaluations(rid),
         staleTime: 30_000,
@@ -482,27 +143,51 @@ export function EvaluationPage() {
         queryFn: fetchLanguageLevels,
         staleTime: 5 * 60_000,
     });
-    const { data: langProfile } = useQuery({
+    const { data: langProfile, isFetching: langFetching } = useQuery({
         queryKey: ['employee_language_profile', employeeId],
         queryFn: () => fetchEmployeeLanguageProfile(employeeId!),
         staleTime: 30_000,
         enabled: !!employeeId,
     });
-    // Selected level id per language key (null = not specified).
-    const [langSel, setLangSel] = useState<Record<string, number | null>>({
-        english: null,
-        french: null,
-    });
 
-    useEffect(() => {
-        if (langProfile) {
-            const next: Record<string, number | null> = { english: null, french: null };
-            for (const l of langProfile.languages) {
-                next[l.language] = l.level_id;
-            }
-            setLangSel(next);
-        }
-    }, [langProfile]);
+    // --- Editable draft (zustand) ---------------------------------------------
+    // All unsaved edits live in the per-rseId draft so navigating between
+    // employees / pages doesn't lose them. `storeDraft` is undefined until the
+    // draft is hydrated; `draft` falls back to a stable frozen sentinel for reads.
+    const storeDraft = usePeopleReviewStore((s) => s.evalDrafts[rid]);
+    const hydrateEvalDraft = usePeopleReviewStore((s) => s.hydrateEvalDraft);
+    const updateEvalDraft = usePeopleReviewStore((s) => s.updateEvalDraft);
+    const clearEvalDraft = usePeopleReviewStore((s) => s.clearEvalDraft);
+    const draft = storeDraft ?? EMPTY_EVAL_DRAFT;
+    const {
+        localEvals, langSel, employeeFeedback, managerFeedback,
+        results, missions, trainings,
+        strongOptions, developOptions, strongDrafts, developDrafts,
+    } = draft;
+
+    // Field setters with the React `useState` dispatch signature so the existing
+    // handlers below can keep using `setX(prev => ...)` unchanged — each writes
+    // back into the store draft for the current rseId.
+    function makeSetter<K extends keyof EvaluationDraft>(key: K): Dispatch<SetStateAction<EvaluationDraft[K]>> {
+        return (action) =>
+            updateEvalDraft(rid, (d) => ({
+                ...d,
+                [key]: typeof action === 'function'
+                    ? (action as (prev: EvaluationDraft[K]) => EvaluationDraft[K])(d[key])
+                    : action,
+            }));
+    }
+    const setLocalEvals = makeSetter('localEvals');
+    const setLangSel = makeSetter('langSel');
+    const setEmployeeFeedback = makeSetter('employeeFeedback');
+    const setManagerFeedback = makeSetter('managerFeedback');
+    const setResults = makeSetter('results');
+    const setMissions = makeSetter('missions');
+    const setTrainings = makeSetter('trainings');
+    const setStrongOptions = makeSetter('strongOptions');
+    const setDevelopOptions = makeSetter('developOptions');
+    const setStrongDrafts = makeSetter('strongDrafts');
+    const setDevelopDrafts = makeSetter('developDrafts');
 
     const langMut = useMutation({
         mutationFn: (languages: EmployeeLanguageInput[]) =>
@@ -556,37 +241,22 @@ export function EvaluationPage() {
         ? formatYearsMonths(personalData.job_assigned_date, getString, userLang)
         : null;
 
-    // --- Employee data tabs (languages / feedback / results) ---
+    // --- Ephemeral tab / input UI (not part of the saved draft) ---
     const [dataTab, setDataTab] = useState(0);
-    const [employeeFeedback, setEmployeeFeedback] = useState('');
-    const [managerFeedback, setManagerFeedback] = useState('');
-    const [results, setResults] = useState<string[]>([]);
     const [newResultText, setNewResultText] = useState('');
-    const [missions, setMissions] = useState<string[]>(() => parseMissions(null, MISSION_COUNT));
-    const [trainings, setTrainings] = useState('');
-    // Competence summary (analysis tab 2): strong / to-develop picked competences.
     const [analysisTab, setAnalysisTab] = useState(0);
-    const [strongOptions, setStrongOptions] = useState<SummaryOption[]>([]);
-    const [developOptions, setDevelopOptions] = useState<SummaryOption[]>([]);
-    // Comment-input drafts per section, lifted here so dimension facts can push into them.
-    const [strongDrafts, setStrongDrafts] = useState<Record<string, string>>({});
-    const [developDrafts, setDevelopDrafts] = useState<Record<string, string>>({});
 
+    // Hydrate the draft once all server data for this rseId is loaded and settled.
+    // Skipped when a draft already exists, so in-progress edits survive navigating
+    // away and back; the draft is cleared on save, which lets this repopulate it
+    // from the fresh server response.
+    const hydrationReady =
+        !!rseDetail && !rseFetching && !evalFetching &&
+        (!employeeId || (langProfile !== undefined && !langFetching));
     useEffect(() => {
-        if (rseDetail) {
-            setEmployeeFeedback(rseDetail.employee_feedback ?? '');
-            setManagerFeedback(rseDetail.manager_feedback ?? '');
-            setResults(parseFacts(rseDetail.results_achievements));
-            setMissions(parseMissions(rseDetail.development_plan, MISSION_COUNT));
-            setTrainings(rseDetail.trainings ?? '');
-            let summary: { strong?: unknown; develop?: unknown } = {};
-            if (rseDetail.competence_summary) {
-                try { summary = JSON.parse(rseDetail.competence_summary); } catch { summary = {}; }
-            }
-            setStrongOptions(parseSummarySide(summary.strong));
-            setDevelopOptions(parseSummarySide(summary.develop));
-        }
-    }, [rseDetail]);
+        if (!hydrationReady || !rseDetail || storeDraft) return;
+        hydrateEvalDraft(rid, buildEvaluationDraft(rseDetail, evaluations, langProfile, getString));
+    }, [hydrationReady, storeDraft, rid, rseDetail, evaluations, langProfile, getString, hydrateEvalDraft]);
 
     const rseFieldsMut = useMutation({
         mutationFn: (fields: RSEFieldsUpdate) => saveRSEFields(rid, fields),
@@ -606,41 +276,6 @@ export function EvaluationPage() {
     const removeResult = (index: number) => {
         setResults(prev => prev.filter((_, i) => i !== index));
     };
-
-    useEffect(() => {
-        if (evaluations.length > 0) {
-            setLocalEvals(evaluations.map((e: Evaluation) => {
-                // Behaviour descriptors come from the competence hint (•-bulleted);
-                // fall back to a single descriptor (the competence name) when there is none.
-                const hintText = competenceHint(getString, e.dimension_key, e.dimension_description ?? '');
-                let descriptors = parseDescriptors(hintText);
-                if (descriptors.length === 0) {
-                    descriptors = [competenceName(getString, e.dimension_key, e.dimension_name)];
-                }
-                const criterionScores: Record<number, number> = {};
-                for (const cs of e.criterion_scores) {
-                    if (cs.criterion_index >= 0 && cs.criterion_index < descriptors.length) {
-                        criterionScores[cs.criterion_index] = cs.score;
-                    }
-                }
-                return {
-                    id: e.id,
-                    dimension_id: e.dimension_id,
-                    dimension_name: e.dimension_name,
-                    dimension_key: e.dimension_key,
-                    dimension_description: e.dimension_description ?? null,
-                    dimension_is_active: e.dimension_is_active,
-                    descriptors,
-                    criterionScores,
-                    facts: parseFacts(e.facts),
-                    improvement: e.improvement ?? '',
-                };
-            }));
-        }
-        // getString intentionally omitted: descriptors are reseeded only on data
-        // change, not on every language re-render (which would clobber edits).
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [evaluations]);
 
     const saveMut = useMutation({
         mutationFn: bulkUpdateEvaluations,
@@ -689,13 +324,16 @@ export function EvaluationPage() {
     const nextId = currentIdx < siblingIds.length - 1 ? siblingIds[currentIdx + 1] : null;
 
     const goToEmployee = (id: number) => {
-        navigate({ to: '/people-review/evaluation/$rseId' as any, params: { rseId: String(id) } });
+        navigate({ to: '/people-review/evaluation/$rseId', params: { rseId: String(id) } });
     };
 
     const isLoading = rseLoading || evalLoading;
     const sessionStatus = rseDetail?.session_status ?? 'open';
     // Editable only if BOTH session is open AND employee status is open
     const isEditable = rseDetail?.status === 'open' && sessionStatus === 'open';
+    // Editing affordances inside the content are additionally gated by presentation
+    // mode; header actions (Save / Mark reviewed / Revert) stay on real `isEditable`.
+    const showEditing = isEditable && !presentationMode;
     const isSessionClosed = sessionStatus === 'closed';
 
     // In a closed session show every dimension; otherwise only active ones.
@@ -715,14 +353,6 @@ export function EvaluationPage() {
         const idx = visibleEvals.findIndex(e => e.dimension_key === key);
         return getDimColor(key, idx >= 0 ? idx : 0);
     };
-
-    // Translate CEFR level label/hint by code, falling back to the DB value.
-    const translatedOr = (key: string, fallback: string) => {
-        const v = getString(key);
-        return v && v !== key ? v : fallback;
-    };
-    const langLevelLabel = (code: string, fallback: string) => translatedOr(`langLevelLabel${code}`, fallback);
-    const langLevelHint = (code: string, fallback: string) => translatedOr(`langLevelHint${code}`, fallback);
 
     // A competence is "picked" if it appears in either summary section.
     const isStrongPicked = (key: string) => strongOptions.some(o => o.dimension_key === key);
@@ -745,11 +375,6 @@ export function EvaluationPage() {
         .filter(e => !developOptions.some(o => o.dimension_key === e.dimension_key))
         .map(e => ({ key: e.dimension_key, name: competenceLabel(e.dimension_key) }));
 
-    const activeEval = visibleEvals[activeTab];
-    const activeColor = activeEval ? getDimColor(activeEval.dimension_key, activeTab) : t.accent;
-    const activeMean = activeEval ? evalMean(activeEval) : null;
-    const activeLevelPct = ((activeMean ?? 0) / MAX_GRADE) * 100;
-
     // Jump the facts section below to the tab of the given competence
     // (used when a competence is selected in the summary above).
     const activateCompetenceTab = (key: string) => {
@@ -757,7 +382,7 @@ export function EvaluationPage() {
         if (idx >= 0) setActiveTab(idx);
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         const updates: EvaluationBulkUpdate[] = localEvals.map(le => {
             // Send the per-behaviour scores; the backend derives the competence
             // level (fractional mean + legacy rounded score) from them.
@@ -773,26 +398,37 @@ export function EvaluationPage() {
                 criterion_scores,
             };
         });
-        saveMut.mutate(updates);
+        const hasMissions = missions.some(m => m.trim());
+        const hasSummary = strongOptions.length > 0 || developOptions.length > 0;
+        const tasks: Promise<unknown>[] = [
+            saveMut.mutateAsync(updates),
+            rseFieldsMut.mutateAsync({
+                employee_feedback: employeeFeedback || null,
+                manager_feedback: managerFeedback || null,
+                results_achievements: serializeFacts(results) || null,
+                development_plan: hasMissions ? JSON.stringify(missions) : null,
+                trainings: trainings || null,
+                competence_summary: hasSummary
+                    ? JSON.stringify({ strong: strongOptions, develop: developOptions })
+                    : null,
+            }),
+        ];
         if (employeeId) {
             const languages: EmployeeLanguageInput[] = FOREIGN_LANGUAGES.map(({ key }) => ({
                 language: key,
                 level_id: langSel[key] ?? null,
             }));
-            langMut.mutate(languages);
+            tasks.push(langMut.mutateAsync(languages));
         }
-        const hasMissions = missions.some(m => m.trim());
-        const hasSummary = strongOptions.length > 0 || developOptions.length > 0;
-        rseFieldsMut.mutate({
-            employee_feedback: employeeFeedback || null,
-            manager_feedback: managerFeedback || null,
-            results_achievements: serializeFacts(results) || null,
-            development_plan: hasMissions ? JSON.stringify(missions) : null,
-            trainings: trainings || null,
-            competence_summary: hasSummary
-                ? JSON.stringify({ strong: strongOptions, develop: developOptions })
-                : null,
-        });
+        try {
+            // Each mutation awaits its own query invalidation (refetch) in onSuccess,
+            // so once all settle the server data is fresh — drop the draft to let the
+            // hydration effect repopulate it (keeps backend-derived fields current).
+            await Promise.all(tasks);
+            clearEvalDraft(rid);
+        } catch {
+            // Per-mutation onError already surfaced the failure to the user.
+        }
     };
 
     const updateMission = (index: number, value: string) => {
@@ -840,6 +476,34 @@ export function EvaluationPage() {
         ));
     };
 
+    // Reorder a fact within the same competence (drop it *before* the target row).
+    const reorderFact = (evalId: number, from: number, toRow: number) => {
+        const to = from < toRow ? toRow - 1 : toRow;
+        if (from === to) return;
+        setLocalEvals(prev => prev.map(e => {
+            if (e.id !== evalId) return e;
+            const next = [...e.facts];
+            const [moved] = next.splice(from, 1);
+            next.splice(to, 0, moved);
+            return { ...e, facts: next };
+        }));
+    };
+
+    // Move a numbered fact from one competence to another. Both lists re-number
+    // automatically (numbering is the render-time array index).
+    const moveFact = (fromEvalId: number, index: number, toEvalId: number) => {
+        if (fromEvalId === toEvalId) return;
+        setLocalEvals(prev => {
+            const fact = prev.find(e => e.id === fromEvalId)?.facts[index];
+            if (fact == null) return prev;
+            return prev.map(e => {
+                if (e.id === fromEvalId) return { ...e, facts: e.facts.filter((_, i) => i !== index) };
+                if (e.id === toEvalId) return { ...e, facts: [...e.facts, fact] };
+                return e;
+            });
+        });
+    };
+
     if (isLoading) {
         return (
             <AppShell>
@@ -859,7 +523,8 @@ export function EvaluationPage() {
                     </Link>
                     {rseDetail && (
                         <Link
-                            to={`/people-review/${rseDetail.session_id}` as any}
+                            to="/people-review/$sessionId"
+                            params={{ sessionId: String(rseDetail.session_id) }}
                             style={{ textDecoration: 'none', color: 'inherit' }}
                         >
                             <Typography variant="body2" color="text.secondary">
@@ -1056,116 +721,43 @@ export function EvaluationPage() {
                                         </Typography>
                                     )}
                                 </Box>
+
+                                {/* Presentation mode toggle — hides every editing affordance.
+                                    Only meaningful while editable (open status); reviewed/closed
+                                    are already read-only, so the switch is not rendered there. */}
+                                {isEditable && (
+                                    <Tooltip title={getString('presentationModeHint')} placement="top">
+                                        <Stack direction="row" alignItems="center" spacing={0.25} sx={{ ml: 0.5 }}>
+                                            <Switch
+                                                size="small"
+                                                checked={presentationMode}
+                                                onChange={(e) => setPresentationMode(e.target.checked)}
+                                            />
+                                            <Typography fontSize={12} fontWeight={600} color={t.textMuted} sx={{ whiteSpace: 'nowrap' }}>
+                                                {getString('presentationMode')}
+                                            </Typography>
+                                        </Stack>
+                                    </Tooltip>
+                                )}
                             </Stack>
                         </Box>
 
                         {/* Employee facts — spread evenly across the full width */}
-                        <Box
-                            sx={{
-                                mb: 2.5,
-                                display: 'flex',
-                                flexWrap: 'wrap',
-                                justifyContent: 'space-between',
-                                alignItems: 'flex-start',
-                                gap: 2,
-                                rowGap: 1.5,
-                            }}
-                        >
-                            {/* Job */}
-                            <Stack direction="row" spacing={0.75} alignItems="center" sx={{ minWidth: 0 }}>
-                                <WorkOutlineIcon sx={{ fontSize: 18, color: t.textMuted }} />
-                                <Box sx={{ minWidth: 0 }}>
-                                    <Typography variant="caption" color={t.textMuted} sx={{ display: 'block', lineHeight: 1.1 }}>
-                                        {getString('job')}
-                                    </Typography>
-                                    <Typography variant="body2" color={t.text} fontWeight={600} noWrap>
-                                        {personalData?.job_name ?? '—'}
-                                    </Typography>
-                                </Box>
-                            </Stack>
-
-                            {/* Department (main) */}
-                            <Stack direction="row" spacing={0.75} alignItems="center" sx={{ minWidth: 0 }}>
-                                <ApartmentIcon sx={{ fontSize: 18, color: t.textMuted }} />
-                                <Box sx={{ minWidth: 0 }}>
-                                    <Typography variant="caption" color={t.textMuted} sx={{ display: 'block', lineHeight: 1.1 }}>
-                                        {getString('department')}
-                                    </Typography>
-                                    <Typography variant="body2" color={t.text} fontWeight={600} noWrap>
-                                        {personalData?.main_department_name ?? '—'}
-                                    </Typography>
-                                </Box>
-                            </Stack>
-
-                            {/* Birth date / age */}
-                            <Stack direction="row" spacing={0.75} alignItems="center" sx={{ minWidth: 0 }}>
-                                <CakeOutlinedIcon sx={{ fontSize: 18, color: t.textMuted }} />
-                                <Box sx={{ minWidth: 0 }}>
-                                    <Typography variant="caption" color={t.textMuted} sx={{ display: 'block', lineHeight: 1.1 }}>
-                                        {getString('birthDate')}
-                                    </Typography>
-                                    <Stack direction="row" spacing={0.25} alignItems="center">
-                                        <Typography variant="body2" color={t.text} fontWeight={600} noWrap>
-                                            {formatDate(personalData?.birth_date ?? null)}
-                                            {employeeAge !== null && ` · ${getString('yearsOld', { age: employeeAge })}`}
-                                        </Typography>
-                                        {employeeId && (
-                                            <Tooltip title={getString('editBirthDate')} placement="top">
-                                                <IconButton size="small" onClick={() => setBirthDateOpen(true)} sx={{ p: 0.2 }}>
-                                                    <EditCalendarIcon sx={{ fontSize: 14 }} />
-                                                </IconButton>
-                                            </Tooltip>
-                                        )}
-                                    </Stack>
-                                </Box>
-                            </Stack>
-
-                            {/* Hire date / tenure */}
-                            <Stack direction="row" spacing={0.75} alignItems="center" sx={{ minWidth: 0 }}>
-                                <BusinessOutlinedIcon sx={{ fontSize: 18, color: t.textMuted }} />
-                                <Box sx={{ minWidth: 0 }}>
-                                    <Typography variant="caption" color={t.textMuted} sx={{ display: 'block', lineHeight: 1.1 }}>
-                                        {getString('hireDate')}
-                                    </Typography>
-                                    <Stack direction="row" spacing={0.25} alignItems="center">
-                                        <Typography variant="body2" color={t.text} fontWeight={600} noWrap>
-                                            {formatDate(personalData?.hire_date ?? null)}
-                                            {employeeTenure !== null && ` · ${getString('yearsWithCompany', { years: employeeTenure })}`}
-                                        </Typography>
-                                        {employeeId && (
-                                            <Tooltip title={getString('editHireDate')} placement="top">
-                                                <IconButton size="small" onClick={() => setHireDateOpen(true)} sx={{ p: 0.2 }}>
-                                                    <EditCalendarIcon sx={{ fontSize: 14 }} />
-                                                </IconButton>
-                                            </Tooltip>
-                                        )}
-                                    </Stack>
-                                </Box>
-                            </Stack>
-
-                            {/* Job-assigned date / time in position */}
-                            <Stack direction="row" spacing={0.75} alignItems="center" sx={{ minWidth: 0 }}>
-                                <EventAvailableOutlinedIcon sx={{ fontSize: 18, color: t.textMuted }} />
-                                <Box sx={{ minWidth: 0 }}>
-                                    <Typography variant="caption" color={t.textMuted} sx={{ display: 'block', lineHeight: 1.1 }}>
-                                        {getString('jobAssignedDate')}
-                                    </Typography>
-                                    <Stack direction="row" spacing={0.25} alignItems="center">
-                                        <Typography variant="body2" color={t.text} fontWeight={600} noWrap>
-                                            {formatDate(personalData?.job_assigned_date ?? null)}
-                                            {positionDuration && ` · ${positionDuration}`}
-                                        </Typography>
-                                        {employeeId && (
-                                            <Tooltip title={getString('editJobAssignedDate')} placement="top">
-                                                <IconButton size="small" onClick={() => setJobAssignedOpen(true)} sx={{ p: 0.2 }}>
-                                                    <EditCalendarIcon sx={{ fontSize: 14 }} />
-                                                </IconButton>
-                                            </Tooltip>
-                                        )}
-                                    </Stack>
-                                </Box>
-                            </Stack>
-                        </Box>
+                        <EmployeeFactsBar
+                            jobName={personalData?.job_name}
+                            departmentName={personalData?.main_department_name}
+                            birthDate={personalData?.birth_date}
+                            hireDate={personalData?.hire_date}
+                            jobAssignedDate={personalData?.job_assigned_date}
+                            employeeAge={employeeAge}
+                            employeeTenure={employeeTenure}
+                            positionDuration={positionDuration}
+                            showEdit={!!employeeId}
+                            getString={getString}
+                            onEditBirth={() => setBirthDateOpen(true)}
+                            onEditHire={() => setHireDateOpen(true)}
+                            onEditJobAssigned={() => setJobAssignedOpen(true)}
+                        />
 
                         {/* Education block (1:N) — full width */}
                         {employeeId && (
@@ -1192,197 +784,28 @@ export function EvaluationPage() {
                         )}
 
                         {/* Employee data tabs: languages / feedback / results */}
-                        <Box sx={{ mb: 3, border: `1px solid ${t.borderLight}`, borderRadius: '12px', overflow: 'hidden', background: t.cardBg }}>
-                            <Tabs
-                                value={dataTab}
-                                onChange={(_, v) => setDataTab(v)}
-                                variant="scrollable"
-                                scrollButtons="auto"
-                                sx={{ borderBottom: `1px solid ${t.borderLight}` }}
-                            >
-                                <Tab label={getString('foreignLanguages')} sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12 }} />
-                                <Tab label={getString('employeeFeedback')} sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12 }} />
-                                <Tab label={getString('managerFeedback')} sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12 }} />
-                                <Tab label={getString('resultsAchievements')} sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12 }} />
-                                <Tab label={getString('developmentPlan')} sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12 }} />
-                                <Tab label={getString('requiredTrainings')} sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12 }} />
-                            </Tabs>
-
-                            <Box sx={{ p: 3 }}>
-                                {dataTab === 0 && (
-                                    <>
-                                        <Typography fontSize={12} color={t.textMuted} mb={2}>
-                                            {getString('foreignLanguagesHint')}
-                                        </Typography>
-                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
-                                {FOREIGN_LANGUAGES.map(({ key, labelKey }) => {
-                                    const selId = langSel[key] ?? null;
-                                    const selected = langLevels.find(l => l.id === selId);
-                                    return (
-                                        <Stack key={key} direction="row" spacing={0.5} alignItems="center">
-                                            <FormControl size="small" sx={{ minWidth: 190 }}>
-                                                <InputLabel id={`lang-${key}-label`}>{getString(labelKey)}</InputLabel>
-                                                <Select
-                                                    variant="outlined"
-                                                    labelId={`lang-${key}-label`}
-                                                    label={getString(labelKey)}
-                                                    value={selId == null ? '' : String(selId)}
-                                                    disabled={!isEditable}
-                                                    onChange={(e) => {
-                                                        const v = e.target.value;
-                                                        setLangSel(prev => ({ ...prev, [key]: v === '' ? null : Number(v) }));
-                                                    }}
-                                                >
-                                                    <MenuItem value=""><em>—</em></MenuItem>
-                                                    {langLevels.map(l => {
-                                                        const label = langLevelLabel(l.code, l.label);
-                                                        const hint = langLevelHint(l.code, l.hint);
-                                                        return (
-                                                            <MenuItem key={l.id} value={String(l.id)}>
-                                                                <Stack direction="row" alignItems="center" spacing={1} sx={{ width: '100%' }}>
-                                                                    <span>{l.code}{label ? ` · ${label}` : ''}</span>
-                                                                    {hint && (
-                                                                        <Tooltip title={hint} placement="right" arrow>
-                                                                            <InfoOutlinedIcon
-                                                                                fontSize="small"
-                                                                                sx={{ ml: 'auto', color: t.textMuted, cursor: 'help' }}
-                                                                                onClick={(e) => e.stopPropagation()}
-                                                                            />
-                                                                        </Tooltip>
-                                                                    )}
-                                                                </Stack>
-                                                            </MenuItem>
-                                                        );
-                                                    })}
-                                                </Select>
-                                            </FormControl>
-                                            <Tooltip
-                                                placement="top"
-                                                arrow
-                                                title={selected?.hint
-                                                    ? <span><strong>{selected.code}</strong> — {langLevelHint(selected.code, selected.hint)}</span>
-                                                    : getString('selectLevel')}
-                                            >
-                                                <InfoOutlinedIcon
-                                                    fontSize="small"
-                                                    sx={{ color: t.textMuted, opacity: selected ? 1 : 0.4, cursor: 'help', flexShrink: 0 }}
-                                                />
-                                            </Tooltip>
-                                        </Stack>
-                                    );
-                                })}
-                                        </Box>
-                                    </>
-                                )}
-
-                                {dataTab === 1 && (
-                                    <TextField
-                                        label={getString('employeeFeedback')}
-                                        value={employeeFeedback}
-                                        onChange={e => setEmployeeFeedback(e.target.value)}
-                                        fullWidth multiline minRows={5}
-                                        disabled={!isEditable}
-                                    />
-                                )}
-
-                                {dataTab === 2 && (
-                                    <TextField
-                                        label={getString('managerFeedback')}
-                                        value={managerFeedback}
-                                        onChange={e => setManagerFeedback(e.target.value)}
-                                        fullWidth multiline minRows={5}
-                                        disabled={!isEditable}
-                                    />
-                                )}
-
-                                {dataTab === 3 && (
-                                    <Box>
-                                        {results.length > 0 && (
-                                            <Box sx={{ mb: 1.5 }}>
-                                                {results.map((item, idx) => (
-                                                    <Stack
-                                                        key={`result-${idx}`}
-                                                        direction="row"
-                                                        alignItems="flex-start"
-                                                        spacing={0.5}
-                                                        sx={{ mb: 0.5, py: 0.5, px: 0.75, borderRadius: '6px', '&:hover': { bgcolor: t.accent + '10' } }}
-                                                    >
-                                                        <Typography fontSize={12} fontWeight={700} color={t.accent} sx={{ minWidth: 22, pt: '2px' }}>
-                                                            {idx + 1}.
-                                                        </Typography>
-                                                        <Typography fontSize={13} sx={{ flex: 1, pt: '2px', wordBreak: 'break-word' }}>
-                                                            {item}
-                                                        </Typography>
-                                                        {isEditable && (
-                                                            <Tooltip title={getString('deleteFact')}>
-                                                                <IconButton size="small" onClick={() => removeResult(idx)} sx={{ p: 0.25, mt: '-2px' }}>
-                                                                    <CloseIcon sx={{ fontSize: 14 }} />
-                                                                </IconButton>
-                                                            </Tooltip>
-                                                        )}
-                                                    </Stack>
-                                                ))}
-                                            </Box>
-                                        )}
-                                        {isEditable && (
-                                            <Stack direction="row" spacing={1}>
-                                                <TextField
-                                                    size="small"
-                                                    placeholder={getString('typeFactPlaceholder')}
-                                                    value={newResultText}
-                                                    onChange={e => setNewResultText(e.target.value)}
-                                                    onKeyDown={e => {
-                                                        if (e.key === 'Enter' && !e.shiftKey) {
-                                                            e.preventDefault();
-                                                            addResult(newResultText);
-                                                        }
-                                                    }}
-                                                    fullWidth
-                                                />
-                                                <Button
-                                                    variant="outlined"
-                                                    size="small"
-                                                    startIcon={<AddIcon />}
-                                                    onClick={() => addResult(newResultText)}
-                                                    disabled={!newResultText.trim()}
-                                                    sx={{ textTransform: 'none', whiteSpace: 'nowrap' }}
-                                                >
-                                                    {getString('addFact')}
-                                                </Button>
-                                            </Stack>
-                                        )}
-                                    </Box>
-                                )}
-
-                                {dataTab === 4 && (
-                                    <Box>
-                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                                            {missions.map((mission, idx) => (
-                                                <TextField
-                                                    key={`mission-${idx}`}
-                                                    label={getString('mission', { num: idx + 1 })}
-                                                    value={mission}
-                                                    onChange={e => updateMission(idx, e.target.value)}
-                                                    multiline minRows={5}
-                                                    disabled={!isEditable}
-                                                    sx={{ flex: '1 1 320px', minWidth: 280 }}
-                                                />
-                                            ))}
-                                        </Box>
-                                    </Box>
-                                )}
-
-                                {dataTab === 5 && (
-                                    <TextField
-                                        label={getString('requiredTrainings')}
-                                        value={trainings}
-                                        onChange={e => setTrainings(e.target.value)}
-                                        fullWidth multiline minRows={5}
-                                        disabled={!isEditable}
-                                    />
-                                )}
-                            </Box>
-                        </Box>
+                        <EmployeeDataTabs
+                            dataTab={dataTab}
+                            onDataTabChange={setDataTab}
+                            isEditable={showEditing}
+                            getString={getString}
+                            langLevels={langLevels}
+                            langSel={langSel}
+                            setLangSel={setLangSel}
+                            employeeFeedback={employeeFeedback}
+                            onEmployeeFeedbackChange={setEmployeeFeedback}
+                            managerFeedback={managerFeedback}
+                            onManagerFeedbackChange={setManagerFeedback}
+                            results={results}
+                            newResultText={newResultText}
+                            onNewResultTextChange={setNewResultText}
+                            onAddResult={addResult}
+                            onRemoveResult={removeResult}
+                            missions={missions}
+                            onUpdateMission={updateMission}
+                            trainings={trainings}
+                            onTrainingsChange={setTrainings}
+                        />
 
                         {/* Scores overview + competence summary tabs */}
                         {visibleEvals.length > 0 && (
@@ -1413,7 +836,7 @@ export function EvaluationPage() {
                                                     candidates={strongCandidates}
                                                     nameOf={competenceLabel}
                                                     colorOf={competenceColor}
-                                                    isEditable={isEditable}
+                                                    isEditable={showEditing}
                                                     getString={getString}
                                                     drafts={strongDrafts}
                                                     onDraftChange={(key, value) => setStrongDrafts(prev => ({ ...prev, [key]: value }))}
@@ -1430,7 +853,7 @@ export function EvaluationPage() {
                                                     candidates={developCandidates}
                                                     nameOf={competenceLabel}
                                                     colorOf={competenceColor}
-                                                    isEditable={isEditable}
+                                                    isEditable={showEditing}
                                                     getString={getString}
                                                     drafts={developDrafts}
                                                     onDraftChange={(key, value) => setDevelopDrafts(prev => ({ ...prev, [key]: value }))}
@@ -1453,219 +876,30 @@ export function EvaluationPage() {
 
                         {/* Dimension tabs */}
                         {visibleEvals.length > 0 && (
-                            <Box sx={{ border: `1px solid ${t.borderLight}`, borderRadius: '12px', overflow: 'hidden', background: t.cardBg }}>
-                                <Tabs
-                                    value={activeTab}
-                                    onChange={(_, v) => setActiveTab(v)}
-                                    variant="scrollable"
-                                    scrollButtons="auto"
-                                    sx={{
-                                        borderBottom: `1px solid ${t.borderLight}`,
-                                        '& .MuiTabs-indicator': { height: 3, borderRadius: '3px 3px 0 0', bgcolor: activeColor },
-                                    }}
-                                >
-                                    {visibleEvals.map((e, idx) => {
-                                        const color = getDimColor(e.dimension_key, idx);
-                                        const filled = evalFilled(e);
-                                        return (
-                                            <Tab
-                                                key={e.id}
-                                                label={
-                                                    <Stack direction="row" spacing={0.75} alignItems="center">
-                                                        <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: filled ? color : `${color}44`, flexShrink: 0 }} />
-                                                        <span>{competenceName(getString, e.dimension_key, e.dimension_name)}</span>
-                                                    </Stack>
-                                                }
-                                                sx={{
-                                                    fontSize: 12,
-                                                    fontWeight: activeTab === idx ? 700 : 500,
-                                                    color: activeTab === idx ? color : t.textMuted,
-                                                    textTransform: 'none',
-                                                    minHeight: 48,
-                                                    '&.Mui-selected': { color },
-                                                }}
-                                            />
-                                        );
-                                    })}
-                                </Tabs>
-
-                                {activeEval && (
-                                    <Box sx={{ p: 3 }}>
-                                        {/* Dimension header */}
-                                        <Stack direction="row" alignItems="center" spacing={1} mb={2.5}>
-                                            <Box sx={{ width: 4, height: 26, borderRadius: 2, bgcolor: activeColor, flexShrink: 0 }} />
-                                            <Typography variant="h6" fontWeight={700} color={activeColor}>
-                                                {competenceName(getString, activeEval.dimension_key, activeEval.dimension_name)}
-                                            </Typography>
-                                        </Stack>
-
-                                        {/* Per-behaviour scoring — the competence level is their average */}
-                                        <Box sx={{ mb: 3 }}>
-                                            <Typography fontSize={13} fontWeight={600} color={t.textSecondary} mb={1}>
-                                                {`${getString('rateEachBehaviour')} (1–${MAX_GRADE})`}
-                                            </Typography>
-                                            <Stack spacing={1} mb={2}>
-                                                {activeEval.descriptors.map((desc, i) => (
-                                                    <Stack
-                                                        key={i}
-                                                        direction="row"
-                                                        alignItems="center"
-                                                        spacing={1.5}
-                                                        sx={{
-                                                            py: 0.75, px: 1.25, borderRadius: '8px',
-                                                            border: `1px solid ${activeColor}22`,
-                                                            bgcolor: activeColor + '08',
-                                                        }}
-                                                    >
-                                                        <Typography fontSize={12} fontWeight={700} color={activeColor} sx={{ minWidth: 18, pt: '1px' }}>
-                                                            {i + 1}.
-                                                        </Typography>
-                                                        <Typography fontSize={13} sx={{ flex: 1, wordBreak: 'break-word' }}>
-                                                            {desc}
-                                                        </Typography>
-                                                        <Rating
-                                                            value={activeEval.criterionScores[i] ?? 0}
-                                                            max={MAX_GRADE}
-                                                            onChange={(_, v) => { if (isEditable) setCriterion(activeEval.id, i, v); }}
-                                                            readOnly={!isEditable}
-                                                            sx={{ flexShrink: 0, '& .MuiRating-iconFilled': { color: activeColor }, '& .MuiRating-iconHover': { color: activeColor } }}
-                                                        />
-                                                        <Typography fontSize={13} fontWeight={700} color={activeColor} sx={{ width: 18, textAlign: 'right' }}>
-                                                            {activeEval.criterionScores[i] ?? '—'}
-                                                        </Typography>
-                                                    </Stack>
-                                                ))}
-                                            </Stack>
-
-                                            {/* Competence level = arithmetic mean (no stars — value is fractional) */}
-                                            <Stack direction="row" alignItems="center" spacing={1.5}>
-                                                <Typography fontSize={13} fontWeight={700} color={t.textSecondary} sx={{ whiteSpace: 'nowrap' }}>
-                                                    {getString('competenceLevel')}
-                                                </Typography>
-                                                <Box sx={{ flex: 1, maxWidth: 240, height: 10, borderRadius: 5, bgcolor: `${activeColor}22`, position: 'relative' }}>
-                                                    <Box sx={{
-                                                        position: 'absolute', left: 0, top: 0, bottom: 0,
-                                                        width: `${activeLevelPct}%`, borderRadius: 5, bgcolor: activeColor,
-                                                        transition: 'width 0.3s ease',
-                                                    }} />
-                                                </Box>
-                                                <Typography fontWeight={700} color={activeColor} fontSize={15} sx={{ minWidth: 64, textAlign: 'right' }}>
-                                                    {activeMean != null ? activeMean.toFixed(2) : '—'}/{MAX_GRADE}
-                                                </Typography>
-                                            </Stack>
-                                        </Box>
-
-                                        <Box sx={{ mb: 2 }}>
-                                            <Typography fontSize={13} fontWeight={600} color={t.textSecondary} mb={1}>
-                                                {getString('factsAndAchievements')}
-                                            </Typography>
-                                            {activeEval.facts.length > 0 && (
-                                                <Box sx={{ mb: 1.5 }}>
-                                                    {activeEval.facts.map((fact, idx) => (
-                                                        <Stack
-                                                            key={`fact-${idx}`}
-                                                            direction="row"
-                                                            alignItems="flex-start"
-                                                            spacing={0.5}
-                                                            sx={{
-                                                                mb: 0.5,
-                                                                py: 0.5,
-                                                                px: 0.75,
-                                                                borderRadius: '6px',
-                                                                '&:hover': { bgcolor: activeColor + '10' },
-                                                            }}
-                                                        >
-                                                            <Typography
-                                                                fontSize={12}
-                                                                fontWeight={700}
-                                                                color={activeColor}
-                                                                sx={{ minWidth: 22, pt: '2px' }}
-                                                            >
-                                                                {idx + 1}.
-                                                            </Typography>
-                                                            <Typography fontSize={13} sx={{ flex: 1, pt: '2px', wordBreak: 'break-word' }}>
-                                                                {fact}
-                                                            </Typography>
-                                                            {isEditable && isCompetencePicked(activeEval.dimension_key) && (
-                                                                <Tooltip title={getString('copyToSummaryComment')}>
-                                                                    <IconButton
-                                                                        size="small"
-                                                                        onClick={() => copyFactToSummary(activeEval.dimension_key, fact)}
-                                                                        sx={{ p: 0.25, mt: '-2px' }}
-                                                                    >
-                                                                        <ContentCopyIcon sx={{ fontSize: 13 }} />
-                                                                    </IconButton>
-                                                                </Tooltip>
-                                                            )}
-                                                            {isEditable && (
-                                                                <Tooltip title={getString('deleteFact')}>
-                                                                    <IconButton
-                                                                        size="small"
-                                                                        onClick={() => removeFact(activeEval.id, idx)}
-                                                                        sx={{ p: 0.25, mt: '-2px' }}
-                                                                    >
-                                                                        <CloseIcon sx={{ fontSize: 14 }} />
-                                                                    </IconButton>
-                                                                </Tooltip>
-                                                            )}
-                                                        </Stack>
-                                                    ))}
-                                                </Box>
-                                            )}
-                                            {isEditable && (
-                                                <Stack direction="row" spacing={1}>
-                                                    <TextField
-                                                        size="small"
-                                                        placeholder={getString('typeFactPlaceholder')}
-                                                        value={newFactTexts[activeEval.id] ?? ''}
-                                                        onChange={e =>
-                                                            setNewFactTexts(prev => ({ ...prev, [activeEval.id]: e.target.value }))
-                                                        }
-                                                        onKeyDown={e => {
-                                                            if (e.key === 'Enter' && !e.shiftKey) {
-                                                                e.preventDefault();
-                                                                addFact(activeEval.id, newFactTexts[activeEval.id] ?? '');
-                                                            }
-                                                        }}
-                                                        fullWidth
-                                                    />
-                                                    <Button
-                                                        variant="outlined"
-                                                        size="small"
-                                                        startIcon={<AddIcon />}
-                                                        onClick={() => addFact(activeEval.id, newFactTexts[activeEval.id] ?? '')}
-                                                        disabled={!(newFactTexts[activeEval.id] ?? '').trim()}
-                                                        sx={{ textTransform: 'none', whiteSpace: 'nowrap' }}
-                                                    >
-                                                        {getString('addFact')}
-                                                    </Button>
-                                                </Stack>
-                                            )}
-                                        </Box>
-                                        <TextField
-                                            label={getString('areasForImprovement')}
-                                            value={activeEval.improvement}
-                                            onChange={e => updateLocal(activeEval.id, 'improvement', e.target.value)}
-                                            fullWidth multiline rows={2}
-                                            disabled={!isEditable}
-                                        />
-
-                                        {/* Prev / Next tab */}
-                                        <Stack direction="row" justifyContent="space-between" mt={2.5}>
-                                            <Button size="small" disabled={activeTab === 0}
-                                                onClick={() => setActiveTab(p => p - 1)}
-                                                sx={{ textTransform: 'none', color: t.textMuted }}>
-                                                ← {getString('previousDimension')}
-                                            </Button>
-                                            <Button size="small" disabled={activeTab === visibleEvals.length - 1}
-                                                onClick={() => setActiveTab(p => p + 1)}
-                                                sx={{ textTransform: 'none', color: activeColor }}>
-                                                {getString('nextDimension')} →
-                                            </Button>
-                                        </Stack>
-                                    </Box>
-                                )}
-                            </Box>
+                            <DimensionPanel
+                                visibleEvals={visibleEvals}
+                                localEvals={localEvals}
+                                activeTab={activeTab}
+                                setActiveTab={setActiveTab}
+                                isEditable={showEditing}
+                                getString={getString}
+                                draggedFact={draggedFact}
+                                setDraggedFact={setDraggedFact}
+                                dragOverTab={dragOverTab}
+                                setDragOverTab={setDragOverTab}
+                                dragOverFactIndex={dragOverFactIndex}
+                                setDragOverFactIndex={setDragOverFactIndex}
+                                setPendingMove={setPendingMove}
+                                newFactTexts={newFactTexts}
+                                setNewFactTexts={setNewFactTexts}
+                                setCriterion={setCriterion}
+                                addFact={addFact}
+                                removeFact={removeFact}
+                                reorderFact={reorderFact}
+                                updateLocal={updateLocal}
+                                isCompetencePicked={isCompetencePicked}
+                                copyFactToSummary={copyFactToSummary}
+                            />
                         )}
                     </>
                 )}
@@ -1723,6 +957,39 @@ export function EvaluationPage() {
                     {snackbar.message}
                 </Alert>
             </Snackbar>
+
+            {/* Confirm moving a fact to another competence tab */}
+            <Dialog open={pendingMove != null} onClose={() => setPendingMove(null)} maxWidth="xs" fullWidth>
+                <DialogTitle>{getString('moveFactTitle')}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText sx={{ mb: 1 }}>
+                        {getString('moveFactConfirm', { target: pendingMove?.toName ?? '' })}
+                    </DialogContentText>
+                    {pendingMove && (
+                        <Typography fontSize={13} sx={{ fontStyle: 'italic', color: t.textMuted, wordBreak: 'break-word' }}>
+                            “{pendingMove.fact}”
+                        </Typography>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setPendingMove(null)} sx={{ textTransform: 'none' }}>
+                        {getString('cancel')}
+                    </Button>
+                    <Button
+                        variant="contained"
+                        onClick={() => {
+                            if (pendingMove) {
+                                moveFact(pendingMove.fromEvalId, pendingMove.index, pendingMove.toEvalId);
+                                setActiveTab(pendingMove.toTabIndex);
+                            }
+                            setPendingMove(null);
+                        }}
+                        sx={{ textTransform: 'none' }}
+                    >
+                        {getString('move')}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </AppShell>
     );
 }

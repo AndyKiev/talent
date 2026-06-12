@@ -39,7 +39,7 @@ export function MyReviewsPage() {
                     startIcon={<EditNoteIcon />}
                     onClick={() =>
                         navigate({
-                            to: '/people-review/evaluation/$rseId' as any,
+                            to: '/people-review/evaluation/$rseId',
                             params: { rseId: String(params.row.id) },
                         })
                     }

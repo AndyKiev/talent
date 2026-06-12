@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, type Dispatch, type SetStateAction } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     Box,
@@ -24,6 +24,11 @@ import {
     type ReviewLevelLite,
     type ReviewLevelRequirementLite,
 } from './peopleReviewApi';
+import {
+    usePeopleReviewStore,
+    EMPTY_PROPOSED_DRAFT,
+    type ProposedDraft,
+} from './peopleReviewStore';
 
 /** Split a stored facts string ("1. one\n2. two") into an array, stripping numbering. */
 function parseFacts(raw: string | null): string[] {
@@ -51,10 +56,28 @@ export function ProposedLevelDrawer({ open, onClose, rseId, setSnackbar }: Props
     const getString = useString();
     const qc = useQueryClient();
 
-    const [levelId, setLevelId] = useState<number | ''>('');
-    // requirement_id -> list of comments
-    const [answers, setAnswers] = useState<Record<number, string[]>>({});
-    const [drafts, setDrafts] = useState<Record<number, string>>({});
+    // Editable draft lives in the people-review store, keyed by rseId, so closing
+    // and reopening the drawer (or navigating away) keeps in-progress edits.
+    const proposedDraft = usePeopleReviewStore((s) => s.proposedDrafts[rseId]);
+    const hydrateProposedDraft = usePeopleReviewStore((s) => s.hydrateProposedDraft);
+    const updateProposedDraft = usePeopleReviewStore((s) => s.updateProposedDraft);
+    const clearProposedDraft = usePeopleReviewStore((s) => s.clearProposedDraft);
+    const { levelId, answers, drafts } = proposedDraft ?? EMPTY_PROPOSED_DRAFT;
+
+    // Field setters with the `useState` dispatch signature so the handlers below
+    // keep working unchanged — each writes back into the store draft.
+    function makeSetter<K extends keyof ProposedDraft>(key: K): Dispatch<SetStateAction<ProposedDraft[K]>> {
+        return (action) =>
+            updateProposedDraft(rseId, (d) => ({
+                ...d,
+                [key]: typeof action === 'function'
+                    ? (action as (prev: ProposedDraft[K]) => ProposedDraft[K])(d[key])
+                    : action,
+            }));
+    }
+    const setLevelId = makeSetter('levelId');
+    const setAnswers = makeSetter('answers');
+    const setDrafts = makeSetter('drafts');
 
     const { data: levels = [] } = useQuery({
         queryKey: ['review_levels', 'active'],
@@ -63,7 +86,7 @@ export function ProposedLevelDrawer({ open, onClose, rseId, setSnackbar }: Props
         enabled: open,
     });
 
-    const { data: proposed } = useQuery({
+    const { data: proposed, isFetching: proposedFetching } = useQuery({
         queryKey: ['proposed_level', rseId],
         queryFn: () => fetchProposedLevel(rseId),
         enabled: open && !!rseId,
@@ -76,18 +99,21 @@ export function ProposedLevelDrawer({ open, onClose, rseId, setSnackbar }: Props
         [levels],
     );
 
-    // Prefill from any saved registration when the drawer opens.
+    // Hydrate the draft from any saved registration once the query has settled,
+    // but only if no draft exists yet — so reopening preserves in-progress edits.
+    // The draft is cleared on save, which lets this repopulate from fresh data.
     useEffect(() => {
-        if (!open) return;
+        if (!open || proposedFetching || proposed === undefined || proposedDraft) return;
+        const map: Record<number, string[]> = {};
         if (proposed) {
-            setLevelId(proposed.level_id);
-            const map: Record<number, string[]> = {};
-            for (const a of proposed.answers) {
-                map[a.requirement_id] = parseFacts(a.facts);
-            }
-            setAnswers(map);
+            for (const a of proposed.answers) map[a.requirement_id] = parseFacts(a.facts);
         }
-    }, [open, proposed]);
+        hydrateProposedDraft(rseId, {
+            levelId: proposed ? proposed.level_id : '',
+            answers: map,
+            drafts: {},
+        });
+    }, [open, proposed, proposedFetching, proposedDraft, rseId, hydrateProposedDraft]);
 
     const selectedLevel: ReviewLevelLite | undefined = levels.find((l) => l.id === levelId);
     const requirements: ReviewLevelRequirementLite[] = useMemo(
@@ -138,6 +164,9 @@ export function ProposedLevelDrawer({ open, onClose, rseId, setSnackbar }: Props
             }),
         onSuccess: async (res) => {
             await qc.invalidateQueries({ queryKey: ['proposed_level', rseId] });
+            // Drop the draft so the hydration effect repopulates from the fresh
+            // server response (keeps the drawer in sync with what was just saved).
+            clearProposedDraft(rseId);
             setSnackbar({ open: true, message: res.detail, severity: 'success' });
         },
         onError: (err: Error) =>
@@ -145,7 +174,7 @@ export function ProposedLevelDrawer({ open, onClose, rseId, setSnackbar }: Props
     });
 
     return (
-        <Drawer anchor="right" open={open} onClose={onClose} PaperProps={{ sx: { width: { xs: '100%', sm: 560 } } }}>
+        <Drawer anchor="right" open={open} onClose={onClose} slotProps={{ paper: { sx: { width: { xs: '100%', sm: 560 } } } }}>
             <Box sx={{ p: 2.5, display: 'flex', flexDirection: 'column', height: '100%' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <Typography variant="h6" fontWeight={700} sx={{ flex: 1 }}>

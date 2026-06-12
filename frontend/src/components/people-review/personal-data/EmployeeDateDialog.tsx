@@ -10,14 +10,10 @@ import {
     DialogTitle,
     Typography,
 } from '@mui/material';
-import dayjs from 'dayjs';
 import BirthDateWheelPicker from './BirthDateWheelPicker';
 import { patchEmployeePersonalData } from '../peopleReviewApi';
 import type { GetStringFn } from '../../../types/getStringFn';
-
-// Display helper — the only place a date is rendered: always DD.MM.YYYY.
-export const formatDate = (iso: string | null): string =>
-    iso ? dayjs(iso).format('DD.MM.YYYY') : '—';
+import { formatDate } from '../../../utils/date';
 
 type DateField = 'birth_date' | 'hire_date' | 'job_assigned_date';
 

@@ -19,7 +19,7 @@ export const Route = createRootRoute({
             throw redirect({ to: "/auth/login" });
         }
         if (access_token && isPublicPath(path)) {
-            throw redirect({ to: "/employees" });
+            throw redirect({ to: "/people-review" });
         }
         if (access_token && isPublicPath(path)) {
             throw redirect({ to: "/admin" });
