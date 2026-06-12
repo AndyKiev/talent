@@ -91,3 +91,6 @@ CLAUDE.md
 **/SKILL.md
 
 
+
+# Messages live in the DB (msg_key/msg). translations.json is local scratch only.
+translations.json
