@@ -30,7 +30,6 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import dayjs from 'dayjs';
 import { Link } from '@tanstack/react-router';
 import EmployeeDateDialog from './personal-data/EmployeeDateDialog';
@@ -48,6 +47,7 @@ import {
     saveEmployeeLanguageProfile,
     saveRSEFields,
     fetchReviewLevels,
+    fetchProposedLevel,
     fetchEmployeeCurrentLevel,
     setEmployeeCurrentLevel,
     fetchEmployeePersonalData,
@@ -87,6 +87,7 @@ import { PersonalInfoPanel } from './evaluation/PersonalInfoPanel';
 import { JobInfoPanel } from './evaluation/JobInfoPanel';
 import { EmployeeDataTabs } from './evaluation/EmployeeDataTabs';
 import { DimensionPanel } from './evaluation/DimensionPanel';
+import EmployeeAvatar from '../ui/EmployeeAvatar';
 
 export function EvaluationPage() {
     const { rseId } = useParams({ strict: false }) as { rseId: string };
@@ -201,6 +202,18 @@ export function EvaluationPage() {
         queryFn: () => fetchReviewLevels(true),
         staleTime: 5 * 60_000,
     });
+    // Saved proposed level — shares the drawer's query key, so saving in the
+    // drawer (which invalidates it) refreshes the name shown on the button.
+    const { data: proposedLevel } = useQuery({
+        queryKey: ['proposed_level', rid],
+        queryFn: () => fetchProposedLevel(rid),
+        enabled: !!rid,
+        staleTime: 30_000,
+    });
+    const proposedLevelKey = proposedLevel
+        ? allLevels.find((l) => l.id === proposedLevel.level_id)?.name_key ?? null
+        : null;
+    const proposedLevelName = proposedLevelKey ? getString(proposedLevelKey) : null;
     const { data: empLevel } = useQuery({
         queryKey: ['employee_current_level', employeeId],
         queryFn: () => fetchEmployeeCurrentLevel(employeeId!),
@@ -600,6 +613,14 @@ export function EvaluationPage() {
                             <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, flexWrap: 'wrap' }}>
                                 <Box sx={{ minWidth: 0 }}>
                                     <Stack direction="row" alignItems="center" spacing={1.5}>
+                                        <EmployeeAvatar
+                                            employeeId={employeeId}
+                                            name={rseDetail.employee_name}
+                                            size={48}
+                                            editable={showEditing}
+                                            onSuccess={(message) => setSnackbar({ open: true, message, severity: 'success' })}
+                                            onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
+                                        />
                                         <Typography variant="h5" fontWeight={700} color={t.text}>
                                             {rseDetail.employee_name}
                                         </Typography>
@@ -692,17 +713,6 @@ export function EvaluationPage() {
                                         }} />
                                     </Box>
                                 </Box>
-
-                                {/* Proposed level (drawer) */}
-                                <Button
-                                    size="small"
-                                    variant="outlined"
-                                    startIcon={<TrendingUpIcon />}
-                                    onClick={() => setProposedOpen(true)}
-                                    sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, fontSize: 12 }}
-                                >
-                                    {getString('proposedLevel')}
-                                </Button>
 
                                 {/* Mark reviewed */}
                                 {isEditable && (
@@ -830,6 +840,8 @@ export function EvaluationPage() {
                                     currentLevelId={empLevel?.current_level_id ?? null}
                                     onCurrentLevelChange={(levelId) => currentLevelMut.mutate(levelId)}
                                     currentLevelDisabled={!employeeId || currentLevelMut.isPending}
+                                    onOpenProposed={() => setProposedOpen(true)}
+                                    proposedLevelName={proposedLevelName}
                                 />
                             }
                             employeeFeedback={employeeFeedback}
@@ -958,6 +970,7 @@ export function EvaluationPage() {
                 onClose={() => setProposedOpen(false)}
                 rseId={rid}
                 setSnackbar={setSnackbar}
+                canEdit={showEditing}
             />
 
             {employeeId && (

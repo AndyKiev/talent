@@ -6,6 +6,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import ChildCareOutlinedIcon from '@mui/icons-material/ChildCareOutlined';
 import dayjs from 'dayjs';
 import ChildFormDialog from './ChildFormDialog';
+import ConfirmDeleteDialog from '../ConfirmDeleteDialog';
 import {
     fetchEmployeeChildren,
     deleteEmployeeChild,
@@ -36,6 +37,7 @@ export default function ChildrenBlock({
 }) {
     const qc = useQueryClient();
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [pendingDelete, setPendingDelete] = useState<EmployeeChild | null>(null);
 
     const { data: children = [] } = useQuery({
         queryKey: ['employee_children', employeeId],
@@ -50,6 +52,7 @@ export default function ChildrenBlock({
             onSuccess?.(getString('employeeChildDeleteSuccess', { name: formatDate(child.birth_date) }));
         },
         onError: (err: Error) => onError?.(err.message),
+        onSettled: () => setPendingDelete(null),
     });
 
     const countUnder14 = children.filter((c) => ageOf(c.birth_date) <= 14).length;
@@ -107,7 +110,7 @@ export default function ChildrenBlock({
                                 <Tooltip title={getString('delete')} placement="top">
                                     <IconButton
                                         size="small"
-                                        onClick={() => delMut.mutate(c)}
+                                        onClick={() => setPendingDelete(c)}
                                         disabled={delMut.isPending}
                                         sx={{ p: 0.25 }}
                                     >
@@ -127,6 +130,16 @@ export default function ChildrenBlock({
                 getString={getString}
                 onSuccess={onSuccess}
                 onError={onError}
+            />
+
+            <ConfirmDeleteDialog
+                open={pendingDelete !== null}
+                message={getString('confirmDeleteChildMessage')}
+                itemLabel={pendingDelete ? formatDate(pendingDelete.birth_date) : undefined}
+                isDeleting={delMut.isPending}
+                getString={getString}
+                onConfirm={() => { if (pendingDelete) delMut.mutate(pendingDelete); }}
+                onClose={() => setPendingDelete(null)}
             />
         </Box>
     );

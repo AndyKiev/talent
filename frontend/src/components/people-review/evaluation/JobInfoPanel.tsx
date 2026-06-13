@@ -1,5 +1,7 @@
 import {
     Box,
+    Button,
+    Chip,
     FormControl,
     InputLabel,
     MenuItem,
@@ -10,6 +12,7 @@ import WorkOutlineIcon from '@mui/icons-material/WorkOutline';
 import ApartmentIcon from '@mui/icons-material/Apartment';
 import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import type { GetStringFn } from '../../../types/getStringFn';
 import { useTheme } from '../../theme/ThemeContext';
 import { formatDate } from '../../../utils/date';
@@ -34,6 +37,9 @@ interface Props {
     currentLevelId: number | null;
     onCurrentLevelChange: (levelId: number) => void;
     currentLevelDisabled: boolean;
+    // Proposed level (opens the drawer); name of the saved proposed level, if any.
+    onOpenProposed: () => void;
+    proposedLevelName: string | null;
 }
 
 /** Job-info tab: job / department / dates and the employee's current competency level. */
@@ -43,6 +49,7 @@ export function JobInfoPanel({
     jobAssignedDate, positionDuration, showEdit,
     onEditHire, onEditJobAssigned,
     levels, currentLevelId, onCurrentLevelChange, currentLevelDisabled,
+    onOpenProposed, proposedLevelName,
 }: Props) {
     const { t } = useTheme();
     return (
@@ -74,26 +81,45 @@ export function JobInfoPanel({
                 />
             </Box>
 
-            {/* Current competency level */}
-            <FormControl size="small" sx={{ minWidth: 200, maxWidth: 280 }}>
-                <InputLabel>{getString('currentLevel')}</InputLabel>
-                <Select
+            {/* Current competency level + proposed level (drawer) */}
+            <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" rowGap={1}>
+                <FormControl size="small" sx={{ minWidth: 200, maxWidth: 280 }}>
+                    <InputLabel>{getString('currentLevel')}</InputLabel>
+                    <Select
+                        variant="outlined"
+                        label={getString('currentLevel')}
+                        value={currentLevelId ? String(currentLevelId) : ''}
+                        onChange={(e) => onCurrentLevelChange(Number(e.target.value))}
+                        disabled={currentLevelDisabled}
+                    >
+                        {levels
+                            .slice()
+                            .sort((a, b) => a.sort_order - b.sort_order)
+                            .map((lvl) => (
+                                <MenuItem key={lvl.id} value={String(lvl.id)}>
+                                    {getString(lvl.name_key)}
+                                </MenuItem>
+                            ))}
+                    </Select>
+                </FormControl>
+
+                <Button
+                    size="small"
                     variant="outlined"
-                    label={getString('currentLevel')}
-                    value={currentLevelId ? String(currentLevelId) : ''}
-                    onChange={(e) => onCurrentLevelChange(Number(e.target.value))}
-                    disabled={currentLevelDisabled}
+                    startIcon={<TrendingUpIcon />}
+                    onClick={onOpenProposed}
+                    sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, fontSize: 12 }}
                 >
-                    {levels
-                        .slice()
-                        .sort((a, b) => a.sort_order - b.sort_order)
-                        .map((lvl) => (
-                            <MenuItem key={lvl.id} value={String(lvl.id)}>
-                                {getString(lvl.name_key)}
-                            </MenuItem>
-                        ))}
-                </Select>
-            </FormControl>
+                    {getString('proposedLevel')}
+                </Button>
+                {proposedLevelName && (
+                    <Chip
+                        size="small"
+                        label={proposedLevelName}
+                        sx={{ fontWeight: 700, fontSize: 12, bgcolor: `${t.accent}18`, color: t.accent }}
+                    />
+                )}
+            </Stack>
         </Stack>
     );
 }

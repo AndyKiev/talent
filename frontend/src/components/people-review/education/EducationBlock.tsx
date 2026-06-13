@@ -6,6 +6,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
 import EducationFormDialog from './EducationFormDialog';
+import ConfirmDeleteDialog from '../ConfirmDeleteDialog';
 import {
     fetchEducationDegrees,
     fetchEmployeeEducations,
@@ -33,6 +34,7 @@ export default function EducationBlock({
         open: false,
         editing: null,
     });
+    const [pendingDelete, setPendingDelete] = useState<EmployeeEducation | null>(null);
 
     const { data: degrees = [] } = useQuery({
         queryKey: ['education_degrees'],
@@ -58,6 +60,7 @@ export default function EducationBlock({
             onSuccess?.(getString('employeeEducationDeleteSuccess', { name: edu.institution }));
         },
         onError: (err: Error) => onError?.(err.message),
+        onSettled: () => setPendingDelete(null),
     });
 
     return (
@@ -120,7 +123,7 @@ export default function EducationBlock({
                                     <Tooltip title={getString('delete')} placement="top">
                                         <IconButton
                                             size="small"
-                                            onClick={() => delMut.mutate(e)}
+                                            onClick={() => setPendingDelete(e)}
                                             disabled={delMut.isPending}
                                             sx={{ p: 0.25 }}
                                         >
@@ -144,6 +147,16 @@ export default function EducationBlock({
                 getString={getString}
                 onSuccess={onSuccess}
                 onError={onError}
+            />
+
+            <ConfirmDeleteDialog
+                open={pendingDelete !== null}
+                message={getString('confirmDeleteEducationMessage')}
+                itemLabel={pendingDelete?.institution}
+                isDeleting={delMut.isPending}
+                getString={getString}
+                onConfirm={() => { if (pendingDelete) delMut.mutate(pendingDelete); }}
+                onClose={() => setPendingDelete(null)}
             />
         </Box>
     );

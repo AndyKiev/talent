@@ -287,10 +287,13 @@ export interface ProposedLevelAnswer {
     facts: string | null;
 }
 
+export type ProposedLevelStatus = 'proposed' | 'validated' | 'rejected';
+
 export interface ProposedLevel {
     id: number;
     review_session_employee_id: number;
     level_id: number;
+    status: ProposedLevelStatus;
     answers: ProposedLevelAnswer[];
 }
 
@@ -335,6 +338,26 @@ export const saveProposedLevel = async (
     const res = await axiosInstance.put<MutationResponse<ProposedLevel>>(
         `${RSE_BASE}/${rseId}/proposed_level`,
         payload,
+    );
+    return res.data;
+};
+
+export const setProposedLevelStatus = async (
+    rseId: number,
+    status: ProposedLevelStatus,
+): Promise<MutationResponse<ProposedLevel>> => {
+    const res = await axiosInstance.patch<MutationResponse<ProposedLevel>>(
+        `${RSE_BASE}/${rseId}/proposed_level/status`,
+        { status },
+    );
+    return res.data;
+};
+
+export const deleteProposedLevel = async (
+    rseId: number,
+): Promise<MutationResponse<null>> => {
+    const res = await axiosInstance.delete<MutationResponse<null>>(
+        `${RSE_BASE}/${rseId}/proposed_level`,
     );
     return res.data;
 };
