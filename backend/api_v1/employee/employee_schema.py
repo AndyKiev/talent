@@ -1,6 +1,6 @@
 # backend/api_v1/employee/employee_schema.py
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional, List, FrozenSet, Tuple
+from typing import Optional, List, FrozenSet, Tuple, Literal
 from datetime import datetime, date
 
 
@@ -24,6 +24,8 @@ class EmployeePersonalDataUpdate(BaseModel):
     birth_date: Optional[date] = None
     hire_date: Optional[date] = None
     job_assigned_date: Optional[date] = None
+    sex: Optional[Literal["male", "female"]] = None
+    marital_status: Optional[Literal["married", "not_married"]] = None
 
 
 class EmployeeUpdate(BaseModel):
@@ -44,6 +46,8 @@ class EmployeeSchema(EmployeeBase):
     birth_date: Optional[date] = None
     hire_date: Optional[date] = None
     job_assigned_date: Optional[date] = None
+    sex: Optional[str] = None
+    marital_status: Optional[str] = None
     groups: List[str] = []  # populated via Employee.groups @property
     operations: List[str] = []  # DEPRECATED — kept during transition window
 

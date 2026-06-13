@@ -125,6 +125,16 @@ class Employee(IntIdPkMixin, TimestampMixin, Base):
         # Read-only mirror of the 1:1 personal-data table (date assigned to job).
         return self.personal_data.job_assigned_date if self.personal_data else None
 
+    @property
+    def sex(self):
+        # Read-only mirror of the 1:1 personal-data table ('male' / 'female').
+        return self.personal_data.sex if self.personal_data else None
+
+    @property
+    def marital_status(self):
+        # Read-only mirror of the 1:1 personal-data table ('married' / 'not_married').
+        return self.personal_data.marital_status if self.personal_data else None
+
     # NOTE: `operations` cannot be a property because it requires an
     # async multi-join query (UserRepository.get_user_operations).
     # It is populated by UserService after every ORM fetch.

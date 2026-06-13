@@ -1,7 +1,7 @@
 from datetime import date
 from typing import TYPE_CHECKING
 from sqlalchemy.orm import mapped_column, Mapped, relationship
-from sqlalchemy import UniqueConstraint, ForeignKey, Date
+from sqlalchemy import UniqueConstraint, ForeignKey, Date, String
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin, TimestampMixin
 
@@ -23,6 +23,11 @@ class EmployeePersonalData(IntIdPkMixin, TimestampMixin, Base):
     # Date the employee was assigned to their current/last job (set manually for
     # now; could later be derived from employee_events).
     job_assigned_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # Biological sex — drives the sex-dependent marital-status wording in the UI
+    # (заміжня/незаміжня vs одружений/неодружений). Values: 'male' / 'female'.
+    sex: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    # Marital status. Values: 'married' / 'not_married'.
+    marital_status: Mapped[str | None] = mapped_column(String(16), nullable=True)
 
     employee: Mapped["Employee"] = relationship(
         back_populates="personal_data", lazy="selectin"

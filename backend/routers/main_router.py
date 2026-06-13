@@ -115,6 +115,9 @@ from backend.api_v1.education_degree.education_degree_views import (
 from backend.api_v1.employee_education.employee_education_views import (
     router as employee_education_router,
 )
+from backend.api_v1.employee_child.employee_child_views import (
+    router as employee_child_router,
+)
 
 # New modules from talent-work
 from backend.api_v1.job_group_type.job_group_type_views import (
@@ -207,6 +210,7 @@ router.include_router(review_level_router)
 router.include_router(review_level_requirement_router)
 router.include_router(education_degree_router)
 router.include_router(employee_education_router)
+router.include_router(employee_child_router)
 router.include_router(review_session_employee_level_router)
 
 # New modules from talent-work

@@ -76,6 +76,8 @@ __all__ = {
     # Education
     "EducationDegree",
     "EmployeeEducation",
+    # Children
+    "EmployeeChild",
 }
 
 from backend.api_v1.lang.lang_model import Lang
@@ -211,3 +213,6 @@ from backend.api_v1.employee_language.employee_language_model import EmployeeLan
 # Education — degree lookup first, then the per-employee education rows.
 from backend.api_v1.education_degree.education_degree_model import EducationDegree
 from backend.api_v1.employee_education.employee_education_model import EmployeeEducation
+
+# Children — per-employee child rows (1:N), birth date only.
+from backend.api_v1.employee_child.employee_child_model import EmployeeChild
