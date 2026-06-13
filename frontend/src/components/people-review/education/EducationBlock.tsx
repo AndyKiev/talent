@@ -19,11 +19,14 @@ export default function EducationBlock({
     getString,
     onError,
     onSuccess,
+    isEditable = true,
 }: {
     employeeId: number;
     getString: GetStringFn;
     onError?: (message: string) => void;
     onSuccess?: (message: string) => void;
+    /** When false, the add / edit / delete affordances are hidden (read-only view). */
+    isEditable?: boolean;
 }) {
     const qc = useQueryClient();
     const [dialog, setDialog] = useState<{ open: boolean; editing: EmployeeEducation | null }>({
@@ -64,15 +67,17 @@ export default function EducationBlock({
                 <Typography variant="subtitle2" fontWeight={700}>
                     {getString('education')}
                 </Typography>
-                <Tooltip title={getString('addEducation')} placement="top">
-                    <IconButton
-                        size="small"
-                        onClick={() => setDialog({ open: true, editing: null })}
-                        sx={{ p: 0.25 }}
-                    >
-                        <AddIcon sx={{ fontSize: 17 }} />
-                    </IconButton>
-                </Tooltip>
+                {isEditable && (
+                    <Tooltip title={getString('addEducation')} placement="top">
+                        <IconButton
+                            size="small"
+                            onClick={() => setDialog({ open: true, editing: null })}
+                            sx={{ p: 0.25 }}
+                        >
+                            <AddIcon sx={{ fontSize: 17 }} />
+                        </IconButton>
+                    </Tooltip>
+                )}
             </Stack>
 
             {educations.length === 0 ? (
@@ -97,6 +102,7 @@ export default function EducationBlock({
                                 sx={{ '&:hover .edu-actions': { opacity: 1 } }}
                             >
                                 <Typography variant="body2">{parts.join(' · ')}</Typography>
+                                {isEditable && (
                                 <Stack
                                     direction="row"
                                     className="edu-actions"
@@ -122,6 +128,7 @@ export default function EducationBlock({
                                         </IconButton>
                                     </Tooltip>
                                 </Stack>
+                                )}
                             </Stack>
                         );
                     })}

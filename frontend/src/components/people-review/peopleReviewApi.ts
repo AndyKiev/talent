@@ -364,21 +364,28 @@ export const setEmployeeCurrentLevel = async (
 
 // --- Employee personal data (birth date, hire date, job-assigned date, ...) ---
 // ISO 'YYYY-MM-DD' on the wire; displayed DD.MM.YYYY.
+export type Sex = 'male' | 'female';
+export type MaritalStatus = 'married' | 'not_married';
+
 export interface EmployeePersonalData {
     id: number;
     birth_date: string | null;
     hire_date: string | null;
     job_assigned_date: string | null;
+    sex: Sex | null;
+    marital_status: MaritalStatus | null;
     // Read-only derived facts (from employees.job_id and the main department link).
     job_name: string | null;
     main_department_name: string | null;
 }
 
-// Only the editable date fields can be patched.
+// Only the editable fields can be patched.
 export type EmployeePersonalDataPatch = Partial<{
     birth_date: string | null;
     hire_date: string | null;
     job_assigned_date: string | null;
+    sex: Sex | null;
+    marital_status: MaritalStatus | null;
 }>;
 
 // Shape of the bits we read off the full employee record.
@@ -387,6 +394,8 @@ interface EmployeeHeaderRaw {
     birth_date: string | null;
     hire_date: string | null;
     job_assigned_date: string | null;
+    sex: Sex | null;
+    marital_status: MaritalStatus | null;
     job: { name: string } | null;
     main_departments: { name: string }[];
 }
@@ -401,6 +410,8 @@ export const fetchEmployeePersonalData = async (
         birth_date: d.birth_date ?? null,
         hire_date: d.hire_date ?? null,
         job_assigned_date: d.job_assigned_date ?? null,
+        sex: d.sex ?? null,
+        marital_status: d.marital_status ?? null,
         job_name: d.job?.name ?? null,
         main_department_name: d.main_departments?.[0]?.name ?? null,
     };
@@ -484,4 +495,37 @@ export const updateEmployeeEducation = async (
 
 export const deleteEmployeeEducation = async (educationId: number): Promise<void> => {
     await axiosInstance.delete(`${EDUCATION_BASE}/${educationId}`);
+};
+
+// --- Children (1:N, birth date only) ---
+const CHILD_BASE = `${BASE_URL}/employee_children`;
+
+export interface EmployeeChild {
+    id: number;
+    employee_id: number;
+    birth_date: string; // ISO 'YYYY-MM-DD'
+}
+
+export const fetchEmployeeChildren = async (
+    employeeId: number,
+): Promise<EmployeeChild[]> => {
+    const res = await axiosInstance.get<EmployeeChild[]>(CHILD_BASE, {
+        params: { employee_id: employeeId },
+    });
+    return res.data;
+};
+
+export const createEmployeeChild = async (
+    employeeId: number,
+    birthDate: string,
+): Promise<MutationResponse<EmployeeChild>> => {
+    const res = await axiosInstance.post<MutationResponse<EmployeeChild>>(
+        CHILD_BASE,
+        { employee_id: employeeId, birth_date: birthDate },
+    );
+    return res.data;
+};
+
+export const deleteEmployeeChild = async (childId: number): Promise<void> => {
+    await axiosInstance.delete(`${CHILD_BASE}/${childId}`);
 };

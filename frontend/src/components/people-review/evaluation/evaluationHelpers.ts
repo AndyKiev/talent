@@ -84,20 +84,26 @@ export interface LocalEval {
     // criterion_index -> score (1..MAX_GRADE). Sparse: unrated descriptors are absent.
     criterionScores: Record<number, number>;
     facts: string[];
-    improvement: string;
+    // Directions for improvement — a numbered list (stored serialized like facts).
+    improvements: string[];
 }
 
-/** A fact being dragged: which competence (evalId) and its row index. */
-export interface DraggedFact {
+/** Which list an item belongs to — facts/achievements or directions for improvement. */
+export type DragItemKind = 'fact' | 'improvement';
+
+/** An item being dragged: its list (kind), competence (evalId) and row index. */
+export interface DraggedItem {
+    kind: DragItemKind;
     evalId: number;
     index: number;
 }
 
-/** A fact pending confirmation to move into another competence tab. */
+/** An item pending confirmation to move into another competence tab. */
 export interface PendingMove {
+    kind: DragItemKind;
     fromEvalId: number;
     index: number;
-    fact: string;
+    text: string;
     toEvalId: number;
     toTabIndex: number;
     toName: string;

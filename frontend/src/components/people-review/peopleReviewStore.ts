@@ -97,7 +97,7 @@ export function buildLocalEvals(evaluations: Evaluation[], getString: GetStringF
             descriptors,
             criterionScores,
             facts: parseFacts(e.facts),
-            improvement: e.improvement ?? '',
+            improvements: parseFacts(e.improvement),
         };
     });
 }
