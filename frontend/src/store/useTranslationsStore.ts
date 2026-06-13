@@ -2,11 +2,11 @@
 import { create } from 'zustand';
 
 interface TranslationsState {
-    strings: Record<string, any>;
+    strings: Record<string, Record<string, string>>;
     langs: string[];
     isLoading: boolean;
     error: string | null;
-    setTranslations: (data: Record<string, any>) => void;
+    setTranslations: (data: Record<string, Record<string, string>>) => void;
     setLangs: (langs: string[]) => void;
     setLoading: (isLoading: boolean) => void;
     setError: (error: string | null) => void;

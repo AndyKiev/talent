@@ -11,9 +11,10 @@ import {useTranslations} from "../../../../hooks/useTranslations.ts";
 import useString from "../../../../hooks/useString.ts";
 import {useDataGridStyles} from "../../../../hooks/useDataGridStyles.ts";
 import type {TableTranslation} from "../translations.ts";
+import type {SelectedRows} from "../../../../store/tableStore.ts";
 interface TranslationGridProps {
     filteredData: TableTranslation[];
-    selectedRows: any;
+    selectedRows: SelectedRows;
     tableName: string;
     isLoading: boolean;
     onRowClick: (translation: TableTranslation) => void;

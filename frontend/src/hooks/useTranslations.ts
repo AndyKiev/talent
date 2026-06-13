@@ -69,8 +69,8 @@ export const useTranslations = (): UseTranslationsReturn => {
             const response = await axiosInstance.post(BASE_FM, newKeyData);
             return response.data;
         },
-        onSuccess: async (data: any) => {
-            if ('detail' in data) {
+        onSuccess: async (data: unknown) => {
+            if (typeof data === 'object' && data !== null && 'detail' in data) {
                 console.log('The "detail" key exists');
             } else {
                 await queryClient.invalidateQueries({ queryKey: ['translations'] });

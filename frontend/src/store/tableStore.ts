@@ -13,7 +13,7 @@ import { create } from 'zustand';
 const EMPTY_EDITING_STATE = Object.freeze({
     editingId:     null as number | null,
     editingField:  null as string | null,
-    editingValues: Object.freeze({}) as Record<string, any>,
+    editingValues: Object.freeze({}) as Record<string, unknown>,
 });
 
 // ---------------------------------------------------------------------------
@@ -23,28 +23,30 @@ const EMPTY_EDITING_STATE = Object.freeze({
 interface EditingState {
     editingId:     number | null;
     editingField:  string | null;
-    editingValues: Record<string, any>;
+    editingValues: Record<string, unknown>;
 }
 
-interface TableState {
-    selectedRows: Record<string, {
-        selectedId:   number | null;
-        selectedData: any | null;
-    }>;
+export type SelectedRows = Record<string, {
+    selectedId:   number | null;
+    selectedData: unknown;
+}>;
 
-    filters: Record<string, Record<string, any>>;
+interface TableState {
+    selectedRows: SelectedRows;
+
+    filters: Record<string, Record<string, unknown>>;
 
     editingStates: Record<string, EditingState>;
 
     // Actions
-    setSelectedRow:   (tableName: string, id: number | null, data?: any) => void;
-    setFilter:        (tableName: string, filterType: string, value: any) => void;
+    setSelectedRow:   (tableName: string, id: number | null, data?: unknown) => void;
+    setFilter:        (tableName: string, filterType: string, value: unknown) => void;
     clearFilter:      (tableName: string, filterType?: string) => void;
     clearAllFilters:  () => void;
 
-    startEditing:        (tableName: string, entityId: number, field: string, initialValue: any) => void;
+    startEditing:        (tableName: string, entityId: number, field: string, initialValue: unknown) => void;
     cancelEditing:       (tableName: string) => void;
-    updateEditingValue:  (tableName: string, field: string, value: any) => void;
+    updateEditingValue:  (tableName: string, field: string, value: unknown) => void;
     getEditingState:     (tableName: string) => EditingState;
 }
 

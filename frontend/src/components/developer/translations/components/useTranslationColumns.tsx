@@ -10,6 +10,7 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import type {TableTranslation} from "../translations.ts";
+import type {GetStringFn} from "../../../../types/getStringFn.ts";
 import CopyButton from "../../../ui/CopyButton.tsx";
 
 
@@ -20,7 +21,7 @@ interface Lang {
 }
 
 interface UseTranslationColumnsParams {
-    getString: (key: string, params?: any) => string;
+    getString: GetStringFn;
     langs: Lang[] | undefined;
     onEditClick: (translation: TableTranslation) => void;
     onDeleteClick: (translation: TableTranslation) => void;

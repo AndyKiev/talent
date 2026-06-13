@@ -23,7 +23,7 @@ const getJobIdByName = async (jobName: string): Promise<number | null> => {
 };
 
 export const fetchUsers = async (jobId?: number, jobName?: string): Promise<User[]> => {
-    const params: any = {};
+    const params: Record<string, string> = {};
     if (jobId) {
         params.job_id = jobId.toString();
     } else if (jobName) {

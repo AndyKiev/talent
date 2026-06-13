@@ -16,6 +16,7 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useAuthStore } from "../../store/authStore.ts";
 import { authApi } from "../../api/authApi.ts";
 import { useTheme } from "../theme/ThemeContext.tsx";
+import type { Theme } from "../theme/themes.ts";
 import ThemeSwitch from "../theme/ThemeSwitch.tsx";
 import useString from "../../hooks/useString.ts";
 import str from "../../strings/str.ts";
@@ -245,8 +246,7 @@ const LoginPage: FC = () => {
 };
 
 // Shared TextField sx — keeps the form fields consistent with app theme
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const fieldSx = (t: any) => ({
+const fieldSx = (t: Theme) => ({
     "& .MuiOutlinedInput-root": {
         borderRadius: "10px",
         fontSize: 14,

@@ -168,8 +168,8 @@ export const LocaleAdminReduced: React.FC = () => {
             await addKeyMutation.mutateAsync(newKeyData);
             setSnackbar({ open: true, message: getString('translationAddedSuccessfully'), severity: 'success' });
             setIsAddDialogOpen(false);
-        } catch (error: any) {
-            const errorMessage = error.response?.data?.detail || getString('failedToAddTranslation');
+        } catch (error: unknown) {
+            const errorMessage = (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail || getString('failedToAddTranslation');
             setSnackbar({ open: true, message: errorMessage, severity: 'error' });
         }
     };
@@ -191,8 +191,8 @@ export const LocaleAdminReduced: React.FC = () => {
             setSnackbar({ open: true, message: getString('translationUpdatedSuccessfully'), severity: 'success' });
             setIsEditDialogOpen(false);
             setEditingTranslation(null);
-        } catch (error: any) {
-            const errorMessage = error.response?.data?.detail || getString('failedToUpdateTranslation');
+        } catch (error: unknown) {
+            const errorMessage = (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail || getString('failedToUpdateTranslation');
             setSnackbar({ open: true, message: errorMessage, severity: 'error' });
         }
     };
@@ -218,10 +218,10 @@ export const LocaleAdminReduced: React.FC = () => {
                 severity: 'success'
             });
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             setSnackbar({
                 open: true,
-                message: getString('jsonExportFailed', { errorMessage: error.message }),
+                message: getString('jsonExportFailed', { errorMessage: error instanceof Error ? error.message : String(error) }),
                 severity: 'error'
             });
         } finally {
@@ -277,13 +277,13 @@ export const LocaleAdminReduced: React.FC = () => {
             setSnackbar({
                 open: true,
                 message: getString('jsonTextImportedSuccessfully', {
-                    successCount: (result as any).success_count
+                    successCount: (result as { success_count?: number }).success_count
                 }),
                 severity: 'success'
             });
 
-        } catch (error: any) {
-            const errorMessage = error.response?.data?.detail || error.message || getString('importFailed');
+        } catch (error: unknown) {
+            const errorMessage = (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail || (error instanceof Error ? error.message : undefined) || getString('importFailed');
             setSnackbar({
                 open: true,
                 message: getString('jsonImportFailed', { errorMessage }),
@@ -315,10 +315,10 @@ export const LocaleAdminReduced: React.FC = () => {
                 severity: 'success'
             });
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             setSnackbar({
                 open: true,
-                message: getString('exportFailed', { errorMessage: error.message }),
+                message: getString('exportFailed', { errorMessage: error instanceof Error ? error.message : String(error) }),
                 severity: 'error'
             });
         } finally {
