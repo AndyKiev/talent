@@ -14,13 +14,15 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
+import EditIcon from '@mui/icons-material/Edit';
 import type { GetStringFn } from '../../../types/getStringFn';
 import type { SummaryOption } from './evaluationHelpers';
+import { InlineEditField } from './InlineEditField';
 
 export function CompetenceSummarySection({
     title, accent, options, candidates, nameOf, colorOf, isEditable, getString,
     drafts, onDraftChange, onAddOption, onRemoveOption, onAddComment, onRemoveComment,
-    onSelectCompetence,
+    onEditComment, onSelectCompetence,
 }: {
     title: string;
     accent: string;
@@ -36,9 +38,12 @@ export function CompetenceSummarySection({
     onRemoveOption: (key: string) => void;
     onAddComment: (key: string, text: string) => void;
     onRemoveComment: (key: string, index: number) => void;
+    onEditComment: (key: string, index: number, text: string) => void;
     onSelectCompetence: (key: string) => void;
 }) {
     const [pick, setPick] = useState('');
+    // Which comment row (competence key + index) is being edited inline; null when none.
+    const [editing, setEditing] = useState<{ key: string; index: number } | null>(null);
 
     const submitComment = (key: string) => {
         const text = (drafts[key] ?? '').trim();
@@ -106,18 +111,37 @@ export function CompetenceSummarySection({
                                         direction="row" alignItems="flex-start" spacing={0.5}
                                         sx={{ mb: 0.5, py: 0.25, px: 0.5, borderRadius: '6px', '&:hover': { bgcolor: color + '10' } }}
                                     >
-                                        <Typography fontSize={12} fontWeight={700} color={color} sx={{ minWidth: 20, pt: '2px' }}>
+                                        <Typography fontSize={12} fontWeight={700} color={color} sx={{ minWidth: 20, pt: editing?.key === opt.dimension_key && editing.index === idx ? '8px' : '2px' }}>
                                             {idx + 1}.
                                         </Typography>
-                                        <Typography fontSize={13} sx={{ flex: 1, pt: '2px', wordBreak: 'break-word' }}>
-                                            {comment}
-                                        </Typography>
-                                        {isEditable && (
-                                            <Tooltip title={getString('deleteComment')}>
-                                                <IconButton size="small" onClick={() => onRemoveComment(opt.dimension_key, idx)} sx={{ p: 0.25, mt: '-2px' }}>
-                                                    <CloseIcon sx={{ fontSize: 13 }} />
-                                                </IconButton>
-                                            </Tooltip>
+                                        {isEditable && editing?.key === opt.dimension_key && editing.index === idx ? (
+                                            <InlineEditField
+                                                initialValue={comment}
+                                                color={color}
+                                                getString={getString}
+                                                onSave={(text) => { onEditComment(opt.dimension_key, idx, text); setEditing(null); }}
+                                                onCancel={() => setEditing(null)}
+                                            />
+                                        ) : (
+                                            <>
+                                                <Typography fontSize={13} sx={{ flex: 1, pt: '2px', wordBreak: 'break-word' }}>
+                                                    {comment}
+                                                </Typography>
+                                                {isEditable && (
+                                                    <Tooltip title={getString('edit')}>
+                                                        <IconButton size="small" onClick={() => setEditing({ key: opt.dimension_key, index: idx })} sx={{ p: 0.25, mt: '-2px' }}>
+                                                            <EditIcon sx={{ fontSize: 13 }} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                )}
+                                                {isEditable && (
+                                                    <Tooltip title={getString('deleteComment')}>
+                                                        <IconButton size="small" onClick={() => onRemoveComment(opt.dimension_key, idx)} sx={{ p: 0.25, mt: '-2px' }}>
+                                                            <CloseIcon sx={{ fontSize: 13 }} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                )}
+                                            </>
                                         )}
                                     </Stack>
                                 ))}

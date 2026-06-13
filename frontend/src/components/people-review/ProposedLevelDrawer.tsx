@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type Dispatch, type SetStateAction } from 'react';
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     Box,
@@ -15,8 +15,10 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
 import useString from '../../hooks/useString';
+import { InlineEditField } from './evaluation/InlineEditField';
 import {
     fetchReviewLevels,
     fetchProposedLevel,
@@ -78,6 +80,9 @@ export function ProposedLevelDrawer({ open, onClose, rseId, setSnackbar }: Props
     const setLevelId = makeSetter('levelId');
     const setAnswers = makeSetter('answers');
     const setDrafts = makeSetter('drafts');
+
+    // Which comment row (requirement id + index) is being edited inline; null when none.
+    const [editing, setEditing] = useState<{ reqId: number; index: number } | null>(null);
 
     const { data: levels = [] } = useQuery({
         queryKey: ['review_levels', 'active'],
@@ -151,6 +156,14 @@ export function ProposedLevelDrawer({ open, onClose, rseId, setSnackbar }: Props
         setAnswers((prev) => ({
             ...prev,
             [reqId]: (prev[reqId] ?? []).filter((_, i) => i !== idx),
+        }));
+    };
+
+    // Edit an existing comment in place (text already trimmed by the inline editor).
+    const editComment = (reqId: number, idx: number, text: string) => {
+        setAnswers((prev) => ({
+            ...prev,
+            [reqId]: (prev[reqId] ?? []).map((c, i) => (i === idx ? text.trim() : c)),
         }));
     };
 
@@ -261,18 +274,37 @@ export function ProposedLevelDrawer({ open, onClose, rseId, setSnackbar }: Props
                                             <Stack
                                                 key={ci}
                                                 direction="row"
-                                                alignItems="center"
+                                                alignItems={editing?.reqId === req.id && editing.index === ci ? 'flex-start' : 'center'}
                                                 spacing={0.5}
                                                 sx={{ mb: 0.5 }}
                                             >
-                                                <Typography fontSize={12} sx={{ flex: 1 }}>
-                                                    {ci + 1}. {comment}
-                                                </Typography>
-                                                <Tooltip title={getString('levelDeleteComment')}>
-                                                    <IconButton size="small" onClick={() => removeComment(req.id, ci)}>
-                                                        <DeleteIcon sx={{ fontSize: 15 }} />
-                                                    </IconButton>
-                                                </Tooltip>
+                                                {editing?.reqId === req.id && editing.index === ci ? (
+                                                    <>
+                                                        <Typography fontSize={12} sx={{ pt: '8px' }}>{ci + 1}.</Typography>
+                                                        <InlineEditField
+                                                            initialValue={comment}
+                                                            getString={getString}
+                                                            onSave={(text) => { editComment(req.id, ci, text); setEditing(null); }}
+                                                            onCancel={() => setEditing(null)}
+                                                        />
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Typography fontSize={12} sx={{ flex: 1 }}>
+                                                            {ci + 1}. {comment}
+                                                        </Typography>
+                                                        <Tooltip title={getString('edit')}>
+                                                            <IconButton size="small" onClick={() => setEditing({ reqId: req.id, index: ci })}>
+                                                                <EditIcon sx={{ fontSize: 15 }} />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                        <Tooltip title={getString('levelDeleteComment')}>
+                                                            <IconButton size="small" onClick={() => removeComment(req.id, ci)}>
+                                                                <DeleteIcon sx={{ fontSize: 15 }} />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    </>
+                                                )}
                                             </Stack>
                                         ))}
 

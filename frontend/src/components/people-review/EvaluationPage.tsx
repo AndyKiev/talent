@@ -13,11 +13,7 @@ import {
     DialogContent,
     DialogContentText,
     DialogTitle,
-    FormControl,
     IconButton,
-    InputLabel,
-    MenuItem,
-    Select,
     Snackbar,
     Stack,
     Switch,
@@ -38,7 +34,6 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import dayjs from 'dayjs';
 import { Link } from '@tanstack/react-router';
 import EmployeeDateDialog from './personal-data/EmployeeDateDialog';
-import EducationBlock from './education/EducationBlock';
 import AppShell from '../layout/AppShell.tsx';
 import {
     fetchRSEDetail,
@@ -68,9 +63,8 @@ import { useAuthStore } from '../../store/authStore';
 import { defaultLangShortName } from '../../utils/eNums';
 import { useTheme } from '../theme/ThemeContext';
 import {
-    type LocalEval,
     type SummaryOption,
-    type DraggedFact,
+    type DraggedItem,
     type PendingMove,
     RSE_STATUS_COLORS,
     FOREIGN_LANGUAGES,
@@ -89,7 +83,8 @@ import {
 } from './peopleReviewStore';
 import { DimensionChart } from './evaluation/DimensionChart';
 import { CompetenceSummarySection } from './evaluation/CompetenceSummarySection';
-import { EmployeeFactsBar } from './evaluation/EmployeeFactsBar';
+import { PersonalInfoPanel } from './evaluation/PersonalInfoPanel';
+import { JobInfoPanel } from './evaluation/JobInfoPanel';
 import { EmployeeDataTabs } from './evaluation/EmployeeDataTabs';
 import { DimensionPanel } from './evaluation/DimensionPanel';
 
@@ -107,11 +102,12 @@ export function EvaluationPage() {
     // even while the record is technically editable (job done, just presenting).
     const [presentationMode, setPresentationMode] = useState(false);
     // Drag-and-drop of a fact from the active competence onto another tab.
-    const [draggedFact, setDraggedFact] = useState<DraggedFact | null>(null);
+    const [draggedItem, setDraggedItem] = useState<DraggedItem | null>(null);
     const [dragOverTab, setDragOverTab] = useState<number | null>(null);
     const [dragOverFactIndex, setDragOverFactIndex] = useState<number | null>(null);
     const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
     const [newFactTexts, setNewFactTexts] = useState<Record<number, string>>({});
+    const [newImprovementTexts, setNewImprovementTexts] = useState<Record<number, string>>({});
 
     const { data: rseDetail, isLoading: rseLoading, isFetching: rseFetching } = useQuery({
         queryKey: ['rse_detail', rid],
@@ -394,7 +390,7 @@ export function EvaluationPage() {
             return {
                 id: le.id,
                 facts: serializeFacts(le.facts) || null,
-                improvement: le.improvement || null,
+                improvement: serializeFacts(le.improvements) || null,
                 criterion_scores,
             };
         });
@@ -445,10 +441,8 @@ export function EvaluationPage() {
         setter(prev => prev.map(o => (o.dimension_key === key ? { ...o, comments: [...o.comments, text.trim()] } : o)));
     const removeSummaryComment = (setter: SummarySetter, key: string, index: number) =>
         setter(prev => prev.map(o => (o.dimension_key === key ? { ...o, comments: o.comments.filter((_, i) => i !== index) } : o)));
-
-    const updateLocal = (id: number, field: keyof LocalEval, value: unknown) => {
-        setLocalEvals(prev => prev.map(e => e.id === id ? { ...e, [field]: value } : e));
-    };
+    const editSummaryComment = (setter: SummarySetter, key: string, index: number, text: string) =>
+        setter(prev => prev.map(o => (o.dimension_key === key ? { ...o, comments: o.comments.map((c, i) => (i === index ? text.trim() : c)) } : o)));
 
     // Set (or clear, when value is null) the score for one behaviour descriptor.
     const setCriterion = (evalId: number, index: number, value: number | null) => {
@@ -476,6 +470,15 @@ export function EvaluationPage() {
         ));
     };
 
+    // Edit an existing fact in place (text already trimmed by the inline editor).
+    const editFact = (evalId: number, index: number, text: string) => {
+        const trimmed = text.trim();
+        if (!trimmed) return;
+        setLocalEvals(prev => prev.map(e =>
+            e.id === evalId ? { ...e, facts: e.facts.map((f, i) => (i === index ? trimmed : f)) } : e,
+        ));
+    };
+
     // Reorder a fact within the same competence (drop it *before* the target row).
     const reorderFact = (evalId: number, from: number, toRow: number) => {
         const to = from < toRow ? toRow - 1 : toRow;
@@ -489,6 +492,44 @@ export function EvaluationPage() {
         }));
     };
 
+    // --- Directions for improvement (a numbered list, like facts but per-competence only) ---
+    const addImprovement = (evalId: number, text: string) => {
+        const trimmed = text.trim();
+        if (!trimmed) return;
+        setLocalEvals(prev => prev.map(e =>
+            e.id === evalId ? { ...e, improvements: [...e.improvements, trimmed] } : e,
+        ));
+        setNewImprovementTexts(prev => ({ ...prev, [evalId]: '' }));
+    };
+
+    const removeImprovement = (evalId: number, index: number) => {
+        setLocalEvals(prev => prev.map(e =>
+            e.id === evalId ? { ...e, improvements: e.improvements.filter((_, i) => i !== index) } : e,
+        ));
+    };
+
+    // Edit an existing direction-for-improvement in place.
+    const editImprovement = (evalId: number, index: number, text: string) => {
+        const trimmed = text.trim();
+        if (!trimmed) return;
+        setLocalEvals(prev => prev.map(e =>
+            e.id === evalId ? { ...e, improvements: e.improvements.map((imp, i) => (i === index ? trimmed : imp)) } : e,
+        ));
+    };
+
+    // Reorder an improvement within the same competence (drop it *before* the target row).
+    const reorderImprovement = (evalId: number, from: number, toRow: number) => {
+        const to = from < toRow ? toRow - 1 : toRow;
+        if (from === to) return;
+        setLocalEvals(prev => prev.map(e => {
+            if (e.id !== evalId) return e;
+            const next = [...e.improvements];
+            const [moved] = next.splice(from, 1);
+            next.splice(to, 0, moved);
+            return { ...e, improvements: next };
+        }));
+    };
+
     // Move a numbered fact from one competence to another. Both lists re-number
     // automatically (numbering is the render-time array index).
     const moveFact = (fromEvalId: number, index: number, toEvalId: number) => {
@@ -499,6 +540,20 @@ export function EvaluationPage() {
             return prev.map(e => {
                 if (e.id === fromEvalId) return { ...e, facts: e.facts.filter((_, i) => i !== index) };
                 if (e.id === toEvalId) return { ...e, facts: [...e.facts, fact] };
+                return e;
+            });
+        });
+    };
+
+    // Move a numbered improvement from one competence to another (mirrors moveFact).
+    const moveImprovement = (fromEvalId: number, index: number, toEvalId: number) => {
+        if (fromEvalId === toEvalId) return;
+        setLocalEvals(prev => {
+            const imp = prev.find(e => e.id === fromEvalId)?.improvements[index];
+            if (imp == null) return prev;
+            return prev.map(e => {
+                if (e.id === fromEvalId) return { ...e, improvements: e.improvements.filter((_, i) => i !== index) };
+                if (e.id === toEvalId) return { ...e, improvements: [...e.improvements, imp] };
                 return e;
             });
         });
@@ -539,37 +594,89 @@ export function EvaluationPage() {
 
                 {rseDetail && (
                     <>
-                        {/* Header row */}
-                        <Box sx={{ mb: 2.5, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
-                            <Box>
-                                <Stack direction="row" alignItems="center" spacing={1.5}>
-                                    <Typography variant="h5" fontWeight={700} color={t.text}>
-                                        {rseDetail.employee_name}
-                                    </Typography>
-                                    <Chip
-                                        label={rseDetail.status}
-                                        size="small"
-                                        sx={{
-                                            fontWeight: 700, fontSize: 11,
-                                            bgcolor: `${RSE_STATUS_COLORS[rseDetail.status] ?? '#888'}18`,
-                                            color: RSE_STATUS_COLORS[rseDetail.status] ?? '#888',
-                                        }}
-                                    />
-                                    {isSessionClosed && (
+                        {/* Header: name (+ employee nav / presentation toggle) → progress & level controls */}
+                        <Box sx={{ mb: 2.5 }}>
+                            {/* Name + identity on the left; employee nav + presentation toggle opposite (right) */}
+                            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, flexWrap: 'wrap' }}>
+                                <Box sx={{ minWidth: 0 }}>
+                                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                                        <Typography variant="h5" fontWeight={700} color={t.text}>
+                                            {rseDetail.employee_name}
+                                        </Typography>
                                         <Chip
-                                            icon={<VisibilityIcon sx={{ fontSize: 13 }} />}
-                                            label="View only"
+                                            label={rseDetail.status}
                                             size="small"
-                                            variant="outlined"
-                                            sx={{ fontSize: 11 }}
+                                            sx={{
+                                                fontWeight: 700, fontSize: 11,
+                                                bgcolor: `${RSE_STATUS_COLORS[rseDetail.status] ?? '#888'}18`,
+                                                color: RSE_STATUS_COLORS[rseDetail.status] ?? '#888',
+                                            }}
                                         />
+                                        {isSessionClosed && (
+                                            <Chip
+                                                icon={<VisibilityIcon sx={{ fontSize: 13 }} />}
+                                                label="View only"
+                                                size="small"
+                                                variant="outlined"
+                                                sx={{ fontSize: 11 }}
+                                            />
+                                        )}
+                                    </Stack>
+                                    <Typography variant="body2" color={t.textMuted} mt={0.3}>
+                                        {rseDetail.employee_code} · {rseDetail.session_name}
+                                    </Typography>
+                                </Box>
+
+                                {/* Employee nav (prev/next) + presentation toggle — opposite the name */}
+                                <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                        <Tooltip title={prevId ? `Previous employee` : 'No previous'}>
+                                            <span>
+                                                <IconButton
+                                                    size="small" disabled={!prevId}
+                                                    onClick={() => prevId && goToEmployee(prevId)}
+                                                    sx={{ border: `1px solid ${t.borderLight}`, borderRadius: '7px' }}
+                                                >
+                                                    <ArrowBackIosNewIcon sx={{ fontSize: 14 }} />
+                                                </IconButton>
+                                            </span>
+                                        </Tooltip>
+                                        <Tooltip title={nextId ? `Next employee` : 'No next'}>
+                                            <span>
+                                                <IconButton
+                                                    size="small" disabled={!nextId}
+                                                    onClick={() => nextId && goToEmployee(nextId)}
+                                                    sx={{ border: `1px solid ${t.borderLight}`, borderRadius: '7px' }}
+                                                >
+                                                    <ArrowForwardIosIcon sx={{ fontSize: 14 }} />
+                                                </IconButton>
+                                            </span>
+                                        </Tooltip>
+                                        {siblings.length > 0 && (
+                                            <Typography fontSize={11} color={t.textMuted} alignSelf="center" ml={0.5}>
+                                                {currentIdx + 1}/{siblings.length}
+                                            </Typography>
+                                        )}
+                                    </Box>
+
+                                    {isEditable && (
+                                        <Tooltip title={getString('presentationModeHint')} placement="top">
+                                            <Stack direction="row" alignItems="center" spacing={0.25} sx={{ ml: 0.5 }}>
+                                                <Switch
+                                                    size="small"
+                                                    checked={presentationMode}
+                                                    onChange={(e) => setPresentationMode(e.target.checked)}
+                                                />
+                                                <Typography fontSize={12} fontWeight={600} color={t.textMuted} sx={{ whiteSpace: 'nowrap' }}>
+                                                    {getString('presentationMode')}
+                                                </Typography>
+                                            </Stack>
+                                        </Tooltip>
                                     )}
                                 </Stack>
-                                <Typography variant="body2" color={t.textMuted} mt={0.3}>
-                                    {rseDetail.employee_code} · {rseDetail.session_name}
-                                </Typography>
                             </Box>
 
+                            {/* Level & progress controls — the next line below the name */}
                             <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
                                 {/* Progress */}
                                 <Box sx={{ textAlign: 'right', mr: 0.5 }}>
@@ -585,27 +692,6 @@ export function EvaluationPage() {
                                         }} />
                                     </Box>
                                 </Box>
-
-                                {/* Current level selector */}
-                                <FormControl size="small" sx={{ minWidth: 150 }}>
-                                    <InputLabel>{getString('currentLevel')}</InputLabel>
-                                    <Select
-                                        variant="outlined"
-                                        label={getString('currentLevel')}
-                                        value={empLevel?.current_level_id ? String(empLevel.current_level_id) : ''}
-                                        onChange={(e) => currentLevelMut.mutate(Number(e.target.value))}
-                                        disabled={!employeeId || currentLevelMut.isPending}
-                                    >
-                                        {allLevels
-                                            .slice()
-                                            .sort((a, b) => a.sort_order - b.sort_order)
-                                            .map((lvl) => (
-                                                <MenuItem key={lvl.id} value={String(lvl.id)}>
-                                                    {getString(lvl.name_key)}
-                                                </MenuItem>
-                                            ))}
-                                    </Select>
-                                </FormControl>
 
                                 {/* Proposed level (drawer) */}
                                 <Button
@@ -644,37 +730,35 @@ export function EvaluationPage() {
 
                                 {/* Revert buttons */}
                                 {rseDetail.status === 'reviewed' && sessionStatus === 'open' && (
-                                    <Tooltip title="Revert to open (allow editing again)">
-                                        <Button
-                                            size="small" variant="outlined" startIcon={<ReplayIcon />}
-                                            onClick={() => revertMut.mutate(rid)}
-                                            disabled={revertMut.isPending}
-                                            sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, fontSize: 12 }}
-                                        >
-                                            Revert to Open
-                                        </Button>
-                                    </Tooltip>
+                                    <Button
+                                        size="small" variant="outlined" startIcon={<ReplayIcon />}
+                                        onClick={() => revertMut.mutate(rid)}
+                                        disabled={revertMut.isPending}
+                                        sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, fontSize: 12 }}
+                                    >
+                                        {getString('revertToOpen')}
+                                    </Button>
                                 )}
                                 {rseDetail.status === 'closed' && sessionStatus !== 'closed' && (
                                     <>
-                                        <Tooltip title="Revert one step back to reviewed">
+                                        <Tooltip title={getString('revertToReviewed')}>
                                             <Button
                                                 size="small" variant="outlined" color="warning" startIcon={<ReplayIcon />}
                                                 onClick={() => revertMut.mutate(rid)}
                                                 disabled={revertMut.isPending}
                                                 sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, fontSize: 12 }}
                                             >
-                                                Revert
+                                                {getString('revert')}
                                             </Button>
                                         </Tooltip>
-                                        <Tooltip title="Set directly to open (skip reviewed)">
+                                        <Tooltip title={getString('setDirectlyToOpen')}>
                                             <Button
                                                 size="small" variant="outlined" startIcon={<ReplayIcon />}
                                                 onClick={() => reopenMut.mutate(rid)}
                                                 disabled={reopenMut.isPending}
                                                 sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, fontSize: 12 }}
                                             >
-                                                Set Open
+                                                {getString('setOpen')}
                                             </Button>
                                         </Tooltip>
                                     </>
@@ -691,85 +775,8 @@ export function EvaluationPage() {
                                     </Button>
                                 )}
 
-                                {/* Prev / Next employee */}
-                                <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                    <Tooltip title={prevId ? `Previous employee` : 'No previous'}>
-                                        <span>
-                                            <IconButton
-                                                size="small" disabled={!prevId}
-                                                onClick={() => prevId && goToEmployee(prevId)}
-                                                sx={{ border: `1px solid ${t.borderLight}`, borderRadius: '7px' }}
-                                            >
-                                                <ArrowBackIosNewIcon sx={{ fontSize: 14 }} />
-                                            </IconButton>
-                                        </span>
-                                    </Tooltip>
-                                    <Tooltip title={nextId ? `Next employee` : 'No next'}>
-                                        <span>
-                                            <IconButton
-                                                size="small" disabled={!nextId}
-                                                onClick={() => nextId && goToEmployee(nextId)}
-                                                sx={{ border: `1px solid ${t.borderLight}`, borderRadius: '7px' }}
-                                            >
-                                                <ArrowForwardIosIcon sx={{ fontSize: 14 }} />
-                                            </IconButton>
-                                        </span>
-                                    </Tooltip>
-                                    {siblings.length > 0 && (
-                                        <Typography fontSize={11} color={t.textMuted} alignSelf="center" ml={0.5}>
-                                            {currentIdx + 1}/{siblings.length}
-                                        </Typography>
-                                    )}
-                                </Box>
-
-                                {/* Presentation mode toggle — hides every editing affordance.
-                                    Only meaningful while editable (open status); reviewed/closed
-                                    are already read-only, so the switch is not rendered there. */}
-                                {isEditable && (
-                                    <Tooltip title={getString('presentationModeHint')} placement="top">
-                                        <Stack direction="row" alignItems="center" spacing={0.25} sx={{ ml: 0.5 }}>
-                                            <Switch
-                                                size="small"
-                                                checked={presentationMode}
-                                                onChange={(e) => setPresentationMode(e.target.checked)}
-                                            />
-                                            <Typography fontSize={12} fontWeight={600} color={t.textMuted} sx={{ whiteSpace: 'nowrap' }}>
-                                                {getString('presentationMode')}
-                                            </Typography>
-                                        </Stack>
-                                    </Tooltip>
-                                )}
                             </Stack>
                         </Box>
-
-                        {/* Employee facts — spread evenly across the full width */}
-                        <EmployeeFactsBar
-                            jobName={personalData?.job_name}
-                            departmentName={personalData?.main_department_name}
-                            birthDate={personalData?.birth_date}
-                            hireDate={personalData?.hire_date}
-                            jobAssignedDate={personalData?.job_assigned_date}
-                            employeeAge={employeeAge}
-                            employeeTenure={employeeTenure}
-                            positionDuration={positionDuration}
-                            showEdit={!!employeeId}
-                            getString={getString}
-                            onEditBirth={() => setBirthDateOpen(true)}
-                            onEditHire={() => setHireDateOpen(true)}
-                            onEditJobAssigned={() => setJobAssignedOpen(true)}
-                        />
-
-                        {/* Education block (1:N) — full width */}
-                        {employeeId && (
-                            <Box sx={{ mb: 2.5 }}>
-                                <EducationBlock
-                                    employeeId={employeeId}
-                                    getString={getString}
-                                    onSuccess={(message) => setSnackbar({ open: true, message, severity: 'success' })}
-                                    onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
-                                />
-                            </Box>
-                        )}
 
                         {/* View-only banner */}
                         {isSessionClosed && (
@@ -789,9 +796,42 @@ export function EvaluationPage() {
                             onDataTabChange={setDataTab}
                             isEditable={showEditing}
                             getString={getString}
-                            langLevels={langLevels}
-                            langSel={langSel}
-                            setLangSel={setLangSel}
+                            personalInfo={
+                                <PersonalInfoPanel
+                                    employeeId={employeeId}
+                                    isEditable={showEditing}
+                                    getString={getString}
+                                    birthDate={personalData?.birth_date}
+                                    employeeAge={employeeAge}
+                                    showEdit={showEditing && !!employeeId}
+                                    onEditBirth={() => setBirthDateOpen(true)}
+                                    sex={personalData?.sex ?? null}
+                                    maritalStatus={personalData?.marital_status ?? null}
+                                    langLevels={langLevels}
+                                    langSel={langSel}
+                                    setLangSel={setLangSel}
+                                    onSuccess={(message) => setSnackbar({ open: true, message, severity: 'success' })}
+                                    onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
+                                />
+                            }
+                            jobInfo={
+                                <JobInfoPanel
+                                    getString={getString}
+                                    jobName={personalData?.job_name}
+                                    departmentName={personalData?.main_department_name}
+                                    hireDate={personalData?.hire_date}
+                                    employeeTenure={employeeTenure}
+                                    jobAssignedDate={personalData?.job_assigned_date}
+                                    positionDuration={positionDuration}
+                                    showEdit={showEditing && !!employeeId}
+                                    onEditHire={() => setHireDateOpen(true)}
+                                    onEditJobAssigned={() => setJobAssignedOpen(true)}
+                                    levels={allLevels}
+                                    currentLevelId={empLevel?.current_level_id ?? null}
+                                    onCurrentLevelChange={(levelId) => currentLevelMut.mutate(levelId)}
+                                    currentLevelDisabled={!employeeId || currentLevelMut.isPending}
+                                />
+                            }
                             employeeFeedback={employeeFeedback}
                             onEmployeeFeedbackChange={setEmployeeFeedback}
                             managerFeedback={managerFeedback}
@@ -844,6 +884,7 @@ export function EvaluationPage() {
                                                     onRemoveOption={key => removeSummaryOption(setStrongOptions, key)}
                                                     onAddComment={(key, text) => addSummaryComment(setStrongOptions, key, text)}
                                                     onRemoveComment={(key, idx) => removeSummaryComment(setStrongOptions, key, idx)}
+                                                    onEditComment={(key, idx, text) => editSummaryComment(setStrongOptions, key, idx, text)}
                                                     onSelectCompetence={activateCompetenceTab}
                                                 />
                                                 <CompetenceSummarySection
@@ -861,6 +902,7 @@ export function EvaluationPage() {
                                                     onRemoveOption={key => removeSummaryOption(setDevelopOptions, key)}
                                                     onAddComment={(key, text) => addSummaryComment(setDevelopOptions, key, text)}
                                                     onRemoveComment={(key, idx) => removeSummaryComment(setDevelopOptions, key, idx)}
+                                                    onEditComment={(key, idx, text) => editSummaryComment(setDevelopOptions, key, idx, text)}
                                                     onSelectCompetence={activateCompetenceTab}
                                                 />
                                             </Box>
@@ -883,8 +925,8 @@ export function EvaluationPage() {
                                 setActiveTab={setActiveTab}
                                 isEditable={showEditing}
                                 getString={getString}
-                                draggedFact={draggedFact}
-                                setDraggedFact={setDraggedFact}
+                                draggedItem={draggedItem}
+                                setDraggedItem={setDraggedItem}
                                 dragOverTab={dragOverTab}
                                 setDragOverTab={setDragOverTab}
                                 dragOverFactIndex={dragOverFactIndex}
@@ -892,11 +934,17 @@ export function EvaluationPage() {
                                 setPendingMove={setPendingMove}
                                 newFactTexts={newFactTexts}
                                 setNewFactTexts={setNewFactTexts}
+                                newImprovementTexts={newImprovementTexts}
+                                setNewImprovementTexts={setNewImprovementTexts}
                                 setCriterion={setCriterion}
                                 addFact={addFact}
                                 removeFact={removeFact}
+                                editFact={editFact}
                                 reorderFact={reorderFact}
-                                updateLocal={updateLocal}
+                                addImprovement={addImprovement}
+                                removeImprovement={removeImprovement}
+                                editImprovement={editImprovement}
+                                reorderImprovement={reorderImprovement}
                                 isCompetencePicked={isCompetencePicked}
                                 copyFactToSummary={copyFactToSummary}
                             />
@@ -958,16 +1006,21 @@ export function EvaluationPage() {
                 </Alert>
             </Snackbar>
 
-            {/* Confirm moving a fact to another competence tab */}
+            {/* Confirm moving a fact / direction-for-improvement to another competence tab */}
             <Dialog open={pendingMove != null} onClose={() => setPendingMove(null)} maxWidth="xs" fullWidth>
-                <DialogTitle>{getString('moveFactTitle')}</DialogTitle>
+                <DialogTitle>
+                    {getString(pendingMove?.kind === 'improvement' ? 'moveImprovementTitle' : 'moveFactTitle')}
+                </DialogTitle>
                 <DialogContent>
                     <DialogContentText sx={{ mb: 1 }}>
-                        {getString('moveFactConfirm', { target: pendingMove?.toName ?? '' })}
+                        {getString(
+                            pendingMove?.kind === 'improvement' ? 'moveImprovementConfirm' : 'moveFactConfirm',
+                            { target: pendingMove?.toName ?? '' },
+                        )}
                     </DialogContentText>
                     {pendingMove && (
                         <Typography fontSize={13} sx={{ fontStyle: 'italic', color: t.textMuted, wordBreak: 'break-word' }}>
-                            “{pendingMove.fact}”
+                            “{pendingMove.text}”
                         </Typography>
                     )}
                 </DialogContent>
@@ -979,7 +1032,11 @@ export function EvaluationPage() {
                         variant="contained"
                         onClick={() => {
                             if (pendingMove) {
-                                moveFact(pendingMove.fromEvalId, pendingMove.index, pendingMove.toEvalId);
+                                if (pendingMove.kind === 'improvement') {
+                                    moveImprovement(pendingMove.fromEvalId, pendingMove.index, pendingMove.toEvalId);
+                                } else {
+                                    moveFact(pendingMove.fromEvalId, pendingMove.index, pendingMove.toEvalId);
+                                }
                                 setActiveTab(pendingMove.toTabIndex);
                             }
                             setPendingMove(null);
