@@ -14,6 +14,7 @@ from backend.api_v1.review_session_employee_level.review_session_employee_level_
 from backend.api_v1.review_session_employee_level.review_session_employee_level_schema import (
     ProposedLevelSchema,
     ProposedLevelUpsert,
+    ProposedLevelStatusUpdate,
 )
 from backend.api_v1.review_session_employee_level_answer.review_session_employee_level_answer_model import (
     ReviewSessionEmployeeLevelAnswer,
@@ -21,6 +22,11 @@ from backend.api_v1.review_session_employee_level_answer.review_session_employee
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.review_session_employee_level.review_session_employee_level_success import (
     ProposedLevelSaveSuccess,
+    ProposedLevelDeleteSuccess,
+    ProposedLevelStatusUpdateSuccess,
+)
+from backend.api_v1.review_session_employee_level.review_session_employee_level_errors import (
+    ProposedLevelNotFound,
 )
 
 
@@ -59,6 +65,10 @@ class ReviewSessionEmployeeLevelService(BaseService):
             await self.session.commit()
             await self.session.refresh(record)
         else:
+            # Re-picking a different target level makes it a fresh proposal, so any
+            # prior validated/rejected decision no longer applies — reset to proposed.
+            if record.level_id != payload.level_id:
+                record.status = "proposed"
             record.level_id = payload.level_id
             # Replace answers wholesale (level may have changed).
             await self.session.execute(
@@ -85,4 +95,27 @@ class ReviewSessionEmployeeLevelService(BaseService):
         fresh = await self._get_by_rse(rse_id)
         schema = ProposedLevelSchema.model_validate(fresh)
         detail = await self._resolve_domain_success(ProposedLevelSaveSuccess())
+        return MutationResponse(detail=detail, data=schema)
+
+    async def delete_proposed_level(self, rse_id: int) -> MutationResponse[None]:
+        record = await self._get_by_rse(rse_id)
+        if record is None:
+            raise ProposedLevelNotFound(rse_id)
+        # Linked answers cascade-delete via the model relationship.
+        await self.session.delete(record)
+        await self.session.commit()
+        detail = await self._resolve_domain_success(ProposedLevelDeleteSuccess())
+        return MutationResponse(detail=detail, data=None)
+
+    async def set_status(
+        self, rse_id: int, payload: ProposedLevelStatusUpdate
+    ) -> MutationResponse[ProposedLevelSchema]:
+        record = await self._get_by_rse(rse_id)
+        if record is None:
+            raise ProposedLevelNotFound(rse_id)
+        record.status = payload.status
+        await self.session.commit()
+        fresh = await self._get_by_rse(rse_id)
+        schema = ProposedLevelSchema.model_validate(fresh)
+        detail = await self._resolve_domain_success(ProposedLevelStatusUpdateSuccess())
         return MutationResponse(detail=detail, data=schema)

@@ -6,6 +6,7 @@ from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.review_session_employee_level.review_session_employee_level_schema import (
     ProposedLevelSchema,
     ProposedLevelUpsert,
+    ProposedLevelStatusUpdate,
 )
 from backend.api_v1.review_session_employee_level.review_session_employee_level_dependencies import (
     get_review_session_employee_level_service,
@@ -50,3 +51,32 @@ async def save_proposed_level(
     ],
 ):
     return await service.upsert_proposed_level(rse_id, payload)
+
+
+@router.patch(
+    "/{rse_id}/proposed_level/status",
+    response_model=MutationResponse[ProposedLevelSchema],
+)
+async def set_proposed_level_status(
+    rse_id: int,
+    payload: ProposedLevelStatusUpdate,
+    service: Annotated[
+        ReviewSessionEmployeeLevelService,
+        Depends(get_review_session_employee_level_service),
+    ],
+):
+    return await service.set_status(rse_id, payload)
+
+
+@router.delete(
+    "/{rse_id}/proposed_level",
+    response_model=MutationResponse[None],
+)
+async def delete_proposed_level(
+    rse_id: int,
+    service: Annotated[
+        ReviewSessionEmployeeLevelService,
+        Depends(get_review_session_employee_level_service),
+    ],
+):
+    return await service.delete_proposed_level(rse_id)

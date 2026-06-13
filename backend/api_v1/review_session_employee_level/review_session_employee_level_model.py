@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, List
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, String
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 
@@ -27,6 +27,12 @@ class ReviewSessionEmployeeLevel(IntIdPkMixin, TimestampMixin, Base):
     )
     level_id: Mapped[int] = mapped_column(
         ForeignKey("review_levels.id"), nullable=False
+    )
+    # Lifecycle of the proposal itself: 'proposed' (default), 'validated', 'rejected'.
+    # Independent of the employee's review status and the session status — it can
+    # be changed at any time. server_default keeps the migration safe on existing rows.
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="proposed", server_default="proposed"
     )
 
     level: Mapped["ReviewLevel"] = relationship(lazy="selectin")
