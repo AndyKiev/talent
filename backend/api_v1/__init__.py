@@ -78,6 +78,8 @@ __all__ = {
     "EmployeeEducation",
     # Children
     "EmployeeChild",
+    # Photo
+    "EmployeePhoto",
 }
 
 from backend.api_v1.lang.lang_model import Lang
@@ -216,3 +218,6 @@ from backend.api_v1.employee_education.employee_education_model import EmployeeE
 
 # Children — per-employee child rows (1:N), birth date only.
 from backend.api_v1.employee_child.employee_child_model import EmployeeChild
+
+# Photo — per-employee profile photo (1:1), downscaled blob, ON DELETE CASCADE.
+from backend.api_v1.employee_photo.employee_photo_model import EmployeePhoto
