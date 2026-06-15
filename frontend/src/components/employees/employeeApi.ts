@@ -31,6 +31,9 @@ export interface Employee {
     operations: string[];
     job: Job | null;
     lang: Lang | null;
+    // Optional employee-status lookup. Not currently emitted by the backend
+    // employee schema, so consumers must treat it as possibly absent.
+    status?: { id: number; name: string } | null;
     main_departments: MainDepartment[];
     extra_departments: MainDepartment[]
 }

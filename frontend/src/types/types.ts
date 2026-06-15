@@ -6,3 +6,9 @@ export interface User {
     name: string;
 }
 
+export interface SnackbarType {
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error';
+}
+

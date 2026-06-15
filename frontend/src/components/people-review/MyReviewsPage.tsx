@@ -39,8 +39,11 @@ export function MyReviewsPage() {
                     startIcon={<EditNoteIcon />}
                     onClick={() =>
                         navigate({
-                            to: '/people-review/evaluation/$rseId',
-                            params: { rseId: String(params.row.id) },
+                            to: '/people_review/$sessionId/employee/$employeeId',
+                            params: {
+                                sessionId: String(params.row.session_id),
+                                employeeId: String(params.row.employee_id),
+                            },
                         })
                     }
                 >

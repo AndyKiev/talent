@@ -129,6 +129,87 @@ export const deleteReviewSession = async (id: number): Promise<MutationResponse<
     return res.data;
 };
 
+// --- People-review scope (active mode / role switching) ---
+const PR_SCOPE_BASE = `${BASE_URL}/people_review`;
+
+export interface MyRole {
+    process_role_id: number;
+    key: string | null;
+    name: string;
+    link_target: 'employee' | 'department';
+}
+export interface MyDepartment {
+    id: number;
+    name: string;
+    process_role_id: number;
+}
+export interface ActiveContext {
+    process_role_id: number | null;
+    department_id: number | null;
+}
+export interface MyScopes {
+    roles: MyRole[];
+    departments: MyDepartment[];
+    active: ActiveContext;
+}
+
+export const fetchMyScopes = async (): Promise<MyScopes> => {
+    const res = await axiosInstance.get<MyScopes>(`${PR_SCOPE_BASE}/my_scopes`);
+    return res.data;
+};
+
+export const setActiveContext = async (body: ActiveContext): Promise<ActiveContext> => {
+    const res = await axiosInstance.put<ActiveContext>(`${PR_SCOPE_BASE}/active_context`, body);
+    return res.data;
+};
+
+// --- Oversight manager (self-service: pick your own oversight reviewer) ---
+export interface OversightManagerOption {
+    process_role_holder_id: number;
+    holder_employee_id: number;
+    holder_code: string | null;
+    holder_name: string | null;
+    role_name: string | null;
+}
+export interface MyOversightManager {
+    link_id: number;
+    process_role_holder_id: number;
+    holder_employee_id: number;
+    holder_code: string | null;
+    holder_name: string | null;
+}
+
+/** Existing oversight reviewers the current user may pick (excludes self). */
+export const fetchOversightManagerOptions = async (): Promise<OversightManagerOption[]> => {
+    const res = await axiosInstance.get<OversightManagerOption[]>(`${PR_SCOPE_BASE}/oversight_managers`);
+    return res.data ?? [];
+};
+
+/** The current user's chosen oversight manager, or null if none picked. */
+export const fetchMyOversightManager = async (): Promise<MyOversightManager | null> => {
+    const res = await axiosInstance.get<MyOversightManager | null>(`${PR_SCOPE_BASE}/my_oversight_manager`);
+    return res.data ?? null;
+};
+
+/** Set/replace the current user's oversight manager (by holder id). */
+export const setMyOversightManager = async (
+    processRoleHolderId: number,
+): Promise<MutationResponse<MyOversightManager>> => {
+    const res = await axiosInstance.put<MutationResponse<MyOversightManager>>(
+        `${PR_SCOPE_BASE}/my_oversight_manager`,
+        { process_role_holder_id: processRoleHolderId },
+    );
+    return res.data;
+};
+
+/** Disconnect (clear) the current user's oversight manager. */
+export const clearMyOversightManager = async (): Promise<MutationResponse<null>> => {
+    const res = await axiosInstance.delete<MutationResponse<null>>(
+        `${PR_SCOPE_BASE}/my_oversight_manager`,
+    );
+    return res.data;
+};
+
 // --- Review Session Employee API ---
 export const fetchSessionEmployees = async (
     sessionId: number,
@@ -144,8 +225,40 @@ export const fetchMyReviews = async (): Promise<ReviewSessionEmployeeList[]> => 
     return res.data ?? [];
 };
 
+/** The user's row in the most-recently-created open session, or null if not listed. */
+export const fetchMyLatestOpenReview = async (): Promise<ReviewSessionEmployeeList | null> => {
+    const res = await axiosInstance.get<ReviewSessionEmployeeList | null>(`${RSE_BASE}/my_latest`);
+    return res.data ?? null;
+};
+
+export const addSessionEmployee = async (
+    sessionId: number,
+    employeeId: number,
+): Promise<MutationResponse<ReviewSessionEmployeeList>> => {
+    const res = await axiosInstance.post<MutationResponse<ReviewSessionEmployeeList>>(
+        RSE_BASE,
+        { session_id: sessionId, employee_id: employeeId },
+    );
+    return res.data;
+};
+
 export const fetchRSEDetail = async (rseId: number): Promise<ReviewSessionEmployee> => {
     const res = await axiosInstance.get<ReviewSessionEmployee>(`${RSE_BASE}/${rseId}`);
+    return res.data;
+};
+
+/**
+ * Resolve a single review record by (session, employee) for the nested
+ * /people_review/$sessionId/employee/$employeeId route. Gated on the backend by
+ * the people-review visibility resolver: an out-of-scope employee returns 404.
+ */
+export const fetchRSEBySessionEmployee = async (
+    sessionId: number,
+    employeeId: number,
+): Promise<ReviewSessionEmployee> => {
+    const res = await axiosInstance.get<ReviewSessionEmployee>(
+        `${RSE_BASE}/by_session/${sessionId}/employee/${employeeId}`,
+    );
     return res.data;
 };
 

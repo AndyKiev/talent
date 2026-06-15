@@ -18,6 +18,9 @@ import FactCheckIcon from '@mui/icons-material/FactCheck';
 import PlaylistAddCheckIcon from '@mui/icons-material/PlaylistAddCheck';
 import RuleFolderIcon from '@mui/icons-material/RuleFolder';
 import RateReviewIcon from "@mui/icons-material/RateReview";
+import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
+import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
+import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 
 import type { RawEssenceConfig } from '../../types/essence';
 
@@ -242,6 +245,36 @@ export const ESSENCES: RawEssenceConfig[] = [
     Icon: DomainIcon,
     color: '#06b6d4',
     parentGroup: 'employee_events',
+  },
+
+  // ── Reviewers (group) — process-role holders + their employee links ───────
+  {
+    parent: 'admin',
+    key: 'reviewers',
+    labelKey: 'reviewersGroup',
+    descriptionKey: 'reviewersGroupDesc',
+    Icon: SupervisorAccountIcon,
+    color: '#e11d48',
+    isGroup: true,
+    groupKey: 'reviewers',
+  },
+  {
+    parent: 'admin',
+    key: 'holders',
+    labelKey: 'reviewers',
+    descriptionKey: 'reviewersDesc',
+    Icon: AssignmentIndIcon,
+    color: '#e11d48',
+    parentGroup: 'reviewers',
+  },
+  {
+    parent: 'admin',
+    key: 'employees',
+    labelKey: 'reviewerAssignments',
+    descriptionKey: 'reviewerAssignmentsDesc',
+    Icon: PeopleAltIcon,
+    color: '#0ea5e9',
+    parentGroup: 'reviewers',
   },
 
   // ── Planning Setup (group) ────────────────────────────────────────────────

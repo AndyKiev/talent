@@ -23,6 +23,12 @@ from backend.api_v1.review_session_employee_evaluation.review_session_employee_e
 from backend.api_v1.review_session_employee_criterion_score.review_session_employee_criterion_score_model import (
     ReviewSessionEmployeeCriterionScore,
 )
+from backend.api_v1.review_session_employee.review_session_employee_repository import (
+    ReviewSessionEmployeeRepository,
+)
+from backend.api_v1.review_session_employee.review_session_employee_service import (
+    ReviewSessionEmployeeService,
+)
 
 
 class ReviewSessionEmployeeEvaluationService(BaseService):
@@ -50,10 +56,21 @@ class ReviewSessionEmployeeEvaluationService(BaseService):
             schema.dimension_is_active = record.dimension.is_active
         return schema
 
+    async def _assert_rse_visible(self, rse_id: int) -> None:
+        """Delegate to the RSE service's people-review visibility guard so an
+        out-of-scope employee's evaluations can't be fetched by a typed-in URL."""
+        rse_service = ReviewSessionEmployeeService(
+            repository=ReviewSessionEmployeeRepository(session=self.session),
+            user=self.user,
+            session=self.session,
+        )
+        await rse_service.assert_rse_visible(rse_id)
+
     async def get_evaluations(
         self,
         review_session_employee_id: int,
     ) -> List[EvaluationSchema]:
+        await self._assert_rse_visible(review_session_employee_id)
         records = await self.get_all(
             params={"review_session_employee_id": review_session_employee_id}
         )

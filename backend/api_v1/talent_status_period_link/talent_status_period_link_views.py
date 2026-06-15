@@ -45,7 +45,7 @@ async def get_talent_status_period_links(
     )
 
 
-@router.get("/active-pairs", response_model=List[TalentStatusPeriodLinkWithLabel])
+@router.get("/active_pairs", response_model=List[TalentStatusPeriodLinkWithLabel])
 async def get_talent_status_period_active_pairs(
     service: Annotated[TalentStatusPeriodLinkService, Depends(get_talent_status_period_link_service)],
     is_active: Optional[bool] = Query(
@@ -67,7 +67,7 @@ async def get_talent_status_period_active_pairs(
     return await service.get_active_pairs(is_active=is_active)
 
 
-@router.get("/by-composite-key", response_model=TalentStatusPeriodLinkSchema)
+@router.get("/by_composite_key", response_model=TalentStatusPeriodLinkSchema)
 async def get_talent_status_period_link_by_composite_key(
     record: TalentStatusPeriodLinkSchema = Depends(talent_status_period_link_by_composite_key),
 ):

@@ -1,5 +1,5 @@
 // components/Customized/Admin/Locale/custom_types.ts
-import type { FullMessageCreate, FullMessageUpdate, TableTranslation } from '../../../../../../edi/frontend/src/types/translations';
+import type { FullMessageCreate, FullMessageUpdate, TableTranslation } from './translations';
 
 export interface TranslationFormData {
     key: string;

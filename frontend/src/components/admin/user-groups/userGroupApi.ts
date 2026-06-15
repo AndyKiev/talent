@@ -11,6 +11,7 @@ export interface UserGroup {
     is_protected: boolean;
     user_group_type_id: number;
     users_qty: { active: number; inactive: number } | null;
+    oesl_ids: number[];          // operation-essence-set link ids (set-grain grants)
 }
 
 export interface UserGroupCreate {

@@ -15,7 +15,7 @@ from backend.api_v1.talent_status.talent_status_dependencies import (
 from backend.api_v1.talent_status.talent_status_service import TalentStatusService
 
 router = APIRouter(
-    prefix="/admin/talent-statuses",
+    prefix="/admin/talent_statuses",
     tags=["Talent Statuses"],
     dependencies=[Depends(HTTPBearer(auto_error=False))],
 )

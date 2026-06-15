@@ -1,5 +1,6 @@
 from typing import Optional, List
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
@@ -7,19 +8,63 @@ from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.review_session_employee.review_session_employee_repository import (
     ReviewSessionEmployeeRepository,
 )
+from backend.api_v1.review_session_employee.review_session_employee_model import (
+    ReviewSessionEmployee as RSEModel,
+)
 from backend.api_v1.review_session_employee.review_session_employee_schema import (
     ReviewSessionEmployee as RSESchema,
     ReviewSessionEmployeeList as RSEListSchema,
     ReviewSessionEmployeeFieldsUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.employee.employee_model import Employee
+from backend.api_v1.employee.employee_errors import EmployeeNotFound
+from backend.api_v1.review_session.review_session_repository import (
+    ReviewSessionRepository,
+)
+from backend.api_v1.review_session.review_session_model import ReviewSession
+from backend.api_v1.review_session.review_session_errors import ReviewSessionNotFound
+from backend.api_v1.review_dimension.review_dimension_model import ReviewDimension
+from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_model import (
+    ReviewSessionEmployeeEvaluation,
+)
 from backend.api_v1.review_session_employee.review_session_employee_errors import (
     ReviewSessionEmployeeNotFound,
     ReviewSessionEmployeeStatusError,
+    ReviewSessionEmployeeAlreadyInSession,
+    ReviewSessionNotOpenForAdd,
 )
 from backend.api_v1.review_session_employee.review_session_employee_success import (
     ReviewSessionEmployeeStatusChangeSuccess,
+    ReviewSessionEmployeeAddedSuccess,
 )
+from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_repository import (
+    ProcessRoleHolderEmployeeLinkRepository,
+)
+from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_service import (
+    ProcessRoleHolderEmployeeLinkService,
+)
+from backend.api_v1.process_roles.process_role_holder_department_link.process_role_holder_department_link_repository import (
+    ProcessRoleHolderDepartmentLinkRepository,
+)
+from backend.api_v1.process_roles.process_role_holder_department_link.process_role_holder_department_link_service import (
+    ProcessRoleHolderDepartmentLinkService,
+)
+from backend.api_v1.process_roles.process_role_active_context.process_role_active_context_repository import (
+    ProcessRoleActiveContextRepository,
+)
+from backend.api_v1.process_roles.process_role.process_role_repository import (
+    ProcessRoleRepository,
+)
+from backend.api_v1.department.department_repository import DepartmentRepository
+from backend.api_v1.employee_department.employee_department_repository import (
+    EmployeeDepartmentRepository,
+)
+
+# people_review visibility scope (§9): roles are switchable MODES per user. With no
+# mode on the user sees only self; a mode on expands to its scope (employee roster
+# or department subtree). The active mode is read from process_role_active_contexts.
+PEOPLE_REVIEW_PROCESS_KEY = "people_review"
 
 RSE_VALID_TRANSITIONS = {
     "open": ["reviewed"],
@@ -71,6 +116,102 @@ class ReviewSessionEmployeeService(BaseService):
         schema.total_dimensions = len(evals)
         return schema
 
+    async def _visible_employee_ids(self) -> set[int]:
+        """Employee ids the current user may see in people-review (§9).
+
+        Own record is always visible (LOCKED). Beyond that, visibility is gated by
+        the user's ACTIVE MODE (process_role_active_contexts):
+          - no mode on              -> self only
+          - mode role.link_target == 'employee' (oversight) -> + linked-employee roster
+          - mode role.link_target == 'department' (supervision) -> + employees whose
+            MAIN department is the selected department or any descendant of it
+        The roster/department resolvers match on holder_employee_id == self, so a
+        stale context for a role the user no longer holds collapses to self only."""
+        if not self.user:
+            return set()
+        visible = {self.user.id}
+
+        ctx = await ProcessRoleActiveContextRepository(
+            session=self.session
+        ).get_for_employee(self.user.id)
+        if ctx is None or ctx.process_role_id is None:
+            return visible  # no mode on -> self only
+
+        role = await ProcessRoleRepository(session=self.session).get_by_id(
+            ctx.process_role_id
+        )
+        if role is None:
+            return visible
+
+        if role.link_target == "department":
+            dept_id = ctx.department_id
+            if dept_id is None:
+                return visible  # supervision on but no department picked yet
+            dept_service = ProcessRoleHolderDepartmentLinkService(
+                repository=ProcessRoleHolderDepartmentLinkRepository(session=self.session),
+                user=self.user,
+                session=self.session,
+            )
+            assigned = await dept_service.get_department_ids(
+                self.user.id, PEOPLE_REVIEW_PROCESS_KEY, role.key
+            )
+            if dept_id not in assigned:
+                return visible  # not the user's department -> self only
+            subtree = {dept_id} | await DepartmentRepository(
+                session=self.session
+            ).get_descendant_ids(dept_id)
+            visible |= await EmployeeDepartmentRepository(
+                session=self.session
+            ).get_main_employee_ids_in_departments(subtree)
+        else:
+            roster_service = ProcessRoleHolderEmployeeLinkService(
+                repository=ProcessRoleHolderEmployeeLinkRepository(session=self.session),
+                user=self.user,
+                session=self.session,
+            )
+            visible |= await roster_service.get_roster_employee_ids(
+                self.user.id, PEOPLE_REVIEW_PROCESS_KEY, role.key
+            )
+        return visible
+
+    async def assert_rse_visible(self, rse_id: int) -> None:
+        """Visibility guard for RSE sub-resources (evaluations, proposed level):
+        if the record EXISTS but its employee is outside the caller's people-review
+        scope, raise NotFound (404, not 403) so we don't leak that it exists. A
+        missing rse_id is left for the caller to handle (returns empty/None), since
+        there is nothing to leak. Called by the evaluation / proposed-level services
+        so a typed-in out-of-scope URL can't pull another employee's review data."""
+        rse = await self.session.get(RSEModel, rse_id)
+        if rse is None:
+            return
+        visible = await self._visible_employee_ids()
+        if rse.employee_id not in visible:
+            raise await self._resolve_domain_error(
+                ReviewSessionEmployeeNotFound(rse_id)
+            )
+
+    async def get_rse_detail_by_session_employee(
+        self, session_id: int, employee_id: int
+    ) -> RSESchema:
+        """Resolve a single review record by (session, employee) for the nested
+        /people_review/{session_id}/employee/{employee_id} route. Gated by the same
+        visibility resolver as get_rse_detail: a non-existent record AND an
+        out-of-scope employee both raise NotFound (no existence leak)."""
+        record = await self.session.scalar(
+            select(RSEModel).where(
+                RSEModel.session_id == session_id,
+                RSEModel.employee_id == employee_id,
+            )
+        )
+        visible = await self._visible_employee_ids()
+        if record is None or record.employee_id not in visible:
+            raise await self._resolve_domain_error(
+                ReviewSessionEmployeeNotFound(record.id if record else employee_id)
+            )
+        # Re-fetch so employee + session relationships are selectin-loaded for _to_schema.
+        record = await self.repository.get_by_id(record.id)
+        return self._to_schema(record)
+
     async def get_session_employees(
         self,
         session_id: int,
@@ -81,7 +222,84 @@ class ReviewSessionEmployeeService(BaseService):
         if status:
             filters["status"] = status
         records = await self.get_all(params=filters, sort_json=sort)
-        return [self._to_list_schema(r) for r in records]
+        visible = await self._visible_employee_ids()
+        # In a role mode (oversight / supervision) a reviewer doesn't review
+        # themselves, so self is dropped from the roster. In "only myself" mode
+        # (no active role) self stays — that's how a role holder reaches and edits
+        # their own data. Own review is also reachable via "My reviews" ->
+        # get_rse_detail (guarded by _visible_employee_ids, which always keeps self).
+        ctx = (
+            await ProcessRoleActiveContextRepository(
+                session=self.session
+            ).get_for_employee(self.user.id)
+            if self.user
+            else None
+        )
+        in_role_mode = ctx is not None and ctx.process_role_id is not None
+        self_id = self.user.id if self.user else None
+        return [
+            self._to_list_schema(r)
+            for r in records
+            if r.employee_id in visible
+            and not (in_role_mode and r.employee_id == self_id)
+        ]
+
+    async def add_employee(
+        self, session_id: int, employee_id: int
+    ) -> MutationResponse[RSEListSchema]:
+        """Enroll one employee into an already-open session: create the RSE row
+        plus an empty evaluation per active dimension (same shape open_session
+        produces in bulk). Rejected if the session isn't open or the employee is
+        already enrolled."""
+        session_rec = await ReviewSessionRepository(session=self.session).get_by_id(
+            session_id
+        )
+        if session_rec is None:
+            raise await self._resolve_domain_error(ReviewSessionNotFound(session_id))
+        if session_rec.status != "open":
+            raise await self._resolve_domain_error(
+                ReviewSessionNotOpenForAdd(session_rec.status)
+            )
+
+        employee = await self.session.get(Employee, employee_id)
+        if employee is None:
+            raise await self._resolve_domain_error(EmployeeNotFound(employee_id))
+
+        existing = await self.session.scalar(
+            select(RSEModel).where(
+                RSEModel.session_id == session_id,
+                RSEModel.employee_id == employee_id,
+            )
+        )
+        if existing is not None:
+            raise await self._resolve_domain_error(
+                ReviewSessionEmployeeAlreadyInSession(employee.name)
+            )
+
+        rse = RSEModel(session_id=session_id, employee_id=employee_id, status="open")
+        self.session.add(rse)
+        await self.session.flush()
+
+        dims = (
+            await self.session.scalars(
+                select(ReviewDimension).where(ReviewDimension.is_active == True)
+            )
+        ).all()
+        for dim in dims:
+            self.session.add(
+                ReviewSessionEmployeeEvaluation(
+                    review_session_employee_id=rse.id, dimension_id=dim.id
+                )
+            )
+        await self.session.commit()
+
+        # Re-fetch so employee + evaluations relationships are selectin-loaded.
+        record = await self.repository.get_by_id(rse.id)
+        schema = self._to_list_schema(record)
+        detail = await self._resolve_domain_success(
+            ReviewSessionEmployeeAddedSuccess(employee.name)
+        )
+        return MutationResponse(detail=detail, data=schema)
 
     async def get_my_reviews(
         self,
@@ -95,8 +313,40 @@ class ReviewSessionEmployeeService(BaseService):
             if r.session and r.session.status == "open" and r.status == "open"
         ]
 
+    async def get_my_latest_open(self) -> Optional[RSEListSchema]:
+        """The current user's review row in the most-recently-created OPEN session.
+
+        Used by the people-review landing redirect for a role-less user (fills only
+        own data): jump straight to this row. Returns None when the user isn't
+        listed in any open session. RSE status is irrelevant — even an already
+        reviewed/closed row in an open session is the user's data to land on."""
+        if not self.user:
+            return None
+        stmt = (
+            select(RSEModel)
+            .join(ReviewSession, ReviewSession.id == RSEModel.session_id)
+            .where(
+                RSEModel.employee_id == self.user.id,
+                ReviewSession.status == "open",
+            )
+            .order_by(ReviewSession.created_at.desc())
+            .limit(1)
+        )
+        record = await self.session.scalar(stmt)
+        if record is None:
+            return None
+        return self._to_list_schema(record)
+
     async def get_rse_detail(self, rse_id: int) -> RSESchema:
         record = await self.get_by_id(rse_id)
+        # Visibility guard (§9a): the sensitive feedback lives on the detail, so
+        # a record outside the user's scope must be unfetchable by id too.
+        # Raise NotFound (not 403) so we don't leak that the record exists.
+        visible = await self._visible_employee_ids()
+        if record.employee_id not in visible:
+            raise await self._resolve_domain_error(
+                ReviewSessionEmployeeNotFound(rse_id)
+            )
         return self._to_schema(record)
 
     async def update_fields(

@@ -1,16 +1,22 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import {
     Alert,
+    Autocomplete,
     Box,
     Breadcrumbs,
     Button,
     Chip,
     CircularProgress,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
     Paper,
     Snackbar,
     Stack,
+    TextField,
     Tooltip,
     Typography,
 } from '@mui/material';
@@ -20,6 +26,7 @@ import LockIcon from '@mui/icons-material/Lock';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ReplayIcon from '@mui/icons-material/Replay';
 import StopIcon from '@mui/icons-material/Stop';
+import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import { Link } from '@tanstack/react-router';
 import AppShell from '../layout/AppShell.tsx';
@@ -31,11 +38,14 @@ import {
     revertRSE,
     reopenRSE,
     closeReviewSession,
+    addSessionEmployee,
     type ReviewSessionEmployeeList,
 } from './peopleReviewApi';
 import { useDataGridLocale } from '../../hooks/useDataGridLocale';
 import { useTheme } from '../theme/ThemeContext';
 import useString from '../../hooks/useString';
+import { ScopeSettings } from './ScopeSettings';
+import { EmployeeAutocomplete } from '../ui/EmployeeAutocomplete';
 
 const RSE_STATUS_COLORS: Record<string, 'info' | 'warning' | 'success' | 'error'> = {
     open: 'info',
@@ -63,6 +73,17 @@ export function SessionEmployeesPage() {
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
 
+    // Frontend-only employee filter: type a name/code to narrow the list, or pick
+    // one employee from the dropdown. Store the id (not the object) so the derived
+    // option survives query refetches; selecting by id sidesteps label-substring
+    // mismatch from the "code — name" dash.
+    const [selectedEmpId, setSelectedEmpId] = useState<number | null>(null);
+    const [empInput, setEmpInput] = useState('');
+
+    // Add-employee-to-session dialog.
+    const [addOpen, setAddOpen] = useState(false);
+    const [addEmpId, setAddEmpId] = useState<number | null>(null);
+
     const qk = ['session_employees', sid] as const;
     const sessQk = ['review_sessions'] as const;
 
@@ -80,9 +101,18 @@ export function SessionEmployeesPage() {
     const sessionName = session?.name ?? getString('sessionNumber', { id: sid });
     const isSessionClosed = sessionStatus === 'closed';
 
-    // Close-session eligibility: no employee in "open" status
+    // Close-session eligibility: no employee in "open" status — ALWAYS on the full
+    // roster, never the filtered view (a UI filter must not make a session closeable).
     const openCount = rows.filter(r => r.status === 'open').length;
     const canCloseSession = openCount === 0 && rows.length > 0 && sessionStatus === 'open';
+
+    const selectedEmp = rows.find(r => r.employee_id === selectedEmpId) ?? null;
+    const filteredRows = useMemo(() => {
+        if (selectedEmpId != null) return rows.filter(r => r.employee_id === selectedEmpId);
+        const q = empInput.trim().toLowerCase();
+        if (!q) return rows;
+        return rows.filter(r => `${r.employee_code} ${r.employee_name}`.toLowerCase().includes(q));
+    }, [rows, selectedEmpId, empInput]);
 
     const onError = (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' });
 
@@ -116,6 +146,17 @@ export function SessionEmployeesPage() {
             await qc.invalidateQueries({ queryKey: sessQk });
             await qc.invalidateQueries({ queryKey: qk });
             setSnackbar({ open: true, message: res.detail, severity: 'success' });
+        },
+        onError,
+    });
+
+    const addMut = useMutation({
+        mutationFn: () => addSessionEmployee(sid, addEmpId as number),
+        onSuccess: async (res) => {
+            await qc.invalidateQueries({ queryKey: qk });
+            setSnackbar({ open: true, message: res.detail, severity: 'success' });
+            setAddOpen(false);
+            setAddEmpId(null);
         },
         onError,
     });
@@ -178,7 +219,7 @@ export function SessionEmployeesPage() {
                     <Stack direction="row" spacing={0.5} alignItems="center" height="100%">
                         <Button
                             size="small" variant="outlined" startIcon={<VisibilityIcon />}
-                            onClick={() => navigate({ to: '/people-review/evaluation/$rseId', params: { rseId: String(row.id) } })}
+                            onClick={() => navigate({ to: '/people_review/$sessionId/employee/$employeeId', params: { sessionId: String(sid), employeeId: String(row.employee_id) } })}
                         >
                             {getString('view')}
                         </Button>
@@ -244,7 +285,7 @@ export function SessionEmployeesPage() {
         <AppShell>
             <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1300, mx: 'auto' }}>
                 <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                    <Link to="/people-review" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <Link to="/people_review" style={{ textDecoration: 'none', color: 'inherit' }}>
                         <Typography variant="body2" color="text.secondary">{getString('peopleReview')}</Typography>
                     </Link>
                     <Typography variant="body2" color="text.primary" fontWeight={600}>
@@ -266,6 +307,9 @@ export function SessionEmployeesPage() {
                             <Chip icon={<VisibilityIcon sx={{ fontSize: 13 }} />} label={getString('viewOnly')} size="small" variant="outlined" />
                         )}
                     </Stack>
+
+                    {/* People-review scope switcher (mode + department) */}
+                    <ScopeSettings />
 
                     {/* Close session button */}
                     {sessionStatus === 'open' && (
@@ -301,9 +345,47 @@ export function SessionEmployeesPage() {
                 {!isLoading && error && <Alert severity="error">{(error as Error).message}</Alert>}
 
                 {!isLoading && !error && (
-                    <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
-                        <DataGrid
-                            rows={rows} columns={columns}
+                    <>
+                        <Box sx={{ mb: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                            {!isSessionClosed ? (
+                                <Button
+                                    variant="contained" size="small"
+                                    startIcon={<PersonAddAlt1Icon />}
+                                    onClick={() => setAddOpen(true)}
+                                    sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
+                                >
+                                    {getString('addEmployee')}
+                                </Button>
+                            ) : <span />}
+                            <Autocomplete<ReviewSessionEmployeeList>
+                                size="small"
+                                sx={{ width: { xs: '100%', sm: 320 } }}
+                                options={rows}
+                                value={selectedEmp}
+                                onChange={(_, opt) => {
+                                    setSelectedEmpId(opt?.employee_id ?? null);
+                                    setPaginationModel(p => ({ ...p, page: 0 }));
+                                }}
+                                inputValue={empInput}
+                                onInputChange={(_, val) => {
+                                    setEmpInput(val);
+                                    setPaginationModel(p => ({ ...p, page: 0 }));
+                                }}
+                                getOptionLabel={(r) => `${r.employee_code} — ${r.employee_name}`}
+                                isOptionEqualToValue={(o, v) => o.employee_id === v.employee_id}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        variant="outlined"
+                                        label={getString('filterByEmployee')}
+                                        placeholder={getString('search')}
+                                    />
+                                )}
+                            />
+                        </Box>
+                        <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+                            <DataGrid
+                            rows={filteredRows} columns={columns}
                             paginationModel={paginationModel}
                             onPaginationModelChange={setPaginationModel}
                             pageSizeOptions={[10, 25, 50]}
@@ -313,9 +395,37 @@ export function SessionEmployeesPage() {
                             localeText={localeText}
                             hideFooterSelectedRowCount
                             sx={{ '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center', py: 1 } }}
-                        />
-                    </Paper>
+                            />
+                        </Paper>
+                    </>
                 )}
+
+                <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="xs" fullWidth>
+                    <DialogTitle>{getString('addEmployeeToSession')}</DialogTitle>
+                    <DialogContent sx={{ pt: 1 }}>
+                        <Box sx={{ mt: 1 }}>
+                            <EmployeeAutocomplete
+                                value={addEmpId}
+                                onChange={setAddEmpId}
+                                label={getString('employee')}
+                                excludeIds={rows.map(r => r.employee_id)}
+                                activeOnly
+                            />
+                        </Box>
+                    </DialogContent>
+                    <DialogActions sx={{ px: 3, pb: 2 }}>
+                        <Button onClick={() => { setAddOpen(false); setAddEmpId(null); }}>
+                            {getString('cancel')}
+                        </Button>
+                        <Button
+                            variant="contained"
+                            onClick={() => addMut.mutate()}
+                            disabled={addEmpId == null || addMut.isPending}
+                        >
+                            {addMut.isPending ? getString('adding') : getString('add')}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
 
                 <Snackbar open={snackbar.open} autoHideDuration={6000}
                     onClose={() => setSnackbar(p => ({ ...p, open: false }))}

@@ -15,7 +15,7 @@ from backend.api_v1.talent_period.talent_period_dependencies import (
 from backend.api_v1.talent_period.talent_period_service import TalentPeriodService
 
 router = APIRouter(
-    prefix="/admin/talent-periods",
+    prefix="/admin/talent_periods",
     tags=["Talent Periods"],
     dependencies=[Depends(HTTPBearer(auto_error=False))],
 )

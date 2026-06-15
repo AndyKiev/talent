@@ -8,3 +8,12 @@ class ReviewSessionEmployeeStatusChangeSuccess(DomainSuccess):
         self.template_vars = {"name": employee_name, "status": new_status}
         self.fallback = f"Review for '{employee_name}' changed to '{new_status}'"
         super().__init__(self.fallback)
+
+
+class ReviewSessionEmployeeAddedSuccess(DomainSuccess):
+    message_key = "reviewSessionEmployeeAdded"
+
+    def __init__(self, employee_name: str) -> None:
+        self.template_vars = {"name": employee_name}
+        self.fallback = f"'{employee_name}' added to the session"
+        super().__init__(self.fallback)

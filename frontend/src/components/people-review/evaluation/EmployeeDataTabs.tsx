@@ -23,11 +23,14 @@ interface Props {
     // Personal-info / job-info tab content (built by the page; the data lives there).
     personalInfo: ReactNode;
     jobInfo: ReactNode;
-    // Feedback
+    // Feedback (per-field editability: employee edits own self-feedback, reviewer
+    // edits manager-feedback; both off in supervision/view-only).
     employeeFeedback: string;
     onEmployeeFeedbackChange: (value: string) => void;
+    employeeFeedbackEditable: boolean;
     managerFeedback: string;
     onManagerFeedbackChange: (value: string) => void;
+    managerFeedbackEditable: boolean;
     // Results
     results: string[];
     newResultText: string;
@@ -46,8 +49,8 @@ interface Props {
 export function EmployeeDataTabs({
     dataTab, onDataTabChange, isEditable, getString,
     personalInfo, jobInfo,
-    employeeFeedback, onEmployeeFeedbackChange,
-    managerFeedback, onManagerFeedbackChange,
+    employeeFeedback, onEmployeeFeedbackChange, employeeFeedbackEditable,
+    managerFeedback, onManagerFeedbackChange, managerFeedbackEditable,
     results, newResultText, onNewResultTextChange, onAddResult, onRemoveResult,
     missions, onUpdateMission,
     trainings, onTrainingsChange,
@@ -83,7 +86,7 @@ export function EmployeeDataTabs({
                         value={employeeFeedback}
                         onChange={e => onEmployeeFeedbackChange(e.target.value)}
                         fullWidth multiline minRows={5}
-                        disabled={!isEditable}
+                        disabled={!employeeFeedbackEditable}
                     />
                 )}
 
@@ -93,7 +96,7 @@ export function EmployeeDataTabs({
                         value={managerFeedback}
                         onChange={e => onManagerFeedbackChange(e.target.value)}
                         fullWidth multiline minRows={5}
-                        disabled={!isEditable}
+                        disabled={!managerFeedbackEditable}
                     />
                 )}
 

@@ -18,6 +18,7 @@ from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.review_session.review_session_errors import (
     ReviewSessionNotFound,
     ReviewSessionDeleteError,
+    ReviewSessionDeletePermission,
     ReviewSessionStatusError,
     ReviewSessionCannotCloseError,
 )
@@ -34,6 +35,15 @@ from backend.api_v1.review_session_employee.review_session_employee_model import
 )
 from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_model import (
     ReviewSessionEmployeeEvaluation,
+)
+from backend.api_v1.review_session_employee_criterion_score.review_session_employee_criterion_score_model import (
+    ReviewSessionEmployeeCriterionScore,
+)
+from backend.api_v1.review_session_employee_level.review_session_employee_level_model import (
+    ReviewSessionEmployeeLevel,
+)
+from backend.api_v1.review_session_employee_level_answer.review_session_employee_level_answer_model import (
+    ReviewSessionEmployeeLevelAnswer,
 )
 from backend.api_v1.employee.employee_model import Employee
 from backend.api_v1.review_dimension.review_dimension_model import ReviewDimension
@@ -199,11 +209,21 @@ class ReviewSessionService(BaseService):
 
     async def delete_review_session(self, rs_id: int) -> None:
         """
-        Cascade-delete a whole session: every employee evaluation, every
-        employee review row, then the session itself — in one transaction.
-        FKs have no ON DELETE CASCADE, so we delete children explicitly.
+        Cascade-delete a whole session and ALL its descendants in one transaction,
+        deepest first:
+          session -> employee reviews
+                       -> evaluations -> criterion scores
+                       -> levels      -> level answers
+        FKs have no ON DELETE CASCADE, so every child is deleted explicitly — a
+        missing one surfaces as the misleading "has employee reviews" error.
+        Restricted to developers (the `dev` group).
         """
         from sqlalchemy import select as sa_select, delete as sa_delete
+
+        groups = [g.lower() for g in (self.user.groups if self.user else [])]
+        if "dev" not in groups:
+            exc = ReviewSessionDeletePermission()
+            raise await self._resolve_domain_error(exc)
 
         record = await self.get_by_id(rs_id)
         name = record.name
@@ -219,7 +239,44 @@ class ReviewSessionService(BaseService):
             ).scalars().all()
 
             if rse_ids:
-                # 1) evaluations -> 2) employee reviews
+                eval_ids = (
+                    await self.session.execute(
+                        sa_select(ReviewSessionEmployeeEvaluation.id).where(
+                            ReviewSessionEmployeeEvaluation.review_session_employee_id.in_(
+                                rse_ids
+                            )
+                        )
+                    )
+                ).scalars().all()
+                level_ids = (
+                    await self.session.execute(
+                        sa_select(ReviewSessionEmployeeLevel.id).where(
+                            ReviewSessionEmployeeLevel.review_session_employee_id.in_(
+                                rse_ids
+                            )
+                        )
+                    )
+                ).scalars().all()
+
+                # 1) grandchildren
+                if eval_ids:
+                    await self.session.execute(
+                        sa_delete(ReviewSessionEmployeeCriterionScore).where(
+                            ReviewSessionEmployeeCriterionScore.review_session_employee_evaluation_id.in_(
+                                eval_ids
+                            )
+                        )
+                    )
+                if level_ids:
+                    await self.session.execute(
+                        sa_delete(ReviewSessionEmployeeLevelAnswer).where(
+                            ReviewSessionEmployeeLevelAnswer.review_session_employee_level_id.in_(
+                                level_ids
+                            )
+                        )
+                    )
+
+                # 2) children of the employee review
                 await self.session.execute(
                     sa_delete(ReviewSessionEmployeeEvaluation).where(
                         ReviewSessionEmployeeEvaluation.review_session_employee_id.in_(
@@ -228,12 +285,21 @@ class ReviewSessionService(BaseService):
                     )
                 )
                 await self.session.execute(
+                    sa_delete(ReviewSessionEmployeeLevel).where(
+                        ReviewSessionEmployeeLevel.review_session_employee_id.in_(
+                            rse_ids
+                        )
+                    )
+                )
+
+                # 3) the employee reviews
+                await self.session.execute(
                     sa_delete(ReviewSessionEmployee).where(
                         ReviewSessionEmployee.session_id == rs_id
                     )
                 )
 
-            # 3) the session
+            # 4) the session
             await self.session.execute(
                 sa_delete(self.repository.model).where(
                     self.repository.model.id == rs_id

@@ -7,6 +7,7 @@ from backend.api_v1.review_session_employee.review_session_employee_schema impor
     ReviewSessionEmployee as RSESchema,
     ReviewSessionEmployeeList as RSEListSchema,
     ReviewSessionEmployeeFieldsUpdate,
+    ReviewSessionEmployeeCreate,
 )
 from backend.api_v1.review_session_employee.review_session_employee_dependencies import (
     get_review_session_employee_service,
@@ -39,6 +40,19 @@ async def get_review_session_employees(
     )
 
 
+@router.post("", response_model=MutationResponse[RSEListSchema], status_code=status.HTTP_201_CREATED)
+async def add_session_employee(
+    payload: ReviewSessionEmployeeCreate,
+    service: Annotated[
+        ReviewSessionEmployeeService,
+        Depends(get_review_session_employee_service),
+    ],
+):
+    return await service.add_employee(
+        session_id=payload.session_id, employee_id=payload.employee_id
+    )
+
+
 @router.get("/my", response_model=List[RSEListSchema])
 async def get_my_reviews(
     service: Annotated[
@@ -48,6 +62,31 @@ async def get_my_reviews(
     user: UserSchema = Depends(get_current_active_auth_user),
 ):
     return await service.get_my_reviews(employee_id=user.id)
+
+
+@router.get("/my_latest", response_model=Optional[RSEListSchema])
+async def get_my_latest_open_review(
+    service: Annotated[
+        ReviewSessionEmployeeService,
+        Depends(get_review_session_employee_service),
+    ],
+):
+    return await service.get_my_latest_open()
+
+
+@router.get(
+    "/by_session/{session_id}/employee/{employee_id}",
+    response_model=RSESchema,
+)
+async def get_rse_by_session_employee(
+    session_id: int,
+    employee_id: int,
+    service: Annotated[
+        ReviewSessionEmployeeService,
+        Depends(get_review_session_employee_service),
+    ],
+):
+    return await service.get_rse_detail_by_session_employee(session_id, employee_id)
 
 
 @router.get("/{rse_id}", response_model=RSESchema)

@@ -1,7 +1,7 @@
 // src/components/admin/talent-statuses/talentStatusApi.ts
 import { axiosInstance } from '../../../api/axiosInstance';
 import {BASE_URL} from "../../../utils/eNums.ts"
-const BASE = `${BASE_URL}/admin/talent-statuses`;
+const BASE = `${BASE_URL}/admin/talent_statuses`;
 
 export interface TalentStatus {
   id: number;

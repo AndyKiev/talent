@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, List, Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Text, ForeignKey
+from sqlalchemy import String, Text, ForeignKey, UniqueConstraint
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 
@@ -14,6 +14,11 @@ if TYPE_CHECKING:
 
 class ReviewSessionEmployee(IntIdPkMixin, TimestampMixin, Base):
     __tablename__ = "review_session_employees"
+    # One review row per (session, employee): hard backstop behind the
+    # add_employee check-then-insert guard (prevents concurrent double-add).
+    __table_args__ = (
+        UniqueConstraint("session_id", "employee_id", name="uq_rse_session_employee"),
+    )
     session_id: Mapped[int] = mapped_column(
         ForeignKey("review_sessions.id"), nullable=False
     )

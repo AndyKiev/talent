@@ -53,7 +53,7 @@ async def mark_read(notification_id: str, user_code: str = "UKR7101004"):
     return {"ok": True}
 
 
-@router.patch("/read-all/all")
+@router.patch("/read_all/all")
 async def mark_all_read(user_code: str = "UKR7101004"):
     count = store.mark_all_read(user_code)
     return {"marked": count}
@@ -74,7 +74,7 @@ async def delete_all_notifications(user_code: str = "UKR7101004"):
     return {"deleted": count}
 
 
-@router.post("/trigger-process")
+@router.post("/trigger_process")
 async def trigger_process(user_code: str = "UKR7101004"):
     asyncio.create_task(run_heavy_process())
     return {"status": "started", "message": "Heavy process started, you will be notified when it finishes."}

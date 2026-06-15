@@ -28,6 +28,12 @@ from backend.api_v1.review_session_employee_level.review_session_employee_level_
 from backend.api_v1.review_session_employee_level.review_session_employee_level_errors import (
     ProposedLevelNotFound,
 )
+from backend.api_v1.review_session_employee.review_session_employee_repository import (
+    ReviewSessionEmployeeRepository,
+)
+from backend.api_v1.review_session_employee.review_session_employee_service import (
+    ReviewSessionEmployeeService,
+)
 
 
 class ReviewSessionEmployeeLevelService(BaseService):
@@ -44,9 +50,20 @@ class ReviewSessionEmployeeLevelService(BaseService):
             "review_session_employee_id", rse_id
         )
 
+    async def _assert_rse_visible(self, rse_id: int) -> None:
+        """Delegate to the RSE service's people-review visibility guard so an
+        out-of-scope employee's proposed level can't be reached by a typed-in URL."""
+        rse_service = ReviewSessionEmployeeService(
+            repository=ReviewSessionEmployeeRepository(session=self.session),
+            user=self.user,
+            session=self.session,
+        )
+        await rse_service.assert_rse_visible(rse_id)
+
     async def get_proposed_level(
         self, rse_id: int
     ) -> Optional[ProposedLevelSchema]:
+        await self._assert_rse_visible(rse_id)
         record = await self._get_by_rse(rse_id)
         if not record:
             return None
@@ -55,6 +72,7 @@ class ReviewSessionEmployeeLevelService(BaseService):
     async def upsert_proposed_level(
         self, rse_id: int, payload: ProposedLevelUpsert
     ) -> MutationResponse[ProposedLevelSchema]:
+        await self._assert_rse_visible(rse_id)
         record = await self._get_by_rse(rse_id)
         if record is None:
             record = ReviewSessionEmployeeLevel(
@@ -98,6 +116,7 @@ class ReviewSessionEmployeeLevelService(BaseService):
         return MutationResponse(detail=detail, data=schema)
 
     async def delete_proposed_level(self, rse_id: int) -> MutationResponse[None]:
+        await self._assert_rse_visible(rse_id)
         record = await self._get_by_rse(rse_id)
         if record is None:
             raise ProposedLevelNotFound(rse_id)
@@ -110,6 +129,7 @@ class ReviewSessionEmployeeLevelService(BaseService):
     async def set_status(
         self, rse_id: int, payload: ProposedLevelStatusUpdate
     ) -> MutationResponse[ProposedLevelSchema]:
+        await self._assert_rse_visible(rse_id)
         record = await self._get_by_rse(rse_id)
         if record is None:
             raise ProposedLevelNotFound(rse_id)

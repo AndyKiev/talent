@@ -24,7 +24,7 @@ export function TestProcessCard() {
         setState('running');
         setError('');
         try {
-            const res = await fetch(`${BASE_URL}/api/v1/notifications/trigger-process?user_code=UKR7101004`, {
+            const res = await fetch(`${BASE_URL}/api/v1/notifications/trigger_process?user_code=UKR7101004`, {
                 method: 'POST',
             });
             if (!res.ok) throw new Error(await res.text());

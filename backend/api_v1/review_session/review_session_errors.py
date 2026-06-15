@@ -22,6 +22,15 @@ class ReviewSessionDeleteError(DeleteError):
         DomainError.__init__(self, self.fallback)
 
 
+class ReviewSessionDeletePermission(DomainError):
+    message_key = "reviewSessionDeletePermission"
+
+    def __init__(self) -> None:
+        self.template_vars = {}
+        self.fallback = "Only developers can delete review sessions"
+        super().__init__(self.fallback)
+
+
 class ReviewSessionStatusError(DomainError):
     message_key = "reviewSessionStatusError"
 

@@ -125,7 +125,7 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
                     <Stack direction="row" spacing={0.5} flexGrow={1}>
                         {navBtn("employees", "/employees", <PeopleAltRounded sx={{ fontSize: 16 }} />)}
                         {navBtn("planning", "/planning", <InsightsRounded sx={{ fontSize: 16 }} />)}
-                        {navBtn("peopleReview", "/people-review", <RateReviewRounded sx={{ fontSize: 16 }} />)}
+                        {navBtn("peopleReview", "/people_review", <RateReviewRounded sx={{ fontSize: 16 }} />)}
                         {navBtn("admin", "/admin", <AdminPanelSettingsRounded sx={{ fontSize: 16 }} />)}
                         {navBtn("developer", "/developer", <CodeIcon sx={{ fontSize: 16 }} />)}
                         {/*{isAdmin && navBtn("Admin", "/admin", <AdminPanelSettingsRounded sx={{ fontSize: 16 }} />)}*/}

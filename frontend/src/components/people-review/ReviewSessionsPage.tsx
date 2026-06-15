@@ -65,6 +65,7 @@ async function renameSession(id: number, name: string): Promise<MutationResponse
     return res.data;
 }
 import { useDataGridLocale } from '../../hooks/useDataGridLocale';
+import { useAuthStore } from '../../store/authStore';
 
 const RS_QK = ['review_sessions'] as const;
 
@@ -85,6 +86,10 @@ export function ReviewSessionsPage() {
     const qc = useQueryClient();
     const localeText = useDataGridLocale();
     const getString = useString();
+    // Deleting a whole session (cascade) is developer-only.
+    const isDeveloper = useAuthStore(
+        (s) => (s.user?.groups ?? []).some((g) => g.toLowerCase() === 'dev'),
+    );
 
     const [snackbar, setSnackbar] = useState({
         open: false,
@@ -275,7 +280,7 @@ export function ReviewSessionsPage() {
                                     color="primary"
                                     onClick={() =>
                                         navigate({
-                                            to: '/people-review/$sessionId',
+                                            to: '/people_review/$sessionId',
                                             params: { sessionId: String(row.id) },
                                         })
                                     }
@@ -298,7 +303,7 @@ export function ReviewSessionsPage() {
                             <>
                                 <IconButton
                                     size="small" color="primary"
-                                    onClick={() => navigate({ to: '/people-review/$sessionId', params: { sessionId: String(row.id) } })}
+                                    onClick={() => navigate({ to: '/people_review/$sessionId', params: { sessionId: String(row.id) } })}
                                 >
                                     <PeopleIcon />
                                 </IconButton>
@@ -312,16 +317,18 @@ export function ReviewSessionsPage() {
                                 </Button>
                             </>
                         )}
-                        <Tooltip title={getString('deleteSessionTooltip')}>
-                            <IconButton
-                                size="small"
-                                color="error"
-                                onClick={() => setDeleteTarget(row)}
-                                disabled={deleteMut.isPending}
-                            >
-                                <DeleteIcon fontSize="small" />
-                            </IconButton>
-                        </Tooltip>
+                        {isDeveloper && (
+                            <Tooltip title={getString('deleteSessionTooltip')}>
+                                <IconButton
+                                    size="small"
+                                    color="error"
+                                    onClick={() => setDeleteTarget(row)}
+                                    disabled={deleteMut.isPending}
+                                >
+                                    <DeleteIcon fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                        )}
                     </Stack>
                 );
             },

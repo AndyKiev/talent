@@ -11,7 +11,8 @@ export interface Job {
   description: string | null;
   is_active: boolean;
   created_at: string;
-  groups: string[]; // group names
+  groups: string[]; // user group names
+  job_group_names: string[]; // job group names linked to this job
 }
 
 export interface JobCreate {
@@ -38,6 +39,15 @@ export interface UserGroup {
 export interface MutationResponse<T> {
   detail: string;
   data: T;
+}
+
+export interface JobBulkUploadResult {
+  detail: string;
+  inserted: Job[];
+  skipped_names: string[];
+  skipped_descriptions: string[];
+  inserted_count: number;
+  skipped_count: number;
 }
 
 // ── Jobs ──────────────────────────────────────────────────────────────────────

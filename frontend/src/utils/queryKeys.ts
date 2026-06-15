@@ -24,3 +24,13 @@ export const PLAN_SCOPE_QK = ['plan_scopes'] as const;
 export const PLAN_SESSION_STATUS_QK = ['plan_session_statuses'] as const;
 export const PLAN_CATEGORY_DEFAULT_QK = ['plan_category_defaults'] as const;
 export const PLAN_SCOPE_DEFAULT_QK = ['plan_scope_defaults'] as const;
+// Process roles
+export const PROCESS_QK = ['processes'] as const;
+export const PROCESS_ROLE_QK = ['process_roles'] as const;
+export const PROCESS_ROLE_HOLDER_QK = ['process_role_holders'] as const;
+export const PROCESS_ROLE_HOLDER_EMPLOYEE_QK = ['process_role_holder_employees'] as const;
+export const PROCESS_ROLE_HOLDER_DEPARTMENT_QK = ['process_role_holder_departments'] as const;
+export const PEOPLE_REVIEW_MY_SCOPES_QK = ['people_review_my_scopes'] as const;
+export const PEOPLE_REVIEW_MY_LATEST_QK = ['people_review_my_latest'] as const;
+export const OVERSIGHT_MANAGER_OPTIONS_QK = ['oversight_manager_options'] as const;
+export const MY_OVERSIGHT_MANAGER_QK = ['my_oversight_manager'] as const;

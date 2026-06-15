@@ -35,7 +35,8 @@ import { Link } from '@tanstack/react-router';
 import EmployeeDateDialog from './personal-data/EmployeeDateDialog';
 import AppShell from '../layout/AppShell.tsx';
 import {
-    fetchRSEDetail,
+    fetchRSEBySessionEmployee,
+    fetchMyScopes,
     fetchSessionEmployees,
     fetchEvaluations,
     bulkUpdateEvaluations,
@@ -61,6 +62,7 @@ import useString from '../../hooks/useString';
 import { str } from '../../strings/str';
 import { useAuthStore } from '../../store/authStore';
 import { defaultLangShortName } from '../../utils/eNums';
+import { PEOPLE_REVIEW_MY_SCOPES_QK } from '../../utils/queryKeys';
 import { useTheme } from '../theme/ThemeContext';
 import {
     type SummaryOption,
@@ -88,14 +90,17 @@ import { JobInfoPanel } from './evaluation/JobInfoPanel';
 import { EmployeeDataTabs } from './evaluation/EmployeeDataTabs';
 import { DimensionPanel } from './evaluation/DimensionPanel';
 import EmployeeAvatar from '../ui/EmployeeAvatar';
+import { OversightManagerPicker } from './OversightManagerPicker';
 
 export function EvaluationPage() {
-    const { rseId } = useParams({ strict: false }) as { rseId: string };
+    const { sessionId: sessionIdParam, employeeId: employeeIdParam } = useParams({ strict: false }) as { sessionId: string; employeeId: string };
     const navigate = useNavigate();
     const qc = useQueryClient();
-    const rid = Number(rseId);
+    const sid = Number(sessionIdParam);
+    const eid = Number(employeeIdParam);
     const { t } = useTheme();
     const getString = useString({ str });
+    const myEmployeeId = useAuthStore((s) => s.user?.id) ?? null;
 
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
     const [activeTab, setActiveTab] = useState(0);
@@ -111,11 +116,14 @@ export function EvaluationPage() {
     const [newImprovementTexts, setNewImprovementTexts] = useState<Record<number, string>>({});
 
     const { data: rseDetail, isLoading: rseLoading, isFetching: rseFetching } = useQuery({
-        queryKey: ['rse_detail', rid],
-        queryFn: () => fetchRSEDetail(rid),
+        queryKey: ['rse_detail', sid, eid],
+        queryFn: () => fetchRSEBySessionEmployee(sid, eid),
         staleTime: 30_000,
-        enabled: !!rid,
+        enabled: !!sid && !!eid,
     });
+    // Flat rse id, resolved from (session, employee). Everything below keys off it
+    // exactly as before; 0 until the detail loads, so dependent queries stay gated.
+    const rid = rseDetail?.id ?? 0;
 
     // Fetch sibling employees for prev/next navigation
     const sessionId = rseDetail?.session_id;
@@ -131,6 +139,13 @@ export function EvaluationPage() {
         queryFn: () => fetchEvaluations(rid),
         staleTime: 30_000,
         enabled: !!rid,
+    });
+
+    // Active people-review mode (for supervision read-only gating).
+    const { data: scopes } = useQuery({
+        queryKey: PEOPLE_REVIEW_MY_SCOPES_QK,
+        queryFn: fetchMyScopes,
+        staleTime: 60_000,
     });
 
     // --- Foreign languages ---
@@ -270,7 +285,7 @@ export function EvaluationPage() {
     const rseFieldsMut = useMutation({
         mutationFn: (fields: RSEFieldsUpdate) => saveRSEFields(rid, fields),
         onSuccess: async () => {
-            await qc.invalidateQueries({ queryKey: ['rse_detail', rid] });
+            await qc.invalidateQueries({ queryKey: ['rse_detail', sid, eid] });
         },
         onError: (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' }),
     });
@@ -299,7 +314,7 @@ export function EvaluationPage() {
     const reviewedMut = useMutation({
         mutationFn: markReviewed,
         onSuccess: async (res) => {
-            await qc.invalidateQueries({ queryKey: ['rse_detail', rid] });
+            await qc.invalidateQueries({ queryKey: ['rse_detail', sid, eid] });
             await qc.invalidateQueries({ queryKey: ['session_employees', sessionId] });
             setSnackbar({ open: true, message: res.detail, severity: 'success' });
         },
@@ -309,7 +324,7 @@ export function EvaluationPage() {
     const revertMut = useMutation({
         mutationFn: revertRSE,
         onSuccess: async (res) => {
-            await qc.invalidateQueries({ queryKey: ['rse_detail', rid] });
+            await qc.invalidateQueries({ queryKey: ['rse_detail', sid, eid] });
             await qc.invalidateQueries({ queryKey: ['session_employees', sessionId] });
             setSnackbar({ open: true, message: res.detail, severity: 'success' });
         },
@@ -319,30 +334,47 @@ export function EvaluationPage() {
     const reopenMut = useMutation({
         mutationFn: reopenRSE,
         onSuccess: async (res) => {
-            await qc.invalidateQueries({ queryKey: ['rse_detail', rid] });
+            await qc.invalidateQueries({ queryKey: ['rse_detail', sid, eid] });
             await qc.invalidateQueries({ queryKey: ['session_employees', sessionId] });
             setSnackbar({ open: true, message: res.detail, severity: 'success' });
         },
         onError: (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' }),
     });
 
-    // Prev / Next employee navigation
-    const siblingIds = siblings.map(s => s.id);
-    const currentIdx = siblingIds.indexOf(rid);
-    const prevId = currentIdx > 0 ? siblingIds[currentIdx - 1] : null;
-    const nextId = currentIdx < siblingIds.length - 1 ? siblingIds[currentIdx + 1] : null;
+    // Prev / Next employee navigation (keyed by employee id — the nested URL param).
+    const siblingEmployeeIds = siblings.map(s => s.employee_id);
+    const currentIdx = siblingEmployeeIds.indexOf(eid);
+    const prevId = currentIdx > 0 ? siblingEmployeeIds[currentIdx - 1] : null;
+    const nextId = currentIdx < siblingEmployeeIds.length - 1 ? siblingEmployeeIds[currentIdx + 1] : null;
 
-    const goToEmployee = (id: number) => {
-        navigate({ to: '/people-review/evaluation/$rseId', params: { rseId: String(id) } });
+    const goToEmployee = (employeeId: number) => {
+        navigate({
+            to: '/people_review/$sessionId/employee/$employeeId',
+            params: { sessionId: String(sid), employeeId: String(employeeId) },
+        });
     };
 
     const isLoading = rseLoading || evalLoading;
     const sessionStatus = rseDetail?.session_status ?? 'open';
     // Editable only if BOTH session is open AND employee status is open
     const isEditable = rseDetail?.status === 'open' && sessionStatus === 'open';
-    // Editing affordances inside the content are additionally gated by presentation
-    // mode; header actions (Save / Mark reviewed / Revert) stay on real `isEditable`.
-    const showEditing = isEditable && !presentationMode;
+    // People-review active mode. Supervision (department-target role) = read-only
+    // "watch", presentation-like, regardless of review/session status. Until
+    // my_scopes loads, default to read-only so a supervisor never sees a brief
+    // editable flash.
+    const activeRoleId = scopes?.active.process_role_id ?? null;
+    const activeRole = scopes?.roles.find((r) => r.process_role_id === activeRoleId) ?? null;
+    const isSupervision = activeRole?.link_target === 'department';
+    const viewOnly = isSupervision || !scopes;
+    // Content editing is additionally gated by presentation mode and viewOnly;
+    // header actions (Save / Mark reviewed / Revert) gate on `isEditable && !viewOnly`.
+    const showEditing = isEditable && !presentationMode && !viewOnly;
+    // Feedback editing splits by record ownership: an employee edits their own
+    // self-feedback; a reviewer edits another's manager-feedback. This also closes
+    // the edge of viewing your own review while in an oversight role.
+    const isOwnRecord = myEmployeeId != null && rseDetail?.employee_id === myEmployeeId;
+    const employeeFeedbackEditable = showEditing && isOwnRecord;
+    const managerFeedbackEditable = showEditing && !isOwnRecord;
     const isSessionClosed = sessionStatus === 'closed';
 
     // In a closed session show every dimension; otherwise only active ones.
@@ -586,12 +618,12 @@ export function EvaluationPage() {
 
                 {/* Breadcrumbs */}
                 <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                    <Link to="/people-review" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <Link to="/people_review" style={{ textDecoration: 'none', color: 'inherit' }}>
                         <Typography variant="body2" color="text.secondary">{getString('peopleReview')}</Typography>
                     </Link>
                     {rseDetail && (
                         <Link
-                            to="/people-review/$sessionId"
+                            to="/people_review/$sessionId"
                             params={{ sessionId: String(rseDetail.session_id) }}
                             style={{ textDecoration: 'none', color: 'inherit' }}
                         >
@@ -680,7 +712,17 @@ export function EvaluationPage() {
                                         )}
                                     </Box>
 
-                                    {isEditable && (
+                                    {/* Oversight-manager settings (own record only) — tucked in the header */}
+                                    {isOwnRecord && (
+                                        <OversightManagerPicker
+                                            editable={showEditing}
+                                            getString={getString}
+                                            onSuccess={(message) => setSnackbar({ open: true, message, severity: 'success' })}
+                                            onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
+                                        />
+                                    )}
+
+                                    {isEditable && !viewOnly && (
                                         <Tooltip title={getString('presentationModeHint')} placement="top">
                                             <Stack direction="row" alignItems="center" spacing={0.25} sx={{ ml: 0.5 }}>
                                                 <Switch
@@ -715,7 +757,7 @@ export function EvaluationPage() {
                                 </Box>
 
                                 {/* Mark reviewed */}
-                                {isEditable && (
+                                {isEditable && !viewOnly && (
                                     <Tooltip
                                         title={allFilled ? getString('markAsReviewed') : getString('fillAllDimensions', { filled: filledCount, total: totalCount })}
                                         placement="top"
@@ -739,7 +781,7 @@ export function EvaluationPage() {
                                 )}
 
                                 {/* Revert buttons */}
-                                {rseDetail.status === 'reviewed' && sessionStatus === 'open' && (
+                                {rseDetail.status === 'reviewed' && sessionStatus === 'open' && !viewOnly && (
                                     <Button
                                         size="small" variant="outlined" startIcon={<ReplayIcon />}
                                         onClick={() => revertMut.mutate(rid)}
@@ -749,7 +791,7 @@ export function EvaluationPage() {
                                         {getString('revertToOpen')}
                                     </Button>
                                 )}
-                                {rseDetail.status === 'closed' && sessionStatus !== 'closed' && (
+                                {rseDetail.status === 'closed' && sessionStatus !== 'closed' && !viewOnly && (
                                     <>
                                         <Tooltip title={getString('revertToReviewed')}>
                                             <Button
@@ -775,7 +817,7 @@ export function EvaluationPage() {
                                 )}
 
                                 {/* Save */}
-                                {isEditable && (
+                                {isEditable && !viewOnly && (
                                     <Button
                                         size="small" variant="outlined" startIcon={<SaveIcon />}
                                         onClick={handleSave} disabled={saveMut.isPending}
@@ -787,6 +829,13 @@ export function EvaluationPage() {
 
                             </Stack>
                         </Box>
+
+                        {/* Supervision = read-only watch, regardless of status */}
+                        {isSupervision && (
+                            <Alert severity="info" icon={<VisibilityIcon />} sx={{ mb: 2, borderRadius: '10px' }}>
+                                {getString('supervisionViewOnly') || 'Supervision mode — view only.'}
+                            </Alert>
+                        )}
 
                         {/* View-only banner */}
                         {isSessionClosed && (
@@ -846,8 +895,10 @@ export function EvaluationPage() {
                             }
                             employeeFeedback={employeeFeedback}
                             onEmployeeFeedbackChange={setEmployeeFeedback}
+                            employeeFeedbackEditable={employeeFeedbackEditable}
                             managerFeedback={managerFeedback}
                             onManagerFeedbackChange={setManagerFeedback}
+                            managerFeedbackEditable={managerFeedbackEditable}
                             results={results}
                             newResultText={newResultText}
                             onNewResultTextChange={setNewResultText}

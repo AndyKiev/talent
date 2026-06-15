@@ -59,6 +59,20 @@ class EmployeeDepartmentRepository(BaseRepository):
         result = await self.session.execute(stmt)
         return result.scalar_one()
 
+    async def get_main_employee_ids_in_departments(
+        self, department_ids: set[int] | list[int]
+    ) -> set[int]:
+        """Employee ids whose MAIN department is one of `department_ids`.
+        Used by people-review supervision scoping (department subtree)."""
+        if not department_ids:
+            return set()
+        stmt = select(self.model.employee_id).where(
+            self.model.is_main == True,
+            self.model.department_id.in_(list(department_ids)),
+        )
+        result = await self.session.scalars(stmt)
+        return set(result.all())
+
     async def get_by_double(
         self,
         employee_id: int,

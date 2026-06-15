@@ -11,20 +11,23 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PlanningRouteRouteImport } from './routes/planning/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as PeopleReviewIndexRouteImport } from './routes/people-review/index'
+import { Route as People_reviewIndexRouteImport } from './routes/people_review/index'
 import { Route as EmployeesIndexRouteImport } from './routes/employees/index'
 import { Route as DeveloperIndexRouteImport } from './routes/developer/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
-import { Route as PeopleReviewMyRouteImport } from './routes/people-review/my'
-import { Route as PeopleReviewSessionIdRouteImport } from './routes/people-review/$sessionId'
+import { Route as People_reviewMyRouteImport } from './routes/people_review/my'
 import { Route as EmployeesNewRouteImport } from './routes/employees/new'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as EmployeesEmployeeIdRouteRouteImport } from './routes/employees/$employeeId/route'
+import { Route as DeveloperProcess_rolesRouteRouteImport } from './routes/developer/process_roles/route'
+import { Route as AdminReviewersRouteRouteImport } from './routes/admin/reviewers/route'
 import { Route as AdminPlanning_setupRouteRouteImport } from './routes/admin/planning_setup/route'
 import { Route as AdminJobs_groupRouteRouteImport } from './routes/admin/jobs_group/route'
 import { Route as AdminDepartments_groupRouteRouteImport } from './routes/admin/departments_group/route'
+import { Route as People_reviewSessionIdIndexRouteImport } from './routes/people_review/$sessionId/index'
 import { Route as EmployeesEmployeeIdIndexRouteImport } from './routes/employees/$employeeId/index'
 import { Route as DeveloperTranslationsIndexRouteImport } from './routes/developer/translations/index'
+import { Route as DeveloperProcess_rolesIndexRouteImport } from './routes/developer/process_roles/index'
 import { Route as AdminUser_groups_groupIndexRouteImport } from './routes/admin/user_groups_group/index'
 import { Route as AdminUserGroupsIndexRouteImport } from './routes/admin/user-groups/index'
 import { Route as AdminUserGroupTypesIndexRouteImport } from './routes/admin/user-group-types/index'
@@ -33,6 +36,7 @@ import { Route as AdminTalentStatusesIndexRouteImport } from './routes/admin/tal
 import { Route as AdminTalentStatusPeriodLinksIndexRouteImport } from './routes/admin/talent-status-period-links/index'
 import { Route as AdminTalentPeriodsIndexRouteImport } from './routes/admin/talent-periods/index'
 import { Route as AdminStructureIndexRouteImport } from './routes/admin/structure/index'
+import { Route as AdminReviewersIndexRouteImport } from './routes/admin/reviewers/index'
 import { Route as AdminReviewLevelsIndexRouteImport } from './routes/admin/review-levels/index'
 import { Route as AdminReviewLevelRequirementsIndexRouteImport } from './routes/admin/review-level-requirements/index'
 import { Route as AdminReviewDimensionsIndexRouteImport } from './routes/admin/review-dimensions/index'
@@ -45,7 +49,6 @@ import { Route as AdminEmployee_eventsIndexRouteImport } from './routes/admin/em
 import { Route as AdminDepartments_groupIndexRouteImport } from './routes/admin/departments_group/index'
 import { Route as AdminDepartment_typesIndexRouteImport } from './routes/admin/department_types/index'
 import { Route as AdminDepartment_categoriesIndexRouteImport } from './routes/admin/department_categories/index'
-import { Route as PeopleReviewEvaluationRseIdRouteImport } from './routes/people-review/evaluation/$rseId'
 import { Route as EmployeesEmployeeIdEditRouteImport } from './routes/employees/$employeeId/edit'
 import { Route as AdminStructureDepartmentIdRouteImport } from './routes/admin/structure/$departmentId'
 import { Route as AdminDepartments_groupDepartment_typesRouteRouteImport } from './routes/admin/departments_group/department_types/route'
@@ -54,6 +57,10 @@ import { Route as EmployeesEmployeeIdSummaryIndexRouteImport } from './routes/em
 import { Route as EmployeesEmployeeIdEventsIndexRouteImport } from './routes/employees/$employeeId/events/index'
 import { Route as EmployeesEmployeeIdDr_historyIndexRouteImport } from './routes/employees/$employeeId/dr_history/index'
 import { Route as EmployeesEmployeeIdDepartmentsIndexRouteImport } from './routes/employees/$employeeId/departments/index'
+import { Route as DeveloperProcess_rolesProcess_roleIndexRouteImport } from './routes/developer/process_roles/process_role/index'
+import { Route as DeveloperProcess_rolesProcessIndexRouteImport } from './routes/developer/process_roles/process/index'
+import { Route as AdminReviewersHoldersIndexRouteImport } from './routes/admin/reviewers/holders/index'
+import { Route as AdminReviewersEmployeesIndexRouteImport } from './routes/admin/reviewers/employees/index'
 import { Route as AdminPlanning_setupPlan_session_statusIndexRouteImport } from './routes/admin/planning_setup/plan_session_status/index'
 import { Route as AdminPlanning_setupPlan_scope_defaultsIndexRouteImport } from './routes/admin/planning_setup/plan_scope_defaults/index'
 import { Route as AdminPlanning_setupPlan_category_defaultsIndexRouteImport } from './routes/admin/planning_setup/plan_category_defaults/index'
@@ -67,6 +74,7 @@ import { Route as AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute
 import { Route as AdminDepartments_groupStructureIndexRouteImport } from './routes/admin/departments_group/structure/index'
 import { Route as AdminDepartments_groupDepartment_typesIndexRouteImport } from './routes/admin/departments_group/department_types/index'
 import { Route as AdminDepartments_groupDepartment_categoriesIndexRouteImport } from './routes/admin/departments_group/department_categories/index'
+import { Route as People_reviewSessionIdEmployeeEmployeeIdRouteImport } from './routes/people_review/$sessionId/employee/$employeeId'
 import { Route as AdminDepartments_groupDepartment_typesListIndexRouteImport } from './routes/admin/departments_group/department_types/list/index'
 import { Route as AdminDepartments_groupDepartment_typesJob_linksIndexRouteImport } from './routes/admin/departments_group/department_types/job_links/index'
 import { Route as AdminDepartments_groupDepartment_typesHierarchyIndexRouteImport } from './routes/admin/departments_group/department_types/hierarchy/index'
@@ -81,9 +89,9 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PeopleReviewIndexRoute = PeopleReviewIndexRouteImport.update({
-  id: '/people-review/',
-  path: '/people-review/',
+const People_reviewIndexRoute = People_reviewIndexRouteImport.update({
+  id: '/people_review/',
+  path: '/people_review/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EmployeesIndexRoute = EmployeesIndexRouteImport.update({
@@ -101,14 +109,9 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PeopleReviewMyRoute = PeopleReviewMyRouteImport.update({
-  id: '/people-review/my',
-  path: '/people-review/my',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PeopleReviewSessionIdRoute = PeopleReviewSessionIdRouteImport.update({
-  id: '/people-review/$sessionId',
-  path: '/people-review/$sessionId',
+const People_reviewMyRoute = People_reviewMyRouteImport.update({
+  id: '/people_review/my',
+  path: '/people_review/my',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EmployeesNewRoute = EmployeesNewRouteImport.update({
@@ -127,6 +130,17 @@ const EmployeesEmployeeIdRouteRoute =
     path: '/employees/$employeeId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const DeveloperProcess_rolesRouteRoute =
+  DeveloperProcess_rolesRouteRouteImport.update({
+    id: '/developer/process_roles',
+    path: '/developer/process_roles',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AdminReviewersRouteRoute = AdminReviewersRouteRouteImport.update({
+  id: '/admin/reviewers',
+  path: '/admin/reviewers',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminPlanning_setupRouteRoute =
   AdminPlanning_setupRouteRouteImport.update({
     id: '/admin/planning_setup',
@@ -144,6 +158,12 @@ const AdminDepartments_groupRouteRoute =
     path: '/admin/departments_group',
     getParentRoute: () => rootRouteImport,
   } as any)
+const People_reviewSessionIdIndexRoute =
+  People_reviewSessionIdIndexRouteImport.update({
+    id: '/people_review/$sessionId/',
+    path: '/people_review/$sessionId/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const EmployeesEmployeeIdIndexRoute =
   EmployeesEmployeeIdIndexRouteImport.update({
     id: '/',
@@ -155,6 +175,12 @@ const DeveloperTranslationsIndexRoute =
     id: '/developer/translations/',
     path: '/developer/translations/',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const DeveloperProcess_rolesIndexRoute =
+  DeveloperProcess_rolesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => DeveloperProcess_rolesRouteRoute,
   } as any)
 const AdminUser_groups_groupIndexRoute =
   AdminUser_groups_groupIndexRouteImport.update({
@@ -199,6 +225,11 @@ const AdminStructureIndexRoute = AdminStructureIndexRouteImport.update({
   id: '/admin/structure/',
   path: '/admin/structure/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminReviewersIndexRoute = AdminReviewersIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminReviewersRouteRoute,
 } as any)
 const AdminReviewLevelsIndexRoute = AdminReviewLevelsIndexRouteImport.update({
   id: '/admin/review-levels/',
@@ -268,12 +299,6 @@ const AdminDepartment_categoriesIndexRoute =
     path: '/admin/department_categories/',
     getParentRoute: () => rootRouteImport,
   } as any)
-const PeopleReviewEvaluationRseIdRoute =
-  PeopleReviewEvaluationRseIdRouteImport.update({
-    id: '/people-review/evaluation/$rseId',
-    path: '/people-review/evaluation/$rseId',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const EmployeesEmployeeIdEditRoute = EmployeesEmployeeIdEditRouteImport.update({
   id: '/edit',
   path: '/edit',
@@ -320,6 +345,30 @@ const EmployeesEmployeeIdDepartmentsIndexRoute =
     id: '/departments/',
     path: '/departments/',
     getParentRoute: () => EmployeesEmployeeIdRouteRoute,
+  } as any)
+const DeveloperProcess_rolesProcess_roleIndexRoute =
+  DeveloperProcess_rolesProcess_roleIndexRouteImport.update({
+    id: '/process_role/',
+    path: '/process_role/',
+    getParentRoute: () => DeveloperProcess_rolesRouteRoute,
+  } as any)
+const DeveloperProcess_rolesProcessIndexRoute =
+  DeveloperProcess_rolesProcessIndexRouteImport.update({
+    id: '/process/',
+    path: '/process/',
+    getParentRoute: () => DeveloperProcess_rolesRouteRoute,
+  } as any)
+const AdminReviewersHoldersIndexRoute =
+  AdminReviewersHoldersIndexRouteImport.update({
+    id: '/holders/',
+    path: '/holders/',
+    getParentRoute: () => AdminReviewersRouteRoute,
+  } as any)
+const AdminReviewersEmployeesIndexRoute =
+  AdminReviewersEmployeesIndexRouteImport.update({
+    id: '/employees/',
+    path: '/employees/',
+    getParentRoute: () => AdminReviewersRouteRoute,
   } as any)
 const AdminPlanning_setupPlan_session_statusIndexRoute =
   AdminPlanning_setupPlan_session_statusIndexRouteImport.update({
@@ -399,6 +448,12 @@ const AdminDepartments_groupDepartment_categoriesIndexRoute =
     path: '/department_categories/',
     getParentRoute: () => AdminDepartments_groupRouteRoute,
   } as any)
+const People_reviewSessionIdEmployeeEmployeeIdRoute =
+  People_reviewSessionIdEmployeeEmployeeIdRouteImport.update({
+    id: '/people_review/$sessionId/employee/$employeeId',
+    path: '/people_review/$sessionId/employee/$employeeId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminDepartments_groupDepartment_typesListIndexRoute =
   AdminDepartments_groupDepartment_typesListIndexRouteImport.update({
     id: '/list/',
@@ -424,19 +479,19 @@ export interface FileRoutesByFullPath {
   '/admin/departments_group': typeof AdminDepartments_groupRouteRouteWithChildren
   '/admin/jobs_group': typeof AdminJobs_groupRouteRouteWithChildren
   '/admin/planning_setup': typeof AdminPlanning_setupRouteRouteWithChildren
+  '/admin/reviewers': typeof AdminReviewersRouteRouteWithChildren
+  '/developer/process_roles': typeof DeveloperProcess_rolesRouteRouteWithChildren
   '/employees/$employeeId': typeof EmployeesEmployeeIdRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/employees/new': typeof EmployeesNewRoute
-  '/people-review/$sessionId': typeof PeopleReviewSessionIdRoute
-  '/people-review/my': typeof PeopleReviewMyRoute
+  '/people_review/my': typeof People_reviewMyRoute
   '/admin': typeof AdminIndexRoute
   '/developer': typeof DeveloperIndexRoute
   '/employees': typeof EmployeesIndexRoute
-  '/people-review': typeof PeopleReviewIndexRoute
+  '/people_review': typeof People_reviewIndexRoute
   '/admin/departments_group/department_types': typeof AdminDepartments_groupDepartment_typesRouteRouteWithChildren
   '/admin/structure/$departmentId': typeof AdminStructureDepartmentIdRoute
   '/employees/$employeeId/edit': typeof EmployeesEmployeeIdEditRoute
-  '/people-review/evaluation/$rseId': typeof PeopleReviewEvaluationRseIdRoute
   '/admin/department_categories': typeof AdminDepartment_categoriesIndexRoute
   '/admin/department_types': typeof AdminDepartment_typesIndexRoute
   '/admin/departments_group/': typeof AdminDepartments_groupIndexRoute
@@ -449,6 +504,7 @@ export interface FileRoutesByFullPath {
   '/admin/review-dimensions': typeof AdminReviewDimensionsIndexRoute
   '/admin/review-level-requirements': typeof AdminReviewLevelRequirementsIndexRoute
   '/admin/review-levels': typeof AdminReviewLevelsIndexRoute
+  '/admin/reviewers/': typeof AdminReviewersIndexRoute
   '/admin/structure': typeof AdminStructureIndexRoute
   '/admin/talent-periods': typeof AdminTalentPeriodsIndexRoute
   '/admin/talent-status-period-links': typeof AdminTalentStatusPeriodLinksIndexRoute
@@ -457,8 +513,11 @@ export interface FileRoutesByFullPath {
   '/admin/user-group-types': typeof AdminUserGroupTypesIndexRoute
   '/admin/user-groups': typeof AdminUserGroupsIndexRoute
   '/admin/user_groups_group': typeof AdminUser_groups_groupIndexRoute
+  '/developer/process_roles/': typeof DeveloperProcess_rolesIndexRoute
   '/developer/translations': typeof DeveloperTranslationsIndexRoute
   '/employees/$employeeId/': typeof EmployeesEmployeeIdIndexRoute
+  '/people_review/$sessionId': typeof People_reviewSessionIdIndexRoute
+  '/people_review/$sessionId/employee/$employeeId': typeof People_reviewSessionIdEmployeeEmployeeIdRoute
   '/admin/departments_group/department_categories': typeof AdminDepartments_groupDepartment_categoriesIndexRoute
   '/admin/departments_group/department_types/': typeof AdminDepartments_groupDepartment_typesIndexRoute
   '/admin/departments_group/structure': typeof AdminDepartments_groupStructureIndexRoute
@@ -472,6 +531,10 @@ export interface FileRoutesByFullPath {
   '/admin/planning_setup/plan_category_defaults': typeof AdminPlanning_setupPlan_category_defaultsIndexRoute
   '/admin/planning_setup/plan_scope_defaults': typeof AdminPlanning_setupPlan_scope_defaultsIndexRoute
   '/admin/planning_setup/plan_session_status': typeof AdminPlanning_setupPlan_session_statusIndexRoute
+  '/admin/reviewers/employees': typeof AdminReviewersEmployeesIndexRoute
+  '/admin/reviewers/holders': typeof AdminReviewersHoldersIndexRoute
+  '/developer/process_roles/process': typeof DeveloperProcess_rolesProcessIndexRoute
+  '/developer/process_roles/process_role': typeof DeveloperProcess_rolesProcess_roleIndexRoute
   '/employees/$employeeId/departments': typeof EmployeesEmployeeIdDepartmentsIndexRoute
   '/employees/$employeeId/dr_history': typeof EmployeesEmployeeIdDr_historyIndexRoute
   '/employees/$employeeId/events': typeof EmployeesEmployeeIdEventsIndexRoute
@@ -486,15 +549,13 @@ export interface FileRoutesByTo {
   '/planning': typeof PlanningRouteRoute
   '/auth/login': typeof AuthLoginRoute
   '/employees/new': typeof EmployeesNewRoute
-  '/people-review/$sessionId': typeof PeopleReviewSessionIdRoute
-  '/people-review/my': typeof PeopleReviewMyRoute
+  '/people_review/my': typeof People_reviewMyRoute
   '/admin': typeof AdminIndexRoute
   '/developer': typeof DeveloperIndexRoute
   '/employees': typeof EmployeesIndexRoute
-  '/people-review': typeof PeopleReviewIndexRoute
+  '/people_review': typeof People_reviewIndexRoute
   '/admin/structure/$departmentId': typeof AdminStructureDepartmentIdRoute
   '/employees/$employeeId/edit': typeof EmployeesEmployeeIdEditRoute
-  '/people-review/evaluation/$rseId': typeof PeopleReviewEvaluationRseIdRoute
   '/admin/department_categories': typeof AdminDepartment_categoriesIndexRoute
   '/admin/department_types': typeof AdminDepartment_typesIndexRoute
   '/admin/departments_group': typeof AdminDepartments_groupIndexRoute
@@ -507,6 +568,7 @@ export interface FileRoutesByTo {
   '/admin/review-dimensions': typeof AdminReviewDimensionsIndexRoute
   '/admin/review-level-requirements': typeof AdminReviewLevelRequirementsIndexRoute
   '/admin/review-levels': typeof AdminReviewLevelsIndexRoute
+  '/admin/reviewers': typeof AdminReviewersIndexRoute
   '/admin/structure': typeof AdminStructureIndexRoute
   '/admin/talent-periods': typeof AdminTalentPeriodsIndexRoute
   '/admin/talent-status-period-links': typeof AdminTalentStatusPeriodLinksIndexRoute
@@ -515,8 +577,11 @@ export interface FileRoutesByTo {
   '/admin/user-group-types': typeof AdminUserGroupTypesIndexRoute
   '/admin/user-groups': typeof AdminUserGroupsIndexRoute
   '/admin/user_groups_group': typeof AdminUser_groups_groupIndexRoute
+  '/developer/process_roles': typeof DeveloperProcess_rolesIndexRoute
   '/developer/translations': typeof DeveloperTranslationsIndexRoute
   '/employees/$employeeId': typeof EmployeesEmployeeIdIndexRoute
+  '/people_review/$sessionId': typeof People_reviewSessionIdIndexRoute
+  '/people_review/$sessionId/employee/$employeeId': typeof People_reviewSessionIdEmployeeEmployeeIdRoute
   '/admin/departments_group/department_categories': typeof AdminDepartments_groupDepartment_categoriesIndexRoute
   '/admin/departments_group/department_types': typeof AdminDepartments_groupDepartment_typesIndexRoute
   '/admin/departments_group/structure': typeof AdminDepartments_groupStructureIndexRoute
@@ -530,6 +595,10 @@ export interface FileRoutesByTo {
   '/admin/planning_setup/plan_category_defaults': typeof AdminPlanning_setupPlan_category_defaultsIndexRoute
   '/admin/planning_setup/plan_scope_defaults': typeof AdminPlanning_setupPlan_scope_defaultsIndexRoute
   '/admin/planning_setup/plan_session_status': typeof AdminPlanning_setupPlan_session_statusIndexRoute
+  '/admin/reviewers/employees': typeof AdminReviewersEmployeesIndexRoute
+  '/admin/reviewers/holders': typeof AdminReviewersHoldersIndexRoute
+  '/developer/process_roles/process': typeof DeveloperProcess_rolesProcessIndexRoute
+  '/developer/process_roles/process_role': typeof DeveloperProcess_rolesProcess_roleIndexRoute
   '/employees/$employeeId/departments': typeof EmployeesEmployeeIdDepartmentsIndexRoute
   '/employees/$employeeId/dr_history': typeof EmployeesEmployeeIdDr_historyIndexRoute
   '/employees/$employeeId/events': typeof EmployeesEmployeeIdEventsIndexRoute
@@ -546,19 +615,19 @@ export interface FileRoutesById {
   '/admin/departments_group': typeof AdminDepartments_groupRouteRouteWithChildren
   '/admin/jobs_group': typeof AdminJobs_groupRouteRouteWithChildren
   '/admin/planning_setup': typeof AdminPlanning_setupRouteRouteWithChildren
+  '/admin/reviewers': typeof AdminReviewersRouteRouteWithChildren
+  '/developer/process_roles': typeof DeveloperProcess_rolesRouteRouteWithChildren
   '/employees/$employeeId': typeof EmployeesEmployeeIdRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/employees/new': typeof EmployeesNewRoute
-  '/people-review/$sessionId': typeof PeopleReviewSessionIdRoute
-  '/people-review/my': typeof PeopleReviewMyRoute
+  '/people_review/my': typeof People_reviewMyRoute
   '/admin/': typeof AdminIndexRoute
   '/developer/': typeof DeveloperIndexRoute
   '/employees/': typeof EmployeesIndexRoute
-  '/people-review/': typeof PeopleReviewIndexRoute
+  '/people_review/': typeof People_reviewIndexRoute
   '/admin/departments_group/department_types': typeof AdminDepartments_groupDepartment_typesRouteRouteWithChildren
   '/admin/structure/$departmentId': typeof AdminStructureDepartmentIdRoute
   '/employees/$employeeId/edit': typeof EmployeesEmployeeIdEditRoute
-  '/people-review/evaluation/$rseId': typeof PeopleReviewEvaluationRseIdRoute
   '/admin/department_categories/': typeof AdminDepartment_categoriesIndexRoute
   '/admin/department_types/': typeof AdminDepartment_typesIndexRoute
   '/admin/departments_group/': typeof AdminDepartments_groupIndexRoute
@@ -571,6 +640,7 @@ export interface FileRoutesById {
   '/admin/review-dimensions/': typeof AdminReviewDimensionsIndexRoute
   '/admin/review-level-requirements/': typeof AdminReviewLevelRequirementsIndexRoute
   '/admin/review-levels/': typeof AdminReviewLevelsIndexRoute
+  '/admin/reviewers/': typeof AdminReviewersIndexRoute
   '/admin/structure/': typeof AdminStructureIndexRoute
   '/admin/talent-periods/': typeof AdminTalentPeriodsIndexRoute
   '/admin/talent-status-period-links/': typeof AdminTalentStatusPeriodLinksIndexRoute
@@ -579,8 +649,11 @@ export interface FileRoutesById {
   '/admin/user-group-types/': typeof AdminUserGroupTypesIndexRoute
   '/admin/user-groups/': typeof AdminUserGroupsIndexRoute
   '/admin/user_groups_group/': typeof AdminUser_groups_groupIndexRoute
+  '/developer/process_roles/': typeof DeveloperProcess_rolesIndexRoute
   '/developer/translations/': typeof DeveloperTranslationsIndexRoute
   '/employees/$employeeId/': typeof EmployeesEmployeeIdIndexRoute
+  '/people_review/$sessionId/': typeof People_reviewSessionIdIndexRoute
+  '/people_review/$sessionId/employee/$employeeId': typeof People_reviewSessionIdEmployeeEmployeeIdRoute
   '/admin/departments_group/department_categories/': typeof AdminDepartments_groupDepartment_categoriesIndexRoute
   '/admin/departments_group/department_types/': typeof AdminDepartments_groupDepartment_typesIndexRoute
   '/admin/departments_group/structure/': typeof AdminDepartments_groupStructureIndexRoute
@@ -594,6 +667,10 @@ export interface FileRoutesById {
   '/admin/planning_setup/plan_category_defaults/': typeof AdminPlanning_setupPlan_category_defaultsIndexRoute
   '/admin/planning_setup/plan_scope_defaults/': typeof AdminPlanning_setupPlan_scope_defaultsIndexRoute
   '/admin/planning_setup/plan_session_status/': typeof AdminPlanning_setupPlan_session_statusIndexRoute
+  '/admin/reviewers/employees/': typeof AdminReviewersEmployeesIndexRoute
+  '/admin/reviewers/holders/': typeof AdminReviewersHoldersIndexRoute
+  '/developer/process_roles/process/': typeof DeveloperProcess_rolesProcessIndexRoute
+  '/developer/process_roles/process_role/': typeof DeveloperProcess_rolesProcess_roleIndexRoute
   '/employees/$employeeId/departments/': typeof EmployeesEmployeeIdDepartmentsIndexRoute
   '/employees/$employeeId/dr_history/': typeof EmployeesEmployeeIdDr_historyIndexRoute
   '/employees/$employeeId/events/': typeof EmployeesEmployeeIdEventsIndexRoute
@@ -611,19 +688,19 @@ export interface FileRouteTypes {
     | '/admin/departments_group'
     | '/admin/jobs_group'
     | '/admin/planning_setup'
+    | '/admin/reviewers'
+    | '/developer/process_roles'
     | '/employees/$employeeId'
     | '/auth/login'
     | '/employees/new'
-    | '/people-review/$sessionId'
-    | '/people-review/my'
+    | '/people_review/my'
     | '/admin'
     | '/developer'
     | '/employees'
-    | '/people-review'
+    | '/people_review'
     | '/admin/departments_group/department_types'
     | '/admin/structure/$departmentId'
     | '/employees/$employeeId/edit'
-    | '/people-review/evaluation/$rseId'
     | '/admin/department_categories'
     | '/admin/department_types'
     | '/admin/departments_group/'
@@ -636,6 +713,7 @@ export interface FileRouteTypes {
     | '/admin/review-dimensions'
     | '/admin/review-level-requirements'
     | '/admin/review-levels'
+    | '/admin/reviewers/'
     | '/admin/structure'
     | '/admin/talent-periods'
     | '/admin/talent-status-period-links'
@@ -644,8 +722,11 @@ export interface FileRouteTypes {
     | '/admin/user-group-types'
     | '/admin/user-groups'
     | '/admin/user_groups_group'
+    | '/developer/process_roles/'
     | '/developer/translations'
     | '/employees/$employeeId/'
+    | '/people_review/$sessionId'
+    | '/people_review/$sessionId/employee/$employeeId'
     | '/admin/departments_group/department_categories'
     | '/admin/departments_group/department_types/'
     | '/admin/departments_group/structure'
@@ -659,6 +740,10 @@ export interface FileRouteTypes {
     | '/admin/planning_setup/plan_category_defaults'
     | '/admin/planning_setup/plan_scope_defaults'
     | '/admin/planning_setup/plan_session_status'
+    | '/admin/reviewers/employees'
+    | '/admin/reviewers/holders'
+    | '/developer/process_roles/process'
+    | '/developer/process_roles/process_role'
     | '/employees/$employeeId/departments'
     | '/employees/$employeeId/dr_history'
     | '/employees/$employeeId/events'
@@ -673,15 +758,13 @@ export interface FileRouteTypes {
     | '/planning'
     | '/auth/login'
     | '/employees/new'
-    | '/people-review/$sessionId'
-    | '/people-review/my'
+    | '/people_review/my'
     | '/admin'
     | '/developer'
     | '/employees'
-    | '/people-review'
+    | '/people_review'
     | '/admin/structure/$departmentId'
     | '/employees/$employeeId/edit'
-    | '/people-review/evaluation/$rseId'
     | '/admin/department_categories'
     | '/admin/department_types'
     | '/admin/departments_group'
@@ -694,6 +777,7 @@ export interface FileRouteTypes {
     | '/admin/review-dimensions'
     | '/admin/review-level-requirements'
     | '/admin/review-levels'
+    | '/admin/reviewers'
     | '/admin/structure'
     | '/admin/talent-periods'
     | '/admin/talent-status-period-links'
@@ -702,8 +786,11 @@ export interface FileRouteTypes {
     | '/admin/user-group-types'
     | '/admin/user-groups'
     | '/admin/user_groups_group'
+    | '/developer/process_roles'
     | '/developer/translations'
     | '/employees/$employeeId'
+    | '/people_review/$sessionId'
+    | '/people_review/$sessionId/employee/$employeeId'
     | '/admin/departments_group/department_categories'
     | '/admin/departments_group/department_types'
     | '/admin/departments_group/structure'
@@ -717,6 +804,10 @@ export interface FileRouteTypes {
     | '/admin/planning_setup/plan_category_defaults'
     | '/admin/planning_setup/plan_scope_defaults'
     | '/admin/planning_setup/plan_session_status'
+    | '/admin/reviewers/employees'
+    | '/admin/reviewers/holders'
+    | '/developer/process_roles/process'
+    | '/developer/process_roles/process_role'
     | '/employees/$employeeId/departments'
     | '/employees/$employeeId/dr_history'
     | '/employees/$employeeId/events'
@@ -732,19 +823,19 @@ export interface FileRouteTypes {
     | '/admin/departments_group'
     | '/admin/jobs_group'
     | '/admin/planning_setup'
+    | '/admin/reviewers'
+    | '/developer/process_roles'
     | '/employees/$employeeId'
     | '/auth/login'
     | '/employees/new'
-    | '/people-review/$sessionId'
-    | '/people-review/my'
+    | '/people_review/my'
     | '/admin/'
     | '/developer/'
     | '/employees/'
-    | '/people-review/'
+    | '/people_review/'
     | '/admin/departments_group/department_types'
     | '/admin/structure/$departmentId'
     | '/employees/$employeeId/edit'
-    | '/people-review/evaluation/$rseId'
     | '/admin/department_categories/'
     | '/admin/department_types/'
     | '/admin/departments_group/'
@@ -757,6 +848,7 @@ export interface FileRouteTypes {
     | '/admin/review-dimensions/'
     | '/admin/review-level-requirements/'
     | '/admin/review-levels/'
+    | '/admin/reviewers/'
     | '/admin/structure/'
     | '/admin/talent-periods/'
     | '/admin/talent-status-period-links/'
@@ -765,8 +857,11 @@ export interface FileRouteTypes {
     | '/admin/user-group-types/'
     | '/admin/user-groups/'
     | '/admin/user_groups_group/'
+    | '/developer/process_roles/'
     | '/developer/translations/'
     | '/employees/$employeeId/'
+    | '/people_review/$sessionId/'
+    | '/people_review/$sessionId/employee/$employeeId'
     | '/admin/departments_group/department_categories/'
     | '/admin/departments_group/department_types/'
     | '/admin/departments_group/structure/'
@@ -780,6 +875,10 @@ export interface FileRouteTypes {
     | '/admin/planning_setup/plan_category_defaults/'
     | '/admin/planning_setup/plan_scope_defaults/'
     | '/admin/planning_setup/plan_session_status/'
+    | '/admin/reviewers/employees/'
+    | '/admin/reviewers/holders/'
+    | '/developer/process_roles/process/'
+    | '/developer/process_roles/process_role/'
     | '/employees/$employeeId/departments/'
     | '/employees/$employeeId/dr_history/'
     | '/employees/$employeeId/events/'
@@ -796,17 +895,17 @@ export interface RootRouteChildren {
   AdminDepartments_groupRouteRoute: typeof AdminDepartments_groupRouteRouteWithChildren
   AdminJobs_groupRouteRoute: typeof AdminJobs_groupRouteRouteWithChildren
   AdminPlanning_setupRouteRoute: typeof AdminPlanning_setupRouteRouteWithChildren
+  AdminReviewersRouteRoute: typeof AdminReviewersRouteRouteWithChildren
+  DeveloperProcess_rolesRouteRoute: typeof DeveloperProcess_rolesRouteRouteWithChildren
   EmployeesEmployeeIdRouteRoute: typeof EmployeesEmployeeIdRouteRouteWithChildren
   AuthLoginRoute: typeof AuthLoginRoute
   EmployeesNewRoute: typeof EmployeesNewRoute
-  PeopleReviewSessionIdRoute: typeof PeopleReviewSessionIdRoute
-  PeopleReviewMyRoute: typeof PeopleReviewMyRoute
+  People_reviewMyRoute: typeof People_reviewMyRoute
   AdminIndexRoute: typeof AdminIndexRoute
   DeveloperIndexRoute: typeof DeveloperIndexRoute
   EmployeesIndexRoute: typeof EmployeesIndexRoute
-  PeopleReviewIndexRoute: typeof PeopleReviewIndexRoute
+  People_reviewIndexRoute: typeof People_reviewIndexRoute
   AdminStructureDepartmentIdRoute: typeof AdminStructureDepartmentIdRoute
-  PeopleReviewEvaluationRseIdRoute: typeof PeopleReviewEvaluationRseIdRoute
   AdminDepartment_categoriesIndexRoute: typeof AdminDepartment_categoriesIndexRoute
   AdminDepartment_typesIndexRoute: typeof AdminDepartment_typesIndexRoute
   AdminEmployee_eventsIndexRoute: typeof AdminEmployee_eventsIndexRoute
@@ -825,6 +924,8 @@ export interface RootRouteChildren {
   AdminUserGroupsIndexRoute: typeof AdminUserGroupsIndexRoute
   AdminUser_groups_groupIndexRoute: typeof AdminUser_groups_groupIndexRoute
   DeveloperTranslationsIndexRoute: typeof DeveloperTranslationsIndexRoute
+  People_reviewSessionIdIndexRoute: typeof People_reviewSessionIdIndexRoute
+  People_reviewSessionIdEmployeeEmployeeIdRoute: typeof People_reviewSessionIdEmployeeEmployeeIdRoute
   AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute: typeof AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute
   AdminEmployee_eventsEmployee_event_direction_typesIndexRoute: typeof AdminEmployee_eventsEmployee_event_direction_typesIndexRoute
   AdminEmployee_eventsEmployee_event_statusesIndexRoute: typeof AdminEmployee_eventsEmployee_event_statusesIndexRoute
@@ -847,11 +948,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/people-review/': {
-      id: '/people-review/'
-      path: '/people-review'
-      fullPath: '/people-review'
-      preLoaderRoute: typeof PeopleReviewIndexRouteImport
+    '/people_review/': {
+      id: '/people_review/'
+      path: '/people_review'
+      fullPath: '/people_review'
+      preLoaderRoute: typeof People_reviewIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/employees/': {
@@ -875,18 +976,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/people-review/my': {
-      id: '/people-review/my'
-      path: '/people-review/my'
-      fullPath: '/people-review/my'
-      preLoaderRoute: typeof PeopleReviewMyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/people-review/$sessionId': {
-      id: '/people-review/$sessionId'
-      path: '/people-review/$sessionId'
-      fullPath: '/people-review/$sessionId'
-      preLoaderRoute: typeof PeopleReviewSessionIdRouteImport
+    '/people_review/my': {
+      id: '/people_review/my'
+      path: '/people_review/my'
+      fullPath: '/people_review/my'
+      preLoaderRoute: typeof People_reviewMyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/employees/new': {
@@ -910,6 +1004,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmployeesEmployeeIdRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/developer/process_roles': {
+      id: '/developer/process_roles'
+      path: '/developer/process_roles'
+      fullPath: '/developer/process_roles'
+      preLoaderRoute: typeof DeveloperProcess_rolesRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/reviewers': {
+      id: '/admin/reviewers'
+      path: '/admin/reviewers'
+      fullPath: '/admin/reviewers'
+      preLoaderRoute: typeof AdminReviewersRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/planning_setup': {
       id: '/admin/planning_setup'
       path: '/admin/planning_setup'
@@ -931,6 +1039,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDepartments_groupRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/people_review/$sessionId/': {
+      id: '/people_review/$sessionId/'
+      path: '/people_review/$sessionId'
+      fullPath: '/people_review/$sessionId'
+      preLoaderRoute: typeof People_reviewSessionIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/employees/$employeeId/': {
       id: '/employees/$employeeId/'
       path: '/'
@@ -944,6 +1059,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/developer/translations'
       preLoaderRoute: typeof DeveloperTranslationsIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/developer/process_roles/': {
+      id: '/developer/process_roles/'
+      path: '/'
+      fullPath: '/developer/process_roles/'
+      preLoaderRoute: typeof DeveloperProcess_rolesIndexRouteImport
+      parentRoute: typeof DeveloperProcess_rolesRouteRoute
     }
     '/admin/user_groups_group/': {
       id: '/admin/user_groups_group/'
@@ -1000,6 +1122,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/structure'
       preLoaderRoute: typeof AdminStructureIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/reviewers/': {
+      id: '/admin/reviewers/'
+      path: '/'
+      fullPath: '/admin/reviewers/'
+      preLoaderRoute: typeof AdminReviewersIndexRouteImport
+      parentRoute: typeof AdminReviewersRouteRoute
     }
     '/admin/review-levels/': {
       id: '/admin/review-levels/'
@@ -1085,13 +1214,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDepartment_categoriesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/people-review/evaluation/$rseId': {
-      id: '/people-review/evaluation/$rseId'
-      path: '/people-review/evaluation/$rseId'
-      fullPath: '/people-review/evaluation/$rseId'
-      preLoaderRoute: typeof PeopleReviewEvaluationRseIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/employees/$employeeId/edit': {
       id: '/employees/$employeeId/edit'
       path: '/edit'
@@ -1147,6 +1269,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/employees/$employeeId/departments'
       preLoaderRoute: typeof EmployeesEmployeeIdDepartmentsIndexRouteImport
       parentRoute: typeof EmployeesEmployeeIdRouteRoute
+    }
+    '/developer/process_roles/process_role/': {
+      id: '/developer/process_roles/process_role/'
+      path: '/process_role'
+      fullPath: '/developer/process_roles/process_role'
+      preLoaderRoute: typeof DeveloperProcess_rolesProcess_roleIndexRouteImport
+      parentRoute: typeof DeveloperProcess_rolesRouteRoute
+    }
+    '/developer/process_roles/process/': {
+      id: '/developer/process_roles/process/'
+      path: '/process'
+      fullPath: '/developer/process_roles/process'
+      preLoaderRoute: typeof DeveloperProcess_rolesProcessIndexRouteImport
+      parentRoute: typeof DeveloperProcess_rolesRouteRoute
+    }
+    '/admin/reviewers/holders/': {
+      id: '/admin/reviewers/holders/'
+      path: '/holders'
+      fullPath: '/admin/reviewers/holders'
+      preLoaderRoute: typeof AdminReviewersHoldersIndexRouteImport
+      parentRoute: typeof AdminReviewersRouteRoute
+    }
+    '/admin/reviewers/employees/': {
+      id: '/admin/reviewers/employees/'
+      path: '/employees'
+      fullPath: '/admin/reviewers/employees'
+      preLoaderRoute: typeof AdminReviewersEmployeesIndexRouteImport
+      parentRoute: typeof AdminReviewersRouteRoute
     }
     '/admin/planning_setup/plan_session_status/': {
       id: '/admin/planning_setup/plan_session_status/'
@@ -1238,6 +1388,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/departments_group/department_categories'
       preLoaderRoute: typeof AdminDepartments_groupDepartment_categoriesIndexRouteImport
       parentRoute: typeof AdminDepartments_groupRouteRoute
+    }
+    '/people_review/$sessionId/employee/$employeeId': {
+      id: '/people_review/$sessionId/employee/$employeeId'
+      path: '/people_review/$sessionId/employee/$employeeId'
+      fullPath: '/people_review/$sessionId/employee/$employeeId'
+      preLoaderRoute: typeof People_reviewSessionIdEmployeeEmployeeIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/admin/departments_group/department_types/list/': {
       id: '/admin/departments_group/department_types/list/'
@@ -1351,6 +1508,41 @@ const AdminPlanning_setupRouteRouteWithChildren =
     AdminPlanning_setupRouteRouteChildren,
   )
 
+interface AdminReviewersRouteRouteChildren {
+  AdminReviewersIndexRoute: typeof AdminReviewersIndexRoute
+  AdminReviewersEmployeesIndexRoute: typeof AdminReviewersEmployeesIndexRoute
+  AdminReviewersHoldersIndexRoute: typeof AdminReviewersHoldersIndexRoute
+}
+
+const AdminReviewersRouteRouteChildren: AdminReviewersRouteRouteChildren = {
+  AdminReviewersIndexRoute: AdminReviewersIndexRoute,
+  AdminReviewersEmployeesIndexRoute: AdminReviewersEmployeesIndexRoute,
+  AdminReviewersHoldersIndexRoute: AdminReviewersHoldersIndexRoute,
+}
+
+const AdminReviewersRouteRouteWithChildren =
+  AdminReviewersRouteRoute._addFileChildren(AdminReviewersRouteRouteChildren)
+
+interface DeveloperProcess_rolesRouteRouteChildren {
+  DeveloperProcess_rolesIndexRoute: typeof DeveloperProcess_rolesIndexRoute
+  DeveloperProcess_rolesProcessIndexRoute: typeof DeveloperProcess_rolesProcessIndexRoute
+  DeveloperProcess_rolesProcess_roleIndexRoute: typeof DeveloperProcess_rolesProcess_roleIndexRoute
+}
+
+const DeveloperProcess_rolesRouteRouteChildren: DeveloperProcess_rolesRouteRouteChildren =
+  {
+    DeveloperProcess_rolesIndexRoute: DeveloperProcess_rolesIndexRoute,
+    DeveloperProcess_rolesProcessIndexRoute:
+      DeveloperProcess_rolesProcessIndexRoute,
+    DeveloperProcess_rolesProcess_roleIndexRoute:
+      DeveloperProcess_rolesProcess_roleIndexRoute,
+  }
+
+const DeveloperProcess_rolesRouteRouteWithChildren =
+  DeveloperProcess_rolesRouteRoute._addFileChildren(
+    DeveloperProcess_rolesRouteRouteChildren,
+  )
+
 interface EmployeesEmployeeIdRouteRouteChildren {
   EmployeesEmployeeIdEditRoute: typeof EmployeesEmployeeIdEditRoute
   EmployeesEmployeeIdIndexRoute: typeof EmployeesEmployeeIdIndexRoute
@@ -1387,17 +1579,18 @@ const rootRouteChildren: RootRouteChildren = {
     AdminDepartments_groupRouteRouteWithChildren,
   AdminJobs_groupRouteRoute: AdminJobs_groupRouteRouteWithChildren,
   AdminPlanning_setupRouteRoute: AdminPlanning_setupRouteRouteWithChildren,
+  AdminReviewersRouteRoute: AdminReviewersRouteRouteWithChildren,
+  DeveloperProcess_rolesRouteRoute:
+    DeveloperProcess_rolesRouteRouteWithChildren,
   EmployeesEmployeeIdRouteRoute: EmployeesEmployeeIdRouteRouteWithChildren,
   AuthLoginRoute: AuthLoginRoute,
   EmployeesNewRoute: EmployeesNewRoute,
-  PeopleReviewSessionIdRoute: PeopleReviewSessionIdRoute,
-  PeopleReviewMyRoute: PeopleReviewMyRoute,
+  People_reviewMyRoute: People_reviewMyRoute,
   AdminIndexRoute: AdminIndexRoute,
   DeveloperIndexRoute: DeveloperIndexRoute,
   EmployeesIndexRoute: EmployeesIndexRoute,
-  PeopleReviewIndexRoute: PeopleReviewIndexRoute,
+  People_reviewIndexRoute: People_reviewIndexRoute,
   AdminStructureDepartmentIdRoute: AdminStructureDepartmentIdRoute,
-  PeopleReviewEvaluationRseIdRoute: PeopleReviewEvaluationRseIdRoute,
   AdminDepartment_categoriesIndexRoute: AdminDepartment_categoriesIndexRoute,
   AdminDepartment_typesIndexRoute: AdminDepartment_typesIndexRoute,
   AdminEmployee_eventsIndexRoute: AdminEmployee_eventsIndexRoute,
@@ -1418,6 +1611,9 @@ const rootRouteChildren: RootRouteChildren = {
   AdminUserGroupsIndexRoute: AdminUserGroupsIndexRoute,
   AdminUser_groups_groupIndexRoute: AdminUser_groups_groupIndexRoute,
   DeveloperTranslationsIndexRoute: DeveloperTranslationsIndexRoute,
+  People_reviewSessionIdIndexRoute: People_reviewSessionIdIndexRoute,
+  People_reviewSessionIdEmployeeEmployeeIdRoute:
+    People_reviewSessionIdEmployeeEmployeeIdRoute,
   AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute:
     AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute,
   AdminEmployee_eventsEmployee_event_direction_typesIndexRoute:

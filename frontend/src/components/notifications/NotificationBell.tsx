@@ -9,7 +9,6 @@ import {
     List,
     ListItem,
     ListItemText,
-    Button,
     Divider,
     CircularProgress,
 } from '@mui/material';
@@ -90,7 +89,7 @@ export function NotificationBell() {
 
     const handleMarkAllRead = async () => {
         setMarking(true);
-        await fetch(`${BASE_URL}/api/v1/notifications/read-all/all?user_code=${userCode}`, { method: 'PATCH' });
+        await fetch(`${BASE_URL}/api/v1/notifications/read_all/all?user_code=${userCode}`, { method: 'PATCH' });
         setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
         setMarking(false);
     };

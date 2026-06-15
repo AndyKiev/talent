@@ -80,6 +80,13 @@ __all__ = {
     "EmployeeChild",
     # Photo
     "EmployeePhoto",
+    # Process roles
+    "Process",
+    "ProcessRole",
+    "ProcessRoleHolder",
+    "ProcessRoleHolderEmployeeLink",
+    "ProcessRoleHolderDepartmentLink",
+    "ProcessRoleActiveContext",
 }
 
 from backend.api_v1.lang.lang_model import Lang
@@ -221,3 +228,19 @@ from backend.api_v1.employee_child.employee_child_model import EmployeeChild
 
 # Photo — per-employee profile photo (1:1), downscaled blob, ON DELETE CASCADE.
 from backend.api_v1.employee_photo.employee_photo_model import EmployeePhoto
+
+# Process roles — parents before children: process -> role -> holder -> leaf link.
+from backend.api_v1.process_roles.process.process_model import Process
+from backend.api_v1.process_roles.process_role.process_role_model import ProcessRole
+from backend.api_v1.process_roles.process_role_holder.process_role_holder_model import (
+    ProcessRoleHolder,
+)
+from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_model import (
+    ProcessRoleHolderEmployeeLink,
+)
+from backend.api_v1.process_roles.process_role_holder_department_link.process_role_holder_department_link_model import (
+    ProcessRoleHolderDepartmentLink,
+)
+from backend.api_v1.process_roles.process_role_active_context.process_role_active_context_model import (
+    ProcessRoleActiveContext,
+)

@@ -45,7 +45,7 @@ interface TalentStatusOption {
 }
 
 const fetchTalentStatuses = async (): Promise<TalentStatusOption[]> => {
-    const res = await axiosInstance.get<TalentStatusOption[]>(`${BASE_URL}/admin/talent-statuses`);
+    const res = await axiosInstance.get<TalentStatusOption[]>(`${BASE_URL}/admin/talent_statuses`);
     return res.data ?? [];
 };
 

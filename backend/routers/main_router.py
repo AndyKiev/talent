@@ -166,6 +166,29 @@ from backend.api_v1.employee_language_profile.employee_language_profile_views im
     router as employee_language_profile_router,
 )
 
+# Process roles
+from backend.api_v1.process_roles.process.process_views import (
+    router as process_router,
+)
+from backend.api_v1.process_roles.process_role.process_role_views import (
+    router as process_role_router,
+)
+from backend.api_v1.process_roles.process_role_holder.process_role_holder_views import (
+    router as process_role_holder_router,
+)
+from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_views import (
+    router as process_role_holder_employee_link_router,
+)
+from backend.api_v1.process_roles.process_role_holder_department_link.process_role_holder_department_link_views import (
+    router as process_role_holder_department_link_router,
+)
+from backend.api_v1.process_roles.process_role_active_context.process_role_active_context_views import (
+    router as process_role_active_context_router,
+)
+from backend.api_v1.process_roles.oversight_manager.oversight_manager_views import (
+    router as oversight_manager_router,
+)
+
 
 router = APIRouter(prefix=settings.api_v1_prefix)
 
@@ -236,3 +259,12 @@ router.include_router(plan_scope_router)
 # Foreign languages
 router.include_router(language_level_router)
 router.include_router(employee_language_profile_router)
+
+# Process roles
+router.include_router(process_router)
+router.include_router(process_role_router)
+router.include_router(process_role_holder_router)
+router.include_router(process_role_holder_employee_link_router)
+router.include_router(process_role_holder_department_link_router)
+router.include_router(process_role_active_context_router)
+router.include_router(oversight_manager_router)

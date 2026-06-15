@@ -4,6 +4,7 @@ import AppShell from '../layout/AppShell';
 import { useTheme } from '../theme/ThemeContext';
 import CodeIcon from '@mui/icons-material/Code';
 import { EssenceCard } from '../ui/EssenceCard';
+import { GroupEssenceCard } from '../ui/GroupEssenceCard';
 import { ESSENCES as RAW_ESSENCES } from './developer.essences.config';
 import { useEssences } from '../../hooks/useEssences';
 import cfl from '../../utils/capitalizeFirstLetter';
@@ -14,6 +15,11 @@ export function DeveloperPage() {
     const { t } = useTheme();
     const getString = useString({ str });
     const essences = useEssences(RAW_ESSENCES);
+
+    const groups = essences.filter((e) => e.isGroup);
+    const regularItems = essences.filter((e) => !e.isGroup && !e.parentGroup);
+    const getChildCount = (groupKey: string) =>
+        essences.filter((e) => e.parentGroup === groupKey).length;
 
     return (
         <AppShell>
@@ -28,6 +34,26 @@ export function DeveloperPage() {
                         </Box>
                     </Stack>
 
+                    {groups.length > 0 && (
+                        <Box mb={4}>
+                            <Box
+                                sx={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                                    gap: 2,
+                                }}
+                            >
+                                {groups.map((group) => (
+                                    <GroupEssenceCard
+                                        key={group.key}
+                                        essence={group}
+                                        childCount={getChildCount(group.groupKey || group.key)}
+                                    />
+                                ))}
+                            </Box>
+                        </Box>
+                    )}
+
                     <Box
                         sx={{
                             display: 'grid',
@@ -35,7 +61,7 @@ export function DeveloperPage() {
                             gap: 2,
                         }}
                     >
-                        {essences.map((essence) => (
+                        {regularItems.map((essence) => (
                             <EssenceCard key={essence.key} essence={essence} />
                         ))}
                     </Box>
