@@ -100,11 +100,13 @@ export default function EducationBlock({
                             <Stack
                                 key={e.id}
                                 direction="row"
-                                alignItems="center"
+                                alignItems="flex-start"
                                 spacing={0.5}
-                                sx={{ '&:hover .edu-actions': { opacity: 1 } }}
+                                sx={{ minWidth: 0, '&:hover .edu-actions': { opacity: 1 } }}
                             >
-                                <Typography variant="body2">{parts.join(' · ')}</Typography>
+                                <Typography variant="body2" sx={{ minWidth: 0, wordBreak: 'break-word' }}>
+                                    {parts.join(' · ')}
+                                </Typography>
                                 {isEditable && (
                                 <Stack
                                     direction="row"

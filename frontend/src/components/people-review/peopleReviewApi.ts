@@ -475,6 +475,74 @@ export const deleteProposedLevel = async (
     return res.data;
 };
 
+// --- Review comments (per-employee reviewer notes) ---
+// Visibility audience is role-dependent (see backend): oversight-public = subject +
+// oversighters; supervision-public = supervisors + oversighters. Private = author only.
+// 'to_oversight' is a supervision-only scope: author + oversight reviewers, hidden
+// from the reviewed employee and from other supervisors.
+export type CommentVisibility = 'private' | 'public' | 'to_oversight';
+export type CommentAuthorRole = 'oversight' | 'supervision';
+
+export interface ReviewComment {
+    id: number;
+    review_session_employee_id: number;
+    author_id: number;
+    author_name: string;
+    author_role: CommentAuthorRole;
+    visibility: CommentVisibility;
+    body: string;
+    created_at: string | null;
+    updated_at: string | null;
+}
+
+export interface ReviewCommentCreate {
+    body: string;
+    visibility: CommentVisibility;
+}
+
+export interface ReviewCommentUpdate {
+    body?: string;
+    visibility?: CommentVisibility;
+}
+
+export const fetchReviewComments = async (rseId: number): Promise<ReviewComment[]> => {
+    const res = await axiosInstance.get<ReviewComment[]>(`${RSE_BASE}/${rseId}/comments`);
+    return res.data ?? [];
+};
+
+export const createReviewComment = async (
+    rseId: number,
+    payload: ReviewCommentCreate,
+): Promise<MutationResponse<ReviewComment>> => {
+    const res = await axiosInstance.post<MutationResponse<ReviewComment>>(
+        `${RSE_BASE}/${rseId}/comments`,
+        payload,
+    );
+    return res.data;
+};
+
+export const updateReviewComment = async (
+    rseId: number,
+    commentId: number,
+    payload: ReviewCommentUpdate,
+): Promise<MutationResponse<ReviewComment>> => {
+    const res = await axiosInstance.patch<MutationResponse<ReviewComment>>(
+        `${RSE_BASE}/${rseId}/comments/${commentId}`,
+        payload,
+    );
+    return res.data;
+};
+
+export const deleteReviewComment = async (
+    rseId: number,
+    commentId: number,
+): Promise<MutationResponse<null>> => {
+    const res = await axiosInstance.delete<MutationResponse<null>>(
+        `${RSE_BASE}/${rseId}/comments/${commentId}`,
+    );
+    return res.data;
+};
+
 // --- Employee current level ---
 export interface EmployeeCurrentLevel {
     id: number;

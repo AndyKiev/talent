@@ -173,30 +173,14 @@ export const ESSENCES: RawEssenceConfig[] = [
     parentGroup: 'departments_group',
   },
 
-  // ── People Review (group) ─────────────────────────────────────────────────
+  // ── Review setup (dimensions + criteria, levels + requirements) ───────────
   {
     parent: 'admin',
-    key: 'review-dimensions',
-    labelKey: 'reviewDimensions',
-    descriptionKey: 'reviewDimensionsDesc',
+    key: 'review_setup',
+    labelKey: 'reviewSetup',
+    descriptionKey: 'reviewSetupDesc',
     Icon: RateReviewIcon,
     color: '#e91e63',
-  },
-  {
-    parent: 'admin',
-    key: 'review-levels',
-    labelKey: 'reviewLevels',
-    descriptionKey: 'reviewLevelsDesc',
-    Icon: RuleFolderIcon,
-    color: '#9c27b0',
-  },
-  {
-    parent: 'admin',
-    key: 'review-level-requirements',
-    labelKey: 'reviewLevelRequirements',
-    descriptionKey: 'reviewLevelRequirementsDesc',
-    Icon: PlaylistAddCheckIcon,
-    color: '#673ab7',
   },
 
   // ── Employee Events (group) ───────────────────────────────────────────────

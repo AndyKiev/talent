@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from '@tanstack/react-router';
 import {
     Alert,
+    Badge,
     Box,
     Breadcrumbs,
     Button,
@@ -23,13 +24,14 @@ import {
     Typography,
 } from '@mui/material';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import SaveIcon from '@mui/icons-material/Save';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import LockIcon from '@mui/icons-material/Lock';
 import ReplayIcon from '@mui/icons-material/Replay';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import dayjs from 'dayjs';
 import { Link } from '@tanstack/react-router';
 import EmployeeDateDialog from './personal-data/EmployeeDateDialog';
@@ -39,25 +41,20 @@ import {
     fetchMyScopes,
     fetchSessionEmployees,
     fetchEvaluations,
-    bulkUpdateEvaluations,
     markReviewed,
     revertRSE,
     reopenRSE,
     fetchLanguageLevels,
     fetchEmployeeLanguageProfile,
-    saveEmployeeLanguageProfile,
-    saveRSEFields,
     fetchReviewLevels,
     fetchProposedLevel,
     fetchEmployeeCurrentLevel,
     setEmployeeCurrentLevel,
     fetchEmployeePersonalData,
-    type EvaluationBulkUpdate,
-    type CriterionScore,
-    type EmployeeLanguageInput,
-    type RSEFieldsUpdate,
+    fetchReviewComments,
 } from './peopleReviewApi';
 import { ProposedLevelDrawer } from './ProposedLevelDrawer';
+import { ReviewCommentsDrawer } from './ReviewCommentsDrawer';
 import useString from '../../hooks/useString';
 import { str } from '../../strings/str';
 import { useAuthStore } from '../../store/authStore';
@@ -69,11 +66,9 @@ import {
     type DraggedItem,
     type PendingMove,
     RSE_STATUS_COLORS,
-    FOREIGN_LANGUAGES,
     getDimColor,
     competenceName,
     evalFilled,
-    serializeFacts,
     formatYearsMonths,
     rankedCompetences,
 } from './evaluation/evaluationHelpers';
@@ -89,6 +84,7 @@ import { PersonalInfoPanel } from './evaluation/PersonalInfoPanel';
 import { JobInfoPanel } from './evaluation/JobInfoPanel';
 import { EmployeeDataTabs } from './evaluation/EmployeeDataTabs';
 import { DimensionPanel } from './evaluation/DimensionPanel';
+import { useEvaluationAutosave } from './evaluation/useEvaluationAutosave';
 import EmployeeAvatar from '../ui/EmployeeAvatar';
 import { OversightManagerPicker } from './OversightManagerPicker';
 
@@ -115,10 +111,29 @@ export function EvaluationPage() {
     const [newFactTexts, setNewFactTexts] = useState<Record<number, string>>({});
     const [newImprovementTexts, setNewImprovementTexts] = useState<Record<number, string>>({});
 
+    // Active people-review mode — resolved first so the per-person queries below
+    // can gate their polling on it. Supervision (department-target role) = read-only
+    // "watch": until my_scopes loads, default to view-only so a supervisor never
+    // sees an editable flash, and so editors don't poll before their role is known.
+    const { data: scopes } = useQuery({
+        queryKey: PEOPLE_REVIEW_MY_SCOPES_QK,
+        queryFn: fetchMyScopes,
+        staleTime: 60_000,
+    });
+    const activeRoleId = scopes?.active.process_role_id ?? null;
+    const activeRole = scopes?.roles.find((r) => r.process_role_id === activeRoleId) ?? null;
+    const isSupervision = activeRole?.link_target === 'department';
+    const viewOnly = isSupervision || !scopes;
+    // Supervisors watch live: poll the mutable per-person data every 30s. React Query
+    // pauses the interval while the tab is unfocused, so idle load stays negligible.
+    // Editors never poll — they own the in-memory draft and must not be clobbered.
+    const pollMs: number | false = viewOnly ? 30_000 : false;
+
     const { data: rseDetail, isLoading: rseLoading, isFetching: rseFetching } = useQuery({
         queryKey: ['rse_detail', sid, eid],
         queryFn: () => fetchRSEBySessionEmployee(sid, eid),
         staleTime: 30_000,
+        refetchInterval: pollMs,
         enabled: !!sid && !!eid,
     });
     // Flat rse id, resolved from (session, employee). Everything below keys off it
@@ -138,14 +153,8 @@ export function EvaluationPage() {
         queryKey: ['evaluations', rid],
         queryFn: () => fetchEvaluations(rid),
         staleTime: 30_000,
+        refetchInterval: pollMs,
         enabled: !!rid,
-    });
-
-    // Active people-review mode (for supervision read-only gating).
-    const { data: scopes } = useQuery({
-        queryKey: PEOPLE_REVIEW_MY_SCOPES_QK,
-        queryFn: fetchMyScopes,
-        staleTime: 60_000,
     });
 
     // --- Foreign languages ---
@@ -159,6 +168,7 @@ export function EvaluationPage() {
         queryKey: ['employee_language_profile', employeeId],
         queryFn: () => fetchEmployeeLanguageProfile(employeeId!),
         staleTime: 30_000,
+        refetchInterval: pollMs,
         enabled: !!employeeId,
     });
 
@@ -169,7 +179,6 @@ export function EvaluationPage() {
     const storeDraft = usePeopleReviewStore((s) => s.evalDrafts[rid]);
     const hydrateEvalDraft = usePeopleReviewStore((s) => s.hydrateEvalDraft);
     const updateEvalDraft = usePeopleReviewStore((s) => s.updateEvalDraft);
-    const clearEvalDraft = usePeopleReviewStore((s) => s.clearEvalDraft);
     const draft = storeDraft ?? EMPTY_EVAL_DRAFT;
     const {
         localEvals, langSel, employeeFeedback, managerFeedback,
@@ -201,13 +210,15 @@ export function EvaluationPage() {
     const setStrongDrafts = makeSetter('strongDrafts');
     const setDevelopDrafts = makeSetter('developDrafts');
 
-    const langMut = useMutation({
-        mutationFn: (languages: EmployeeLanguageInput[]) =>
-            saveEmployeeLanguageProfile(employeeId!, languages),
-        onSuccess: async () => {
-            await qc.invalidateQueries({ queryKey: ['employee_language_profile', employeeId] });
-        },
-        onError: (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' }),
+    // --- Reviewer notes (comments) ---
+    const [commentsOpen, setCommentsOpen] = useState(false);
+    // Count drives the header chip badge; the drawer re-fetches its own full list.
+    const { data: comments = [] } = useQuery({
+        queryKey: ['review_comments', rid],
+        queryFn: () => fetchReviewComments(rid),
+        enabled: !!rid,
+        staleTime: 15_000,
+        refetchInterval: pollMs,
     });
 
     // --- Competency level (current + proposed) ---
@@ -224,6 +235,7 @@ export function EvaluationPage() {
         queryFn: () => fetchProposedLevel(rid),
         enabled: !!rid,
         staleTime: 30_000,
+        refetchInterval: pollMs,
     });
     const proposedLevelKey = proposedLevel
         ? allLevels.find((l) => l.id === proposedLevel.level_id)?.name_key ?? null
@@ -234,6 +246,7 @@ export function EvaluationPage() {
         queryFn: () => fetchEmployeeCurrentLevel(employeeId!),
         enabled: !!employeeId,
         staleTime: 30_000,
+        refetchInterval: pollMs,
     });
     const currentLevelMut = useMutation({
         mutationFn: (levelId: number) => setEmployeeCurrentLevel(employeeId!, levelId),
@@ -252,6 +265,7 @@ export function EvaluationPage() {
         queryFn: () => fetchEmployeePersonalData(employeeId!),
         enabled: !!employeeId,
         staleTime: 30_000,
+        refetchInterval: pollMs,
     });
     const employeeAge = personalData?.birth_date
         ? dayjs().diff(dayjs(personalData.birth_date), 'year')
@@ -271,24 +285,26 @@ export function EvaluationPage() {
     const [analysisTab, setAnalysisTab] = useState(0);
 
     // Hydrate the draft once all server data for this rseId is loaded and settled.
-    // Skipped when a draft already exists, so in-progress edits survive navigating
-    // away and back; the draft is cleared on save, which lets this repopulate it
-    // from the fresh server response.
+    // Editable path: skipped when a draft already exists, so in-progress edits survive
+    // navigating away and back (the draft is the live source; autosave keeps it).
     const hydrationReady =
         !!rseDetail && !rseFetching && !evalFetching &&
         (!employeeId || (langProfile !== undefined && !langFetching));
     useEffect(() => {
+        if (viewOnly) return; // view-only re-hydration is handled separately below
         if (!hydrationReady || !rseDetail || storeDraft) return;
         hydrateEvalDraft(rid, buildEvaluationDraft(rseDetail, evaluations, langProfile, getString));
-    }, [hydrationReady, storeDraft, rid, rseDetail, evaluations, langProfile, getString, hydrateEvalDraft]);
+    }, [viewOnly, hydrationReady, storeDraft, rid, rseDetail, evaluations, langProfile, getString, hydrateEvalDraft]);
 
-    const rseFieldsMut = useMutation({
-        mutationFn: (fields: RSEFieldsUpdate) => saveRSEFields(rid, fields),
-        onSuccess: async () => {
-            await qc.invalidateQueries({ queryKey: ['rse_detail', sid, eid] });
-        },
-        onError: (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' }),
-    });
+    // Supervision (view-only) is a passive watch with NO local edits, so we keep the
+    // draft in lock-step with the polled server data: re-hydrate whenever it changes.
+    // Deps deliberately exclude `storeDraft` (re-hydrating mutates it) — React Query's
+    // structural sharing keeps rseDetail/evaluations/langProfile references stable on
+    // no-op refetches, so this only fires on a real change, not on every render.
+    useEffect(() => {
+        if (!viewOnly || !hydrationReady || !rseDetail) return;
+        hydrateEvalDraft(rid, buildEvaluationDraft(rseDetail, evaluations, langProfile, getString));
+    }, [viewOnly, hydrationReady, rid, rseDetail, evaluations, langProfile, getString, hydrateEvalDraft]);
 
     const addResult = (text: string) => {
         const trimmed = text.trim();
@@ -300,16 +316,6 @@ export function EvaluationPage() {
     const removeResult = (index: number) => {
         setResults(prev => prev.filter((_, i) => i !== index));
     };
-
-    const saveMut = useMutation({
-        mutationFn: bulkUpdateEvaluations,
-        onSuccess: async (res) => {
-            await qc.invalidateQueries({ queryKey: ['evaluations', rid] });
-            await qc.invalidateQueries({ queryKey: ['session_employees', sessionId] });
-            setSnackbar({ open: true, message: res.detail, severity: 'success' });
-        },
-        onError: (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' }),
-    });
 
     const reviewedMut = useMutation({
         mutationFn: markReviewed,
@@ -358,16 +364,9 @@ export function EvaluationPage() {
     const sessionStatus = rseDetail?.session_status ?? 'open';
     // Editable only if BOTH session is open AND employee status is open
     const isEditable = rseDetail?.status === 'open' && sessionStatus === 'open';
-    // People-review active mode. Supervision (department-target role) = read-only
-    // "watch", presentation-like, regardless of review/session status. Until
-    // my_scopes loads, default to read-only so a supervisor never sees a brief
-    // editable flash.
-    const activeRoleId = scopes?.active.process_role_id ?? null;
-    const activeRole = scopes?.roles.find((r) => r.process_role_id === activeRoleId) ?? null;
-    const isSupervision = activeRole?.link_target === 'department';
-    const viewOnly = isSupervision || !scopes;
+    // `isSupervision` / `viewOnly` are derived up top (they gate query polling).
     // Content editing is additionally gated by presentation mode and viewOnly;
-    // header actions (Save / Mark reviewed / Revert) gate on `isEditable && !viewOnly`.
+    // header actions (autosave status / Mark reviewed / Revert) gate on `isEditable && !viewOnly`.
     const showEditing = isEditable && !presentationMode && !viewOnly;
     // Feedback editing splits by record ownership: an employee edits their own
     // self-feedback; a reviewer edits another's manager-feedback. This also closes
@@ -376,6 +375,46 @@ export function EvaluationPage() {
     const employeeFeedbackEditable = showEditing && isOwnRecord;
     const managerFeedbackEditable = showEditing && !isOwnRecord;
     const isSessionClosed = sessionStatus === 'closed';
+
+    // Reviewer notes: writable only by an ACTIVE oversight/supervision reviewer
+    // (any active role mode), on someone else's still-open review, outside
+    // presentation mode. Crucially NOT derived from `showEditing`/`viewOnly` —
+    // supervision is view-only for the evaluation yet may still comment. The
+    // backend enforces the same rule (scope minus self + open). Reading is always
+    // allowed; the drawer/chip stays available even when comments are read-only.
+    const canComment = !!activeRoleId && !isOwnRecord && isEditable && !presentationMode;
+    const showCommentsButton = comments.length > 0 || canComment;
+    // The role a NEW note would be authored under — drives the composer's scopes
+    // (supervision unlocks the 'to_oversight' escalation scope). Null when role-less.
+    const myAuthorRole: 'oversight' | 'supervision' | null =
+        activeRole?.link_target === 'department' ? 'supervision'
+            : activeRole?.link_target === 'employee' ? 'oversight'
+                : null;
+
+    // Single compact "why is this read-only" reason, shown as a chip + tooltip next
+    // to the status chip in the header. Replaces the old full-width banners, which
+    // reflowed the whole page (pushing the tabs down) whenever the status changed.
+    const readOnlyHint = isSupervision
+        ? getString('supervisionViewOnly')
+        : isSessionClosed
+            ? getString('sessionClosedRevertHint')
+            : rseDetail?.status && rseDetail.status !== 'open'
+                ? getString('employeeStatusRevertHint', { status: rseDetail.status })
+                : null;
+
+    // --- Autosave -------------------------------------------------------------
+    // Replaces the manual Save button: every editable change is pushed to the
+    // server shortly after the last edit. Gated on `isEditable && !viewOnly` (NOT
+    // presentation mode — that only hides the editing UI) and on the draft being
+    // hydrated, so half-loaded data is never written back.
+    const { status: autosaveStatus, flush: flushAutosave } = useEvaluationAutosave({
+        rid,
+        employeeId: employeeId ?? null,
+        sessionId,
+        enabled: isEditable && !viewOnly && hydrationReady && !!storeDraft,
+        draft,
+        onError: (message) => setSnackbar({ open: true, message, severity: 'error' }),
+    });
 
     // In a closed session show every dimension; otherwise only active ones.
     const visibleEvals = isSessionClosed ? localEvals : localEvals.filter(e => e.dimension_is_active);
@@ -421,55 +460,6 @@ export function EvaluationPage() {
     const activateCompetenceTab = (key: string) => {
         const idx = visibleEvals.findIndex(e => e.dimension_key === key);
         if (idx >= 0) setActiveTab(idx);
-    };
-
-    const handleSave = async () => {
-        const updates: EvaluationBulkUpdate[] = localEvals.map(le => {
-            // Send the per-behaviour scores; the backend derives the competence
-            // level (fractional mean + legacy rounded score) from them.
-            const criterion_scores: CriterionScore[] = [];
-            le.descriptors.forEach((_, i) => {
-                const s = le.criterionScores[i];
-                if (s != null) criterion_scores.push({ criterion_index: i, score: s });
-            });
-            return {
-                id: le.id,
-                facts: serializeFacts(le.facts) || null,
-                improvement: serializeFacts(le.improvements) || null,
-                criterion_scores,
-            };
-        });
-        const hasMissions = missions.some(m => m.trim());
-        const hasSummary = strongOptions.length > 0 || developOptions.length > 0;
-        const tasks: Promise<unknown>[] = [
-            saveMut.mutateAsync(updates),
-            rseFieldsMut.mutateAsync({
-                employee_feedback: employeeFeedback || null,
-                manager_feedback: managerFeedback || null,
-                results_achievements: serializeFacts(results) || null,
-                development_plan: hasMissions ? JSON.stringify(missions) : null,
-                trainings: trainings || null,
-                competence_summary: hasSummary
-                    ? JSON.stringify({ strong: strongOptions, develop: developOptions })
-                    : null,
-            }),
-        ];
-        if (employeeId) {
-            const languages: EmployeeLanguageInput[] = FOREIGN_LANGUAGES.map(({ key }) => ({
-                language: key,
-                level_id: langSel[key] ?? null,
-            }));
-            tasks.push(langMut.mutateAsync(languages));
-        }
-        try {
-            // Each mutation awaits its own query invalidation (refetch) in onSuccess,
-            // so once all settle the server data is fresh — drop the draft to let the
-            // hydration effect repopulate it (keeps backend-derived fields current).
-            await Promise.all(tasks);
-            clearEvalDraft(rid);
-        } catch {
-            // Per-mutation onError already surfaced the failure to the user.
-        }
     };
 
     const updateMission = (index: number, value: string) => {
@@ -614,10 +604,22 @@ export function EvaluationPage() {
 
     return (
         <AppShell>
-            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1400, mx: 'auto' }}>
+            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: '100%', px: { xs: 2, sm: 4, md: 6 } }}>
 
-                {/* Breadcrumbs */}
-                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
+                {/* Breadcrumbs — sticky just under the main menu (56px AppBar) so the
+                    trail + employee name (the last crumb) stay visible while scrolling. */}
+                <Breadcrumbs
+                    separator={<NavigateNextIcon fontSize="small" />}
+                    sx={{
+                        position: 'sticky',
+                        top: '56px',
+                        zIndex: 5,
+                        bgcolor: t.bg,
+                        borderBottom: `1px solid ${t.borderLight}`,
+                        py: 1.5,
+                        mb: 2,
+                    }}
+                >
                     <Link to="/people_review" style={{ textDecoration: 'none', color: 'inherit' }}>
                         <Typography variant="body2" color="text.secondary">{getString('peopleReview')}</Typography>
                     </Link>
@@ -665,14 +667,16 @@ export function EvaluationPage() {
                                                 color: RSE_STATUS_COLORS[rseDetail.status] ?? '#888',
                                             }}
                                         />
-                                        {isSessionClosed && (
-                                            <Chip
-                                                icon={<VisibilityIcon sx={{ fontSize: 13 }} />}
-                                                label="View only"
-                                                size="small"
-                                                variant="outlined"
-                                                sx={{ fontSize: 11 }}
-                                            />
+                                        {readOnlyHint && (
+                                            <Tooltip title={readOnlyHint}>
+                                                <Chip
+                                                    icon={<VisibilityIcon sx={{ fontSize: 13 }} />}
+                                                    label={getString('viewOnly')}
+                                                    size="small"
+                                                    variant="outlined"
+                                                    sx={{ fontSize: 11, cursor: 'help' }}
+                                                />
+                                            </Tooltip>
                                         )}
                                     </Stack>
                                     <Typography variant="body2" color={t.textMuted} mt={0.3}>
@@ -711,6 +715,24 @@ export function EvaluationPage() {
                                             </Typography>
                                         )}
                                     </Box>
+
+                                    {/* Reviewer notes — chip+badge opens the comments drawer.
+                                        Shown when there are notes to read OR the user may add one. */}
+                                    {showCommentsButton && (
+                                        <Tooltip title={getString('reviewCommentsTooltip')}>
+                                            <Badge badgeContent={comments.length} color="primary" overlap="circular">
+                                                <Button
+                                                    size="small"
+                                                    variant="outlined"
+                                                    startIcon={<ChatBubbleOutlineIcon sx={{ fontSize: 16 }} />}
+                                                    onClick={() => setCommentsOpen(true)}
+                                                    sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, fontSize: 12 }}
+                                                >
+                                                    {getString('reviewComments')}
+                                                </Button>
+                                            </Badge>
+                                        </Tooltip>
+                                    )}
 
                                     {/* Oversight-manager settings (own record only) — tucked in the header */}
                                     {isOwnRecord && (
@@ -766,7 +788,7 @@ export function EvaluationPage() {
                                             <Button
                                                 size="small" variant="contained"
                                                 startIcon={allFilled ? <CheckCircleIcon /> : <LockIcon />}
-                                                onClick={() => reviewedMut.mutate(rid)}
+                                                onClick={async () => { await flushAutosave(); reviewedMut.mutate(rid); }}
                                                 disabled={!allFilled || reviewedMut.isPending}
                                                 sx={{
                                                     borderRadius: '8px', textTransform: 'none', fontWeight: 600, fontSize: 12,
@@ -816,38 +838,37 @@ export function EvaluationPage() {
                                     </>
                                 )}
 
-                                {/* Save */}
+                                {/* Autosave status — replaces the old manual Save button. Every
+                                    edit persists on its own; this only reports progress (and offers
+                                    a retry if a background save failed). */}
                                 {isEditable && !viewOnly && (
-                                    <Button
-                                        size="small" variant="outlined" startIcon={<SaveIcon />}
-                                        onClick={handleSave} disabled={saveMut.isPending}
-                                        sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, fontSize: 12 }}
-                                    >
-                                        {saveMut.isPending ? getString('saving') : getString('save')}
-                                    </Button>
+                                    autosaveStatus === 'error' ? (
+                                        <Tooltip title={getString('autosaveFailedHint')}>
+                                            <Button
+                                                size="small" variant="outlined" color="error" startIcon={<ErrorOutlineIcon />}
+                                                onClick={() => { void flushAutosave(); }}
+                                                sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, fontSize: 12 }}
+                                            >
+                                                {getString('autosaveRetry')}
+                                            </Button>
+                                        </Tooltip>
+                                    ) : (
+                                        <Stack direction="row" alignItems="center" spacing={0.75} sx={{ px: 1, color: t.textMuted }}>
+                                            {autosaveStatus === 'saving'
+                                                ? <CircularProgress size={14} thickness={5} />
+                                                : <CheckCircleIcon sx={{ fontSize: 16, color: '#2E7D32' }} />}
+                                            <Typography fontSize={12} fontWeight={600} sx={{ whiteSpace: 'nowrap' }}>
+                                                {autosaveStatus === 'saving' ? getString('saving') : getString('allChangesSaved')}
+                                            </Typography>
+                                        </Stack>
+                                    )
                                 )}
 
                             </Stack>
                         </Box>
 
-                        {/* Supervision = read-only watch, regardless of status */}
-                        {isSupervision && (
-                            <Alert severity="info" icon={<VisibilityIcon />} sx={{ mb: 2, borderRadius: '10px' }}>
-                                {getString('supervisionViewOnly') || 'Supervision mode — view only.'}
-                            </Alert>
-                        )}
-
-                        {/* View-only banner */}
-                        {isSessionClosed && (
-                            <Alert severity="info" icon={<VisibilityIcon />} sx={{ mb: 2, borderRadius: '10px' }}>
-                                This session is <strong>closed</strong> — view-only mode. Revert the session to allow edits.
-                            </Alert>
-                        )}
-                        {!isSessionClosed && rseDetail.status !== 'open' && (
-                            <Alert severity="warning" sx={{ mb: 2, borderRadius: '10px' }}>
-                                Employee status is <strong>{rseDetail.status}</strong> — use "Revert" to allow editing again.
-                            </Alert>
-                        )}
+                        {/* Read-only reason now lives as a chip + tooltip next to the status
+                            chip in the header (above), so it no longer reflows the page. */}
 
                         {/* Employee data tabs: languages / feedback / results */}
                         <EmployeeDataTabs
@@ -1022,6 +1043,16 @@ export function EvaluationPage() {
                 rseId={rid}
                 setSnackbar={setSnackbar}
                 canEdit={showEditing}
+            />
+
+            <ReviewCommentsDrawer
+                open={commentsOpen}
+                onClose={() => setCommentsOpen(false)}
+                rseId={rid}
+                canComment={canComment}
+                myAuthorRole={myAuthorRole}
+                myEmployeeId={myEmployeeId}
+                setSnackbar={setSnackbar}
             />
 
             {employeeId && (

@@ -64,6 +64,7 @@ __all__ = {
     "ReviewSessionEmployee",
     "ReviewSessionEmployeeEvaluation",
     "ReviewSessionEmployeeCriterionScore",
+    "ReviewSessionEmployeeComment",
     # People review — competency levels
     "ReviewLevel",
     "ReviewLevelRequirement",
@@ -197,6 +198,9 @@ from backend.api_v1.review_session_employee_evaluation.review_session_employee_e
 )
 from backend.api_v1.review_session_employee_criterion_score.review_session_employee_criterion_score_model import (
     ReviewSessionEmployeeCriterionScore,
+)
+from backend.api_v1.review_session_employee_comment.review_session_employee_comment_model import (
+    ReviewSessionEmployeeComment,
 )
 
 # People review — competency levels: level (parent) + requirements (child),

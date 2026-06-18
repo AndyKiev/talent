@@ -64,11 +64,19 @@ export function PersonalInfoPanel({
     const langLevelHint = (code: string, fallback: string) => translatedOr(`langLevelHint${code}`, fallback);
 
     return (
-        // Balanced multi-column (masonry) layout so the blocks spread across the
-        // tab width; each block stays whole (break-inside: avoid).
-        <Box sx={{ columnGap: 3, columnCount: { xs: 1, sm: 2, lg: 3 } }}>
-            {/* Birth date + sex / marital status */}
-            <Box sx={{ breakInside: 'avoid', mb: 2.5 }}>
+        // Explicit columns (one block per column, in order: personal · education ·
+        // children · languages) so education always gets its OWN column (col 2),
+        // separate from children — a balanced masonry can't guarantee that.
+        <Box
+            sx={{
+                display: 'grid',
+                gap: 3,
+                alignItems: 'start',
+                gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
+            }}
+        >
+            {/* Col 1 — Birth date + sex / marital status */}
+            <Box sx={{ minWidth: 0 }}>
                 <Stack spacing={1.5}>
                     <FactItem
                         icon={<CakeOutlinedIcon sx={{ fontSize: 18, color: t.textMuted }} />}
@@ -90,22 +98,9 @@ export function PersonalInfoPanel({
                 </Stack>
             </Box>
 
-            {/* Children (1:N) — headline = count of kids aged ≤14 */}
+            {/* Col 2 — Education (1:N), its own column, before children */}
             {employeeId && (
-                <Box sx={{ breakInside: 'avoid', mb: 2.5 }}>
-                    <ChildrenBlock
-                        employeeId={employeeId}
-                        getString={getString}
-                        isEditable={isEditable}
-                        onSuccess={onSuccess}
-                        onError={onError}
-                    />
-                </Box>
-            )}
-
-            {/* Education (1:N) */}
-            {employeeId && (
-                <Box sx={{ breakInside: 'avoid', mb: 2.5 }}>
+                <Box sx={{ minWidth: 0 }}>
                     <EducationBlock
                         employeeId={employeeId}
                         getString={getString}
@@ -116,8 +111,21 @@ export function PersonalInfoPanel({
                 </Box>
             )}
 
-            {/* Foreign languages */}
-            <Box sx={{ breakInside: 'avoid', mb: 2.5 }}>
+            {/* Col 3 — Children (1:N) — headline = count of kids aged ≤14 */}
+            {employeeId && (
+                <Box sx={{ minWidth: 0 }}>
+                    <ChildrenBlock
+                        employeeId={employeeId}
+                        getString={getString}
+                        isEditable={isEditable}
+                        onSuccess={onSuccess}
+                        onError={onError}
+                    />
+                </Box>
+            )}
+
+            {/* Col 4 — Foreign languages */}
+            <Box sx={{ minWidth: 0 }}>
                 <Stack direction="row" alignItems="center" spacing={0.75} sx={{ mb: 1 }}>
                     <LanguageOutlinedIcon sx={{ fontSize: 17 }} />
                     <Typography variant="subtitle2" fontWeight={700}>

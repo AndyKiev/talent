@@ -78,6 +78,14 @@ RSE_REVERT_TRANSITIONS = {
     "closed": "reviewed",
 }
 
+# Raw status value -> translation key, so the status word inside status-change
+# success messages is localized (reuses the same keys the frontend chips use).
+RSE_STATUS_LABEL_KEYS = {
+    "open": "statusOpen",
+    "reviewed": "statusReviewed",
+    "closed": "statusClosed",
+}
+
 
 class ReviewSessionEmployeeService(BaseService):
     def __init__(
@@ -173,6 +181,23 @@ class ReviewSessionEmployeeService(BaseService):
                 self.user.id, PEOPLE_REVIEW_PROCESS_KEY, role.key
             )
         return visible
+
+    async def get_active_role(self):
+        """The current user's ACTIVE people-review role (ProcessRole) or None.
+
+        None == 'only myself' mode (no active context / no role). Used by the
+        comment service to classify the viewer as oversight (link_target
+        'employee') vs supervision (link_target 'department')."""
+        if not self.user:
+            return None
+        ctx = await ProcessRoleActiveContextRepository(
+            session=self.session
+        ).get_for_employee(self.user.id)
+        if ctx is None or ctx.process_role_id is None:
+            return None
+        return await ProcessRoleRepository(session=self.session).get_by_id(
+            ctx.process_role_id
+        )
 
     async def assert_rse_visible(self, rse_id: int) -> None:
         """Visibility guard for RSE sub-resources (evaluations, proposed level):
@@ -359,6 +384,13 @@ class ReviewSessionEmployeeService(BaseService):
         await self.session.refresh(record)
         return self._to_schema(record)
 
+    async def _status_label(self, status_value: str) -> str:
+        """Localized label for a raw RSE status value (falls back to the raw value)."""
+        key = RSE_STATUS_LABEL_KEYS.get(status_value)
+        if not key:
+            return status_value
+        return await self._translate(key, fallback=status_value)
+
     async def change_status(
         self, rse_id: int, target_status: str
     ) -> MutationResponse[RSESchema]:
@@ -375,7 +407,9 @@ class ReviewSessionEmployeeService(BaseService):
         schema = self._to_schema(record)
         emp_name = record.employee.name if record.employee else str(rse_id)
         detail = await self._resolve_domain_success(
-            ReviewSessionEmployeeStatusChangeSuccess(emp_name, target_status)
+            ReviewSessionEmployeeStatusChangeSuccess(
+                emp_name, await self._status_label(target_status)
+            )
         )
         return MutationResponse(detail=detail, data=schema)
 
@@ -393,7 +427,9 @@ class ReviewSessionEmployeeService(BaseService):
         schema = self._to_schema(record)
         emp_name = record.employee.name if record.employee else str(rse_id)
         detail = await self._resolve_domain_success(
-            ReviewSessionEmployeeStatusChangeSuccess(emp_name, "open")
+            ReviewSessionEmployeeStatusChangeSuccess(
+                emp_name, await self._status_label("open")
+            )
         )
         return MutationResponse(detail=detail, data=schema)
 
@@ -411,6 +447,8 @@ class ReviewSessionEmployeeService(BaseService):
         schema = self._to_schema(record)
         emp_name = record.employee.name if record.employee else str(rse_id)
         detail = await self._resolve_domain_success(
-            ReviewSessionEmployeeStatusChangeSuccess(emp_name, target)
+            ReviewSessionEmployeeStatusChangeSuccess(
+                emp_name, await self._status_label(target)
+            )
         )
         return MutationResponse(detail=detail, data=schema)

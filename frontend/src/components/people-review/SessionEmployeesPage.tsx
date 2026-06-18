@@ -25,8 +25,8 @@ import CheckIcon from '@mui/icons-material/Check';
 import LockIcon from '@mui/icons-material/Lock';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ReplayIcon from '@mui/icons-material/Replay';
-import StopIcon from '@mui/icons-material/Stop';
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import { Link } from '@tanstack/react-router';
 import AppShell from '../layout/AppShell.tsx';
@@ -37,7 +37,6 @@ import {
     closeRSE,
     revertRSE,
     reopenRSE,
-    closeReviewSession,
     addSessionEmployee,
     type ReviewSessionEmployeeList,
 } from './peopleReviewApi';
@@ -101,10 +100,9 @@ export function SessionEmployeesPage() {
     const sessionName = session?.name ?? getString('sessionNumber', { id: sid });
     const isSessionClosed = sessionStatus === 'closed';
 
-    // Close-session eligibility: no employee in "open" status — ALWAYS on the full
-    // roster, never the filtered view (a UI filter must not make a session closeable).
+    // Count of employees still in "open" status — ALWAYS on the full roster, never
+    // the filtered view. Drives the "employees still open" warning chip below.
     const openCount = rows.filter(r => r.status === 'open').length;
-    const canCloseSession = openCount === 0 && rows.length > 0 && sessionStatus === 'open';
 
     const selectedEmp = rows.find(r => r.employee_id === selectedEmpId) ?? null;
     const filteredRows = useMemo(() => {
@@ -116,37 +114,39 @@ export function SessionEmployeesPage() {
 
     const onError = (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' });
 
+    // A status change here must ALSO refresh the per-employee detail page. Its
+    // query (['rse_detail', sid, eid]) has a 30s staleTime, so without this the
+    // detail page serves a stale status when you navigate into it. Prefix-match
+    // invalidates every employee's detail in this session (eid is the 3rd key).
+    const onStatusChangeSuccess = async (res: { detail: string }) => {
+        await Promise.all([
+            qc.invalidateQueries({ queryKey: qk }),
+            qc.invalidateQueries({ queryKey: ['rse_detail', sid] }),
+        ]);
+        setSnackbar({ open: true, message: res.detail, severity: 'success' });
+    };
+
     const reviewedMut = useMutation({
         mutationFn: markReviewed,
-        onSuccess: async (res) => { await qc.invalidateQueries({ queryKey: qk }); setSnackbar({ open: true, message: res.detail, severity: 'success' }); },
+        onSuccess: onStatusChangeSuccess,
         onError,
     });
 
     const closeMut = useMutation({
         mutationFn: closeRSE,
-        onSuccess: async (res) => { await qc.invalidateQueries({ queryKey: qk }); setSnackbar({ open: true, message: res.detail, severity: 'success' }); },
+        onSuccess: onStatusChangeSuccess,
         onError,
     });
 
     const revertMut = useMutation({
         mutationFn: revertRSE,
-        onSuccess: async (res) => { await qc.invalidateQueries({ queryKey: qk }); setSnackbar({ open: true, message: res.detail, severity: 'success' }); },
+        onSuccess: onStatusChangeSuccess,
         onError,
     });
 
     const reopenMut = useMutation({
         mutationFn: reopenRSE,
-        onSuccess: async (res) => { await qc.invalidateQueries({ queryKey: qk }); setSnackbar({ open: true, message: res.detail, severity: 'success' }); },
-        onError,
-    });
-
-    const closeSessionMut = useMutation({
-        mutationFn: closeReviewSession,
-        onSuccess: async (res) => {
-            await qc.invalidateQueries({ queryKey: sessQk });
-            await qc.invalidateQueries({ queryKey: qk });
-            setSnackbar({ open: true, message: res.detail, severity: 'success' });
-        },
+        onSuccess: onStatusChangeSuccess,
         onError,
     });
 
@@ -283,7 +283,7 @@ export function SessionEmployeesPage() {
 
     return (
         <AppShell>
-            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1300, mx: 'auto' }}>
+            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: '100%', px: { xs: 2, sm: 4, md: 6 } }}>
                 <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
                     <Link to="/people_review" style={{ textDecoration: 'none', color: 'inherit' }}>
                         <Typography variant="body2" color="text.secondary">{getString('peopleReview')}</Typography>
@@ -311,33 +311,12 @@ export function SessionEmployeesPage() {
                     {/* People-review scope switcher (mode + department) */}
                     <ScopeSettings />
 
-                    {/* Close session button */}
-                    {sessionStatus === 'open' && (
-                        <Tooltip title={canCloseSession ? getString('closeThisSession') : getString('employeesStillOpenTip', { count: openCount })}>
-                            <span>
-                                <Button
-                                    variant="contained" color="error" size="small"
-                                    startIcon={canCloseSession ? <StopIcon /> : <LockIcon />}
-                                    onClick={() => closeSessionMut.mutate(sid)}
-                                    disabled={!canCloseSession || closeSessionMut.isPending}
-                                    sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
-                                >
-                                    {closeSessionMut.isPending ? getString('closing') : getString('closeSession')}
-                                </Button>
-                            </span>
-                        </Tooltip>
-                    )}
+                    {/* Session is closed from the sessions grid's action column, not here. */}
                 </Stack>
 
                 {isSessionClosed && (
                     <Alert severity="info" icon={<VisibilityIcon />} sx={{ mb: 2, borderRadius: '10px' }}>
                         {getString('sessionClosedViewOnly')}
-                    </Alert>
-                )}
-
-                {openCount > 0 && sessionStatus === 'open' && (
-                    <Alert severity="warning" sx={{ mb: 2, borderRadius: '10px' }}>
-                        {getString('employeesStillOpenWarning', { count: openCount })}
                     </Alert>
                 )}
 
@@ -357,6 +336,18 @@ export function SessionEmployeesPage() {
                                     {getString('addEmployee')}
                                 </Button>
                             ) : <span />}
+                            {/* Compact warning in the toolbar row so it never pushes the table down. */}
+                            {openCount > 0 && sessionStatus === 'open' && (
+                                <Tooltip title={getString('employeesStillOpenWarning', { count: openCount })}>
+                                    <Chip
+                                        color="warning"
+                                        variant="outlined"
+                                        size="small"
+                                        icon={<WarningAmberRoundedIcon sx={{ fontSize: 16 }} />}
+                                        label={getString('employeesStillOpenShort', { count: openCount })}
+                                    />
+                                </Tooltip>
+                            )}
                             <Autocomplete<ReviewSessionEmployeeList>
                                 size="small"
                                 sx={{ width: { xs: '100%', sm: 320 } }}

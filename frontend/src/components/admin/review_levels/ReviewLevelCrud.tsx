@@ -13,6 +13,7 @@ import {
     Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import useString from '../../../hooks/useString';
@@ -29,6 +30,7 @@ export function ReviewLevelCrud() {
         severity: 'success' as 'success' | 'error',
     });
     const [formOpen, setFormOpen] = useState(false);
+    const [editing, setEditing] = useState<ReviewLevel | null>(null);
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
 
     const { data: rows = [], isLoading, error } = useQuery({
@@ -40,7 +42,17 @@ export function ReviewLevelCrud() {
     const { createMutation, updateMutation, deleteMutation } = useReviewLevelMutations({
         setSnackbar,
         onCreateSuccess: () => setFormOpen(false),
+        onUpdateSuccess: () => setFormOpen(false),
     });
+
+    const openCreate = () => {
+        setEditing(null);
+        setFormOpen(true);
+    };
+    const openEdit = (row: ReviewLevel) => {
+        setEditing(row);
+        setFormOpen(true);
+    };
 
     const localeText = useDataGridLocale();
 
@@ -114,17 +126,22 @@ export function ReviewLevelCrud() {
         {
             field: 'actions',
             headerName: '',
-            width: 70,
+            width: 90,
             sortable: false,
             renderCell: (params) => (
-                <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() => handleDelete(params.row.id)}
-                    disabled={deleteMutation.isPending}
-                >
-                    <DeleteIcon fontSize="small" />
-                </IconButton>
+                <Stack direction="row" spacing={0.5}>
+                    <IconButton size="small" onClick={() => openEdit(params.row)}>
+                        <EditIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => handleDelete(params.row.id)}
+                        disabled={deleteMutation.isPending}
+                    >
+                        <DeleteIcon fontSize="small" />
+                    </IconButton>
+                </Stack>
             ),
         },
     ];
@@ -135,12 +152,7 @@ export function ReviewLevelCrud() {
                 <Typography variant="h6" fontWeight={600} sx={{ flex: 1 }}>
                     {getString('reviewLevels')}
                 </Typography>
-                <Button
-                    variant="contained"
-                    size="medium"
-                    startIcon={<AddIcon />}
-                    onClick={() => setFormOpen(true)}
-                >
+                <Button variant="contained" size="medium" startIcon={<AddIcon />} onClick={openCreate}>
                     {getString('addReviewLevel')}
                 </Button>
             </Box>
@@ -178,7 +190,9 @@ export function ReviewLevelCrud() {
             <ReviewLevelForm
                 open={formOpen}
                 onClose={() => setFormOpen(false)}
+                editing={editing}
                 createMutation={createMutation}
+                updateMutation={updateMutation}
             />
 
             <Snackbar

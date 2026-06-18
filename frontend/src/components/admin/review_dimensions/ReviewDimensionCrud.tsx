@@ -13,20 +13,24 @@ import {
     Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
+import useString from '../../../hooks/useString';
 import { fetchReviewDimensions, type ReviewDimension } from './reviewDimensionApi';
 import { REVIEW_DIMENSION_QK, useReviewDimensionMutations } from './useReviewDimensionMutations';
 import { ReviewDimensionForm } from './ReviewDimensionForm';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 
 export function ReviewDimensionCrud() {
+    const getString = useString();
     const [snackbar, setSnackbar] = useState({
         open: false,
         message: '',
         severity: 'success' as 'success' | 'error',
     });
     const [formOpen, setFormOpen] = useState(false);
+    const [editing, setEditing] = useState<ReviewDimension | null>(null);
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
 
     const { data: rows = [], isLoading, error } = useQuery({
@@ -38,6 +42,7 @@ export function ReviewDimensionCrud() {
     const { createMutation, updateMutation, deleteMutation } = useReviewDimensionMutations({
         setSnackbar,
         onCreateSuccess: () => setFormOpen(false),
+        onUpdateSuccess: () => setFormOpen(false),
     });
 
     const localeText = useDataGridLocale();
@@ -49,42 +54,35 @@ export function ReviewDimensionCrud() {
         [updateMutation],
     );
 
-    const handleDelete = useCallback(
-        (id: number) => {
-            deleteMutation.mutate(id);
-        },
-        [deleteMutation],
-    );
+    const openCreate = () => {
+        setEditing(null);
+        setFormOpen(true);
+    };
+    const openEdit = (row: ReviewDimension) => {
+        setEditing(row);
+        setFormOpen(true);
+    };
 
     const columns: GridColDef<ReviewDimension>[] = [
-        { field: 'id', headerName: 'ID', width: 60 },
-        { field: 'name', headerName: 'Name', flex: 1, minWidth: 200 },
-        { field: 'key', headerName: 'Key', width: 200 },
-        {
-            field: 'description',
-            headerName: 'Description',
-            flex: 1,
-            minWidth: 200,
-        },
+        { field: 'id', headerName: getString('idColumn'), width: 60 },
+        { field: 'name', headerName: getString('name'), flex: 1, minWidth: 200 },
+        { field: 'key', headerName: getString('keyLabel'), width: 200 },
+        { field: 'description', headerName: getString('descriptionCol'), flex: 1, minWidth: 200 },
         {
             field: 'criteria',
-            headerName: 'Criteria',
-            width: 80,
+            headerName: getString('criteria'),
+            width: 90,
             renderCell: (params) => (
-                <Chip
-                    label={params.row.criteria?.length ?? 0}
-                    size="small"
-                    variant="outlined"
-                />
+                <Chip label={params.row.criteria?.length ?? 0} size="small" variant="outlined" />
             ),
         },
         {
             field: 'is_active',
-            headerName: 'Active',
+            headerName: getString('isActiveCol'),
             width: 90,
             renderCell: (params) => (
                 <Chip
-                    label={params.row.is_active ? 'Yes' : 'No'}
+                    label={params.row.is_active ? getString('yes') : getString('no')}
                     color={params.row.is_active ? 'success' : 'default'}
                     size="small"
                     onClick={() => handleToggleActive(params.row)}
@@ -95,14 +93,17 @@ export function ReviewDimensionCrud() {
         {
             field: 'actions',
             headerName: '',
-            width: 80,
+            width: 90,
             sortable: false,
             renderCell: (params) => (
                 <Stack direction="row" spacing={0.5}>
+                    <IconButton size="small" onClick={() => openEdit(params.row)}>
+                        <EditIcon fontSize="small" />
+                    </IconButton>
                     <IconButton
                         size="small"
                         color="error"
-                        onClick={() => handleDelete(params.row.id)}
+                        onClick={() => deleteMutation.mutate(params.row.id)}
                         disabled={deleteMutation.isPending}
                     >
                         <DeleteIcon fontSize="small" />
@@ -116,15 +117,10 @@ export function ReviewDimensionCrud() {
         <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                 <Typography variant="h6" fontWeight={600} sx={{ flex: 1 }}>
-                    Review Dimensions
+                    {getString('reviewDimensions')}
                 </Typography>
-                <Button
-                    variant="contained"
-                    size="medium"
-                    startIcon={<AddIcon />}
-                    onClick={() => setFormOpen(true)}
-                >
-                    Add Dimension
+                <Button variant="contained" size="medium" startIcon={<AddIcon />} onClick={openCreate}>
+                    {getString('addReviewDimension')}
                 </Button>
             </Box>
 
@@ -161,7 +157,9 @@ export function ReviewDimensionCrud() {
             <ReviewDimensionForm
                 open={formOpen}
                 onClose={() => setFormOpen(false)}
+                editing={editing}
                 createMutation={createMutation}
+                updateMutation={updateMutation}
             />
 
             <Snackbar

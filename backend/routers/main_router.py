@@ -109,6 +109,9 @@ from backend.api_v1.review_level_requirement.review_level_requirement_views impo
 from backend.api_v1.review_session_employee_level.review_session_employee_level_views import (
     router as review_session_employee_level_router,
 )
+from backend.api_v1.review_session_employee_comment.review_session_employee_comment_views import (
+    router as review_session_employee_comment_router,
+)
 from backend.api_v1.education_degree.education_degree_views import (
     router as education_degree_router,
 )
@@ -239,6 +242,7 @@ router.include_router(employee_education_router)
 router.include_router(employee_child_router)
 router.include_router(employee_photo_router)
 router.include_router(review_session_employee_level_router)
+router.include_router(review_session_employee_comment_router)
 
 # New modules from talent-work
 router.include_router(job_group_type_router)

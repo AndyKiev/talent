@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -11,59 +11,82 @@ import {
     FormControlLabel,
 } from '@mui/material';
 import type { UseMutationResult } from '@tanstack/react-query';
-import type { ReviewDimensionCreate, ReviewDimension, MutationResponse } from './reviewDimensionApi';
+import useString from '../../../hooks/useString';
+import type {
+    ReviewDimensionCreate,
+    ReviewDimensionUpdate,
+    ReviewDimension,
+    MutationResponse,
+} from './reviewDimensionApi';
 
 interface Props {
     open: boolean;
     onClose: () => void;
+    /** When set, the dialog edits this row; otherwise it creates a new one. */
+    editing?: ReviewDimension | null;
     createMutation: UseMutationResult<MutationResponse<ReviewDimension>, Error, ReviewDimensionCreate>;
+    updateMutation: UseMutationResult<
+        MutationResponse<ReviewDimension>,
+        Error,
+        { id: number; data: ReviewDimensionUpdate }
+    >;
 }
 
-export function ReviewDimensionForm({ open, onClose, createMutation }: Props) {
+export function ReviewDimensionForm({ open, onClose, editing, createMutation, updateMutation }: Props) {
+    const getString = useString();
     const [name, setName] = useState('');
     const [key, setKey] = useState('');
     const [description, setDescription] = useState('');
     const [isActive, setIsActive] = useState(true);
 
-    const handleSubmit = () => {
-        createMutation.mutate({
-            name,
-            key,
-            description: description || null,
-            is_active: isActive,
-        });
-    };
+    // Prefill from the edited row (or reset for create) each time the dialog opens.
+    useEffect(() => {
+        if (!open) return;
+        setName(editing?.name ?? '');
+        setKey(editing?.key ?? '');
+        setDescription(editing?.description ?? '');
+        setIsActive(editing?.is_active ?? true);
+    }, [open, editing]);
 
-    const handleClose = () => {
-        setName('');
-        setKey('');
-        setDescription('');
-        setIsActive(true);
-        onClose();
+    const isEdit = !!editing;
+    const pending = createMutation.isPending || updateMutation.isPending;
+
+    const handleSubmit = () => {
+        const payload = {
+            name: name.trim(),
+            key: key.trim(),
+            description: description.trim() || null,
+            is_active: isActive,
+        };
+        if (isEdit && editing) {
+            updateMutation.mutate({ id: editing.id, data: payload });
+        } else {
+            createMutation.mutate(payload);
+        }
     };
 
     return (
-        <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-            <DialogTitle>Add Review Dimension</DialogTitle>
+        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+            <DialogTitle>{getString(isEdit ? 'editReviewDimension' : 'addReviewDimension')}</DialogTitle>
             <DialogContent>
                 <Stack spacing={2} sx={{ mt: 1 }}>
                     <TextField
-                        label="Name"
+                        label={getString('name')}
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         fullWidth
                         required
                     />
                     <TextField
-                        label="Key"
+                        label={getString('keyLabel')}
                         value={key}
                         onChange={(e) => setKey(e.target.value)}
                         fullWidth
                         required
-                        helperText="Short unique identifier, e.g. TRANSFORMATION_PERFORMANCE"
+                        helperText={getString('reviewDimensionKeyHint')}
                     />
                     <TextField
-                        label="Description"
+                        label={getString('descriptionCol')}
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         fullWidth
@@ -71,21 +94,19 @@ export function ReviewDimensionForm({ open, onClose, createMutation }: Props) {
                         rows={3}
                     />
                     <FormControlLabel
-                        control={
-                            <Switch checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
-                        }
-                        label="Active"
+                        control={<Switch checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />}
+                        label={getString('isActiveCol')}
                     />
                 </Stack>
             </DialogContent>
             <DialogActions>
-                <Button onClick={handleClose}>Cancel</Button>
+                <Button onClick={onClose}>{getString('cancel')}</Button>
                 <Button
                     variant="contained"
                     onClick={handleSubmit}
-                    disabled={!name || !key || createMutation.isPending}
+                    disabled={!name.trim() || !key.trim() || pending}
                 >
-                    {createMutation.isPending ? 'Creating...' : 'Create'}
+                    {pending ? getString('saving') : getString(isEdit ? 'save' : 'create')}
                 </Button>
             </DialogActions>
         </Dialog>
