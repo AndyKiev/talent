@@ -416,8 +416,13 @@ export function EvaluationPage() {
         onError: (message) => setSnackbar({ open: true, message, severity: 'error' }),
     });
 
-    // In a closed session show every dimension; otherwise only active ones.
-    const visibleEvals = isSessionClosed ? localEvals : localEvals.filter(e => e.dimension_is_active);
+    // The evaluation rows ARE the session's frozen dimension snapshot (created at
+    // open / add-employee time from the then-active dimensions). Show them all,
+    // regardless of a dimension's later is_active toggle, so a session's dimension
+    // set never changes once it exists — deactivating a dimension globally leaves
+    // already-existing sessions (open or closed) intact. New sessions still pick up
+    // the new active set at open time.
+    const visibleEvals = localEvals;
 
     const allFilled = visibleEvals.length > 0 && visibleEvals.every(evalFilled);
     const filledCount = visibleEvals.filter(evalFilled).length;
