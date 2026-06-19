@@ -26,7 +26,7 @@ import cfl from "../../utils/capitalizeFirstLetter.ts";
 const LoginPage: FC = () => {
     const { t } = useTheme();
     const navigate = useNavigate();
-    const { setToken, setUser } = useAuthStore();
+    const { setToken, access_token } = useAuthStore();
     const getString = useString({ str });
 
     const [username, setUsername] = useState("");
@@ -46,15 +46,14 @@ const LoginPage: FC = () => {
 
         try {
             // 1. Get token
-            const { access_token } = await authApi.login(username.trim(), password);
-            setToken(access_token);
+            const { access_token: token } = await authApi.login(username.trim(), password);
+            setToken(token);
 
-            // 2. Fetch full user profile
-            const user = await authApi.me();
-            setUser(user);
-
-            // 3. Navigate to main page
-            await navigate({ to: "/people_review" });
+            // 2. Route in immediately. RootLayout fetches /me and loads translations
+            //    on token change, so we don't await them here — awaiting /me before
+            //    navigating let translations finish first and remounted an empty login
+            //    form for a frame (the "blinking").
+            navigate({ to: "/people_review" });
         } catch (err: unknown) {
             const message =
                 err instanceof Error
@@ -69,6 +68,26 @@ const LoginPage: FC = () => {
     const handleKeyDown = async (e: React.KeyboardEvent) => {
         if (e.key === "Enter") await handleSubmit();
     };
+
+    // Once a token exists we're transitioning into the app. Show a spinner instead of
+    // the form so a brief remount during the auth/translations transition never flashes
+    // empty username/password fields.
+    if (access_token) {
+        return (
+            <Box
+                sx={{
+                    minHeight: "100vh",
+                    background: t.bg,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "background 0.3s",
+                }}
+            >
+                <CircularProgress sx={{ color: t.accent }} />
+            </Box>
+        );
+    }
 
     return (
         <Box
