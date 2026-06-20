@@ -21,3 +21,12 @@ class ProcessRoleHolderEmployeeDeleteSuccess(DeleteSuccess):
         self.template_vars = {"employee": employee}
         self.fallback = f"Employee '{employee}' removed"
         DomainSuccess.__init__(self, self.fallback)
+
+
+class ProcessRoleHolderEmployeeOrderSuccess(DomainSuccess):
+    message_key = "processRoleHolderEmployeeOrdered"
+
+    def __init__(self) -> None:
+        self.template_vars = {}
+        self.fallback = "Roster order saved"
+        DomainSuccess.__init__(self, self.fallback)

@@ -13,9 +13,11 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
+    FormControlLabel,
     Paper,
     Snackbar,
     Stack,
+    Switch,
     TextField,
     Tooltip,
     Typography,
@@ -33,6 +35,8 @@ import AppShell from '../layout/AppShell.tsx';
 import {
     fetchSessionEmployees,
     fetchReviewSessions,
+    fetchMyScopes,
+    reorderSessionEmployees,
     markReviewed,
     closeRSE,
     revertRSE,
@@ -40,10 +44,12 @@ import {
     addSessionEmployee,
     type ReviewSessionEmployeeList,
 } from './peopleReviewApi';
+import { PEOPLE_REVIEW_MY_SCOPES_QK } from '../../utils/queryKeys';
 import { useDataGridLocale } from '../../hooks/useDataGridLocale';
 import { useTheme } from '../theme/ThemeContext';
 import useString from '../../hooks/useString';
 import { ScopeSettings } from './ScopeSettings';
+import { ReorderableList } from './ReorderableList';
 import { EmployeeAutocomplete } from '../ui/EmployeeAutocomplete';
 
 const RSE_STATUS_COLORS: Record<string, 'info' | 'warning' | 'success' | 'error'> = {
@@ -83,6 +89,10 @@ export function SessionEmployeesPage() {
     const [addOpen, setAddOpen] = useState(false);
     const [addEmpId, setAddEmpId] = useState<number | null>(null);
 
+    // Presentation-queue reorder mode (oversight only). Local UI state — only the
+    // order persists server-side; the toggle resets to OFF on reload.
+    const [reorderMode, setReorderMode] = useState(false);
+
     const qk = ['session_employees', sid] as const;
     const sessQk = ['review_sessions'] as const;
 
@@ -99,6 +109,17 @@ export function SessionEmployeesPage() {
     const sessionStatus = session?.status ?? 'open';
     const sessionName = session?.name ?? getString('sessionNumber', { id: sid });
     const isSessionClosed = sessionStatus === 'closed';
+
+    // Reordering the presentation queue is an oversight-only action: the active
+    // people-review role must target employees (link_target === 'employee').
+    const { data: scopes } = useQuery({
+        queryKey: PEOPLE_REVIEW_MY_SCOPES_QK,
+        queryFn: fetchMyScopes,
+        staleTime: 60_000,
+    });
+    const activeRole = scopes?.roles.find(r => r.process_role_id === scopes.active.process_role_id);
+    const isOversightActive = activeRole?.link_target === 'employee';
+    const canReorder = isOversightActive && !isSessionClosed;
 
     // Count of employees still in "open" status — ALWAYS on the full roster, never
     // the filtered view. Drives the "employees still open" warning chip below.
@@ -147,6 +168,15 @@ export function SessionEmployeesPage() {
     const reopenMut = useMutation({
         mutationFn: reopenRSE,
         onSuccess: onStatusChangeSuccess,
+        onError,
+    });
+
+    const reorderMut = useMutation({
+        mutationFn: (orderedIds: number[]) => reorderSessionEmployees(sid, orderedIds),
+        onSuccess: async (res) => {
+            await qc.invalidateQueries({ queryKey: qk });
+            setSnackbar({ open: true, message: res.detail, severity: 'success' });
+        },
         onError,
     });
 
@@ -336,6 +366,20 @@ export function SessionEmployeesPage() {
                                     {getString('addEmployee')}
                                 </Button>
                             ) : <span />}
+                            {/* Oversight-only: toggle drag/arrow reordering of the presentation queue. */}
+                            {canReorder && (
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            size="small"
+                                            checked={reorderMode}
+                                            onChange={(_, v) => setReorderMode(v)}
+                                        />
+                                    }
+                                    label={getString('reorderQueue')}
+                                    sx={{ ml: 0, mr: 0, '& .MuiFormControlLabel-label': { fontSize: 13, fontWeight: 600 } }}
+                                />
+                            )}
                             {/* Compact warning in the toolbar row so it never pushes the table down. */}
                             {openCount > 0 && sessionStatus === 'open' && (
                                 <Tooltip title={getString('employeesStillOpenWarning', { count: openCount })}>
@@ -374,20 +418,44 @@ export function SessionEmployeesPage() {
                                 )}
                             />
                         </Box>
-                        <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
-                            <DataGrid
-                            rows={filteredRows} columns={columns}
-                            paginationModel={paginationModel}
-                            onPaginationModelChange={setPaginationModel}
-                            pageSizeOptions={[10, 25, 50]}
-                            disableRowSelectionOnClick
-                            rowHeight={64}
-                            getRowId={row => row.id}
-                            localeText={localeText}
-                            hideFooterSelectedRowCount
-                            sx={{ '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center', py: 1 } }}
+                        {reorderMode && canReorder ? (
+                            // Full unpaginated roster in queue order; drag/arrows reassign 10,20,30…
+                            <ReorderableList<ReviewSessionEmployeeList>
+                                rows={rows}
+                                getRowId={r => r.id}
+                                getString={getString}
+                                onReorder={ids => reorderMut.mutate(ids)}
+                                renderRow={r => (
+                                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                                        <Typography fontSize={13} fontWeight={600} color="text.secondary" sx={{ minWidth: 64 }}>
+                                            {r.employee_code}
+                                        </Typography>
+                                        <Typography fontSize={13} sx={{ flex: 1 }}>{r.employee_name}</Typography>
+                                        <Chip
+                                            label={getString(STATUS_LABEL_KEYS[r.status] ?? r.status)}
+                                            color={RSE_STATUS_COLORS[r.status] ?? 'default'}
+                                            size="small"
+                                            variant="outlined"
+                                        />
+                                    </Stack>
+                                )}
                             />
-                        </Paper>
+                        ) : (
+                            <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+                                <DataGrid
+                                rows={filteredRows} columns={columns}
+                                paginationModel={paginationModel}
+                                onPaginationModelChange={setPaginationModel}
+                                pageSizeOptions={[10, 25, 50]}
+                                disableRowSelectionOnClick
+                                rowHeight={64}
+                                getRowId={row => row.id}
+                                localeText={localeText}
+                                hideFooterSelectedRowCount
+                                sx={{ '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center', py: 1 } }}
+                                />
+                            </Paper>
+                        )}
                     </>
                 )}
 

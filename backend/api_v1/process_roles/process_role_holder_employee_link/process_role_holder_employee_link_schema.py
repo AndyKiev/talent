@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 
@@ -20,3 +20,12 @@ class ProcessRoleHolderEmployeeLink(ProcessRoleHolderEmployeeLinkBase):
     created_at: datetime
     employee_code: Optional[str] = None
     employee_name: Optional[str] = None
+    order_position: Optional[int] = None
+
+
+class ProcessRoleHolderEmployeeReorder(BaseModel):
+    """Bulk roster reorder for one holder: the link ids in their new top-to-bottom
+    order. Positions are reassigned server-side as 10, 20, 30 …"""
+
+    process_role_holder_id: int
+    ordered_ids: List[int]

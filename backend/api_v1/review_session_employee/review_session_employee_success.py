@@ -17,3 +17,12 @@ class ReviewSessionEmployeeAddedSuccess(DomainSuccess):
         self.template_vars = {"name": employee_name}
         self.fallback = f"'{employee_name}' added to the session"
         super().__init__(self.fallback)
+
+
+class ReviewSessionEmployeeQueueOrderSuccess(DomainSuccess):
+    message_key = "reviewSessionEmployeeQueueOrdered"
+
+    def __init__(self) -> None:
+        self.template_vars = {}
+        self.fallback = "Presentation queue order saved"
+        super().__init__(self.fallback)

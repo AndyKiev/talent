@@ -8,6 +8,7 @@ from backend.api_v1.review_session_employee.review_session_employee_schema impor
     ReviewSessionEmployeeList as RSEListSchema,
     ReviewSessionEmployeeFieldsUpdate,
     ReviewSessionEmployeeCreate,
+    ReviewSessionEmployeeReorder,
 )
 from backend.api_v1.review_session_employee.review_session_employee_dependencies import (
     get_review_session_employee_service,
@@ -51,6 +52,17 @@ async def add_session_employee(
     return await service.add_employee(
         session_id=payload.session_id, employee_id=payload.employee_id
     )
+
+
+@router.post("/reorder", response_model=MutationResponse[None])
+async def reorder_session_employees(
+    payload: ReviewSessionEmployeeReorder,
+    service: Annotated[
+        ReviewSessionEmployeeService,
+        Depends(get_review_session_employee_service),
+    ],
+):
+    return await service.set_queue_order(payload.session_id, payload.ordered_ids)
 
 
 @router.get("/my", response_model=List[RSEListSchema])

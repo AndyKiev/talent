@@ -47,6 +47,7 @@ export interface ReviewSessionEmployeeList {
     scored_count: number;
     facts_count: number;
     total_dimensions: number;
+    queue_position: number | null;
 }
 
 export interface CriterionScore {
@@ -244,6 +245,21 @@ export const addSessionEmployee = async (
 
 export const fetchRSEDetail = async (rseId: number): Promise<ReviewSessionEmployee> => {
     const res = await axiosInstance.get<ReviewSessionEmployee>(`${RSE_BASE}/${rseId}`);
+    return res.data;
+};
+
+/**
+ * Persist the presentation-queue order for a session (oversight mode only). Sends
+ * the full top-to-bottom RSE id order; the server assigns positions 10, 20, 30 …
+ */
+export const reorderSessionEmployees = async (
+    sessionId: number,
+    orderedIds: number[],
+): Promise<MutationResponse<null>> => {
+    const res = await axiosInstance.post<MutationResponse<null>>(`${RSE_BASE}/reorder`, {
+        session_id: sessionId,
+        ordered_ids: orderedIds,
+    });
     return res.data;
 };
 

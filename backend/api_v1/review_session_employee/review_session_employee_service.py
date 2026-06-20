@@ -33,10 +33,12 @@ from backend.api_v1.review_session_employee.review_session_employee_errors impor
     ReviewSessionEmployeeStatusError,
     ReviewSessionEmployeeAlreadyInSession,
     ReviewSessionNotOpenForAdd,
+    ReviewSessionReorderNotAllowed,
 )
 from backend.api_v1.review_session_employee.review_session_employee_success import (
     ReviewSessionEmployeeStatusChangeSuccess,
     ReviewSessionEmployeeAddedSuccess,
+    ReviewSessionEmployeeQueueOrderSuccess,
 )
 from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_repository import (
     ProcessRoleHolderEmployeeLinkRepository,
@@ -122,6 +124,8 @@ class ReviewSessionEmployeeService(BaseService):
         schema.scored_count = sum(1 for e in evals if e.score is not None and e.score > 0)
         schema.facts_count = sum(1 for e in evals if e.facts and e.facts.strip())
         schema.total_dimensions = len(evals)
+        # queue_position is filled by get_session_employees from the reviewer's
+        # roster order (the shared order_position store), not from the RSE row.
         return schema
 
     async def _visible_employee_ids(self) -> set[int]:
@@ -262,12 +266,45 @@ class ReviewSessionEmployeeService(BaseService):
         )
         in_role_mode = ctx is not None and ctx.process_role_id is not None
         self_id = self.user.id if self.user else None
-        return [
+        result = [
             self._to_list_schema(r)
             for r in records
             if r.employee_id in visible
             and not (in_role_mode and r.employee_id == self_id)
         ]
+        # Presentation order = the reviewer's SINGLE roster order (order_position on
+        # the holder's employee links), shared with the admin reviewer screen — one
+        # order per reviewer, shown everywhere. We surface it on queue_position for
+        # the frontend, then sort: ordered employees first (asc), the rest by id.
+        # NULL sorts last, so a freshly-added employee lands at the end. This order
+        # also drives the evaluation page's prev/next navigation (same query).
+        order_map = await self._roster_order_map()
+        for s in result:
+            s.queue_position = order_map.get(s.employee_id)
+        result.sort(
+            key=lambda s: (s.queue_position is None, s.queue_position or 0, s.id)
+        )
+        return result
+
+    async def _roster_order_map(self) -> dict[int, int]:
+        """{employee_id: order_position} for the current user's people-review
+        oversight roster, or empty when the user isn't an oversight reviewer. The
+        single source of truth for presentation order (same store the admin screen
+        edits)."""
+        role = await self.get_active_role()
+        if role is None or role.link_target != "employee" or not self.user:
+            return {}
+        link_service = ProcessRoleHolderEmployeeLinkService(
+            repository=ProcessRoleHolderEmployeeLinkRepository(session=self.session),
+            user=self.user,
+            session=self.session,
+        )
+        holder_id = await link_service.get_holder_id(
+            self.user.id, PEOPLE_REVIEW_PROCESS_KEY, role.key
+        )
+        if holder_id is None:
+            return {}
+        return await link_service.get_employee_order_map(holder_id)
 
     async def add_employee(
         self, session_id: int, employee_id: int
@@ -325,6 +362,49 @@ class ReviewSessionEmployeeService(BaseService):
             ReviewSessionEmployeeAddedSuccess(employee.name)
         )
         return MutationResponse(detail=detail, data=schema)
+
+    async def set_queue_order(
+        self, session_id: int, ordered_ids: List[int]
+    ) -> MutationResponse[None]:
+        """Persist a session reorder into the reviewer's SINGLE roster order
+        (oversight only) — the same order_position store the admin reviewer screen
+        edits, so reordering here is reflected everywhere.
+
+        Guarded to oversight mode (active role link_target='employee'). The payload
+        is RSE ids; we translate them to employee ids, drop any outside the caller's
+        visible roster, and renumber the holder's roster links so those employees
+        come first (10, 20, 30 …) followed by roster members not in this session."""
+        role = await self.get_active_role()
+        if role is None or role.link_target != "employee" or not self.user:
+            raise await self._resolve_domain_error(ReviewSessionReorderNotAllowed())
+
+        visible = await self._visible_employee_ids()
+        rows = await self.session.scalars(
+            select(RSEModel).where(RSEModel.session_id == session_id)
+        )
+        rse_to_emp = {r.id: r.employee_id for r in rows.all()}
+        ordered_employee_ids = [
+            rse_to_emp[rid]
+            for rid in ordered_ids
+            if rid in rse_to_emp and rse_to_emp[rid] in visible
+        ]
+
+        link_service = ProcessRoleHolderEmployeeLinkService(
+            repository=ProcessRoleHolderEmployeeLinkRepository(session=self.session),
+            user=self.user,
+            session=self.session,
+        )
+        holder_id = await link_service.get_holder_id(
+            self.user.id, PEOPLE_REVIEW_PROCESS_KEY, role.key
+        )
+        if holder_id is None:
+            raise await self._resolve_domain_error(ReviewSessionReorderNotAllowed())
+        await link_service.set_session_order(holder_id, ordered_employee_ids)
+
+        detail = await self._resolve_domain_success(
+            ReviewSessionEmployeeQueueOrderSuccess()
+        )
+        return MutationResponse(detail=detail, data=None)
 
     async def get_my_reviews(
         self,

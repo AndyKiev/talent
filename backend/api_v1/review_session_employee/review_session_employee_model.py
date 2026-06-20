@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, List, Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Text, ForeignKey, UniqueConstraint
+from sqlalchemy import String, Text, Integer, ForeignKey, UniqueConstraint
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 
@@ -26,6 +26,10 @@ class ReviewSessionEmployee(IntIdPkMixin, TimestampMixin, Base):
         ForeignKey("employees.id"), nullable=False
     )
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="open")
+
+    # Presentation-queue order for oversight mode (multiples of 10: 10, 20, 30 …).
+    # NULL sorts last, so a newly-added employee lands at the end of the queue.
+    queue_position: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
     # Free-text employee-filled fields for this review (per-session).
     employee_feedback: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

@@ -6,6 +6,7 @@ from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_schema import (
     ProcessRoleHolderEmployeeLink as ProcessRoleHolderEmployeeLinkSchema,
     ProcessRoleHolderEmployeeLinkCreate,
+    ProcessRoleHolderEmployeeReorder,
 )
 from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_dependencies import (
     get_process_role_holder_employee_link_service,
@@ -53,6 +54,19 @@ async def create_link(
     ],
 ):
     return await service.create_link(link_in)
+
+
+@router.post("/reorder", response_model=MutationResponse[None])
+async def reorder_links(
+    payload: ProcessRoleHolderEmployeeReorder,
+    service: Annotated[
+        ProcessRoleHolderEmployeeLinkService,
+        Depends(get_process_role_holder_employee_link_service),
+    ],
+):
+    return await service.set_order(
+        payload.process_role_holder_id, payload.ordered_ids
+    )
 
 
 @router.delete("/{link_id}", status_code=status.HTTP_200_OK)

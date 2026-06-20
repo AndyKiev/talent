@@ -12,6 +12,7 @@ export interface ProcessRoleHolderEmployeeLink {
     created_at: string;
     employee_code: string | null;
     employee_name: string | null;
+    order_position: number | null;
 }
 
 export interface ProcessRoleHolderEmployeeLinkCreate {
@@ -42,5 +43,20 @@ export const deleteProcessRoleHolderEmployeeLink = async (
     id: number,
 ): Promise<MutationResponse<null>> => {
     const res = await axiosInstance.delete<MutationResponse<null>>(`${BASE}/${id}`);
+    return res.data;
+};
+
+/**
+ * Persist the roster presentation order for one holder. Sends the full top-to-
+ * bottom link id order; the server assigns positions 10, 20, 30 …
+ */
+export const reorderProcessRoleHolderEmployeeLinks = async (
+    processRoleHolderId: number,
+    orderedIds: number[],
+): Promise<MutationResponse<null>> => {
+    const res = await axiosInstance.post<MutationResponse<null>>(`${BASE}/reorder`, {
+        process_role_holder_id: processRoleHolderId,
+        ordered_ids: orderedIds,
+    });
     return res.data;
 };

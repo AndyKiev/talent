@@ -28,6 +28,15 @@ class ReviewSessionEmployeeAlreadyInSession(AlreadyExistsError):
         super().__init__("ReviewSessionEmployee", "employee", employee_name)
 
 
+class ReviewSessionReorderNotAllowed(DomainError):
+    message_key = "reviewSessionReorderNotAllowed"
+
+    def __init__(self) -> None:
+        self.template_vars = {}
+        self.fallback = "Only an oversight reviewer can reorder the presentation queue"
+        super().__init__(self.fallback)
+
+
 class ReviewSessionNotOpenForAdd(DomainError):
     message_key = "reviewSessionNotOpenForAdd"
 

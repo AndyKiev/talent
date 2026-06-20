@@ -63,3 +63,12 @@ class ReviewSessionEmployeeList(BaseModel):
     scored_count: int = 0
     facts_count: int = 0
     total_dimensions: int = 0
+    queue_position: Optional[int] = None
+
+
+class ReviewSessionEmployeeReorder(BaseModel):
+    """Bulk presentation-queue reorder: the RSE ids in their new top-to-bottom
+    presentation order. Positions are reassigned server-side as 10, 20, 30 …"""
+
+    session_id: int
+    ordered_ids: List[int]

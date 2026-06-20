@@ -1,9 +1,9 @@
 from __future__ import annotations
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, ForeignKeyConstraint, UniqueConstraint
+from sqlalchemy import ForeignKey, ForeignKeyConstraint, UniqueConstraint, Integer
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from backend.api_v1.process_roles.process_role_holder.process_role_holder_model import (
@@ -35,6 +35,9 @@ class ProcessRoleHolderEmployeeLink(IntIdPkMixin, TimestampMixin, Base):
         nullable=False,
         index=True,
     )
+    # Per-holder roster order for oversight presentation (multiples of 10).
+    # NULL sorts last, so a newly-assigned employee lands at the end.
+    order_position: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
     holder: Mapped["ProcessRoleHolder"] = relationship(
         "ProcessRoleHolder",
