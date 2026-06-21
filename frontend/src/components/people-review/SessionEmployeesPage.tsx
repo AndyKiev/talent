@@ -14,6 +14,7 @@ import {
     DialogContent,
     DialogTitle,
     FormControlLabel,
+    IconButton,
     Paper,
     Snackbar,
     Stack,
@@ -23,11 +24,13 @@ import {
     Typography,
 } from '@mui/material';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import LockIcon from '@mui/icons-material/Lock';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ReplayIcon from '@mui/icons-material/Replay';
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
+import SlideshowIcon from '@mui/icons-material/Slideshow';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import { Link } from '@tanstack/react-router';
@@ -42,12 +45,14 @@ import {
     revertRSE,
     reopenRSE,
     addSessionEmployee,
+    openTempoPresentation,
     type ReviewSessionEmployeeList,
 } from './peopleReviewApi';
 import { PEOPLE_REVIEW_MY_SCOPES_QK } from '../../utils/queryKeys';
 import { useDataGridLocale } from '../../hooks/useDataGridLocale';
 import { useTheme } from '../theme/ThemeContext';
 import useString from '../../hooks/useString';
+import { useClipboard } from '../../hooks/useClipboard';
 import { ScopeSettings } from './ScopeSettings';
 import { ReorderableList } from './ReorderableList';
 import { EmployeeAutocomplete } from '../ui/EmployeeAutocomplete';
@@ -76,6 +81,10 @@ export function SessionEmployeesPage() {
     const sid = Number(sessionId);
 
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+    const { copyToClipboard } = useClipboard({
+        onSuccess: (message) => setSnackbar({ open: true, message, severity: 'success' }),
+        onError: (message) => setSnackbar({ open: true, message, severity: 'error' }),
+    });
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
 
     // Frontend-only employee filter: type a name/code to narrow the list, or pick
@@ -192,7 +201,25 @@ export function SessionEmployeesPage() {
     });
 
     const columns: GridColDef<ReviewSessionEmployeeList>[] = [
-        { field: 'employee_code', headerName: getString('code'), width: 100 },
+        {
+            field: 'employee_code',
+            headerName: getString('code'),
+            width: 130,
+            renderCell: (params) => (
+                <Stack direction="row" alignItems="center" spacing={0.25} height="100%">
+                    <Typography fontSize={13}>{params.row.employee_code}</Typography>
+                    <Tooltip title={getString('copyCode')}>
+                        <IconButton
+                            size="small"
+                            onClick={(e) => { e.stopPropagation(); void copyToClipboard(params.row.employee_code); }}
+                            sx={{ p: 0.25, color: t.textMuted }}
+                        >
+                            <ContentCopyIcon sx={{ fontSize: 14 }} />
+                        </IconButton>
+                    </Tooltip>
+                </Stack>
+            ),
+        },
         { field: 'employee_name', headerName: getString('employee'), flex: 1, minWidth: 180 },
         {
             field: 'status',
@@ -366,6 +393,18 @@ export function SessionEmployeesPage() {
                                     {getString('addEmployee')}
                                 </Button>
                             ) : <span />}
+                            {/* Presentation: open all employees (in queue order) as one
+                                HTML deck with ◀ ▶ navigation, in a new tab. */}
+                            {rows.length > 0 && (
+                                <Button
+                                    variant="outlined" size="small"
+                                    startIcon={<SlideshowIcon />}
+                                    onClick={() => openTempoPresentation(sid).catch(onError)}
+                                    sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
+                                >
+                                    {getString('tempoPresentation')}
+                                </Button>
+                            )}
                             {/* Oversight-only: toggle drag/arrow reordering of the presentation queue. */}
                             {canReorder && (
                                 <FormControlLabel

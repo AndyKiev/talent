@@ -16,21 +16,8 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { axiosInstance } from '../../api/axiosInstance';
 import { BASE_URL } from '../../utils/eNums';
 import { MAX_GRADE } from './peopleReviewApi';
+import { getDimColor } from './evaluation/evaluationHelpers';
 import { useTheme } from '../theme/ThemeContext';
-
-// ── Dimension colour palette (must match EvaluationPage) ─────────────────────
-const DIMENSION_COLORS: Record<string, string> = {
-    TRANSFORMATION:   '#1565C0',
-    ETHICS:           '#2E7D32',
-    MOBILIZATION:     '#E65100',
-    PEOPLE_PLANET:    '#0097A7',
-    OPENNESS:         '#6A1B9A',
-    CUSTOMER_RESULTS: '#AD1457',
-};
-const FALLBACK_COLORS = ['#1565C0','#2E7D32','#E65100','#0097A7','#6A1B9A','#AD1457','#0277BD','#558B2F'];
-function getDimColor(key: string, idx: number) {
-    return DIMENSION_COLORS[key] ?? FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
-}
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface DimensionAnalytics {
@@ -38,6 +25,8 @@ interface DimensionAnalytics {
     dimension_name: string;
     dimension_key: string;
     dimension_description: string | null;
+    dimension_color: string;
+    dimension_sort_order: number;
     total_evaluations: number;
     scored_count: number;
     avg_score: number | null;
@@ -54,7 +43,7 @@ async function fetchAnalytics(sessionId: number): Promise<DimensionAnalytics[]> 
 
 // ── Bar row ───────────────────────────────────────────────────────────────────
 function DimBar({ dim, idx }: { dim: DimensionAnalytics; idx: number }) {
-    const color = getDimColor(dim.dimension_key, idx);
+    const color = getDimColor(dim.dimension_key, idx, dim.dimension_color);
     const avg = dim.avg_score ?? 0;
     const pct = (avg / MAX_GRADE) * 100;
     const minPct = ((dim.min_score ?? 0) / MAX_GRADE) * 100;

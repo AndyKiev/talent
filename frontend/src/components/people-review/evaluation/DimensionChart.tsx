@@ -7,7 +7,7 @@ export function DimensionChart({ evals, getString }: { evals: LocalEval[]; getSt
     return (
         <Box>
             {evals.map((e, idx) => {
-                const color = getDimColor(e.dimension_key, idx);
+                const color = getDimColor(e.dimension_key, idx, e.dimension_color);
                 const mean = evalMean(e);
                 const pct = ((mean ?? 0) / MAX_GRADE) * 100;
                 return (

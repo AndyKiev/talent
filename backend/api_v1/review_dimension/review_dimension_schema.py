@@ -14,6 +14,10 @@ class ReviewDimensionBase(BaseModel):
     key: str = Field(..., max_length=64)
     description: Optional[str] = None
     is_active: bool = True
+    # No max_length here: the service validates the hex format and returns a
+    # domain message for ANY bad input (over-length included).
+    color: str = "#1565C0"
+    sort_order: int = 0
 
 
 class ReviewDimensionCreate(ReviewDimensionBase):
@@ -25,6 +29,8 @@ class ReviewDimensionUpdate(BaseModel):
     key: Optional[str] = Field(None, max_length=64)
     description: Optional[str] = None
     is_active: Optional[bool] = None
+    color: Optional[str] = None
+    sort_order: Optional[int] = None
 
 
 class ReviewDimension(ReviewDimensionBase):

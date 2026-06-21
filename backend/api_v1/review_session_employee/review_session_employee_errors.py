@@ -44,3 +44,33 @@ class ReviewSessionNotOpenForAdd(DomainError):
         self.template_vars = {"status": status}
         self.fallback = f"Cannot add employees to a session in '{status}' status"
         super().__init__(self.fallback)
+
+
+class ProposedLevelRequiredForReview(DomainError):
+    """Block open→reviewed when the employee has a current level but no proposed
+    level: the review must either confirm or change the existing level."""
+
+    message_key = "proposedLevelRequiredForReview"
+
+    def __init__(self) -> None:
+        self.template_vars = {}
+        self.fallback = (
+            "A proposed level is required before this review can be marked "
+            "reviewed (confirm the current level or propose a new one)"
+        )
+        super().__init__(self.fallback)
+
+
+class ProposedLevelDetailsIncomplete(DomainError):
+    """Block open→reviewed when the proposed level keeps/raises the current level
+    but not every requirement of that level has been justified."""
+
+    message_key = "proposedLevelDetailsIncomplete"
+
+    def __init__(self) -> None:
+        self.template_vars = {}
+        self.fallback = (
+            "Fill in the details for every requirement of the proposed level "
+            "before marking this review reviewed"
+        )
+        super().__init__(self.fallback)

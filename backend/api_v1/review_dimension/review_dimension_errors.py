@@ -33,6 +33,17 @@ class ReviewDimensionNameTaken(AlreadyExistsError):
         super().__init__("ReviewDimension", "name", name)
 
 
+class ReviewDimensionInvalidColor(DomainError):
+    message_key = "reviewDimensionInvalidColor"
+
+    def __init__(self, color: str) -> None:
+        self.template_vars = {"color": color}
+        self.fallback = (
+            f"Invalid color '{color}'. Use a hex value like #2E7D32."
+        )
+        super().__init__(self.fallback)
+
+
 class ReviewDimensionDeleteError(DeleteError):
     message_key = "reviewDimensionDeleteError"
 

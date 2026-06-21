@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useDebouncedSave } from '../../hooks/useDebouncedSave';
 import {
     Box,
     Button,
@@ -117,11 +118,9 @@ export function ProposedLevelDrawer({ open, onClose, rseId, setSnackbar, canEdit
     // Which comment row (requirement id + index) is being edited inline; null when none.
     const [editing, setEditing] = useState<{ reqId: number; index: number } | null>(null);
     const [confirmDelete, setConfirmDelete] = useState(false);
-
-    // Auto-save bookkeeping: `dirtyRef` flags user-made changes (so hydration does
-    // not trigger a save); `timerRef` holds the pending debounce timer.
-    const dirtyRef = useRef(false);
-    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // Which requirement "tab" (by index) is shown — picked via the chip row below,
+    // so only one requirement's facts + input occupy the screen at a time.
+    const [activeReqIndex, setActiveReqIndex] = useState(0);
 
     const { data: levels = [] } = useQuery({
         queryKey: ['review_levels', 'active'],
@@ -169,46 +168,6 @@ export function ProposedLevelDrawer({ open, onClose, rseId, setSnackbar, canEdit
 
     const filledCount = requirements.filter((r) => (answers[r.id]?.length ?? 0) > 0).length;
 
-    const handleLevelChange = (value: number) => {
-        dirtyRef.current = true;
-        setLevelId(value);
-        // Keep answers only for requirements that still belong to the chosen level
-        // (when re-picking the same level the saved answers are preserved).
-        if (proposed && proposed.level_id === value) {
-            const map: Record<number, string[]> = {};
-            for (const a of proposed.answers) map[a.requirement_id] = parseFacts(a.facts);
-            setAnswers(map);
-        } else {
-            setAnswers({});
-        }
-        setDrafts({});
-    };
-
-    const addComment = (reqId: number) => {
-        const text = (drafts[reqId] ?? '').trim();
-        if (!text) return;
-        dirtyRef.current = true;
-        setAnswers((prev) => ({ ...prev, [reqId]: [...(prev[reqId] ?? []), text] }));
-        setDrafts((prev) => ({ ...prev, [reqId]: '' }));
-    };
-
-    const removeComment = (reqId: number, idx: number) => {
-        dirtyRef.current = true;
-        setAnswers((prev) => ({
-            ...prev,
-            [reqId]: (prev[reqId] ?? []).filter((_, i) => i !== idx),
-        }));
-    };
-
-    // Edit an existing comment in place (text already trimmed by the inline editor).
-    const editComment = (reqId: number, idx: number, text: string) => {
-        dirtyRef.current = true;
-        setAnswers((prev) => ({
-            ...prev,
-            [reqId]: (prev[reqId] ?? []).map((c, i) => (i === idx ? text.trim() : c)),
-        }));
-    };
-
     const saveMut = useMutation({
         mutationFn: () =>
             saveProposedLevel(rseId, {
@@ -225,30 +184,66 @@ export function ProposedLevelDrawer({ open, onClose, rseId, setSnackbar, canEdit
         onError: (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' }),
     });
 
-    // Debounced auto-save: persist edits to the DB after a short idle, so there is
-    // no Save button. Skipped while read-only, with no level chosen, or right after
-    // hydration (dirtyRef is false until the user changes something).
-    useEffect(() => {
-        if (!open || !canEdit || levelId === '' || !dirtyRef.current) return;
-        if (timerRef.current) clearTimeout(timerRef.current);
-        timerRef.current = setTimeout(() => {
-            dirtyRef.current = false;
-            saveMut.mutate();
-        }, AUTOSAVE_DELAY_MS);
-        return () => {
-            if (timerRef.current) clearTimeout(timerRef.current);
-        };
-        // saveMut.mutate is stable; re-running on every render would reset the timer.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open, canEdit, levelId, answers]);
-
-    // Flush any pending edit immediately when the drawer closes.
-    const handleClose = () => {
-        if (timerRef.current) clearTimeout(timerRef.current);
-        if (open && canEdit && levelId !== '' && dirtyRef.current) {
-            dirtyRef.current = false;
-            saveMut.mutate();
+    // Debounced + serialized auto-save: persist edits to the DB after a short idle,
+    // so there is no Save button. Triggered explicitly from the edit handlers (not a
+    // state-watching effect), so hydration never saves. The hook guarantees only one
+    // save is in flight at a time — rapid "add" presses no longer fire overlapping
+    // writes to the same row (the source of the lock-contention freeze) — and clears
+    // its pending timer on unmount. The save reads the latest state each render.
+    const { schedule: scheduleSave, flush: flushSave, cancel: cancelSave } = useDebouncedSave(async () => {
+        if (!canEdit || levelId === '') return;
+        try {
+            await saveMut.mutateAsync();
+        } catch {
+            /* surfaced via saveMut.onError; the edit stays dirty and retries later */
         }
+    }, AUTOSAVE_DELAY_MS);
+
+    const handleLevelChange = (value: number) => {
+        setLevelId(value);
+        setActiveReqIndex(0); // a new level has its own requirement set
+
+        // Keep answers only for requirements that still belong to the chosen level
+        // (when re-picking the same level the saved answers are preserved).
+        if (proposed && proposed.level_id === value) {
+            const map: Record<number, string[]> = {};
+            for (const a of proposed.answers) map[a.requirement_id] = parseFacts(a.facts);
+            setAnswers(map);
+        } else {
+            setAnswers({});
+        }
+        setDrafts({});
+        scheduleSave();
+    };
+
+    const addComment = (reqId: number) => {
+        const text = (drafts[reqId] ?? '').trim();
+        if (!text) return;
+        setAnswers((prev) => ({ ...prev, [reqId]: [...(prev[reqId] ?? []), text] }));
+        setDrafts((prev) => ({ ...prev, [reqId]: '' }));
+        scheduleSave();
+    };
+
+    const removeComment = (reqId: number, idx: number) => {
+        setAnswers((prev) => ({
+            ...prev,
+            [reqId]: (prev[reqId] ?? []).filter((_, i) => i !== idx),
+        }));
+        scheduleSave();
+    };
+
+    // Edit an existing comment in place (text already trimmed by the inline editor).
+    const editComment = (reqId: number, idx: number, text: string) => {
+        setAnswers((prev) => ({
+            ...prev,
+            [reqId]: (prev[reqId] ?? []).map((c, i) => (i === idx ? text.trim() : c)),
+        }));
+        scheduleSave();
+    };
+
+    // Flush any pending edit immediately when the drawer closes (no-op if nothing dirty).
+    const handleClose = () => {
+        void flushSave();
         onClose();
     };
 
@@ -264,7 +259,8 @@ export function ProposedLevelDrawer({ open, onClose, rseId, setSnackbar, canEdit
     const deleteMut = useMutation({
         mutationFn: () => deleteProposedLevel(rseId),
         onSuccess: (res) => {
-            dirtyRef.current = false;
+            // Drop any queued autosave so it can't re-create the row we just deleted.
+            cancelSave();
             // Set the cache to null first so hydration repopulates the (now empty)
             // draft instead of racing against the stale cached record.
             qc.setQueryData(['proposed_level', rseId], null);
@@ -361,7 +357,13 @@ export function ProposedLevelDrawer({ open, onClose, rseId, setSnackbar, canEdit
                         </Typography>
                     )}
 
-                    {levelId !== '' && requirements.length > 0 && (
+                    {levelId !== '' && requirements.length > 0 && (() => {
+                        // Single-requirement view: the chip row below picks which one is
+                        // shown, so its facts list + a roomy input get the whole panel.
+                        const safeIdx = Math.min(activeReqIndex, requirements.length - 1);
+                        const activeReq = requirements[safeIdx];
+                        const comments = answers[activeReq.id] ?? [];
+                        return (
                         <>
                             {/* Mini progress chart — one bar per requirement, filled when answered. */}
                             <Box sx={{ mb: 1 }}>
@@ -386,108 +388,129 @@ export function ProposedLevelDrawer({ open, onClose, rseId, setSnackbar, canEdit
                                     })}
                                 </Stack>
                             </Box>
-                            <Divider sx={{ mb: 1.5 }} />
 
-                            <Typography fontSize={13} fontWeight={700} sx={{ mb: 1 }}>
-                                {getString('requirementsToAchieve')}
-                            </Typography>
-
-                            <Box sx={{ flex: 1, overflowY: 'auto', pr: 0.5 }}>
-                                {requirements.map((req, idx) => {
-                                    const comments = answers[req.id] ?? [];
+                            {/* Second row — one selectable chip per requirement (the tabs),
+                                in equal-width columns aligned 1:1 under the bars above. Click
+                                selects it below; the active chip is highlighted, the rest
+                                neutral (filled ones tinted). Tooltip shows the requirement text. */}
+                            <Stack direction="row" spacing={0.5} sx={{ mb: 1.5 }}>
+                                {requirements.map((r, idx) => {
+                                    const filled = (answers[r.id]?.length ?? 0) > 0;
+                                    const isActive = idx === safeIdx;
                                     return (
-                                        <Box
-                                            key={req.id}
-                                            sx={{
-                                                mb: 1.5,
-                                                p: 1.5,
-                                                border: '1px solid',
-                                                borderColor: 'divider',
-                                                borderRadius: 1,
-                                            }}
-                                        >
-                                            <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
-                                                <Chip label={idx + 1} size="small" />
-                                                <Typography fontSize={13}>{getString(req.text_key)}</Typography>
-                                            </Stack>
-
-                                            {comments.map((comment, ci) => (
-                                                <Stack
-                                                    key={ci}
-                                                    direction="row"
-                                                    alignItems={editing?.reqId === req.id && editing.index === ci ? 'flex-start' : 'center'}
-                                                    spacing={0.5}
-                                                    sx={{ mb: 0.5 }}
-                                                >
-                                                    {canEdit && editing?.reqId === req.id && editing.index === ci ? (
-                                                        <>
-                                                            <Typography fontSize={12} sx={{ pt: '8px' }}>{ci + 1}.</Typography>
-                                                            <InlineEditField
-                                                                initialValue={comment}
-                                                                getString={getString}
-                                                                onSave={(text) => { editComment(req.id, ci, text); setEditing(null); }}
-                                                                onCancel={() => setEditing(null)}
-                                                            />
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Typography fontSize={12} sx={{ flex: 1 }}>
-                                                                {ci + 1}. {comment}
-                                                            </Typography>
-                                                            {canEdit && (
-                                                                <>
-                                                                    <Tooltip title={getString('edit')}>
-                                                                        <IconButton size="small" onClick={() => setEditing({ reqId: req.id, index: ci })}>
-                                                                            <EditIcon sx={{ fontSize: 15 }} />
-                                                                        </IconButton>
-                                                                    </Tooltip>
-                                                                    <Tooltip title={getString('levelDeleteComment')}>
-                                                                        <IconButton size="small" onClick={() => removeComment(req.id, ci)}>
-                                                                            <DeleteIcon sx={{ fontSize: 15 }} />
-                                                                        </IconButton>
-                                                                    </Tooltip>
-                                                                </>
-                                                            )}
-                                                        </>
-                                                    )}
-                                                </Stack>
-                                            ))}
-
-                                            {canEdit && (
-                                                <Stack direction="row" spacing={1} sx={{ mt: 0.5 }}>
-                                                    <TextField
-                                                        size="small"
-                                                        fullWidth
-                                                        variant="outlined"
-                                                        placeholder={getString('levelTypeComment')}
-                                                        value={drafts[req.id] ?? ''}
-                                                        onChange={(e) =>
-                                                            setDrafts((prev) => ({ ...prev, [req.id]: e.target.value }))
-                                                        }
-                                                        onKeyDown={(e) => {
-                                                            if (e.key === 'Enter') {
-                                                                e.preventDefault();
-                                                                addComment(req.id);
-                                                            }
-                                                        }}
-                                                    />
-                                                    <Button
-                                                        size="small"
-                                                        variant="outlined"
-                                                        startIcon={<AddIcon />}
-                                                        onClick={() => addComment(req.id)}
-                                                        disabled={!(drafts[req.id] ?? '').trim()}
-                                                    >
-                                                        {getString('levelAddComment')}
-                                                    </Button>
-                                                </Stack>
-                                            )}
-                                        </Box>
+                                        <Tooltip key={r.id} title={getString(r.text_key)}>
+                                            <Chip
+                                                label={idx + 1}
+                                                size="small"
+                                                color={isActive ? 'primary' : 'default'}
+                                                variant={isActive ? 'filled' : 'outlined'}
+                                                onClick={() => setActiveReqIndex(idx)}
+                                                sx={{
+                                                    flex: 1,
+                                                    minWidth: 0,
+                                                    fontWeight: 700,
+                                                    cursor: 'pointer',
+                                                    ...(filled && !isActive && { color: 'success.main', borderColor: 'success.main' }),
+                                                }}
+                                            />
+                                        </Tooltip>
                                     );
                                 })}
+                            </Stack>
+                            <Divider sx={{ mb: 1.5 }} />
+
+                            {/* Active requirement: title, its facts, and a roomy input. */}
+                            <Stack direction="row" spacing={1} sx={{ mb: 1.5 }}>
+                                <Chip label={safeIdx + 1} size="small" color="primary" />
+                                <Typography fontSize={13} fontWeight={600}>{getString(activeReq.text_key)}</Typography>
+                            </Stack>
+
+                            <Box sx={{ flex: 1, overflowY: 'auto', pr: 0.5, mb: 1.5 }}>
+                                {comments.length === 0 && (
+                                    <Typography fontSize={12} color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                                        {getString('levelNoCommentsYet')}
+                                    </Typography>
+                                )}
+                                {comments.map((comment, ci) => (
+                                    <Stack
+                                        key={ci}
+                                        direction="row"
+                                        alignItems={editing?.reqId === activeReq.id && editing.index === ci ? 'flex-start' : 'center'}
+                                        spacing={0.5}
+                                        sx={{ mb: 0.5 }}
+                                    >
+                                        {canEdit && editing?.reqId === activeReq.id && editing.index === ci ? (
+                                            <>
+                                                <Typography fontSize={12} sx={{ pt: '8px' }}>{ci + 1}.</Typography>
+                                                <InlineEditField
+                                                    initialValue={comment}
+                                                    getString={getString}
+                                                    onSave={(text) => { editComment(activeReq.id, ci, text); setEditing(null); }}
+                                                    onCancel={() => setEditing(null)}
+                                                />
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Typography fontSize={13} sx={{ flex: 1, wordBreak: 'break-word' }}>
+                                                    {ci + 1}. {comment}
+                                                </Typography>
+                                                {canEdit && (
+                                                    <>
+                                                        <Tooltip title={getString('edit')}>
+                                                            <IconButton size="small" onClick={() => setEditing({ reqId: activeReq.id, index: ci })}>
+                                                                <EditIcon sx={{ fontSize: 15 }} />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                        <Tooltip title={getString('levelDeleteComment')}>
+                                                            <IconButton size="small" onClick={() => removeComment(activeReq.id, ci)}>
+                                                                <DeleteIcon sx={{ fontSize: 15 }} />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    </>
+                                                )}
+                                            </>
+                                        )}
+                                    </Stack>
+                                ))}
                             </Box>
+
+                            {canEdit && (
+                                <Stack direction="row" spacing={1} alignItems="flex-start">
+                                    <TextField
+                                        size="small"
+                                        fullWidth
+                                        multiline
+                                        minRows={3}
+                                        maxRows={10}
+                                        variant="outlined"
+                                        placeholder={getString('levelTypeComment')}
+                                        value={drafts[activeReq.id] ?? ''}
+                                        onChange={(e) =>
+                                            setDrafts((prev) => ({ ...prev, [activeReq.id]: e.target.value }))
+                                        }
+                                        onKeyDown={(e) => {
+                                            // Multiline now: Enter inserts a newline; Ctrl/Cmd+Enter adds.
+                                            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                                                e.preventDefault();
+                                                addComment(activeReq.id);
+                                            }
+                                        }}
+                                    />
+                                    <Button
+                                        size="small"
+                                        variant="outlined"
+                                        startIcon={<AddIcon />}
+                                        onClick={() => addComment(activeReq.id)}
+                                        disabled={!(drafts[activeReq.id] ?? '').trim()}
+                                        sx={{ mt: 0.5, whiteSpace: 'nowrap' }}
+                                    >
+                                        {getString('levelAddComment')}
+                                    </Button>
+                                </Stack>
+                            )}
                         </>
-                    )}
+                        );
+                    })()}
 
                     <Divider sx={{ my: 1.5 }} />
                     <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">

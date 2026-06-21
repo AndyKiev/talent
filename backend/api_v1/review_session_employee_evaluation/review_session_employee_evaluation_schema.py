@@ -40,6 +40,8 @@ class Evaluation(EvaluationBase):
     dimension_key: str = ""
     dimension_description: Optional[str] = None
     dimension_is_active: bool = True
+    dimension_color: str = "#1565C0"
+    dimension_sort_order: int = 0
 
 
 class EvaluationBulkUpdate(BaseModel):

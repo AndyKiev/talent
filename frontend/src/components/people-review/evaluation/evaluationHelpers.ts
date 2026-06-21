@@ -34,7 +34,13 @@ export const DIMENSION_COLORS: Record<string, string> = {
 };
 const FALLBACK_COLORS = ['#1565C0','#2E7D32','#E65100','#0097A7','#6A1B9A','#AD1457','#0277BD','#558B2F'];
 
-export function getDimColor(key: string, idx: number) {
+/**
+ * Resolve a dimension's display color. The DB is the source of truth: when a
+ * backend `dbColor` is provided it always wins. The legacy key map and the
+ * index-cycled palette remain only as a fallback for callers without a color.
+ */
+export function getDimColor(key: string, idx: number, dbColor?: string | null) {
+    if (dbColor) return dbColor;
     return DIMENSION_COLORS[key] ?? FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
 }
 
@@ -79,6 +85,8 @@ export interface LocalEval {
     dimension_key: string;
     dimension_description: string | null;
     dimension_is_active: boolean;
+    dimension_color: string;
+    dimension_sort_order: number;
     // Behaviour descriptors (hint bullets) shown as children, each rated 1..MAX_GRADE.
     descriptors: string[];
     // criterion_index -> score (1..MAX_GRADE). Sparse: unrated descriptors are absent.

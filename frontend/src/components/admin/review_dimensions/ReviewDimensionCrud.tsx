@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
     Alert,
@@ -17,8 +17,9 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import useString from '../../../hooks/useString';
-import { fetchReviewDimensions, type ReviewDimension } from './reviewDimensionApi';
+import { fetchReviewDimensions, updateReviewDimension, type ReviewDimension } from './reviewDimensionApi';
 import { REVIEW_DIMENSION_QK, useReviewDimensionMutations } from './useReviewDimensionMutations';
+import { useArrowReorder } from './useArrowReorder';
 import { ReviewDimensionForm } from './ReviewDimensionForm';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 
@@ -39,6 +40,13 @@ export function ReviewDimensionCrud() {
         staleTime: 2 * 60 * 1000,
     });
 
+    // Display in the admin-defined order (sort_order, id tiebreak) — same order
+    // the rest of the app reads.
+    const sortedRows = useMemo(
+        () => [...rows].sort((a, b) => (a.sort_order - b.sort_order) || (a.id - b.id)),
+        [rows],
+    );
+
     const { createMutation, updateMutation, deleteMutation } = useReviewDimensionMutations({
         setSnackbar,
         onCreateSuccess: () => setFormOpen(false),
@@ -46,6 +54,14 @@ export function ReviewDimensionCrud() {
     });
 
     const localeText = useDataGridLocale();
+
+    // Shared up/down-arrow reordering (same logic as the criteria grid).
+    const { orderColumn } = useArrowReorder<ReviewDimension>({
+        rows: sortedRows,
+        updateSortOrder: (id, sort_order) => updateReviewDimension({ id, data: { sort_order } }),
+        invalidateKeys: [REVIEW_DIMENSION_QK],
+        onError: (message) => setSnackbar({ open: true, message, severity: 'error' }),
+    });
 
     const handleToggleActive = useCallback(
         (row: ReviewDimension) => {
@@ -64,7 +80,27 @@ export function ReviewDimensionCrud() {
     };
 
     const columns: GridColDef<ReviewDimension>[] = [
+        orderColumn,
         { field: 'id', headerName: getString('idColumn'), width: 60 },
+        {
+            field: 'color',
+            headerName: getString('colorCol'),
+            width: 80,
+            sortable: false,
+            renderCell: (params) => (
+                <Box
+                    sx={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: '4px',
+                        bgcolor: params.row.color,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                    }}
+                    title={params.row.color}
+                />
+            ),
+        },
         { field: 'name', headerName: getString('name'), flex: 1, minWidth: 200 },
         { field: 'key', headerName: getString('keyLabel'), width: 200 },
         { field: 'description', headerName: getString('descriptionCol'), flex: 1, minWidth: 200 },
@@ -139,7 +175,7 @@ export function ReviewDimensionCrud() {
             {!isLoading && !error && (
                 <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
                     <DataGrid
-                        rows={rows}
+                        rows={sortedRows}
                         columns={columns}
                         paginationModel={paginationModel}
                         onPaginationModelChange={setPaginationModel}
@@ -158,6 +194,7 @@ export function ReviewDimensionCrud() {
                 open={formOpen}
                 onClose={() => setFormOpen(false)}
                 editing={editing}
+                nextSortOrder={sortedRows.length}
                 createMutation={createMutation}
                 updateMutation={updateMutation}
             />

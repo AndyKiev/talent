@@ -73,7 +73,12 @@ export const EMPTY_PROPOSED_DRAFT: ProposedDraft = Object.freeze({
 
 /** Build the editable competence rows from the loaded evaluations. */
 export function buildLocalEvals(evaluations: Evaluation[], getString: GetStringFn): LocalEval[] {
-    return evaluations.map((e) => {
+    // Render in the admin-defined order (sort_order, id tiebreak) — same order
+    // used everywhere else this dimension appears.
+    const ordered = [...evaluations].sort(
+        (a, b) => (a.dimension_sort_order - b.dimension_sort_order) || (a.id - b.id),
+    );
+    return ordered.map((e) => {
         // Behaviour descriptors come from the competence hint (•-bulleted);
         // fall back to a single descriptor (the competence name) when there is none.
         const hintText = competenceHint(getString, e.dimension_key, e.dimension_description ?? '');
@@ -94,6 +99,8 @@ export function buildLocalEvals(evaluations: Evaluation[], getString: GetStringF
             dimension_key: e.dimension_key,
             dimension_description: e.dimension_description ?? null,
             dimension_is_active: e.dimension_is_active,
+            dimension_color: e.dimension_color,
+            dimension_sort_order: e.dimension_sort_order,
             descriptors,
             criterionScores,
             facts: parseFacts(e.facts),

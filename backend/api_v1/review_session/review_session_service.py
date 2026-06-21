@@ -338,6 +338,8 @@ class ReviewSessionService(BaseService):
                 ReviewDimension.name,
                 ReviewDimension.key,
                 ReviewDimension.description,
+                ReviewDimension.color,
+                ReviewDimension.sort_order,
                 func.count(EvalModel.id).label("total_evaluations"),
                 func.count(EvalModel.score).label("scored_count"),
                 func.avg(EvalModel.score).label("avg_score"),
@@ -347,8 +349,15 @@ class ReviewSessionService(BaseService):
             .join(EvalModel, EvalModel.dimension_id == ReviewDimension.id)
             .join(RSEModel, RSEModel.id == EvalModel.review_session_employee_id)
             .where(RSEModel.session_id == rs_id)
-            .group_by(ReviewDimension.id, ReviewDimension.name, ReviewDimension.key, ReviewDimension.description)
-            .order_by(ReviewDimension.id)
+            .group_by(
+                ReviewDimension.id,
+                ReviewDimension.name,
+                ReviewDimension.key,
+                ReviewDimension.description,
+                ReviewDimension.color,
+                ReviewDimension.sort_order,
+            )
+            .order_by(ReviewDimension.sort_order, ReviewDimension.id)
         )
 
         result = await self.session.execute(stmt)
@@ -360,6 +369,8 @@ class ReviewSessionService(BaseService):
                 "dimension_name": r.name,
                 "dimension_key": r.key,
                 "dimension_description": r.description,
+                "dimension_color": r.color,
+                "dimension_sort_order": r.sort_order,
                 "total_evaluations": r.total_evaluations,
                 "scored_count": r.scored_count,
                 "avg_score": round(float(r.avg_score), 2) if r.avg_score is not None else None,

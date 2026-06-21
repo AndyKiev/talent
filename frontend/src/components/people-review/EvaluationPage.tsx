@@ -32,6 +32,9 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
+import CloseIcon from '@mui/icons-material/Close';
 import dayjs from 'dayjs';
 import { Link } from '@tanstack/react-router';
 import EmployeeDateDialog from './personal-data/EmployeeDateDialog';
@@ -52,6 +55,9 @@ import {
     setEmployeeCurrentLevel,
     fetchEmployeePersonalData,
     fetchReviewComments,
+    fetchTempoPngUrl,
+    downloadTempoPdf,
+    openTempoHtml,
 } from './peopleReviewApi';
 import { ProposedLevelDrawer } from './ProposedLevelDrawer';
 import { ReviewCommentsDrawer } from './ReviewCommentsDrawer';
@@ -210,6 +216,61 @@ export function EvaluationPage() {
     const setStrongDrafts = makeSetter('strongDrafts');
     const setDevelopDrafts = makeSetter('developDrafts');
 
+    // --- TEMPO album (viewer dialog) ---
+    // Lazily fetch the album as a PNG blob URL (axios sends the JWT; a plain src
+    // can't) and show it inline in an <img> — browsers always render images,
+    // whereas an application/pdf iframe is downloaded in many of them. The PDF is
+    // offered as an explicit download. The URL is revoked on close.
+    const [pdfOpen, setPdfOpen] = useState(false);
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+    const [pdfLoading, setPdfLoading] = useState(false);
+    const [pdfError, setPdfError] = useState<string | null>(null);
+    const openTempoPdf = async () => {
+        setPdfOpen(true);
+        setPdfLoading(true);
+        setPdfError(null);
+        try {
+            const url = await fetchTempoPngUrl(rid);
+            setPdfUrl(url);
+        } catch (err) {
+            // Keep the dialog open and show the reason in-place — a silent close
+            // looked like "nothing displayed".
+            setPdfError((err as Error).message || getString('tempoPdfError'));
+        } finally {
+            setPdfLoading(false);
+        }
+    };
+    const closeTempoPdf = () => {
+        setPdfOpen(false);
+        setPdfError(null);
+        if (pdfUrl) { URL.revokeObjectURL(pdfUrl); setPdfUrl(null); }
+    };
+    const downloadTempo = async () => {
+        // Filename = session id + session name + employee code + employee name
+        // (sanitized of path/illegal chars), per request — not a hash.
+        const sanitize = (s: string) => s.replace(/[/\\:*?"<>|]+/g, '').replace(/\s+/g, '_').trim();
+        const parts = [
+            rseDetail?.session_id != null ? `s${rseDetail.session_id}` : null,
+            rseDetail?.session_name,
+            rseDetail?.employee_code,
+            rseDetail?.employee_name,
+        ].filter(Boolean).map((p) => sanitize(String(p)));
+        const fileName = `${parts.join('_') || `tempo_${rid}`}.pdf`;
+        try {
+            await downloadTempoPdf(rid, fileName);
+        } catch (err) {
+            setSnackbar({ open: true, message: (err as Error).message, severity: 'error' });
+        }
+    };
+    // Open the interactive HTML sheet (single page, in-page links) in a new tab.
+    const openTempoHtmlView = async () => {
+        try {
+            await openTempoHtml(rid);
+        } catch (err) {
+            setSnackbar({ open: true, message: (err as Error).message, severity: 'error' });
+        }
+    };
+
     // --- Reviewer notes (comments) ---
     const [commentsOpen, setCommentsOpen] = useState(false);
     // Count drives the header chip badge; the drawer re-fetches its own full list.
@@ -248,6 +309,39 @@ export function EvaluationPage() {
         staleTime: 30_000,
         refetchInterval: pollMs,
     });
+
+    // Level "sense": compare the proposed level to the employee's current one by
+    // sort_order — a higher rank reads as a proposed increase, equal as a
+    // confirmation, lower as a decrease. Null when either side is missing. Kept
+    // in lock-step with the backend (_tempo_data) so chip + album + gate agree.
+    const currentLevelId = empLevel?.current_level_id ?? null;
+    const currentLevelObj = allLevels.find((l) => l.id === currentLevelId) ?? null;
+    const proposedLevelObj = proposedLevel
+        ? allLevels.find((l) => l.id === proposedLevel.level_id) ?? null
+        : null;
+    const proposedLevelSense: 'increase' | 'same' | 'decrease' | null =
+        currentLevelObj && proposedLevelObj
+            ? proposedLevelObj.sort_order > currentLevelObj.sort_order
+                ? 'increase'
+                : proposedLevelObj.sort_order < currentLevelObj.sort_order
+                    ? 'decrease'
+                    : 'same'
+            : null;
+
+    // Level-decision gate for Mark-reviewed (mirrors the backend rule): once the
+    // employee has a current level, a proposed level is mandatory; unless it is a
+    // decrease, every active requirement of that level must be justified.
+    const levelDecisionComplete = (() => {
+        if (!currentLevelId) return true;
+        if (!proposedLevel) return false;
+        if (proposedLevelSense === 'decrease') return true;
+        const reqs = (proposedLevelObj?.requirements ?? []).filter((r) => r.is_active);
+        const answered = new Set(
+            proposedLevel.answers.filter((a) => (a.facts ?? '').trim()).map((a) => a.requirement_id),
+        );
+        return reqs.every((r) => answered.has(r.id));
+    })();
+
     const currentLevelMut = useMutation({
         mutationFn: (levelId: number) => setEmployeeCurrentLevel(employeeId!, levelId),
         onSuccess: async () => {
@@ -428,6 +522,16 @@ export function EvaluationPage() {
     const filledCount = visibleEvals.filter(evalFilled).length;
     const totalCount = visibleEvals.length;
 
+    // Mark-reviewed is allowed only once every competence is scored AND the level
+    // decision is settled (see levelDecisionComplete). The reason string explains
+    // what is still missing; the backend enforces the same rule on the transition.
+    const canMarkReviewed = allFilled && levelDecisionComplete;
+    const markReviewedHint = !allFilled
+        ? getString('fillAllDimensions', { filled: filledCount, total: totalCount })
+        : !levelDecisionComplete
+            ? (!proposedLevel ? getString('proposeLevelFirst') : getString('fillLevelDetails'))
+            : getString('markAsReviewed');
+
     const competenceLabel = (key: string) => {
         const ev = localEvals.find(e => e.dimension_key === key);
         return competenceName(getString, key, ev?.dimension_name ?? key);
@@ -436,21 +540,21 @@ export function EvaluationPage() {
     // Same color a competence gets in the dimension tabs below (same source).
     const competenceColor = (key: string) => {
         const idx = visibleEvals.findIndex(e => e.dimension_key === key);
-        return getDimColor(key, idx >= 0 ? idx : 0);
+        const ev = idx >= 0 ? visibleEvals[idx] : undefined;
+        return getDimColor(key, idx >= 0 ? idx : 0, ev?.dimension_color);
     };
 
-    // A competence is "picked" if it appears in either summary section.
+    // A competence is "picked" if it appears in the matching summary section.
     const isStrongPicked = (key: string) => strongOptions.some(o => o.dimension_key === key);
     const isDevelopPicked = (key: string) => developOptions.some(o => o.dimension_key === key);
-    const isCompetencePicked = (key: string) => isStrongPicked(key) || isDevelopPicked(key);
 
-    // Copy a fact into the comment-input draft(s) of the matching summary option(s).
+    // Push a line into the comment-input draft of one summary side. Facts prove
+    // STRONG competences, so they copy only into the strong summary; the directions
+    // for improvement feed only the to-develop summary. Each side has its own button.
     const appendDraft = (setter: Dispatch<SetStateAction<Record<string, string>>>, key: string, text: string) =>
         setter(prev => ({ ...prev, [key]: prev[key] ? `${prev[key]}\n${text}` : text }));
-    const copyFactToSummary = (key: string, text: string) => {
-        if (isStrongPicked(key)) appendDraft(setStrongDrafts, key, text);
-        if (isDevelopPicked(key)) appendDraft(setDevelopDrafts, key, text);
-    };
+    const copyFactToStrong = (key: string, text: string) => appendDraft(setStrongDrafts, key, text);
+    const copyImprovementToDevelop = (key: string, text: string) => appendDraft(setDevelopDrafts, key, text);
 
     // Summary select candidates: top/bottom scored, excluding already-picked ones.
     const strongCandidates = rankedCompetences(visibleEvals, 'desc')
@@ -723,6 +827,27 @@ export function EvaluationPage() {
 
                                     {/* Reviewer notes — chip+badge opens the comments drawer.
                                         Shown when there are notes to read OR the user may add one. */}
+                                    {/* TEMPO album PDF — tiny button, always available on the detail page */}
+                                    <Tooltip title={getString('tempoPdfTooltip')}>
+                                        <IconButton
+                                            size="small"
+                                            onClick={openTempoPdf}
+                                            sx={{ color: t.textMuted }}
+                                        >
+                                            <PictureAsPdfIcon sx={{ fontSize: 18 }} />
+                                        </IconButton>
+                                    </Tooltip>
+                                    {/* TEMPO album as an interactive HTML page (new tab) */}
+                                    <Tooltip title={getString('tempoHtmlTooltip')}>
+                                        <IconButton
+                                            size="small"
+                                            onClick={openTempoHtmlView}
+                                            sx={{ color: t.textMuted }}
+                                        >
+                                            <ArticleOutlinedIcon sx={{ fontSize: 18 }} />
+                                        </IconButton>
+                                    </Tooltip>
+
                                     {showCommentsButton && (
                                         <Tooltip title={getString('reviewCommentsTooltip')}>
                                             <Badge badgeContent={comments.length} color="primary" overlap="circular">
@@ -785,20 +910,17 @@ export function EvaluationPage() {
 
                                 {/* Mark reviewed */}
                                 {isEditable && !viewOnly && (
-                                    <Tooltip
-                                        title={allFilled ? getString('markAsReviewed') : getString('fillAllDimensions', { filled: filledCount, total: totalCount })}
-                                        placement="top"
-                                    >
+                                    <Tooltip title={markReviewedHint} placement="top">
                                         <span>
                                             <Button
                                                 size="small" variant="contained"
-                                                startIcon={allFilled ? <CheckCircleIcon /> : <LockIcon />}
+                                                startIcon={canMarkReviewed ? <CheckCircleIcon /> : <LockIcon />}
                                                 onClick={async () => { await flushAutosave(); reviewedMut.mutate(rid); }}
-                                                disabled={!allFilled || reviewedMut.isPending}
+                                                disabled={!canMarkReviewed || reviewedMut.isPending}
                                                 sx={{
                                                     borderRadius: '8px', textTransform: 'none', fontWeight: 600, fontSize: 12,
-                                                    bgcolor: allFilled ? '#2E7D32' : undefined,
-                                                    '&:hover': { bgcolor: allFilled ? '#1B5E20' : undefined },
+                                                    bgcolor: canMarkReviewed ? '#2E7D32' : undefined,
+                                                    '&:hover': { bgcolor: canMarkReviewed ? '#1B5E20' : undefined },
                                                 }}
                                             >
                                                 {getString('markReviewed')}
@@ -917,6 +1039,7 @@ export function EvaluationPage() {
                                     currentLevelDisabled={!employeeId || currentLevelMut.isPending}
                                     onOpenProposed={() => setProposedOpen(true)}
                                     proposedLevelName={proposedLevelName}
+                                    proposedLevelSense={proposedLevelSense}
                                 />
                             }
                             employeeFeedback={employeeFeedback}
@@ -1034,8 +1157,10 @@ export function EvaluationPage() {
                                 removeImprovement={removeImprovement}
                                 editImprovement={editImprovement}
                                 reorderImprovement={reorderImprovement}
-                                isCompetencePicked={isCompetencePicked}
-                                copyFactToSummary={copyFactToSummary}
+                                isStrongPicked={isStrongPicked}
+                                isDevelopPicked={isDevelopPicked}
+                                copyFactToStrong={copyFactToStrong}
+                                copyImprovementToDevelop={copyImprovementToDevelop}
                             />
                         )}
                     </>
@@ -1059,6 +1184,45 @@ export function EvaluationPage() {
                 myEmployeeId={myEmployeeId}
                 setSnackbar={setSnackbar}
             />
+
+            {/* TEMPO album PDF viewer — iframe in a wide dialog (the seed of the
+                future presentation mode). The PDF is landscape A4, so the dialog is
+                kept wide and short. */}
+            <Dialog open={pdfOpen} onClose={closeTempoPdf} maxWidth="lg" fullWidth>
+                <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    {getString('tempoPdfTitle')}
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <Button
+                            size="small"
+                            variant="outlined"
+                            startIcon={<PictureAsPdfIcon sx={{ fontSize: 16 }} />}
+                            onClick={downloadTempo}
+                            sx={{ textTransform: 'none', fontWeight: 600 }}
+                        >
+                            {getString('downloadPdf')}
+                        </Button>
+                        <IconButton size="small" onClick={closeTempoPdf}><CloseIcon fontSize="small" /></IconButton>
+                    </Stack>
+                </DialogTitle>
+                <DialogContent sx={{ p: 1.5, bgcolor: '#f7f6f2' }}>
+                    {pdfError ? (
+                        <Box sx={{ minHeight: '40vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Alert severity="error" sx={{ maxWidth: 480 }}>{pdfError}</Alert>
+                        </Box>
+                    ) : pdfLoading || !pdfUrl ? (
+                        <Box sx={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <CircularProgress />
+                        </Box>
+                    ) : (
+                        <Box
+                            component="img"
+                            src={pdfUrl}
+                            alt={getString('tempoPdfTitle')}
+                            sx={{ width: '100%', height: 'auto', display: 'block', borderRadius: '6px' }}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
 
             {employeeId && (
                 <>

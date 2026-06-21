@@ -17,6 +17,8 @@ export interface ReviewDimension {
     key: string;
     description: string | null;
     is_active: boolean;
+    color: string;
+    sort_order: number;
     criteria: ReviewDimensionCriteria[];
 }
 
@@ -25,6 +27,8 @@ export interface ReviewDimensionCreate {
     key: string;
     description?: string | null;
     is_active: boolean;
+    color: string;
+    sort_order: number;
 }
 
 export interface ReviewDimensionUpdate {
@@ -32,6 +36,8 @@ export interface ReviewDimensionUpdate {
     key?: string;
     description?: string | null;
     is_active?: boolean;
+    color?: string;
+    sort_order?: number;
 }
 
 export interface MutationResponse<T> {

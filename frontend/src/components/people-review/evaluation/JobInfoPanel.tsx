@@ -7,12 +7,15 @@ import {
     MenuItem,
     Select,
     Stack,
+    Typography,
 } from '@mui/material';
 import WorkOutlineIcon from '@mui/icons-material/WorkOutline';
 import ApartmentIcon from '@mui/icons-material/Apartment';
 import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import type { GetStringFn } from '../../../types/getStringFn';
 import { useTheme } from '../../theme/ThemeContext';
 import { formatDate } from '../../../utils/date';
@@ -40,7 +43,19 @@ interface Props {
     // Proposed level (opens the drawer); name of the saved proposed level, if any.
     onOpenProposed: () => void;
     proposedLevelName: string | null;
+    // How the proposed level compares to the current one (null when not both set).
+    proposedLevelSense: 'increase' | 'same' | 'decrease' | null;
 }
+
+// Icon + colour + comment-key per level sense, shown above/inside the proposed chip.
+const SENSE_META: Record<
+    'increase' | 'same' | 'decrease',
+    { icon: typeof TrendingUpIcon; color: string; labelKey: string }
+> = {
+    increase: { icon: TrendingUpIcon, color: '#2E7D32', labelKey: 'levelSenseIncrease' },
+    same: { icon: TrendingFlatIcon, color: '#1565C0', labelKey: 'levelSenseSame' },
+    decrease: { icon: TrendingDownIcon, color: '#C62828', labelKey: 'levelSenseDecrease' },
+};
 
 /** Job-info tab: job / department / dates and the employee's current competency level. */
 export function JobInfoPanel({
@@ -49,9 +64,11 @@ export function JobInfoPanel({
     jobAssignedDate, positionDuration, showEdit,
     onEditHire, onEditJobAssigned,
     levels, currentLevelId, onCurrentLevelChange, currentLevelDisabled,
-    onOpenProposed, proposedLevelName,
+    onOpenProposed, proposedLevelName, proposedLevelSense,
 }: Props) {
     const { t } = useTheme();
+    const sense = proposedLevelSense ? SENSE_META[proposedLevelSense] : null;
+    const SenseIcon = sense?.icon;
     return (
         <Stack spacing={2.5}>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, rowGap: 1.5 }}>
@@ -113,11 +130,26 @@ export function JobInfoPanel({
                     {getString('proposedLevel')}
                 </Button>
                 {proposedLevelName && (
-                    <Chip
-                        size="small"
-                        label={proposedLevelName}
-                        sx={{ fontWeight: 700, fontSize: 12, bgcolor: `${t.accent}18`, color: t.accent }}
-                    />
+                    // Comment (the level "sense") sits over the chip; the chip itself
+                    // carries the matching sense icon + the proposed level name.
+                    <Stack spacing={0.25} alignItems="flex-start">
+                        {sense && SenseIcon && (
+                            <Typography fontSize={11} fontWeight={700} sx={{ color: sense.color, lineHeight: 1.2 }}>
+                                {getString(sense.labelKey)}
+                            </Typography>
+                        )}
+                        <Chip
+                            size="small"
+                            icon={SenseIcon ? <SenseIcon sx={{ fontSize: 16, color: `${sense!.color} !important` }} /> : undefined}
+                            label={proposedLevelName}
+                            sx={{
+                                fontWeight: 700,
+                                fontSize: 12,
+                                bgcolor: sense ? `${sense.color}18` : `${t.accent}18`,
+                                color: sense ? sense.color : t.accent,
+                            }}
+                        />
+                    </Stack>
                 )}
             </Stack>
         </Stack>

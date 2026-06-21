@@ -54,6 +54,8 @@ class ReviewSessionEmployeeEvaluationService(BaseService):
             schema.dimension_key = record.dimension.key
             schema.dimension_description = record.dimension.description
             schema.dimension_is_active = record.dimension.is_active
+            schema.dimension_color = record.dimension.color
+            schema.dimension_sort_order = record.dimension.sort_order
         return schema
 
     async def _assert_rse_visible(self, rse_id: int) -> None:

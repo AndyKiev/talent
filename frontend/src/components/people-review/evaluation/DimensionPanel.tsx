@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import EditIcon from '@mui/icons-material/Edit';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
@@ -58,8 +58,10 @@ interface Props {
     removeImprovement: (evalId: number, index: number) => void;
     editImprovement: (evalId: number, index: number, text: string) => void;
     reorderImprovement: (evalId: number, from: number, toRow: number) => void;
-    isCompetencePicked: (key: string) => boolean;
-    copyFactToSummary: (key: string, text: string) => void;
+    isStrongPicked: (key: string) => boolean;
+    isDevelopPicked: (key: string) => boolean;
+    copyFactToStrong: (key: string, text: string) => void;
+    copyImprovementToDevelop: (key: string, text: string) => void;
 }
 
 /** The per-competence dimension tabs with behaviour scoring, facts and improvement. */
@@ -71,7 +73,7 @@ export function DimensionPanel({
     newImprovementTexts, setNewImprovementTexts,
     setCriterion, addFact, removeFact, editFact, reorderFact,
     addImprovement, removeImprovement, editImprovement, reorderImprovement,
-    isCompetencePicked, copyFactToSummary,
+    isStrongPicked, isDevelopPicked, copyFactToStrong, copyImprovementToDevelop,
 }: Props) {
     const { t } = useTheme();
 
@@ -85,7 +87,7 @@ export function DimensionPanel({
     const [editingImp, setEditingImp] = useState<{ id: number; index: number } | null>(null);
 
     const activeEval = visibleEvals[activeTab];
-    const activeColor = activeEval ? getDimColor(activeEval.dimension_key, activeTab) : t.accent;
+    const activeColor = activeEval ? getDimColor(activeEval.dimension_key, activeTab, activeEval.dimension_color) : t.accent;
     const activeMean = activeEval ? evalMean(activeEval) : null;
     const activeLevelPct = ((activeMean ?? 0) / MAX_GRADE) * 100;
 
@@ -102,7 +104,7 @@ export function DimensionPanel({
                 }}
             >
                 {visibleEvals.map((e, idx) => {
-                    const color = getDimColor(e.dimension_key, idx);
+                    const color = getDimColor(e.dimension_key, idx, e.dimension_color);
                     const filled = evalFilled(e);
                     const isDropTarget = draggedItem != null && draggedItem.evalId !== e.id;
                     return (
@@ -314,14 +316,14 @@ export function DimensionPanel({
                                                         </IconButton>
                                                     </Tooltip>
                                                 )}
-                                                {isEditable && isCompetencePicked(activeEval.dimension_key) && (
-                                                    <Tooltip title={getString('copyToSummaryComment')}>
+                                                {isEditable && isStrongPicked(activeEval.dimension_key) && (
+                                                    <Tooltip title={getString('copyFactToStrongSummary')}>
                                                         <IconButton
                                                             size="small"
-                                                            onClick={() => copyFactToSummary(activeEval.dimension_key, fact)}
+                                                            onClick={() => copyFactToStrong(activeEval.dimension_key, fact)}
                                                             sx={{ p: 0.25, mt: '-2px' }}
                                                         >
-                                                            <ContentCopyIcon sx={{ fontSize: 13 }} />
+                                                            <KeyboardDoubleArrowUpIcon sx={{ fontSize: 15 }} />
                                                         </IconButton>
                                                     </Tooltip>
                                                 )}
@@ -471,6 +473,17 @@ export function DimensionPanel({
                                                             sx={{ p: 0.25, mt: '-2px' }}
                                                         >
                                                             <EditIcon sx={{ fontSize: 14 }} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                )}
+                                                {isEditable && isDevelopPicked(activeEval.dimension_key) && (
+                                                    <Tooltip title={getString('copyImprovementToDevelopSummary')}>
+                                                        <IconButton
+                                                            size="small"
+                                                            onClick={() => copyImprovementToDevelop(activeEval.dimension_key, imp)}
+                                                            sx={{ p: 0.25, mt: '-2px' }}
+                                                        >
+                                                            <KeyboardDoubleArrowUpIcon sx={{ fontSize: 15 }} />
                                                         </IconButton>
                                                     </Tooltip>
                                                 )}

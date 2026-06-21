@@ -61,18 +61,6 @@ export function useReviewCriteriaMutations({
         onError: (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' }),
     });
 
-    // Reorder: normalize sort_order to the array index, patching only the rows that moved.
-    const reorderMutation = useMutation({
-        mutationFn: async (orderedIds: { id: number; sort_order: number }[]) => {
-            await Promise.all(
-                orderedIds
-                    .map((r, i) => (r.sort_order === i ? null : updateCriteria({ id: r.id, data: { sort_order: i } })))
-                    .filter((p): p is ReturnType<typeof updateCriteria> => p !== null),
-            );
-        },
-        onSuccess: invalidate,
-        onError: (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' }),
-    });
-
-    return { createMutation, updateMutation, deleteMutation, reorderMutation };
+    // Reordering is shared with the dimensions grid via useArrowReorder.
+    return { createMutation, updateMutation, deleteMutation };
 }

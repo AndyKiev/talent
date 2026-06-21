@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import delete
+from sqlalchemy import delete, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
@@ -34,6 +34,14 @@ from backend.api_v1.review_session_employee.review_session_employee_repository i
 from backend.api_v1.review_session_employee.review_session_employee_service import (
     ReviewSessionEmployeeService,
 )
+
+
+# Fixed namespace for the per-RSE advisory lock used by upsert_proposed_level.
+# pg_advisory_xact_lock(classid, objid) is keyed (this constant, rse_id) so it
+# never collides with advisory locks taken elsewhere. The lock auto-releases at
+# COMMIT/ROLLBACK — no schema change — and makes overlapping upserts for the same
+# RSE queue instead of racing on the read-then-create / delete-then-insert window.
+_PROPOSED_LEVEL_LOCK_NAMESPACE = 4801
 
 
 class ReviewSessionEmployeeLevelService(BaseService):
@@ -73,6 +81,16 @@ class ReviewSessionEmployeeLevelService(BaseService):
         self, rse_id: int, payload: ProposedLevelUpsert
     ) -> MutationResponse[ProposedLevelSchema]:
         await self._assert_rse_visible(rse_id)
+        # Serialize concurrent upserts for the same RSE (e.g. rapid "add" presses
+        # firing overlapping autosaves). Without this, two requests can both read
+        # no record and race the create, or interleave the answer delete/insert,
+        # holding row locks until they pile up and drain the connection pool — the
+        # whole app then hangs. The lock is held until the single commit below.
+        await self.session.execute(
+            text("SELECT pg_advisory_xact_lock(:ns, :rse_id)"),
+            {"ns": _PROPOSED_LEVEL_LOCK_NAMESPACE, "rse_id": rse_id},
+        )
+
         record = await self._get_by_rse(rse_id)
         if record is None:
             record = ReviewSessionEmployeeLevel(
@@ -80,8 +98,9 @@ class ReviewSessionEmployeeLevelService(BaseService):
                 level_id=payload.level_id,
             )
             self.session.add(record)
-            await self.session.commit()
-            await self.session.refresh(record)
+            # flush (not commit) to populate record.id while keeping the whole
+            # upsert in ONE transaction — the advisory lock stays held throughout.
+            await self.session.flush()
         else:
             # Re-picking a different target level makes it a fresh proposal, so any
             # prior validated/rejected decision no longer applies — reset to proposed.
@@ -95,7 +114,6 @@ class ReviewSessionEmployeeLevelService(BaseService):
                     == record.id
                 )
             )
-            await self.session.commit()
 
         new_answers = [
             ReviewSessionEmployeeLevelAnswer(
@@ -108,7 +126,10 @@ class ReviewSessionEmployeeLevelService(BaseService):
         ]
         if new_answers:
             self.session.add_all(new_answers)
-            await self.session.commit()
+
+        # Single commit: create/level-change, answer wipe and re-insert all land
+        # atomically, and the advisory lock releases here.
+        await self.session.commit()
 
         fresh = await self._get_by_rse(rse_id)
         schema = ProposedLevelSchema.model_validate(fresh)
@@ -117,6 +138,12 @@ class ReviewSessionEmployeeLevelService(BaseService):
 
     async def delete_proposed_level(self, rse_id: int) -> MutationResponse[None]:
         await self._assert_rse_visible(rse_id)
+        # Same per-RSE lock as the upsert, so a delete and a still-in-flight save
+        # serialize instead of racing (a save must not re-create a deleted row).
+        await self.session.execute(
+            text("SELECT pg_advisory_xact_lock(:ns, :rse_id)"),
+            {"ns": _PROPOSED_LEVEL_LOCK_NAMESPACE, "rse_id": rse_id},
+        )
         record = await self._get_by_rse(rse_id)
         if record is None:
             raise ProposedLevelNotFound(rse_id)

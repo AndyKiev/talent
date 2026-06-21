@@ -68,6 +68,8 @@ export interface Evaluation {
     dimension_key: string;
     dimension_description: string | null;
     dimension_is_active: boolean;
+    dimension_color: string;
+    dimension_sort_order: number;
 }
 
 export interface ReviewSessionEmployee {
@@ -247,6 +249,58 @@ export const fetchRSEDetail = async (rseId: number): Promise<ReviewSessionEmploy
     const res = await axiosInstance.get<ReviewSessionEmployee>(`${RSE_BASE}/${rseId}`);
     return res.data;
 };
+
+/**
+ * Fetch the TEMPO album as a PNG and return an object URL for an <img>. We show a
+ * PNG (not a PDF iframe) because browsers reliably render images inline, whereas
+ * an application/pdf iframe is downloaded in many browsers. Authenticated via the
+ * axios instance (the JWT goes in the header; a plain src can't send it). Revoke
+ * the URL when done to avoid leaking the blob.
+ */
+export const fetchTempoPngUrl = async (rseId: number): Promise<string> => {
+    const res = await axiosInstance.get<Blob>(`${RSE_BASE}/${rseId}/tempo_png`, {
+        responseType: 'blob',
+    });
+    return URL.createObjectURL(res.data);
+};
+
+/**
+ * Download the TEMPO album as a PDF (the print artifact). Fetched as a blob so
+ * the JWT is sent, then triggers a browser download via a temporary anchor.
+ */
+export const downloadTempoPdf = async (rseId: number, fileName: string): Promise<void> => {
+    const res = await axiosInstance.get<Blob>(`${RSE_BASE}/${rseId}/tempo_pdf`, {
+        responseType: 'blob',
+    });
+    const url = URL.createObjectURL(res.data);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+};
+
+/**
+ * Open the TEMPO album as an interactive HTML page in a new tab. Fetched as a
+ * blob so the JWT is sent (a plain window.open can't), then opened as a blob URL
+ * — all in-page links/navigation are self-contained, so no further auth needed.
+ */
+const openHtmlBlob = async (url: string): Promise<void> => {
+    const res = await axiosInstance.get<Blob>(url, { responseType: 'blob' });
+    const blob = new Blob([res.data], { type: 'text/html' });
+    const objUrl = URL.createObjectURL(blob);
+    window.open(objUrl, '_blank');
+    // Revoke after the new tab has had time to load the document.
+    setTimeout(() => URL.revokeObjectURL(objUrl), 60_000);
+};
+
+export const openTempoHtml = (rseId: number): Promise<void> =>
+    openHtmlBlob(`${RSE_BASE}/${rseId}/tempo_html`);
+
+export const openTempoPresentation = (sessionId: number): Promise<void> =>
+    openHtmlBlob(`${RSE_BASE}/tempo_presentation?session_id=${sessionId}`);
 
 /**
  * Persist the presentation-queue order for a session (oversight mode only). Sends

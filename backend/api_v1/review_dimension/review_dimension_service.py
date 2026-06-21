@@ -1,3 +1,4 @@
+import re
 from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
@@ -19,6 +20,7 @@ from backend.api_v1.review_dimension.review_dimension_errors import (
     ReviewDimensionNameTaken,
     ReviewDimensionDeleteError,
     ReviewDimensionNotFoundByName,
+    ReviewDimensionInvalidColor,
 )
 from backend.api_v1.review_dimension.review_dimension_success import (
     ReviewDimensionDeleteSuccess,
@@ -35,6 +37,15 @@ class ReviewDimensionService(BaseService):
         session: Optional[AsyncSession] = None,
     ):
         super().__init__(repository, user=user, session=session)
+
+    # A 6-digit hex color (e.g. #2E7D32) — matches the picker output + DB column.
+    _HEX_COLOR_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
+
+    async def _validate_color(self, color: Optional[str]) -> None:
+        if color is not None and not self._HEX_COLOR_RE.match(color):
+            raise await self._resolve_domain_error(
+                ReviewDimensionInvalidColor(color)
+            )
 
     async def get_by_id(self, id: int):
         result = await self.repository.get_by_id(id)
@@ -57,12 +68,19 @@ class ReviewDimensionService(BaseService):
         filters = {}
         if is_active is not None:
             filters["is_active"] = is_active
-        records = await self.get_all(params=filters or None, sort_json=sort)
+        # Default to the admin-defined display order (sort_order, then id as
+        # tiebreak) so every list/PDF shares one order unless caller overrides.
+        records = await self.get_all(
+            params=filters or None,
+            sort_json=sort,
+            sort=None if sort else ["sort_order", "id"],
+        )
         return [ReviewDimensionSchema.model_validate(r) for r in records]
 
     async def create_review_dimension(
         self, dim_in: ReviewDimensionCreate
     ) -> MutationResponse[ReviewDimensionSchema]:
+        await self._validate_color(dim_in.color)
         await self.exists_by_name(
             dim_in.name, already_exists_exc=ReviewDimensionNameTaken
         )
@@ -81,6 +99,7 @@ class ReviewDimensionService(BaseService):
     async def update_review_dimension(
         self, dim_id: int, dim_update: ReviewDimensionUpdate
     ) -> MutationResponse[ReviewDimensionSchema]:
+        await self._validate_color(dim_update.color)
         if dim_update.name:
             await self.exists_by_name_excluding(
                 dim_update.name,

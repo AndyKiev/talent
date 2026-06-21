@@ -16,17 +16,17 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import useString from '../../../hooks/useString';
 import {
     fetchReviewDimensions,
     fetchCriteria,
+    updateCriteria,
     type ReviewDimensionCriteria,
 } from './reviewDimensionApi';
 import { REVIEW_DIMENSION_QK } from './useReviewDimensionMutations';
 import { REVIEW_CRITERIA_QK, useReviewCriteriaMutations } from './useReviewCriteriaMutations';
+import { useArrowReorder } from './useArrowReorder';
 import { ReviewCriteriaForm } from './ReviewCriteriaForm';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 
@@ -66,13 +66,21 @@ export function ReviewCriteriaManager() {
         [criteria],
     );
 
-    const { createMutation, updateMutation, deleteMutation, reorderMutation } =
-        useReviewCriteriaMutations({
-            dimensionId,
-            setSnackbar,
-            onCreateSuccess: () => setFormOpen(false),
-            onUpdateSuccess: () => setFormOpen(false),
-        });
+    const { createMutation, updateMutation, deleteMutation } = useReviewCriteriaMutations({
+        dimensionId,
+        setSnackbar,
+        onCreateSuccess: () => setFormOpen(false),
+        onUpdateSuccess: () => setFormOpen(false),
+    });
+
+    // Shared up/down-arrow reordering. Invalidate both the criteria list AND the
+    // dimensions list (its criteria-count chip).
+    const { orderColumn } = useArrowReorder<ReviewDimensionCriteria>({
+        rows,
+        updateSortOrder: (id, sort_order) => updateCriteria({ id, data: { sort_order } }),
+        invalidateKeys: [REVIEW_CRITERIA_QK(dimensionId), REVIEW_DIMENSION_QK],
+        onError: (message) => setSnackbar({ open: true, message, severity: 'error' }),
+    });
 
     const openCreate = () => {
         setEditing(null);
@@ -83,46 +91,8 @@ export function ReviewCriteriaManager() {
         setFormOpen(true);
     };
 
-    const move = (row: ReviewDimensionCriteria, dir: 'up' | 'down') => {
-        const idx = rows.findIndex((r) => r.id === row.id);
-        const swap = dir === 'up' ? idx - 1 : idx + 1;
-        if (swap < 0 || swap >= rows.length) return;
-        const next = [...rows];
-        [next[idx], next[swap]] = [next[swap], next[idx]];
-        reorderMutation.mutate(next.map((r) => ({ id: r.id, sort_order: r.sort_order })));
-    };
-
     const columns: GridColDef<ReviewDimensionCriteria>[] = [
-        {
-            field: 'order',
-            headerName: '#',
-            width: 110,
-            sortable: false,
-            renderCell: (params) => {
-                const idx = rows.findIndex((r) => r.id === params.row.id);
-                return (
-                    <Stack direction="row" alignItems="center" spacing={0.5}>
-                        <Typography fontSize={13} sx={{ width: 20, textAlign: 'right' }}>
-                            {idx + 1}
-                        </Typography>
-                        <IconButton
-                            size="small"
-                            onClick={() => move(params.row, 'up')}
-                            disabled={idx === 0 || reorderMutation.isPending}
-                        >
-                            <ArrowUpwardIcon sx={{ fontSize: 16 }} />
-                        </IconButton>
-                        <IconButton
-                            size="small"
-                            onClick={() => move(params.row, 'down')}
-                            disabled={idx === rows.length - 1 || reorderMutation.isPending}
-                        >
-                            <ArrowDownwardIcon sx={{ fontSize: 16 }} />
-                        </IconButton>
-                    </Stack>
-                );
-            },
-        },
+        orderColumn,
         { field: 'text', headerName: getString('criterionText'), flex: 1, minWidth: 320 },
         {
             field: 'actions',

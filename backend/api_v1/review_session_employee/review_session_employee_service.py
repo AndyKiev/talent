@@ -34,6 +34,8 @@ from backend.api_v1.review_session_employee.review_session_employee_errors impor
     ReviewSessionEmployeeAlreadyInSession,
     ReviewSessionNotOpenForAdd,
     ReviewSessionReorderNotAllowed,
+    ProposedLevelRequiredForReview,
+    ProposedLevelDetailsIncomplete,
 )
 from backend.api_v1.review_session_employee.review_session_employee_success import (
     ReviewSessionEmployeeStatusChangeSuccess,
@@ -406,6 +408,345 @@ class ReviewSessionEmployeeService(BaseService):
         )
         return MutationResponse(detail=detail, data=None)
 
+    async def build_tempo_pdf(self, rse_id: int) -> bytes:
+        """TEMPO album as PDF bytes (download artifact)."""
+        from backend.api_v1.review_session_employee.tempo_pdf import build_tempo_pdf
+
+        return build_tempo_pdf(await self._tempo_data(rse_id))
+
+    async def build_tempo_png(self, rse_id: int) -> bytes:
+        """TEMPO album as PNG bytes (inline viewer — renders in any browser)."""
+        from backend.api_v1.review_session_employee.tempo_pdf import render_tempo_png
+
+        return render_tempo_png(await self._tempo_data(rse_id))
+
+    async def build_tempo_html(self, rse_id: int) -> str:
+        """TEMPO album as a self-contained HTML page (one employee)."""
+        from backend.api_v1.review_session_employee.tempo_html import render_tempo_html
+
+        return render_tempo_html(await self._tempo_data(rse_id))
+
+    async def build_tempo_presentation(self, session_id: int) -> str:
+        """Presentation HTML: every employee the current user can see in the
+        session, in the user's roster order, with ◀ ▶ navigation. Reuses the
+        ordered list the session screen shows."""
+        from backend.api_v1.review_session_employee.tempo_html import (
+            render_tempo_presentation,
+        )
+
+        ordered = await self.get_session_employees(session_id=session_id)
+        sheets = [await self._tempo_data(rse.id) for rse in ordered]
+        return render_tempo_presentation(sheets)
+
+    async def _tempo_data(self, rse_id: int) -> dict:
+        """Gather this review's data into the flat dict the TEMPO album builder
+        expects. Visibility-gated like the detail page (out-of-scope -> NotFound).
+        Missing data is left as a placeholder in the album by design — the user
+        fills gaps after seeing the first draft."""
+        from datetime import date as _date
+        from backend.api_v1.employee_education.employee_education_model import (
+            EmployeeEducation,
+        )
+        from backend.api_v1.employee_child.employee_child_model import EmployeeChild
+
+        record = await self.get_by_id(rse_id)
+        visible = await self._visible_employee_ids()
+        if record.employee_id not in visible:
+            raise await self._resolve_domain_error(
+                ReviewSessionEmployeeNotFound(rse_id)
+            )
+
+        emp = record.employee
+        emp_id = record.employee_id
+
+        # Age from birth date; children summary from child birth dates.
+        today = _date.today()
+        birth = getattr(emp, "birth_date", None)
+        age = None
+        if birth:
+            age = today.year - birth.year - (
+                (today.month, today.day) < (birth.month, birth.day)
+            )
+        children_rows = (
+            await self.session.scalars(
+                select(EmployeeChild).where(EmployeeChild.employee_id == emp_id)
+            )
+        ).all()
+        children = None
+        if children_rows:
+            ages = sorted(
+                (today.year - c.birth_date.year) for c in children_rows
+            )
+            children = ", ".join(f"{a} р." for a in ages)
+
+        education = (
+            await self.session.scalar(
+                select(EmployeeEducation)
+                .where(EmployeeEducation.employee_id == emp_id)
+                .order_by(EmployeeEducation.graduation_year.desc())
+            )
+        )
+        education_str = None
+        if education:
+            parts = [
+                p for p in (education.speciality, education.institution) if p
+            ]
+            if education.graduation_year:
+                parts.append(str(education.graduation_year))
+            education_str = ", ".join(parts)
+
+        # Foreign languages: "English B2, French A1" from the employee's profile.
+        from backend.api_v1.employee_language_profile.employee_language_profile_model import (
+            EmployeeLanguageProfile,
+        )
+
+        lang_profile = await self.session.scalar(
+            select(EmployeeLanguageProfile).where(
+                EmployeeLanguageProfile.employee_id == emp_id
+            )
+        )
+        lang_level = None
+        if lang_profile and lang_profile.languages:
+            parts = []
+            for lng in lang_profile.languages:
+                # Language name is a translation key ("english"/"french") — resolve
+                # to the viewer's language, same as the frontend review page.
+                lname = await self._translate(lng.language, fallback=lng.language)
+                parts.append(f"{lname} {lng.level.code}" if lng.level else lname)
+            lang_level = ", ".join(parts)
+
+        # Competence levels for the bar chart — the FRACTIONAL mean (same value the
+        # UI shows: average of behaviour scores), not the rounded integer score.
+        competences = []
+        eval_dims = []
+        for ev in getattr(record, "evaluations", []) or []:
+            dim = await self.session.get(ReviewDimension, ev.dimension_id)
+            eval_dims.append((ev, dim))
+        # Same order as everywhere else: dimension sort_order (id as tiebreak).
+        for ev, dim in sorted(
+            eval_dims,
+            key=lambda pair: (
+                pair[1].sort_order if pair[1] else 0,
+                pair[0].dimension_id,
+            ),
+        ):
+            raw_name = (dim.name if dim else None) or f"#{ev.dimension_id}"
+            # Translate via the frontend convention competence<PascalKey>
+            # (PEOPLE_PLANET -> competencePeoplePlanet), DB name as fallback.
+            if dim and dim.key:
+                name = await self._translate(
+                    f"competence{self._pascal_dim_key(dim.key)}", fallback=raw_name
+                )
+            else:
+                name = raw_name
+            color = dim.color if dim else "#1565C0"
+            value = ev.mean_score if ev.mean_score is not None else ev.score
+            competences.append(
+                (name, float(value) if value is not None else 0.0, color)
+            )
+
+        # Photo bytes (1:1 blob table, no ORM relationship -> direct query).
+        from backend.api_v1.employee_photo.employee_photo_model import EmployeePhoto
+
+        photo = await self.session.scalar(
+            select(EmployeePhoto).where(EmployeePhoto.employee_id == emp_id)
+        )
+
+        # Levels: current (employee.current_level_id) + proposed (the registration
+        # on this review). Level/requirement names are translation keys -> resolve.
+        from backend.api_v1.review_level.review_level_model import ReviewLevel
+        from backend.api_v1.review_session_employee_level.review_session_employee_level_model import (
+            ReviewSessionEmployeeLevel,
+        )
+
+        async def _level_name(level_id):
+            if not level_id:
+                return None
+            lvl = await self.session.get(ReviewLevel, level_id)
+            if not lvl:
+                return None
+            return await self._translate(lvl.name_key, fallback=lvl.name_key)
+
+        current_level = await _level_name(
+            getattr(emp, "current_level_id", None) if emp else None
+        )
+
+        registration = await self.session.scalar(
+            select(ReviewSessionEmployeeLevel).where(
+                ReviewSessionEmployeeLevel.review_session_employee_id == rse_id
+            )
+        )
+        proposed_level = None
+        proposed_status = None
+        level_requirements: list[dict] = []
+        if registration:
+            proposed_level = await _level_name(registration.level_id)
+            proposed_status = registration.status
+            facts_by_req = {
+                a.requirement_id: a.facts for a in (registration.answers or [])
+            }
+            level = await self.session.get(ReviewLevel, registration.level_id)
+            reqs = sorted(
+                (level.requirements if level else []),
+                key=lambda r: r.sort_order,
+            )
+            for req in reqs:
+                text = await self._translate(req.text_key, fallback=req.text_key)
+                level_requirements.append(
+                    {"text": text, "facts": facts_by_req.get(req.id)}
+                )
+
+        # Level "sense" — compares the proposed level against the employee's
+        # current one (by sort_order): a higher rank reads as a proposed increase,
+        # an equal one as a confirmation, a lower one as a decrease. Only meaningful
+        # when BOTH a current and a proposed level exist.
+        level_sense = None
+        proposed_level_sense = None
+        current_level_id = getattr(emp, "current_level_id", None) if emp else None
+        if registration and current_level_id:
+            cur_lvl = await self.session.get(ReviewLevel, current_level_id)
+            prop_lvl = await self.session.get(ReviewLevel, registration.level_id)
+            if cur_lvl and prop_lvl:
+                if prop_lvl.sort_order > cur_lvl.sort_order:
+                    level_sense = "increase"
+                elif prop_lvl.sort_order < cur_lvl.sort_order:
+                    level_sense = "decrease"
+                else:
+                    level_sense = "same"
+                sense_key = {
+                    "increase": "levelSenseIncrease",
+                    "same": "levelSenseSame",
+                    "decrease": "levelSenseDecrease",
+                }[level_sense]
+                proposed_level_sense = await self._translate(
+                    sense_key, fallback=level_sense
+                )
+
+        # Gender-aware marital status, resolved to the viewer's language. Keys
+        # mirror the frontend (maritalMarriedMale / maritalNotMarriedFemale, …).
+        marital_status = None
+        ms = getattr(emp, "marital_status", None) if emp else None
+        if ms in ("married", "not_married"):
+            base = "maritalMarried" if ms == "married" else "maritalNotMarried"
+            suffix = "Female" if getattr(emp, "sex", None) == "female" else "Male"
+            marital_status = await self._translate(base + suffix, fallback=ms)
+
+        # Tenure (years with the company) from hire date.
+        tenure = None
+        hire = getattr(emp, "hire_date", None) if emp else None
+        if hire:
+            tenure = str(
+                today.year - hire.year
+                - ((today.month, today.day) < (hire.month, hire.day))
+            )
+
+        # All section/field labels resolved here so the renderer stays pure (no DB)
+        # and nothing in the album is hardcoded.
+        label_keys = {
+            "competence_level": "competenceLevel",
+            "results": "resultsAchievements",
+            "not_achieved": "notAchieved",
+            "strengths": "strongCompetences",
+            "development": "competencesToDevelop",
+            "idp": "developmentPlan",
+            "training": "requiredTrainings",
+            "employee_feedback": "employeeFeedback",
+            "manager_feedback": "managerFeedback",
+            "birth_age": "birthDate",
+            "marital_children": "maritalStatus",
+            "position": "job",
+            "languages": "foreignLanguages",
+            "education": "education",
+            "tenure": "tenure",
+            "current_level": "currentLevel",
+            "proposed_level": "proposedLevel",
+            "level_requirements": "levelRequirements",
+        }
+        labels = {
+            slot: await self._translate(key, fallback=key)
+            for slot, key in label_keys.items()
+        }
+
+        data = {
+            "full_name": emp.name if emp else "",
+            "birth_date": birth.strftime("%d.%m.%Y") if birth else None,
+            "age": str(age) if age is not None else None,
+            "marital_status": marital_status,
+            "children": children,
+            "position": emp.job.name if emp and emp.job else None,
+            "education": education_str,
+            "lang_level": lang_level,
+            "tenure": tenure,
+            "competences": competences,
+            "max_grade": 4,
+            "current_level": current_level,
+            "proposed_level": proposed_level,
+            "proposed_level_status": proposed_status,
+            "proposed_level_sense": proposed_level_sense,
+            "level_sense": level_sense,
+            "has_level_registration": registration is not None,
+            "level_requirements": level_requirements,
+            "results_achievements": record.results_achievements,
+            "not_achieved": None,
+            "employee_feedback": record.employee_feedback,
+            "manager_feedback": record.manager_feedback,
+            "training_done": record.trainings,
+            "idp_missions": self._development_missions(record.development_plan),
+            "strengths": self._competence_summary_text(
+                record.competence_summary, "strong"
+            ),
+            "development_directions": self._competence_summary_text(
+                record.competence_summary, "develop"
+            ),
+            "labels": labels,
+            "photo": photo.data if photo else None,
+            "photo_mime": photo.content_type if photo else None,
+        }
+        return data
+
+    @staticmethod
+    def _pascal_dim_key(key: str) -> str:
+        """PEOPLE_PLANET -> PeoplePlanet (frontend competence-key convention)."""
+        return "".join(
+            part.capitalize() for part in str(key).split("_") if part
+        )
+
+    @staticmethod
+    def _development_missions(development_plan: Optional[str]) -> list[str]:
+        """development_plan is a JSON array of mission strings (per the model)."""
+        if not development_plan:
+            return []
+        import json
+
+        try:
+            arr = json.loads(development_plan)
+            return [str(x) for x in arr if str(x).strip()]
+        except (ValueError, TypeError):
+            return [development_plan]
+
+    @staticmethod
+    def _competence_summary_text(
+        competence_summary: Optional[str], bucket: str
+    ) -> Optional[str]:
+        """competence_summary is JSON {"strong":[...], "develop":[...]}, each item
+        {"dimension_key":..., "comments":[...]}. Flatten one bucket to text."""
+        if not competence_summary:
+            return None
+        import json
+
+        try:
+            obj = json.loads(competence_summary)
+        except (ValueError, TypeError):
+            return None
+        items = obj.get(bucket) or []
+        lines = []
+        for it in items:
+            comments = it.get("comments") or []
+            for c in comments:
+                if str(c).strip():
+                    lines.append(f"• {c}")
+        return "\n".join(lines) if lines else None
+
     async def get_my_reviews(
         self,
         employee_id: int,
@@ -471,6 +812,56 @@ class ReviewSessionEmployeeService(BaseService):
             return status_value
         return await self._translate(key, fallback=status_value)
 
+    async def _validate_level_for_review(self, record) -> None:
+        """Gate the open→reviewed transition on the level decision.
+
+        - No current level on the employee → nothing required (a fresh hire has
+          no level to confirm or change yet).
+        - Current level present → a proposed level registration is mandatory.
+        - Proposing the SAME or a HIGHER level → every active requirement of the
+          proposed level must be justified (≥1 fact). A LOWER (decrease) proposal
+          needs no requirement details.
+        """
+        from backend.api_v1.review_level.review_level_model import ReviewLevel
+        from backend.api_v1.review_session_employee_level.review_session_employee_level_model import (
+            ReviewSessionEmployeeLevel,
+        )
+
+        emp = record.employee
+        current_level_id = getattr(emp, "current_level_id", None) if emp else None
+        if not current_level_id:
+            return
+
+        registration = await self.session.scalar(
+            select(ReviewSessionEmployeeLevel).where(
+                ReviewSessionEmployeeLevel.review_session_employee_id == record.id
+            )
+        )
+        if registration is None:
+            raise await self._resolve_domain_error(ProposedLevelRequiredForReview())
+
+        current = await self.session.get(ReviewLevel, current_level_id)
+        proposed = await self.session.get(ReviewLevel, registration.level_id)
+        # A decrease (lower sort_order) skips the requirement-detail check.
+        is_decrease = (
+            current is not None
+            and proposed is not None
+            and proposed.sort_order < current.sort_order
+        )
+        if is_decrease:
+            return
+
+        active_reqs = [
+            r for r in (proposed.requirements if proposed else []) if r.is_active
+        ]
+        answered = {
+            a.requirement_id
+            for a in (registration.answers or [])
+            if (a.facts or "").strip()
+        }
+        if any(r.id not in answered for r in active_reqs):
+            raise await self._resolve_domain_error(ProposedLevelDetailsIncomplete())
+
     async def change_status(
         self, rse_id: int, target_status: str
     ) -> MutationResponse[RSESchema]:
@@ -479,6 +870,12 @@ class ReviewSessionEmployeeService(BaseService):
         if target_status not in valid:
             exc = ReviewSessionEmployeeStatusError(record.status, target_status)
             raise await self._resolve_domain_error(exc)
+
+        # open → reviewed: a level decision is mandatory once the employee has a
+        # current level (confirm it or propose a change). Enforced here — the
+        # single transition point — so the session-list shortcut can't bypass it.
+        if record.status == "open" and target_status == "reviewed":
+            await self._validate_level_for_review(record)
 
         record.status = target_status
         await self.session.commit()

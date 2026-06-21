@@ -9,6 +9,7 @@ import {
     Stack,
     Switch,
     FormControlLabel,
+    Box,
 } from '@mui/material';
 import type { UseMutationResult } from '@tanstack/react-query';
 import useString from '../../../hooks/useString';
@@ -19,11 +20,16 @@ import type {
     MutationResponse,
 } from './reviewDimensionApi';
 
+/** A 6-digit hex color (e.g. #2E7D32) — matches the picker output + DB column. */
+const HEX_COLOR_RE = /^#[0-9A-Fa-f]{6}$/;
+
 interface Props {
     open: boolean;
     onClose: () => void;
     /** When set, the dialog edits this row; otherwise it creates a new one. */
     editing?: ReviewDimension | null;
+    /** sort_order to give a newly-created dimension (append at the end). */
+    nextSortOrder: number;
     createMutation: UseMutationResult<MutationResponse<ReviewDimension>, Error, ReviewDimensionCreate>;
     updateMutation: UseMutationResult<
         MutationResponse<ReviewDimension>,
@@ -32,12 +38,14 @@ interface Props {
     >;
 }
 
-export function ReviewDimensionForm({ open, onClose, editing, createMutation, updateMutation }: Props) {
+export function ReviewDimensionForm({ open, onClose, editing, nextSortOrder, createMutation, updateMutation }: Props) {
     const getString = useString();
     const [name, setName] = useState('');
     const [key, setKey] = useState('');
     const [description, setDescription] = useState('');
     const [isActive, setIsActive] = useState(true);
+    const [color, setColor] = useState('#1565C0');
+    const colorValid = HEX_COLOR_RE.test(color);
 
     // Prefill from the edited row (or reset for create) each time the dialog opens.
     useEffect(() => {
@@ -46,6 +54,7 @@ export function ReviewDimensionForm({ open, onClose, editing, createMutation, up
         setKey(editing?.key ?? '');
         setDescription(editing?.description ?? '');
         setIsActive(editing?.is_active ?? true);
+        setColor(editing?.color ?? '#1565C0');
     }, [open, editing]);
 
     const isEdit = !!editing;
@@ -57,6 +66,10 @@ export function ReviewDimensionForm({ open, onClose, editing, createMutation, up
             key: key.trim(),
             description: description.trim() || null,
             is_active: isActive,
+            color,
+            // Keep the existing order on edit; a fresh dimension is appended at
+            // the end (admin can reorder it later with the up/down arrows).
+            sort_order: editing ? editing.sort_order : nextSortOrder,
         };
         if (isEdit && editing) {
             updateMutation.mutate({ id: editing.id, data: payload });
@@ -93,6 +106,40 @@ export function ReviewDimensionForm({ open, onClose, editing, createMutation, up
                         multiline
                         rows={3}
                     />
+                    <Stack direction="row" alignItems="flex-start" spacing={1.5}>
+                        <Box
+                            component="input"
+                            type="color"
+                            // The native picker only accepts a valid hex; while the
+                            // text field holds an invalid value, fall back to black.
+                            value={colorValid ? color : '#000000'}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setColor(e.target.value)}
+                            sx={{
+                                width: 48,
+                                height: 56,
+                                p: 0,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                borderRadius: 1,
+                                cursor: 'pointer',
+                                background: 'none',
+                                flexShrink: 0,
+                            }}
+                        />
+                        <TextField
+                            label={getString('dimensionColor')}
+                            value={color}
+                            onChange={(e) => setColor(e.target.value)}
+                            fullWidth
+                            error={!colorValid}
+                            helperText={
+                                colorValid
+                                    ? getString('colorHexHint')
+                                    : getString('reviewDimensionInvalidColor', { color })
+                            }
+                            placeholder="#2E7D32"
+                        />
+                    </Stack>
                     <FormControlLabel
                         control={<Switch checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />}
                         label={getString('isActiveCol')}
@@ -104,7 +151,7 @@ export function ReviewDimensionForm({ open, onClose, editing, createMutation, up
                 <Button
                     variant="contained"
                     onClick={handleSubmit}
-                    disabled={!name.trim() || !key.trim() || pending}
+                    disabled={!name.trim() || !key.trim() || !colorValid || pending}
                 >
                     {pending ? getString('saving') : getString(isEdit ? 'save' : 'create')}
                 </Button>
