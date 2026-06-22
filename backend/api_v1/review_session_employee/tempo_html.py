@@ -71,18 +71,20 @@ def _prep(data: dict) -> dict:
         (L.get("talent_status_period"), g("talent_levels")),
     ]
 
+    # IDP missions: each is {text, dimension_key, name, color}; the template shows
+    # the text plus the linked competence name in its own color (same as the page).
     idp = g("idp_missions") or []
-    idp_text = "\n".join(f"• {m}" for m in idp) if idp else None
 
     # Lower-grid sections. Most are {title, accent, body}; the strong /
     # to-develop competences carry {items} instead — each a named, DB-colored
-    # competence with its comments, rendered specially by the template.
+    # competence with its comments, rendered specially by the template. The IDP
+    # carries {missions} — colored per-mission competence labels.
     sections = [
         {"title": L.get("results"), "accent": False, "body": g("results_achievements")},
         {"title": L.get("not_achieved"), "accent": False, "body": g("not_achieved")},
         {"title": L.get("strengths"), "accent": True, "comps": g("strengths_items")},
         {"title": L.get("development"), "accent": True, "comps": g("development_items")},
-        {"title": L.get("idp"), "accent": True, "body": idp_text},
+        {"title": L.get("idp"), "accent": True, "missions": idp},
         {"title": L.get("training"), "accent": False, "body": g("training_done")},
         {"title": L.get("employee_feedback"), "accent": False, "body": g("employee_feedback")},
         {"title": L.get("manager_feedback"), "accent": False, "body": g("manager_feedback")},
@@ -160,6 +162,10 @@ word-break:break-word;}
 .cmp{margin-bottom:8px;}
 .cmp-name{font-size:12.5px;font-weight:700;margin-bottom:2px;}
 .cmp .body{margin-left:2px;}
+/* An IDP mission: its text plus a colored competence-to-develop tag. */
+.mission{margin-bottom:8px;}
+.mtag{display:inline-block;margin-top:3px;font-size:11px;font-weight:700;
+border:1px solid;border-radius:10px;padding:1px 8px;}
 .req{margin-top:8px;}
 .req .item{background:var(--panel);border:1px solid var(--border);
 border-radius:10px;padding:10px 14px;margin-bottom:10px;}
@@ -219,6 +225,15 @@ _SHEET = """
             <div class="cmp">
               <div class="cmp-name" style="color:{{ it.color }}">{{ it.name }}</div>
               {% if it.comments %}<div class="body">{% for c in it.comments %}• {{ c }}{% if not loop.last %}<br>{% endif %}{% endfor %}</div>{% endif %}
+            </div>
+            {% endfor %}
+          {% else %}<div class="body empty">—</div>{% endif %}
+        {% elif sec.missions is defined %}
+          {% if sec.missions %}
+            {% for m in sec.missions %}
+            <div class="mission">
+              <div class="body">{{ loop.index }}. {{ m.text }}</div>
+              {% if m.name %}<span class="mtag" style="color:{{ m.color }};border-color:{{ m.color }}">{{ m.name }}</span>{% endif %}
             </div>
             {% endfor %}
           {% else %}<div class="body empty">—</div>{% endif %}

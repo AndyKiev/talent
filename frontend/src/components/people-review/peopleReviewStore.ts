@@ -7,6 +7,7 @@ import type {
 } from './peopleReviewApi';
 import {
     type LocalEval,
+    type Mission,
     type SummaryOption,
     competenceHint,
     competenceName,
@@ -14,7 +15,6 @@ import {
     parseFacts,
     parseMissions,
     parseSummarySide,
-    MISSION_COUNT,
 } from './evaluation/evaluationHelpers';
 
 // ---------------------------------------------------------------------------
@@ -28,7 +28,7 @@ export interface EvaluationDraft {
     employeeFeedback: string;
     managerFeedback: string;
     results: string[];
-    missions: string[];
+    missions: Mission[];
     trainings: string;
     strongOptions: SummaryOption[];
     developOptions: SummaryOption[];
@@ -130,7 +130,7 @@ export function buildEvaluationDraft(
         employeeFeedback: rseDetail.employee_feedback ?? '',
         managerFeedback: rseDetail.manager_feedback ?? '',
         results: parseFacts(rseDetail.results_achievements),
-        missions: parseMissions(rseDetail.development_plan, MISSION_COUNT),
+        missions: parseMissions(rseDetail.development_plan),
         trainings: rseDetail.trainings ?? '',
         strongOptions: parseSummarySide(summary.strong),
         developOptions: parseSummarySide(summary.develop),

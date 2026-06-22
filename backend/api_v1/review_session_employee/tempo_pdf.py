@@ -89,6 +89,42 @@ def _titled(fig, x, y, w, title, body, title_color=ACCENT, body_size=8.0,
              ha="left", fontfamily=FONT, linespacing=1.4, zorder=4)
 
 
+def _idp_block(fig, x, y, w, missions, title, body_lines=8, body_size=8.0):
+    """IDP missions: numbered text plus a colored competence-to-develop tag per
+    mission (same coloring the page/HTML uses). Manual line layout so each
+    mission's linked competence name can be drawn in its own color."""
+    _text(fig, x, y, title, 9, ACCENT, weight="bold", va="top")
+    if not missions:
+        fig.text(x, y - 0.026, "—", fontsize=body_size, color=INK, va="top",
+                 ha="left", fontfamily=FONT, zorder=4)
+        return
+    line_step = 0.0165
+    yc = y - 0.026
+    lines_left = body_lines
+    width_chars = int(w * 165)
+    for i, m in enumerate(missions, start=1):
+        if lines_left <= 0:
+            fig.text(x, yc, "…", fontsize=body_size, color=INK, va="top",
+                     ha="left", fontfamily=FONT, zorder=4)
+            break
+        text = m.get("text") if isinstance(m, dict) else str(m)
+        for ln in _wrap(f"{i}. {text}", width_chars=width_chars).split("\n"):
+            if lines_left <= 0:
+                break
+            fig.text(x, yc, ln, fontsize=body_size, color=INK, va="top",
+                     ha="left", fontfamily=FONT, zorder=4)
+            yc -= line_step
+            lines_left -= 1
+        name = m.get("name") if isinstance(m, dict) else None
+        color = m.get("color") if isinstance(m, dict) else None
+        if name and lines_left > 0:
+            fig.text(x + 0.006, yc, f"→ {name}", fontsize=body_size - 0.5,
+                     color=color or ACCENT, va="top", ha="left",
+                     fontfamily=FONT, fontweight="bold", zorder=4)
+            yc -= line_step
+            lines_left -= 1
+
+
 def _wrap(text, width_chars):
     import textwrap
 
@@ -257,9 +293,7 @@ def _build_page1(data: dict) -> Figure:
             L.get("development"), g("development_directions"), ACCENT, 8,
             body_lines=8)
     idp = g("idp_missions") or []
-    idp_text = "\n".join(f"• {m}" for m in idp) if idp else "—"
-    _titled(fig, cols[1] + 0.013, 0.22, iw,
-            L.get("idp"), idp_text, ACCENT, 8, body_lines=8)
+    _idp_block(fig, cols[1] + 0.013, 0.22, iw, idp, L.get("idp"), body_lines=8)
 
     # Column 3: training + employee feedback + manager feedback.
     _titled(fig, cols[2] + 0.013, 0.58, iw,

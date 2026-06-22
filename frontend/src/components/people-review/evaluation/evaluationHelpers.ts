@@ -44,6 +44,57 @@ export function getDimColor(key: string, idx: number, dbColor?: string | null) {
     return DIMENSION_COLORS[key] ?? FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
 }
 
+// Header accents for the two competence-summary boxes. They keep the "mood"
+// (strong = good greens/blues, to-develop = alert reds/oranges) but each palette
+// spans a range (green→teal→blue, red→orange→amber) so the picker can move away
+// from a competence color that shares the same hue family.
+const STRONG_ACCENTS = ['#00A651', '#1B873F', '#0CA678', '#0B7285', '#1971C2', '#1864AB', '#3B5BDB'];
+const DEVELOP_ACCENTS = ['#E03131', '#C92A2A', '#D9480F', '#E8590C', '#F76707', '#F08C00', '#F59F00'];
+
+function hexToRgb(hex: string): [number, number, number] | null {
+    let h = hex.trim().replace('#', '');
+    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    if (h.length !== 6) return null;
+    const n = parseInt(h, 16);
+    if (Number.isNaN(n)) return null;
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+// Perceptual-ish color distance ("redmean") — cheap and far closer to human
+// perception than plain RGB euclidean, so reds aren't called "far" from oranges
+// when they actually look alike.
+function colorDistance(a: [number, number, number], b: [number, number, number]): number {
+    const rmean = (a[0] + b[0]) / 2;
+    const dr = a[0] - b[0], dg = a[1] - b[1], db = a[2] - b[2];
+    return Math.sqrt((2 + rmean / 256) * dr * dr + 4 * dg * dg + (2 + (255 - rmean) / 256) * db * db);
+}
+
+/**
+ * Pick a summary-header accent from the family palette that is the most visually
+ * DISTINCT from the listed competence colors — the palette entry whose nearest
+ * competence color is farthest away (maximize the minimum distance). This avoids
+ * "different hex but same-looking hue" collisions, while staying in the family.
+ */
+export function pickSummaryAccent(family: 'strong' | 'develop', usedColors: Iterable<string>): string {
+    const palette = family === 'strong' ? STRONG_ACCENTS : DEVELOP_ACCENTS;
+    const used = [...usedColors]
+        .map(hexToRgb)
+        .filter((c): c is [number, number, number] => c !== null);
+    if (used.length === 0) return palette[0];
+    let best = palette[0];
+    let bestScore = -1;
+    for (const cand of palette) {
+        const rgb = hexToRgb(cand);
+        if (!rgb) continue;
+        const nearest = Math.min(...used.map(u => colorDistance(rgb, u)));
+        if (nearest > bestScore) {
+            bestScore = nearest;
+            best = cand;
+        }
+    }
+    return best;
+}
+
 // Derive the message-key suffix from a dimension key: "PEOPLE_PLANET" -> "PeoplePlanet".
 function pascalFromDimensionKey(key: string): string {
     return key
@@ -167,24 +218,45 @@ export const FOREIGN_LANGUAGES: { key: string; labelKey: 'english' | 'french' }[
     { key: 'french', labelKey: 'french' },
 ];
 
-// Individual development plan — number of mission boxes (hardcoded for now,
-// stored as a JSON array so this can grow later without a schema change).
-export const MISSION_COUNT = 2;
+// Individual development plan — a numbered list of missions (like results/facts),
+// stored as a JSON array. Each mission can optionally be linked to the competence
+// (by dimension_key) it is focused on developing, so the album can color it.
+export interface Mission {
+    text: string;
+    // dimension_key of the linked competence-to-develop, or null when unlinked.
+    dimension_key: string | null;
+}
 
-/** Parse the stored development plan (JSON array) into a string[] padded to `count`. */
-export function parseMissions(raw: string | null, count: number): string[] {
-    let arr: string[] = [];
-    if (raw) {
-        try {
-            const parsed: unknown = JSON.parse(raw);
-            if (Array.isArray(parsed)) arr = parsed.map(x => (x == null ? '' : String(x)));
-        } catch {
-            /* not JSON yet — start empty */
-        }
+/**
+ * Parse the stored development plan into a Mission[]. Accepts BOTH the legacy
+ * shape (a JSON array of plain strings) and the new shape (array of
+ * `{text, dimension_key}` objects), so existing records keep working.
+ */
+export function parseMissions(raw: string | null): Mission[] {
+    if (!raw) return [];
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(raw);
+    } catch {
+        return [];
     }
-    const out = [...arr];
-    while (out.length < count) out.push('');
-    return out;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((item): Mission => {
+        if (item && typeof item === 'object' && 'text' in item) {
+            const obj = item as { text?: unknown; dimension_key?: unknown };
+            const key = obj.dimension_key == null ? null : String(obj.dimension_key) || null;
+            return { text: obj.text == null ? '' : String(obj.text), dimension_key: key };
+        }
+        return { text: item == null ? '' : String(item), dimension_key: null };
+    });
+}
+
+/** Serialize the mission list for storage, dropping entries with no text. */
+export function serializeMissions(missions: Mission[]): string {
+    const kept = missions
+        .map(m => ({ text: m.text.trim(), dimension_key: m.dimension_key }))
+        .filter(m => m.text.length > 0);
+    return JSON.stringify(kept);
 }
 
 // One picked competence in the summary, with its linked comments.
@@ -239,6 +311,9 @@ export interface PendingFlip {
     // The side the competence currently sits in and will be removed FROM.
     side: SummarySide;
     name: string;
+    // True when the competence is leaving the develop list AND is attached to a
+    // development-plan mission — that link is dropped on confirm, so warn first.
+    missionLinked: boolean;
 }
 
 /**

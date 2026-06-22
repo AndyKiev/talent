@@ -25,6 +25,36 @@ APP_SETTINGS = [
         "label_key": "settingPeopleReviewEditTalentStatus",
         "description_key": "settingPeopleReviewEditTalentStatusDesc",
     },
+    {
+        "key": "idp_min_missions",
+        "value": 1,
+        "value_type_key": "integer",
+        "label_key": "settingIdpMinMissions",
+        "description_key": "settingIdpMinMissionsDesc",
+    },
+    {
+        "key": "idp_max_missions",
+        "value": 5,
+        "value_type_key": "integer",
+        "label_key": "settingIdpMaxMissions",
+        "description_key": "settingIdpMaxMissionsDesc",
+    },
+    {
+        "key": "idp_allow_full_competence_list",
+        "value": False,
+        "value_type_key": "boolean",
+        "label_key": "settingIdpAllowFullCompetenceList",
+        "description_key": "settingIdpAllowFullCompetenceListDesc",
+    },
+    {
+        # When OFF the base level is only DISPLAYED for an employee with no current
+        # level; when ON it is persisted to the employee record (and re-read).
+        "key": "employee_default_level_persist",
+        "value": False,
+        "value_type_key": "boolean",
+        "label_key": "settingEmployeeDefaultLevelPersist",
+        "description_key": "settingEmployeeDefaultLevelPersistDesc",
+    },
 ]
 
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, type Dispatch, type SetStateAction } from 'react';
+import { useState, useEffect, useRef, type Dispatch, type SetStateAction } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from '@tanstack/react-router';
 import {
@@ -75,6 +75,7 @@ import {
     type PendingFlip,
     RSE_STATUS_COLORS,
     getDimColor,
+    pickSummaryAccent,
     competenceName,
     evalFilled,
     formatYearsMonths,
@@ -92,7 +93,7 @@ import { CompetenceSummarySection } from './evaluation/CompetenceSummarySection'
 import { PersonalInfoPanel } from './evaluation/PersonalInfoPanel';
 import { JobInfoPanel } from './evaluation/JobInfoPanel';
 import { TalentStatusPeriodPanel } from './evaluation/TalentStatusPeriodPanel';
-import { useBooleanSetting } from '../../hooks/useAppSetting';
+import { useBooleanSetting, useIntegerSetting } from '../../hooks/useAppSetting';
 import { EmployeeDataTabs } from './evaluation/EmployeeDataTabs';
 import { DimensionPanel } from './evaluation/DimensionPanel';
 import { useEvaluationAutosave } from './evaluation/useEvaluationAutosave';
@@ -111,6 +112,15 @@ export function EvaluationPage() {
     // Developer setting: when on, the talent status/period can be edited from
     // inside people-review (otherwise it's read-only here). Display is unaffected.
     const { enabled: canEditTalentStatus } = useBooleanSetting('people_review_edit_talent_status');
+    // Developer settings for the individual development plan: how many missions
+    // must / may be saved, and whether the user may link a mission to ANY
+    // competence (vs. only the competences picked in the "to develop" summary).
+    const { value: minMissions } = useIntegerSetting('idp_min_missions', 1);
+    const { value: maxMissions } = useIntegerSetting('idp_max_missions', 5);
+    const { enabled: allowFullCompetenceList } = useBooleanSetting('idp_allow_full_competence_list');
+    // When ON, an employee with no current level gets the base level persisted to
+    // their record; when OFF the base level is only shown (no DB write).
+    const { enabled: persistDefaultLevel } = useBooleanSetting('employee_default_level_persist');
 
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
     const [activeTab, setActiveTab] = useState(0);
@@ -125,6 +135,9 @@ export function EvaluationPage() {
     // A star re-rating held back because it would flip a competence to the
     // opposite summary list — confirmed via a dialog, then applied atomically.
     const [pendingFlip, setPendingFlip] = useState<PendingFlip | null>(null);
+    // A direct removal of a to-develop competence that is linked to a mission —
+    // held back for confirmation because it unlinks that mission (allow-full off).
+    const [pendingDevelopRemoval, setPendingDevelopRemoval] = useState<{ key: string; name: string } | null>(null);
     const [newFactTexts, setNewFactTexts] = useState<Record<number, string>>({});
     const [newImprovementTexts, setNewImprovementTexts] = useState<Record<number, string>>({});
 
@@ -326,7 +339,12 @@ export function EvaluationPage() {
     // confirmation, lower as a decrease. Null when either side is missing. Kept
     // in lock-step with the backend (_tempo_data) so chip + album + gate agree.
     const currentLevelId = empLevel?.current_level_id ?? null;
-    const currentLevelObj = allLevels.find((l) => l.id === currentLevelId) ?? null;
+    // Every employee must have a level: when none is set, fall back to the base
+    // level (lowest sort_order). A developer setting decides whether that base is
+    // only displayed or actually persisted to the employee record (and re-read).
+    const baseLevelId = [...allLevels].sort((a, b) => a.sort_order - b.sort_order)[0]?.id ?? null;
+    const displayLevelId = currentLevelId ?? baseLevelId;
+    const currentLevelObj = allLevels.find((l) => l.id === displayLevelId) ?? null;
     const proposedLevelObj = proposedLevel
         ? allLevels.find((l) => l.id === proposedLevel.level_id) ?? null
         : null;
@@ -360,6 +378,18 @@ export function EvaluationPage() {
         },
         onError: (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' }),
     });
+
+    // Persist-default-level mode: when an editable employee has no current level,
+    // write the base level once. The re-read then surfaces it like a real level
+    // (display-only mode skips this and just shows the base in the chip).
+    const persistedLevelForRef = useRef<number | null>(null);
+    useEffect(() => {
+        if (!persistDefaultLevel || viewOnly) return;
+        if (!employeeId || currentLevelId != null || baseLevelId == null) return;
+        if (currentLevelMut.isPending || persistedLevelForRef.current === employeeId) return;
+        persistedLevelForRef.current = employeeId;
+        currentLevelMut.mutate(baseLevelId);
+    }, [persistDefaultLevel, viewOnly, employeeId, currentLevelId, baseLevelId, currentLevelMut]);
 
     // --- Personal data (birth date / age, hire date / tenure, job-assigned date) ---
     const [birthDateOpen, setBirthDateOpen] = useState(false);
@@ -555,6 +585,13 @@ export function EvaluationPage() {
         return getDimColor(key, idx >= 0 ? idx : 0, ev?.dimension_color);
     };
 
+    // Header accents for the two summary boxes: dynamic so they never reuse a
+    // competence's own color (which made the headers look like a competence),
+    // while keeping the strong=good / develop=alert mood.
+    const usedCompetenceColors = visibleEvals.map(e => competenceColor(e.dimension_key));
+    const strongAccent = pickSummaryAccent('strong', usedCompetenceColors);
+    const developAccent = pickSummaryAccent('develop', usedCompetenceColors);
+
     // A competence is "picked" if it appears in the matching summary section.
     const isStrongPicked = (key: string) => strongOptions.some(o => o.dimension_key === key);
     const isDevelopPicked = (key: string) => developOptions.some(o => o.dimension_key === key);
@@ -582,9 +619,42 @@ export function EvaluationPage() {
         if (idx >= 0) setActiveTab(idx);
     };
 
-    const updateMission = (index: number, value: string) => {
-        setMissions(prev => prev.map((m, i) => (i === index ? value : m)));
+    // --- Development plan (missions) ---
+    // A numbered, add/remove list (like results) bounded by the developer min/max.
+    // The add row lets the user set the linked competence in parallel with the text.
+    const [newMissionText, setNewMissionText] = useState('');
+    const [newMissionCompetence, setNewMissionCompetence] = useState<string | null>(null);
+    const addMission = (text: string, dimensionKey: string | null) => {
+        const trimmed = text.trim();
+        if (!trimmed) return;
+        if (missions.length >= maxMissions) return;
+        setMissions(prev => [...prev, { text: trimmed, dimension_key: dimensionKey }]);
+        setNewMissionText('');
+        setNewMissionCompetence(null);
     };
+    const removeMission = (index: number) => {
+        setMissions(prev => prev.filter((_, i) => i !== index));
+    };
+    const updateMission = (index: number, value: string) => {
+        setMissions(prev => prev.map((m, i) => (i === index ? { ...m, text: value } : m)));
+    };
+    const setMissionCompetence = (index: number, dimension_key: string | null) => {
+        setMissions(prev => prev.map((m, i) => (i === index ? { ...m, dimension_key } : m)));
+    };
+
+    // Competences a mission may target: the "to develop" shortlist by default,
+    // or every competence when the developer setting allows it AND the user opts
+    // in. Each option carries its translated name + color, mirroring the page.
+    const developCompetenceOptions = developOptions.map(o => ({
+        key: o.dimension_key,
+        name: competenceLabel(o.dimension_key),
+        color: competenceColor(o.dimension_key),
+    }));
+    const allCompetenceOptions = visibleEvals.map(e => ({
+        key: e.dimension_key,
+        name: competenceLabel(e.dimension_key),
+        color: competenceColor(e.dimension_key),
+    }));
 
     // --- Competence summary helpers (shared by both sections) ---
     type SummarySetter = Dispatch<SetStateAction<SummaryOption[]>>;
@@ -592,6 +662,27 @@ export function EvaluationPage() {
         setter(prev => (prev.some(o => o.dimension_key === key) ? prev : [...prev, { dimension_key: key, comments: [] }]));
     const removeSummaryOption = (setter: SummarySetter, key: string) =>
         setter(prev => prev.filter(o => o.dimension_key !== key));
+    // Removing a competence directly from the to-develop list also unlinks it from
+    // any mission that targeted it — but only when missions are restricted to the
+    // to-develop shortlist (allow-full off); with the full list allowed the link stays.
+    // When a mission link would be dropped, confirm first (mirrors the star-flip flow).
+    const removeDevelopOption = (key: string) => {
+        const willUnlinkMission = !allowFullCompetenceList && missions.some(m => m.dimension_key === key);
+        if (willUnlinkMission) {
+            setPendingDevelopRemoval({ key, name: competenceLabel(key) });
+            return;
+        }
+        removeSummaryOption(setDevelopOptions, key);
+    };
+
+    // Confirm a held to-develop removal: drop the competence and unlink its mission.
+    const confirmDevelopRemoval = () => {
+        if (!pendingDevelopRemoval) return;
+        const { key } = pendingDevelopRemoval;
+        removeSummaryOption(setDevelopOptions, key);
+        setMissions(prev => prev.map(m => (m.dimension_key === key ? { ...m, dimension_key: null } : m)));
+        setPendingDevelopRemoval(null);
+    };
     const addSummaryComment = (setter: SummarySetter, key: string, text: string) =>
         setter(prev => prev.map(o => (o.dimension_key === key ? { ...o, comments: [...o.comments, text.trim()] } : o)));
     const removeSummaryComment = (setter: SummarySetter, key: string, index: number) =>
@@ -641,7 +732,12 @@ export function EvaluationPage() {
             nextEvals, ev.dimension_key, isStrongPicked(ev.dimension_key), isDevelopPicked(ev.dimension_key),
         );
         if (!side) { setCriterion(evalId, index, value); return; }
-        setPendingFlip({ evalId, index, value, key: ev.dimension_key, side, name: competenceLabel(ev.dimension_key) });
+        // A competence leaving the develop list is no longer a "to develop" target,
+        // so any mission focused on developing it loses its link — warn about that too.
+        // Only when missions are restricted to the to-develop shortlist (allow-full off).
+        const missionLinked = side === 'develop' && !allowFullCompetenceList
+            && missions.some(m => m.dimension_key === ev.dimension_key);
+        setPendingFlip({ evalId, index, value, key: ev.dimension_key, side, name: competenceLabel(ev.dimension_key), missionLinked });
     };
 
     // Confirm the held re-rating: flush other pending edits, then persist the flip
@@ -678,6 +774,11 @@ export function EvaluationPage() {
             developOptions: side === 'develop' ? d.developOptions.filter(o => o.dimension_key !== key) : d.developOptions,
             strongDrafts: side === 'strong' ? dropKey(d.strongDrafts) : d.strongDrafts,
             developDrafts: side === 'develop' ? dropKey(d.developDrafts) : d.developDrafts,
+            // Drop the link from any mission that targeted this competence for development
+            // (only when missions are restricted to the to-develop shortlist).
+            missions: side === 'develop' && !allowFullCompetenceList
+                ? d.missions.map(m => (m.dimension_key === key ? { ...m, dimension_key: null } : m))
+                : d.missions,
         }));
         setPendingFlip(null);
     };
@@ -1117,7 +1218,7 @@ export function EvaluationPage() {
                                     onEditHire={() => setHireDateOpen(true)}
                                     onEditJobAssigned={() => setJobAssignedOpen(true)}
                                     levels={allLevels}
-                                    currentLevelId={empLevel?.current_level_id ?? null}
+                                    currentLevelId={displayLevelId}
                                     onCurrentLevelChange={(levelId) => currentLevelMut.mutate(levelId)}
                                     currentLevelDisabled={!employeeId || currentLevelMut.isPending}
                                     onOpenProposed={() => setProposedOpen(true)}
@@ -1148,6 +1249,18 @@ export function EvaluationPage() {
                             onRemoveResult={removeResult}
                             missions={missions}
                             onUpdateMission={updateMission}
+                            onAddMission={addMission}
+                            onRemoveMission={removeMission}
+                            onSetMissionCompetence={setMissionCompetence}
+                            newMissionText={newMissionText}
+                            onNewMissionTextChange={setNewMissionText}
+                            newMissionCompetence={newMissionCompetence}
+                            onNewMissionCompetenceChange={setNewMissionCompetence}
+                            minMissions={minMissions}
+                            maxMissions={maxMissions}
+                            developCompetenceOptions={developCompetenceOptions}
+                            allCompetenceOptions={allCompetenceOptions}
+                            allowFullCompetenceList={allowFullCompetenceList}
                             trainings={trainings}
                             onTrainingsChange={setTrainings}
                         />
@@ -1176,7 +1289,7 @@ export function EvaluationPage() {
                                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
                                                 <CompetenceSummarySection
                                                     title={getString('strongCompetences')}
-                                                    accent="#00A651"
+                                                    accent={strongAccent}
                                                     options={strongOptions}
                                                     candidates={strongCandidates}
                                                     nameOf={competenceLabel}
@@ -1195,7 +1308,7 @@ export function EvaluationPage() {
                                                 />
                                                 <CompetenceSummarySection
                                                     title={getString('competencesToDevelop')}
-                                                    accent="#E02424"
+                                                    accent={developAccent}
                                                     options={developOptions}
                                                     candidates={developCandidates}
                                                     nameOf={competenceLabel}
@@ -1205,7 +1318,7 @@ export function EvaluationPage() {
                                                     drafts={developDrafts}
                                                     onDraftChange={(key, value) => setDevelopDrafts(prev => ({ ...prev, [key]: value }))}
                                                     onAddOption={key => addSummaryOption(setDevelopOptions, key)}
-                                                    onRemoveOption={key => removeSummaryOption(setDevelopOptions, key)}
+                                                    onRemoveOption={removeDevelopOption}
                                                     onAddComment={(key, text) => addSummaryComment(setDevelopOptions, key, text)}
                                                     onRemoveComment={(key, idx) => removeSummaryComment(setDevelopOptions, key, idx)}
                                                     onEditComment={(key, idx, text) => editSummaryComment(setDevelopOptions, key, idx, text)}
@@ -1266,7 +1379,7 @@ export function EvaluationPage() {
                 open={proposedOpen}
                 onClose={() => setProposedOpen(false)}
                 rseId={rid}
-                currentLevelId={currentLevelId}
+                currentLevelId={displayLevelId}
                 setSnackbar={setSnackbar}
                 canEdit={showEditing}
             />
@@ -1420,6 +1533,11 @@ export function EvaluationPage() {
                             { competence: pendingFlip?.name ?? '' },
                         )}
                     </DialogContentText>
+                    {pendingFlip?.missionLinked && (
+                        <DialogContentText sx={{ mt: 1.5, color: 'warning.main' }}>
+                            {getString('flipCompetenceMissionWarning', { competence: pendingFlip?.name ?? '' })}
+                        </DialogContentText>
+                    )}
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setPendingFlip(null)} sx={{ textTransform: 'none' }}>
@@ -1432,6 +1550,30 @@ export function EvaluationPage() {
                         sx={{ textTransform: 'none' }}
                     >
                         {getString('flipCompetenceConfirm')}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Confirm a direct removal of a to-develop competence that is linked to a
+                mission — the link is dropped on confirm (allow-full off only). */}
+            <Dialog open={pendingDevelopRemoval != null} onClose={() => setPendingDevelopRemoval(null)} maxWidth="xs" fullWidth>
+                <DialogTitle>{getString('removeDevelopCompetenceTitle')}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        {getString('flipCompetenceMissionWarning', { competence: pendingDevelopRemoval?.name ?? '' })}
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setPendingDevelopRemoval(null)} sx={{ textTransform: 'none' }}>
+                        {getString('cancel')}
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color="error"
+                        onClick={confirmDevelopRemoval}
+                        sx={{ textTransform: 'none' }}
+                    >
+                        {getString('delete')}
                     </Button>
                 </DialogActions>
             </Dialog>

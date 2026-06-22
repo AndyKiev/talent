@@ -25,3 +25,13 @@ export function useBooleanSetting(key: string): { enabled: boolean; isLoading: b
     const { value, isLoading } = useAppSetting(key);
     return { enabled: value === true, isLoading };
 }
+
+/**
+ * Convenience wrapper for integer settings. Returns the numeric value, or
+ * `fallback` while loading / when the setting is missing or non-numeric.
+ */
+export function useIntegerSetting(key: string, fallback: number): { value: number; isLoading: boolean } {
+    const { value, isLoading } = useAppSetting(key);
+    const num = typeof value === 'number' ? value : Number(value);
+    return { value: Number.isFinite(num) ? num : fallback, isLoading };
+}

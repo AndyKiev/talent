@@ -572,9 +572,20 @@ class ReviewSessionEmployeeService(BaseService):
                 return None
             return await self._translate(lvl.name_key, fallback=lvl.name_key)
 
-        current_level = await _level_name(
+        # Every employee shows a level: fall back to the base level (lowest
+        # sort_order, active) when none is set, so the album never shows a blank.
+        effective_current_level_id = (
             getattr(emp, "current_level_id", None) if emp else None
         )
+        if not effective_current_level_id:
+            base_lvl = await self.session.scalar(
+                select(ReviewLevel)
+                .where(ReviewLevel.is_active.is_(True))
+                .order_by(ReviewLevel.sort_order)
+                .limit(1)
+            )
+            effective_current_level_id = base_lvl.id if base_lvl else None
+        current_level = await _level_name(effective_current_level_id)
 
         registration = await self.session.scalar(
             select(ReviewSessionEmployeeLevel).where(
@@ -620,7 +631,7 @@ class ReviewSessionEmployeeService(BaseService):
         # when BOTH a current and a proposed level exist.
         level_sense = None
         proposed_level_sense = None
-        current_level_id = getattr(emp, "current_level_id", None) if emp else None
+        current_level_id = effective_current_level_id
         if registration and current_level_id:
             cur_lvl = await self.session.get(ReviewLevel, current_level_id)
             prop_lvl = await self.session.get(ReviewLevel, registration.level_id)
@@ -783,7 +794,9 @@ class ReviewSessionEmployeeService(BaseService):
             "employee_feedback": record.employee_feedback,
             "manager_feedback": record.manager_feedback,
             "training_done": record.trainings,
-            "idp_missions": self._development_missions(record.development_plan),
+            "idp_missions": self._development_missions(
+                record.development_plan, dim_meta
+            ),
             "strengths": self._competence_summary_text(
                 record.competence_summary, "strong"
             ),
@@ -807,17 +820,47 @@ class ReviewSessionEmployeeService(BaseService):
         )
 
     @staticmethod
-    def _development_missions(development_plan: Optional[str]) -> list[str]:
-        """development_plan is a JSON array of mission strings (per the model)."""
+    def _development_missions(
+        development_plan: Optional[str],
+        dim_meta: dict[str, tuple[str, str]],
+    ) -> list[dict]:
+        """development_plan is a JSON array of missions. Accepts BOTH the legacy
+        shape (plain strings) and the new shape ({text, dimension_key}). Returns
+        enriched dicts {text, dimension_key, name, color} so the album can show
+        each mission's linked competence in its own color (same as the page)."""
         if not development_plan:
             return []
         import json
 
         try:
             arr = json.loads(development_plan)
-            return [str(x) for x in arr if str(x).strip()]
         except (ValueError, TypeError):
-            return [development_plan]
+            arr = [development_plan]
+        if not isinstance(arr, list):
+            return []
+
+        out: list[dict] = []
+        for item in arr:
+            if isinstance(item, dict):
+                text = str(item.get("text") or "").strip()
+                key = item.get("dimension_key")
+            else:
+                text = str(item or "").strip()
+                key = None
+            if not text:
+                continue
+            name, color = (None, None)
+            if key:
+                name, color = dim_meta.get(str(key), (None, None))
+            out.append(
+                {
+                    "text": text,
+                    "dimension_key": str(key) if key else None,
+                    "name": name,
+                    "color": color,
+                }
+            )
+        return out
 
     @staticmethod
     def _competence_summary_text(
