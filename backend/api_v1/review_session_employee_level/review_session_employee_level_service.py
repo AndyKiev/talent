@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import delete, text
+from sqlalchemy import delete, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
@@ -27,6 +27,7 @@ from backend.api_v1.review_session_employee_level.review_session_employee_level_
 )
 from backend.api_v1.review_session_employee_level.review_session_employee_level_errors import (
     ProposedLevelNotFound,
+    ProposedLevelStepTooHigh,
 )
 from backend.api_v1.review_session_employee.review_session_employee_repository import (
     ReviewSessionEmployeeRepository,
@@ -77,6 +78,39 @@ class ReviewSessionEmployeeLevelService(BaseService):
             return None
         return ProposedLevelSchema.model_validate(record)
 
+    async def _assert_step_allowed(self, rse_id: int, target_level_id: int) -> None:
+        """Enforce the +1 rule: a proposed level may be at most one rank above the
+        employee's current level (no +2 jumps). Decreases are unrestricted. Rank is
+        the position in the sort_order-ordered active-level list, so the rule stays
+        correct even when sort_order values have gaps."""
+        from backend.api_v1.review_session_employee.review_session_employee_model import (
+            ReviewSessionEmployee,
+        )
+        from backend.api_v1.employee.employee_model import Employee
+        from backend.api_v1.review_level.review_level_model import ReviewLevel
+
+        rse = await self.session.get(ReviewSessionEmployee, rse_id)
+        current_level_id = None
+        if rse is not None:
+            emp = await self.session.get(Employee, rse.employee_id)
+            current_level_id = getattr(emp, "current_level_id", None) if emp else None
+
+        levels = (
+            await self.session.scalars(
+                select(ReviewLevel)
+                .where(ReviewLevel.is_active.is_(True))
+                .order_by(ReviewLevel.sort_order)
+            )
+        ).all()
+        ranks = {lvl.id: i for i, lvl in enumerate(levels)}
+        target_rank = ranks.get(target_level_id)
+        if target_rank is None:
+            return  # unknown/inactive target — leave it to other validation
+        # No current level → baseline is the base level (rank 0).
+        current_rank = ranks.get(current_level_id, 0) if current_level_id else 0
+        if target_rank > current_rank + 1:
+            raise await self._resolve_domain_error(ProposedLevelStepTooHigh())
+
     async def upsert_proposed_level(
         self, rse_id: int, payload: ProposedLevelUpsert
     ) -> MutationResponse[ProposedLevelSchema]:
@@ -92,6 +126,12 @@ class ReviewSessionEmployeeLevelService(BaseService):
         )
 
         record = await self._get_by_rse(rse_id)
+        # Enforce the +1 step rule only when the level is actually being set or
+        # changed — NOT on answer-only autosaves (those re-send the same level_id,
+        # and a record already above +1, e.g. after the employee's current level was
+        # later lowered, must still accept comment edits).
+        if record is None or record.level_id != payload.level_id:
+            await self._assert_step_allowed(rse_id, payload.level_id)
         if record is None:
             record = ReviewSessionEmployeeLevel(
                 review_session_employee_id=rse_id,

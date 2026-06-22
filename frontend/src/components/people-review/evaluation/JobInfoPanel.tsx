@@ -1,14 +1,17 @@
+import { useState } from 'react';
 import {
     Box,
     Button,
     Chip,
     FormControl,
-    InputLabel,
+    IconButton,
     MenuItem,
     Select,
     Stack,
+    Tooltip,
     Typography,
 } from '@mui/material';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import WorkOutlineIcon from '@mui/icons-material/WorkOutline';
 import ApartmentIcon from '@mui/icons-material/Apartment';
 import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
@@ -19,7 +22,7 @@ import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import type { GetStringFn } from '../../../types/getStringFn';
 import { useTheme } from '../../theme/ThemeContext';
 import { formatDate } from '../../../utils/date';
-import type { ReviewLevelLite } from '../peopleReviewApi';
+import type { ReviewLevelLite, ProposedLevelStatus } from '../peopleReviewApi';
 import { FactItem } from './FactItem';
 
 interface Props {
@@ -45,7 +48,16 @@ interface Props {
     proposedLevelName: string | null;
     // How the proposed level compares to the current one (null when not both set).
     proposedLevelSense: 'increase' | 'same' | 'decrease' | null;
+    // Lifecycle status of the saved proposal (null when none saved yet).
+    proposedLevelStatus: ProposedLevelStatus | null;
 }
+
+// Proposal lifecycle status → Chip colour + translation key (mirrors ProposedLevelDrawer).
+const STATUS_META: Record<ProposedLevelStatus, { labelKey: string; chipColor: 'default' | 'success' | 'error' }> = {
+    proposed: { labelKey: 'proposedLevelStatusProposed', chipColor: 'default' },
+    validated: { labelKey: 'proposedLevelStatusValidated', chipColor: 'success' },
+    rejected: { labelKey: 'proposedLevelStatusRejected', chipColor: 'error' },
+};
 
 // Icon + colour + comment-key per level sense, shown above/inside the proposed chip.
 const SENSE_META: Record<
@@ -64,11 +76,16 @@ export function JobInfoPanel({
     jobAssignedDate, positionDuration, showEdit,
     onEditHire, onEditJobAssigned,
     levels, currentLevelId, onCurrentLevelChange, currentLevelDisabled,
-    onOpenProposed, proposedLevelName, proposedLevelSense,
+    onOpenProposed, proposedLevelName, proposedLevelSense, proposedLevelStatus,
 }: Props) {
     const { t } = useTheme();
     const sense = proposedLevelSense ? SENSE_META[proposedLevelSense] : null;
     const SenseIcon = sense?.icon;
+    // Current level: shown as a chip by default; the edit pencil swaps it for the
+    // (chip-height) select. The pencil is hidden in presentation/view-only mode.
+    const [editingLevel, setEditingLevel] = useState(false);
+    const currentLevel = levels.find((lvl) => lvl.id === currentLevelId);
+    const currentLevelLabel = currentLevel ? getString(currentLevel.name_key) : '—';
     return (
         <Stack spacing={2.5}>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, rowGap: 1.5 }}>
@@ -100,25 +117,60 @@ export function JobInfoPanel({
 
             {/* Current competency level + proposed level (drawer) */}
             <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" rowGap={1}>
-                <FormControl size="small" sx={{ minWidth: 200, maxWidth: 280 }}>
-                    <InputLabel>{getString('currentLevel')}</InputLabel>
-                    <Select
-                        variant="outlined"
-                        label={getString('currentLevel')}
-                        value={currentLevelId ? String(currentLevelId) : ''}
-                        onChange={(e) => onCurrentLevelChange(Number(e.target.value))}
-                        disabled={currentLevelDisabled}
-                    >
-                        {levels
-                            .slice()
-                            .sort((a, b) => a.sort_order - b.sort_order)
-                            .map((lvl) => (
-                                <MenuItem key={lvl.id} value={String(lvl.id)}>
-                                    {getString(lvl.name_key)}
-                                </MenuItem>
-                            ))}
-                    </Select>
-                </FormControl>
+                <Stack spacing={0.25} alignItems="flex-start">
+                    <Typography variant="caption" color={t.textMuted} sx={{ lineHeight: 1.1 }}>
+                        {getString('currentLevel')}
+                    </Typography>
+                    {editingLevel ? (
+                        <FormControl size="small" sx={{ minWidth: 200, maxWidth: 280 }}>
+                            <Select
+                                variant="outlined"
+                                defaultOpen
+                                value={currentLevelId ? String(currentLevelId) : ''}
+                                onChange={(e) => {
+                                    onCurrentLevelChange(Number(e.target.value));
+                                    setEditingLevel(false);
+                                }}
+                                onClose={() => setEditingLevel(false)}
+                                disabled={currentLevelDisabled}
+                                sx={{
+                                    height: 24,
+                                    fontSize: 13,
+                                    '& .MuiSelect-select': { py: 0, display: 'flex', alignItems: 'center' },
+                                }}
+                            >
+                                {levels
+                                    .slice()
+                                    .sort((a, b) => a.sort_order - b.sort_order)
+                                    .map((lvl) => (
+                                        <MenuItem key={lvl.id} value={String(lvl.id)}>
+                                            {getString(lvl.name_key)}
+                                        </MenuItem>
+                                    ))}
+                            </Select>
+                        </FormControl>
+                    ) : (
+                        <Stack direction="row" spacing={0.5} alignItems="center">
+                            <Chip
+                                size="small"
+                                label={currentLevelLabel}
+                                sx={{ fontWeight: 700, fontSize: 12, bgcolor: `${t.accent}18`, color: t.accent }}
+                            />
+                            {showEdit && (
+                                <Tooltip title={getString('editCurrentLevel')} placement="top">
+                                    <IconButton
+                                        size="small"
+                                        onClick={() => setEditingLevel(true)}
+                                        disabled={currentLevelDisabled}
+                                        sx={{ p: 0.2 }}
+                                    >
+                                        <EditOutlinedIcon sx={{ fontSize: 14 }} />
+                                    </IconButton>
+                                </Tooltip>
+                            )}
+                        </Stack>
+                    )}
+                </Stack>
 
                 <Button
                     size="small"
@@ -138,17 +190,27 @@ export function JobInfoPanel({
                                 {getString(sense.labelKey)}
                             </Typography>
                         )}
-                        <Chip
-                            size="small"
-                            icon={SenseIcon ? <SenseIcon sx={{ fontSize: 16, color: `${sense!.color} !important` }} /> : undefined}
-                            label={proposedLevelName}
-                            sx={{
-                                fontWeight: 700,
-                                fontSize: 12,
-                                bgcolor: sense ? `${sense.color}18` : `${t.accent}18`,
-                                color: sense ? sense.color : t.accent,
-                            }}
-                        />
+                        <Stack direction="row" spacing={0.5} alignItems="center">
+                            <Chip
+                                size="small"
+                                icon={SenseIcon ? <SenseIcon sx={{ fontSize: 16, color: `${sense!.color} !important` }} /> : undefined}
+                                label={proposedLevelName}
+                                sx={{
+                                    fontWeight: 700,
+                                    fontSize: 12,
+                                    bgcolor: sense ? `${sense.color}18` : `${t.accent}18`,
+                                    color: sense ? sense.color : t.accent,
+                                }}
+                            />
+                            {proposedLevelStatus && (
+                                <Chip
+                                    size="small"
+                                    color={STATUS_META[proposedLevelStatus].chipColor}
+                                    label={getString(STATUS_META[proposedLevelStatus].labelKey)}
+                                    sx={{ fontWeight: 700, fontSize: 11 }}
+                                />
+                            )}
+                        </Stack>
                     </Stack>
                 )}
             </Stack>

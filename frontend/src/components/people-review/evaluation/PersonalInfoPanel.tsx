@@ -1,8 +1,9 @@
-import { type Dispatch, type SetStateAction } from 'react';
+import { useState, type Dispatch, type SetStateAction } from 'react';
 import {
     Box,
+    Chip,
     FormControl,
-    InputLabel,
+    IconButton,
     MenuItem,
     Select,
     Stack,
@@ -10,6 +11,7 @@ import {
     Typography,
 } from '@mui/material';
 import CakeOutlinedIcon from '@mui/icons-material/CakeOutlined';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import LanguageOutlinedIcon from '@mui/icons-material/LanguageOutlined';
 import type { GetStringFn } from '../../../types/getStringFn';
@@ -54,6 +56,9 @@ export function PersonalInfoPanel({
     onSuccess, onError,
 }: Props) {
     const { t } = useTheme();
+    // Which language is being edited inline; null when none. Mirrors the
+    // current-level field on JobInfoPanel: a chip by default, the select on edit.
+    const [editingLang, setEditingLang] = useState<string | null>(null);
 
     // Translate CEFR level label/hint by code, falling back to the DB value.
     const translatedOr = (key: string, fallback: string) => {
@@ -138,52 +143,84 @@ export function PersonalInfoPanel({
                         </Tooltip>
                     )}
                 </Stack>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'flex-start' }}>
                     {FOREIGN_LANGUAGES.map(({ key, labelKey }) => {
                         const selId = langSel[key] ?? null;
                         const selected = langLevels.find(l => l.id === selId);
+                        const chipLabel = selected
+                            ? (langLevelLabel(selected.code, selected.label)
+                                ? `${selected.code} · ${langLevelLabel(selected.code, selected.label)}`
+                                : selected.code)
+                            : '—';
                         return (
-                            <FormControl key={key} size="small" sx={{ width: 190 }}>
-                                <InputLabel id={`lang-${key}-label`}>{getString(labelKey)}</InputLabel>
-                                <Select
-                                    variant="outlined"
-                                    labelId={`lang-${key}-label`}
-                                    label={getString(labelKey)}
-                                    value={selId == null ? '' : String(selId)}
-                                    disabled={!isEditable}
-                                    onChange={(e) => {
-                                        const v = e.target.value;
-                                        setLangSel(prev => ({ ...prev, [key]: v === '' ? null : Number(v) }));
-                                    }}
-                                    renderValue={() => {
-                                        if (!selected) return '';
-                                        const label = langLevelLabel(selected.code, selected.label);
-                                        return label ? `${selected.code} · ${label}` : selected.code;
-                                    }}
-                                >
-                                    <MenuItem value=""><em>—</em></MenuItem>
-                                    {langLevels.map(l => {
-                                        const label = langLevelLabel(l.code, l.label);
-                                        const hint = langLevelHint(l.code, l.hint);
-                                        return (
-                                            <MenuItem key={l.id} value={String(l.id)}>
-                                                <Stack direction="row" alignItems="center" spacing={1} sx={{ width: '100%' }}>
-                                                    <span>{l.code}{label ? ` · ${label}` : ''}</span>
-                                                    {hint && (
-                                                        <Tooltip title={hint} placement="right" arrow>
-                                                            <InfoOutlinedIcon
-                                                                fontSize="small"
-                                                                sx={{ ml: 'auto', color: t.textMuted, cursor: 'help' }}
-                                                                onClick={(e) => e.stopPropagation()}
-                                                            />
-                                                        </Tooltip>
-                                                    )}
-                                                </Stack>
-                                            </MenuItem>
-                                        );
-                                    })}
-                                </Select>
-                            </FormControl>
+                            <Stack key={key} spacing={0.25} alignItems="flex-start">
+                                <Typography variant="caption" color={t.textMuted} sx={{ lineHeight: 1.1 }}>
+                                    {getString(labelKey)}
+                                </Typography>
+                                {editingLang === key ? (
+                                    <FormControl size="small" sx={{ width: 190 }}>
+                                        <Select
+                                            variant="outlined"
+                                            defaultOpen
+                                            value={selId == null ? '' : String(selId)}
+                                            disabled={!isEditable}
+                                            onChange={(e) => {
+                                                const v = e.target.value;
+                                                setLangSel(prev => ({ ...prev, [key]: v === '' ? null : Number(v) }));
+                                                setEditingLang(null);
+                                            }}
+                                            onClose={() => setEditingLang(null)}
+                                            sx={{
+                                                height: 24,
+                                                fontSize: 13,
+                                                '& .MuiSelect-select': { py: 0, display: 'flex', alignItems: 'center' },
+                                            }}
+                                            renderValue={() => {
+                                                if (!selected) return '';
+                                                const label = langLevelLabel(selected.code, selected.label);
+                                                return label ? `${selected.code} · ${label}` : selected.code;
+                                            }}
+                                        >
+                                            <MenuItem value=""><em>—</em></MenuItem>
+                                            {langLevels.map(l => {
+                                                const label = langLevelLabel(l.code, l.label);
+                                                const hint = langLevelHint(l.code, l.hint);
+                                                return (
+                                                    <MenuItem key={l.id} value={String(l.id)}>
+                                                        <Stack direction="row" alignItems="center" spacing={1} sx={{ width: '100%' }}>
+                                                            <span>{l.code}{label ? ` · ${label}` : ''}</span>
+                                                            {hint && (
+                                                                <Tooltip title={hint} placement="right" arrow>
+                                                                    <InfoOutlinedIcon
+                                                                        fontSize="small"
+                                                                        sx={{ ml: 'auto', color: t.textMuted, cursor: 'help' }}
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                    />
+                                                                </Tooltip>
+                                                            )}
+                                                        </Stack>
+                                                    </MenuItem>
+                                                );
+                                            })}
+                                        </Select>
+                                    </FormControl>
+                                ) : (
+                                    <Stack direction="row" spacing={0.5} alignItems="center">
+                                        <Chip
+                                            size="small"
+                                            label={chipLabel}
+                                            sx={{ fontWeight: 700, fontSize: 12, bgcolor: `${t.accent}18`, color: t.accent }}
+                                        />
+                                        {isEditable && (
+                                            <Tooltip title={getString('edit')} placement="top">
+                                                <IconButton size="small" onClick={() => setEditingLang(key)} sx={{ p: 0.2 }}>
+                                                    <EditOutlinedIcon sx={{ fontSize: 14 }} />
+                                                </IconButton>
+                                            </Tooltip>
+                                        )}
+                                    </Stack>
+                                )}
+                            </Stack>
                         );
                     })}
                 </Box>

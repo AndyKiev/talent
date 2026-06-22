@@ -1040,6 +1040,7 @@ export function EvaluationPage() {
                                     onOpenProposed={() => setProposedOpen(true)}
                                     proposedLevelName={proposedLevelName}
                                     proposedLevelSense={proposedLevelSense}
+                                    proposedLevelStatus={proposedLevel?.status ?? null}
                                 />
                             }
                             employeeFeedback={employeeFeedback}
@@ -1171,6 +1172,7 @@ export function EvaluationPage() {
                 open={proposedOpen}
                 onClose={() => setProposedOpen(false)}
                 rseId={rid}
+                currentLevelId={currentLevelId}
                 setSnackbar={setSnackbar}
                 canEdit={showEditing}
             />

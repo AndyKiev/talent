@@ -6,6 +6,11 @@ import {
     Button,
     Chip,
     CircularProgress,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
     Divider,
     Drawer,
     IconButton,
@@ -75,6 +80,9 @@ interface Props {
     open: boolean;
     onClose: () => void;
     rseId: number;
+    /** The employee's current competency level — baseline for the +1 step rule and
+     *  the decrease confirmation. Null when the employee has no level yet. */
+    currentLevelId: number | null;
     setSnackbar: (s: { open: boolean; message: string; severity: 'success' | 'error' }) => void;
     /**
      * When false the drawer is view-only — the level select is disabled, the
@@ -88,7 +96,7 @@ interface Props {
     canEdit?: boolean;
 }
 
-export function ProposedLevelDrawer({ open, onClose, rseId, setSnackbar, canEdit = true }: Props) {
+export function ProposedLevelDrawer({ open, onClose, rseId, currentLevelId, setSnackbar, canEdit = true }: Props) {
     const getString = useString();
     const qc = useQueryClient();
 
@@ -118,6 +126,11 @@ export function ProposedLevelDrawer({ open, onClose, rseId, setSnackbar, canEdit
     // Which comment row (requirement id + index) is being edited inline; null when none.
     const [editing, setEditing] = useState<{ reqId: number; index: number } | null>(null);
     const [confirmDelete, setConfirmDelete] = useState(false);
+    // A level switch awaiting confirmation: it would discard registered answers
+    // (losesData) and/or proposes a level below the current one (isDecrement).
+    const [pendingLevel, setPendingLevel] = useState<
+        { value: number; losesData: boolean; isDecrement: boolean } | null
+    >(null);
     // Which requirement "tab" (by index) is shown — picked via the chip row below,
     // so only one requirement's facts + input occupy the screen at a time.
     const [activeReqIndex, setActiveReqIndex] = useState(0);
@@ -141,6 +154,21 @@ export function ProposedLevelDrawer({ open, onClose, rseId, setSnackbar, canEdit
         () => levels.filter((l) => l.sort_order > 0).sort((a, b) => a.sort_order - b.sort_order),
         [levels],
     );
+
+    // Step rule: the proposed level may be at most one RANK above the employee's
+    // current level (no +2 jumps); decreases are unlimited but need confirmation.
+    // Rank = position in the sort_order-ordered level list, so the +1 rule holds
+    // even when sort_order values have gaps.
+    const sortedLevels = useMemo(
+        () => [...levels].sort((a, b) => a.sort_order - b.sort_order),
+        [levels],
+    );
+    const rankOf = (id: number | null | undefined) =>
+        id == null ? -1 : sortedLevels.findIndex((l) => l.id === id);
+    const currentRankRaw = rankOf(currentLevelId);
+    // No current level (or it isn't in the active list) → baseline is the base (rank 0).
+    const currentRank = currentRankRaw < 0 ? 0 : currentRankRaw;
+    const maxRank = currentRank + 1;
 
     // Hydrate the draft from any saved registration once the query has settled,
     // but only if no draft exists yet — so reopening preserves in-progress edits.
@@ -199,7 +227,8 @@ export function ProposedLevelDrawer({ open, onClose, rseId, setSnackbar, canEdit
         }
     }, AUTOSAVE_DELAY_MS);
 
-    const handleLevelChange = (value: number) => {
+    // Commit a level switch (after any required confirmation).
+    const applyLevelChange = (value: number) => {
         setLevelId(value);
         setActiveReqIndex(0); // a new level has its own requirement set
 
@@ -214,6 +243,22 @@ export function ProposedLevelDrawer({ open, onClose, rseId, setSnackbar, canEdit
         }
         setDrafts({});
         scheduleSave();
+    };
+
+    // Gate the switch: confirm when it would discard registered answers, or when
+    // the target is below the employee's current level (a decrease). Otherwise the
+    // switch is applied immediately. On confirm-needed we touch NO state, so the
+    // select snaps back to the current value if the user cancels.
+    const handleLevelChange = (value: number) => {
+        if (value === levelId) return;
+        const losesData = filledCount > 0 && !(proposed && proposed.level_id === value);
+        const targetRank = rankOf(value);
+        const isDecrement = currentRankRaw >= 0 && targetRank >= 0 && targetRank < currentRank;
+        if (losesData || isDecrement) {
+            setPendingLevel({ value, losesData, isDecrement });
+            return;
+        }
+        applyLevelChange(value);
     };
 
     const addComment = (reqId: number) => {
@@ -310,11 +355,16 @@ export function ProposedLevelDrawer({ open, onClose, rseId, setSnackbar, canEdit
                         value={levelId === '' ? '' : String(levelId)}
                         onChange={(e) => handleLevelChange(Number(e.target.value))}
                         disabled={!canEdit}
+                        helperText={getString('proposedLevelStepHint')}
                         fullWidth
                         sx={{ mb: 2 }}
                     >
                         {selectableLevels.map((lvl) => (
-                            <MenuItem key={lvl.id} value={String(lvl.id)}>
+                            <MenuItem
+                                key={lvl.id}
+                                value={String(lvl.id)}
+                                disabled={rankOf(lvl.id) > maxRank}
+                            >
                                 {getString(lvl.name_key)}
                             </MenuItem>
                         ))}
@@ -540,6 +590,34 @@ export function ProposedLevelDrawer({ open, onClose, rseId, setSnackbar, canEdit
                 onConfirm={() => deleteMut.mutate()}
                 onClose={() => setConfirmDelete(false)}
             />
+
+            {/* Confirm a level switch that loses registered data and/or decreases the level. */}
+            <Dialog open={pendingLevel !== null} onClose={() => setPendingLevel(null)} maxWidth="xs" fullWidth>
+                <DialogTitle>{getString('confirmProposedLevelChangeTitle')}</DialogTitle>
+                <DialogContent>
+                    {pendingLevel?.isDecrement && (
+                        <DialogContentText>{getString('confirmProposedLevelDecrement')}</DialogContentText>
+                    )}
+                    {pendingLevel?.losesData && (
+                        <DialogContentText sx={{ mt: pendingLevel?.isDecrement ? 1 : 0 }}>
+                            {getString('confirmProposedLevelDataLoss')}
+                        </DialogContentText>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setPendingLevel(null)}>{getString('cancel')}</Button>
+                    <Button
+                        variant="contained"
+                        color="warning"
+                        onClick={() => {
+                            if (pendingLevel) applyLevelChange(pendingLevel.value);
+                            setPendingLevel(null);
+                        }}
+                    >
+                        {getString('continue')}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </>
     );
 }
