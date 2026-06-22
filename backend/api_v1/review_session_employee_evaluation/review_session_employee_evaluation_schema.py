@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional, List
+from typing import Optional, List, Literal
 
 from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_constants import (
     MAX_GRADE,
@@ -51,3 +51,16 @@ class EvaluationBulkUpdate(BaseModel):
     # Per-descriptor (hint bullet) star ratings. When provided, the server
     # replaces the stored set and recomputes mean_score (+ legacy rounded score).
     criterion_scores: Optional[List[CriterionScoreInput]] = None
+
+
+class EvaluationFlipCompetence(BaseModel):
+    """A confirmed re-rating that moves a competence to the opposite summary
+    list. Atomic: the single descriptor score is set, the leaving side's dim
+    column is cleared, and the competence is stripped from the RSE's
+    competence_summary JSON — all in one transaction (commit once, rollback on
+    failure). `leaving_side` is the summary list the competence is removed from:
+    "strong" clears `facts`, "develop" clears `improvement`."""
+
+    criterion_index: int = Field(..., ge=0)
+    new_score: int = Field(..., ge=1, le=MAX_GRADE)
+    leaving_side: Literal["strong", "develop"]

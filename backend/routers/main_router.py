@@ -192,6 +192,14 @@ from backend.api_v1.process_roles.oversight_manager.oversight_manager_views impo
     router as oversight_manager_router,
 )
 
+# App settings (typed key/value)
+from backend.api_v1.setting_value_type.setting_value_type_views import (
+    router as setting_value_type_router,
+)
+from backend.api_v1.app_setting.app_setting_views import (
+    router as app_setting_router,
+)
+
 
 router = APIRouter(prefix=settings.api_v1_prefix)
 
@@ -272,3 +280,7 @@ router.include_router(process_role_holder_employee_link_router)
 router.include_router(process_role_holder_department_link_router)
 router.include_router(process_role_active_context_router)
 router.include_router(oversight_manager_router)
+
+# App settings (typed key/value)
+router.include_router(setting_value_type_router)
+router.include_router(app_setting_router)

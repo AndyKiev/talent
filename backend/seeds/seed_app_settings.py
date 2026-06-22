@@ -1,0 +1,70 @@
+import asyncio
+
+from sqlalchemy import select
+
+from backend.database.db_helper import db_helper
+from backend.api_v1.setting_value_type.setting_value_type_model import SettingValueType
+from backend.api_v1.app_setting.app_setting_model import AppSetting
+
+
+# Value types — the catalog that says how to read a setting's JSON value.
+VALUE_TYPES = [
+    {"key": "boolean", "name": "Boolean"},
+    {"key": "integer", "name": "Integer"},
+    {"key": "date", "name": "Date"},
+    {"key": "json", "name": "JSON / config"},
+]
+
+# Initial settings. label_key / description_key are translation keys resolved
+# in the developer UI via getString.
+APP_SETTINGS = [
+    {
+        "key": "people_review_edit_talent_status",
+        "value": False,
+        "value_type_key": "boolean",
+        "label_key": "settingPeopleReviewEditTalentStatus",
+        "description_key": "settingPeopleReviewEditTalentStatusDesc",
+    },
+]
+
+
+async def seed_app_settings():
+    async with db_helper.session_factory() as session:
+        # 1) Value types
+        type_by_key: dict[str, SettingValueType] = {}
+        for vt in VALUE_TYPES:
+            result = await session.execute(
+                select(SettingValueType).where(SettingValueType.key == vt["key"])
+            )
+            existing = result.scalar_one_or_none()
+            if not existing:
+                existing = SettingValueType(key=vt["key"], name=vt["name"])
+                session.add(existing)
+                await session.flush()
+                print(f"Seeded value type: {vt['key']}")
+            type_by_key[vt["key"]] = existing
+
+        # 2) Settings
+        for s in APP_SETTINGS:
+            result = await session.execute(
+                select(AppSetting).where(AppSetting.key == s["key"])
+            )
+            if result.scalar_one_or_none():
+                print(f"App setting '{s['key']}' already seeded, skipping.")
+                continue
+            session.add(
+                AppSetting(
+                    key=s["key"],
+                    value=s["value"],
+                    value_type_id=type_by_key[s["value_type_key"]].id,
+                    label_key=s["label_key"],
+                    description_key=s["description_key"],
+                )
+            )
+            print(f"Seeded app setting: {s['key']}")
+
+        await session.commit()
+
+
+if __name__ == "__main__":
+    asyncio.run(seed_app_settings())

@@ -393,6 +393,27 @@ export const bulkUpdateEvaluations = async (
     return res.data;
 };
 
+// Atomically re-rate a competence so it moves to the opposite summary list:
+// in ONE backend transaction the descriptor score is set, the leaving side's dim
+// column (facts for "strong", improvement for "develop") is cleared, and the
+// competence is stripped from the RSE competence_summary. Rolls back on failure.
+export interface EvaluationFlipCompetence {
+    criterion_index: number;
+    new_score: number;
+    leaving_side: 'strong' | 'develop';
+}
+
+export const flipCompetence = async (
+    evaluationId: number,
+    payload: EvaluationFlipCompetence,
+): Promise<MutationResponse<Evaluation>> => {
+    const res = await axiosInstance.post<MutationResponse<Evaluation>>(
+        `${EVAL_BASE}/${evaluationId}/flip_competence`,
+        payload,
+    );
+    return res.data;
+};
+
 // --- Foreign languages ---
 export interface LanguageLevel {
     id: number;

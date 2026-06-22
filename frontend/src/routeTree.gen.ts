@@ -28,6 +28,7 @@ import { Route as AdminDepartments_groupRouteRouteImport } from './routes/admin/
 import { Route as People_reviewSessionIdIndexRouteImport } from './routes/people_review/$sessionId/index'
 import { Route as EmployeesEmployeeIdIndexRouteImport } from './routes/employees/$employeeId/index'
 import { Route as DeveloperTranslationsIndexRouteImport } from './routes/developer/translations/index'
+import { Route as DeveloperSettingsIndexRouteImport } from './routes/developer/settings/index'
 import { Route as DeveloperProcess_rolesIndexRouteImport } from './routes/developer/process_roles/index'
 import { Route as AdminUser_groups_groupIndexRouteImport } from './routes/admin/user_groups_group/index'
 import { Route as AdminUserGroupsIndexRouteImport } from './routes/admin/user-groups/index'
@@ -188,6 +189,11 @@ const DeveloperTranslationsIndexRoute =
     path: '/developer/translations/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const DeveloperSettingsIndexRoute = DeveloperSettingsIndexRouteImport.update({
+  id: '/developer/settings/',
+  path: '/developer/settings/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DeveloperProcess_rolesIndexRoute =
   DeveloperProcess_rolesIndexRouteImport.update({
     id: '/',
@@ -563,6 +569,7 @@ export interface FileRoutesByFullPath {
   '/admin/user-groups': typeof AdminUserGroupsIndexRoute
   '/admin/user_groups_group': typeof AdminUser_groups_groupIndexRoute
   '/developer/process_roles/': typeof DeveloperProcess_rolesIndexRoute
+  '/developer/settings': typeof DeveloperSettingsIndexRoute
   '/developer/translations': typeof DeveloperTranslationsIndexRoute
   '/employees/$employeeId/': typeof EmployeesEmployeeIdIndexRoute
   '/people_review/$sessionId': typeof People_reviewSessionIdIndexRoute
@@ -631,6 +638,7 @@ export interface FileRoutesByTo {
   '/admin/user-groups': typeof AdminUserGroupsIndexRoute
   '/admin/user_groups_group': typeof AdminUser_groups_groupIndexRoute
   '/developer/process_roles': typeof DeveloperProcess_rolesIndexRoute
+  '/developer/settings': typeof DeveloperSettingsIndexRoute
   '/developer/translations': typeof DeveloperTranslationsIndexRoute
   '/employees/$employeeId': typeof EmployeesEmployeeIdIndexRoute
   '/people_review/$sessionId': typeof People_reviewSessionIdIndexRoute
@@ -710,6 +718,7 @@ export interface FileRoutesById {
   '/admin/user-groups/': typeof AdminUserGroupsIndexRoute
   '/admin/user_groups_group/': typeof AdminUser_groups_groupIndexRoute
   '/developer/process_roles/': typeof DeveloperProcess_rolesIndexRoute
+  '/developer/settings/': typeof DeveloperSettingsIndexRoute
   '/developer/translations/': typeof DeveloperTranslationsIndexRoute
   '/employees/$employeeId/': typeof EmployeesEmployeeIdIndexRoute
   '/people_review/$sessionId/': typeof People_reviewSessionIdIndexRoute
@@ -790,6 +799,7 @@ export interface FileRouteTypes {
     | '/admin/user-groups'
     | '/admin/user_groups_group'
     | '/developer/process_roles/'
+    | '/developer/settings'
     | '/developer/translations'
     | '/employees/$employeeId/'
     | '/people_review/$sessionId'
@@ -858,6 +868,7 @@ export interface FileRouteTypes {
     | '/admin/user-groups'
     | '/admin/user_groups_group'
     | '/developer/process_roles'
+    | '/developer/settings'
     | '/developer/translations'
     | '/employees/$employeeId'
     | '/people_review/$sessionId'
@@ -936,6 +947,7 @@ export interface FileRouteTypes {
     | '/admin/user-groups/'
     | '/admin/user_groups_group/'
     | '/developer/process_roles/'
+    | '/developer/settings/'
     | '/developer/translations/'
     | '/employees/$employeeId/'
     | '/people_review/$sessionId/'
@@ -1005,6 +1017,7 @@ export interface RootRouteChildren {
   AdminUserGroupTypesIndexRoute: typeof AdminUserGroupTypesIndexRoute
   AdminUserGroupsIndexRoute: typeof AdminUserGroupsIndexRoute
   AdminUser_groups_groupIndexRoute: typeof AdminUser_groups_groupIndexRoute
+  DeveloperSettingsIndexRoute: typeof DeveloperSettingsIndexRoute
   DeveloperTranslationsIndexRoute: typeof DeveloperTranslationsIndexRoute
   People_reviewSessionIdIndexRoute: typeof People_reviewSessionIdIndexRoute
   People_reviewSessionIdEmployeeEmployeeIdRoute: typeof People_reviewSessionIdEmployeeEmployeeIdRoute
@@ -1147,6 +1160,13 @@ declare module '@tanstack/react-router' {
       path: '/developer/translations'
       fullPath: '/developer/translations'
       preLoaderRoute: typeof DeveloperTranslationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/developer/settings/': {
+      id: '/developer/settings/'
+      path: '/developer/settings'
+      fullPath: '/developer/settings'
+      preLoaderRoute: typeof DeveloperSettingsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/developer/process_roles/': {
@@ -1799,6 +1819,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminUserGroupTypesIndexRoute: AdminUserGroupTypesIndexRoute,
   AdminUserGroupsIndexRoute: AdminUserGroupsIndexRoute,
   AdminUser_groups_groupIndexRoute: AdminUser_groups_groupIndexRoute,
+  DeveloperSettingsIndexRoute: DeveloperSettingsIndexRoute,
   DeveloperTranslationsIndexRoute: DeveloperTranslationsIndexRoute,
   People_reviewSessionIdIndexRoute: People_reviewSessionIdIndexRoute,
   People_reviewSessionIdEmployeeEmployeeIdRoute:

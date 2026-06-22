@@ -34,3 +34,7 @@ export const PEOPLE_REVIEW_MY_SCOPES_QK = ['people_review_my_scopes'] as const;
 export const PEOPLE_REVIEW_MY_LATEST_QK = ['people_review_my_latest'] as const;
 export const OVERSIGHT_MANAGER_OPTIONS_QK = ['oversight_manager_options'] as const;
 export const MY_OVERSIGHT_MANAGER_QK = ['my_oversight_manager'] as const;
+// App settings (typed key/value)
+export const APP_SETTINGS_QK = ['app_settings'] as const;
+export const SETTING_VALUE_TYPES_QK = ['setting_value_types'] as const;
+export const appSettingByKeyQK = (key: string) => ['app_setting_by_key', key] as const;

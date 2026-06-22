@@ -15,6 +15,8 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
+import DoneIcon from '@mui/icons-material/Done';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import type { GetStringFn } from '../../../types/getStringFn';
 import type { SummaryOption } from './evaluationHelpers';
 import { InlineEditField } from './InlineEditField';
@@ -22,7 +24,7 @@ import { InlineEditField } from './InlineEditField';
 export function CompetenceSummarySection({
     title, accent, options, candidates, nameOf, colorOf, isEditable, getString,
     drafts, onDraftChange, onAddOption, onRemoveOption, onAddComment, onRemoveComment,
-    onEditComment, onSelectCompetence,
+    onEditComment, onReorderOption, onSelectCompetence,
 }: {
     title: string;
     accent: string;
@@ -39,11 +41,30 @@ export function CompetenceSummarySection({
     onAddComment: (key: string, text: string) => void;
     onRemoveComment: (key: string, index: number) => void;
     onEditComment: (key: string, index: number, text: string) => void;
+    onReorderOption: (fromIndex: number, toIndex: number) => void;
     onSelectCompetence: (key: string) => void;
 }) {
     const [pick, setPick] = useState('');
     // Which comment row (competence key + index) is being edited inline; null when none.
     const [editing, setEditing] = useState<{ key: string; index: number } | null>(null);
+    // Only ONE competence card may be open for editing at a time — its comment
+    // input box (and per-comment controls) show only while it is the active one.
+    const [editKey, setEditKey] = useState<string | null>(null);
+    // Section-level edit toggle: the whole box is read-only until the user opts in
+    // (so no input boxes / pickers are active by default). Mirrors the dimension
+    // facts/improvements and the data tabs.
+    const [sectionEditing, setSectionEditing] = useState(false);
+    const editingActive = isEditable && sectionEditing;
+
+    const exitSectionEdit = () => {
+        setSectionEditing(false);
+        setEditKey(null);
+        setEditing(null);
+        setPick('');
+    };
+    // Drag-to-reorder state (whole cards): index being dragged + current drop row.
+    const [dragIndex, setDragIndex] = useState<number | null>(null);
+    const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
     const submitComment = (key: string) => {
         const text = (drafts[key] ?? '').trim();
@@ -54,11 +75,24 @@ export function CompetenceSummarySection({
 
     return (
         <Box sx={{ flex: '1 1 340px', minWidth: 300 }}>
-            <Typography fontSize={11} fontWeight={700} color={accent} mb={1.5} textTransform="uppercase" letterSpacing="0.06em">
-                {title}
-            </Typography>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
+                <Typography fontSize={11} fontWeight={700} color={accent} textTransform="uppercase" letterSpacing="0.06em">
+                    {title}
+                </Typography>
+                {isEditable && (
+                    <Tooltip title={getString(sectionEditing ? 'doneEditing' : 'edit')}>
+                        <IconButton
+                            size="small"
+                            onClick={() => (sectionEditing ? exitSectionEdit() : setSectionEditing(true))}
+                            sx={{ p: 0.25, color: sectionEditing ? accent : undefined }}
+                        >
+                            {sectionEditing ? <DoneIcon sx={{ fontSize: 16 }} /> : <EditIcon sx={{ fontSize: 15 }} />}
+                        </IconButton>
+                    </Tooltip>
+                )}
+            </Stack>
 
-            {isEditable && candidates.length > 0 && (
+            {editingActive && candidates.length > 0 && (
                 <Stack direction="row" spacing={1} mb={2}>
                     <FormControl size="small" sx={{ flex: 1, minWidth: 0 }}>
                         <InputLabel id={`add-${title}-label`}>{getString('selectCompetence')}</InputLabel>
@@ -76,7 +110,8 @@ export function CompetenceSummarySection({
                     </FormControl>
                     <Button
                         variant="outlined" size="small" startIcon={<AddIcon />}
-                        onClick={() => { if (pick) { onAddOption(pick); setPick(''); } }}
+                        // Adding a competence opens it for editing right away.
+                        onClick={() => { if (pick) { onAddOption(pick); setEditKey(pick); setPick(''); } }}
                         disabled={!pick}
                         sx={{ textTransform: 'none', whiteSpace: 'nowrap' }}
                     >
@@ -86,40 +121,94 @@ export function CompetenceSummarySection({
             )}
 
             <Stack spacing={1.5}>
-                {options.map(opt => {
+                {options.map((opt, idx) => {
                     const color = colorOf(opt.dimension_key);
+                    const isCardEditing = editingActive && editKey === opt.dimension_key;
                     return (
-                    <Box key={opt.dimension_key} sx={{ border: `1px solid ${color}33`, borderRadius: '10px', p: 1.5 }}>
+                    <Box
+                        key={opt.dimension_key}
+                        onDragOver={(e) => {
+                            if (dragIndex == null || dragIndex === idx) return;
+                            e.preventDefault();
+                            if (dragOverIndex !== idx) setDragOverIndex(idx);
+                        }}
+                        onDragLeave={() => { if (dragOverIndex === idx) setDragOverIndex(null); }}
+                        onDrop={(e) => {
+                            e.preventDefault();
+                            if (dragIndex != null && dragIndex !== idx) onReorderOption(dragIndex, idx);
+                            setDragIndex(null);
+                            setDragOverIndex(null);
+                        }}
+                        sx={{
+                            border: `1px solid ${color}33`,
+                            borderRadius: '10px',
+                            p: 1.5,
+                            opacity: dragIndex === idx ? 0.4 : 1,
+                            borderTop: dragOverIndex === idx ? `2px solid ${color}` : undefined,
+                        }}
+                    >
                         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
-                            <Typography fontSize={13} fontWeight={700} color={color}>
-                                {nameOf(opt.dimension_key)}
-                            </Typography>
-                            {isEditable && (
-                                <Tooltip title={getString('removeOption')}>
-                                    <IconButton size="small" onClick={() => onRemoveOption(opt.dimension_key)} sx={{ p: 0.25 }}>
-                                        <CloseIcon sx={{ fontSize: 16 }} />
-                                    </IconButton>
-                                </Tooltip>
+                            <Stack direction="row" alignItems="center" spacing={0.5} sx={{ minWidth: 0 }}>
+                                {editingActive && (
+                                    <Tooltip title={getString('dragToReorder')}>
+                                        <Box
+                                            draggable
+                                            onDragStart={(e) => {
+                                                e.dataTransfer.effectAllowed = 'move';
+                                                setDragIndex(idx);
+                                            }}
+                                            onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
+                                            sx={{ display: 'flex', alignItems: 'center', cursor: 'grab', color: color, '&:active': { cursor: 'grabbing' } }}
+                                        >
+                                            <DragIndicatorIcon sx={{ fontSize: 16 }} />
+                                        </Box>
+                                    </Tooltip>
+                                )}
+                                <Typography fontSize={13} fontWeight={700} color={color} sx={{ wordBreak: 'break-word' }}>
+                                    {nameOf(opt.dimension_key)}
+                                </Typography>
+                            </Stack>
+                            {editingActive && (
+                                <Stack direction="row" alignItems="center" spacing={0.25}>
+                                    <Tooltip title={getString(isCardEditing ? 'doneEditing' : 'edit')}>
+                                        <IconButton
+                                            size="small"
+                                            onClick={() => setEditKey(isCardEditing ? null : opt.dimension_key)}
+                                            sx={{ p: 0.25, color: isCardEditing ? color : undefined }}
+                                        >
+                                            {isCardEditing ? <DoneIcon sx={{ fontSize: 16 }} /> : <EditIcon sx={{ fontSize: 15 }} />}
+                                        </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title={getString('removeOption')}>
+                                        <IconButton
+                                            size="small"
+                                            onClick={() => { if (editKey === opt.dimension_key) setEditKey(null); onRemoveOption(opt.dimension_key); }}
+                                            sx={{ p: 0.25 }}
+                                        >
+                                            <CloseIcon sx={{ fontSize: 16 }} />
+                                        </IconButton>
+                                    </Tooltip>
+                                </Stack>
                             )}
                         </Stack>
 
                         {opt.comments.length > 0 && (
                             <Box sx={{ mb: 1 }}>
-                                {opt.comments.map((comment, idx) => (
+                                {opt.comments.map((comment, cIdx) => (
                                     <Stack
-                                        key={`${opt.dimension_key}-c-${idx}`}
+                                        key={`${opt.dimension_key}-c-${cIdx}`}
                                         direction="row" alignItems="flex-start" spacing={0.5}
                                         sx={{ mb: 0.5, py: 0.25, px: 0.5, borderRadius: '6px', '&:hover': { bgcolor: color + '10' } }}
                                     >
-                                        <Typography fontSize={12} fontWeight={700} color={color} sx={{ minWidth: 20, pt: editing?.key === opt.dimension_key && editing.index === idx ? '8px' : '2px' }}>
-                                            {idx + 1}.
+                                        <Typography fontSize={12} fontWeight={700} color={color} sx={{ minWidth: 20, pt: editing?.key === opt.dimension_key && editing.index === cIdx ? '8px' : '2px' }}>
+                                            {cIdx + 1}.
                                         </Typography>
-                                        {isEditable && editing?.key === opt.dimension_key && editing.index === idx ? (
+                                        {isCardEditing && editing?.key === opt.dimension_key && editing.index === cIdx ? (
                                             <InlineEditField
                                                 initialValue={comment}
                                                 color={color}
                                                 getString={getString}
-                                                onSave={(text) => { onEditComment(opt.dimension_key, idx, text); setEditing(null); }}
+                                                onSave={(text) => { onEditComment(opt.dimension_key, cIdx, text); setEditing(null); }}
                                                 onCancel={() => setEditing(null)}
                                             />
                                         ) : (
@@ -127,16 +216,16 @@ export function CompetenceSummarySection({
                                                 <Typography fontSize={13} sx={{ flex: 1, pt: '2px', wordBreak: 'break-word' }}>
                                                     {comment}
                                                 </Typography>
-                                                {isEditable && (
+                                                {isCardEditing && (
                                                     <Tooltip title={getString('edit')}>
-                                                        <IconButton size="small" onClick={() => setEditing({ key: opt.dimension_key, index: idx })} sx={{ p: 0.25, mt: '-2px' }}>
+                                                        <IconButton size="small" onClick={() => setEditing({ key: opt.dimension_key, index: cIdx })} sx={{ p: 0.25, mt: '-2px' }}>
                                                             <EditIcon sx={{ fontSize: 13 }} />
                                                         </IconButton>
                                                     </Tooltip>
                                                 )}
-                                                {isEditable && (
+                                                {isCardEditing && (
                                                     <Tooltip title={getString('deleteComment')}>
-                                                        <IconButton size="small" onClick={() => onRemoveComment(opt.dimension_key, idx)} sx={{ p: 0.25, mt: '-2px' }}>
+                                                        <IconButton size="small" onClick={() => onRemoveComment(opt.dimension_key, cIdx)} sx={{ p: 0.25, mt: '-2px' }}>
                                                             <CloseIcon sx={{ fontSize: 13 }} />
                                                         </IconButton>
                                                     </Tooltip>
@@ -148,7 +237,7 @@ export function CompetenceSummarySection({
                             </Box>
                         )}
 
-                        {isEditable && (
+                        {isCardEditing && (
                             <Stack direction="row" spacing={2} alignItems="flex-start">
                                 <TextField
                                     size="small"

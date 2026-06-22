@@ -58,6 +58,7 @@ import {
     fetchTempoPngUrl,
     downloadTempoPdf,
     openTempoHtml,
+    flipCompetence,
 } from './peopleReviewApi';
 import { ProposedLevelDrawer } from './ProposedLevelDrawer';
 import { ReviewCommentsDrawer } from './ReviewCommentsDrawer';
@@ -71,12 +72,14 @@ import {
     type SummaryOption,
     type DraggedItem,
     type PendingMove,
+    type PendingFlip,
     RSE_STATUS_COLORS,
     getDimColor,
     competenceName,
     evalFilled,
     formatYearsMonths,
     rankedCompetences,
+    detectCompetenceFlip,
 } from './evaluation/evaluationHelpers';
 import {
     usePeopleReviewStore,
@@ -88,6 +91,8 @@ import { DimensionChart } from './evaluation/DimensionChart';
 import { CompetenceSummarySection } from './evaluation/CompetenceSummarySection';
 import { PersonalInfoPanel } from './evaluation/PersonalInfoPanel';
 import { JobInfoPanel } from './evaluation/JobInfoPanel';
+import { TalentStatusPeriodPanel } from './evaluation/TalentStatusPeriodPanel';
+import { useBooleanSetting } from '../../hooks/useAppSetting';
 import { EmployeeDataTabs } from './evaluation/EmployeeDataTabs';
 import { DimensionPanel } from './evaluation/DimensionPanel';
 import { useEvaluationAutosave } from './evaluation/useEvaluationAutosave';
@@ -103,6 +108,9 @@ export function EvaluationPage() {
     const { t } = useTheme();
     const getString = useString({ str });
     const myEmployeeId = useAuthStore((s) => s.user?.id) ?? null;
+    // Developer setting: when on, the talent status/period can be edited from
+    // inside people-review (otherwise it's read-only here). Display is unaffected.
+    const { enabled: canEditTalentStatus } = useBooleanSetting('people_review_edit_talent_status');
 
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
     const [activeTab, setActiveTab] = useState(0);
@@ -114,6 +122,9 @@ export function EvaluationPage() {
     const [dragOverTab, setDragOverTab] = useState<number | null>(null);
     const [dragOverFactIndex, setDragOverFactIndex] = useState<number | null>(null);
     const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
+    // A star re-rating held back because it would flip a competence to the
+    // opposite summary list — confirmed via a dialog, then applied atomically.
+    const [pendingFlip, setPendingFlip] = useState<PendingFlip | null>(null);
     const [newFactTexts, setNewFactTexts] = useState<Record<number, string>>({});
     const [newImprovementTexts, setNewImprovementTexts] = useState<Record<number, string>>({});
 
@@ -587,6 +598,21 @@ export function EvaluationPage() {
         setter(prev => prev.map(o => (o.dimension_key === key ? { ...o, comments: o.comments.filter((_, i) => i !== index) } : o)));
     const editSummaryComment = (setter: SummarySetter, key: string, index: number, text: string) =>
         setter(prev => prev.map(o => (o.dimension_key === key ? { ...o, comments: o.comments.map((c, i) => (i === index ? text.trim() : c)) } : o)));
+    // Reorder a whole competence card within its summary list (drop it *before*
+    // the target row — same convention as the in-competence fact reorder). The
+    // array order IS the persisted order: autosave serializes it as-is and the
+    // exports (HTML/PDF) flatten the bucket in this order, so no order number is
+    // stored and every view stays in sync.
+    const reorderSummaryOption = (setter: SummarySetter, from: number, toRow: number) => {
+        const to = from < toRow ? toRow - 1 : toRow;
+        if (from === to) return;
+        setter(prev => {
+            const next = [...prev];
+            const [moved] = next.splice(from, 1);
+            next.splice(to, 0, moved);
+            return next;
+        });
+    };
 
     // Set (or clear, when value is null) the score for one behaviour descriptor.
     const setCriterion = (evalId: number, index: number, value: number | null) => {
@@ -597,6 +623,63 @@ export function EvaluationPage() {
             else cs[index] = value;
             return { ...e, criterionScores: cs };
         }));
+    };
+
+    // Star-change entry point for the dimension tabs. A re-rating that would move
+    // a picked competence to the OPPOSITE summary list (by its new average) is held
+    // back and confirmed via a dialog (it deletes that competence + its linked
+    // facts/comments). Everything else applies immediately.
+    const handleCriterionChange = (evalId: number, index: number, value: number | null) => {
+        if (value == null) { setCriterion(evalId, index, value); return; }
+        const ev = localEvals.find(e => e.id === evalId);
+        if (!ev) { setCriterion(evalId, index, value); return; }
+        // Evaluate the flip on the hypothetical post-change scores.
+        const nextEvals = localEvals.map(e =>
+            e.id === evalId ? { ...e, criterionScores: { ...e.criterionScores, [index]: value } } : e,
+        );
+        const side = detectCompetenceFlip(
+            nextEvals, ev.dimension_key, isStrongPicked(ev.dimension_key), isDevelopPicked(ev.dimension_key),
+        );
+        if (!side) { setCriterion(evalId, index, value); return; }
+        setPendingFlip({ evalId, index, value, key: ev.dimension_key, side, name: competenceLabel(ev.dimension_key) });
+    };
+
+    // Confirm the held re-rating: flush other pending edits, then persist the flip
+    // atomically on the server (one transaction), then mirror that exact write into
+    // the local draft in a single update so the competence can never show in both
+    // lists. The follow-up autosave re-pushes the same values — idempotent.
+    const confirmFlip = async () => {
+        if (!pendingFlip) return;
+        const { evalId, index, value, key, side } = pendingFlip;
+        await flushAutosave();
+        try {
+            await flipCompetence(evalId, { criterion_index: index, new_score: value, leaving_side: side });
+        } catch (err) {
+            setSnackbar({ open: true, message: (err as Error).message, severity: 'error' });
+            return;
+        }
+        const dropKey = (rec: Record<string, string>) => {
+            if (!(key in rec)) return rec;
+            const next = { ...rec }; delete next[key]; return next;
+        };
+        updateEvalDraft(rid, (d) => ({
+            ...d,
+            localEvals: d.localEvals.map(e =>
+                e.id === evalId
+                    ? {
+                        ...e,
+                        criterionScores: { ...e.criterionScores, [index]: value },
+                        facts: side === 'strong' ? [] : e.facts,
+                        improvements: side === 'develop' ? [] : e.improvements,
+                    }
+                    : e,
+            ),
+            strongOptions: side === 'strong' ? d.strongOptions.filter(o => o.dimension_key !== key) : d.strongOptions,
+            developOptions: side === 'develop' ? d.developOptions.filter(o => o.dimension_key !== key) : d.developOptions,
+            strongDrafts: side === 'strong' ? dropKey(d.strongDrafts) : d.strongDrafts,
+            developDrafts: side === 'develop' ? dropKey(d.developDrafts) : d.developDrafts,
+        }));
+        setPendingFlip(null);
     };
 
     const addFact = (evalId: number, text: string) => {
@@ -1041,6 +1124,15 @@ export function EvaluationPage() {
                                     proposedLevelName={proposedLevelName}
                                     proposedLevelSense={proposedLevelSense}
                                     proposedLevelStatus={proposedLevel?.status ?? null}
+                                    talentStatusPanel={
+                                        <TalentStatusPeriodPanel
+                                            employeeId={employeeId}
+                                            editable={canEditTalentStatus && showEditing}
+                                            getString={getString}
+                                            onSuccess={(message) => setSnackbar({ open: true, message, severity: 'success' })}
+                                            onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
+                                        />
+                                    }
                                 />
                             }
                             employeeFeedback={employeeFeedback}
@@ -1098,6 +1190,7 @@ export function EvaluationPage() {
                                                     onAddComment={(key, text) => addSummaryComment(setStrongOptions, key, text)}
                                                     onRemoveComment={(key, idx) => removeSummaryComment(setStrongOptions, key, idx)}
                                                     onEditComment={(key, idx, text) => editSummaryComment(setStrongOptions, key, idx, text)}
+                                                    onReorderOption={(from, to) => reorderSummaryOption(setStrongOptions, from, to)}
                                                     onSelectCompetence={activateCompetenceTab}
                                                 />
                                                 <CompetenceSummarySection
@@ -1116,6 +1209,7 @@ export function EvaluationPage() {
                                                     onAddComment={(key, text) => addSummaryComment(setDevelopOptions, key, text)}
                                                     onRemoveComment={(key, idx) => removeSummaryComment(setDevelopOptions, key, idx)}
                                                     onEditComment={(key, idx, text) => editSummaryComment(setDevelopOptions, key, idx, text)}
+                                                    onReorderOption={(from, to) => reorderSummaryOption(setDevelopOptions, from, to)}
                                                     onSelectCompetence={activateCompetenceTab}
                                                 />
                                             </Box>
@@ -1149,7 +1243,7 @@ export function EvaluationPage() {
                                 setNewFactTexts={setNewFactTexts}
                                 newImprovementTexts={newImprovementTexts}
                                 setNewImprovementTexts={setNewImprovementTexts}
-                                setCriterion={setCriterion}
+                                setCriterion={handleCriterionChange}
                                 addFact={addFact}
                                 removeFact={removeFact}
                                 editFact={editFact}
@@ -1310,6 +1404,34 @@ export function EvaluationPage() {
                         sx={{ textTransform: 'none' }}
                     >
                         {getString('move')}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Confirm a star re-rating that flips a competence to the opposite
+                summary list — it deletes the competence from its current list along
+                with the facts/comments linked to it there. Applied atomically. */}
+            <Dialog open={pendingFlip != null} onClose={() => setPendingFlip(null)} maxWidth="xs" fullWidth>
+                <DialogTitle>{getString('flipCompetenceTitle')}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        {getString(
+                            pendingFlip?.side === 'strong' ? 'flipCompetenceFromStrong' : 'flipCompetenceFromDevelop',
+                            { competence: pendingFlip?.name ?? '' },
+                        )}
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setPendingFlip(null)} sx={{ textTransform: 'none' }}>
+                        {getString('cancel')}
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color="error"
+                        onClick={() => { void confirmFlip(); }}
+                        sx={{ textTransform: 'none' }}
+                    >
+                        {getString('flipCompetenceConfirm')}
                     </Button>
                 </DialogActions>
             </Dialog>

@@ -3,6 +3,7 @@ import TuneIcon from '@mui/icons-material/Tune';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import CategoryIcon from '@mui/icons-material/Category';
 import BadgeIcon from '@mui/icons-material/Badge';
+import SettingsIcon from '@mui/icons-material/Settings';
 import type { RawEssenceConfig } from '../../types/essence';
 
 export const ESSENCES: RawEssenceConfig[] = [
@@ -13,6 +14,16 @@ export const ESSENCES: RawEssenceConfig[] = [
     descriptionKey: 'translationsDesc',
     Icon: TuneIcon,
     color: '#6366f1',
+  },
+
+  // ── App settings (typed key/value: booleans, ints, dates, configs) ─────────
+  {
+    parent: 'developer',
+    key: 'settings',
+    labelKey: 'settings',
+    descriptionKey: 'settingsDesc',
+    Icon: SettingsIcon,
+    color: '#f59e0b',
   },
 
   // ── Process Roles (group) — catalogs: process, process_role ────────────────

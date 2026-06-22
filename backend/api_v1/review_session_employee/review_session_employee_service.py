@@ -518,6 +518,9 @@ class ReviewSessionEmployeeService(BaseService):
         # Competence levels for the bar chart — the FRACTIONAL mean (same value the
         # UI shows: average of behaviour scores), not the rounded integer score.
         competences = []
+        # dimension_key -> (translated name, color), used to label the strong /
+        # to-develop competence summaries (and color them like the bar chart).
+        dim_meta: dict[str, tuple[str, str]] = {}
         eval_dims = []
         for ev in getattr(record, "evaluations", []) or []:
             dim = await self.session.get(ReviewDimension, ev.dimension_id)
@@ -540,6 +543,8 @@ class ReviewSessionEmployeeService(BaseService):
             else:
                 name = raw_name
             color = dim.color if dim else "#1565C0"
+            if dim and dim.key:
+                dim_meta[dim.key] = (name, color)
             value = ev.mean_score if ev.mean_score is not None else ev.score
             competences.append(
                 (name, float(value) if value is not None else 0.0, color)
@@ -581,7 +586,20 @@ class ReviewSessionEmployeeService(BaseService):
         level_requirements: list[dict] = []
         if registration:
             proposed_level = await _level_name(registration.level_id)
-            proposed_status = registration.status
+            # Translate the proposal's lifecycle status to the viewer's language
+            # (same keys as the frontend ProposedLevelDrawer / JobInfoPanel), so
+            # the HTML/PDF album shows a localized word, not the raw enum value.
+            _status_keys = {
+                "proposed": "proposedLevelStatusProposed",
+                "validated": "proposedLevelStatusValidated",
+                "rejected": "proposedLevelStatusRejected",
+            }
+            _raw_status = registration.status
+            proposed_status = (
+                await self._translate(_status_keys[_raw_status], fallback=_raw_status)
+                if _raw_status in _status_keys
+                else _raw_status
+            )
             facts_by_req = {
                 a.requirement_id: a.facts for a in (registration.answers or [])
             }
@@ -640,6 +658,78 @@ class ReviewSessionEmployeeService(BaseService):
                 - ((today.month, today.day) < (hire.month, hire.day))
             )
 
+        # Talent status/period progression (the talent_audit_job rows for this
+        # employee — same data as the list-of-persons screen, no interviews).
+        # Each row "job · status/period · status"; ordered by period months asc.
+        from backend.api_v1.talent_audit.talent_audit_model import TalentAudit
+        from backend.api_v1.talent_audit_job.talent_audit_job_model import (
+            TalentAuditJob,
+        )
+
+        talent_levels: list[str] = []
+        audit = await self.session.scalar(
+            select(TalentAudit).where(TalentAudit.employee_id == emp_id)
+        )
+        if audit:
+            audit_jobs = (
+                await self.session.scalars(
+                    select(TalentAuditJob).where(
+                        TalentAuditJob.talent_audit_id == audit.id
+                    )
+                )
+            ).all()
+
+            def _job_months(j) -> int:
+                link = j.talent_status_period_link
+                return link.talent_period.qty_months if link and link.talent_period else 0
+
+            for j in sorted(audit_jobs, key=_job_months):
+                link = j.talent_status_period_link
+                status_period = (
+                    f"{link.talent_status.key} - {link.talent_period.name}"
+                    if link and link.talent_status and link.talent_period
+                    else None
+                )
+                parts = [
+                    p
+                    for p in (
+                        j.target_job.name if j.target_job else None,
+                        status_period,
+                        j.status.name if j.status else None,
+                    )
+                    if p
+                ]
+                if parts:
+                    talent_levels.append(" · ".join(parts))
+        talent_levels_str = "; ".join(talent_levels) if talent_levels else None
+
+        # Structured strong / to-develop competence summaries for the HTML album:
+        # each item carries the competence NAME + its DB color + its comments, so
+        # the renderer can show the named, colored heading (the flat *_text values
+        # below stay as-is for the PDF). competence_summary JSON:
+        # {"strong":[{"dimension_key","comments":[...]}], "develop":[...]}.
+        def _summary_items(bucket: str) -> list[dict]:
+            if not record.competence_summary:
+                return []
+            import json as _json
+
+            try:
+                obj = _json.loads(record.competence_summary)
+            except (ValueError, TypeError):
+                return []
+            out = []
+            for it in obj.get(bucket) or []:
+                key = it.get("dimension_key")
+                name, color = dim_meta.get(key, (key, "#1565C0"))
+                comments = [
+                    str(c) for c in (it.get("comments") or []) if str(c).strip()
+                ]
+                out.append({"name": name, "color": color, "comments": comments})
+            return out
+
+        strengths_items = _summary_items("strong")
+        development_items = _summary_items("develop")
+
         # All section/field labels resolved here so the renderer stays pure (no DB)
         # and nothing in the album is hardcoded.
         label_keys = {
@@ -660,6 +750,7 @@ class ReviewSessionEmployeeService(BaseService):
             "tenure": "tenure",
             "current_level": "currentLevel",
             "proposed_level": "proposedLevel",
+            "talent_status_period": "talentStatusPeriod",
             "level_requirements": "levelRequirements",
         }
         labels = {
@@ -681,6 +772,7 @@ class ReviewSessionEmployeeService(BaseService):
             "max_grade": 4,
             "current_level": current_level,
             "proposed_level": proposed_level,
+            "talent_levels": talent_levels_str,
             "proposed_level_status": proposed_status,
             "proposed_level_sense": proposed_level_sense,
             "level_sense": level_sense,
@@ -698,6 +790,9 @@ class ReviewSessionEmployeeService(BaseService):
             "development_directions": self._competence_summary_text(
                 record.competence_summary, "develop"
             ),
+            # Named + colored variants for the HTML album.
+            "strengths_items": strengths_items,
+            "development_items": development_items,
             "labels": labels,
             "photo": photo.data if photo else None,
             "photo_mime": photo.content_type if photo else None,

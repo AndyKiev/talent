@@ -16,6 +16,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import EditIcon from '@mui/icons-material/Edit';
+import DoneIcon from '@mui/icons-material/Done';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import type { GetStringFn } from '../../../types/getStringFn';
 import { useTheme } from '../../theme/ThemeContext';
@@ -86,7 +87,17 @@ export function DimensionPanel({
     const [editingFact, setEditingFact] = useState<{ id: number; index: number } | null>(null);
     const [editingImp, setEditingImp] = useState<{ id: number; index: number } | null>(null);
 
+    // Section-level edit toggle (the "competence level" edit): the facts and the
+    // improvements lists are read-only until the user opts in, so no input boxes /
+    // row controls are active by default. Keyed by the eval id, so switching tabs
+    // returns to read-only automatically. The inline row edit above is the second
+    // ("detail / fact level") edit.
+    const [factsEditId, setFactsEditId] = useState<number | null>(null);
+    const [impEditId, setImpEditId] = useState<number | null>(null);
+
     const activeEval = visibleEvals[activeTab];
+    const factsEditing = isEditable && !!activeEval && factsEditId === activeEval.id;
+    const impEditing = isEditable && !!activeEval && impEditId === activeEval.id;
     const activeColor = activeEval ? getDimColor(activeEval.dimension_key, activeTab, activeEval.dimension_color) : t.accent;
     const activeMean = activeEval ? evalMean(activeEval) : null;
     const activeLevelPct = ((activeMean ?? 0) / MAX_GRADE) * 100;
@@ -228,9 +239,25 @@ export function DimensionPanel({
                     </Box>
 
                     <Box sx={{ mb: 2 }}>
-                        <Typography fontSize={13} fontWeight={600} color={t.textSecondary} mb={1}>
-                            {getString('factsAndAchievements')}
-                        </Typography>
+                        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
+                            <Typography fontSize={13} fontWeight={600} color={t.textSecondary}>
+                                {getString('factsAndAchievements')}
+                            </Typography>
+                            {isEditable && (
+                                <Tooltip title={getString(factsEditing ? 'doneEditing' : 'edit')}>
+                                    <IconButton
+                                        size="small"
+                                        onClick={() => {
+                                            if (factsEditing) { setFactsEditId(null); setEditingFact(null); }
+                                            else setFactsEditId(activeEval.id);
+                                        }}
+                                        sx={{ p: 0.25, color: factsEditing ? activeColor : undefined }}
+                                    >
+                                        {factsEditing ? <DoneIcon sx={{ fontSize: 16 }} /> : <EditIcon sx={{ fontSize: 15 }} />}
+                                    </IconButton>
+                                </Tooltip>
+                            )}
+                        </Stack>
                         {activeEval.facts.length > 0 && (
                             <Box sx={{ mb: 1.5 }}>
                                 {activeEval.facts.map((fact, idx) => (
@@ -263,7 +290,7 @@ export function DimensionPanel({
                                             '&:hover': { bgcolor: activeColor + '10' },
                                         }}
                                     >
-                                        {isEditable && editingFact?.id === activeEval.id && editingFact.index === idx ? (
+                                        {factsEditing && editingFact?.id === activeEval.id && editingFact.index === idx ? (
                                             <>
                                                 <Typography fontSize={12} fontWeight={700} color={activeColor} sx={{ minWidth: 22, pt: '8px' }}>
                                                     {idx + 1}.
@@ -278,7 +305,7 @@ export function DimensionPanel({
                                             </>
                                         ) : (
                                             <>
-                                                {isEditable && (
+                                                {factsEditing && (
                                                     <Tooltip title={getString('dragFactReorderOrMove')}>
                                                         <Box
                                                             draggable
@@ -305,7 +332,7 @@ export function DimensionPanel({
                                                 <Typography fontSize={13} sx={{ flex: 1, pt: '2px', wordBreak: 'break-word' }}>
                                                     {fact}
                                                 </Typography>
-                                                {isEditable && (
+                                                {factsEditing && (
                                                     <Tooltip title={getString('edit')}>
                                                         <IconButton
                                                             size="small"
@@ -316,7 +343,7 @@ export function DimensionPanel({
                                                         </IconButton>
                                                     </Tooltip>
                                                 )}
-                                                {isEditable && isStrongPicked(activeEval.dimension_key) && (
+                                                {factsEditing && isStrongPicked(activeEval.dimension_key) && (
                                                     <Tooltip title={getString('copyFactToStrongSummary')}>
                                                         <IconButton
                                                             size="small"
@@ -327,7 +354,7 @@ export function DimensionPanel({
                                                         </IconButton>
                                                     </Tooltip>
                                                 )}
-                                                {isEditable && (
+                                                {factsEditing && (
                                                     <Tooltip title={getString('deleteFact')}>
                                                         <IconButton
                                                             size="small"
@@ -344,7 +371,7 @@ export function DimensionPanel({
                                 ))}
                             </Box>
                         )}
-                        {isEditable && (
+                        {factsEditing && (
                             <Stack direction="row" spacing={1} alignItems="flex-start">
                                 <TextField
                                     size="small"
@@ -385,11 +412,27 @@ export function DimensionPanel({
                             bgcolor: `${activeColor}0A`,
                         }}
                     >
-                        <Stack direction="row" spacing={0.75} alignItems="center" mb={1}>
-                            <TrendingUpIcon sx={{ fontSize: 18, color: activeColor }} />
-                            <Typography fontSize={13} fontWeight={700} color={activeColor}>
-                                {getString('areasForImprovement')}
-                            </Typography>
+                        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
+                            <Stack direction="row" spacing={0.75} alignItems="center">
+                                <TrendingUpIcon sx={{ fontSize: 18, color: activeColor }} />
+                                <Typography fontSize={13} fontWeight={700} color={activeColor}>
+                                    {getString('areasForImprovement')}
+                                </Typography>
+                            </Stack>
+                            {isEditable && (
+                                <Tooltip title={getString(impEditing ? 'doneEditing' : 'edit')}>
+                                    <IconButton
+                                        size="small"
+                                        onClick={() => {
+                                            if (impEditing) { setImpEditId(null); setEditingImp(null); }
+                                            else setImpEditId(activeEval.id);
+                                        }}
+                                        sx={{ p: 0.25, color: impEditing ? activeColor : undefined }}
+                                    >
+                                        {impEditing ? <DoneIcon sx={{ fontSize: 16 }} /> : <EditIcon sx={{ fontSize: 15 }} />}
+                                    </IconButton>
+                                </Tooltip>
+                            )}
                         </Stack>
                         {activeEval.improvements.length > 0 && (
                             <Box sx={{ mb: 1.5 }}>
@@ -423,7 +466,7 @@ export function DimensionPanel({
                                             '&:hover': { bgcolor: activeColor + '14' },
                                         }}
                                     >
-                                        {isEditable && editingImp?.id === activeEval.id && editingImp.index === idx ? (
+                                        {impEditing && editingImp?.id === activeEval.id && editingImp.index === idx ? (
                                             <>
                                                 <Typography fontSize={12} fontWeight={700} color={activeColor} sx={{ minWidth: 22, pt: '8px' }}>
                                                     {idx + 1}.
@@ -438,7 +481,7 @@ export function DimensionPanel({
                                             </>
                                         ) : (
                                             <>
-                                                {isEditable && (
+                                                {impEditing && (
                                                     <Tooltip title={getString('dragFactReorderOrMove')}>
                                                         <Box
                                                             draggable
@@ -465,7 +508,7 @@ export function DimensionPanel({
                                                 <Typography fontSize={13} sx={{ flex: 1, pt: '2px', wordBreak: 'break-word' }}>
                                                     {imp}
                                                 </Typography>
-                                                {isEditable && (
+                                                {impEditing && (
                                                     <Tooltip title={getString('edit')}>
                                                         <IconButton
                                                             size="small"
@@ -476,7 +519,7 @@ export function DimensionPanel({
                                                         </IconButton>
                                                     </Tooltip>
                                                 )}
-                                                {isEditable && isDevelopPicked(activeEval.dimension_key) && (
+                                                {impEditing && isDevelopPicked(activeEval.dimension_key) && (
                                                     <Tooltip title={getString('copyImprovementToDevelopSummary')}>
                                                         <IconButton
                                                             size="small"
@@ -487,7 +530,7 @@ export function DimensionPanel({
                                                         </IconButton>
                                                     </Tooltip>
                                                 )}
-                                                {isEditable && (
+                                                {impEditing && (
                                                     <Tooltip title={getString('delete')}>
                                                         <IconButton
                                                             size="small"
@@ -504,7 +547,7 @@ export function DimensionPanel({
                                 ))}
                             </Box>
                         )}
-                        {isEditable && (
+                        {impEditing && (
                             <Stack direction="row" spacing={1} alignItems="flex-start">
                                 <TextField
                                     size="small"

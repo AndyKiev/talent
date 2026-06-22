@@ -7,6 +7,7 @@ from backend.api_v1.review_session_employee_evaluation.review_session_employee_e
     Evaluation as EvaluationSchema,
     EvaluationUpdate,
     EvaluationBulkUpdate,
+    EvaluationFlipCompetence,
 )
 from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_dependencies import (
     get_evaluation_service,
@@ -62,3 +63,18 @@ async def bulk_update_evaluations(
     ],
 ):
     return await service.bulk_update(updates)
+
+
+@router.post(
+    "/{evaluation_id}/flip_competence",
+    response_model=MutationResponse[EvaluationSchema],
+)
+async def flip_competence(
+    evaluation_id: int,
+    payload: EvaluationFlipCompetence,
+    service: Annotated[
+        ReviewSessionEmployeeEvaluationService,
+        Depends(get_evaluation_service),
+    ],
+):
+    return await service.flip_competence(evaluation_id, payload)

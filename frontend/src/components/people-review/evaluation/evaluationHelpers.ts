@@ -226,3 +226,41 @@ export function rankedCompetences(evals: LocalEval[], direction: 'desc' | 'asc')
         direction === 'desc' ? (evalMean(e) ?? 0) >= threshold : (evalMean(e) ?? 0) <= threshold,
     );
 }
+
+/** The summary side a competence is picked into, mirrored from the page state. */
+export type SummarySide = 'strong' | 'develop';
+
+/** A star re-rating pending confirmation because it flips a competence's summary list. */
+export interface PendingFlip {
+    evalId: number;
+    index: number;
+    value: number;
+    key: string;
+    // The side the competence currently sits in and will be removed FROM.
+    side: SummarySide;
+    name: string;
+}
+
+/**
+ * Decide whether re-rating competence `key` (on the ALREADY-updated `evals`)
+ * flips it to the opposite summary list — i.e. its new average star ranking now
+ * puts it on the other side from where it is currently picked. Returns the side
+ * it must LEAVE, or null when no flip is warranted.
+ *
+ * Relative ranking (per design): a competence picked in "strong" flips when it
+ * now ranks among the lowest-scored (develop) competences and no longer among
+ * the highest-scored (strong); symmetric for "develop". A boundary tie — where
+ * the competence still qualifies for BOTH sides — does NOT flip.
+ */
+export function detectCompetenceFlip(
+    evals: LocalEval[],
+    key: string,
+    isStrongPicked: boolean,
+    isDevelopPicked: boolean,
+): SummarySide | null {
+    const strongKeys = new Set(rankedCompetences(evals, 'desc').map(e => e.dimension_key));
+    const developKeys = new Set(rankedCompetences(evals, 'asc').map(e => e.dimension_key));
+    if (isStrongPicked && developKeys.has(key) && !strongKeys.has(key)) return 'strong';
+    if (isDevelopPicked && strongKeys.has(key) && !developKeys.has(key)) return 'develop';
+    return null;
+}

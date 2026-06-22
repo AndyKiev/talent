@@ -88,6 +88,9 @@ __all__ = {
     "ProcessRoleHolderEmployeeLink",
     "ProcessRoleHolderDepartmentLink",
     "ProcessRoleActiveContext",
+    # App settings (typed key/value)
+    "SettingValueType",
+    "AppSetting",
 }
 
 from backend.api_v1.lang.lang_model import Lang
@@ -248,3 +251,7 @@ from backend.api_v1.process_roles.process_role_holder_department_link.process_ro
 from backend.api_v1.process_roles.process_role_active_context.process_role_active_context_model import (
     ProcessRoleActiveContext,
 )
+
+# App settings — value-type catalog first (FK target), then the settings table.
+from backend.api_v1.setting_value_type.setting_value_type_model import SettingValueType
+from backend.api_v1.app_setting.app_setting_model import AppSetting

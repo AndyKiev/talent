@@ -226,6 +226,10 @@ def _build_page1(data: dict) -> Figure:
         _field(fig, col2_x, ry, l2, v2, val_w_chars=30)
         ry -= 0.052
 
+    # Talent status/period progression — a wider single row beneath the grid.
+    _field(fig, col1_x, ry, L.get("talent_status_period"), g("talent_levels"),
+           val_w_chars=46)
+
     # Competence bar chart (top-right).
     _competence_chart(fig, 0.61, 0.66, 0.365, 0.265,
                       g("competences") or [], g("max_grade") or 4,
@@ -234,18 +238,20 @@ def _build_page1(data: dict) -> Figure:
     # --- lower grid: 3 tall columns (most of the page, max room for text) ------
     cols = [0.025, 0.343, 0.661]
     cw = 0.31
+    # Cards start lower (top 0.60, not 0.64) so the talent status/period row
+    # added above them has clear space and no longer overlaps the cards.
     for cx in cols:
-        _card(fig, cx, 0.04, cw, 0.60)
+        _card(fig, cx, 0.04, cw, 0.56)
     iw = cw - 0.026  # inner text width
 
     # Column 1: results + what wasn't achieved.
-    _titled(fig, cols[0] + 0.013, 0.62, iw,
+    _titled(fig, cols[0] + 0.013, 0.58, iw,
             L.get("results"), g("results_achievements"), INK, 8, body_lines=14)
     _titled(fig, cols[0] + 0.013, 0.32, iw,
             L.get("not_achieved"), g("not_achieved"), INK, 8, body_lines=12)
 
     # Column 2: strengths + development directions + IDP missions.
-    _titled(fig, cols[1] + 0.013, 0.62, iw,
+    _titled(fig, cols[1] + 0.013, 0.58, iw,
             L.get("strengths"), g("strengths"), ACCENT, 8, body_lines=8)
     _titled(fig, cols[1] + 0.013, 0.42, iw,
             L.get("development"), g("development_directions"), ACCENT, 8,
@@ -256,7 +262,7 @@ def _build_page1(data: dict) -> Figure:
             L.get("idp"), idp_text, ACCENT, 8, body_lines=8)
 
     # Column 3: training + employee feedback + manager feedback.
-    _titled(fig, cols[2] + 0.013, 0.62, iw,
+    _titled(fig, cols[2] + 0.013, 0.58, iw,
             L.get("training"), g("training_done"), INK, 8, body_lines=8)
     _titled(fig, cols[2] + 0.013, 0.42, iw,
             L.get("employee_feedback"), g("employee_feedback"), INK, 8,

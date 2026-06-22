@@ -68,21 +68,24 @@ def _prep(data: dict) -> dict:
         (L.get("tenure"), g("tenure")),
         (L.get("current_level"), g("current_level")),
         (L.get("proposed_level"), proposed),
+        (L.get("talent_status_period"), g("talent_levels")),
     ]
 
     idp = g("idp_missions") or []
     idp_text = "\n".join(f"• {m}" for m in idp) if idp else None
 
-    # (title, accent?, body) sections of the lower grid.
+    # Lower-grid sections. Most are {title, accent, body}; the strong /
+    # to-develop competences carry {items} instead — each a named, DB-colored
+    # competence with its comments, rendered specially by the template.
     sections = [
-        (L.get("results"), False, g("results_achievements")),
-        (L.get("not_achieved"), False, g("not_achieved")),
-        (L.get("strengths"), True, g("strengths")),
-        (L.get("development"), True, g("development_directions")),
-        (L.get("idp"), True, idp_text),
-        (L.get("training"), False, g("training_done")),
-        (L.get("employee_feedback"), False, g("employee_feedback")),
-        (L.get("manager_feedback"), False, g("manager_feedback")),
+        {"title": L.get("results"), "accent": False, "body": g("results_achievements")},
+        {"title": L.get("not_achieved"), "accent": False, "body": g("not_achieved")},
+        {"title": L.get("strengths"), "accent": True, "comps": g("strengths_items")},
+        {"title": L.get("development"), "accent": True, "comps": g("development_items")},
+        {"title": L.get("idp"), "accent": True, "body": idp_text},
+        {"title": L.get("training"), "accent": False, "body": g("training_done")},
+        {"title": L.get("employee_feedback"), "accent": False, "body": g("employee_feedback")},
+        {"title": L.get("manager_feedback"), "accent": False, "body": g("manager_feedback")},
     ]
 
     reqs = []
@@ -99,7 +102,7 @@ def _prep(data: dict) -> dict:
         "competence_title": L.get("competence_level", "—"),
         "competences": competences,
         "fields": [(lbl, val) for lbl, val in fields if lbl],
-        "sections": [(t, acc, body) for t, acc, body in sections if t],
+        "sections": [s for s in sections if s["title"]],
         "requirements": reqs,
         "req_title": req_title,
         "req_sense": g("proposed_level_sense"),
@@ -144,7 +147,8 @@ overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 position:relative;overflow:hidden;}
 .chart .fill{position:absolute;left:0;top:0;bottom:0;border-radius:6px;}
 .chart .sc{width:42px;text-align:right;font-size:12px;font-weight:700;}
-.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px;}
+/* Narrower results / feedback columns, wider competences-summary column. */
+.cols{display:grid;grid-template-columns:0.8fr 1.5fr 0.7fr;gap:14px;margin-top:14px;}
 .sec{margin-bottom:14px;}
 .sec h3{margin:0 0 4px;font-size:13px;font-weight:700;text-transform:uppercase;
 letter-spacing:.3px;}
@@ -152,6 +156,10 @@ letter-spacing:.3px;}
 .sec .body{font-size:12.5px;line-height:1.5;white-space:pre-wrap;
 word-break:break-word;}
 .sec .body.empty{color:var(--muted);}
+/* A named, colored competence in the strong / to-develop summary. */
+.cmp{margin-bottom:8px;}
+.cmp-name{font-size:12.5px;font-weight:700;margin-bottom:2px;}
+.cmp .body{margin-left:2px;}
 .req{margin-top:8px;}
 .req .item{background:var(--panel);border:1px solid var(--border);
 border-radius:10px;padding:10px 14px;margin-bottom:10px;}
@@ -202,10 +210,21 @@ _SHEET = """
   <div class="cols">
     {% for col in s.section_cols %}
     <div>
-      {% for title, accent, body in col %}
-      <div class="sec {% if accent %}accent{% endif %}">
-        <h3>{{ title }}</h3>
-        <div class="body {% if not body %}empty{% endif %}">{{ body if body else "—" }}</div>
+      {% for sec in col %}
+      <div class="sec {% if sec.accent %}accent{% endif %}">
+        <h3>{{ sec.title }}</h3>
+        {% if sec.comps is defined %}
+          {% if sec.comps %}
+            {% for it in sec.comps %}
+            <div class="cmp">
+              <div class="cmp-name" style="color:{{ it.color }}">{{ it.name }}</div>
+              {% if it.comments %}<div class="body">{% for c in it.comments %}• {{ c }}{% if not loop.last %}<br>{% endif %}{% endfor %}</div>{% endif %}
+            </div>
+            {% endfor %}
+          {% else %}<div class="body empty">—</div>{% endif %}
+        {% else %}
+          <div class="body {% if not sec.body %}empty{% endif %}">{{ sec.body if sec.body else "—" }}</div>
+        {% endif %}
       </div>
       {% endfor %}
     </div>

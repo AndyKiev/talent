@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
     Box,
     Button,
@@ -50,6 +50,10 @@ interface Props {
     proposedLevelSense: 'increase' | 'same' | 'decrease' | null;
     // Lifecycle status of the saved proposal (null when none saved yet).
     proposedLevelStatus: ProposedLevelStatus | null;
+    // Talent status/period block (jobName · status/period · status), rendered to
+    // the left of the current/proposed level. Always shown; editing is gated
+    // inside the panel itself by the developer setting.
+    talentStatusPanel?: ReactNode;
 }
 
 // Proposal lifecycle status → Chip colour + translation key (mirrors ProposedLevelDrawer).
@@ -77,6 +81,7 @@ export function JobInfoPanel({
     onEditHire, onEditJobAssigned,
     levels, currentLevelId, onCurrentLevelChange, currentLevelDisabled,
     onOpenProposed, proposedLevelName, proposedLevelSense, proposedLevelStatus,
+    talentStatusPanel,
 }: Props) {
     const { t } = useTheme();
     const sense = proposedLevelSense ? SENSE_META[proposedLevelSense] : null;
@@ -115,8 +120,9 @@ export function JobInfoPanel({
                 />
             </Box>
 
-            {/* Current competency level + proposed level (drawer) */}
+            {/* Talent status/period + current competency level + proposed level (drawer) */}
             <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" rowGap={1}>
+                {talentStatusPanel}
                 <Stack spacing={0.25} alignItems="flex-start">
                     <Typography variant="caption" color={t.textMuted} sx={{ lineHeight: 1.1 }}>
                         {getString('currentLevel')}
