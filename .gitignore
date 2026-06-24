@@ -94,3 +94,6 @@ CLAUDE.md
 
 # Messages live in the DB (msg_key/msg). translations.json is local scratch only.
 translations.json
+
+# Phase-2 data dump from talent-test (867KB, do not commit)
+backend/scripts/scripts_talent_test_data.sql

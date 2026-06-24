@@ -13,10 +13,12 @@ import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import AppShell from '../layout/AppShell.tsx';
 import { fetchMyReviews, type ReviewSessionEmployeeList } from './peopleReviewApi';
 import { useDataGridLocale } from '../../hooks/useDataGridLocale';
+import useString from '../../hooks/useString';
 
 export function MyReviewsPage() {
     const navigate = useNavigate();
     const localeText = useDataGridLocale();
+    const getString = useString();
 
     const { data: rows = [], isLoading, error } = useQuery({
         queryKey: ['my_reviews'],
@@ -25,8 +27,8 @@ export function MyReviewsPage() {
     });
 
     const columns: GridColDef<ReviewSessionEmployeeList>[] = [
-        { field: 'employee_name', headerName: 'Your Name', flex: 1 },
-        { field: 'status', headerName: 'Status', width: 120 },
+        { field: 'employee_name', headerName: getString('employee'), flex: 1 },
+        { field: 'status', headerName: getString('status'), width: 120 },
         {
             field: 'actions',
             headerName: '',
@@ -47,7 +49,7 @@ export function MyReviewsPage() {
                         })
                     }
                 >
-                    Fill Evaluation
+                    {getString('fillEvaluation')}
                 </Button>
             ),
         },
@@ -57,7 +59,7 @@ export function MyReviewsPage() {
         <AppShell>
             <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 800, mx: 'auto' }}>
                 <Typography variant="h5" fontWeight={600} sx={{ mb: 3 }}>
-                    My People Reviews
+                    {getString('myPeopleReviews')}
                 </Typography>
 
                 {isLoading && (
@@ -72,7 +74,7 @@ export function MyReviewsPage() {
 
                 {!isLoading && !error && rows.length === 0 && (
                     <Alert severity="info">
-                        No open reviews at this time.
+                        {getString('noOpenReviews')}
                     </Alert>
                 )}
 

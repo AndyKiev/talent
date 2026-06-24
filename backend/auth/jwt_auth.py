@@ -9,6 +9,7 @@ from backend.auth.auth_dependencies import validate_auth_user_ldap
 from backend.auth import auth_utils as auth_utils
 from backend.auth.auth_schemas import LDAPUser, AuthResponse
 from backend.auth.permission_errors import PermissionDeniedSet
+from backend.auth.permission_resolvers import resolve_user_is_bypass
 from backend.api_v1.employee.employee_service import EmployeeService
 from backend.api_v1.employee.employee_repository import EmployeeRepository
 from backend.api_v1.msg_key.msg_key_model import MsgKey
@@ -61,7 +62,11 @@ async def get_current_auth_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
         )
-    return await service._to_schema(orm_user)
+    schema = await service._to_schema(orm_user)
+    # Superadmin bypass flag — computed from the same selectin-loaded user-group
+    # relationships the permission resolvers use. (Ported from talent-test.)
+    schema.is_bypass = resolve_user_is_bypass(orm_user)
+    return schema
 
 
 # jwt_auth.py — updated require_operation signature
@@ -240,6 +245,9 @@ def has_access_set(
         current_user: EmployeeSchema = Depends(get_current_active_auth_user),
         session: AsyncSession = Depends(db_helper.session_getter),
     ) -> EmployeeSchema:
+        # Superadmin / bypass group skips every set-grain check.
+        if getattr(current_user, "is_bypass", False):
+            return current_user
         if (op_name, required_set) in current_user.permission_sets:
             return current_user
 

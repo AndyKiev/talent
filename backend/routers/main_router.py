@@ -160,6 +160,12 @@ from backend.api_v1.planning.plan_scope_default.plan_scope_default_views import 
 from backend.api_v1.planning.plan_scope.plan_scope_views import (
     router as plan_scope_router,
 )
+from backend.api_v1.planning.plan_report.plan_report_views import (
+    router as plan_report_router,
+)
+from backend.api_v1.planning.plan_matrix.plan_matrix_views import (
+    router as plan_matrix_router,
+)
 
 # Foreign languages
 from backend.api_v1.language_level.language_level_views import (
@@ -199,6 +205,29 @@ from backend.api_v1.setting_value_type.setting_value_type_views import (
 from backend.api_v1.app_setting.app_setting_views import (
     router as app_setting_router,
 )
+
+# Regions (ported from talent-test)
+from backend.api_v1.region.region_views import router as region_router
+from backend.api_v1.department_region_link.department_region_link_views import (
+    router as department_region_link_router,
+)
+
+# Audit change-log subsystem (ported from talent-test)
+from backend.api_v1.audit.change_session.change_session_views import (
+    router as change_session_router,
+)
+from backend.api_v1.audit.change_log.change_log_views import (
+    router as change_log_router,
+)
+
+# Auth model (ported from talent-test) — employee-based permissions
+from backend.api_v1.permission_manifest.permission_manifest_views import (
+    router as permission_manifest_router,
+)
+from backend.api_v1.employee_user_group_link.employee_user_group_link_views import (
+    router as employee_user_group_link_router,
+)
+from backend.api_v1.hrm_scope.hrm_scope_views import router as hrm_scope_router
 
 
 router = APIRouter(prefix=settings.api_v1_prefix)
@@ -267,6 +296,8 @@ router.include_router(plan_session_router)
 router.include_router(plan_category_default_router)
 router.include_router(plan_scope_default_router)
 router.include_router(plan_scope_router)
+router.include_router(plan_report_router)
+router.include_router(plan_matrix_router)
 
 # Foreign languages
 router.include_router(language_level_router)
@@ -284,3 +315,16 @@ router.include_router(oversight_manager_router)
 # App settings (typed key/value)
 router.include_router(setting_value_type_router)
 router.include_router(app_setting_router)
+
+# Regions (ported from talent-test)
+router.include_router(region_router)
+router.include_router(department_region_link_router)
+
+# Audit change-log subsystem (ported from talent-test)
+router.include_router(change_session_router)
+router.include_router(change_log_router)
+
+# Auth model (ported from talent-test)
+router.include_router(permission_manifest_router)
+router.include_router(employee_user_group_link_router)
+router.include_router(hrm_scope_router)

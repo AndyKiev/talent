@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Integer, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.api_v1.base.base_model import Base
@@ -22,6 +22,9 @@ class TalentAudit(IntIdPkMixin, Base):
     )
     status_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("talent_audit_statuses.id", ondelete="RESTRICT"), nullable=False
+    )
+    talent_plus: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default="false", default=False
     )
     created_by: Mapped[int] = mapped_column(
         Integer, ForeignKey("employees.id", ondelete="RESTRICT"), nullable=False
@@ -56,5 +59,6 @@ class TalentAudit(IntIdPkMixin, Base):
         return (
             f"<TalentAudit(id={self.id}, "
             f"employee_id={self.employee_id}, "
-            f"status_id={self.status_id})>"
+            f"status_id={self.status_id}, "
+            f"talent_plus={self.talent_plus})>"
         )

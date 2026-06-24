@@ -21,6 +21,8 @@ from backend.api_v1.talent_audit.talent_audit_success import (
     TalentAuditCreateSuccess,
     TalentAuditDeleteSuccess,
     TalentAuditUpdateSuccess,
+    TalentAuditTalentPlusDisableSuccess,
+    TalentAuditTalentPlusEnableSuccess,
 )
 
 
@@ -95,9 +97,22 @@ class TalentAuditService(BaseService):
         )
         schema = TalentAuditSchema.model_validate(updated)
         detail = await self._resolve_domain_success(
-            TalentAuditUpdateSuccess(schema.id)
+            self._pick_update_success(schema.id, update_data)
         )
         return MutationResponse(detail=detail, data=schema)
+
+    @staticmethod
+    def _pick_update_success(audit_id: int, update_data: dict):
+        """
+        Choose the success object for an update. A lone talent_plus toggle gets
+        a dedicated enable/disable message; everything else uses the generic
+        update message.
+        """
+        if set(update_data.keys()) == {"talent_plus"}:
+            if update_data["talent_plus"]:
+                return TalentAuditTalentPlusEnableSuccess(audit_id)
+            return TalentAuditTalentPlusDisableSuccess(audit_id)
+        return TalentAuditUpdateSuccess(audit_id)
 
     async def delete_talent_audit(self, audit_id: int) -> None:
         await self.get_by_id(audit_id)

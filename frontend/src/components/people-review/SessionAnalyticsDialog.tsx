@@ -18,6 +18,7 @@ import { BASE_URL } from '../../utils/eNums';
 import { MAX_GRADE } from './peopleReviewApi';
 import { getDimColor } from './evaluation/evaluationHelpers';
 import { useTheme } from '../theme/ThemeContext';
+import useString from '../../hooks/useString';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface DimensionAnalytics {
@@ -42,7 +43,7 @@ async function fetchAnalytics(sessionId: number): Promise<DimensionAnalytics[]> 
 }
 
 // ── Bar row ───────────────────────────────────────────────────────────────────
-function DimBar({ dim, idx }: { dim: DimensionAnalytics; idx: number }) {
+function DimBar({ dim, idx, getString }: { dim: DimensionAnalytics; idx: number; getString: (key: string) => string }) {
     const color = getDimColor(dim.dimension_key, idx, dim.dimension_color);
     const avg = dim.avg_score ?? 0;
     const pct = (avg / MAX_GRADE) * 100;
@@ -73,7 +74,7 @@ function DimBar({ dim, idx }: { dim: DimensionAnalytics; idx: number }) {
                 </Stack>
                 <Stack direction="row" spacing={2} alignItems="center">
                     <Typography fontSize={11} color="#aaa">
-                        {dim.scored_count}/{dim.total_evaluations} scored ({coverage}%)
+                        {dim.scored_count}/{dim.total_evaluations} {getString('scored')} ({coverage}%)
                     </Typography>
                     <Typography fontSize={13} fontWeight={800} color={color} sx={{ minWidth: 36, textAlign: 'right' }}>
                         {dim.avg_score !== null ? dim.avg_score.toFixed(2) : '—'}/{MAX_GRADE}
@@ -126,6 +127,7 @@ interface Props {
 
 export function SessionAnalyticsDialog({ sessionId, sessionName, open, onClose }: Props) {
     const { t } = useTheme();
+    const getString = useString();
 
     const { data = [], isLoading } = useQuery({
         queryKey: ['session_analytics', sessionId],
@@ -152,7 +154,7 @@ export function SessionAnalyticsDialog({ sessionId, sessionName, open, onClose }
                 <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
                     <Box>
                         <Typography fontWeight={700} fontSize={17} color={t.text}>
-                            Session Analytics
+                            {getString('sessionAnalytics')}
                         </Typography>
                         <Typography fontSize={12} color={t.textMuted}>{sessionName}</Typography>
                     </Box>
@@ -171,7 +173,7 @@ export function SessionAnalyticsDialog({ sessionId, sessionName, open, onClose }
                     </Box>
                 ) : data.length === 0 ? (
                     <Typography color={t.textMuted} textAlign="center" py={3}>
-                        No evaluation data yet for this session.
+                        {getString('noEvaluationData')}
                     </Typography>
                 ) : (
                     <>
@@ -183,7 +185,7 @@ export function SessionAnalyticsDialog({ sessionId, sessionName, open, onClose }
                                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                             }}>
                                 <Typography fontSize={13} fontWeight={600} color={t.text}>
-                                    Overall average score
+                                    {getString('overallAverageScore')}
                                 </Typography>
                                 <Typography fontSize={22} fontWeight={800} color={t.accent}>
                                     {overallAvg.toFixed(2)}/{MAX_GRADE}
@@ -194,7 +196,7 @@ export function SessionAnalyticsDialog({ sessionId, sessionName, open, onClose }
                         {/* Per-dimension bars */}
                         <Stack spacing={2.5}>
                             {data.map((dim, idx) => (
-                                <DimBar key={dim.dimension_id} dim={dim} idx={idx} />
+                                <DimBar key={dim.dimension_id} dim={dim} idx={idx} getString={getString} />
                             ))}
                         </Stack>
 

@@ -91,6 +91,14 @@ __all__ = {
     # App settings (typed key/value)
     "SettingValueType",
     "AppSetting",
+    # Regions (ported from talent-test)
+    "Region",
+    "DepartmentRegionLink",
+    # Audit change-log subsystem (ported from talent-test)
+    "ChangeSession",
+    "ChangeLog",
+    # HRM scope (ported from talent-test)
+    "HrmScope",
 }
 
 from backend.api_v1.lang.lang_model import Lang
@@ -255,3 +263,17 @@ from backend.api_v1.process_roles.process_role_active_context.process_role_activ
 # App settings — value-type catalog first (FK target), then the settings table.
 from backend.api_v1.setting_value_type.setting_value_type_model import SettingValueType
 from backend.api_v1.app_setting.app_setting_model import AppSetting
+
+# Regions (ported from talent-test) — region first, then the department link.
+from backend.api_v1.region.region_model import Region
+from backend.api_v1.department_region_link.department_region_link_model import (
+    DepartmentRegionLink,
+)
+
+# Audit change-log subsystem (ported from talent-test) — session first, then log.
+from backend.api_v1.audit.change_session.change_session_model import ChangeSession
+from backend.api_v1.audit.change_log.change_log_model import ChangeLog
+
+# HRM scope (ported from talent-test) — FK targets (employees, departments,
+# employee_user_group_links) all already registered above.
+from backend.api_v1.hrm_scope.hrm_scope_model import HrmScope

@@ -1,8 +1,6 @@
 from typing import List, Optional
-
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.operation.operation_repository import OperationRepository
@@ -25,14 +23,15 @@ from backend.api_v1.operation.operation_success import (
     OperationUpdateSuccess,
 )
 from backend.api_v1.base.errors import DomainError
+from backend.api_v1.operation.operation_model import Operation  # Import ORM model
 
 
 class OperationService(BaseService):
     def __init__(
-        self,
-        repository: OperationRepository,
-        user: Optional[UserSchema] = None,
-        session: Optional[AsyncSession] = None,
+            self,
+            repository: OperationRepository,
+            user: Optional[UserSchema] = None,
+            session: Optional[AsyncSession] = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -40,15 +39,16 @@ class OperationService(BaseService):
     # Read
     # ------------------------------------------------------------------
 
-    async def get_by_id(self, id: int) -> OperationSchema:
+    # Fixed return type: returns ORM model, not Pydantic schema
+    async def get_by_id(self, id: int) -> Operation:
         result = await self.repository.get_by_id(id)
         if not result:
             raise await self._resolve_domain_error(OperationNotFound(id))
         return result
 
     async def get_operations(
-        self,
-        name: Optional[str] = None,
+            self,
+            name: Optional[str] = None,
     ) -> List[OperationSchema]:
         if name:
             operation = await self.get_by_name(
@@ -63,7 +63,7 @@ class OperationService(BaseService):
     # ------------------------------------------------------------------
 
     async def create_operation(
-        self, operation_in: OperationCreate
+            self, operation_in: OperationCreate
     ) -> MutationResponse[OperationSchema]:
         await self.exists_by_name(
             operation_in.name, already_exists_exc=OperationNameTaken
@@ -81,7 +81,7 @@ class OperationService(BaseService):
             )
 
     async def update_operation(
-        self, operation_id: int, operation_update: OperationUpdate
+            self, operation_id: int, operation_update: OperationUpdate
     ) -> MutationResponse[OperationSchema]:
         if operation_update.name:
             await self.exists_by_name(
@@ -89,7 +89,11 @@ class OperationService(BaseService):
             )
         try:
             orm_operation = await self.get_by_id(operation_id)
-            updated = await self.update(orm_operation, operation_update, partial=True)
+
+            # Type checker fix: ModelType is a module-level TypeVar.
+            # Explicit ignore is the standard, safe way to satisfy static analysis here.
+            updated = await self.update(orm_operation, operation_update, partial=True)  # type: ignore[arg-type]
+
             schema = OperationSchema.model_validate(updated)
             detail = await self._resolve_domain_success(
                 OperationUpdateSuccess(schema.name)
@@ -118,7 +122,7 @@ class OperationService(BaseService):
     # ------------------------------------------------------------------
 
     async def add_to_group(
-        self, operation_id: int, user_group_id: int
+            self, operation_id: int, user_group_id: int
     ) -> OperationSchema:
         try:
             operation = await self.repository.add_operation_to_user_group(
@@ -129,7 +133,7 @@ class OperationService(BaseService):
             raise await self._resolve_domain_error(exc)
 
     async def remove_from_group(
-        self, operation_id: int, user_group_id: int
+            self, operation_id: int, user_group_id: int
     ) -> OperationSchema:
         try:
             operation = await self.repository.remove_operation_from_user_group(
@@ -140,7 +144,7 @@ class OperationService(BaseService):
             raise await self._resolve_domain_error(exc)
 
     async def set_groups(
-        self, operation_id: int, user_group_ids: List[int]
+            self, operation_id: int, user_group_ids: List[int]
     ) -> OperationSchema:
         try:
             operation = await self.repository.set_operation_user_groups(

@@ -59,6 +59,9 @@ class EmployeeSchema(EmployeeBase):
     permission_sets: FrozenSet[Tuple[str, FrozenSet[str]]] = Field(
         default_factory=frozenset, exclude=True
     )
+    # Superadmin / bypass-group flag, set in jwt_auth.get_current_auth_user.
+    # Excluded from serialization — used only by the has_access dependencies.
+    is_bypass: bool = Field(default=False, exclude=True)
     job: Optional["Job"] = None
     lang: Optional["Lang"] = None
     # Populated by EmployeeService._to_schema from the selectin-loaded relationship.

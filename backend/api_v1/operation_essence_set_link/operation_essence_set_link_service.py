@@ -14,6 +14,11 @@ from backend.api_v1.operation_essence_set_link.operation_essence_set_link_model 
 from backend.api_v1.operation_essence_set_link.operation_essence_set_link_schema import (
     OperationEssenceSetLinkSchema,
     OperationEssenceSetLinkCreate,
+    PermissionMatrixApplyRequest,
+    PermissionMatrixApplyResult,
+    PermissionMatrixGroupDiff,
+    PermissionSyncResult,
+    PermissionSyncSkip,
 )
 from backend.api_v1.operation_essence_set_link.operation_essence_set_link_errors import (
     OperationEssenceSetLinkNotFound,
@@ -27,7 +32,10 @@ from backend.api_v1.essence_set.essence_set_service import EssenceSetService
 from backend.api_v1.table_relationship_links.user_group_operation_essence_set_link_model import (
     UserGroupOperationEssenceSetLink,
 )
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func
+
+from backend.api_v1.operation.operation_model import Operation
+from backend.api_v1.essence.essence_model import Essence
 
 
 class OperationEssenceSetLinkService(BaseService):
@@ -48,7 +56,7 @@ class OperationEssenceSetLinkService(BaseService):
         super().__init__(repository, session=session)
         self.essence_set_service = essence_set_service
 
-    # ── Helpers ────────────────────────────────────────────────────────────────
+    # -- Helpers ----------------------------------------------------------------
 
     @staticmethod
     def _label(link: OperationEssenceSetLink) -> str:
@@ -72,7 +80,7 @@ class OperationEssenceSetLinkService(BaseService):
             user_group_names=group_names,
         )
 
-    # ── Read ────────────────────────────────────────────────────────────────────
+    # -- Read -------------------------------------------------------------------
 
     async def get_all(self) -> List[OperationEssenceSetLinkSchema]:
         links = await self.repository.get_all_links()
@@ -86,7 +94,7 @@ class OperationEssenceSetLinkService(BaseService):
             )
         return link
 
-    # ── Write ─────────────────────────────────────────────────────────────────
+    # -- Write ------------------------------------------------------------------
 
     async def create(
         self, data: OperationEssenceSetLinkCreate
@@ -127,7 +135,7 @@ class OperationEssenceSetLinkService(BaseService):
             delete_success_exc=OperationEssenceSetLinkDeleteSuccess,
         )
 
-    # ── Group grant / revoke (UGOESL) ───────────────────────────────────────────
+    # -- Group grant / revoke (UGOESL) ------------------------------------------
     #
     # Set-grain sibling of OperationEssenceLinkService's group methods.
     # Mirrors the legacy grant_to_group / revoke_from_group / set_group_permissions
@@ -150,6 +158,14 @@ class OperationEssenceSetLinkService(BaseService):
         result = await self.session.execute(stmt)
         links = list(result.scalars().all())
         return [self._to_schema(link) for link in links]
+
+    async def _granted_ids_for_group(self, user_group_id: int) -> set[int]:
+        """Just the OESL ids granted to a group (lightweight; no schema build)."""
+        stmt = select(
+            UserGroupOperationEssenceSetLink.operation_essence_set_link_id
+        ).where(UserGroupOperationEssenceSetLink.user_group_id == user_group_id)
+        result = await self.session.execute(stmt)
+        return set(result.scalars().all())
 
     async def grant_to_group(
         self, user_group_id: int, operation_essence_set_link_id: int
@@ -214,3 +230,168 @@ class OperationEssenceSetLinkService(BaseService):
             )
 
         await self.session.commit()
+
+    # -- Permission-matrix apply (BA grid round-trip) ---------------------------
+
+    async def apply_matrix(
+        self, request: PermissionMatrixApplyRequest, dry_run: bool = True
+    ) -> PermissionMatrixApplyResult:
+        """
+        Diff an uploaded matrix against the DB and optionally commit it.
+
+        For each group the payload carries the FULL desired set of OESL ids
+        (full-replace). Unknown ids (e.g. a permission deleted since the file
+        was downloaded) are reported and skipped, never applied. With
+        dry_run=True nothing is written — the result is a preview.
+        """
+        # Valid permission ids in the DB right now.
+        all_links = await self.repository.get_all_links()
+        valid_ids = {link.id for link in all_links}
+
+        diffs: List[PermissionMatrixGroupDiff] = []
+        total_added = total_removed = total_unknown = 0
+
+        for grp in request.groups:
+            requested = set(grp.operation_essence_set_link_ids)
+            unknown = sorted(requested - valid_ids)
+            target = requested & valid_ids
+
+            current = await self._granted_ids_for_group(grp.user_group_id)
+            added = sorted(target - current)
+            removed = sorted(current - target)
+            unchanged = len(target & current)
+
+            applied = False
+            if not dry_run and (added or removed):
+                await self.set_group_permissions(grp.user_group_id, list(target))
+                applied = True
+
+            total_added += len(added)
+            total_removed += len(removed)
+            total_unknown += len(unknown)
+
+            diffs.append(
+                PermissionMatrixGroupDiff(
+                    user_group_id=grp.user_group_id,
+                    user_group_name=grp.user_group_name,
+                    added=added,
+                    removed=removed,
+                    unchanged=unchanged,
+                    unknown_ids=unknown,
+                    applied=applied,
+                )
+            )
+
+        return PermissionMatrixApplyResult(
+            dry_run=dry_run,
+            groups=diffs,
+            total_added=total_added,
+            total_removed=total_removed,
+            total_unknown=total_unknown,
+        )
+
+    # -- Sync from code (materialise guard permissions into permissions_set) -----
+
+    @staticmethod
+    def _extract_required_permissions(app) -> set[tuple[str, tuple[str, ...]]]:
+        """
+        Walk the live FastAPI route table and collect every distinct
+        (operation_name, sorted essence-set) required by an access guard.
+
+        Reads the stamps set in has_access_set:
+            _is_access_guard / _access_operation / _access_essences
+        """
+        seen: set[tuple[str, tuple[str, ...]]] = set()
+        for route in getattr(app, "routes", []):
+            dependant = getattr(route, "dependant", None)
+            if dependant is None:
+                continue
+            stack = list(getattr(dependant, "dependencies", []))
+            while stack:
+                dep = stack.pop()
+                call = getattr(dep, "call", None)
+                if call is not None and getattr(call, "_is_access_guard", False):
+                    op = getattr(call, "_access_operation", None)
+                    essences = tuple(sorted(getattr(call, "_access_essences", []) or []))
+                    if op and essences:
+                        seen.add((op, essences))
+                stack.extend(getattr(dep, "dependencies", []))
+        return seen
+
+    async def _resolve_operation_id(self, name: str) -> Optional[int]:
+        result = await self.session.execute(
+            select(Operation.id).where(func.lower(Operation.name) == name.lower())
+        )
+        return result.scalar_one_or_none()
+
+    async def _resolve_essence_id(self, name: str) -> Optional[int]:
+        result = await self.session.execute(
+            select(Essence.id).where(func.lower(Essence.name) == name.lower())
+        )
+        return result.scalar_one_or_none()
+
+    async def sync_from_routes(self, app) -> PermissionSyncResult:
+        """
+        Materialise every guard-required permission into permissions_set.
+
+        For each distinct (operation, essence-set) discovered on the routes,
+        resolve the operation id and essence ids, then create the OESL row if it
+        doesn't already exist. Permissions whose operation or any essence isn't
+        seeded yet are skipped and reported (mirrors the manifest seed-diff).
+        Idempotent — safe to run repeatedly.
+        """
+        required = self._extract_required_permissions(app)
+        created = existing = 0
+        skipped: List[PermissionSyncSkip] = []
+
+        for op_name, essence_names in sorted(required):
+            op_id = await self._resolve_operation_id(op_name)
+            if op_id is None:
+                skipped.append(
+                    PermissionSyncSkip(
+                        operation=op_name,
+                        essences=list(essence_names),
+                        reason="operation not seeded",
+                    )
+                )
+                continue
+
+            essence_ids: List[int] = []
+            missing: List[str] = []
+            for en in essence_names:
+                eid = await self._resolve_essence_id(en)
+                if eid is None:
+                    missing.append(en)
+                else:
+                    essence_ids.append(eid)
+            if missing:
+                skipped.append(
+                    PermissionSyncSkip(
+                        operation=op_name,
+                        essences=list(essence_names),
+                        reason=f"essences not seeded: {', '.join(missing)}",
+                    )
+                )
+                continue
+
+            essence_set = await self.essence_set_service.get_or_create(essence_ids)
+            already = await self.repository.get_by_operation_and_set(
+                op_id, essence_set.id
+            )
+            if already:
+                existing += 1
+                continue
+
+            await self.repository.create(
+                OperationEssenceSetLink(
+                    operation_id=op_id, essence_set_id=essence_set.id
+                )
+            )
+            created += 1
+
+        return PermissionSyncResult(
+            total_required=len(required),
+            created=created,
+            existing=existing,
+            skipped=skipped,
+        )

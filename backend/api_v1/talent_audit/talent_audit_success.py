@@ -19,6 +19,24 @@ class TalentAuditUpdateSuccess(UpdateSuccess):
         DomainSuccess.__init__(self, self.fallback)
 
 
+class TalentAuditTalentPlusEnableSuccess(UpdateSuccess):
+    message_key = "talentAuditTalentPlusEnableSuccess"
+
+    def __init__(self, audit_id: int) -> None:
+        self.template_vars = {"auditId": audit_id}
+        self.fallback = f"Talent + enabled for audit ID {audit_id}"
+        DomainSuccess.__init__(self, self.fallback)
+
+
+class TalentAuditTalentPlusDisableSuccess(UpdateSuccess):
+    message_key = "talentAuditTalentPlusDisableSuccess"
+
+    def __init__(self, audit_id: int) -> None:
+        self.template_vars = {"auditId": audit_id}
+        self.fallback = f"Talent + disabled for audit ID {audit_id}"
+        DomainSuccess.__init__(self, self.fallback)
+
+
 class TalentAuditDeleteSuccess(DeleteSuccess):
     message_key = "talentAuditDeleteSuccess"
 

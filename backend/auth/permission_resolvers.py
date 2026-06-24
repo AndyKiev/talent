@@ -61,3 +61,28 @@ def resolve_user_permission_sets(user_orm) -> frozenset[tuple[str, frozenset[str
         perms |= ug.permission_sets  # UserGroup.permission_sets property
 
     return frozenset(perms)
+
+
+# Centralised single source of truth for superadmin / bypass group names.
+# A user in any of these groups (of type 'authorisation') skips ALL set-grain
+# permission checks. Matched case-insensitively. (Ported from talent-test.)
+BYPASS_GROUP_NAMES: frozenset[str] = frozenset({"dev"})
+
+
+def resolve_user_is_bypass(user_orm) -> bool:
+    """
+    True if the user belongs to a bypass group (e.g. 'dev') of type
+    'authorisation'. Bypass users skip every set-grain permission check.
+
+    Same authorisation-type filter as the permission resolvers above, so a
+    group named 'dev' of any other type does NOT grant a bypass.
+    """
+    for eugl in user_orm.user_groups:
+        ug = eugl.user_group
+        if not ug:
+            continue
+        if not ug.user_group_type or ug.user_group_type.name != "authorisation":
+            continue
+        if ug.name and ug.name.strip().lower() in BYPASS_GROUP_NAMES:
+            return True
+    return False
