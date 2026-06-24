@@ -9,6 +9,9 @@ import HistoryIcon from '@mui/icons-material/History';
 import StorageIcon from '@mui/icons-material/Storage';
 import BoltIcon from '@mui/icons-material/Bolt';
 import DataObjectIcon from '@mui/icons-material/DataObject';
+import SettingsIcon from '@mui/icons-material/Settings';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import BadgeIcon from '@mui/icons-material/Badge';
 import type { RawEssenceConfig } from '../../types/essence';
 
 export const ESSENCES: RawEssenceConfig[] = [
@@ -113,5 +116,45 @@ export const ESSENCES: RawEssenceConfig[] = [
     Icon: DataObjectIcon,
     color: '#6366f1',
     parentGroup: 'catalog',
+  },
+
+  // ── App settings (people-review / TL) ─────────────────────────────────────
+  {
+    parent: 'developer',
+    key: 'settings',
+    labelKey: 'settings',
+    descriptionKey: 'settingsDesc',
+    Icon: SettingsIcon,
+    color: '#f59e0b',
+  },
+
+  // ── Process Roles (group) — process, process_role (people-review / TL) ─────
+  {
+    parent: 'developer',
+    key: 'process_roles',
+    labelKey: 'processRolesGroup',
+    descriptionKey: 'processRolesGroupDesc',
+    Icon: AccountTreeIcon,
+    color: '#0ea5e9',
+    isGroup: true,
+    groupKey: 'process_roles',
+  },
+  {
+    parent: 'developer',
+    key: 'process',
+    labelKey: 'processes',
+    descriptionKey: 'processesDesc',
+    Icon: CategoryIcon,
+    color: '#0ea5e9',
+    parentGroup: 'process_roles',
+  },
+  {
+    parent: 'developer',
+    key: 'process_role',
+    labelKey: 'processRoles',
+    descriptionKey: 'processRolesDesc',
+    Icon: BadgeIcon,
+    color: '#6366f1',
+    parentGroup: 'process_roles',
   },
 ];
