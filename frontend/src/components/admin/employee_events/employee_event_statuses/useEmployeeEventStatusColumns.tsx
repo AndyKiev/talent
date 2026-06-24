@@ -8,7 +8,7 @@ import type { EmployeeEventStatus } from './employeeEventStatusApi';
 import type { GetStringFn } from '../../../../types/getStringFn';
 import { TextEditCell } from '../../TextEditCell';
 import { ReadonlyCell } from '../../ReadonlyCell';
-import cfl from '../../../../utils/capitalizeFirstLetter';
+import cfl from '../../../../utils/helpers.ts';
 
 export interface EditingState {
   rowId: number | null;

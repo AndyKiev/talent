@@ -16,6 +16,10 @@ import {
     Select,
     TextField,
 } from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
 import {
     fetchEmployeeEventTypes,
     fetchEmployeeEventStatuses,
@@ -24,6 +28,7 @@ import {
     type EmployeeEventStatusSchema,
 } from './employeeEventApi';
 import type { GetStringFn } from '../../../types/getStringFn';
+import { DATE_FORMAT } from '../../../utils/eNums';
 import cfl from '../../../utils/helpers.ts';
 
 interface FormValues {
@@ -40,25 +45,29 @@ interface Props {
     getString: GetStringFn;
     /** Whether the employee already has any event (drives activation-first filter). */
     hasAnyEvent: boolean;
+    /** Effective dates already taken by existing events — cannot be reused. */
+    existingDates?: string[];
 }
 
 export function EmployeeEventCreateDialog({
-    open,
-    onClose,
-    onSubmit,
-    isPending,
-    getString,
-    hasAnyEvent,
-}: Props) {
+                                              open,
+                                              onClose,
+                                              onSubmit,
+                                              isPending,
+                                              getString,
+                                              hasAnyEvent,
+                                              existingDates = [],
+                                          }: Props) {
     const {
         control,
         handleSubmit,
         reset,
+        watch,
         formState: { errors },
     } = useForm<FormValues>({
         defaultValues: {
             event_type_id: '',
-            effective_date: new Date().toISOString().slice(0, 10),
+            effective_date: dayjs().format('YYYY-MM-DD'),
             description: '',
         },
     });
@@ -68,7 +77,7 @@ export function EmployeeEventCreateDialog({
         if (open) {
             reset({
                 event_type_id: '',
-                effective_date: new Date().toISOString().slice(0, 10),
+                effective_date: dayjs().format('YYYY-MM-DD'),
                 description: '',
             });
         }
@@ -90,6 +99,10 @@ export function EmployeeEventCreateDialog({
     // Find the "draft" status ID — events always start as draft
     const draftStatus = statuses.find((s) => s.name === 'draft');
 
+    // The selected date cannot collide with an existing event's effective date.
+    const selectedDate = watch('effective_date');
+    const dateTaken = !!selectedDate && existingDates.includes(selectedDate);
+
     // Activation-first rule:
     // - No events yet  -> only ACTIVATION can be created.
     // - Events exist   -> ACTIVATION is hidden (it may exist only once, first).
@@ -99,6 +112,7 @@ export function EmployeeEventCreateDialog({
 
     const onFormSubmit = (values: FormValues) => {
         if (!draftStatus) return;
+        if (existingDates.includes(values.effective_date)) return; // duplicate date guard
         onSubmit({
             event_type_id: values.event_type_id as number,
             status_id: draftStatus.id,
@@ -112,67 +126,82 @@ export function EmployeeEventCreateDialog({
         <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
             <DialogTitle>{cfl(getString('addEvent') || 'Add event')}</DialogTitle>
             <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: '16px !important' }}>
-                {/* Event Type */}
-                <Controller
-                    name="event_type_id"
-                    control={control}
-                    rules={{ required: cfl(getString('fieldRequired') || 'Required') }}
-                    render={({ field }) => (
-                        <FormControl fullWidth error={!!errors.event_type_id} size="small">
-                            <InputLabel>{cfl(getString('eventType') || 'Event type')}</InputLabel>
-                            <Select
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    {/* Event Type */}
+                    <Controller
+                        name="event_type_id"
+                        control={control}
+                        rules={{ required: cfl(getString('fieldRequired') || 'Required') }}
+                        render={({ field }) => (
+                            <FormControl fullWidth error={!!errors.event_type_id} size="small">
+                                <InputLabel>{cfl(getString('eventType') || 'Event type')}</InputLabel>
+                                <Select
+                                    {...field}
+                                    label={cfl(getString('eventType') || 'Event type')}
+                                    disabled={typesLoading}
+                                >
+                                    {selectableTypes.map((et) => (
+                                        <MenuItem key={et.id} value={et.id}>
+                                            {et.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                                {errors.event_type_id && (
+                                    <FormHelperText>{errors.event_type_id.message}</FormHelperText>
+                                )}
+                            </FormControl>
+                        )}
+                    />
+
+                    {/* Effective Date — MUI calendar, DD.MM.YYYY */}
+                    <Controller
+                        name="effective_date"
+                        control={control}
+                        rules={{ required: cfl(getString('fieldRequired') || 'Required') }}
+                        render={({ field }) => (
+                            <DatePicker
+                                label={cfl(getString('effectiveDate') || 'Effective date')}
+                                format={DATE_FORMAT}
+                                value={field.value ? dayjs(field.value) : null}
+                                onChange={(v) => {
+                                    const d = v ? dayjs(v) : null;
+                                    field.onChange(d && d.isValid() ? d.format('YYYY-MM-DD') : '');
+                                }}
+                                shouldDisableDate={(d) =>
+                                    existingDates.includes(dayjs(d).format('YYYY-MM-DD'))
+                                }
+                                slotProps={{
+                                    textField: {
+                                        size: 'small',
+                                        fullWidth: true,
+                                        error: !!errors.effective_date || dateTaken,
+                                        helperText: dateTaken
+                                            ? (getString('dateAlreadyUsed') ||
+                                                'An event already exists on this date')
+                                            : errors.effective_date?.message,
+                                    },
+                                }}
+                            />
+                        )}
+                    />
+
+                    {/* Description */}
+                    <Controller
+                        name="description"
+                        control={control}
+                        render={({ field }) => (
+                            <TextField
                                 {...field}
-                                label={cfl(getString('eventType') || 'Event type')}
-                                disabled={typesLoading}
-                            >
-                                {selectableTypes.map((et) => (
-                                    <MenuItem key={et.id} value={et.id}>
-                                        {et.name}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                            {errors.event_type_id && (
-                                <FormHelperText>{errors.event_type_id.message}</FormHelperText>
-                            )}
-                        </FormControl>
-                    )}
-                />
-
-                {/* Effective Date */}
-                <Controller
-                    name="effective_date"
-                    control={control}
-                    rules={{ required: cfl(getString('fieldRequired') || 'Required') }}
-                    render={({ field }) => (
-                        <TextField
-                            {...field}
-                            type="date"
-                            label={cfl(getString('effectiveDate') || 'Effective date')}
-                            size="small"
-                            fullWidth
-                            InputLabelProps={{ shrink: true }}
-                            error={!!errors.effective_date}
-                            helperText={errors.effective_date?.message}
-                        />
-                    )}
-                />
-
-                {/* Description */}
-                <Controller
-                    name="description"
-                    control={control}
-                    render={({ field }) => (
-                        <TextField
-                            {...field}
-                            label={cfl(getString('description') || 'Description')}
-                            size="small"
-                            fullWidth
-                            multiline
-                            minRows={2}
-                            maxRows={4}
-                        />
-                    )}
-                />
+                                label={cfl(getString('description') || 'Description')}
+                                size="small"
+                                fullWidth
+                                multiline
+                                minRows={2}
+                                maxRows={4}
+                            />
+                        )}
+                    />
+                </LocalizationProvider>
             </DialogContent>
 
             <DialogActions>
@@ -182,7 +211,7 @@ export function EmployeeEventCreateDialog({
                 <Button
                     variant="contained"
                     onClick={handleSubmit(onFormSubmit)}
-                    disabled={isPending || !draftStatus}
+                    disabled={isPending || !draftStatus || dateTaken}
                     startIcon={isPending ? <CircularProgress size={16} color="inherit" /> : undefined}
                 >
                     {cfl(getString('create') || 'Create')}

@@ -17,7 +17,6 @@ import {
     type EmployeeEventDirectionType,
 } from './employeeEventDirectionTypeApi';
 import {
-    EMPLOYEE_EVENT_DIRECTION_TYPE_QK,
     useEmployeeEventDirectionTypeMutations,
 } from './useEmployeeEventDirectionTypeMutations';
 import {
@@ -33,7 +32,8 @@ import { EmployeeEventDirectionTypeDeleteDialog } from './EmployeeEventDirection
 import { useDataGridLocale } from '../../../../hooks/useDataGridLocale';
 import useString from '../../../../hooks/useString';
 import str from '../../../../strings/str';
-import cfl from '../../../../utils/capitalizeFirstLetter';
+import cfl from '../../../../utils/helpers.ts';
+import {EMPLOYEE_EVENT_DIRECTION_TYPE_QK} from "../../../../utils/queryKeys.ts";
 
 export function EmployeeEventDirectionTypeCrud() {
     const getString = useString({ str });

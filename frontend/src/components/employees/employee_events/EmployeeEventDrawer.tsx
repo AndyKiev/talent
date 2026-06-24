@@ -51,6 +51,8 @@ import {
 } from './employeeEventApi';
 import { fetchEmployeeById } from '../employeeApi';
 import { employeeEventsQK } from './useEmployeeEventMutations';
+import { DepartmentTreePicker } from '../DepartmentTreePicker';
+import type { DepartmentNode } from '../../admin/departments/departmentApi';
 import type { GetStringFn } from '../../../types/getStringFn';
 import cfl from '../../../utils/helpers.ts';
 import { formatToUkrDate } from '../../../utils/dateFormatter';
@@ -190,6 +192,10 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
             // Applying writes status/job/department to the employee — refresh
             // the employees grid so the projection shows immediately.
             qc.invalidateQueries({ queryKey: ['employees'] });
+            // Also refresh the single-employee projection (header job chip,
+            // summary, departments) so the new job/department shows without reload.
+            qc.invalidateQueries({ queryKey: ['employee', employeeId] });
+            qc.invalidateQueries({ queryKey: ['employee_departments', employeeId] });
             setSnackMsg({ text: cfl(getString('eventApplied') || 'Event applied'), severity: 'success' });
         },
         onError: (err: unknown) => {
@@ -238,6 +244,12 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
 
     // Event type code (drives status auto-set / picker rules)
     const eventCode = event?.event_type?.code ?? '';
+    // Whether this event type changes the main department (e.g. TRANSFER).
+    // PROMOTION-like types have no MAIN_DEPT_CHANGE direction → the job changes
+    // WITHIN the current main department, so its job list comes from that dept.
+    const eventTypeHasMainDept = typeDirections.some(
+        (d) => d.direction_type?.code === 'MAIN_DEPT_CHANGE',
+    );
     // For these types the status is fixed by the backend (auto-created),
     // so the HRM must never pick STATUS_CHANGE manually.
     const STATUS_AUTO_CODES = ['ACTIVATION', 'RETURN', 'DISMISSAL'];
@@ -282,7 +294,7 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
     const { data: jobsByCurrentType = [] } = useQuery({
         queryKey: ['jobs-by-dept-type', currentMainDeptTypeId],
         queryFn: () => fetchJobsByDepartmentType(currentMainDeptTypeId as number),
-        enabled: open && currentMainDeptTypeId != null && eventCode === 'PROMOTION',
+        enabled: open && currentMainDeptTypeId != null,
         staleTime: 5 * 60 * 1000,
     });
 
@@ -290,14 +302,11 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
     const getOptions = (code: string): { id: number; name: string }[] => {
         switch (code) {
             case 'JOB_CHANGE': {
-                // PROMOTION: jobs scoped to current main dept type.
-                // TRANSFER/others: jobs scoped to the newly-saved dept type.
-                let list =
-                    eventCode === 'PROMOTION'
-                        ? jobsByCurrentType
-                        : savedMainDeptTypeId != null
-                            ? jobsByType
-                            : jobs;
+                // TRANSFER (changes main dept): jobs from the newly-saved dept type.
+                // PROMOTION (no dept change): jobs from the CURRENT main dept type.
+                let list = eventTypeHasMainDept
+                    ? (savedMainDeptTypeId != null ? jobsByType : jobs)
+                    : jobsByCurrentType;
                 // Exclude the employee's current job (we're changing it).
                 if (currentJobId != null) {
                     list = list.filter((j) => j.id !== currentJobId);
@@ -325,6 +334,8 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
     const [newValue, setNewValue] = useState<number | ''>('');
     // For MAIN_DEPT_CHANGE: pick a main category first, then a department in it.
     const [selectedCategoryId, setSelectedCategoryId] = useState<number | ''>('');
+    // MAIN_DEPT_CHANGE: chosen top instance whose subtree the tree picker shows.
+    const [topDeptId, setTopDeptId] = useState<number | ''>('');
 
     const addingDirection = typeDirections.find((td) => td.direction_type_id === addingDirectionId);
     const addingCode = addingDirection?.direction_type?.code ?? '';
@@ -399,6 +410,7 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
                 setAddingDirectionId(null);
                 setNewValue('');
                 setSelectedCategoryId('');
+                setTopDeptId('');
             },
         });
     };
@@ -410,7 +422,7 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
     const canApply = isReady && !applyMutation.isPending;
 
     return (
-        <Drawer anchor="right" open={open} onClose={onClose} PaperProps={{ sx: { width: { xs: '100%', sm: 480 } } }}>
+        <Drawer anchor="right" open={open} onClose={onClose} PaperProps={{ sx: { width: { xs: '100%', sm: 640 } } }}>
             <Box sx={{ p: 3 }}>
                 {/* Header */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -578,6 +590,7 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
                                     setAddingDirectionId(e.target.value as number);
                                     setNewValue('');
                                     setSelectedCategoryId('');
+                                    setTopDeptId('');
                                 }}
                             >
                                 {missingDirections.map((td) => (
@@ -603,6 +616,7 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
                                         onChange={(e) => {
                                             setSelectedCategoryId(e.target.value as number);
                                             setNewValue('');
+                                            setTopDeptId('');
                                         }}
                                     >
                                         {mainCategories.map((cat) => (
@@ -616,25 +630,55 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
                                 {selectedCategoryId !== '' && (
                                     <FormControl fullWidth size="small" sx={{ mb: 1.5 }}>
                                         <InputLabel>
-                                            {cfl(getString('mainDepartment') || 'Main department')}
+                                            {cfl(getString('topDepartment') || 'Top department')}
                                         </InputLabel>
                                         <Select
                                             variant="outlined"
-                                            value={newValue}
-                                            label={cfl(getString('mainDepartment') || 'Main department')}
-                                            onChange={(e) => setNewValue(e.target.value as number)}
+                                            value={topDeptId}
+                                            label={cfl(getString('topDepartment') || 'Top department')}
+                                            onChange={(e) => {
+                                                const id = Number(e.target.value);
+                                                setTopDeptId(id);
+                                                // Seed selection with the top instance; the tree can refine it.
+                                                setNewValue(id);
+                                            }}
                                         >
-                                            {deptsByCategory
-                                                .filter((d) => !currentMainDeptIds.includes(d.id))
-                                                .map((d) => (
-                                                    <MenuItem key={d.id} value={d.id}>
-                                                        {d.name}
-                                                    </MenuItem>
-                                                ))}
+                                            {deptsByCategory.map((d) => (
+                                                <MenuItem key={d.id} value={d.id}>
+                                                    {d.name}
+                                                </MenuItem>
+                                            ))}
                                         </Select>
                                     </FormControl>
                                 )}
+
+                                {topDeptId !== '' && (
+                                    <Box sx={{ mb: 1.5 }}>
+                                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                                            {cfl(getString('selectExactDepartmentHint') ||
+                                                'Select the exact department in the tree (or keep the top one)')}
+                                        </Typography>
+                                        <DepartmentTreePicker
+                                            rootId={topDeptId as number}
+                                            selectedId={typeof newValue === 'number' ? newValue : null}
+                                            onSelect={(node: DepartmentNode) => setNewValue(node.id)}
+                                        />
+                                        {typeof newValue === 'number' && currentMainDeptIds.includes(newValue) && (
+                                            <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 0.5 }}>
+                                                {getString('alreadyMainDepartment') ||
+                                                    'This is already a main department for this employee.'}
+                                            </Typography>
+                                        )}
+                                    </Box>
+                                )}
                             </>
+                        )}
+
+                        {/* PROMOTION: show which department the new job stays within */}
+                        {addingCode === 'JOB_CHANGE' && !eventTypeHasMainDept && currentMainDept && (
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                                {cfl(getString('promotionWithin') || 'Promotion within')}: {currentMainDept.name}
+                            </Typography>
                         )}
 
                         {/* Other directions (JOB_CHANGE, STATUS_CHANGE): single select */}

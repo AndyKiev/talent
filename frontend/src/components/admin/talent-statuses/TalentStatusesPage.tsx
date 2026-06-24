@@ -5,7 +5,7 @@ import {Link} from "@tanstack/react-router";
 import {TalentStatusCrud} from "./TalentStatusCrud.tsx";
 import useString from "../../../hooks/useString.ts";
 import str from "../../../strings/str.ts";
-import cfl from "../../../utils/capitalizeFirstLetter.ts";
+import cfl from "../../../utils/helpers.ts";
 
 export function TalentStatusesPage() {
     const getString = useString({ str });

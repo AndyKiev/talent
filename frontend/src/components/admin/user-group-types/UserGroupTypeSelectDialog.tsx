@@ -16,9 +16,9 @@ import {
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { fetchUserGroupTypes, type UserGroupType } from './userGroupTypeApi';
-import { USER_GROUP_TYPE_QK } from './useUserGroupTypeMutations';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
+import {USER_GROUP_TYPE_QK} from "../../../utils/queryKeys.ts";
 
 interface Props {
     group: { id: number; user_group_type_id?: number; name?: string } | null;
@@ -57,6 +57,7 @@ export function UserGroupTypeSelectDialog({ group, isPending, onConfirm, onCance
                     <FormControl fullWidth size="small">
                         <InputLabel>{getString('userGroupType') || 'Group Type'}</InputLabel>
                         <Select
+                            variant={"outlined"}
                             value={selectedTypeId}
                             onChange={(e) => setSelectedTypeId(e.target.value as number)}
                             label={getString('userGroupType') || 'Group Type'}

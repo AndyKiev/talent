@@ -5,7 +5,7 @@ import { Box, IconButton, Tooltip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 import type { EmployeeEventType } from './employeeEventTypeApi.ts';
-import cfl from '../../../../utils/capitalizeFirstLetter.ts';
+import cfl from '../../../../utils/helpers.ts';
 import type { GetStringFn } from '../../../../types/getStringFn.ts';
 import { TextEditCell } from '../../TextEditCell.tsx';
 import { ReadonlyCell } from '../../ReadonlyCell.tsx';
@@ -63,7 +63,7 @@ export function useEmployeeEventTypeColumns({
                     <ReadonlyCell
                         value={String(row[field] ?? '')}
                         onEdit={(e) => onEditFieldClick(row, field as string, e)}
-                        editTitle={getString(`edit_${field}`) || `Edit ${field}`}
+                        editTitle={getString(`edit${cfl(field)}`) || `Edit ${field}`}
                         placeholder="—"
                     />
                 );
@@ -72,6 +72,7 @@ export function useEmployeeEventTypeColumns({
     }
 
     return [
+        textEditCol('code', 'code', 160),
         textEditCol('name', 'name', 200, 1),
         textEditCol('description', 'description', 280, 1),
         {

@@ -23,11 +23,11 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import type { UseMutationResult } from '@tanstack/react-query';
 import { fetchUserGroupTypes } from '../user-group-types/userGroupTypeApi';
-import { USER_GROUP_TYPE_QK } from '../user-group-types/useUserGroupTypeMutations';
 import type { UserGroupCreate, MutationResponse, UserGroup } from './userGroupApi';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
-import cfl from '../../../utils/capitalizeFirstLetter';
+import cfl from '../../../utils/helpers.ts';
+import {USER_GROUP_TYPE_QK} from "../../../utils/queryKeys.ts";
 
 const schema = z.object({
     name: z.string().min(3, 'nameTooShort').max(128, 'nameTooLong'),

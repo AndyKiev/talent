@@ -1,6 +1,6 @@
 // src/components/employees/employee_events/EmployeeEventsPage.tsx
-import { useState, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useCallback, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
     Alert,
     Box,
@@ -17,10 +17,12 @@ import type { GridColDef } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import DeleteIcon from '@mui/icons-material/Delete';
+import UndoIcon from '@mui/icons-material/Undo';
 import { useParams } from '@tanstack/react-router';
 import { fetchEmployeeEvents, type EmployeeEventFlat, type EmployeeEventCreate } from './employeeEventApi';
 import { employeeEventsQK, useEmployeeEventMutations } from './useEmployeeEventMutations';
 import { EmployeeEventDeleteDialog } from './EmployeeEventDeleteDialog';
+import { EmployeeEventRevertDialog } from './EmployeeEventRevertDialog';
 import { EmployeeEventCreateDialog } from './EmployeeEventCreateDialog';
 import { EmployeeEventDrawer } from './EmployeeEventDrawer';
 import useString from '../../../hooks/useString';
@@ -36,17 +38,23 @@ const STATUS_COLORS: Record<string, 'warning' | 'info' | 'success' | 'default'> 
     applied: 'success',
 };
 
+// Backward step machine, mirrors the backend: applied -> ready -> draft.
+// A status absent here (i.e. draft) cannot be reverted further.
+const REVERT_TARGET: Record<string, string> = { applied: 'ready', ready: 'draft' };
+
 export function EmployeeEventsPage() {
     const { employeeId: employeeIdStr } = useParams({
         from: '/employees/$employeeId/events/',
     });
     const employeeId = Number(employeeIdStr);
     const getString = useString({ str });
+    const qc = useQueryClient();
     const dataGridSx = useDataGridStyles();
     const localeText = useDataGridLocale();
 
     const [createOpen, setCreateOpen] = useState(false);
     const [eventToDelete, setEventToDelete] = useState<EmployeeEventFlat | null>(null);
+    const [eventToRevert, setEventToRevert] = useState<EmployeeEventFlat | null>(null);
     const [drawerEvent, setDrawerEvent] = useState<EmployeeEventFlat | null>(null);
     const [snackbar, setSnackbar] = useState({
         open: false,
@@ -62,12 +70,40 @@ export function EmployeeEventsPage() {
     });
 
     // ── Mutations ─────────────────────────────────────────────────────────────
-    const { createMutation, deleteMutation } = useEmployeeEventMutations({
+    const { createMutation, deleteMutation, revertMutation } = useEmployeeEventMutations({
         employeeId,
         setSnackbar,
         onCreateSuccess: () => setCreateOpen(false),
-        onDeleteSuccess: () => setEventToDelete(null),
+        onDeleteSuccess: () => {
+            setEventToDelete(null);
+            // Deleting the latest event reprojects job + main department on the
+            // employee server-side — refresh the views that show them.
+            qc.invalidateQueries({ queryKey: ['employee'] });
+            qc.invalidateQueries({ queryKey: ['employee_departments'] });
+            qc.invalidateQueries({ queryKey: ['employees'] });
+        },
+        onRevertSuccess: () => {
+            setEventToRevert(null);
+            // applied -> ready un-applies the event (reprojects job + main dept
+            // and restores talent statuses) — refresh the same views as delete.
+            qc.invalidateQueries({ queryKey: ['employee'] });
+            qc.invalidateQueries({ queryKey: ['employee_departments'] });
+            qc.invalidateQueries({ queryKey: ['employees'] });
+        },
     });
+
+    // Only the latest event (by effective_date, then id) may be deleted —
+    // deletion must unwind state from the most recent change backwards.
+    const lastEvent = useMemo<EmployeeEventFlat | null>(
+        () =>
+            events.reduce<EmployeeEventFlat | null>((max, e) => {
+                if (!max) return e;
+                if (e.effective_date > max.effective_date) return e;
+                if (e.effective_date === max.effective_date && e.id > max.id) return e;
+                return max;
+            }, null),
+        [events],
+    );
 
     const handleDeleteClick = useCallback(
         (e: React.MouseEvent, event: EmployeeEventFlat) => {
@@ -79,6 +115,18 @@ export function EmployeeEventsPage() {
 
     const handleDeleteConfirm = () => {
         if (eventToDelete) deleteMutation.mutate(eventToDelete.id);
+    };
+
+    const handleRevertClick = useCallback(
+        (e: React.MouseEvent, event: EmployeeEventFlat) => {
+            e.stopPropagation();
+            setEventToRevert(event);
+        },
+        [],
+    );
+
+    const handleRevertConfirm = () => {
+        if (eventToRevert) revertMutation.mutate(eventToRevert.id);
     };
 
     const handleCreate = (payload: EmployeeEventCreate) => {
@@ -155,25 +203,51 @@ export function EmployeeEventsPage() {
         {
             field: '_actions',
             headerName: '',
-            width: 60,
+            width: 100,
             sortable: false,
             disableColumnMenu: true,
             renderCell: ({ row }) => {
-                const isDraft = row.status?.name === 'draft';
+                const isLast = lastEvent?.id === row.id;
+                const statusName = row.status?.name ?? '';
+                const revertTarget = REVERT_TARGET[statusName];
+                const canRevert = isLast && !!revertTarget;
                 return (
-                    <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, height: '100%' }}>
                         <Tooltip
                             title={
-                                isDraft
+                                !isLast
+                                    ? cfl(getString('onlyLastEventRevertable') ||
+                                        'Only the latest event can be reverted')
+                                    : !revertTarget
+                                        ? cfl(getString('nothingToRevert') ||
+                                            'Nothing to revert (already a draft)')
+                                        : `${cfl(getString('revert') || 'Revert')} → ${cfl(getString(revertTarget) || revertTarget)}`
+                            }
+                        >
+                            <span>
+                                <IconButton
+                                    size="small"
+                                    color="warning"
+                                    disabled={!canRevert}
+                                    onClick={(e) => handleRevertClick(e, row)}
+                                >
+                                    <UndoIcon fontSize="small" />
+                                </IconButton>
+                            </span>
+                        </Tooltip>
+                        <Tooltip
+                            title={
+                                isLast
                                     ? cfl(getString('delete') || 'Delete')
-                                    : cfl(getString('appliedCannotDelete') || 'Applied events cannot be deleted')
+                                    : cfl(getString('onlyLastEventDeletable') ||
+                                        'Only the latest event (by date) can be deleted')
                             }
                         >
                             <span>
                                 <IconButton
                                     size="small"
                                     color="error"
-                                    disabled={false}
+                                    disabled={!isLast}
                                     onClick={(e) => handleDeleteClick(e, row)}
                                 >
                                     <DeleteIcon fontSize="small" />
@@ -247,12 +321,20 @@ export function EmployeeEventsPage() {
                 isPending={createMutation.isPending}
                 getString={getString}
                 hasAnyEvent={events.length > 0}
+                existingDates={events.map((e) => e.effective_date)}
             />
             <EmployeeEventDeleteDialog
                 event={eventToDelete}
                 isPending={deleteMutation.isPending}
                 onConfirm={handleDeleteConfirm}
                 onCancel={() => setEventToDelete(null)}
+                getString={getString}
+            />
+            <EmployeeEventRevertDialog
+                event={eventToRevert}
+                isPending={revertMutation.isPending}
+                onConfirm={handleRevertConfirm}
+                onCancel={() => setEventToRevert(null)}
                 getString={getString}
             />
             <EmployeeEventDrawer

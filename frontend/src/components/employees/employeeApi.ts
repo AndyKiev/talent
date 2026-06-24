@@ -16,6 +16,13 @@ export interface Lang {
     name: string;
 }
 
+// Derived top-level org unit (board / directorate / store), resolved by the
+// backend by walking up the department tree from the actual department.
+export interface TopOrgUnit {
+    id: number;
+    name: string;
+}
+
 // ── Core shapes ───────────────────────────────────────────────────────────────
 
 export interface Employee {
@@ -24,18 +31,17 @@ export interface Employee {
     name: string;
     email: string | null;
     is_active: boolean;
-    job_id: number;
+    status_id: number | null;        // ADD
+    status: { id: number; name: string } | null;  // ADD
+    job_id: number | null;           // CHANGE: was number
     lang_id: number;
     created_at: string;
     groups: string[];
     operations: string[];
     job: Job | null;
     lang: Lang | null;
-    // Optional employee-status lookup. Not currently emitted by the backend
-    // employee schema, so consumers must treat it as possibly absent.
-    status?: { id: number; name: string } | null;
     main_departments: MainDepartment[];
-    extra_departments: MainDepartment[]
+    extra_departments: MainDepartment[];
 }
 
 export interface EmployeeCreate {
@@ -102,10 +108,38 @@ export const deleteEmployee = async (id: number): Promise<{ detail: string }> =>
     return res.data;
 };
 
+// ── Scope-filter Select ───────────────────────────────────────────────────────
+
+// A department option for the employees-page filter Select. Already ordered by
+// the backend: store (by region sort_order) -> directorate -> other.
+export interface ScopeDepartment {
+    id: number;
+    name: string;
+    category_key: string | null;
+    category_name: string | null;
+}
+
+export const fetchScopeDepartments = async (): Promise<ScopeDepartment[]> => {
+    const res = await axiosInstance.get<ScopeDepartment[]>(`${BASE}/scope_departments`);
+    return res.data ?? [];
+};
+
+// Employees filtered to one department's subtree (intersected with caller scope).
+export const fetchEmployeesByDepartment = async (
+    departmentId: number,
+): Promise<Employee[]> => {
+    const res = await axiosInstance.get<Employee[]>(BASE, {
+        params: { department_id: departmentId },
+    });
+    return res.data ?? [];
+};
+
 // ── Main department slim shape (mirrors backend MainDepartmentSchema) ──────────
 
 export interface MainDepartment {
     id: number;           // EmployeeDepartment link id
     department_id: number;
     name: string;
+    // Derived top-level org unit (board / directorate / store) for this dept.
+    top_department: TopOrgUnit | null;
 }

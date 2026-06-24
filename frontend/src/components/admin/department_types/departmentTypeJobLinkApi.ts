@@ -38,6 +38,20 @@ export interface MutationResponse<T> {
     data: T;
 }
 
+/**
+ * Fetch ALL department_type ↔ job links, optionally filtered by is_active.
+ * Lightweight (link rows only) — used to determine which department types
+ * have at least one job linked.
+ */
+export const fetchDepartmentTypeJobLinks = async (
+    isActive?: boolean,
+): Promise<DepartmentTypeJobLink[]> => {
+    const params: Record<string, string> = {};
+    if (isActive !== undefined) params.is_active = String(isActive);
+    const res = await axiosInstance.get<DepartmentTypeJobLink[]>(BASE, { params });
+    return res.data ?? [];
+};
+
 /** Fetch all jobs linked to a department type (active only by default) */
 export const fetchJobsByDepartmentType = async (
     departmentTypeId: number,

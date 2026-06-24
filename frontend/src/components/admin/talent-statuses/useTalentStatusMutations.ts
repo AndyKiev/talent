@@ -1,17 +1,11 @@
 // src/components/admin/talent-statuses/useTalentStatusMutations.ts
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  createTalentStatus,
-  updateTalentStatus,
-  deleteTalentStatus,
-} from './talentStatusApi';
-
-type Snackbar = { open: boolean; message: string; severity: 'success' | 'error' };
-
-export const TALENT_STATUS_QK = ['talent_statuses'] as const;
+import {useMutation, useQueryClient} from '@tanstack/react-query';
+import {createTalentStatus, deleteTalentStatus, updateTalentStatus,} from './talentStatusApi';
+import {TALENT_STATUS_QK} from "../../../utils/queryKeys.ts";
+import type {SnackbarType} from "../../../types/types.ts";
 
 interface Props {
-  setSnackbar: (s: Snackbar) => void;
+  setSnackbar: (s: SnackbarType) => void;
   onCreateSuccess?: () => void;
   onUpdateSuccess?: () => void;
   onDeleteSuccess?: () => void;

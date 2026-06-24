@@ -4,13 +4,14 @@ import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { Box, Chip, IconButton, Switch, Tooltip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LockIcon from '@mui/icons-material/Lock';
+import KeyIcon from '@mui/icons-material/Key';
 
 import type { UserGroup } from './userGroupApi';
 import type { UserGroupType } from '../user-group-types/userGroupTypeApi';
 import type { GetStringFn } from '../../../types/getStringFn';
 import { TextEditCell } from '../TextEditCell';
 import { ReadonlyCell } from '../ReadonlyCell';
-import cfl from '../../../utils/capitalizeFirstLetter';
+import cfl from '../../../utils/helpers.ts';
 
 export interface EditingState {
     rowId: number | null;
@@ -28,24 +29,26 @@ interface Params {
     onToggleProtected: (row: UserGroup) => void;
     toggleIsPending: boolean;
     onEditTypeClick: (row: UserGroup) => void;
+    onPermissionSetsClick: (row: UserGroup) => void;
     onDeleteClick: (row: UserGroup) => void;
     deleteIsPending: boolean;
 }
 
 export function useUserGroupColumns({
-                                        getString,
-                                        groupTypes,
-                                        editingState,
-                                        onEditFieldClick,
-                                        onRequestSave,
-                                        onCancelEdit,
-                                        updateIsPending,
-                                        onToggleProtected,
-                                        toggleIsPending,
-                                        onEditTypeClick,
-                                        onDeleteClick,
-                                        deleteIsPending,
-                                    }: Params): GridColDef[] {
+    getString,
+    groupTypes,
+    editingState,
+    onEditFieldClick,
+    onRequestSave,
+    onCancelEdit,
+    updateIsPending,
+    onToggleProtected,
+    toggleIsPending,
+    onEditTypeClick,
+    onPermissionSetsClick,
+    onDeleteClick,
+    deleteIsPending,
+}: Params): GridColDef[] {
     function textEditCol(
         field: keyof UserGroup,
         headerKey: string,
@@ -72,7 +75,7 @@ export function useUserGroupColumns({
                     <ReadonlyCell
                         value={value}
                         onEdit={(e) => onEditFieldClick(row, field as string, e)}
-                        editTitle={getString(`edit_${field}`) || `Edit ${field}`}
+                        editTitle={getString(`edit_${field as string}`) || `Edit ${field as string}`}
                         placeholder="—"
                     />
                 );
@@ -82,7 +85,6 @@ export function useUserGroupColumns({
 
     return [
         textEditCol('name', 'name', 200, 1),
-
         textEditCol('description', 'description', 240, 1),
 
         {
@@ -92,7 +94,8 @@ export function useUserGroupColumns({
             renderCell: (params: GridRenderCellParams<UserGroup>) => {
                 const row = params.row;
                 const typeName =
-                    groupTypes.find((t) => t.id === row.user_group_type_id)?.name ?? String(row.user_group_type_id);
+                    groupTypes.find((t) => t.id === row.user_group_type_id)?.name ??
+                    String(row.user_group_type_id);
                 return (
                     <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
                         <Chip
@@ -141,25 +144,52 @@ export function useUserGroupColumns({
                         <Tooltip
                             title={
                                 row.is_protected
-                                    ? getString('protectedGroupHint') || 'Protected — only visible to protected group members'
+                                    ? getString('protectedGroupHint') ||
+                                      'Protected — only visible to protected group members'
                                     : getString('unprotectedGroupHint') || 'Not protected'
                             }
                         >
-              <span>
-                <Switch
-                    size="small"
-                    checked={row.is_protected}
-                    onChange={() => onToggleProtected(row)}
-                    disabled={toggleIsPending}
-                    onClick={(e) => e.stopPropagation()}
-                    icon={<LockIcon sx={{ fontSize: 14 }} />}
-                    checkedIcon={<LockIcon sx={{ fontSize: 14 }} />}
-                />
-              </span>
+                            <span>
+                                <Switch
+                                    size="small"
+                                    checked={row.is_protected}
+                                    onChange={() => onToggleProtected(row)}
+                                    disabled={toggleIsPending}
+                                    onClick={(e) => e.stopPropagation()}
+                                    icon={<LockIcon sx={{ fontSize: 14 }} />}
+                                    checkedIcon={<LockIcon sx={{ fontSize: 14 }} />}
+                                />
+                            </span>
                         </Tooltip>
                     </Box>
                 );
             },
+        },
+
+        // ── Permissions button (set grain) ────────────────────────────────────
+        {
+            field: '_permission_sets',
+            headerName: '',
+            width: 56,
+            sortable: false,
+            filterable: false,
+            disableColumnMenu: true,
+            renderCell: (params: GridRenderCellParams<UserGroup>) => (
+                <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+                    <Tooltip title={getString('permissions') || 'Permissions'}>
+                        <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onPermissionSetsClick(params.row);
+                            }}
+                        >
+                            <KeyIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                </Box>
+            ),
         },
 
         {
@@ -172,19 +202,19 @@ export function useUserGroupColumns({
             renderCell: (params: GridRenderCellParams<UserGroup>) => (
                 <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
                     <Tooltip title={getString('delete') || 'Delete'}>
-            <span>
-              <IconButton
-                  size="small"
-                  color="error"
-                  onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteClick(params.row);
-                  }}
-                  disabled={deleteIsPending}
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </span>
+                        <span>
+                            <IconButton
+                                size="small"
+                                color="error"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDeleteClick(params.row);
+                                }}
+                                disabled={deleteIsPending}
+                            >
+                                <DeleteIcon fontSize="small" />
+                            </IconButton>
+                        </span>
                     </Tooltip>
                 </Box>
             ),

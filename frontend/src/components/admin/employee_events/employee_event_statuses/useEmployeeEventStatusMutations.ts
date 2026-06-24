@@ -1,17 +1,15 @@
 // src/components/admin/employee_events/employee-event-statuses/useEmployeeEventStatusMutations.ts
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
 import {
   createEmployeeEventStatus,
-  updateEmployeeEventStatus,
   deleteEmployeeEventStatus,
+  updateEmployeeEventStatus,
 } from './employeeEventStatusApi';
-
-type Snackbar = { open: boolean; message: string; severity: 'success' | 'error' };
-
-export const EMPLOYEE_EVENT_STATUS_QK = ['employee_event_statuses'] as const;
+import {EMPLOYEE_EVENT_STATUS_QK} from "../../../../utils/queryKeys.ts";
+import type {SnackbarType} from "../../../../types/types.ts";
 
 interface Props {
-  setSnackbar: (s: Snackbar) => void;
+  setSnackbar: (s: SnackbarType) => void;
   onCreateSuccess?: () => void;
   onUpdateSuccess?: () => void;
   onDeleteSuccess?: () => void;

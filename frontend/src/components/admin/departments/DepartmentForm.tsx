@@ -39,7 +39,7 @@ import {
 import { useAllowedDepartmentTypes } from './useAllowedDepartmentTypes';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
-import cfl from '../../../utils/capitalizeFirstLetter';
+import cfl from '../../../utils/helpers.ts';
 import {fetchDepartmentCategories} from "../department_categories/departmentCategoryApi.ts";
 
 const schema = z.object({

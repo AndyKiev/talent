@@ -1,8 +1,9 @@
 // src/components/employees/SummaryTab.tsx
 import { useParams } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { Paper, Grid, Typography, Stack, Chip, Box } from '@mui/material';
-import { fetchEmployeeById } from './employeeApi';
+import { Paper, Grid, Typography, Chip, Box } from '@mui/material';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import { fetchEmployeeById, type MainDepartment } from './employeeApi';
 import useString from '../../hooks/useString';
 import str from '../../strings/str';
 import cfl from '../../utils/helpers.ts';
@@ -12,6 +13,21 @@ function Field({ label, value }: { label: string; value?: string | null }) {
         <Box sx={{ mb: 1.5 }}>
             <Typography variant="caption" color="text.secondary">{label}</Typography>
             <Typography variant="body1">{value || '—'}</Typography>
+        </Box>
+    );
+}
+
+// One row: derived top-level unit (board / directorate / store) › specific dept.
+function DeptRow({ dept }: { dept: MainDepartment }) {
+    return (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', mb: 0.5 }}>
+            {dept.top_department && (
+                <>
+                    <Chip label={dept.top_department.name} size="small" color="success" variant="filled" />
+                    <ChevronRightIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
+                </>
+            )}
+            <Chip label={dept.name} size="small" color="primary" variant="outlined" />
         </Box>
     );
 }
@@ -27,15 +43,15 @@ export function SummaryTab() {
         staleTime: 5 * 60 * 1000,
     });
 
+    const mainDepts = employee?.main_departments ?? [];
+    const extraDepts = employee?.extra_departments ?? [];
+
     return (
         <Paper variant="outlined" sx={{ p: 2 }}>
             <Grid container spacing={3}>
+                {/* Code & name intentionally omitted — shown in the card header. */}
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Field label={cfl(getString('code') || 'Code')} value={employee?.code} />
-                    <Field label={cfl(getString('name') || 'Name')} value={employee?.name} />
                     <Field label={cfl(getString('email') || 'Email')} value={employee?.email} />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                     <Field label={cfl(getString('job') || 'Job')} value={employee?.job?.name} />
                     <Field
                         label={cfl(getString('employeeStatus') || 'Status')}
@@ -46,27 +62,26 @@ export function SummaryTab() {
                         value={employee?.is_active ? (getString('yes') || 'Yes') : (getString('no') || 'No')}
                     />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+
+                {/* Departments (folded in from the former Departments tab) */}
+                <Grid size={{ xs: 12, sm: 6, md: 8 }}>
                     <Typography variant="caption" color="text.secondary">
                         {cfl(getString('mainDepartment') || 'Main department')}
                     </Typography>
-                    <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mb: 1.5 }}>
-                        {(employee?.main_departments ?? []).length > 0
-                            ? employee!.main_departments.map((d) => (
-                                  <Chip key={d.id} label={d.name} size="small" variant="outlined" />
-                              ))
+                    <Box sx={{ mb: 2, mt: 0.5 }}>
+                        {mainDepts.length > 0
+                            ? mainDepts.map((d) => <DeptRow key={d.id} dept={d} />)
                             : <Typography variant="body1">—</Typography>}
-                    </Stack>
+                    </Box>
+
                     <Typography variant="caption" color="text.secondary">
                         {cfl(getString('responsibilityDepts') || 'Responsibility departments')}
                     </Typography>
-                    <Stack direction="row" spacing={0.5} flexWrap="wrap">
-                        {(employee?.extra_departments ?? []).length > 0
-                            ? employee!.extra_departments.map((d) => (
-                                  <Chip key={d.id} label={d.name} size="small" variant="outlined" />
-                              ))
+                    <Box sx={{ mt: 0.5 }}>
+                        {extraDepts.length > 0
+                            ? extraDepts.map((d) => <DeptRow key={d.id} dept={d} />)
                             : <Typography variant="body1">—</Typography>}
-                    </Stack>
+                    </Box>
                 </Grid>
             </Grid>
         </Paper>

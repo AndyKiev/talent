@@ -13,7 +13,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import { DataGrid } from '@mui/x-data-grid';
 import { fetchEmployeeEventTypes, type EmployeeEventType } from './employeeEventTypeApi.ts';
-import { EMPLOYEE_EVENT_TYPE_QK, useEmployeeEventTypeMutations } from './useEmployeeEventTypeMutations.ts';
+import { useEmployeeEventTypeMutations } from './useEmployeeEventTypeMutations.ts';
 import { useEmployeeEventTypeColumns, type EditingState } from './useEmployeeEventTypeColumns.tsx';
 import { EmployeeEventTypeForm } from './EmployeeEventTypeForm.tsx';
 import { EmployeeEventTypeEditDialog, type PendingEdit } from './EmployeeEventTypeEditDialog.tsx';
@@ -21,7 +21,8 @@ import { EmployeeEventTypeDeleteDialog } from './EmployeeEventTypeDeleteDialog.t
 import { useDataGridLocale } from '../../../../hooks/useDataGridLocale.ts';
 import useString from '../../../../hooks/useString.ts';
 import str from '../../../../strings/str.ts';
-import cfl from '../../../../utils/capitalizeFirstLetter.ts';
+import cfl from '../../../../utils/helpers.ts';
+import {EMPLOYEE_EVENT_TYPE_QK} from "../../../../utils/queryKeys.ts";
 
 export function EmployeeEventTypeCrud() {
     const getString = useString({ str });

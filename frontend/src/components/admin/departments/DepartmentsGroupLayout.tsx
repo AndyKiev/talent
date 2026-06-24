@@ -12,6 +12,7 @@ const TOP_TABS = [
     { label: 'structure',            path: '/admin/departments_group/structure' },
     { label: 'departmentCategories', path: '/admin/departments_group/department_categories' },
     { label: 'departmentTypes',      path: '/admin/departments_group/department_types' },
+    { label: 'regions',              path: '/admin/departments_group/regions' },
 ] as const;
 
 export function DepartmentsGroupLayout() {

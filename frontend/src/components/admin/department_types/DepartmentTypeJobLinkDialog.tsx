@@ -27,7 +27,7 @@ import type {
 import type { Job } from '../jobs/jobApi';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
-import cfl from '../../../utils/capitalizeFirstLetter';
+import cfl from '../../../utils/helpers.ts';
 
 interface Props {
     open: boolean;

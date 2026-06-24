@@ -14,7 +14,7 @@ import AddIcon from '@mui/icons-material/Add';
 import { DataGrid } from '@mui/x-data-grid';
 
 import { fetchTalentStatusPeriodLinks, type TalentStatusPeriodLink } from './talentStatusPeriodLinkApi';
-import { TSPL_QK, useTalentStatusPeriodLinkMutations } from './useTalentStatusPeriodLinkMutations';
+import { useTalentStatusPeriodLinkMutations } from './useTalentStatusPeriodLinkMutations';
 import { useTalentStatusPeriodLinkColumns } from './useTalentStatusPeriodLinkColumns';
 import { TalentStatusPeriodLinkForm } from './TalentStatusPeriodLinkForm';
 import {
@@ -25,7 +25,8 @@ import { TalentStatusPeriodLinkDeleteDialog } from './TalentStatusPeriodLinkDele
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
-import cfl from '../../../utils/capitalizeFirstLetter';
+import cfl from '../../../utils/helpers.ts';
+import {TSPL_QK} from "../../../utils/queryKeys.ts";
 
 export function TalentStatusPeriodLinkCrud() {
     const getString = useString({ str });
@@ -47,7 +48,7 @@ export function TalentStatusPeriodLinkCrud() {
     const [rowToDelete, setRowToDelete] = useState<TalentStatusPeriodLink | null>(null);
 
     // ── Pagination ────────────────────────────────────────────────────────────
-    const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
+    const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 30 });
 
     // ── Query ─────────────────────────────────────────────────────────────────
     const { data: rows = [], isLoading, error } = useQuery({
@@ -150,7 +151,7 @@ export function TalentStatusPeriodLinkCrud() {
                         columns={columns}
                         paginationModel={paginationModel}
                         onPaginationModelChange={setPaginationModel}
-                        pageSizeOptions={[5, 10, 25, 50]}
+                        pageSizeOptions={[30, 50]}
                         disableRowSelectionOnClick
                         getRowId={(row) => row.id}
                         getRowHeight={() => 'auto'}

@@ -21,21 +21,32 @@ import {
   fetchDepartmentTypes,
   type DepartmentNode,
 } from './departmentApi';
-import { DEPARTMENT_TREE_QK, useDepartmentMutations } from './useDepartmentMutations';
+import {  useDepartmentMutations } from './useDepartmentMutations';
 import { DepartmentTreeNode } from './DepartmentTreeNode';
 import { DepartmentForm } from './DepartmentForm';
 import { DepartmentDeleteDialog } from './DepartmentDeleteDialog';
 import { DepartmentEditDialog, type PendingDepartmentEdit } from './DepartmentEditDialog';
+import { DepartmentGenerateSubtreeDialog } from './DepartmentGenerateSubtreeDialog';
+import { DepartmentRegionLinkDialog } from './DepartmentRegionLinkDialog';
+import {
+  fetchDepartmentRegionLinks,
+  type DepartmentRegionLink,
+} from './departmentRegionLinkApi';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
-import cfl from '../../../utils/capitalizeFirstLetter';
+import cfl from '../../../utils/helpers.ts';
 import {fetchDepartmentCategories} from "../department_categories/departmentCategoryApi.ts";
+import {
+  DEPARTMENT_ROOTS_QK,
+  DEPARTMENT_TREE_QK,
+  DEPARTMENT_REGION_LINK_QK,
+} from "../../../utils/queryKeys.ts";
 
 interface Props {
   selectedId?: number | null;
 }
 
-export const DEPARTMENT_ROOTS_QK = ['department_roots'] as const;
+
 
 export function DepartmentTree({ selectedId = null }: Props) {
   const getString = useString({ str });
@@ -50,6 +61,8 @@ export function DepartmentTree({ selectedId = null }: Props) {
   const [parentNode, setParentNode] = useState<DepartmentNode | null>(null);
   const [pendingEdit, setPendingEdit] = useState<PendingDepartmentEdit | null>(null);
   const [nodeToDelete, setNodeToDelete] = useState<DepartmentNode | null>(null);
+  const [nodeToGenerate, setNodeToGenerate] = useState<DepartmentNode | null>(null);
+  const [nodeForRegion, setNodeForRegion] = useState<DepartmentNode | null>(null);
 
   // ── Queries ───────────────────────────────────────────────────────────────
 
@@ -78,18 +91,32 @@ export function DepartmentTree({ selectedId = null }: Props) {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Region links across all departments → map by department_id for tree display.
+  const { data: regionLinks = [] } = useQuery({
+    queryKey: DEPARTMENT_REGION_LINK_QK,
+    queryFn: () => fetchDepartmentRegionLinks(),
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const regionByDept = new Map<number, DepartmentRegionLink>(
+    regionLinks.map((l) => [l.department_id, l]),
+  );
+
   // ── Mutations ─────────────────────────────────────────────────────────────
 
-  const { createMutation, updateMutation, deleteMutation } = useDepartmentMutations({
-    setSnackbar,
-    onCreateSuccess: () => {
-      setFormOpen(false);
-      setParentNode(null);
-    },
-    onUpdateSuccess: () => setPendingEdit(null),
-    onDeleteSuccess: () => setNodeToDelete(null),
-    onDeleteError: () => setNodeToDelete(null),
-  });
+  const { createMutation, updateMutation, deleteMutation, generateSubtreeMutation } =
+    useDepartmentMutations({
+      setSnackbar,
+      onCreateSuccess: () => {
+        setFormOpen(false);
+        setParentNode(null);
+      },
+      onUpdateSuccess: () => setPendingEdit(null),
+      onDeleteSuccess: () => setNodeToDelete(null),
+      onDeleteError: () => setNodeToDelete(null),
+      onGenerateSuccess: () => setNodeToGenerate(null),
+      onGenerateError: () => setNodeToGenerate(null),
+    });
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -119,6 +146,11 @@ export function DepartmentTree({ selectedId = null }: Props) {
     if (!nodeToDelete) return;
     deleteMutation.mutate(nodeToDelete.id);
   }, [nodeToDelete, deleteMutation]);
+
+  const handleConfirmGenerate = useCallback(() => {
+    if (!nodeToGenerate) return;
+    generateSubtreeMutation.mutate(nodeToGenerate.id);
+  }, [nodeToGenerate, generateSubtreeMutation]);
 
   const rootExists = !rootsLoading && roots.length > 0;
 
@@ -192,11 +224,15 @@ export function DepartmentTree({ selectedId = null }: Props) {
                             allTypes={allTypes}
                             categories={categories}
                             parentTypeId={null}
+                            regionByDept={regionByDept}
                             updateIsPending={updateMutation.isPending}
                             deleteIsPending={deleteMutation.isPending}
+                            generateIsPending={generateSubtreeMutation.isPending}
                             onAddChild={handleAddChild}
                             onDeleteClick={setNodeToDelete}
+                            onGenerateSubtree={setNodeToGenerate}
                             onPendingEdit={handlePendingEdit}
+                            onRegionClick={setNodeForRegion}
                         />
                     ))}
                   </Box>
@@ -223,6 +259,20 @@ export function DepartmentTree({ selectedId = null }: Props) {
             isPending={deleteMutation.isPending}
             onConfirm={handleConfirmDelete}
             onCancel={() => setNodeToDelete(null)}
+        />
+
+        <DepartmentGenerateSubtreeDialog
+            node={nodeToGenerate}
+            isPending={generateSubtreeMutation.isPending}
+            onConfirm={handleConfirmGenerate}
+            onCancel={() => setNodeToGenerate(null)}
+        />
+
+        <DepartmentRegionLinkDialog
+            node={nodeForRegion}
+            currentLink={nodeForRegion ? regionByDept.get(nodeForRegion.id) ?? null : null}
+            onClose={() => setNodeForRegion(null)}
+            setSnackbar={setSnackbar}
         />
 
         <Snackbar

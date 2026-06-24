@@ -5,6 +5,7 @@ import {
     updateEmployeeEvent,
     deleteEmployeeEvent,
     applyEmployeeEvent,
+    revertEmployeeEvent,
     type EmployeeEventCreate,
     type EmployeeEventUpdate,
 } from './employeeEventApi';
@@ -18,6 +19,7 @@ interface Options {
     onUpdateSuccess?: () => void;
     onDeleteSuccess?: () => void;
     onApplySuccess?: () => void;
+    onRevertSuccess?: () => void;
 }
 
 export function useEmployeeEventMutations({
@@ -27,6 +29,7 @@ export function useEmployeeEventMutations({
     onUpdateSuccess,
     onDeleteSuccess,
     onApplySuccess,
+    onRevertSuccess,
 }: Options) {
     const qc = useQueryClient();
     const qk = employeeEventsQK(employeeId);
@@ -88,5 +91,18 @@ export function useEmployeeEventMutations({
         },
     });
 
-    return { createMutation, updateMutation, deleteMutation, applyMutation };
+    const revertMutation = useMutation({
+        mutationFn: (eventId: number) => revertEmployeeEvent(employeeId, eventId),
+        onSuccess: () => {
+            invalidate();
+            onRevertSuccess?.();
+        },
+        onError: (err: unknown) => {
+            const msg = (err as { response?: { data?: { detail?: string } } })
+                ?.response?.data?.detail ?? 'Error reverting event';
+            setSnackbar({ open: true, message: msg, severity: 'error' });
+        },
+    });
+
+    return { createMutation, updateMutation, deleteMutation, applyMutation, revertMutation };
 }

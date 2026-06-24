@@ -13,7 +13,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import { DataGrid } from '@mui/x-data-grid';
 import { fetchTalentPeriods, type TalentPeriod } from './talentPeriodApi';
-import { TALENT_PERIOD_QK, useTalentPeriodMutations } from './useTalentPeriodMutations';
+import { useTalentPeriodMutations } from './useTalentPeriodMutations';
 import { useTalentPeriodColumns, type EditingState } from './useTalentPeriodColumns';
 import { TalentPeriodForm } from './TalentPeriodForm';
 import { TalentPeriodEditDialog, type PendingEdit } from './TalentPeriodEditDialog';
@@ -21,7 +21,8 @@ import { TalentPeriodDeleteDialog } from './TalentPeriodDeleteDialog';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
-import cfl from '../../../utils/capitalizeFirstLetter';
+import cfl from '../../../utils/helpers.ts';
+import {TALENT_PERIOD_QK} from "../../../utils/queryKeys.ts";
 
 export function TalentPeriodCrud() {
     const getString = useString({ str });

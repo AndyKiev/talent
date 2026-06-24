@@ -25,15 +25,15 @@ import type {
     TalentStatusPeriodLink,
 } from './talentStatusPeriodLinkApi';
 import { fetchTalentPeriods } from '../talent-periods/talentPeriodApi';
-import { TALENT_PERIOD_QK } from '../talent-periods/useTalentPeriodMutations';
 import useString from '../../../hooks/useString';
-import cfl from '../../../utils/capitalizeFirstLetter';
+import cfl from '../../../utils/helpers.ts';
 import str from '../../../strings/str';
 
 // We fetch talent statuses from their own API endpoint.
 // Reuse the same base URL pattern used by other API files.
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums';
+import {TALENT_PERIOD_QK} from "../../../utils/queryKeys.ts";
 
 const TALENT_STATUS_QK = ['talent_statuses'] as const;
 
@@ -45,7 +45,7 @@ interface TalentStatusOption {
 }
 
 const fetchTalentStatuses = async (): Promise<TalentStatusOption[]> => {
-    const res = await axiosInstance.get<TalentStatusOption[]>(`${BASE_URL}/admin/talent_statuses`);
+    const res = await axiosInstance.get<TalentStatusOption[]>(`${BASE_URL}/admin/talent-statuses`);
     return res.data ?? [];
 };
 

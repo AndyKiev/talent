@@ -4,7 +4,7 @@ import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { Box, IconButton, Tooltip, Chip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import type { UserGroupType } from "./userGroupTypeApi";
-import cfl from "../../../utils/capitalizeFirstLetter";
+import cfl from "../../../utils/helpers.ts";
 import type { GetStringFn } from "../../../types/getStringFn";
 import { TextEditCell } from "../TextEditCell";
 import { ReadonlyCell } from "../ReadonlyCell";

@@ -21,11 +21,11 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import { fetchUserGroupTypes } from '../user-group-types/userGroupTypeApi';
-import { USER_GROUP_TYPE_QK } from '../user-group-types/useUserGroupTypeMutations';
 import type { UserGroup } from './userGroupApi';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
-import cfl from '../../../utils/capitalizeFirstLetter';
+import cfl from '../../../utils/helpers.ts';
+import {USER_GROUP_TYPE_QK} from "../../../utils/queryKeys.ts";
 
 interface Props {
     group: UserGroup | null;

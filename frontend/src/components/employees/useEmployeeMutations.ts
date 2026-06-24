@@ -1,17 +1,19 @@
 // src/components/employees/useEmployeeMutations.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { axiosInstance } from '../../api/axiosInstance';
+import { BASE_URL } from '../../utils/eNums';
 import {
-    createEmployee,
     updateEmployee,
     deleteEmployee,
-    type EmployeeCreate,
+    type Employee,
     type EmployeeUpdate,
 } from './employeeApi';
-import { createEmployeeDepartment } from './employeeDepartmentApi';
+import type { EmployeeWithActivationPayload } from './EmployeeCreateDialog';
 
 type Snackbar = { open: boolean; message: string; severity: 'success' | 'error' };
 
 export const EMPLOYEES_QK = ['employees'] as const;
+export const SCOPE_DEPARTMENTS_QK = ['employees', 'scope_departments'] as const;
 
 interface Props {
     setSnackbar: (s: Snackbar) => void;
@@ -20,6 +22,18 @@ interface Props {
     onDeleteSuccess?: () => void;
     onDeleteError?: () => void;
 }
+
+// ── API call for the orchestration endpoint ───────────────────────────────────
+
+const createEmployeeWithActivation = async (
+    payload: EmployeeWithActivationPayload,
+): Promise<Employee> => {
+    const res = await axiosInstance.post<Employee>(
+        `${BASE_URL}/employees/with_activation`,
+        payload,
+    );
+    return res.data;
+};
 
 export function useEmployeeMutations({
     setSnackbar,
@@ -34,23 +48,10 @@ export function useEmployeeMutations({
         await qc.invalidateQueries({ queryKey: EMPLOYEES_QK });
     };
 
-    // ── Create employee + attach main department (two sequential calls) ────────
+    // ── Create employee + activation (single backend call, atomic) ────────────
 
     const createMutation = useMutation({
-        mutationFn: async ({
-            employeeData,
-            departmentId,
-        }: {
-            employeeData: EmployeeCreate;
-            departmentId: number;
-        }) => {
-            const employee = await createEmployee(employeeData);
-            await createEmployeeDepartment(employee.id, {
-                department_id: departmentId,
-                is_main: true,
-            });
-            return employee;
-        },
+        mutationFn: createEmployeeWithActivation,
         onSuccess: async () => {
             await invalidate();
             setSnackbar({ open: true, message: 'Employee created successfully', severity: 'success' });

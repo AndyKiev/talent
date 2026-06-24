@@ -5,7 +5,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 
 import type { TalentStatusPeriodLink } from './talentStatusPeriodLinkApi';
 import type { GetStringFn } from '../../../types/getStringFn';
-import cfl from '../../../utils/capitalizeFirstLetter';
+import cfl from '../../../utils/helpers.ts';
 import { formatToUkrDate } from '../../../utils/dateFormatter';
 
 interface Params {

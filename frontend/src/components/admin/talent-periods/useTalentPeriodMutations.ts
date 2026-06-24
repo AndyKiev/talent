@@ -1,17 +1,12 @@
 // src/components/admin/talent-periods/useTalentPeriodMutations.ts
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-    createTalentPeriod,
-    updateTalentPeriod,
-    deleteTalentPeriod,
-} from './talentPeriodApi';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
+import {createTalentPeriod, deleteTalentPeriod, updateTalentPeriod,} from './talentPeriodApi';
+import {TALENT_PERIOD_QK} from "../../../utils/queryKeys.ts";
+import type {SnackbarType} from "../../../types/types.ts";
 
-type Snackbar = { open: boolean; message: string; severity: 'success' | 'error' };
-
-export const TALENT_PERIOD_QK = ['talent_periods'] as const;
 
 interface Props {
-    setSnackbar: (s: Snackbar) => void;
+    setSnackbar: (s: SnackbarType) => void;
     onCreateSuccess?: () => void;
     onUpdateSuccess?: () => void;
     onDeleteSuccess?: () => void;

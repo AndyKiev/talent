@@ -1,17 +1,12 @@
 // src/components/admin/user-group-types/useUserGroupTypeMutations.ts
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-    createUserGroupType,
-    updateUserGroupType,
-    deleteUserGroupType,
-} from './userGroupTypeApi';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
+import {createUserGroupType, deleteUserGroupType, updateUserGroupType,} from './userGroupTypeApi';
+import {USER_GROUP_TYPE_QK} from "../../../utils/queryKeys.ts";
+import type {SnackbarType} from "../../../types/types.ts";
 
-type Snackbar = { open: boolean; message: string; severity: 'success' | 'error' };
-
-export const USER_GROUP_TYPE_QK = ['user_group_types'] as const;
 
 interface Props {
-    setSnackbar: (s: Snackbar) => void;
+    setSnackbar: (s: SnackbarType) => void;
     onCreateSuccess?: () => void;
     onUpdateSuccess?: () => void;
     onDeleteSuccess?: () => void;

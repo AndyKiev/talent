@@ -1,17 +1,15 @@
 // src/components/admin/talent-status-period-links/useTalentStatusPeriodLinkMutations.ts
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
 import {
     createTalentStatusPeriodLink,
-    updateTalentStatusPeriodLink,
     deleteTalentStatusPeriodLink,
+    updateTalentStatusPeriodLink,
 } from './talentStatusPeriodLinkApi';
-
-type Snackbar = { open: boolean; message: string; severity: 'success' | 'error' };
-
-export const TSPL_QK = ['talent_status_period_links'] as const;
+import {TSPL_QK} from "../../../utils/queryKeys.ts";
+import type {SnackbarType} from "../../../types/types.ts";
 
 interface Props {
-    setSnackbar: (s: Snackbar) => void;
+    setSnackbar: (s: SnackbarType) => void;
     onCreateSuccess?: () => void;
     onUpdateSuccess?: () => void;
     onDeleteSuccess?: () => void;

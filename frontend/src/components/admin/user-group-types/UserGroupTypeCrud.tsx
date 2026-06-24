@@ -13,7 +13,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import { DataGrid } from '@mui/x-data-grid';
 import { fetchUserGroupTypes, type UserGroupType } from './userGroupTypeApi';
-import { USER_GROUP_TYPE_QK, useUserGroupTypeMutations } from './useUserGroupTypeMutations';
+import { useUserGroupTypeMutations } from './useUserGroupTypeMutations';
 import { useUserGroupTypeColumns, type EditingState } from './useUserGroupTypeColumns';
 import { UserGroupTypeForm } from './UserGroupTypeForm';
 import { UserGroupTypeEditDialog, type PendingEdit } from './UserGroupTypeEditDialog';
@@ -21,7 +21,8 @@ import { UserGroupTypeDeleteDialog } from './UserGroupTypeDeleteDialog';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
-import cfl from '../../../utils/capitalizeFirstLetter';
+import cfl from '../../../utils/helpers.ts';
+import {USER_GROUP_TYPE_QK} from "../../../utils/queryKeys.ts";
 
 export function UserGroupTypeCrud() {
     const getString = useString({ str });

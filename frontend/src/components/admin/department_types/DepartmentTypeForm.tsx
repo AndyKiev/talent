@@ -18,7 +18,7 @@ import {
 import type { UseMutationResult } from '@tanstack/react-query';
 import type { DepartmentTypeCreate, MutationResponse, DepartmentType } from './departmentTypeApi';
 import useString from '../../../hooks/useString.ts';
-import cfl from '../../../utils/capitalizeFirstLetter.ts';
+import cfl from '../../../utils/helpers.ts';
 import str from '../../../strings/str.ts';
 
 const schema = z.object({

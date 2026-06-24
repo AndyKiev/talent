@@ -6,17 +6,20 @@ const BASE = `${BASE_URL}/admin/employee_events/employee_event_types`;
 
 export interface EmployeeEventType {
     id: number;
+    code: string;
     name: string;
     description: string | null;
     created_at: string;
 }
 
 export interface EmployeeEventTypeCreate {
+    code: string;
     name: string;
     description?: string | null;
 }
 
 export interface EmployeeEventTypeUpdate {
+    code?: string;
     name?: string;
     description?: string | null;
 }
@@ -39,9 +42,9 @@ export const createEmployeeEventType = async (
 };
 
 export const updateEmployeeEventType = async ({
-                                                  id,
-                                                  data,
-                                              }: {
+    id,
+    data,
+}: {
     id: number;
     data: EmployeeEventTypeUpdate;
 }): Promise<MutationResponse<EmployeeEventType>> => {

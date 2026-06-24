@@ -20,7 +20,7 @@ import type {
     EmployeeEventChangeDeptType,
 } from './employeeEventChangeDeptTypeApi';
 import useString from '../../../../hooks/useString.ts';
-import cfl from '../../../../utils/capitalizeFirstLetter.ts';
+import cfl from '../../../../utils/helpers.ts';
 import str from '../../../../strings/str.ts';
 
 const schema = z.object({

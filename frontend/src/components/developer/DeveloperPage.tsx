@@ -7,19 +7,20 @@ import { EssenceCard } from '../ui/EssenceCard';
 import { GroupEssenceCard } from '../ui/GroupEssenceCard';
 import { ESSENCES as RAW_ESSENCES } from './developer.essences.config';
 import { useEssences } from '../../hooks/useEssences';
-import cfl from '../../utils/capitalizeFirstLetter';
+import cfl from '../../utils/helpers.ts';
 import useString from '../../hooks/useString';
 import str from '../../strings/str';
 
 export function DeveloperPage() {
     const { t } = useTheme();
     const getString = useString({ str });
-    const essences = useEssences(RAW_ESSENCES);
+    const allEssences = useEssences(RAW_ESSENCES);
 
-    const groups = essences.filter((e) => e.isGroup);
-    const regularItems = essences.filter((e) => !e.isGroup && !e.parentGroup);
+    const groups       = allEssences.filter((e) => e.isGroup);
+    const regularItems = allEssences.filter((e) => !e.isGroup && !e.isTree && !e.parentGroup);
+
     const getChildCount = (groupKey: string) =>
-        essences.filter((e) => e.parentGroup === groupKey).length;
+        allEssences.filter((e) => e.parentGroup === groupKey).length;
 
     return (
         <AppShell>
@@ -34,8 +35,12 @@ export function DeveloperPage() {
                         </Box>
                     </Stack>
 
+                    {/* ── Group cards ───────────────────────────────────────── */}
                     {groups.length > 0 && (
                         <Box mb={4}>
+                            <Typography variant="subtitle2" color={t.textSecondary} sx={{ mb: 2, ml: 1 }}>
+                                {getString('settingsGroups').toUpperCase()}
+                            </Typography>
                             <Box
                                 sx={{
                                     display: 'grid',
@@ -54,17 +59,25 @@ export function DeveloperPage() {
                         </Box>
                     )}
 
-                    <Box
-                        sx={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                            gap: 2,
-                        }}
-                    >
-                        {regularItems.map((essence) => (
-                            <EssenceCard key={essence.key} essence={essence} />
-                        ))}
-                    </Box>
+                    {/* ── Regular flat cards ────────────────────────────────── */}
+                    {regularItems.length > 0 && (
+                        <Box>
+                            <Typography variant="subtitle2" color={t.textSecondary} sx={{ mb: 2, ml: 1 }}>
+                                SETTINGS
+                            </Typography>
+                            <Box
+                                sx={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                                    gap: 2,
+                                }}
+                            >
+                                {regularItems.map((essence) => (
+                                    <EssenceCard key={essence.key} essence={essence} />
+                                ))}
+                            </Box>
+                        </Box>
+                    )}
                 </Box>
             </Box>
         </AppShell>

@@ -30,7 +30,7 @@ export interface TalentStatusPeriodLink {
 }
 
 /**
- * Returned by GET /active_pairs — identical to TalentStatusPeriodLink but
+ * Returned by GET /active-pairs — identical to TalentStatusPeriodLink but
  * includes the backend-computed label, e.g. "PO - 24" or "PA - 36".
  */
 export interface TalentStatusPeriodLinkWithLabel extends TalentStatusPeriodLink {
@@ -60,7 +60,7 @@ export const fetchTalentStatusPeriodLinks = async (): Promise<TalentStatusPeriod
 };
 
 /**
- * GET /talent_status_period_links/active_pairs
+ * GET /talent_status_period_links/active-pairs
  *
  * is_active=true  → only rows where link + status + period are ALL active
  * is_active=false → all rows, no filtering at any level
@@ -71,7 +71,7 @@ export const fetchActivePairs = async (
 ): Promise<TalentStatusPeriodLinkWithLabel[]> => {
     const params = is_active !== undefined ? { is_active } : {};
     const res = await axiosInstance.get<TalentStatusPeriodLinkWithLabel[]>(
-        `${BASE}/active_pairs`,
+        `${BASE}/active-pairs`,
         { params },
     );
     return res.data ?? [];

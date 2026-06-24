@@ -16,10 +16,11 @@ import {
 import type { UseMutationResult } from '@tanstack/react-query';
 import type { EmployeeEventTypeCreate, MutationResponse, EmployeeEventType } from './employeeEventTypeApi.ts';
 import useString from '../../../../hooks/useString.ts';
-import cfl from '../../../../utils/capitalizeFirstLetter.ts';
+import cfl from '../../../../utils/helpers.ts';
 import str from '../../../../strings/str.ts';
 
 const schema = z.object({
+    code: z.string().min(1, 'codeRequired').max(64, 'codeTooLong'),
     name: z.string().min(1, 'nameRequired').max(128, 'nameTooLong'),
     description: z.string().max(512, 'descriptionTooLong').optional().or(z.literal('')),
 });
@@ -42,7 +43,7 @@ export function EmployeeEventTypeForm({ open, onClose, createMutation }: Props) 
         reset,
     } = useForm<FormData>({
         resolver: zodResolver(schema),
-        defaultValues: { name: '', description: '' },
+        defaultValues: { code: '', name: '', description: '' },
     });
 
     const handleClose = () => {
@@ -52,6 +53,7 @@ export function EmployeeEventTypeForm({ open, onClose, createMutation }: Props) 
 
     const onSubmit = (data: FormData) => {
         createMutation.mutate({
+            code: data.code,
             name: data.name,
             description: data.description || null,
         });
@@ -65,6 +67,14 @@ export function EmployeeEventTypeForm({ open, onClose, createMutation }: Props) 
                     {createMutation.isError && (
                         <Alert severity="error">{createMutation.error?.message}</Alert>
                     )}
+                    <TextField
+                        label={cfl(getString('code')) || 'Code'}
+                        fullWidth
+                        slotProps={{ htmlInput: { maxLength: 64 } }}
+                        error={!!errors.code}
+                        helperText={errors.code?.message && (getString(errors.code.message) || errors.code.message)}
+                        {...register('code')}
+                    />
                     <TextField
                         label={cfl(getString('name')) || 'Name'}
                         fullWidth

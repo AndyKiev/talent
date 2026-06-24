@@ -1,12 +1,30 @@
 // src/components/employees/useEmployeeColumns.tsx
 import { useMemo } from 'react';
 import type { GridColDef } from '@mui/x-data-grid';
-import { Box, Chip, Tooltip } from '@mui/material';
-import type { Employee } from './employeeApi';
+import { Box, Chip, Tooltip, Typography } from '@mui/material';
+import type { Employee, TopOrgUnit } from './employeeApi';
 import { formatToUkrDate } from '../../utils/dateFormatter';
 import useString from '../../hooks/useString';
 import str from '../../strings/str';
-import cfl from '../../utils/capitalizeFirstLetter';
+import cfl from '../../utils/helpers.ts';
+
+// Theme-aware empty-cell placeholder. Kept as a lowercase render helper (NOT a
+// component) so this file's only component-like export stays the hook, which
+// keeps react-refresh/only-export-components happy.
+const emptyDash = () => (
+    <Typography component="span" sx={{ color: 'text.disabled' }}>
+        —
+    </Typography>
+);
+
+// De-duplicate resolved top org units by id, preserving order.
+const uniqueTops = (tops: (TopOrgUnit | null | undefined)[]): TopOrgUnit[] => {
+    const map = new Map<number, TopOrgUnit>();
+    for (const t of tops) {
+        if (t) map.set(t.id, t);
+    }
+    return Array.from(map.values());
+};
 
 export function useEmployeeColumns(): GridColDef<Employee>[] {
     const getString = useString({ str });
@@ -25,7 +43,7 @@ export function useEmployeeColumns(): GridColDef<Employee>[] {
             },
             {
                 field: 'name',
-                headerName: cfl(getString('name') || 'Name'),
+                headerName: cfl(getString('employeeName') || 'Employee name'),
                 flex: 1,
                 minWidth: 160,
             },
@@ -36,14 +54,45 @@ export function useEmployeeColumns(): GridColDef<Employee>[] {
                 minWidth: 180,
                 renderCell: ({ value }) =>
                     value ? (
-                        <span style={{ fontSize: '0.85rem', color: '#555' }}>{value}</span>
+                        <Typography
+                            component="span"
+                            sx={{ fontSize: '0.85rem', color: 'text.secondary' }}
+                        >
+                            {value}
+                        </Typography>
                     ) : (
-                        <span style={{ color: '#bbb' }}>—</span>
+                        emptyDash()
                     ),
             },
+            // ── NEW: derived top-level org unit (board / directorate / store) ──
+            // Walked up the department tree on the backend. Precedes the specific
+            // department column below.
+            {
+                field: 'main_department_top',
+                headerName: cfl(getString('mainDepartment') || 'Main department'),
+                flex: 1,
+                minWidth: 170,
+                sortable: false,
+                valueGetter: (_value, row) =>
+                    uniqueTops((row.main_departments ?? []).map((d) => d.top_department))
+                        .map((t) => t.name)
+                        .join(', ') || '—',
+                renderCell: ({ row }) => {
+                    const tops = uniqueTops((row.main_departments ?? []).map((d) => d.top_department));
+                    if (tops.length === 0) return emptyDash();
+                    return (
+                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', alignItems: 'center', py: 0.5 }}>
+                            {tops.map((t) => (
+                                <Chip key={t.id} label={t.name} size="small" color="success" variant="filled" />
+                            ))}
+                        </Box>
+                    );
+                },
+            },
+            // ── The specific assigned (is_main) department(s) ──
             {
                 field: 'main_departments',
-                headerName: cfl(getString('mainDepartments') || 'Main Departments'),
+                headerName: cfl(getString('department') || 'Department'),
                 flex: 1,
                 minWidth: 180,
                 sortable: false,
@@ -52,7 +101,7 @@ export function useEmployeeColumns(): GridColDef<Employee>[] {
                 renderCell: ({ row }) => {
                     const depts = row.main_departments ?? [];
                     if (depts.length === 0) {
-                        return <span style={{ color: '#bbb' }}>—</span>;
+                        return emptyDash();
                     }
                     return (
                         <Box
@@ -79,7 +128,7 @@ export function useEmployeeColumns(): GridColDef<Employee>[] {
             },
             {
                 field: 'extra_departments',
-                headerName: cfl(getString('extraDepartments') || 'Other Departments'),
+                headerName: cfl(getString('responsibilityAreas') || 'Responsibility Areas'),
                 flex: 1,
                 minWidth: 180,
                 sortable: false,
@@ -88,7 +137,7 @@ export function useEmployeeColumns(): GridColDef<Employee>[] {
                 renderCell: ({ row }) => {
                     const depts = row.extra_departments ?? [];
                     if (depts.length === 0) {
-                        return <span style={{ color: '#bbb' }}>—</span>;
+                        return emptyDash();
                     }
                     return (
                         <Box
@@ -122,25 +171,31 @@ export function useEmployeeColumns(): GridColDef<Employee>[] {
                     value !== '—' ? (
                         <Chip label={value} size="small" color="primary" variant="outlined" />
                     ) : (
-                        <span style={{ color: '#bbb' }}>—</span>
+                        emptyDash()
                     ),
             },
             {
-                field: 'is_active',
-                headerName: cfl(getString('status') || 'Status'),
-                width: 110,
-                renderCell: ({ value }) => (
-                    <Chip
-                        label={
-                            value
-                                ? getString('active') || 'Active'
-                                : getString('inactive') || 'Inactive'
-                        }
-                        size="small"
-                        color={value ? 'success' : 'default'}
-                        variant="outlined"
-                    />
-                ),
+                field: 'employee_status',
+                headerName: cfl(getString('employeeStatus') || 'Employee Status'),
+                width: 140,
+                valueGetter: (_value, row) => row.status?.name ?? '—',
+                renderCell: ({ row }) => {
+                    const name = row.status?.name ?? '';
+                    if (!name) return emptyDash();
+                    const colorMap: Record<string, 'warning' | 'success' | 'error' | 'default'> = {
+                        pending: 'warning',
+                        working: 'success',
+                        dismissed: 'error',
+                    };
+                    return (
+                        <Chip
+                            label={cfl(getString(name) || name)}
+                            size="small"
+                            color={colorMap[name] ?? 'default'}
+                            variant="outlined"
+                        />
+                    );
+                },
             },
             {
                 field: 'created_at',

@@ -13,7 +13,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import { DataGrid } from '@mui/x-data-grid';
 import { fetchDepartmentCategories, type DepartmentCategory } from './departmentCategoryApi';
-import { DEPARTMENT_CATEGORY_QK, useDepartmentCategoryMutations } from './useDepartmentCategoryMutations';
+import { useDepartmentCategoryMutations } from './useDepartmentCategoryMutations';
 import { useDepartmentCategoryColumns, type EditingState } from './useDepartmentCategoryColumns';
 import { DepartmentCategoryForm } from './DepartmentCategoryForm';
 import { DepartmentCategoryEditDialog, type PendingEdit } from './DepartmentCategoryEditDialog';
@@ -21,7 +21,8 @@ import { DepartmentCategoryDeleteDialog } from './DepartmentCategoryDeleteDialog
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
-import cfl from '../../../utils/capitalizeFirstLetter';
+import cfl from '../../../utils/helpers.ts';
+import {DEPARTMENT_CATEGORY_QK} from "../../../utils/queryKeys.ts";
 
 export function DepartmentCategoryCrud() {
     const getString = useString({ str });

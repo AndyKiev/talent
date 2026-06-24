@@ -8,7 +8,7 @@ import { DepartmentTypeCrud } from './DepartmentTypeCrud.tsx';
 import { DepartmentTypeHierarchy } from './DepartmentTypeHierarchy.tsx';
 import { DepartmentTypeJobLinkPanel } from './DepartmentTypeJobLinkPanel.tsx';
 
-import cfl from '../../../utils/capitalizeFirstLetter.ts';
+import cfl from '../../../utils/helpers.ts';
 import useString from '../../../hooks/useString.ts';
 import str from '../../../strings/str.ts';
 

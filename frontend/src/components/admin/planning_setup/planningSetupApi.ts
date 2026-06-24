@@ -159,6 +159,7 @@ export const fetchJobGroupsRef = async (): Promise<RefJobGroup[]> => {
 };
 
 export const fetchTalentStatusesRef = async (): Promise<RefTalentStatus[]> => {
-    const res = await axiosInstance.get<RefTalentStatus[]>(`${BASE_URL}/admin/talent_statuses`);
+    // Talent statuses router currently uses a dash in its prefix
+    const res = await axiosInstance.get<RefTalentStatus[]>(`${BASE_URL}/admin/talent-statuses`);
     return res.data ?? [];
 };

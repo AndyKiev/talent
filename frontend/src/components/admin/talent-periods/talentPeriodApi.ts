@@ -2,13 +2,14 @@
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from "../../../utils/eNums.ts"
 
-const BASE = `${BASE_URL}/admin/talent_periods`;
+const BASE = `${BASE_URL}/admin/talent-periods`;
 
 export interface TalentPeriod {
     id: number;
     name: string;
     description: string | null;
     is_active: boolean;
+    qty_months: number;  // Added
     created_at: string;
 }
 
@@ -16,12 +17,14 @@ export interface TalentPeriodCreate {
     name: string;
     description?: string | null;
     is_active: boolean;
+    qty_months: number;  // Added
 }
 
 export interface TalentPeriodUpdate {
     name?: string;
     description?: string | null;
     is_active?: boolean;
+    qty_months?: number;  // Added
 }
 
 export interface MutationResponse<T> {

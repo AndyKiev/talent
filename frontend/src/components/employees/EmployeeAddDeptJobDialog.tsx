@@ -1,7 +1,11 @@
 // src/components/employees/EmployeeAddDeptJobDialog.tsx
 //
-// mode="add_department"  → dept cascade + job locked to employee's current job_id
-// mode="change_job"      → dept cascade + editable job select with warning on change
+// mode="add_department"  → pick exact department (tree) + job locked to current
+// mode="change_job"      → pick exact department (tree) + editable job (warns on change)
+//
+// Admin tool — bypasses employee events. Department is NEVER chosen as a flat
+// top-level select anymore: pick the top instance, then drill into the tree to
+// the exact node. The job list is derived from the picked node's department TYPE.
 //
 // onSubmit callback replaces the mutation prop — the parent decides whether to
 // show an extra confirmation before actually firing the mutation.
@@ -34,31 +38,22 @@ import {
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import WorkIcon from '@mui/icons-material/Work';
 import ApartmentIcon from '@mui/icons-material/Apartment';
-import { axiosInstance } from '../../api/axiosInstance';
-import { BASE_URL } from '../../utils/eNums';
 import { fetchJobsByDepartmentType } from './jobsByDepartmentTypeApi';
+import {
+    fetchDepartmentsByCategory,
+    type DepartmentOption,
+} from './employee_events/employeeEventApi';
+import { DepartmentTreePicker } from './DepartmentTreePicker';
+import type { DepartmentNode } from '../admin/departments/departmentApi';
 import type { Employee } from './employeeApi';
 import useString from '../../hooks/useString';
 import str from '../../strings/str';
-import cfl from '../../utils/capitalizeFirstLetter';
+import cfl from '../../utils/helpers.ts';
 import { fetchDepartmentCategories } from '../admin/department_categories/departmentCategoryApi';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type AddDeptJobMode = 'add_department' | 'change_job';
-
-interface DepartmentOption {
-    id: number;
-    name: string;
-    department_type_id: number;
-}
-
-const fetchDepartmentsByCategory = async (categoryId: number): Promise<DepartmentOption[]> => {
-    const res = await axiosInstance.get<DepartmentOption[]>(`${BASE_URL}/departments`, {
-        params: { department_category_id: categoryId },
-    });
-    return res.data ?? [];
-};
 
 export interface AddDeptJobPayload {
     departmentId: number;
@@ -102,6 +97,11 @@ export function EmployeeAddDeptJobDialog({
     const getString = useString({ str });
     const [jobChangeWarningAcknowledged, setJobChangeWarningAcknowledged] = useState(false);
 
+    // ── Tree-picker local state (department_id on the form is the exact node) ──
+    const [topDeptId, setTopDeptId] = useState<number | null>(null);
+    const [pickedTypeId, setPickedTypeId] = useState<number | null>(null);
+    const [pickedName, setPickedName] = useState<string>('');
+
     const {
         handleSubmit,
         control,
@@ -127,6 +127,12 @@ export function EmployeeAddDeptJobDialog({
     // ── Ref to skip the isMain reset on first render / dialog open ─────────
     const isMainPrev = useRef(isMain);
 
+    const clearPicker = () => {
+        setTopDeptId(null);
+        setPickedTypeId(null);
+        setPickedName('');
+    };
+
     // ── Reset form when dialog opens/closes ───────────────────────────────────
 
     useEffect(() => {
@@ -139,39 +145,38 @@ export function EmployeeAddDeptJobDialog({
             });
             setJobChangeWarningAcknowledged(false);
             isMainPrev.current = true;
+            clearPicker();
         }
     }, [open, reset]);
 
     // ── Queries ───────────────────────────────────────────────────────────────
 
-    // FIX 1: categories filtered by is_main — refetches when toggle changes
+    // Categories filtered by is_main — refetches when toggle changes
     const { data: categories = [] } = useQuery({
         queryKey: ['department_categories', { is_main: isMain }],
         queryFn: () => fetchDepartmentCategories({ is_main: isMain }),
         staleTime: 5 * 60 * 1000,
     });
 
-    const { data: departments = [], isLoading: deptsLoading } = useQuery({
+    // TOP department instances in the chosen category
+    const { data: departments = [], isLoading: deptsLoading } = useQuery<DepartmentOption[]>({
         queryKey: ['departments_by_category', categoryId],
         queryFn: () => fetchDepartmentsByCategory(categoryId!),
         enabled: categoryId != null,
         staleTime: 2 * 60 * 1000,
     });
 
-    const selectedDept = departments.find((d) => d.id === departmentId);
-    const deptTypeId = selectedDept?.department_type_id ?? null;
-
+    // Jobs for the PICKED node's department type
     const { data: jobs = [], isLoading: jobsLoading } = useQuery({
-        queryKey: ['jobs_by_dept_type', deptTypeId],
-        queryFn: () => fetchJobsByDepartmentType(deptTypeId!),
-        enabled: deptTypeId != null,
+        queryKey: ['jobs_by_dept_type', pickedTypeId],
+        queryFn: () => fetchJobsByDepartmentType(pickedTypeId!),
+        enabled: pickedTypeId != null,
         staleTime: 2 * 60 * 1000,
     });
 
     // ── Cascade resets ────────────────────────────────────────────────────────
 
-    // FIX 2: When is_main toggles → reset category + department + job
-    // Uses ref to avoid resetting on initial render / dialog open
+    // When is_main toggles → reset category + department + job + picker
     useEffect(() => {
         if (isMainPrev.current !== isMain) {
             isMainPrev.current = isMain;
@@ -179,15 +184,19 @@ export function EmployeeAddDeptJobDialog({
             setValue('department_id', undefined as unknown as number);
             setValue('job_id', undefined as unknown as number);
             setJobChangeWarningAcknowledged(false);
+            clearPicker();
         }
     }, [isMain, setValue]);
 
+    // When category changes → reset department + job + picker
     useEffect(() => {
         setValue('department_id', undefined as unknown as number);
         setValue('job_id', undefined as unknown as number);
         setJobChangeWarningAcknowledged(false);
+        clearPicker();
     }, [categoryId, setValue]);
 
+    // When the picked department changes → reset job
     useEffect(() => {
         setValue('job_id', undefined as unknown as number);
         setJobChangeWarningAcknowledged(false);
@@ -200,14 +209,38 @@ export function EmployeeAddDeptJobDialog({
     useEffect(() => {
         if (mode === 'add_department' && employee) {
             if (!isMain) {
-                // Extra department — just set the employee's current job, no validation
-                setValue('job_id', employee.job_id);
+                setValue('job_id', employee.job_id ?? (undefined as unknown as number));
             } else if (jobs.length > 0) {
                 const match = jobs.find((j) => j.id === employee.job_id);
                 setValue('job_id', match ? match.id : (undefined as unknown as number));
             }
         }
     }, [jobs, mode, employee, isMain, setValue]);
+
+    // ── Picker handlers ─────────────────────────────────────────────────────────
+
+    // Selecting a top instance seeds the picked department from the option
+    // (it already carries department_type_id); the subtree loads below.
+    const handleTopDeptChange = (id: number) => {
+        const opt = departments.find((d) => d.id === id);
+        setTopDeptId(id);
+        if (opt) {
+            setPickedTypeId(opt.department_type_id);
+            setPickedName(opt.name);
+            setValue('department_id', opt.id, { shouldValidate: true });
+        }
+        setValue('job_id', undefined as unknown as number);
+        setJobChangeWarningAcknowledged(false);
+    };
+
+    // Clicking any node in the tree overrides the picked department.
+    const handleTreeSelect = (node: DepartmentNode) => {
+        setPickedTypeId(node.department_type_id);
+        setPickedName(node.name);
+        setValue('department_id', node.id, { shouldValidate: true });
+        setValue('job_id', undefined as unknown as number);
+        setJobChangeWarningAcknowledged(false);
+    };
 
     // ── Derived flags ─────────────────────────────────────────────────────────
 
@@ -298,7 +331,7 @@ export function EmployeeAddDeptJobDialog({
 
                     <Divider />
 
-                    {/* FIX 3: is_main toggle ABOVE the category select */}
+                    {/* is_main toggle ABOVE the category select */}
                     <Controller
                         name="is_main"
                         control={control}
@@ -356,51 +389,67 @@ export function EmployeeAddDeptJobDialog({
                         )}
                     />
 
-                    {/* Step 2 — Department */}
-                    <Controller
-                        name="department_id"
-                        control={control}
-                        render={({ field }) => (
-                            <FormControl
-                                fullWidth
-                                error={!!errors.department_id}
-                                disabled={!categoryId || deptsLoading}
-                            >
-                                <InputLabel required>
-                                    {cfl(getString('department') || 'Department')}
-                                </InputLabel>
-                                <Select
-                                    {...field}
-                                    value={field.value ?? ''}
-                                    label={cfl(getString('department') || 'Department')}
-                                    onChange={(e) => field.onChange(Number(e.target.value))}
-                                    startAdornment={
-                                        deptsLoading ? <CircularProgress size={16} sx={{ mr: 1 }} /> : undefined
-                                    }
-                                >
-                                    {!categoryId && (
-                                        <MenuItem disabled value="">
-                                            <em>{getString('firstSelectCategory') || 'First select a category'}</em>
-                                        </MenuItem>
-                                    )}
-                                    {departments.map((d) => (
-                                        <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>
-                                    ))}
-                                </Select>
-                                {errors.department_id && (
-                                    <FormHelperText>
-                                        {getString(errors.department_id.message ?? '') ||
-                                            errors.department_id.message}
-                                    </FormHelperText>
-                                )}
-                                {categoryId && !deptsLoading && departments.length === 0 && (
-                                    <FormHelperText>
-                                        {getString('noDepartmentsInCategory') || 'No departments in this category'}
-                                    </FormHelperText>
-                                )}
-                            </FormControl>
+                    {/* Step 2 — Top department instance + tree drill-down */}
+                    <FormControl
+                        fullWidth
+                        error={!!errors.department_id}
+                        disabled={!categoryId || deptsLoading}
+                    >
+                        <InputLabel required>{cfl(getString('topDepartment') || 'Top department')}</InputLabel>
+                        <Select
+                            variant={"outlined"}
+                            value={topDeptId ?? ''}
+                            label={cfl(getString('topDepartment') || 'Top department')}
+                            onChange={(e) => handleTopDeptChange(Number(e.target.value))}
+                            startAdornment={
+                                deptsLoading ? <CircularProgress size={16} sx={{ mr: 1 }} /> : undefined
+                            }
+                        >
+                            {!categoryId && (
+                                <MenuItem disabled value="">
+                                    <em>{getString('firstSelectCategory') || 'First select a category'}</em>
+                                </MenuItem>
+                            )}
+                            {departments.map((d) => (
+                                <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>
+                            ))}
+                        </Select>
+                        {categoryId && !deptsLoading && departments.length === 0 && (
+                            <FormHelperText>
+                                {getString('noDepartmentsInCategory') || 'No departments in this category'}
+                            </FormHelperText>
                         )}
-                    />
+                        {errors.department_id && (
+                            <FormHelperText>
+                                {getString(errors.department_id.message ?? '') || errors.department_id.message}
+                            </FormHelperText>
+                        )}
+                    </FormControl>
+
+                    {topDeptId != null && (
+                        <Box>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                                {getString('selectExactDepartmentHint') ||
+                                    'Select the exact department in the tree (or keep the top one)'}
+                            </Typography>
+                            <DepartmentTreePicker
+                                rootId={topDeptId}
+                                selectedId={departmentId ?? null}
+                                onSelect={handleTreeSelect}
+                            />
+                            {pickedName && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                                    <ApartmentIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                    <Typography variant="caption" color="text.secondary">
+                                        {pickedName}
+                                    </Typography>
+                                    {departmentId != null && (
+                                        <Chip size="small" label={`#${departmentId}`} sx={{ height: 20, fontSize: '0.7rem' }} />
+                                    )}
+                                </Box>
+                            )}
+                        </Box>
+                    )}
 
                     {/* Step 3 — Job */}
                     {mode === 'add_department' ? (
@@ -437,7 +486,7 @@ export function EmployeeAddDeptJobDialog({
                                 <FormControl
                                     fullWidth
                                     error={!!errors.job_id}
-                                    disabled={!departmentId || jobsLoading}
+                                    disabled={pickedTypeId == null || jobsLoading}
                                 >
                                     <InputLabel required>{cfl(getString('job') || 'Job')}</InputLabel>
                                     <Select
@@ -449,7 +498,7 @@ export function EmployeeAddDeptJobDialog({
                                             jobsLoading ? <CircularProgress size={16} sx={{ mr: 1 }} /> : undefined
                                         }
                                     >
-                                        {!departmentId && (
+                                        {pickedTypeId == null && (
                                             <MenuItem disabled value="">
                                                 <em>{getString('firstSelectDepartment') || 'First select a department'}</em>
                                             </MenuItem>
@@ -463,7 +512,7 @@ export function EmployeeAddDeptJobDialog({
                                             {getString(errors.job_id.message ?? '') || errors.job_id.message}
                                         </FormHelperText>
                                     )}
-                                    {noJobsForType && (
+                                    {pickedTypeId != null && !jobsLoading && jobs.length === 0 && (
                                         <FormHelperText error>
                                             {getString('noJobsForDepartmentType') ||
                                                 'No jobs linked to this department type. Configure links first.'}

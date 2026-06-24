@@ -10,8 +10,12 @@ export interface UserGroup {
     description: string | null;
     is_protected: boolean;
     user_group_type_id: number;
+    user_group_type_name: string | null;
     users_qty: { active: number; inactive: number } | null;
-    oesl_ids: number[];          // operation-essence-set link ids (set-grain grants)
+    /** IDs of OperationEssenceLink rows granted to this group (legacy grain) */
+    oel_ids: number[];
+    /** IDs of OperationEssenceSetLink rows granted to this group (set grain) */
+    oesl_ids: number[];
 }
 
 export interface UserGroupCreate {
@@ -46,9 +50,9 @@ export const createUserGroup = async (
 };
 
 export const updateUserGroup = async ({
-                                          id,
-                                          data,
-                                      }: {
+    id,
+    data,
+}: {
     id: number;
     data: UserGroupUpdate;
 }): Promise<MutationResponse<UserGroup>> => {

@@ -16,11 +16,11 @@ import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { Link } from '@tanstack/react-router';
 import { DepartmentTree } from './DepartmentTree';
 import { fetchDepartmentById } from './departmentApi';
-import { DEPARTMENT_TREE_QK } from './useDepartmentMutations';
 import { formatToUkrDate } from '../../../utils/dateFormatter';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
-import cfl from '../../../utils/capitalizeFirstLetter';
+import cfl from '../../../utils/helpers.ts';
+import {DEPARTMENT_TREE_QK} from "../../../utils/queryKeys.ts";
 
 interface Props {
     departmentId: number;

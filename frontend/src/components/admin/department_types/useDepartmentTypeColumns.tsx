@@ -5,7 +5,7 @@ import { Box, IconButton, Switch, Tooltip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 import type { DepartmentType } from './departmentTypeApi.ts';
-import cfl from '../../../utils/capitalizeFirstLetter.ts';
+import cfl from '../../../utils/helpers.ts';
 import type { GetStringFn } from '../../../types/getStringFn.ts';
 import { TextEditCell } from '../TextEditCell.tsx';
 import { ReadonlyCell } from '../ReadonlyCell.tsx';

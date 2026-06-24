@@ -6,10 +6,12 @@ import { Link } from '@tanstack/react-router';
 import { JobCrud } from './JobCrud';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
-import cfl from '../../../utils/capitalizeFirstLetter';
+import cfl from '../../../utils/helpers.ts';
+import {setPageTitle} from "../../../utils/setPageTitle.ts";
 
 export function JobsPage() {
   const getString = useString({ str });
+  setPageTitle(getString('jobs') || 'Jobs')
 
   return (
     <AppShell>

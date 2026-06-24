@@ -18,7 +18,6 @@ import {
   type EmployeeEventStatus,
 } from './employeeEventStatusApi';
 import {
-  EMPLOYEE_EVENT_STATUS_QK,
   useEmployeeEventStatusMutations,
 } from './useEmployeeEventStatusMutations';
 import {
@@ -34,7 +33,8 @@ import { EmployeeEventStatusDeleteDialog } from './EmployeeEventStatusDeleteDial
 import { useDataGridLocale } from '../../../../hooks/useDataGridLocale';
 import useString from '../../../../hooks/useString';
 import str from '../../../../strings/str';
-import cfl from '../../../../utils/capitalizeFirstLetter';
+import cfl from '../../../../utils/helpers.ts';
+import {EMPLOYEE_EVENT_STATUS_QK} from "../../../../utils/queryKeys.ts";
 
 export function EmployeeEventStatusCrud() {
   const getString = useString({ str });

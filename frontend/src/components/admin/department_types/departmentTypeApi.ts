@@ -10,6 +10,9 @@ export interface DepartmentType {
     description: string | null;
     is_active: boolean;
     created_at: string;
+    // Enriched by the list endpoint (GET /admin/department_types):
+    parent_names: string[];
+    job_count: number;
 }
 
 export interface DepartmentTypeCreate {

@@ -17,7 +17,7 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchOESLs, setGroupPermissionSets, type OESL } from '../operation_essence_set_links/oeslApi';
+import { fetchOESLs, setGroupPermissionSets, type OESL } from '../../developer/security/operation_essence_set_links/oeslApi';
 import type { UserGroup } from './userGroupApi';
 import type { GetStringFn } from '../../../types/getStringFn';
 import cfl from '../../../utils/helpers.ts';

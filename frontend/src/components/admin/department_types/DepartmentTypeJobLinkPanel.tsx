@@ -1,27 +1,29 @@
 // src/components/admin/department_types/DepartmentTypeJobLinkPanel.tsx
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
     Alert,
     Box,
     CircularProgress,
+    InputAdornment,
     Paper,
     Snackbar,
+    TextField,
     Typography,
 } from '@mui/material';
-
-// import { fetchDepartmentTypes, type DepartmentType } from './departmentTypeApi';
+import SearchIcon from '@mui/icons-material/Search';
 import { fetchDepartmentTypes } from './departmentTypeApi';
-import { DEPARTMENT_TYPE_QK } from './useDepartmentTypeMutations';
 import { useDepartmentTypeJobLinkMutations } from './useDepartmentTypeJobLinkMutations';
 import { DepartmentTypeJobLinkRow } from './DepartmentTypeJobLinkRow';
 import { fetchJobs } from '../jobs/jobApi';
-import { JOB_QK } from '../jobs/useJobMutations';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
+import {DEPARTMENT_TYPE_QK, JOB_QK} from "../../../utils/queryKeys.ts";
 
 export function DepartmentTypeJobLinkPanel() {
     const getString = useString({ str });
+
+    const [filter, setFilter] = useState('');
 
     const [snackbar, setSnackbar] = useState({
         open: false,
@@ -36,7 +38,7 @@ export function DepartmentTypeJobLinkPanel() {
         error: typesError,
     } = useQuery({
         queryKey: DEPARTMENT_TYPE_QK,
-        queryFn: fetchDepartmentTypes,
+         queryFn: () => fetchDepartmentTypes(),
         staleTime: 2 * 60 * 1000,
     });
 
@@ -47,13 +49,20 @@ export function DepartmentTypeJobLinkPanel() {
         error: jobsError,
     } = useQuery({
         queryKey: JOB_QK,
-        queryFn: fetchJobs,
+        queryFn: () => fetchJobs(),
         staleTime: 2 * 60 * 1000,
     });
 
     // ── Link mutations ───────────────────────────────────────────────────────
     const { createLinkMutation, updateLinkMutation, deleteLinkMutation } =
         useDepartmentTypeJobLinkMutations({ setSnackbar });
+
+    // ── Filter by department type name ───────────────────────────────────────
+    const filteredTypes = useMemo(() => {
+        const q = filter.trim().toLowerCase();
+        if (!q) return allTypes;
+        return allTypes.filter((t) => t.name.toLowerCase().includes(q));
+    }, [allTypes, filter]);
 
     // ── Handlers ─────────────────────────────────────────────────────────────
 
@@ -97,6 +106,25 @@ export function DepartmentTypeJobLinkPanel() {
 
     return (
         <Box>
+            {/* ── Name filter ─────────────────────────────────────────────── */}
+            <TextField
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                placeholder={
+                    getString('filterByDepartmentTypeName') || 'Filter by department type name…'
+                }
+                size="small"
+                fullWidth
+                sx={{ mb: 2 }}
+                InputProps={{
+                    startAdornment: (
+                        <InputAdornment position="start">
+                            <SearchIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+                        </InputAdornment>
+                    ),
+                }}
+            />
+
             <Paper
                 elevation={0}
                 sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}
@@ -107,9 +135,16 @@ export function DepartmentTypeJobLinkPanel() {
                             {getString('noDepartmentTypes') || 'No department types yet.'}
                         </Typography>
                     </Box>
+                ) : filteredTypes.length === 0 ? (
+                    <Box sx={{ p: 4, textAlign: 'center' }}>
+                        <Typography variant="body2" color="text.secondary">
+                            {getString('noMatchingDepartmentTypes') ||
+                                'No department types match the filter.'}
+                        </Typography>
+                    </Box>
                 ) : (
                     <Box sx={{ py: 1 }}>
-                        {allTypes.map((type) => (
+                        {filteredTypes.map((type) => (
                             <DepartmentTypeJobLinkRow
                                 key={type.id}
                                 type={type}

@@ -11,13 +11,19 @@ import {
   CircularProgress,
   Alert,
   TextField,
+  Typography,
 } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchJobs, type Job } from '../../admin/jobs/jobApi';
+import {
+  fetchJobsByDepartmentType,
+  type JobWithLinkId,
+} from '../../admin/department_types/departmentTypeJobLinkApi';
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums';
 import { createTalentAuditJob, type TalentAuditJobCreate } from './talentAuditApi';
+import { DepartmentTypeSelectTree } from './DepartmentTypeSelectTree';
+import { DEPT_TYPE_JOB_LINK_QK, TSPL_QK } from '../../../utils/queryKeys';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 
@@ -40,7 +46,6 @@ interface Props {
   auditJobsQK: readonly unknown[];
   onClose: () => void;
   onSuccess: (detail: string) => void;
-  // onError: (detail: string) => void;
 }
 
 export function TalentAuditJobDialog({
@@ -54,38 +59,57 @@ export function TalentAuditJobDialog({
   const qc = useQueryClient();
   const [errorMessage, setErrorMessage] = useState('');
 
-  const { data: jobs = [], isLoading: jobsLoading } = useQuery<Job[]>({
-    queryKey: ['jobs'],
-    queryFn: fetchJobs,
-    staleTime: 5 * 60 * 1000,
+  // Department type chosen in the tree → drives the job select below.
+  const [selectedTypeId, setSelectedTypeId] = useState<number | null>(null);
+  const [selectedTypeName, setSelectedTypeName] = useState('');
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm<FormValues>({
+    defaultValues: { target_job_id: '', talent_status_period_link_id: '' },
   });
 
+  // Reset everything when the dialog closes.
+  useEffect(() => {
+    if (!open) {
+      reset({ target_job_id: '', talent_status_period_link_id: '' });
+      setSelectedTypeId(null);
+      setSelectedTypeName('');
+      setErrorMessage('');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  // Jobs linked to the chosen department type (active links only).
+  const { data: jobs = [], isLoading: jobsLoading } = useQuery<JobWithLinkId[]>({
+    queryKey: [...DEPT_TYPE_JOB_LINK_QK, 'by_type', selectedTypeId, true],
+    queryFn: () => fetchJobsByDepartmentType(selectedTypeId as number, true),
+    enabled: selectedTypeId != null,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Talent status + period pairs (the "talent level" select) — unchanged.
   const { data: pairs = [], isLoading: pairsLoading } = useQuery<StatusPeriodOption[]>({
-    queryKey: ['talent_status_period_links', 'active-pairs', true],
+    queryKey: [...TSPL_QK, 'active-pairs', true],
     queryFn: async () => {
       const res = await axiosInstance.get(
-          `${BASE_URL}/talent_status_period_links/active_pairs?is_active=true`,
+          `${BASE_URL}/talent_status_period_links/active-pairs?is_active=true`,
       );
       return res.data ?? [];
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  const {
-    control,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<FormValues>({
-    defaultValues: { target_job_id: '', talent_status_period_link_id: '' },
-  });
-
-  useEffect(() => {
-    if (!open) {
-      reset({ target_job_id: '', talent_status_period_link_id: '' });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  const handleSelectType = (typeId: number, typeName: string) => {
+    setSelectedTypeId(typeId);
+    setSelectedTypeName(typeName);
+    // Clear any previously picked job — it may not belong to the new type.
+    setValue('target_job_id', '');
+  };
 
   const mutation = useMutation({
     mutationFn: (body: TalentAuditJobCreate) => createTalentAuditJob(body),
@@ -110,69 +134,86 @@ export function TalentAuditJobDialog({
     });
   };
 
-  const loading = jobsLoading || pairsLoading;
-
   return (
       <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
         <DialogTitle>{getString('addTalentAuditJob') || 'Add Job Assessment'}</DialogTitle>
         <DialogContent>
-          {loading ? (
-              <CircularProgress size={24} sx={{ m: 2 }} />
-          ) : (
-              <Stack spacing={2} sx={{ mt: 1 }}>
-                {errorMessage && (
-                    <Alert severity="error">{errorMessage}</Alert>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
+
+            {/* ── 1. Department type tree ───────────────────────────────── */}
+            <Stack spacing={0.5}>
+              <Typography variant="subtitle2">
+                {getString('selectDepartmentType') || 'Select department type'}
+              </Typography>
+              <DepartmentTypeSelectTree
+                  selectedTypeId={selectedTypeId}
+                  onSelect={handleSelectType}
+              />
+            </Stack>
+
+            {/* ── 2. Target job (filtered by the chosen type) ───────────── */}
+            <Controller
+                name="target_job_id"
+                control={control}
+                rules={{ required: true }}
+                render={({ field }) => (
+                    <TextField
+                        {...field}
+                        select
+                        fullWidth
+                        label={getString('targetJob') || 'Target Job'}
+                        disabled={selectedTypeId == null || jobsLoading}
+                        error={!!errors.target_job_id}
+                        helperText={
+                          selectedTypeId == null
+                              ? getString('selectTypeFirst') || 'Select a department type first'
+                              : !jobsLoading && jobs.length === 0
+                                  ? getString('noJobsForType') || 'No jobs linked to this department type'
+                                  : errors.target_job_id
+                                      ? getString('fieldRequired') || 'Required'
+                                      : selectedTypeName
+                                          ? `${getString('jobsFor') || 'Jobs for'}: ${selectedTypeName}`
+                                          : ''
+                        }
+                    >
+                      {jobs.map((j) => (
+                          <MenuItem key={j.id} value={j.id}>
+                            {j.name}
+                          </MenuItem>
+                      ))}
+                    </TextField>
                 )}
+            />
 
-                <Controller
-                    name="target_job_id"
-                    control={control}
-                    rules={{ required: true }}
-                    render={({ field }) => (
-                        <TextField
-                            {...field}
-                            select
-                            fullWidth
-                            label={getString('targetJob') || 'Target Job'}
-                            error={!!errors.target_job_id}
-                            helperText={errors.target_job_id ? getString('fieldRequired') || 'Required' : ''}
-                        >
-                          {jobs.map((j) => (
-                              <MenuItem key={j.id} value={j.id}>
-                                {j.name}
-                              </MenuItem>
-                          ))}
-                        </TextField>
-                    )}
-                />
-
-                <Controller
-                    name="talent_status_period_link_id"
-                    control={control}
-                    rules={{ required: true }}
-                    render={({ field }) => (
-                        <TextField
-                            {...field}
-                            select
-                            fullWidth
-                            label={getString('talentStatusPeriod') || 'Talent Status & Period'}
-                            error={!!errors.talent_status_period_link_id}
-                            helperText={
-                              errors.talent_status_period_link_id
-                                  ? getString('fieldRequired') || 'Required'
-                                  : ''
-                            }
-                        >
-                          {pairs.map((p) => (
-                              <MenuItem key={p.id} value={p.id}>
-                                {p.label}
-                              </MenuItem>
-                          ))}
-                        </TextField>
-                    )}
-                />
-              </Stack>
-          )}
+            {/* ── 3. Talent status & period (talent level) ──────────────── */}
+            <Controller
+                name="talent_status_period_link_id"
+                control={control}
+                rules={{ required: true }}
+                render={({ field }) => (
+                    <TextField
+                        {...field}
+                        select
+                        fullWidth
+                        label={getString('talentStatusPeriod') || 'Talent Status & Period'}
+                        disabled={pairsLoading}
+                        error={!!errors.talent_status_period_link_id}
+                        helperText={
+                          errors.talent_status_period_link_id
+                              ? getString('fieldRequired') || 'Required'
+                              : ''
+                        }
+                    >
+                      {pairs.map((p) => (
+                          <MenuItem key={p.id} value={p.id}>
+                            {p.label}
+                          </MenuItem>
+                      ))}
+                    </TextField>
+                )}
+            />
+          </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} disabled={mutation.isPending}>
@@ -181,7 +222,7 @@ export function TalentAuditJobDialog({
           <Button
               variant="contained"
               onClick={handleSubmit(onSubmit)}
-              disabled={mutation.isPending || loading}
+              disabled={mutation.isPending || pairsLoading}
           >
             {mutation.isPending ? <CircularProgress size={18} /> : getString('add') || 'Add'}
           </Button>

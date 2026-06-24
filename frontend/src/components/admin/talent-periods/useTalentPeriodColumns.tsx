@@ -3,7 +3,6 @@ import React from 'react';
 import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import {
     Box,
-    // Chip,
     IconButton,
     Switch,
     Tooltip,
@@ -11,11 +10,12 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 
 import type { TalentPeriod } from "./talentPeriodApi.ts";
-import cfl from "../../../utils/capitalizeFirstLetter.ts";
+import cfl from "../../../utils/helpers.ts";
 import type { GetStringFn } from "../../../types/getStringFn.ts";
 import { TextEditCell } from "../TextEditCell.tsx";
 import { ReadonlyCell } from "../ReadonlyCell.tsx";
-import {formatToUkrDate} from "../../../utils/dateFormatter.ts";
+import { formatToUkrDate } from "../../../utils/dateFormatter.ts";
+
 export interface EditingState {
     userId: number | null;
     field: string | null;
@@ -84,11 +84,56 @@ export function useTalentPeriodColumns({
         };
     }
 
+    function numberEditCol(
+        field: keyof TalentPeriod,
+        headerKey: string,
+        width: number,
+        flex?: number,
+    ): GridColDef {
+        return {
+            field: field as string,
+            headerName: cfl(getString(headerKey)) || headerKey,
+            width: flex ? undefined : width,
+            flex,
+            renderCell: (params: GridRenderCellParams<TalentPeriod>) => {
+                const row = params.row;
+                const isEditing = editingState.userId === row.id && editingState.field === field;
+                return isEditing ? (
+                    <TextEditCell
+                        value={String(row[field] ?? '')}
+                        onSave={(val) => {
+                            // Validate number before saving
+                            const numValue = Number(val);
+                            if (field === 'qty_months') {
+                                if (isNaN(numValue) || numValue < 1 || numValue > 120) {
+                                    // Show error to user
+                                    alert(getString('qtyMonthsInvalid') || 'Duration must be between 1 and 120 months');
+                                    return;
+                                }
+                                onRequestSave(row, field as string, String(numValue));
+                            } else {
+                                onRequestSave(row, field as string, val);
+                            }
+                        }}
+                        onCancel={onCancelEdit}
+                        isPending={updateIsPending}
+                    />
+                ) : (
+                    <ReadonlyCell
+                        value={String(row[field] ?? '')}
+                        onEdit={(e) => onEditFieldClick(row, field as string, e)}
+                        editTitle={getString(`edit_${field}`) || `Edit ${field}`}
+                        placeholder="—"
+                    />
+                );
+            },
+        };
+    }
+
     return [
         textEditCol('name', 'name', 200, 1),
-
         textEditCol('description', 'description', 240, 1),
-
+        numberEditCol('qty_months', 'qtyMonths', 140, 0.5), // Added qty_months column
         {
             field: 'is_active',
             headerName: cfl(getString('isActive')) || 'Active',
@@ -116,21 +161,6 @@ export function useTalentPeriodColumns({
             renderCell: (params: GridRenderCellParams<TalentPeriod>) =>
                 formatToUkrDate(params.row.created_at),
         },
-        // {
-        //     field: 'created_at',
-        //     headerName: getString('createdAt'),
-        //     width: 160,
-        //     renderCell: (params: GridRenderCellParams<TalentPeriod>) => (
-        //         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-        //             <Chip
-        //                 label={new Date(params.row.created_at).toLocaleDateString()}
-        //                 size="small"
-        //                 variant="outlined"
-        //             />
-        //         </Box>
-        //     ),
-        // },
-
         {
             field: '_actions',
             headerName: '',

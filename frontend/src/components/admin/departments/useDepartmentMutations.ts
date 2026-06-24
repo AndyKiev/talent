@@ -4,20 +4,19 @@ import {
   createDepartment,
   updateDepartment,
   deleteDepartment,
+  generateDepartmentSubtree,
 } from './departmentApi';
-import { DEPARTMENT_ROOTS_QK } from './DepartmentTree';
-
-type Snackbar = { open: boolean; message: string; severity: 'success' | 'error' };
-
-export const DEPARTMENT_TREE_QK = ['department_tree'] as const;
-export const DEPARTMENT_FLAT_QK = ['departments_flat'] as const;
+import {DEPARTMENT_ROOTS_QK, DEPARTMENT_TREE_QK, DEPARTMENT_FLAT_QK} from "../../../utils/queryKeys.ts";
+import type {SnackbarType} from "../../../types/types.ts";
 
 interface Props {
-  setSnackbar: (s: Snackbar) => void;
+  setSnackbar: (s: SnackbarType) => void;
   onCreateSuccess?: () => void;
   onUpdateSuccess?: () => void;
   onDeleteSuccess?: () => void;
   onDeleteError?: () => void;
+  onGenerateSuccess?: () => void;
+  onGenerateError?: () => void;
 }
 
 export function useDepartmentMutations({
@@ -26,6 +25,8 @@ export function useDepartmentMutations({
                                          onUpdateSuccess,
                                          onDeleteSuccess,
                                          onDeleteError,
+                                         onGenerateSuccess,
+                                         onGenerateError,
                                        }: Props) {
   const qc = useQueryClient();
 
@@ -73,5 +74,18 @@ export function useDepartmentMutations({
     },
   });
 
-  return { createMutation, updateMutation, deleteMutation };
+  const generateSubtreeMutation = useMutation({
+    mutationFn: generateDepartmentSubtree,
+    onSuccess: async (res) => {
+      await invalidateAll();
+      setSnackbar({ open: true, message: res.detail, severity: 'success' });
+      onGenerateSuccess?.();
+    },
+    onError: (err: Error) => {
+      setSnackbar({ open: true, message: err.message, severity: 'error' });
+      onGenerateError?.();
+    },
+  });
+
+  return { createMutation, updateMutation, deleteMutation, generateSubtreeMutation };
 }

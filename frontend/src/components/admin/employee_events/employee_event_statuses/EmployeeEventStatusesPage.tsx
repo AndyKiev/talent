@@ -6,7 +6,7 @@ import { Link } from '@tanstack/react-router';
 import { EmployeeEventStatusCrud } from './EmployeeEventStatusCrud';
 import useString from '../../../../hooks/useString';
 import str from '../../../../strings/str';
-import cfl from '../../../../utils/capitalizeFirstLetter';
+import cfl from '../../../../utils/helpers.ts';
 
 export function EmployeeEventStatusesPage() {
   const getString = useString({ str });

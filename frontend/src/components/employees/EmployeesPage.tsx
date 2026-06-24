@@ -20,18 +20,20 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ApartmentIcon from '@mui/icons-material/Apartment';
 import AssessmentIcon from '@mui/icons-material/Assessment';
+import EventNoteIcon from '@mui/icons-material/EventNote';
 import { Link, useNavigate } from '@tanstack/react-router';
 import AppShell from '../layout/AppShell';
-import { fetchEmployees, type Employee } from './employeeApi';
+import { fetchEmployees, fetchEmployeesByDepartment, type Employee } from './employeeApi';
 import { useEmployeeColumns } from './useEmployeeColumns';
 import { useEmployeeMutations, EMPLOYEES_QK } from './useEmployeeMutations';
+import { SelectScopeDepartment } from './SelectScopeDepartment';
 import { EmployeeCreateDialog } from './EmployeeCreateDialog';
 import { EmployeeEditDialog } from './EmployeeEditDialog';
 import { EmployeeDeleteDialog } from './EmployeeDeleteDialog';
 import { EmployeeDepartmentsDrawer } from './EmployeeDepartmentsDrawer';
 import useString from '../../hooks/useString';
 import str from '../../strings/str';
-import cfl from '../../utils/capitalizeFirstLetter';
+import cfl from '../../utils/helpers.ts';
 import { useDataGridStyles } from '../../hooks/useDataGridStyles';
 import { useDataGridLocale } from '../../hooks/useDataGridLocale';
 
@@ -47,6 +49,9 @@ export function EmployeesPage() {
     const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
     const [employeeForDepts, setEmployeeForDepts] = useState<Employee | null>(null);
 
+    // Selected department in the filter Select (null = all visible to the user).
+    const [selectedDeptId, setSelectedDeptId] = useState<number | null>(null);
+
     const [snackbar, setSnackbar] = useState({
         open: false,
         message: '',
@@ -55,8 +60,11 @@ export function EmployeesPage() {
 
     // ── Data ──────────────────────────────────────────────────────────────────
     const { data: employees = [], isLoading, error } = useQuery({
-        queryKey: EMPLOYEES_QK,
-        queryFn: fetchEmployees,
+        queryKey: [...EMPLOYEES_QK, { departmentId: selectedDeptId }],
+        queryFn: () =>
+            selectedDeptId == null
+                ? fetchEmployees()
+                : fetchEmployeesByDepartment(selectedDeptId),
         staleTime: 2 * 60 * 1000,
     });
 
@@ -80,40 +88,54 @@ export function EmployeesPage() {
     const actionsColumn: GridColDef<Employee> = {
         field: '_actions',
         headerName: '',
-        width: 150,
+        width: 180,
         sortable: false,
         disableColumnMenu: true,
         renderCell: ({ row }) => (
             <Box sx={{ display: 'flex', gap: 0.25, alignItems: 'center', height: '100%' }}>
+                <Tooltip title={cfl(getString('events') || 'Events')}>
+                    <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => {
+                            void navigate({
+                                to: '/employees/$employeeId/events',
+                                params: { employeeId: String(row.id) },
+                            });
+                        }}
+                    >
+                        <EventNoteIcon fontSize="small" />
+                    </IconButton>
+                </Tooltip>
                 <Tooltip title={cfl(getString('talentAudit') || 'Talent Audit')}>
                     <IconButton
                         size="small"
                         color="secondary"
-                        onClick={() =>
-                            navigate({
+                        onClick={() => {
+                            void navigate({
                                 to: '/employees/$employeeId/talent_audit',
                                 params: { employeeId: String(row.id) },
-                            })
-                        }
+                            });
+                        }}
                     >
                         <AssessmentIcon fontSize="small" />
                     </IconButton>
                 </Tooltip>
-                <Tooltip title={getString('manageDepartments') || 'Manage Departments'}>
+                <Tooltip title={cfl(getString('manageDepartments') || 'Manage Departments')}>
                     <IconButton
                         size="small"
-                        color="primary"
+                        color="info"
                         onClick={() => handleManageDepts(row)}
                     >
                         <ApartmentIcon fontSize="small" />
                     </IconButton>
                 </Tooltip>
-                <Tooltip title={getString('edit') || 'Edit'}>
-                    <IconButton size="small" onClick={() => handleEdit(row)}>
+                <Tooltip title={cfl(getString('edit') || 'Edit')}>
+                    <IconButton size="small" color="warning" onClick={() => handleEdit(row)}>
                         <EditIcon fontSize="small" />
                     </IconButton>
                 </Tooltip>
-                <Tooltip title={getString('delete') || 'Delete'}>
+                <Tooltip title={cfl(getString('delete') || 'Delete')}>
                     <IconButton size="small" color="error" onClick={() => handleDelete(row)}>
                         <DeleteIcon fontSize="small" />
                     </IconButton>
@@ -127,7 +149,7 @@ export function EmployeesPage() {
     // ── Render ────────────────────────────────────────────────────────────────
     return (
         <AppShell>
-            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1400, mx: 'auto' }}>
+            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1800, mx: 'auto' }}>
                 {/* Breadcrumbs */}
                 <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
                     <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -143,9 +165,11 @@ export function EmployeesPage() {
                 {/* Header */}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                     <PeopleIcon color="action" />
-                    <Typography variant="h6" fontWeight={600} sx={{ flex: 1 }}>
+                    <Typography variant="h6" fontWeight={600}>
                         {cfl(getString('employees') || 'Employees')}
                     </Typography>
+                    <SelectScopeDepartment value={selectedDeptId} onChange={setSelectedDeptId} />
+                    <Box sx={{ flex: 1 }} />
                     <Button
                         variant="contained"
                         startIcon={<AddIcon />}

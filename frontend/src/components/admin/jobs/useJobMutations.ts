@@ -1,19 +1,19 @@
 // src/components/admin/jobs/useJobMutations.ts
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createJob, updateJob, deleteJob, setJobGroups } from './jobApi';
-
-type Snackbar = { open: boolean; message: string; severity: 'success' | 'error' };
-
-export const JOB_QK = ['jobs'] as const;
-export const USER_GROUPS_QK = ['user_groups'] as const;
+import {useMutation, useQueryClient} from '@tanstack/react-query';
+import type {JobBulkUploadResult} from './jobApi';
+import {bulkUploadJobs, createJob, deleteJob, setJobGroups, setJobJobGroups, updateJob} from './jobApi';
+import {JOB_QK} from "../../../utils/queryKeys.ts";
+import type {SnackbarType} from "../../../types/types.ts";
 
 interface Props {
-  setSnackbar: (s: Snackbar) => void;
+  setSnackbar: (s: SnackbarType) => void;
   onCreateSuccess?: () => void;
   onUpdateSuccess?: () => void;
   onDeleteSuccess?: () => void;
   onDeleteError?: () => void;
   onSetGroupsSuccess?: () => void;
+  onSetJobGroupsSuccess?: () => void;
+  onBulkUploadSuccess?: (result: JobBulkUploadResult) => void;
 }
 
 export function useJobMutations({
@@ -23,6 +23,8 @@ export function useJobMutations({
   onDeleteSuccess,
   onDeleteError,
   onSetGroupsSuccess,
+  onSetJobGroupsSuccess,
+  onBulkUploadSuccess
 }: Props) {
   const qc = useQueryClient();
 
@@ -32,6 +34,17 @@ export function useJobMutations({
       await qc.invalidateQueries({ queryKey: JOB_QK });
       setSnackbar({ open: true, message: res.detail, severity: 'success' });
       onCreateSuccess?.();
+    },
+    onError: (err: Error) => {
+      setSnackbar({ open: true, message: err.message, severity: 'error' });
+    },
+  });
+
+  const bulkUploadMutation = useMutation({
+    mutationFn: bulkUploadJobs,
+    onSuccess: async (res) => {
+      await qc.invalidateQueries({ queryKey: JOB_QK });
+      onBulkUploadSuccess?.(res);
     },
     onError: (err: Error) => {
       setSnackbar({ open: true, message: err.message, severity: 'error' });
@@ -63,6 +76,7 @@ export function useJobMutations({
     },
   });
 
+  // Existing: assign user-groups to job (PUT /jobs/{id}/groups)
   const setGroupsMutation = useMutation({
     mutationFn: setJobGroups,
     onSuccess: async () => {
@@ -74,5 +88,17 @@ export function useJobMutations({
     },
   });
 
-  return { createMutation, updateMutation, deleteMutation, setGroupsMutation };
+  // New: assign job-groups to job (PUT /job_job_group_links/job/{id})
+  const setJobJobGroupsMutation = useMutation({
+    mutationFn: setJobJobGroups,
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: JOB_QK });
+      onSetJobGroupsSuccess?.();
+    },
+    onError: (err: Error) => {
+      setSnackbar({ open: true, message: err.message, severity: 'error' });
+    },
+  });
+
+  return { createMutation, updateMutation, deleteMutation, setGroupsMutation, setJobJobGroupsMutation, bulkUploadMutation };
 }

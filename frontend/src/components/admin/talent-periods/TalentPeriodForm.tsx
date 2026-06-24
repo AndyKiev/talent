@@ -18,13 +18,17 @@ import {
 import type { UseMutationResult } from '@tanstack/react-query';
 import type { TalentPeriodCreate, MutationResponse, TalentPeriod } from './talentPeriodApi';
 import useString from "../../../hooks/useString.ts";
-import cfl from "../../../utils/capitalizeFirstLetter.ts";
+import cfl from "../../../utils/helpers.ts";
 import str from "../../../strings/str.ts";
 
 const schema = z.object({
     name: z.string().min(1, 'nameRequired').max(32, 'nameTooLong'),
     description: z.string().max(64, 'descriptionTooLong').optional().or(z.literal('')),
     is_active: z.boolean(),
+    qty_months: z.number()
+        .int('qtyMonthsInteger')
+        .min(0, 'qtyMonthsMin')  // Changed from 1 to 0
+        .max(120, 'qtyMonthsMax'),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -47,7 +51,7 @@ export function TalentPeriodForm({ open, onClose, createMutation }: Props) {
         setValue,
     } = useForm<FormData>({
         resolver: zodResolver(schema),
-        defaultValues: { name: '', description: '', is_active: true },
+        defaultValues: { name: '', description: '', is_active: true, qty_months: 12 }, // Added default
     });
 
     const handleClose = () => {
@@ -60,6 +64,7 @@ export function TalentPeriodForm({ open, onClose, createMutation }: Props) {
             name: data.name,
             description: data.description || null,
             is_active: data.is_active,
+            qty_months: data.qty_months, // Added
         });
     };
 
@@ -93,6 +98,21 @@ export function TalentPeriodForm({ open, onClose, createMutation }: Props) {
                             (getString(errors.description.message) || errors.description.message)
                         }
                         {...register('description')}
+                    />
+
+                    <TextField
+                        label={cfl(getString('qtyMonths')) || 'Duration (months)'}
+                        type="number"
+                        fullWidth
+                        slotProps={{
+                            htmlInput: { min: 1, max: 120, step: 1 }
+                        }}
+                        error={!!errors.qty_months}
+                        helperText={
+                            errors.qty_months?.message &&
+                            (getString(errors.qty_months.message) || errors.qty_months.message)
+                        }
+                        {...register('qty_months', { valueAsNumber: true })}
                     />
 
                     <FormControlLabel

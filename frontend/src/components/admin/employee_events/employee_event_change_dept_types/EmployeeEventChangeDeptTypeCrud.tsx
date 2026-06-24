@@ -17,7 +17,6 @@ import {
     type EmployeeEventChangeDeptType,
 } from './employeeEventChangeDeptTypeApi';
 import {
-    EMPLOYEE_EVENT_CHANGE_DEPT_TYPE_QK,
     useEmployeeEventChangeDeptTypeMutations,
 } from './useEmployeeEventChangeDeptTypeMutations';
 import {
@@ -33,7 +32,8 @@ import { EmployeeEventChangeDeptTypeDeleteDialog } from './EmployeeEventChangeDe
 import { useDataGridLocale } from '../../../../hooks/useDataGridLocale';
 import useString from '../../../../hooks/useString';
 import str from '../../../../strings/str';
-import cfl from '../../../../utils/capitalizeFirstLetter';
+import cfl from '../../../../utils/helpers.ts';
+import {EMPLOYEE_EVENT_CHANGE_DEPT_TYPE_QK} from "../../../../utils/queryKeys.ts";
 
 export function EmployeeEventChangeDeptTypeCrud() {
     const getString = useString({ str });

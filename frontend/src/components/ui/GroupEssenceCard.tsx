@@ -5,6 +5,7 @@ import FolderIcon from '@mui/icons-material/Folder';
 import { useNavigate } from '@tanstack/react-router';
 import { useTheme } from '../theme/ThemeContext';
 import type { CardEssenceConfig } from '../../types/essence';
+import cfl from "../../utils/helpers.ts";
 
 interface GroupEssenceCardProps {
     essence: CardEssenceConfig;
@@ -57,7 +58,7 @@ export function GroupEssenceCard({ essence, childCount }: GroupEssenceCardProps)
             <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                     <Typography variant="subtitle1" fontWeight={700} color={t.text}>
-                        {label}
+                        {cfl(label)}
                     </Typography>
                     <Chip
                         label={`${childCount} item${childCount !== 1 ? 's' : ''}`}

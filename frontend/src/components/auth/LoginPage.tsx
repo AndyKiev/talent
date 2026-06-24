@@ -16,17 +16,16 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useAuthStore } from "../../store/authStore.ts";
 import { authApi } from "../../api/authApi.ts";
 import { useTheme } from "../theme/ThemeContext.tsx";
-import type { Theme } from "../theme/themes.ts";
 import ThemeSwitch from "../theme/ThemeSwitch.tsx";
 import useString from "../../hooks/useString.ts";
 import str from "../../strings/str.ts";
-import cfl from "../../utils/capitalizeFirstLetter.ts";
+import cfl from "../../utils/helpers.ts";
 
 
 const LoginPage: FC = () => {
     const { t } = useTheme();
     const navigate = useNavigate();
-    const { setToken, access_token } = useAuthStore();
+    const { setToken, setUser } = useAuthStore();
     const getString = useString({ str });
 
     const [username, setUsername] = useState("");
@@ -46,14 +45,15 @@ const LoginPage: FC = () => {
 
         try {
             // 1. Get token
-            const { access_token: token } = await authApi.login(username.trim(), password);
-            setToken(token);
+            const { access_token } = await authApi.login(username.trim(), password);
+            setToken(access_token);
 
-            // 2. Route in immediately. RootLayout fetches /me and loads translations
-            //    on token change, so we don't await them here — awaiting /me before
-            //    navigating let translations finish first and remounted an empty login
-            //    form for a frame (the "blinking").
-            navigate({ to: "/people_review" });
+            // 2. Fetch full user profile
+            const user = await authApi.me();
+            setUser(user);
+
+            // 3. Navigate to main page
+            await navigate({ to: "/employees" });
         } catch (err: unknown) {
             const message =
                 err instanceof Error
@@ -68,26 +68,6 @@ const LoginPage: FC = () => {
     const handleKeyDown = async (e: React.KeyboardEvent) => {
         if (e.key === "Enter") await handleSubmit();
     };
-
-    // Once a token exists we're transitioning into the app. Show a spinner instead of
-    // the form so a brief remount during the auth/translations transition never flashes
-    // empty username/password fields.
-    if (access_token) {
-        return (
-            <Box
-                sx={{
-                    minHeight: "100vh",
-                    background: t.bg,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    transition: "background 0.3s",
-                }}
-            >
-                <CircularProgress sx={{ color: t.accent }} />
-            </Box>
-        );
-    }
 
     return (
         <Box
@@ -265,7 +245,8 @@ const LoginPage: FC = () => {
 };
 
 // Shared TextField sx — keeps the form fields consistent with app theme
-const fieldSx = (t: Theme) => ({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const fieldSx = (t: any) => ({
     "& .MuiOutlinedInput-root": {
         borderRadius: "10px",
         fontSize: 14,

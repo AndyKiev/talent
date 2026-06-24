@@ -13,14 +13,15 @@ import {
     IconButton,
 } from "@mui/material";
 import CodeIcon from '@mui/icons-material/Code';
-import { LogoutRounded, PeopleAltRounded, AdminPanelSettingsRounded, RateReviewRounded, InsightsRounded } from "@mui/icons-material";
+import InsightsRounded from '@mui/icons-material/InsightsRounded';
+import { LogoutRounded, PeopleAltRounded, AdminPanelSettingsRounded } from "@mui/icons-material";
 import { useTheme } from "../theme/ThemeContext";
 import { useAuthStore } from "../../store/authStore";
 import ThemeSwitch from "../theme/ThemeSwitch";
-import { NotificationBell } from "../notifications/NotificationBell";
-import cfl from "../../utils/capitalizeFirstLetter.ts";
+import cfl from "../../utils/helpers.ts";
 import useString from "../../hooks/useString.ts";
 import str from "../../strings/str.ts";
+import { canSeeMenu } from "../../config/menuVisibility";
 
 // const ADMIN_GROUP = "admin"; // adjust to match your LDAP group name
 
@@ -35,7 +36,7 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
     const { user, logout } = useAuthStore();
     const routerState = useRouterState();
     const currentPath = routerState.location.pathname;
-
+    const groups = user?.groups ?? [];
     // const isAdmin = user?.groups?.some(
     //     (g) => g.toLowerCase() === ADMIN_GROUP
     // ) ?? false;
@@ -123,12 +124,14 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
 
                     {/* Nav items */}
                     <Stack direction="row" spacing={0.5} flexGrow={1}>
-                        {navBtn("employees", "/employees", <PeopleAltRounded sx={{ fontSize: 16 }} />)}
-                        {navBtn("planning", "/planning", <InsightsRounded sx={{ fontSize: 16 }} />)}
-                        {navBtn("peopleReview", "/people_review", <RateReviewRounded sx={{ fontSize: 16 }} />)}
-                        {navBtn("admin", "/admin", <AdminPanelSettingsRounded sx={{ fontSize: 16 }} />)}
-                        {navBtn("developer", "/developer", <CodeIcon sx={{ fontSize: 16 }} />)}
-                        {/*{isAdmin && navBtn("Admin", "/admin", <AdminPanelSettingsRounded sx={{ fontSize: 16 }} />)}*/}
+                        {canSeeMenu("employees", groups) &&
+                            navBtn("employees", "/employees", <PeopleAltRounded sx={{ fontSize: 16 }} />)}
+                        {canSeeMenu("planning", groups) &&
+                            navBtn("planning", "/planning", <InsightsRounded sx={{ fontSize: 16 }} />)}
+                        {canSeeMenu("admin", groups) &&
+                            navBtn("admin", "/admin", <AdminPanelSettingsRounded sx={{ fontSize: 16 }} />)}
+                        {canSeeMenu("developer", groups) &&
+                            navBtn("developer", "/developer", <CodeIcon sx={{ fontSize: 16 }} />)}
                     </Stack>
 
                     {/* Right side */}
@@ -151,8 +154,6 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
                                 }}
                             />
                         )}
-
-                        <NotificationBell />
 
                         <Tooltip title="Sign out">
                             <IconButton

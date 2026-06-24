@@ -4,8 +4,9 @@ import {
     createDepartmentTypeJobLink,
     updateDepartmentTypeJobLink,
     deleteDepartmentTypeJobLink,
-    // type DepartmentTypeJobLinkCreate,
 } from './departmentTypeJobLinkApi';
+import {DEPARTMENT_TYPE_QK} from "../../../utils/queryKeys.ts";
+
 
 type Snackbar = { open: boolean; message: string; severity: 'success' | 'error' };
 
@@ -31,9 +32,13 @@ export function useDepartmentTypeJobLinkMutations({
     const createLinkMutation = useMutation({
         mutationFn: createDepartmentTypeJobLink,
         onSuccess: async (res, variables) => {
-            await qc.invalidateQueries({
-                queryKey: deptTypeJobsQK(variables.department_type_id),
-            });
+            await Promise.all([
+                qc.invalidateQueries({
+                    queryKey: deptTypeJobsQK(variables.department_type_id),
+                }),
+                // Refresh the list so the job_count chip stays accurate
+                qc.invalidateQueries({ queryKey: DEPARTMENT_TYPE_QK }),
+            ]);
             setSnackbar({ open: true, message: res.detail, severity: 'success' });
             onCreateSuccess?.();
         },
@@ -44,9 +49,9 @@ export function useDepartmentTypeJobLinkMutations({
 
     const updateLinkMutation = useMutation({
         mutationFn: updateDepartmentTypeJobLink,
-        // onSuccess: async (res, variables) => {
         onSuccess: async (res) => {
-            // We don't know the dept type ID here, so invalidate all job-link queries
+            // We don't know the dept type ID here, so invalidate all job-link queries.
+            // job_count is unaffected by is_active toggles, so no list invalidation needed.
             await qc.invalidateQueries({ queryKey: ['department_type_jobs'] });
             setSnackbar({ open: true, message: res.detail, severity: 'success' });
             onUpdateSuccess?.();
@@ -64,9 +69,13 @@ export function useDepartmentTypeJobLinkMutations({
             departmentTypeId: number;
         }) => deleteDepartmentTypeJobLink(linkId),
         onSuccess: async (res, variables) => {
-            await qc.invalidateQueries({
-                queryKey: deptTypeJobsQK(variables.departmentTypeId),
-            });
+            await Promise.all([
+                qc.invalidateQueries({
+                    queryKey: deptTypeJobsQK(variables.departmentTypeId),
+                }),
+                // Refresh the list so the job_count chip stays accurate
+                qc.invalidateQueries({ queryKey: DEPARTMENT_TYPE_QK }),
+            ]);
             setSnackbar({ open: true, message: res.detail, severity: 'success' });
             onDeleteSuccess?.();
         },

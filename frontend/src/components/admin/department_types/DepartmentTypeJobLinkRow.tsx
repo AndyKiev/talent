@@ -12,10 +12,11 @@ import {
     Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-// import DeleteIcon from '@mui/icons-material/Delete';
 import LinkOffIcon from '@mui/icons-material/LinkOff';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import WorkOutlineIcon from '@mui/icons-material/WorkOutline';
 
 import type { DepartmentType } from './departmentTypeApi';
 import type { JobWithLinkId } from './departmentTypeJobLinkApi';
@@ -63,7 +64,6 @@ export function DepartmentTypeJobLinkRow({
 
     const SHOW_ALL_LINKS = undefined; // undefined = show all links (both active and inactive)
 
-// Then use it in the queryFn:
     const { data: linkedJobs = [], isLoading: jobsLoading } = useQuery({
         queryKey: deptTypeJobsQK(type.id),
         queryFn: () => fetchJobsByDepartmentType(type.id, SHOW_ALL_LINKS),
@@ -72,6 +72,9 @@ export function DepartmentTypeJobLinkRow({
     });
 
     const handleToggleExpand = useCallback(() => setExpanded((p) => !p), []);
+
+    const parentNames = type.parent_names ?? [];
+    const parentLabel = parentNames.join(', ');
 
     return (
         <Box>
@@ -107,6 +110,42 @@ export function DepartmentTypeJobLinkRow({
                 <Typography variant="body2" fontWeight={500} sx={{ flex: 1, minWidth: 120 }}>
                     {type.name}
                 </Typography>
+
+                {/* Parent department chip */}
+                {parentNames.length > 0 && (
+                    <Tooltip
+                        title={`${getString('parentDepartmentType') || 'Parent'}: ${parentLabel}`}
+                    >
+                        <Chip
+                            icon={<AccountTreeIcon sx={{ fontSize: 14 }} />}
+                            label={parentLabel}
+                            size="small"
+                            variant="outlined"
+                            sx={{
+                                fontSize: '0.7rem',
+                                height: 20,
+                                flexShrink: 0,
+                                maxWidth: 200,
+                                '& .MuiChip-label': {
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                },
+                            }}
+                        />
+                    </Tooltip>
+                )}
+
+                {/* Linked job count chip */}
+                <Tooltip title={getString('linkedJobsCount') || 'Linked jobs'}>
+                    <Chip
+                        icon={<WorkOutlineIcon sx={{ fontSize: 14 }} />}
+                        label={type.job_count}
+                        size="small"
+                        color={type.job_count > 0 ? 'primary' : 'default'}
+                        variant={type.job_count > 0 ? 'filled' : 'outlined'}
+                        sx={{ fontSize: '0.7rem', height: 20, flexShrink: 0 }}
+                    />
+                </Tooltip>
 
                 {/* Active badge */}
                 <Chip

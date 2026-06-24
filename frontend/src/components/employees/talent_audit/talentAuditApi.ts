@@ -17,6 +17,7 @@ export interface TalentAudit {
   id: number;
   employee_id: number;
   status_id: number;
+  talent_plus: boolean;
   created_by: number;
   created_at: string;
 }
@@ -24,6 +25,11 @@ export interface TalentAudit {
 export interface TalentAuditCreate {
   employee_id: number;
   status_id: number;
+}
+
+export interface TalentAuditUpdate {
+  status_id?: number;
+  talent_plus?: boolean;
 }
 
 export const fetchTalentAuditByEmployee = async (
@@ -39,6 +45,17 @@ export const createTalentAudit = async (
 ): Promise<MutationResponse<TalentAudit>> => {
   const res = await axiosInstance.post<MutationResponse<TalentAudit>>(
     `${BASE}/talent_audits`,
+    body,
+  );
+  return res.data;
+};
+
+export const updateTalentAudit = async (
+  id: number,
+  body: TalentAuditUpdate,
+): Promise<MutationResponse<TalentAudit>> => {
+  const res = await axiosInstance.patch<MutationResponse<TalentAudit>>(
+    `${BASE}/talent_audits/${id}`,
     body,
   );
   return res.data;
@@ -88,6 +105,35 @@ export const createTalentAuditJob = async (
 
 export const deleteTalentAuditJob = async (id: number): Promise<void> => {
   await axiosInstance.delete(`${BASE}/talent_audit_jobs/${id}`);
+};
+
+// ── TalentAuditJob status (manual change) ─────────────────────────────────────
+
+export interface TalentAuditJobStatus {
+  id: number;
+  name: string;
+  key: string;
+  description?: string | null;
+}
+
+export const fetchTalentAuditJobStatuses = async (): Promise<
+  TalentAuditJobStatus[]
+> => {
+  const res = await axiosInstance.get<TalentAuditJobStatus[]>(
+    `${BASE}/talent_audit_job_statuses`,
+  );
+  return res.data ?? [];
+};
+
+export const updateTalentAuditJobStatus = async (
+  id: number,
+  statusId: number,
+): Promise<MutationResponse<TalentAuditJob>> => {
+  const res = await axiosInstance.patch<MutationResponse<TalentAuditJob>>(
+    `${BASE}/talent_audit_jobs/${id}`,
+    { status_id: statusId },
+  );
+  return res.data;
 };
 
 // ── Free jobs for interview ───────────────────────────────────────────────────

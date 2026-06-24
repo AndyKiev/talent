@@ -1,67 +1,54 @@
 // src/components/admin/employee_events/EmployeeEventsPage.tsx
-import { useTheme } from '../../theme/ThemeContext';
+import React, { useState } from 'react';
+import { Box, Breadcrumbs, Tab, Tabs, Typography } from '@mui/material';
+import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import { Link } from '@tanstack/react-router';
 import AppShell from '../../layout/AppShell';
-import { Box, Typography, Stack, IconButton } from '@mui/material';
-import { EventNote, ArrowBack } from '@mui/icons-material';
-import { ESSENCES as RAW_ESSENCES } from '../admin.essences.config';
-import { EssenceCard } from '../../ui/EssenceCard';
-import { useEssences } from '../../../hooks/useEssences';
-import { useNavigate } from '@tanstack/react-router';
-import cfl from '../../../utils/capitalizeFirstLetter';
+import { EmployeeEventTypeCrud } from './employee_event_types/EmployeeEventTypeCrud';
+import { EmployeeEventDirectionTypeCrud } from './employee_event_direction_types/EmployeeEventDirectionTypeCrud';
+import { EmployeeEventStatusCrud } from './employee_event_statuses/EmployeeEventStatusCrud';
+import { EmployeeEventChangeDeptTypeCrud } from './employee_event_change_dept_types/EmployeeEventChangeDeptTypeCrud';
+import cfl from '../../../utils/helpers.ts';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 
-export function EmployeeEventsPage() {
-    const { t } = useTheme();
-    const navigate = useNavigate();
-    const getString = useString({ str });
+function TabPanel({ children, value, index }: { children: React.ReactNode; value: number; index: number }) {
+    return (
+        <Box hidden={value !== index} sx={{ pt: 3 }}>
+            {value === index && children}
+        </Box>
+    );
+}
 
-    // Get all essences and filter for those belonging to employee_events group
-    const allEssences = useEssences(RAW_ESSENCES);
-    const childEssences = allEssences.filter(essence => essence.parentGroup === 'employee_events');
+export function EmployeeEventsPage() {
+    const getString = useString({ str });
+    const [tab, setTab] = useState(0);
 
     return (
         <AppShell>
-            <Box sx={{ minHeight: 'calc(100vh - 56px)', background: t.bg, py: 5, px: 2.5 }}>
-                <Box sx={{ maxWidth: 960, mx: 'auto' }}>
-                    <Stack direction="row" alignItems="center" spacing={1.5} mb={4}>
-                        <IconButton
-                            onClick={() => navigate({ to: '/admin' })}
-                            sx={{ color: t.textSecondary }}
-                        >
-                            <ArrowBack />
-                        </IconButton>
-                        <EventNote sx={{ color: '#8b5cf6', fontSize: 28 }} />
-                        <Box>
-                            <Typography variant="h5" fontWeight={700} letterSpacing="-0.02em" color={t.text}>
-                                {cfl(getString('employeeEvents'))}
-                            </Typography>
-                            <Typography variant="body2" color={t.textSecondary}>
-                                {cfl(getString('employeeEventsDesc'))}
-                            </Typography>
-                        </Box>
-                    </Stack>
+            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1800, mx: 'auto' }}>
+                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
+                    <Link to="/admin" style={{ textDecoration: 'none', color: 'inherit' }}>
+                        <Typography variant="body2" color="text.secondary">
+                            {cfl(getString('admin'))}
+                        </Typography>
+                    </Link>
+                    <Typography variant="body2" color="text.primary" fontWeight={600}>
+                        {cfl(getString('employeeEvents') || 'Employee Events')}
+                    </Typography>
+                </Breadcrumbs>
 
-                    {childEssences.length === 0 ? (
-                        <Box sx={{ textAlign: 'center', py: 8 }}>
-                            <Typography variant="body1" color={t.textSecondary}>
-                                No settings available for employee events yet.
-                            </Typography>
-                        </Box>
-                    ) : (
-                        <Box
-                            sx={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                                gap: 2,
-                            }}
-                        >
-                            {childEssences.map((essence) => (
-                                <EssenceCard key={essence.key} essence={essence} isChild={true} />
-                            ))}
-                        </Box>
-                    )}
-                </Box>
+                <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                    <Tab label={cfl(getString('employeeEventTypes') || 'Event Types')} />
+                    <Tab label={cfl(getString('employeeEventDirectionTypes') || 'Direction Types')} />
+                    <Tab label={cfl(getString('employeeEventStatuses') || 'Statuses')} />
+                    <Tab label={cfl(getString('employeeEventChangeDeptTypes') || 'Change Dept Types')} />
+                </Tabs>
+
+                <TabPanel value={tab} index={0}><EmployeeEventTypeCrud /></TabPanel>
+                <TabPanel value={tab} index={1}><EmployeeEventDirectionTypeCrud /></TabPanel>
+                <TabPanel value={tab} index={2}><EmployeeEventStatusCrud /></TabPanel>
+                <TabPanel value={tab} index={3}><EmployeeEventChangeDeptTypeCrud /></TabPanel>
             </Box>
         </AppShell>
     );

@@ -19,8 +19,11 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import AutoAwesomeMotionIcon from '@mui/icons-material/AutoAwesomeMotion';
+import PublicIcon from '@mui/icons-material/Public';
 
 import type { DepartmentNode, DepartmentType, DepartmentCategory } from './departmentApi';
+import type { DepartmentRegionLink } from './departmentRegionLinkApi';
 import { TextEditCell } from '../TextEditCell';
 import { ReadonlyCell } from '../ReadonlyCell';
 import type { PendingDepartmentEdit } from './DepartmentEditDialog';
@@ -33,13 +36,21 @@ import str from '../../../strings/str';
 const COL = {
   expand:   28,   // expand/collapse icon
   name:     200,  // inline-editable name
-  type:     140,  // department type select
-  category: 140,  // department category select
+  type:     180,  // department type select
+  category: 180,  // department category select
+  region:   150,  // region chip
   toggle:   48,   // active switch
   id:       48,   // #id badge
   addBtn:   32,   // + child button
+  genBtn:   32,   // generate-subtree button
+  regBtn:   32,   // assign-region button
   delBtn:   32,   // delete button
 };
+
+// Category KEYS (case-insensitive) eligible to hold a region.
+// Matches on category.key (kept in English) — names are localized (e.g. Ukrainian).
+// Mirrors backend guard; purely cosmetic here (server enforces).
+const REGION_ALLOWED_CATEGORY_KEYS = new Set(['board', 'store', 'directorate']);
 
 interface Props {
   node: DepartmentNode;
@@ -52,11 +63,15 @@ interface Props {
    * null = root node → all types allowed.
    */
   parentTypeId: number | null;
+  regionByDept: Map<number, DepartmentRegionLink>;
   updateIsPending: boolean;
   deleteIsPending: boolean;
+  generateIsPending: boolean;
   onAddChild: (parentNode: DepartmentNode) => void;
   onDeleteClick: (node: DepartmentNode) => void;
+  onGenerateSubtree: (node: DepartmentNode) => void;
   onPendingEdit: (edit: PendingDepartmentEdit) => void;
+  onRegionClick: (node: DepartmentNode) => void;
 }
 
 export function DepartmentTreeNode({
@@ -66,11 +81,15 @@ export function DepartmentTreeNode({
                                      allTypes,
                                      categories,
                                      parentTypeId,
+                                     regionByDept,
                                      updateIsPending,
                                      deleteIsPending,
+                                     generateIsPending,
                                      onAddChild,
                                      onDeleteClick,
+                                     onGenerateSubtree,
                                      onPendingEdit,
+                                     onRegionClick,
                                    }: Props) {
   const getString = useString({ str });
   const navigate = useNavigate();
@@ -82,6 +101,13 @@ export function DepartmentTreeNode({
   const hasChildren = node.children.length > 0;
   const indentPx = depth * 24;
 
+  // Region link for this department (if any) + whether category allows one.
+  const regionLink = regionByDept.get(node.id) ?? null;
+  const nodeCategory = categories.find((c) => c.id === node.department_category_id);
+  const regionAllowed = REGION_ALLOWED_CATEGORY_KEYS.has(
+    (nodeCategory?.key ?? '').trim().toLowerCase(),
+  );
+
   // Types allowed for THIS node = children of its parent's type.
   const { allowedTypes, isLoading: typesLoading } = useAllowedDepartmentTypes(
       parentTypeId,
@@ -90,9 +116,9 @@ export function DepartmentTreeNode({
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
-  const handleNodeClick = (e: React.MouseEvent) => {
+  const handleNodeClick = async (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button, input, select, .MuiSelect-root')) return;
-    navigate({ to: '/admin/structure/$departmentId', params: { departmentId: String(node.id) } });
+    await navigate({ to: '/admin/structure/$departmentId', params: { departmentId: String(node.id) } });
   };
 
   const handleNameSave = useCallback(
@@ -245,7 +271,7 @@ export function DepartmentTreeNode({
                                 label={t?.name ?? String(val)}
                                 size="small"
                                 sx={{
-                                  height: 20,
+                                  height: 30,
                                   fontSize: '0.75rem',
                                   bgcolor: 'info.light',
                                   color: 'info.contrastText',
@@ -305,6 +331,35 @@ export function DepartmentTreeNode({
             </FormControl>
           </Box>
 
+          {/* ── Region chip ───────────────────────────────────────────────── */}
+          <Box
+              onClick={(e) => e.stopPropagation()}
+              sx={{ width: COL.region, flexShrink: 0, pt: '4px', display: 'flex', alignItems: 'center' }}
+          >
+            {regionLink?.region ? (
+                <Tooltip title={getString('region') || 'Region'}>
+                  <Chip
+                      icon={<PublicIcon sx={{ fontSize: 14 }} />}
+                      label={regionLink.region.name}
+                      size="small"
+                      onClick={() => regionAllowed && onRegionClick(node)}
+                      sx={{
+                        height: 22,
+                        fontSize: '0.72rem',
+                        bgcolor: 'primary.light',
+                        color: 'primary.contrastText',
+                        cursor: regionAllowed ? 'pointer' : 'default',
+                        '& .MuiChip-label': { whiteSpace: 'normal', lineHeight: 1.2 },
+                      }}
+                  />
+                </Tooltip>
+            ) : regionAllowed ? (
+                <Typography variant="caption" color="text.disabled">
+                  {getString('noRegion') || '— no region —'}
+                </Typography>
+            ) : null}
+          </Box>
+
           {/* ── Active toggle ─────────────────────────────────────────────── */}
           <Box onClick={(e) => e.stopPropagation()} sx={{ width: COL.toggle, flexShrink: 0, pt: '4px' }}>
             <Tooltip title={getString('isActive') || 'Active'}>
@@ -348,6 +403,37 @@ export function DepartmentTreeNode({
             </Tooltip>
           </Box>
 
+          {/* ── Assign region ─────────────────────────────────────────────── */}
+          <Box sx={{ width: COL.regBtn, flexShrink: 0 }}>
+            {regionAllowed && (
+                <Tooltip title={getString('assignRegion') || 'Assign region'}>
+                  <IconButton
+                      size="small"
+                      color={regionLink ? 'primary' : 'default'}
+                      onClick={(e) => { e.stopPropagation(); onRegionClick(node); }}
+                  >
+                    <PublicIcon sx={{ fontSize: 16 }} />
+                  </IconButton>
+                </Tooltip>
+            )}
+          </Box>
+
+          {/* ── Generate subtree ──────────────────────────────────────────── */}
+          <Box sx={{ width: COL.genBtn, flexShrink: 0 }}>
+            <Tooltip title={getString('generateSubtree') || 'Generate subtree from types'}>
+            <span>
+              <IconButton
+                  size="small"
+                  color="secondary"
+                  disabled={generateIsPending}
+                  onClick={(e) => { e.stopPropagation(); onGenerateSubtree(node); }}
+              >
+                <AutoAwesomeMotionIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            </span>
+            </Tooltip>
+          </Box>
+
           {/* ── Delete ────────────────────────────────────────────────────── */}
           <Box sx={{ width: COL.delBtn, flexShrink: 0 }}>
             <Tooltip title={getString('delete') || 'Delete'}>
@@ -378,11 +464,15 @@ export function DepartmentTreeNode({
                       categories={categories}
                       // Each child's allowed types = types linked under THIS node's type
                       parentTypeId={node.department_type_id}
+                      regionByDept={regionByDept}
                       updateIsPending={updateIsPending}
                       deleteIsPending={deleteIsPending}
+                      generateIsPending={generateIsPending}
                       onAddChild={onAddChild}
                       onDeleteClick={onDeleteClick}
+                      onGenerateSubtree={onGenerateSubtree}
                       onPendingEdit={onPendingEdit}
+                      onRegionClick={onRegionClick}
                   />
               ))}
             </Collapse>

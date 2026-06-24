@@ -11,21 +11,22 @@ import {
     Select,
     MenuItem,
     Typography,
+    TextField,
+    InputAdornment,
 } from '@mui/material';
-import { useState } from 'react';
+import SearchIcon from '@mui/icons-material/Search';
+import { useState, useMemo } from 'react';
 import type { UseMutationResult } from '@tanstack/react-query';
 import type { DepartmentType } from './departmentTypeApi';
 import type { DepartmentTypeChild, ParentalLinkCreate, MutationResponse } from './departmentTypeParentalLinkApi';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
-import cfl from '../../../utils/capitalizeFirstLetter';
+import cfl from '../../../utils/helpers.ts';
 
 interface Props {
     open: boolean;
     parentType: DepartmentType | null;
-    /** All types — children and the parent itself will be excluded */
     allTypes: DepartmentType[];
-    /** Already-linked children for this parent (to exclude from the select) */
     existingChildren: DepartmentTypeChild[];
     createLinkMutation: UseMutationResult<MutationResponse<unknown>, Error, ParentalLinkCreate>;
     onClose: () => void;
@@ -41,16 +42,23 @@ export function DepartmentTypeLinkDialog({
 }: Props) {
     const getString = useString({ str });
     const [selectedChildId, setSelectedChildId] = useState<number | ''>('');
+    const [search, setSearch] = useState('');
 
     const existingChildIds = new Set(existingChildren.map((c) => c.id));
 
-    // Exclude: the parent itself, already-linked children
-    const available = allTypes.filter(
-        (t) => t.id !== parentType?.id && !existingChildIds.has(t.id),
-    );
+    const available = useMemo(() => {
+        const q = search.trim().toLowerCase();
+        return allTypes.filter(
+            (t) =>
+                t.id !== parentType?.id &&
+                !existingChildIds.has(t.id) &&
+                (!q || t.name.toLowerCase().includes(q)),
+        );
+    }, [allTypes, existingChildIds, parentType, search]);
 
     const handleClose = () => {
         setSelectedChildId('');
+        setSearch('');
         onClose();
     };
 
@@ -67,16 +75,36 @@ export function DepartmentTypeLinkDialog({
             <DialogTitle>
                 {cfl(getString('addChildDepartmentType') || 'Add child department type')}
             </DialogTitle>
-            <DialogContent sx={{ pt: 2 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <DialogContent sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Typography variant="body2" color="text.secondary">
                     {getString('parentType') || 'Parent'}:{' '}
                     <strong>{parentType?.name}</strong>
                 </Typography>
 
+                <TextField
+                    size="small"
+                    fullWidth
+                    placeholder={getString('search') || 'Search…'}
+                    value={search}
+                    onChange={(e) => {
+                        setSearch(e.target.value);
+                        setSelectedChildId('');
+                    }}
+                    slotProps={{
+                        input: {
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon fontSize="small" />
+                                </InputAdornment>
+                            ),
+                        },
+                    }}
+                />
+
                 {available.length === 0 ? (
                     <Typography variant="body2" color="text.secondary">
                         {getString('noAvailableChildTypes') ||
-                            'All department types are already linked or there are none to add.'}
+                            'All department types are already linked or no types match the search.'}
                     </Typography>
                 ) : (
                     <FormControl fullWidth size="small">

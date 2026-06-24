@@ -38,3 +38,11 @@ export const MY_OVERSIGHT_MANAGER_QK = ['my_oversight_manager'] as const;
 export const APP_SETTINGS_QK = ['app_settings'] as const;
 export const SETTING_VALUE_TYPES_QK = ['setting_value_types'] as const;
 export const appSettingByKeyQK = (key: string) => ['app_setting_by_key', key] as const;
+
+// ── Ported from talent-test (regions, hrm scopes, links) ──────────────────────
+export const DEPARTMENT_REGION_LINK_QK = ['department_region_links'] as const;
+export const DEPT_TYPE_JOB_LINK_QK = ['department_type_job_links'] as const;
+export const EMPLOYEE_USER_GROUP_QK = ['employee_user_groups'] as const;
+export const HRM_EMPLOYEE_QK = ['hrm_employees'] as const;
+export const HRM_SCOPE_QK = ['hrm_scopes'] as const;
+export const REGION_QK = ['regions'] as const;

@@ -17,7 +17,8 @@ import {
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -27,8 +28,7 @@ import {
   type TalentAuditInterviewCreate,
 } from './talentAuditApi';
 import { axiosInstance } from '../../../api/axiosInstance';
-import { BASE_URL } from '../../../utils/eNums';
-import { format } from 'date-fns';
+import { BASE_URL, DATE_FORMAT } from '../../../utils/eNums';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 
@@ -52,7 +52,7 @@ interface JobRow {
 }
 
 interface FormValues {
-  interview_date: Date | null;
+  interview_date: string;
   jobs: JobRow[];
 }
 
@@ -92,7 +92,7 @@ export function TalentAuditInterviewDialog({
     queryKey: ['talent_status_period_links', 'active-pairs-with-months'],
     queryFn: async () => {
       const res = await axiosInstance.get(
-        `${BASE_URL}/talent_status_period_links/active_pairs?is_active=true`,
+        `${BASE_URL}/talent_status_period_links/active-pairs?is_active=true`,
       );
       return (res.data ?? []).map((p: { id: number; label: string; talent_period?: { qty_months?: number }; talent_status?: { key?: string } }) => ({
         id: p.id,
@@ -117,7 +117,7 @@ export function TalentAuditInterviewDialog({
     watch,
     formState: { errors },
   } = useForm<FormValues>({
-    defaultValues: { interview_date: null, jobs: [] },
+    defaultValues: { interview_date: '', jobs: [] },
   });
 
   const { fields } = useFieldArray({ control, name: 'jobs' });
@@ -128,7 +128,7 @@ export function TalentAuditInterviewDialog({
   useEffect(() => {
     if (open && freeJobsCount > 0) {
       reset({
-        interview_date: null,
+        interview_date: '',
         jobs: freeJobs.map((fj) => ({
           talent_audit_job_id: fj.id,
           job_name: fj.job_name,
@@ -146,7 +146,7 @@ export function TalentAuditInterviewDialog({
 
   useEffect(() => {
     if (!open) {
-      reset({ interview_date: null, jobs: [] });
+      reset({ interview_date: '', jobs: [] });
       setShowConfirmation(false);
       setPendingValues(null);
     }
@@ -236,7 +236,7 @@ export function TalentAuditInterviewDialog({
     mutation.mutate({
       talent_audit_id: talentAuditId,
       status_id: DEFAULT_STATUS_ID,
-      interview_date: format(values.interview_date!, 'yyyy-MM-dd'),
+      interview_date: values.interview_date,
       job_assessments: values.jobs.map((j) => ({
         talent_audit_job_id: j.talent_audit_job_id,
         talent_status_period_link_id: j.talent_status_period_link_id as number,
@@ -275,7 +275,7 @@ export function TalentAuditInterviewDialog({
       <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
         <DialogTitle>{getString('addInterview') || 'Add Interview'}</DialogTitle>
         <DialogContent>
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
             <Stack spacing={2} sx={{ mt: 1 }}>
               {mutation.isError && (
                 <Alert severity="error">
@@ -306,8 +306,12 @@ export function TalentAuditInterviewDialog({
                     render={({ field }) => (
                       <DatePicker
                         label={getString('interviewDate') || 'Interview Date'}
-                        value={field.value}
-                        onChange={field.onChange}
+                        format={DATE_FORMAT}
+                        value={field.value ? dayjs(field.value) : null}
+                        onChange={(v) => {
+                          const d = v ? dayjs(v) : null;
+                          field.onChange(d && d.isValid() ? d.format('YYYY-MM-DD') : '');
+                        }}
                         slotProps={{
                           textField: {
                             fullWidth: true,

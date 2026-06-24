@@ -21,7 +21,7 @@ import type {
 } from './employeeEventStatusApi';
 import useString from '../../../../hooks/useString';
 import str from '../../../../strings/str';
-import cfl from '../../../../utils/capitalizeFirstLetter';
+import cfl from '../../../../utils/helpers.ts';
 
 const schema = z.object({
   name: z.string().min(1, 'nameRequired').max(32, 'nameTooLong'),

@@ -1,19 +1,24 @@
 // src/components/admin/department_types/DepartmentTypeCrud.tsx
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
     Alert,
+    Autocomplete,
     Box,
     Button,
     CircularProgress,
+    InputAdornment,
     Paper,
     Snackbar,
+    TextField,
     Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search';
 import { DataGrid } from '@mui/x-data-grid';
 import { fetchDepartmentTypes, type DepartmentType } from './departmentTypeApi';
-import { DEPARTMENT_TYPE_QK, useDepartmentTypeMutations } from './useDepartmentTypeMutations';
+import { useDepartmentTypeMutations } from './useDepartmentTypeMutations';
+import { DEPARTMENT_TYPE_QK } from '../../../utils/queryKeys.ts';
 import { useDepartmentTypeColumns, type EditingState } from './useDepartmentTypeColumns';
 import { DepartmentTypeForm } from './DepartmentTypeForm';
 import { DepartmentTypeEditDialog, type PendingEdit } from './DepartmentTypeEditDialog';
@@ -21,7 +26,8 @@ import { DepartmentTypeDeleteDialog } from './DepartmentTypeDeleteDialog';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
-import cfl from '../../../utils/capitalizeFirstLetter';
+import cfl from "../../../utils/helpers.ts";
+
 
 export function DepartmentTypeCrud() {
     const getString = useString({ str });
@@ -38,11 +44,35 @@ export function DepartmentTypeCrud() {
     const [rowToDelete, setRowToDelete] = useState<DepartmentType | null>(null);
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
 
+    // ── Filters (name + parent department type) ─────────────────────────────
+    const [filter, setFilter] = useState('');
+    const [parentFilter, setParentFilter] = useState<string | null>(null);
+
     const { data: rows = [], isLoading, error } = useQuery({
         queryKey: DEPARTMENT_TYPE_QK,
-        queryFn: fetchDepartmentTypes,
+        queryFn: () => fetchDepartmentTypes(),
         staleTime: 2 * 60 * 1000,
     });
+
+    // ── Parent-name options (only parents that actually appear) ─────────────
+    const parentOptions = useMemo(
+        () =>
+            Array.from(new Set(rows.flatMap((r) => r.parent_names ?? []))).sort((a, b) =>
+                a.localeCompare(b),
+            ),
+        [rows],
+    );
+
+    // ── Filter by name AND parent type (both apply together) ────────────────
+    const filteredRows = useMemo(() => {
+        const q = filter.trim().toLowerCase();
+        return rows.filter((r) => {
+            const nameOk = !q || r.name.toLowerCase().includes(q);
+            const parentOk =
+                !parentFilter || (r.parent_names ?? []).some((p) => p === parentFilter);
+            return nameOk && parentOk;
+        });
+    }, [rows, filter, parentFilter]);
 
     const { createMutation, updateMutation, deleteMutation } = useDepartmentTypeMutations({
         setSnackbar,
@@ -163,21 +193,52 @@ export function DepartmentTypeCrud() {
             )}
 
             {!isLoading && !error && (
-                <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
-                    <DataGrid
-                        rows={rows}
-                        columns={columns}
-                        paginationModel={paginationModel}
-                        onPaginationModelChange={setPaginationModel}
-                        pageSizeOptions={[5, 10, 25, 50]}
-                        disableRowSelectionOnClick
-                        getRowId={(row) => row.id}
-                        getRowHeight={() => 'auto'}
-                        localeText={localeText}
-                        hideFooterSelectedRowCount
-                        sx={{ '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
-                    />
-                </Paper>
+                <>
+                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 2 }}>
+                        <TextField
+                            value={filter}
+                            onChange={(e) => setFilter(e.target.value)}
+                            placeholder={getString('filterByDepartmentTypeName') || 'Filter by department type name…'}
+                            size="small"
+                            fullWidth
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <SearchIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+                                    </InputAdornment>
+                                ),
+                            }}
+                        />
+                        <Autocomplete
+                            value={parentFilter}
+                            onChange={(_, newValue) => setParentFilter(newValue)}
+                            options={parentOptions}
+                            size="small"
+                            fullWidth
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    placeholder={getString('filterByParentDepartmentType') || 'Filter by parent type…'}
+                                />
+                            )}
+                        />
+                    </Box>
+                    <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+                        <DataGrid
+                            rows={filteredRows}
+                            columns={columns}
+                            paginationModel={paginationModel}
+                            onPaginationModelChange={setPaginationModel}
+                            pageSizeOptions={[5, 10, 25, 50]}
+                            disableRowSelectionOnClick
+                            getRowId={(row) => row.id}
+                            getRowHeight={() => 'auto'}
+                            localeText={localeText}
+                            hideFooterSelectedRowCount
+                            sx={{ '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
+                        />
+                    </Paper>
+                </>
             )}
 
             <DepartmentTypeForm

@@ -1,17 +1,11 @@
 // src/components/admin/department_types/useDepartmentTypeMutations.ts
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-    createDepartmentType,
-    updateDepartmentType,
-    deleteDepartmentType,
-} from './departmentTypeApi';
-
-type Snackbar = { open: boolean; message: string; severity: 'success' | 'error' };
-
-export const DEPARTMENT_TYPE_QK = ['department_types'] as const;
+import {useMutation, useQueryClient} from '@tanstack/react-query';
+import {createDepartmentType, deleteDepartmentType, updateDepartmentType,} from './departmentTypeApi';
+import {DEPARTMENT_TYPE_QK} from "../../../utils/queryKeys.ts";
+import type {SnackbarType} from "../../../types/types.ts";
 
 interface Props {
-    setSnackbar: (s: Snackbar) => void;
+    setSnackbar: (s: SnackbarType) => void;
     onCreateSuccess?: () => void;
     onUpdateSuccess?: () => void;
     onDeleteSuccess?: () => void;

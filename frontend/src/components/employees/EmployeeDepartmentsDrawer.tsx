@@ -54,7 +54,7 @@ import { updateEmployeeJob, type Employee } from './employeeApi';
 import { EMPLOYEES_QK } from './useEmployeeMutations';
 import useString from '../../hooks/useString';
 import str from '../../strings/str';
-import cfl from '../../utils/capitalizeFirstLetter';
+import cfl from '../../utils/helpers.ts';
 import { formatToUkrDate } from '../../utils/dateFormatter';
 
 export const DEPT_QK = (employeeId: number) =>

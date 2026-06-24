@@ -13,7 +13,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import { DataGrid } from '@mui/x-data-grid';
 import { fetchTalentStatuses, type TalentStatus } from './talentStatusApi';
-import { TALENT_STATUS_QK, useTalentStatusMutations } from './useTalentStatusMutations';
+import { useTalentStatusMutations } from './useTalentStatusMutations';
 import { useTalentStatusColumns, type EditingState } from './useTalentStatusColumns';
 import { TalentStatusForm } from './TalentStatusForm';
 import { TalentStatusEditDialog, type PendingEdit } from './TalentStatusEditDialog';
@@ -21,7 +21,8 @@ import { TalentStatusDeleteDialog } from './TalentStatusDeleteDialog';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
-import cfl from '../../../utils/capitalizeFirstLetter';
+import cfl from '../../../utils/helpers.ts';
+import {TALENT_STATUS_QK} from "../../../utils/queryKeys.ts";
 
 export function TalentStatusCrud() {
   const getString = useString({ str });

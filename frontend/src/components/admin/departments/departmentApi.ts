@@ -9,6 +9,7 @@ const BASE = `${BASE_URL}/departments`;
 export interface DepartmentCategory {
     id: number;
     name: string;
+    key: string | null;
 }
 
 export interface DepartmentType {
@@ -53,6 +54,13 @@ export interface DepartmentUpdate {
 export interface MutationResponse<T> {
     detail: string;
     data: T;
+}
+
+export interface DepartmentSubtreeGenerateResult {
+    detail: string;
+    root_id: number;
+    created_count: number;
+    created: DepartmentFlat[];
 }
 
 // ── API functions ─────────────────────────────────────────────────────────────
@@ -101,6 +109,20 @@ export const updateDepartment = async ({
 
 export const deleteDepartment = async (id: number): Promise<MutationResponse<null>> => {
     const res = await axiosInstance.delete<MutationResponse<null>>(`${BASE}/${id}`);
+    return res.data;
+};
+
+/**
+ * Recursively create missing department instances below `id`, following the
+ * department-type parental graph (active links only). Idempotent — existing
+ * children of a given type are reused. Runs server-side in one transaction.
+ */
+export const generateDepartmentSubtree = async (
+    id: number,
+): Promise<DepartmentSubtreeGenerateResult> => {
+    const res = await axiosInstance.post<DepartmentSubtreeGenerateResult>(
+        `${BASE}/${id}/generate_subtree`,
+    );
     return res.data;
 };
 

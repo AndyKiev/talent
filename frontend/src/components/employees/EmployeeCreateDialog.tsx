@@ -1,5 +1,5 @@
 // src/components/employees/EmployeeCreateDialog.tsx
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod/v4';
@@ -10,73 +10,77 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
-    Button,
     TextField,
+    Button,
+    Box,
+    Alert,
+    CircularProgress,
     FormControl,
     InputLabel,
     Select,
     MenuItem,
     FormHelperText,
-    FormControlLabel,
-    Switch,
-    Box,
-    Alert,
-    CircularProgress,
     Typography,
     Divider,
+    FormControlLabel,
+    Switch,
+    Chip,
 } from '@mui/material';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import { fetchDepartmentCategories } from '../admin/department_categories/departmentCategoryApi';
-import { axiosInstance } from '../../api/axiosInstance';
-import { BASE_URL } from '../../utils/eNums';
-import { fetchJobsByDepartmentType } from './jobsByDepartmentTypeApi';
-import type { Employee, EmployeeCreate } from './employeeApi';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
+import type { Employee } from './employeeApi';
+import {
+    fetchMainDepartmentCategories,
+    fetchDepartmentsByCategory,
+    fetchJobsByDepartmentType,
+    type DepartmentCategoryOption,
+    type DepartmentOption,
+    type JobByDeptType,
+} from './employee_events/employeeEventApi';
+import { DepartmentTreePicker } from './DepartmentTreePicker';
+import type { DepartmentNode } from '../admin/departments/departmentApi';
+import { DATE_FORMAT } from '../../utils/eNums';
 import useString from '../../hooks/useString';
 import str from '../../strings/str';
-import cfl from '../../utils/capitalizeFirstLetter';
+import cfl from '../../utils/helpers.ts';
 
-// ── Fetch departments by category ─────────────────────────────────────────────
-
-interface DepartmentOption {
-    id: number;
-    name: string;
-    department_type_id: number;
-}
-
-const fetchDepartmentsByCategory = async (categoryId: number): Promise<DepartmentOption[]> => {
-    const res = await axiosInstance.get<DepartmentOption[]>(`${BASE_URL}/departments`, {
-        params: { department_category_id: categoryId },
-    });
-    return res.data ?? [];
-};
-
-// ── Zod schema ────────────────────────────────────────────────────────────────
+// ── Form schema ────────────────────────────────────────────────────────────────
 
 const schema = z.object({
     code: z.string().min(1, 'codeRequired').max(10, 'codeTooLong'),
     name: z.string().min(1, 'nameRequired').max(100, 'nameTooLong'),
     email: z.string().max(100).email('invalidEmail').optional().or(z.literal('')),
     is_active: z.boolean(),
-    department_category_id: z.number({ error: 'categoryRequired' }),
-    department_id: z.number({ error: 'departmentRequired' }),
-    job_id: z.number({ error: 'jobRequired' }),
+    effective_date: z.string().min(1, 'fieldRequired'),
+    department_category_id: z.number({ message: 'fieldRequired' }),
+    department_id: z.number({ message: 'fieldRequired' }),
+    job_id: z.number({ message: 'fieldRequired' }),
+    description: z.string().max(512).optional().or(z.literal('')),
 });
 
 type FormData = z.infer<typeof schema>;
 
-// ── Props ─────────────────────────────────────────────────────────────────────
+// ── Payload for the backend endpoint ──────────────────────────────────────────
+
+export interface EmployeeWithActivationPayload {
+    code: string;
+    name: string;
+    email?: string | null;
+    is_active: boolean;
+    lang_id: number;
+    effective_date: string;
+    department_id: number;
+    job_id: number;
+    description?: string | null;
+}
 
 interface Props {
     open: boolean;
     onClose: () => void;
-    createMutation: UseMutationResult<
-        Employee,
-        Error,
-        { employeeData: EmployeeCreate; departmentId: number }
-    >;
+    createMutation: UseMutationResult<Employee, Error, EmployeeWithActivationPayload>;
 }
-
-// ── Component ─────────────────────────────────────────────────────────────────
 
 export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
     const getString = useString({ str });
@@ -84,9 +88,9 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
     const {
         register,
         handleSubmit,
-        control,
         formState: { errors },
         reset,
+        control,
         watch,
         setValue,
     } = useForm<FormData>({
@@ -96,325 +100,339 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
             name: '',
             email: '',
             is_active: true,
+            effective_date: dayjs().format('YYYY-MM-DD'),
             department_category_id: undefined,
             department_id: undefined,
             job_id: undefined,
+            description: '',
         },
     });
 
-    const categoryId = watch('department_category_id');
-    const departmentId = watch('department_id');
+    const selectedCategoryId = watch('department_category_id');
+    const selectedDeptId = watch('department_id');
 
-    // ── Queries ───────────────────────────────────────────────────────────────
+    // ── Local cascade state (the picked node's id lives on the form as
+    //    department_id; here we keep what we need to drive the tree + job list)
+    const [topDeptId, setTopDeptId] = useState<number | null>(null);
+    const [pickedTypeId, setPickedTypeId] = useState<number | null>(null);
+    const [pickedName, setPickedName] = useState<string>('');
 
-    const { data: categories = [] } = useQuery({
-        queryKey: ['department_categories', { is_main: true }],
-        queryFn: () => fetchDepartmentCategories({ is_main: true }),
+    // ── Fetch main categories ─────────────────────────────────────────────────
+    const { data: categories = [] } = useQuery<DepartmentCategoryOption[]>({
+        queryKey: ['main-department-categories'],
+        queryFn: fetchMainDepartmentCategories,
+        enabled: open,
+        staleTime: 10 * 60 * 1000,
+    });
+
+    // ── Fetch TOP department instances by category ────────────────────────────
+    const { data: topDepartments = [] } = useQuery<DepartmentOption[]>({
+        queryKey: ['departments-by-category', selectedCategoryId],
+        queryFn: () => fetchDepartmentsByCategory(selectedCategoryId!),
+        enabled: open && selectedCategoryId != null,
         staleTime: 5 * 60 * 1000,
     });
 
-    const { data: departments = [], isLoading: deptsLoading } = useQuery({
-        queryKey: ['departments_by_category', categoryId],
-        queryFn: () => fetchDepartmentsByCategory(categoryId!),
-        enabled: categoryId != null,
-        staleTime: 2 * 60 * 1000,
+    // ── Jobs for the PICKED node's department type ────────────────────────────
+    const { data: jobsByType = [] } = useQuery<JobByDeptType[]>({
+        queryKey: ['jobs-by-dept-type', pickedTypeId],
+        queryFn: () => fetchJobsByDepartmentType(pickedTypeId!),
+        enabled: open && pickedTypeId != null,
+        staleTime: 5 * 60 * 1000,
     });
 
-    // Resolve selected department to get its department_type_id
-    const selectedDept = departments.find((d) => d.id === departmentId);
-    const deptTypeId = selectedDept?.department_type_id ?? null;
-
-    const { data: jobs = [], isLoading: jobsLoading } = useQuery({
-        queryKey: ['jobs_by_dept_type', deptTypeId],
-        queryFn: () => fetchJobsByDepartmentType(deptTypeId!),
-        enabled: deptTypeId != null,
-        staleTime: 2 * 60 * 1000,
-    });
-
-    // ── Cascade resets ────────────────────────────────────────────────────────
-
+    // ── Reset all state when the dialog closes ────────────────────────────────
     useEffect(() => {
+        if (!open) {
+            reset();
+            setTopDeptId(null);
+            setPickedTypeId(null);
+            setPickedName('');
+        }
+    }, [open, reset]);
+
+    // ── Cascade helpers ───────────────────────────────────────────────────────
+    const resetCascadeBelowCategory = () => {
+        setTopDeptId(null);
+        setPickedTypeId(null);
+        setPickedName('');
         setValue('department_id', undefined as unknown as number);
         setValue('job_id', undefined as unknown as number);
-    }, [categoryId, setValue]);
+    };
 
-    useEffect(() => {
+    // Selecting a top instance: seed the picked department from the option
+    // (it already carries department_type_id), then load its subtree below.
+    const handleTopDeptChange = (id: number) => {
+        const opt = topDepartments.find((d) => d.id === id);
+        setTopDeptId(id);
+        if (opt) {
+            setPickedTypeId(opt.department_type_id);
+            setPickedName(opt.name);
+            setValue('department_id', opt.id, { shouldValidate: true });
+        }
         setValue('job_id', undefined as unknown as number);
-    }, [departmentId, setValue]);
+    };
 
-    // ── Handlers ──────────────────────────────────────────────────────────────
+    // Clicking any node in the tree overrides the picked department.
+    const handleTreeSelect = (node: DepartmentNode) => {
+        setPickedTypeId(node.department_type_id);
+        setPickedName(node.name);
+        setValue('department_id', node.id, { shouldValidate: true });
+        setValue('job_id', undefined as unknown as number);
+    };
 
     const handleClose = () => {
         reset();
+        setTopDeptId(null);
+        setPickedTypeId(null);
+        setPickedName('');
         onClose();
     };
 
     const onSubmit = (data: FormData) => {
         createMutation.mutate({
-            employeeData: {
-                code: data.code.trim().toUpperCase(),
-                name: data.name.trim(),
-                email: data.email?.trim() || null,
-                is_active: data.is_active,
-                job_id: data.job_id,
-                lang_id: 3,
-            },
-            departmentId: data.department_id,
+            code: data.code.trim().toUpperCase(),
+            name: data.name.trim(),
+            email: data.email?.trim() || null,
+            is_active: data.is_active,
+            lang_id: 3, // default; user can change later
+            effective_date: data.effective_date,
+            department_id: data.department_id, // exact picked node → is_main on backend
+            job_id: data.job_id,
+            description: data.description?.trim() || null,
         });
     };
 
-    // ── Render ────────────────────────────────────────────────────────────────
+    const noJobsForType = pickedTypeId != null && jobsByType.length === 0;
 
     return (
-        <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-            <DialogTitle>{cfl(getString('createEmployee') || 'Create Employee')}</DialogTitle>
+        <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+            <DialogTitle>{cfl(getString('addEmployee') || 'Add Employee')}</DialogTitle>
             <DialogContent>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, mt: 1 }}>
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
                     {createMutation.isError && (
-                        <Alert severity="error">{createMutation.error?.message}</Alert>
+                        <Alert severity="error" sx={{ mt: 1, mb: 1 }}>
+                            {createMutation.error?.message}
+                        </Alert>
                     )}
 
-                    {/* ── Personal info ───────────────────────────────────────── */}
-                    <Typography variant="overline" color="text.secondary" sx={{ mb: -1 }}>
-                        {getString('personalInfo') || 'Personal info'}
-                    </Typography>
+                    {/* Two columns: personal data + description (left), department (right) */}
+                    <Box
+                        sx={{
+                            display: 'grid',
+                            gridTemplateColumns: { xs: '1fr', md: '0.8fr 1.4fr' },
+                            gap: 3,
+                            mt: 1,
+                            alignItems: 'start',
+                        }}
+                    >
+                        {/* ── LEFT: personal data + activation date + description ── */}
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            <Typography variant="subtitle2" color="text.secondary">
+                                {cfl(getString('personalData') || 'Personal data')}
+                            </Typography>
 
-                    <Box sx={{ display: 'flex', gap: 2 }}>
-                        <TextField
-                            label={cfl(getString('code') || 'Code')}
-                            required
-                            fullWidth
-                            slotProps={{
-                                htmlInput: { maxLength: 10, style: { textTransform: 'uppercase' } },
-                            }}
-                            error={!!errors.code}
-                            helperText={
-                                errors.code?.message &&
-                                (getString(errors.code.message) || errors.code.message)
-                            }
-                            {...register('code')}
-                        />
-                        <TextField
-                            label={cfl(getString('name') || 'Name')}
-                            required
-                            fullWidth
-                            slotProps={{ htmlInput: { maxLength: 100 } }}
-                            error={!!errors.name}
-                            helperText={
-                                errors.name?.message &&
-                                (getString(errors.name.message) || errors.name.message)
-                            }
-                            {...register('name')}
-                        />
-                    </Box>
+                            <TextField
+                                label={cfl(getString('code') || 'Code')}
+                                required fullWidth
+                                slotProps={{ htmlInput: { maxLength: 10 } }}
+                                error={!!errors.code}
+                                helperText={errors.code?.message && (getString(errors.code.message) || errors.code.message)}
+                                {...register('code')}
+                            />
+                            <TextField
+                                label={cfl(getString('employeeName') || 'Employee Name')}
+                                required fullWidth
+                                slotProps={{ htmlInput: { maxLength: 100 } }}
+                                error={!!errors.name}
+                                helperText={errors.name?.message && (getString(errors.name.message) || errors.name.message)}
+                                {...register('name')}
+                            />
+                            <TextField
+                                label={cfl(getString('email') || 'Email')}
+                                fullWidth type="email"
+                                slotProps={{ htmlInput: { maxLength: 100 } }}
+                                error={!!errors.email}
+                                helperText={errors.email?.message && (getString(errors.email.message) || errors.email.message)}
+                                {...register('email')}
+                            />
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={watch('is_active')}
+                                        onChange={(_, v) => setValue('is_active', v)}
+                                    />
+                                }
+                                label={cfl(getString('isActive') || 'Active')}
+                            />
 
-                    <TextField
-                        label={cfl(getString('email') || 'Email')}
-                        fullWidth
-                        type="email"
-                        slotProps={{ htmlInput: { maxLength: 100 } }}
-                        error={!!errors.email}
-                        helperText={
-                            errors.email?.message &&
-                            (getString(errors.email.message) || errors.email.message)
-                        }
-                        {...register('email')}
-                    />
+                            <Divider />
 
-                    <FormControlLabel
-                        control={
                             <Controller
-                                name="is_active"
+                                name="effective_date"
                                 control={control}
                                 render={({ field }) => (
-                                    <Switch
-                                        checked={field.value}
-                                        onChange={(_, checked) => field.onChange(checked)}
+                                    <DatePicker
+                                        label={cfl(getString('effectiveDate') || 'Effective date')}
+                                        format={DATE_FORMAT}
+                                        value={field.value ? dayjs(field.value) : null}
+                                        onChange={(v) => {
+                                            const d = v ? dayjs(v) : null;
+                                            field.onChange(d && d.isValid() ? d.format('YYYY-MM-DD') : '');
+                                        }}
+                                        slotProps={{
+                                            textField: {
+                                                fullWidth: true,
+                                                required: true,
+                                                error: !!errors.effective_date,
+                                                helperText:
+                                                    errors.effective_date?.message &&
+                                                    (getString(errors.effective_date.message) ||
+                                                        errors.effective_date.message),
+                                            },
+                                        }}
                                     />
                                 )}
                             />
-                        }
-                        label={cfl(getString('isActive') || 'Active')}
-                    />
 
-                    <Divider />
+                            <TextField
+                                label={cfl(getString('description') || 'Description')}
+                                fullWidth multiline minRows={3}
+                                slotProps={{ htmlInput: { maxLength: 512 } }}
+                                {...register('description')}
+                            />
+                        </Box>
 
-                    {/* ── Department & job ────────────────────────────────────── */}
-                    <Typography variant="overline" color="text.secondary" sx={{ mb: -1 }}>
-                        {getString('departmentAndJob') || 'Department & Job'}
-                    </Typography>
+                        {/* ── RIGHT: category → top instance → tree → job ── */}
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            <Typography variant="subtitle2" color="text.secondary">
+                                {cfl(getString('mainDepartment') || 'Main department')}
+                            </Typography>
 
-                    {/* Step 1 — Category */}
-                    <Controller
-                        name="department_category_id"
-                        control={control}
-                        render={({ field }) => (
-                            <FormControl fullWidth error={!!errors.department_category_id}>
-                                <InputLabel required>
-                                    {cfl(getString('departmentCategory') || 'Department Category')}
-                                </InputLabel>
+                            {/* Category */}
+                            <Controller
+                                name="department_category_id"
+                                control={control}
+                                render={({ field }) => (
+                                    <FormControl fullWidth error={!!errors.department_category_id}>
+                                        <InputLabel>{cfl(getString('departmentCategory') || 'Department category')}</InputLabel>
+                                        <Select
+                                            {...field}
+                                            value={field.value ?? ''}
+                                            label={cfl(getString('departmentCategory') || 'Department category')}
+                                            onChange={(e) => {
+                                                field.onChange(e.target.value as number);
+                                                resetCascadeBelowCategory();
+                                            }}
+                                        >
+                                            {categories.map((c) => (
+                                                <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+                                            ))}
+                                        </Select>
+                                        {errors.department_category_id?.message && (
+                                            <FormHelperText>
+                                                {getString(errors.department_category_id.message) || errors.department_category_id.message}
+                                            </FormHelperText>
+                                        )}
+                                    </FormControl>
+                                )}
+                            />
+
+                            {/* Top department instance (directorate / store / board) */}
+                            <FormControl fullWidth disabled={!selectedCategoryId}>
+                                <InputLabel>{cfl(getString('topDepartment') || 'Top department')}</InputLabel>
                                 <Select
-                                    {...field}
-                                    value={field.value ?? ''}
-                                    label={cfl(
-                                        getString('departmentCategory') || 'Department Category',
-                                    )}
-                                    onChange={(e) => field.onChange(Number(e.target.value))}
+                                    value={topDeptId ?? ''}
+                                    label={cfl(getString('topDepartment') || 'Top department')}
+                                    onChange={(e) => handleTopDeptChange(Number(e.target.value))}
                                 >
-                                    {categories.map((c) => (
-                                        <MenuItem key={c.id} value={c.id}>
-                                            {c.name}
-                                        </MenuItem>
+                                    {topDepartments.map((d) => (
+                                        <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>
                                     ))}
                                 </Select>
-                                {errors.department_category_id && (
+                                {selectedCategoryId && topDepartments.length === 0 && (
                                     <FormHelperText>
-                                        {getString(
-                                            errors.department_category_id.message ?? '',
-                                        ) || errors.department_category_id.message}
+                                        {getString('noDepartmentsInCategory') || 'No departments in this category'}
                                     </FormHelperText>
                                 )}
                             </FormControl>
-                        )}
-                    />
 
-                    {/* Step 2 — Department (enabled after category) */}
-                    <Controller
-                        name="department_id"
-                        control={control}
-                        render={({ field }) => (
-                            <FormControl
-                                fullWidth
-                                error={!!errors.department_id}
-                                disabled={!categoryId || deptsLoading}
-                            >
-                                <InputLabel required>
-                                    {cfl(getString('department') || 'Department')}
-                                </InputLabel>
-                                <Select
-                                    {...field}
-                                    value={field.value ?? ''}
-                                    label={cfl(getString('department') || 'Department')}
-                                    onChange={(e) => field.onChange(Number(e.target.value))}
-                                    startAdornment={
-                                        deptsLoading ? (
-                                            <CircularProgress size={16} sx={{ mr: 1 }} />
-                                        ) : undefined
-                                    }
-                                >
-                                    {!categoryId && (
-                                        <MenuItem disabled value="">
-                                            <em>
-                                                {getString('firstSelectCategory') ||
-                                                    'First select a category'}
-                                            </em>
-                                        </MenuItem>
+                            {/* Tree drill-down: pick the EXACT department instance */}
+                            {topDeptId != null && (
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                                        {getString('selectExactDepartmentHint') ||
+                                            'Select the exact department in the tree (or keep the top one)'}
+                                    </Typography>
+                                    <DepartmentTreePicker
+                                        rootId={topDeptId}
+                                        selectedId={selectedDeptId ?? null}
+                                        onSelect={handleTreeSelect}
+                                        maxHeight={360}
+                                    />
+                                    {pickedName && (
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {getString('mainDepartmentSelected', { name: pickedName }) ||
+                                                    `Main department: ${pickedName}`}
+                                            </Typography>
+                                            {selectedDeptId != null && (
+                                                <Chip size="small" label={`#${selectedDeptId}`} sx={{ height: 20, fontSize: '0.7rem' }} />
+                                            )}
+                                        </Box>
                                     )}
-                                    {departments.map((d) => (
-                                        <MenuItem key={d.id} value={d.id}>
-                                            {d.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                                {errors.department_id && (
-                                    <FormHelperText>
-                                        {getString(errors.department_id.message ?? '') ||
-                                            errors.department_id.message}
-                                    </FormHelperText>
-                                )}
-                                {categoryId && !deptsLoading && departments.length === 0 && (
-                                    <FormHelperText>
-                                        {getString('noDepartmentsInCategory') ||
-                                            'No departments in this category'}
-                                    </FormHelperText>
-                                )}
-                            </FormControl>
-                        )}
-                    />
+                                </Box>
+                            )}
+                            {errors.department_id?.message && (
+                                <Typography variant="caption" color="error" sx={{ ml: 1.5 }}>
+                                    {getString(errors.department_id.message) || errors.department_id.message}
+                                </Typography>
+                            )}
 
-                    {/* Step 3 — Job (enabled after department) */}
-                    <Controller
-                        name="job_id"
-                        control={control}
-                        render={({ field }) => (
-                            <FormControl
-                                fullWidth
-                                error={!!errors.job_id}
-                                disabled={!departmentId || jobsLoading}
-                            >
-                                <InputLabel required>
-                                    {cfl(getString('job') || 'Job')}
-                                </InputLabel>
-                                <Select
-                                    {...field}
-                                    value={field.value ?? ''}
-                                    label={cfl(getString('job') || 'Job')}
-                                    onChange={(e) => field.onChange(Number(e.target.value))}
-                                    startAdornment={
-                                        jobsLoading ? (
-                                            <CircularProgress size={16} sx={{ mr: 1 }} />
-                                        ) : undefined
-                                    }
-                                >
-                                    {!departmentId && (
-                                        <MenuItem disabled value="">
-                                            <em>
-                                                {getString('firstSelectDepartment') ||
-                                                    'First select a department'}
-                                            </em>
-                                        </MenuItem>
-                                    )}
-                                    {jobs.map((j) => (
-                                        <MenuItem key={j.id} value={j.id}>
-                                            {j.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                                {errors.job_id && (
-                                    <FormHelperText>
-                                        {getString(errors.job_id.message ?? '') ||
-                                            errors.job_id.message}
-                                    </FormHelperText>
+                            {/* Job (from picked node's department type) */}
+                            <Controller
+                                name="job_id"
+                                control={control}
+                                render={({ field }) => (
+                                    <FormControl fullWidth error={!!errors.job_id} disabled={pickedTypeId == null}>
+                                        <InputLabel>{cfl(getString('job') || 'Job')}</InputLabel>
+                                        <Select
+                                            {...field}
+                                            value={field.value ?? ''}
+                                            label={cfl(getString('job') || 'Job')}
+                                            onChange={(e) => field.onChange(e.target.value as number)}
+                                        >
+                                            {jobsByType.map((j) => (
+                                                <MenuItem key={j.id} value={j.id}>{j.name}</MenuItem>
+                                            ))}
+                                        </Select>
+                                        {noJobsForType && (
+                                            <FormHelperText error>
+                                                {getString('noJobsForDepartmentType') ||
+                                                    'No jobs linked to this department type. Configure links first.'}
+                                            </FormHelperText>
+                                        )}
+                                        {errors.job_id?.message && !noJobsForType && (
+                                            <FormHelperText>
+                                                {getString(errors.job_id.message) || errors.job_id.message}
+                                            </FormHelperText>
+                                        )}
+                                    </FormControl>
                                 )}
-                                {departmentId && !jobsLoading && jobs.length === 0 && (
-                                    <FormHelperText error>
-                                        {getString('noJobsForDepartmentType') ||
-                                            'No jobs linked to this department type. Configure links first.'}
-                                    </FormHelperText>
-                                )}
-                            </FormControl>
-                        )}
-                    />
-
-                    {/* Warning: department type has no jobs linked */}
-                    {departmentId && !jobsLoading && jobs.length === 0 && (
-                        <Alert severity="warning" icon={<WarningAmberIcon />}>
-                            {getString('noJobsWarning') ||
-                                'The selected department has no jobs linked to its type. Please configure Department Type → Job links first.'}
-                        </Alert>
-                    )}
-                </Box>
+                            />
+                        </Box>
+                    </Box>
+                </LocalizationProvider>
             </DialogContent>
             <DialogActions>
-                <Button
-                    variant="outlined"
-                    onClick={handleClose}
-                    disabled={createMutation.isPending}
-                >
+                <Button variant="outlined" onClick={handleClose} disabled={createMutation.isPending}>
                     {getString('cancel') || 'Cancel'}
                 </Button>
                 <Button
                     variant="contained"
                     onClick={handleSubmit(onSubmit)}
-                    disabled={
-                        createMutation.isPending ||
-                        (!!departmentId && !jobsLoading && jobs.length === 0)
-                    }
-                    startIcon={
-                        createMutation.isPending ? (
-                            <CircularProgress size={16} color="inherit" />
-                        ) : undefined
-                    }
+                    disabled={createMutation.isPending}
+                    startIcon={createMutation.isPending ? <CircularProgress size={16} color="inherit" /> : undefined}
                 >
                     {getString('create') || 'Create'}
                 </Button>

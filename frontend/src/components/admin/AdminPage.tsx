@@ -4,12 +4,11 @@ import AppShell from '../layout/AppShell';
 import { Box, Typography, Stack } from '@mui/material';
 import { AdminPanelSettingsRounded } from '@mui/icons-material';
 import { ESSENCES as RAW_ESSENCES } from './admin.essences.config';
-import { TestProcessCard } from '../notifications/TestProcessCard';
 import { EssenceCard } from '../ui/EssenceCard';
 import { GroupEssenceCard } from '../ui/GroupEssenceCard';
 import { TreeEssenceCard } from '../ui/TreeEssenceCard';
 import { useEssences } from '../../hooks/useEssences';
-import cfl from '../../utils/capitalizeFirstLetter';
+import cfl from '../../utils/helpers.ts';
 import useString from '../../hooks/useString';
 import str from '../../strings/str';
 
@@ -62,7 +61,7 @@ export function AdminPage() {
                     {groups.length > 0 && (
                         <Box mb={4}>
                             <Typography variant="subtitle2" color={t.textSecondary} sx={{ mb: 2, ml: 1 }}>
-                                SETTINGS GROUPS
+                                {getString("settingsGroups").toUpperCase()}
                             </Typography>
                             <Box
                                 sx={{
@@ -101,7 +100,6 @@ export function AdminPage() {
                             </Box>
                         </Box>
                     )}
-                    <TestProcessCard />
                 </Box>
             </Box>
         </AppShell>

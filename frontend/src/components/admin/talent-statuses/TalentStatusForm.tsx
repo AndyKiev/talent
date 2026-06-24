@@ -22,7 +22,7 @@ import type { TalentStatusCreate, MutationResponse, TalentStatus } from './talen
 
 import str from "../../../strings/str.ts";
 import useString from "../../../hooks/useString.ts";
-import cfl from "../../../utils/capitalizeFirstLetter.ts";
+import cfl from "../../../utils/helpers.ts";
 
 const schema = z.object({
   key: z.string().min(1, 'keyRequired').max(8, 'keyTooLong'),

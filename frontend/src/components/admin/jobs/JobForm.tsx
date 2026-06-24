@@ -19,10 +19,12 @@ import type { UseMutationResult } from '@tanstack/react-query';
 import type { JobCreate, MutationResponse, Job } from './jobApi';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
-import cfl from '../../../utils/capitalizeFirstLetter';
+import cfl from '../../../utils/helpers.ts';
 
 const schema = z.object({
   name: z.string().min(1, 'nameRequired').max(128, 'nameTooLong'),
+  short_name: z.string().max(64, 'shortNameTooLong').optional().or(z.literal('')),
+  key: z.string().max(64, 'keyTooLong').optional().or(z.literal('')),
   description: z.string().max(256, 'descriptionTooLong').optional().or(z.literal('')),
   is_active: z.boolean(),
 });
@@ -47,7 +49,7 @@ export function JobForm({ open, onClose, createMutation }: Props) {
     setValue,
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', description: '', is_active: true },
+    defaultValues: { name: '', short_name: '', key: '', description: '', is_active: true },
   });
 
   const handleClose = () => {
@@ -58,6 +60,8 @@ export function JobForm({ open, onClose, createMutation }: Props) {
   const onSubmit = (data: FormData) => {
     createMutation.mutate({
       name: data.name,
+      short_name: data.short_name || null,
+      key: data.key || null,
       description: data.description || null,
       is_active: data.is_active,
     });
@@ -82,6 +86,32 @@ export function JobForm({ open, onClose, createMutation }: Props) {
               (getString(errors.name.message) || errors.name.message)
             }
             {...register('name')}
+          />
+
+          <TextField
+            label={cfl(getString('shortName')) || 'Short Name'}
+            fullWidth
+            slotProps={{ htmlInput: { maxLength: 64 } }}
+            error={!!errors.short_name}
+            helperText={
+              errors.short_name?.message
+                ? getString(errors.short_name.message) || errors.short_name.message
+                : getString('shortNameHint') || 'Optional abbreviation (max 64 chars)'
+            }
+            {...register('short_name')}
+          />
+
+          <TextField
+            label={cfl(getString('key')) || 'Key'}
+            fullWidth
+            slotProps={{ htmlInput: { maxLength: 64 } }}
+            error={!!errors.key}
+            helperText={
+              errors.key?.message
+                ? getString(errors.key.message) || errors.key.message
+                : getString('keyHint') || 'Optional identifier key (max 64 chars)'
+            }
+            {...register('key')}
           />
 
           <TextField

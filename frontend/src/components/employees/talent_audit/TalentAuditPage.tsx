@@ -22,6 +22,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -37,6 +38,7 @@ import {
 } from './talentAuditApi';
 import { TalentAuditJobDialog } from './TalentAuditJobDialog';
 import { TalentAuditInterviewDialog } from './TalentAuditInterviewDialog';
+import { TalentAuditJobStatusDialog } from './TalentAuditJobStatusDialog';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import { useDataGridStyles } from '../../../hooks/useDataGridStyles';
@@ -62,6 +64,7 @@ interface FlatRow {
   hrsLabel: string;
   interviewId: number | null;
   statusName: string;
+  statusId: number;
 }
 
 function buildFlatRows(
@@ -84,6 +87,7 @@ function buildFlatRows(
             hrsLabel: ij.hrs_status_period_label ?? `Link #${ij.talent_status_period_link_id}`,
             interviewId: interview.id,
             statusName: aj.status_name ?? `Status #${aj.status_id}`,
+            statusId: aj.status_id,
           });
         }
       }
@@ -98,6 +102,7 @@ function buildFlatRows(
         hrsLabel: '',
         interviewId: null,
         statusName: aj.status_name ?? `Status #${aj.status_id}`,
+        statusId: aj.status_id,
       });
     }
   }
@@ -123,6 +128,11 @@ export function TalentAuditPage() {
   const [addJobOpen, setAddJobOpen] = useState(false);
   const [addInterviewOpen, setAddInterviewOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
+  const [statusTarget, setStatusTarget] = useState<{
+    auditJobId: number;
+    statusId: number;
+    jobName: string;
+  } | null>(null);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -214,11 +224,25 @@ export function TalentAuditPage() {
     {
       field: '_actions',
       headerName: '',
-      width: 80,
+      width: 110,
       sortable: false,
       disableColumnMenu: true,
       renderCell: ({ row }) => (
           <Box sx={{ display: 'flex', gap: 0.25 }}>
+            <Tooltip title={getString('changeJobStatus') || 'Change status'}>
+              <IconButton
+                  size="small"
+                  onClick={() =>
+                      setStatusTarget({
+                        auditJobId: row.auditJobId,
+                        statusId: row.statusId,
+                        jobName: row.jobName,
+                      })
+                  }
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
             {!row.interviewId && (
                 <Tooltip title={getString('deleteJobAssessment') || 'Delete job assessment'}>
                   <IconButton
@@ -330,6 +354,16 @@ export function TalentAuditPage() {
                   interviewsQK={ivQKey}
                   auditJobsQK={jobsQKey}
                   onClose={() => setAddInterviewOpen(false)}
+                  onSuccess={(msg) => showNotification(msg)}
+                  onError={(msg) => showNotification(msg, 'error')}
+              />
+              <TalentAuditJobStatusDialog
+                  open={!!statusTarget}
+                  auditJobId={statusTarget?.auditJobId ?? null}
+                  currentStatusId={statusTarget?.statusId ?? null}
+                  jobName={statusTarget?.jobName}
+                  auditJobsQK={jobsQKey}
+                  onClose={() => setStatusTarget(null)}
                   onSuccess={(msg) => showNotification(msg)}
                   onError={(msg) => showNotification(msg, 'error')}
               />

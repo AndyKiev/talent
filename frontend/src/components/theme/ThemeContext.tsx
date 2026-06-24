@@ -87,22 +87,6 @@ export const ThemeProvider: FC<{ children: ReactNode }> = ({ children }) => {
                             select: { paddingTop: "9px", paddingBottom: "9px" },
                         },
                     },
-                    MuiTooltip: {
-                        styleOverrides: {
-                            tooltip: {
-                                backgroundColor: mode === "dark" ? "#e8edf5" : "#1a2333",
-                                color: mode === "dark" ? "#1a2333" : "#ffffff",
-                                fontSize: 12,
-                                borderRadius: 6,
-                                boxShadow: mode === "dark"
-                                    ? "0 4px 16px rgba(0,0,0,0.5)"
-                                    : "0 4px 12px rgba(0,0,0,0.25)",
-                            },
-                            arrow: {
-                                color: mode === "dark" ? "#e8edf5" : "#1a2333",
-                            },
-                        },
-                    },
                 },
             }),
         [mode, t]

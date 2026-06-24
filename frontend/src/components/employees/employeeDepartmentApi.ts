@@ -1,6 +1,7 @@
 // src/components/employees/employeeDepartmentApi.ts
 import { axiosInstance } from '../../api/axiosInstance';
 import { BASE_URL } from '../../utils/eNums';
+import type { TopOrgUnit } from './employeeApi';
 
 const base = (employeeId: number) => `${BASE_URL}/employees/${employeeId}/departments`;
 
@@ -22,6 +23,8 @@ export interface EmployeeDepartment {
     is_main: boolean;
     created_at: string;
     department: DepartmentFlat | null;
+    // Derived top-level org unit (board / directorate / store) for this dept.
+    top_department: TopOrgUnit | null;
 }
 
 export interface EmployeeDepartmentCreate {

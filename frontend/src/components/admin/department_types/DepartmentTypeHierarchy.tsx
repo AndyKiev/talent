@@ -1,26 +1,32 @@
 // src/components/admin/department_types/DepartmentTypeHierarchy.tsx
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
     Alert,
     Box,
     CircularProgress,
+    InputAdornment,
     Paper,
     Snackbar,
+    TextField,
     Typography,
 } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
 
 import { fetchDepartmentTypes, type DepartmentType } from './departmentTypeApi';
-import { DEPARTMENT_TYPE_QK, useDepartmentTypeMutations } from './useDepartmentTypeMutations';
+import { useDepartmentTypeMutations } from './useDepartmentTypeMutations';
 import { useDepartmentTypeLinkMutations } from './useDepartmentTypeLinkMutations';
 import { DepartmentTypeHierarchyRow } from './DepartmentTypeHierarchyRow';
 import { DepartmentTypeEditDialog, type PendingEdit } from './DepartmentTypeEditDialog';
 import { DepartmentTypeDeleteDialog } from './DepartmentTypeDeleteDialog';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
+import { DEPARTMENT_TYPE_QK } from '../../../utils/queryKeys.ts';
 
 export function DepartmentTypeHierarchy() {
     const getString = useString({ str });
+
+    const [filter, setFilter] = useState('');
 
     const [snackbar, setSnackbar] = useState({
         open: false,
@@ -34,7 +40,7 @@ export function DepartmentTypeHierarchy() {
     // ── All types (flat list, used as the source for link selects) ──────────
     const { data: allTypes = [], isLoading, error } = useQuery({
         queryKey: DEPARTMENT_TYPE_QK,
-        queryFn: fetchDepartmentTypes,
+        queryFn: () => fetchDepartmentTypes(),
         staleTime: 2 * 60 * 1000,
     });
 
@@ -46,10 +52,22 @@ export function DepartmentTypeHierarchy() {
         onDeleteError: () => setTypeToDelete(null),
     });
 
-    // ── Link mutations (create / delete parental links) ─────────────────────
-    const { createLinkMutation, deleteLinkMutation } = useDepartmentTypeLinkMutations({
-        setSnackbar,
-    });
+    // ── Link mutations (create / move / toggle / delete parental links) ─────
+    const {
+        createLinkMutation,
+        updateLinkMutation,
+        toggleLinkActiveMutation,
+        deleteLinkMutation,
+    } = useDepartmentTypeLinkMutations({ setSnackbar });
+
+    // ── Filter the first parental level only (top-level rows) ───────────────
+    // Children are fetched lazily per-row on expand and are intentionally
+    // left unfiltered.
+    const filteredTypes = useMemo(() => {
+        const q = filter.trim().toLowerCase();
+        if (!q) return allTypes;
+        return allTypes.filter((t) => t.name.toLowerCase().includes(q));
+    }, [allTypes, filter]);
 
     // ── Handlers ────────────────────────────────────────────────────────────
 
@@ -103,6 +121,25 @@ export function DepartmentTypeHierarchy() {
 
     return (
         <Box>
+            {/* ── Name filter (first level only) ──────────────────────────── */}
+            <TextField
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                placeholder={
+                    getString('filterByDepartmentTypeName') || 'Filter by department type name…'
+                }
+                size="small"
+                fullWidth
+                sx={{ mb: 2 }}
+                InputProps={{
+                    startAdornment: (
+                        <InputAdornment position="start">
+                            <SearchIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+                        </InputAdornment>
+                    ),
+                }}
+            />
+
             <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                 {allTypes.length === 0 ? (
                     <Box sx={{ p: 4, textAlign: 'center' }}>
@@ -110,9 +147,16 @@ export function DepartmentTypeHierarchy() {
                             {getString('noDepartmentTypes') || 'No department types yet.'}
                         </Typography>
                     </Box>
+                ) : filteredTypes.length === 0 ? (
+                    <Box sx={{ p: 4, textAlign: 'center' }}>
+                        <Typography variant="body2" color="text.secondary">
+                            {getString('noMatchingDepartmentTypes') ||
+                                'No department types match the filter.'}
+                        </Typography>
+                    </Box>
                 ) : (
                     <Box sx={{ py: 1 }}>
-                        {allTypes.map((type) => (
+                        {filteredTypes.map((type) => (
                             <DepartmentTypeHierarchyRow
                                 key={type.id}
                                 type={type}
@@ -122,6 +166,8 @@ export function DepartmentTypeHierarchy() {
                                 deleteIsPending={deleteMutation.isPending}
                                 deleteLinkIsPending={deleteLinkMutation.isPending}
                                 createLinkMutation={createLinkMutation}
+                                updateLinkMutation={updateLinkMutation}
+                                toggleLinkActiveMutation={toggleLinkActiveMutation}
                                 onToggleActive={handleToggleActive}
                                 onDeleteClick={setTypeToDelete}
                                 onRequestEdit={setPendingEdit}

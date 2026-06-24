@@ -4,7 +4,7 @@ import { Box, Breadcrumbs, Typography } from '@mui/material';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { Link } from '@tanstack/react-router';
 import { EmployeeEventDirectionTypeCrud } from './EmployeeEventDirectionTypeCrud.tsx';
-import cfl from '../../../../utils/capitalizeFirstLetter.ts';
+import cfl from '../../../../utils/helpers.ts';
 import useString from '../../../../hooks/useString.ts';
 import str from '../../../../strings/str.ts';
 

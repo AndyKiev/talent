@@ -5,7 +5,7 @@ import { Box, IconButton, Switch, Tooltip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 import type { DepartmentCategory } from './departmentCategoryApi.ts';
-import cfl from '../../../utils/capitalizeFirstLetter.ts';
+import cfl from '../../../utils/helpers.ts';
 import type { GetStringFn } from '../../../types/getStringFn.ts';
 import { TextEditCell } from '../TextEditCell.tsx';
 import { ReadonlyCell } from '../ReadonlyCell.tsx';
@@ -69,7 +69,7 @@ export function useDepartmentCategoryColumns({
                     <ReadonlyCell
                         value={String(row[field] ?? '')}
                         onEdit={(e) => onEditFieldClick(row, field as string, e)}
-                        editTitle={getString(`edit_${field}`) || `Edit ${field}`}
+                        editTitle={getString(`edit${cfl(field)}`) || `Edit ${field}`}
                         placeholder="—"
                     />
                 );

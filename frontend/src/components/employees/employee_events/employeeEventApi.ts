@@ -178,6 +178,20 @@ export const applyEmployeeEvent = async (
     return res.data.record ?? res.data;
 };
 
+// Step the event's status one stage BACKWARD: applied -> ready -> draft.
+// Only valid on the latest event; un-applying (applied -> ready) unwinds the
+// same job / main-dept / talent side effects as delete (event row is kept).
+export const revertEmployeeEvent = async (
+    employeeId: number,
+    eventId: number,
+): Promise<EmployeeEventFlat> => {
+    const res = await axiosInstance.post(
+        `${base(employeeId)}/${eventId}/revert`,
+        null,
+    );
+    return res.data.record ?? res.data;
+};
+
 // ── Change endpoints ──────────────────────────────────────────────────────────
 
 const changesBase = (employeeId: number, eventId: number) =>

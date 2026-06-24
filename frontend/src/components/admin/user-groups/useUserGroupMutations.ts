@@ -1,13 +1,13 @@
 // src/components/admin/user-groups/useUserGroupMutations.ts
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createUserGroup, updateUserGroup, deleteUserGroup } from './userGroupApi';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
+import {createUserGroup, deleteUserGroup, updateUserGroup} from './userGroupApi';
+import {USER_GROUP_QK} from "../../../utils/queryKeys.ts";
+import type {SnackbarType} from "../../../types/types.ts";
 
-type Snackbar = { open: boolean; message: string; severity: 'success' | 'error' };
 
-export const USER_GROUP_QK = ['user_groups'] as const;
 
 interface Props {
-    setSnackbar: (s: Snackbar) => void;
+    setSnackbar: (s: SnackbarType) => void;
     // Localised fallback for delete success (pass getString('userGroupDeleteSuccess') || '...')
     deleteSuccessMessage: string;
     onCreateSuccess?: () => void;

@@ -14,21 +14,39 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LinkOffIcon from '@mui/icons-material/LinkOff';
+import DriveFileMoveIcon from '@mui/icons-material/DriveFileMove';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 
 import type { DepartmentType } from './departmentTypeApi';
-import { fetchChildrenByParent, type DepartmentTypeChild } from './departmentTypeParentalLinkApi';
+import {
+    fetchChildrenByParent,
+    type DepartmentTypeChild,
+} from './departmentTypeParentalLinkApi';
 import { deptTypeChildrenQK } from './useDepartmentTypeLinkMutations';
 import type { PendingEdit } from './DepartmentTypeEditDialog';
 import type { UseMutationResult } from '@tanstack/react-query';
 import type { MutationResponse } from './departmentTypeParentalLinkApi';
 import { DepartmentTypeLinkDialog } from './DepartmentTypeLinkDialog';
+import { DepartmentTypeMoveDialog } from './DepartmentTypeMoveDialog';
 import { TextEditCell } from '../TextEditCell';
 import { ReadonlyCell } from '../ReadonlyCell';
 import { formatToUkrDate } from '../../../utils/dateFormatter';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
+
+interface MoveVars {
+    linkId: number;
+    newParentId: number;
+    oldParentId: number;
+}
+
+interface ToggleLinkVars {
+    linkId: number;
+    parentId: number;
+    isActive: boolean;
+}
 
 interface Props {
     type: DepartmentType;
@@ -38,6 +56,8 @@ interface Props {
     deleteIsPending: boolean;
     deleteLinkIsPending: boolean;
     createLinkMutation: UseMutationResult<MutationResponse<unknown>, Error, { child_id: number; parent_id: number; is_active?: boolean }>;
+    updateLinkMutation: UseMutationResult<MutationResponse<unknown>, Error, MoveVars>;
+    toggleLinkActiveMutation: UseMutationResult<MutationResponse<unknown>, Error, ToggleLinkVars>;
     onToggleActive: (type: DepartmentType) => void;
     onDeleteClick: (type: DepartmentType) => void;
     onRequestEdit: (pending: PendingEdit) => void;
@@ -54,6 +74,8 @@ export function DepartmentTypeHierarchyRow({
                                                deleteIsPending,
                                                deleteLinkIsPending,
                                                createLinkMutation,
+                                               updateLinkMutation,
+                                               toggleLinkActiveMutation,
                                                onToggleActive,
                                                onDeleteClick,
                                                onRequestEdit,
@@ -64,17 +86,22 @@ export function DepartmentTypeHierarchyRow({
     const [expanded, setExpanded] = useState(false);
     const [editingField, setEditingField] = useState<string | null>(null);
     const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+    const [moveChild, setMoveChild] = useState<DepartmentTypeChild | null>(null);
 
-    // Lazy-fetch children only when expanded
+    // Always fetch children (cheap + cached) so we know leaf-status & count
+    // up front — no API change needed.
     const {
         data: children = [],
         isLoading: childrenLoading,
+        isFetched: childrenFetched,
     } = useQuery({
         queryKey: deptTypeChildrenQK(type.id),
         queryFn: () => fetchChildrenByParent(type.id),
-        enabled: expanded,
         staleTime: 2 * 60 * 1000,
     });
+
+    const childCount = children.length;
+    const isLeaf = childrenFetched && childCount === 0;
 
     const handleNameSave = useCallback(
         (val: string) => {
@@ -88,6 +115,18 @@ export function DepartmentTypeHierarchyRow({
             setEditingField(null);
         },
         [type, getString, onRequestEdit],
+    );
+
+    const handleToggleLinkActive = useCallback(
+        (child: DepartmentTypeChild) => {
+            if (child.link_id == null) return;
+            toggleLinkActiveMutation.mutate({
+                linkId: child.link_id,
+                parentId: type.id,
+                isActive: !(child.link_is_active ?? false),
+            });
+        },
+        [toggleLinkActiveMutation, type.id],
     );
 
     const indentPx = depth * 28;
@@ -112,18 +151,34 @@ export function DepartmentTypeHierarchyRow({
                     borderRadius: 1,
                 }}
             >
-                {/* Expand toggle */}
-                <IconButton
-                    size="small"
-                    onClick={() => setExpanded((p) => !p)}
-                    sx={{ p: 0.25, flexShrink: 0 }}
-                >
-                    {expanded ? (
-                        <ExpandMoreIcon sx={{ fontSize: 18 }} />
-                    ) : (
-                        <ChevronRightIcon sx={{ fontSize: 18 }} />
-                    )}
-                </IconButton>
+                {/* Expand toggle — or leaf dot when no children */}
+                {isLeaf ? (
+                    <Tooltip title={getString('leafDepartmentType') || 'No child types (leaf)'}>
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: 28,
+                                flexShrink: 0,
+                            }}
+                        >
+                            <FiberManualRecordIcon sx={{ fontSize: 8, color: 'text.disabled' }} />
+                        </Box>
+                    </Tooltip>
+                ) : (
+                    <IconButton
+                        size="small"
+                        onClick={() => setExpanded((p) => !p)}
+                        sx={{ p: 0.25, flexShrink: 0 }}
+                    >
+                        {expanded ? (
+                            <ExpandMoreIcon sx={{ fontSize: 18 }} />
+                        ) : (
+                            <ChevronRightIcon sx={{ fontSize: 18 }} />
+                        )}
+                    </IconButton>
+                )}
 
                 {/* Name inline edit */}
                 <Box
@@ -145,6 +200,19 @@ export function DepartmentTypeHierarchyRow({
                         />
                     )}
                 </Box>
+
+                {/* Child count badge (branches only) */}
+                {!isLeaf && childCount > 0 && (
+                    <Tooltip title={getString('childTypesCount') || 'Linked child types'}>
+                        <Chip
+                            label={childCount}
+                            size="small"
+                            variant="outlined"
+                            color="primary"
+                            sx={{ fontSize: '0.7rem', height: 20, minWidth: 28, flexShrink: 0 }}
+                        />
+                    </Tooltip>
+                )}
 
                 {/* Active badge */}
                 <Chip
@@ -208,35 +276,32 @@ export function DepartmentTypeHierarchyRow({
                 </Tooltip>
             </Box>
 
-            {/* ── Children (when expanded) ────────────────────────────────── */}
-            <Collapse in={expanded} timeout="auto" unmountOnExit>
-                {childrenLoading && (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 1, pl: `${indentPx + 40}px` }}>
-                        <CircularProgress size={18} />
-                    </Box>
-                )}
+            {/* ── Children (branches only, when expanded) ─────────────────── */}
+            {!isLeaf && (
+                <Collapse in={expanded} timeout="auto" unmountOnExit>
+                    {childrenLoading && (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 1, pl: `${indentPx + 40}px` }}>
+                            <CircularProgress size={18} />
+                        </Box>
+                    )}
 
-                {!childrenLoading && children.length === 0 && (
-                    <Box sx={{ pl: `${indentPx + 52}px`, py: 0.75 }}>
-                        <Typography variant="caption" color="text.disabled">
-                            {getString('noChildTypes') || 'No child types linked'}
-                        </Typography>
-                    </Box>
-                )}
-
-                {!childrenLoading &&
-                    children.map((child) => (
-                        <ChildLinkRow
-                            key={child.id}
-                            child={child}
-                            parentId={type.id}
-                            indentPx={indentPx + 28}
-                            deleteLinkIsPending={deleteLinkIsPending}
-                            onDeleteLink={onDeleteLink}
-                            getString={getString}
-                        />
-                    ))}
-            </Collapse>
+                    {!childrenLoading &&
+                        children.map((child) => (
+                            <ChildLinkRow
+                                key={child.id}
+                                child={child}
+                                parentId={type.id}
+                                indentPx={indentPx + 28}
+                                deleteLinkIsPending={deleteLinkIsPending}
+                                toggleLinkIsPending={toggleLinkActiveMutation.isPending}
+                                onDeleteLink={onDeleteLink}
+                                onToggleLinkActive={handleToggleLinkActive}
+                                onMoveClick={setMoveChild}
+                                getString={getString}
+                            />
+                        ))}
+                </Collapse>
+            )}
 
             {/* ── Add link dialog ─────────────────────────────────────────── */}
             <DepartmentTypeLinkDialog
@@ -246,6 +311,17 @@ export function DepartmentTypeHierarchyRow({
                 existingChildren={children}
                 createLinkMutation={createLinkMutation}
                 onClose={() => setLinkDialogOpen(false)}
+            />
+
+            {/* ── Move child dialog ───────────────────────────────────────── */}
+            <DepartmentTypeMoveDialog
+                open={!!moveChild}
+                childType={moveChild ? { ...type, id: moveChild.id, name: moveChild.name } : null}
+                currentParentId={type.id}
+                linkId={moveChild?.link_id ?? null}
+                allTypes={allTypes}
+                updateLinkMutation={updateLinkMutation}
+                onClose={() => setMoveChild(null)}
             />
         </Box>
     );
@@ -258,7 +334,10 @@ interface ChildLinkRowProps {
     parentId: number;
     indentPx: number;
     deleteLinkIsPending: boolean;
+    toggleLinkIsPending: boolean;
     onDeleteLink: (linkId: number, parentId: number) => void;
+    onToggleLinkActive: (child: DepartmentTypeChild) => void;
+    onMoveClick: (child: DepartmentTypeChild) => void;
     getString: (key: string) => string;
 }
 
@@ -267,7 +346,10 @@ function ChildLinkRow({
                           parentId,
                           indentPx,
                           deleteLinkIsPending,
+                          toggleLinkIsPending,
                           onDeleteLink,
+                          onToggleLinkActive,
+                          onMoveClick,
                           getString,
                       }: ChildLinkRowProps) {
     return (
@@ -300,6 +382,25 @@ function ChildLinkRow({
                 sx={{ fontSize: '0.7rem', height: 20 }}
             />
 
+            {/* Link-active toggle */}
+            <Tooltip
+                title={
+                    child.link_is_active
+                        ? getString('linkActive') || 'Link active — click to deactivate'
+                        : getString('linkInactive') || 'Link inactive — click to activate'
+                }
+            >
+                <span>
+                    <Switch
+                        size="small"
+                        checked={!!child.link_is_active}
+                        onChange={() => onToggleLinkActive(child)}
+                        disabled={toggleLinkIsPending || child.link_id == null}
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </span>
+            </Tooltip>
+
             {/* link_id badge */}
             <Typography
                 variant="caption"
@@ -307,6 +408,20 @@ function ChildLinkRow({
             >
                 link #{child.link_id}
             </Typography>
+
+            {/* Move button */}
+            <Tooltip title={getString('moveDepartmentType') || 'Move to another parent'}>
+                <span>
+                    <IconButton
+                        size="small"
+                        color="primary"
+                        disabled={child.link_id == null}
+                        onClick={() => onMoveClick(child)}
+                    >
+                        <DriveFileMoveIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                </span>
+            </Tooltip>
 
             {/* Unlink button */}
             <Tooltip title={getString('removeLink') || 'Remove link'}>

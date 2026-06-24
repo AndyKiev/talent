@@ -4,13 +4,15 @@ import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { Box, Chip, IconButton, Switch, Tooltip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import GroupsIcon from '@mui/icons-material/Groups';
+import WorkspacesIcon from '@mui/icons-material/Workspaces';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
 
 import type { Job } from './jobApi';
 import type { GetStringFn } from '../../../types/getStringFn';
 import { TextEditCell } from '../TextEditCell';
 import { ReadonlyCell } from '../ReadonlyCell';
 import { formatToUkrDate } from '../../../utils/dateFormatter';
-import cfl from '../../../utils/capitalizeFirstLetter';
+import cfl, {snakeToCamel} from '../../../utils/helpers.ts';
 
 export interface EditingState {
   rowId: number | null;
@@ -26,29 +28,31 @@ interface Params {
   updateIsPending: boolean;
   onToggleActive: (row: Job) => void;
   toggleIsPending: boolean;
-  onGroupsClick: (row: Job) => void;
+  onGroupsClick: (row: Job) => void;       // user-groups dialog
+  onJobGroupsClick: (row: Job) => void;    // job-groups dialog (new)
   onDeleteClick: (row: Job) => void;
   deleteIsPending: boolean;
 }
 
 export function useJobColumns({
-  getString,
-  editingState,
-  onEditFieldClick,
-  onRequestSave,
-  onCancelEdit,
-  updateIsPending,
-  onToggleActive,
-  toggleIsPending,
-  onGroupsClick,
-  onDeleteClick,
-  deleteIsPending,
-}: Params): GridColDef[] {
+                                getString,
+                                editingState,
+                                onEditFieldClick,
+                                onRequestSave,
+                                onCancelEdit,
+                                updateIsPending,
+                                onToggleActive,
+                                toggleIsPending,
+                                onGroupsClick,
+                                onJobGroupsClick,
+                                onDeleteClick,
+                                deleteIsPending,
+                              }: Params): GridColDef[] {
   function textEditCol(
-    field: keyof Job,
-    headerKey: string,
-    width: number,
-    flex?: number,
+      field: keyof Job,
+      headerKey: string,
+      width: number,
+      flex?: number,
   ): GridColDef {
     return {
       field: field as string,
@@ -60,19 +64,19 @@ export function useJobColumns({
         const isEditing = editingState.rowId === row.id && editingState.field === field;
         const value = String((row as unknown as Record<string, unknown>)[field] ?? '');
         return isEditing ? (
-          <TextEditCell
-            value={value}
-            onSave={(val) => onRequestSave(row, field as string, val)}
-            onCancel={onCancelEdit}
-            isPending={updateIsPending}
-          />
+            <TextEditCell
+                value={value}
+                onSave={(val) => onRequestSave(row, field as string, val)}
+                onCancel={onCancelEdit}
+                isPending={updateIsPending}
+            />
         ) : (
-          <ReadonlyCell
-            value={value}
-            onEdit={(e) => onEditFieldClick(row, field as string, e)}
-            editTitle={getString(`edit_${field}`) || `Edit ${field}`}
-            placeholder="—"
-          />
+            <ReadonlyCell
+                value={value}
+                onEdit={(e) => onEditFieldClick(row, field as string, e)}
+                editTitle={`${getString("edit")} + ' ' + ${getString(snakeToCamel(field))}`}
+                placeholder="—"
+            />
         );
       },
     };
@@ -81,43 +85,116 @@ export function useJobColumns({
   return [
     textEditCol('name', 'name', 200, 1),
 
+    textEditCol('short_name', 'shortName', 160),
+
+    textEditCol('key', 'key', 160),
+
     textEditCol('description', 'description', 260, 1),
 
+    // Existing: user-groups column
     {
       field: 'groups',
       headerName: cfl(getString('groups')) || 'Groups',
-      width: 220,
+      width: 200,
       sortable: false,
       renderCell: (params: GridRenderCellParams<Job>) => {
         const row = params.row;
         const groups: string[] = row.groups ?? [];
         return (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.5,
-              flexWrap: 'wrap',
-              py: 0.5,
-              cursor: 'pointer',
-            }}
-            onClick={() => onGroupsClick(row)}
-          >
-            {groups.length === 0 ? (
-              <Chip
-                label={getString('noGroups') || 'No groups'}
-                size="small"
-                variant="outlined"
-                color="default"
-                icon={<GroupsIcon />}
+            <Box
+                sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', py: 0.5, cursor: 'pointer' }}
                 onClick={() => onGroupsClick(row)}
-              />
-            ) : (
-              groups.map((g) => (
-                <Chip key={g} label={g} size="small" variant="outlined" color="primary" />
-              ))
-            )}
-          </Box>
+            >
+              {groups.length === 0 ? (
+                  <Chip
+                      label={getString('noGroups') || 'No groups'}
+                      size="small"
+                      variant="outlined"
+                      color="default"
+                      icon={<GroupsIcon />}
+                      onClick={() => onGroupsClick(row)}
+                  />
+              ) : (
+                  groups.map((g) => (
+                      <Chip key={g} label={g} size="small" variant="outlined" color="primary" />
+                  ))
+              )}
+            </Box>
+        );
+      },
+    },
+
+    // New: job-groups column — sortable via custom comparator (joins array → string)
+    {
+      field: 'job_group_names',
+      headerName: cfl(getString('jobGroups')) || 'Job Groups',
+      width: 200,
+      sortable: true,
+      sortComparator: (v1: string[], v2: string[]) => {
+        const a = (v1 ?? []).join(', ');
+        const b = (v2 ?? []).join(', ');
+        return a.localeCompare(b);
+      },
+      renderCell: (params: GridRenderCellParams<Job>) => {
+        const row = params.row;
+        const jobGroups: string[] = row.job_group_names ?? [];
+        return (
+            <Box
+                sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', py: 0.5, cursor: 'pointer' }}
+                onClick={() => onJobGroupsClick(row)}
+            >
+              {jobGroups.length === 0 ? (
+                  <Chip
+                      label={getString('noJobGroups') || 'No job groups'}
+                      size="small"
+                      variant="outlined"
+                      color="default"
+                      icon={<WorkspacesIcon />}
+                      onClick={() => onJobGroupsClick(row)}
+                  />
+              ) : (
+                  jobGroups.map((g) => (
+                      <Chip key={g} label={g} size="small" variant="outlined" color="secondary" />
+                  ))
+              )}
+            </Box>
+        );
+      },
+    },
+
+    // New: department-types column (chip color reflects the link's is_active)
+    {
+      field: 'department_type_links',
+      headerName: cfl(getString('departmentTypes')) || 'Department Types',
+      width: 240,
+      sortable: false,
+      renderCell: (params: GridRenderCellParams<Job>) => {
+        const row = params.row;
+        const links = row.department_type_links ?? [];
+        return (
+            <Box
+                sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', py: 0.5 }}
+            >
+              {links.length === 0 ? (
+                  <Chip
+                      label={getString('noDepartmentTypes') || 'No department types'}
+                      size="small"
+                      variant="outlined"
+                      color="default"
+                      icon={<AccountTreeIcon />}
+                  />
+              ) : (
+                  links.map((link, i) => (
+                      <Chip
+                          key={`${link.name}-${i}`}
+                          label={link.name}
+                          size="small"
+                          variant={link.is_active ? 'filled' : 'outlined'}
+                          color={link.is_active ? 'primary' : 'default'}
+                      />
+                  ))
+              )}
+            </Box>
         );
       },
     },
@@ -130,15 +207,15 @@ export function useJobColumns({
       renderCell: (params: GridRenderCellParams<Job>) => {
         const row = params.row;
         return (
-          <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-            <Switch
-              size="small"
-              checked={row.is_active}
-              onChange={() => onToggleActive(row)}
-              disabled={toggleIsPending}
-              onClick={(e) => e.stopPropagation()}
-            />
-          </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+              <Switch
+                  size="small"
+                  checked={row.is_active}
+                  onChange={() => onToggleActive(row)}
+                  disabled={toggleIsPending}
+                  onClick={(e) => e.stopPropagation()}
+              />
+            </Box>
         );
       },
     },
@@ -148,7 +225,7 @@ export function useJobColumns({
       headerName: cfl(getString('createdAt')) || 'Created',
       width: 160,
       renderCell: (params: GridRenderCellParams<Job>) =>
-        formatToUkrDate(params.row.created_at),
+          formatToUkrDate(params.row.created_at),
     },
 
     {
@@ -159,23 +236,23 @@ export function useJobColumns({
       filterable: false,
       disableColumnMenu: true,
       renderCell: (params: GridRenderCellParams<Job>) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          <Tooltip title={getString('delete') || 'Delete'}>
+          <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+            <Tooltip title={getString('delete') || 'Delete'}>
             <span>
               <IconButton
-                size="small"
-                color="error"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteClick(params.row);
-                }}
-                disabled={deleteIsPending}
+                  size="small"
+                  color="error"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteClick(params.row);
+                  }}
+                  disabled={deleteIsPending}
               >
                 <DeleteIcon fontSize="small" />
               </IconButton>
             </span>
-          </Tooltip>
-        </Box>
+            </Tooltip>
+          </Box>
       ),
     },
   ];

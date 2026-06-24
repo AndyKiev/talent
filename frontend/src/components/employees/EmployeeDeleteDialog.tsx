@@ -13,7 +13,7 @@ import {
 import type { Employee } from './employeeApi';
 import useString from '../../hooks/useString';
 import str from '../../strings/str';
-import cfl from '../../utils/capitalizeFirstLetter';
+import cfl from '../../utils/helpers.ts';
 
 interface Props {
     employee: Employee | null;
