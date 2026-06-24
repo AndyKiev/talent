@@ -16,15 +16,32 @@ from backend.api_v1.employee_events.employee_event.employee_event_dependencies i
 from backend.api_v1.employee_events.employee_event.employee_event_service import (
     EmployeeEventService,
 )
+
 from backend.auth.guards import Guard
 from backend.utils.enums import OperationVerb, EssenceName
 
-# ── Router nested under /employees/{employee_id}/events ───────────────────────
+# -- Router nested under /employees/{employee_id}/events -----------------------
 # Mount this router on the employee router with prefix="/employees".
 router = APIRouter(
     tags=["Employee Events"],
     dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
+
+
+@router.post(
+    "/events/apply_due",
+    dependencies=[Guard(OperationVerb.APPLY, EssenceName.EMPLOYEE_EVENT)],
+)
+async def apply_due_employee_events(
+    service: Annotated[EmployeeEventService, Depends(get_employee_event_service)],
+):
+    """
+    Manually trigger the same sweep the scheduler runs: apply every `ready`
+    event whose effective_date is on or before today. Returns the run stats
+    (checked / applied / failed + per-event failures). Per-event errors do not
+    abort the sweep.
+    """
+    return await service.apply_due_events()
 
 
 @router.get(
@@ -119,3 +136,39 @@ async def delete_employee_event(
     service: Annotated[EmployeeEventService, Depends(get_employee_event_service)],
 ):
     await service.delete_employee_event(event_id)
+
+
+@router.post(
+    "/{employee_id}/events/{event_id}/revert",
+    response_model=MutationResponse[EmployeeEventSchema],
+    dependencies=[Guard(OperationVerb.REVERT, EssenceName.EMPLOYEE_EVENT)],
+)
+async def revert_employee_event(
+    employee_id: int,
+    record: EmployeeEventSchema = Depends(employee_event_by_id),
+    service: Annotated[
+        EmployeeEventService, Depends(get_employee_event_service)
+    ] = None,
+):
+    """
+    Step the event's status one stage backward: applied -> ready -> draft.
+    Only the latest event may be reverted. Un-applying (applied -> ready)
+    unwinds the same job / main-department / talent side effects as delete,
+    but keeps the event row.
+    """
+    return await service.revert_employee_event(record.id)
+
+
+@router.get(
+    "/{employee_id}/responsibility_history",
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE_EVENT)],
+)
+async def get_responsibility_history(
+    employee_id: int,
+    service: Annotated[EmployeeEventService, Depends(get_employee_event_service)],
+):
+    """
+    Flat history of responsibility-department assignments for an employee,
+    derived from applied RESPONSIBILITY_DEPTS_CHANGE events. Latest first.
+    """
+    return await service.get_responsibility_history(employee_id)

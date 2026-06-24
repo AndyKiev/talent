@@ -48,9 +48,9 @@ class EmployeeEventTypeDirectionService(BaseService):
         event_type_id: int,
         sort: Optional[str] = None,
     ) -> List[EmployeeEventTypeDirectionSchema]:
-        records = await self.repository.filter_by(
+        records = await self.repository.get_all(
             filters={"event_type_id": event_type_id},
-            sort_json=sort,
+            sort=sort,
         )
         return [EmployeeEventTypeDirectionSchema.model_validate(r) for r in records]
 
@@ -60,7 +60,7 @@ class EmployeeEventTypeDirectionService(BaseService):
         direction_in: EmployeeEventTypeDirectionCreate,
     ) -> MutationResponse[EmployeeEventTypeDirectionSchema]:
         # Guard: unique (event_type_id, direction_type_id)
-        existing = await self.repository.filter_by(
+        existing = await self.repository.get_all(
             filters={
                 "event_type_id": event_type_id,
                 "direction_type_id": direction_in.direction_type_id,

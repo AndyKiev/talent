@@ -15,6 +15,7 @@ from backend.api_v1.employee_events.employee_event_change.employee_event_change_
 from backend.api_v1.employee_events.employee_event_change.employee_event_change_service import (
     EmployeeEventChangeService,
 )
+
 from backend.auth.guards import Guard
 from backend.utils.enums import OperationVerb, EssenceName
 

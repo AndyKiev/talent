@@ -15,6 +15,7 @@ from backend.api_v1.employee_events.employee_event_type_direction.employee_event
 from backend.api_v1.employee_events.employee_event_type_direction.employee_event_type_direction_service import (
     EmployeeEventTypeDirectionService,
 )
+
 from backend.auth.guards import Guard
 from backend.utils.enums import OperationVerb, EssenceName
 

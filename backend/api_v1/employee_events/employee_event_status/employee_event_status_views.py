@@ -15,6 +15,7 @@ from backend.api_v1.employee_events.employee_event_status.employee_event_status_
 from backend.api_v1.employee_events.employee_event_status.employee_event_status_service import (
     EmployeeEventStatusService,
 )
+
 from backend.auth.guards import Guard
 from backend.utils.enums import OperationVerb, EssenceName
 

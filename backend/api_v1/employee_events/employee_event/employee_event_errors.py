@@ -45,3 +45,76 @@ class EmployeeEventNotDraft(DomainError):
             f"because it is not in draft status"
         )
         super().__init__(self.fallback)
+
+
+class EmployeeEventInvalidStatusTransition(DomainError):
+    message_key = "employeeEventInvalidStatusTransition"
+
+    def __init__(self, current: str, target: str, event_id: int) -> None:
+        self.template_vars = {
+            "current": current,
+            "target": target,
+            "eventId": event_id,
+        }
+        self.fallback = (
+            f"Cannot apply event {event_id}: illegal status transition "
+            f"from '{current}' to '{target}'"
+        )
+        super().__init__(self.fallback)
+
+
+class EmployeeEventOpenEventExists(DomainError):
+    message_key = "employeeEventOpenEventExists"
+
+    def __init__(self, employee_id: int) -> None:
+        self.template_vars = {"employeeId": employee_id}
+        self.fallback = (
+            "This employee already has an open (draft or ready) event. "
+            "Apply it before creating a new one."
+        )
+        super().__init__(self.fallback)
+
+
+class EmployeeEventActivationExists(DomainError):
+    message_key = "employeeEventActivationExists"
+
+    def __init__(self, employee_id: int) -> None:
+        self.template_vars = {"employeeId": employee_id}
+        self.fallback = "This employee already has an activation event."
+        super().__init__(self.fallback)
+
+
+class EmployeeEventActivationRequired(DomainError):
+    message_key = "employeeEventActivationRequired"
+
+    def __init__(self, employee_id: int) -> None:
+        self.template_vars = {"employeeId": employee_id}
+        self.fallback = "The first event for an employee must be an activation event."
+        super().__init__(self.fallback)
+
+
+class EmployeeEventDateTaken(DomainError):
+    message_key = "employeeEventDateTaken"
+
+    def __init__(self, employee_id: int, effective_date) -> None:
+        self.template_vars = {
+            "employeeId": employee_id,
+            "date": str(effective_date),
+        }
+        self.fallback = (
+            f"Employee {employee_id} already has an event dated {effective_date}. "
+            f"Each event must have a unique effective date."
+        )
+        super().__init__(self.fallback)
+
+
+class EmployeeEventNotLatest(DomainError):
+    message_key = "employeeEventNotLatest"
+
+    def __init__(self, event_id: int) -> None:
+        self.template_vars = {"eventId": event_id}
+        self.fallback = (
+            f"Event {event_id} is not the latest event (by effective date) and "
+            f"cannot be deleted. Delete the most recent event first."
+        )
+        super().__init__(self.fallback)
