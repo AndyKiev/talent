@@ -1,6 +1,7 @@
 // src/config/menuVisibility.ts
 export const MENU_ACCESS: Record<string, string[] | null> = {
     employees: null,                          // everyone
+    peopleReview: null,                       // everyone (page scopes itself)
     planning: ["dev", "admin", "hrs"],
     admin: ["dev", "admin"],
     developer: ["dev"],

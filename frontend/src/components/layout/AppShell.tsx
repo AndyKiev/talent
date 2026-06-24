@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import CodeIcon from '@mui/icons-material/Code';
 import InsightsRounded from '@mui/icons-material/InsightsRounded';
-import { LogoutRounded, PeopleAltRounded, AdminPanelSettingsRounded } from "@mui/icons-material";
+import { LogoutRounded, PeopleAltRounded, AdminPanelSettingsRounded, RateReviewRounded } from "@mui/icons-material";
 import { useTheme } from "../theme/ThemeContext";
 import { useAuthStore } from "../../store/authStore";
 import ThemeSwitch from "../theme/ThemeSwitch";
@@ -128,6 +128,8 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
                             navBtn("employees", "/employees", <PeopleAltRounded sx={{ fontSize: 16 }} />)}
                         {canSeeMenu("planning", groups) &&
                             navBtn("planning", "/planning", <InsightsRounded sx={{ fontSize: 16 }} />)}
+                        {canSeeMenu("peopleReview", groups) &&
+                            navBtn("peopleReview", "/people_review", <RateReviewRounded sx={{ fontSize: 16 }} />)}
                         {canSeeMenu("admin", groups) &&
                             navBtn("admin", "/admin", <AdminPanelSettingsRounded sx={{ fontSize: 16 }} />)}
                         {canSeeMenu("developer", groups) &&
