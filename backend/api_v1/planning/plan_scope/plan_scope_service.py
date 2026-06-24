@@ -30,6 +30,7 @@ from backend.api_v1.planning.plan_session.plan_session_repository import (
 from backend.api_v1.planning.plan_session_status.plan_session_status_repository import (
     PlanSessionStatusRepository,
 )
+from backend.api_v1.region.region_schema import RegionSlim
 
 
 def _scope_label(schema: PlanScopeSchema) -> str:
@@ -61,7 +62,16 @@ class PlanScopeService(BaseService):
         self, plan_session_id: int
     ) -> List[PlanScopeSchema]:
         records = await self.repository.get_by_session(plan_session_id)
-        return [PlanScopeSchema.model_validate(r) for r in records]
+        dept_ids = {r.department_id for r in records}
+        region_map = await self.repository.get_region_map(dept_ids)
+        out: List[PlanScopeSchema] = []
+        for r in records:
+            schema = PlanScopeSchema.model_validate(r)
+            region = region_map.get(r.department_id)
+            if region:
+                schema.region = RegionSlim.model_validate(region)
+            out.append(schema)
+        return out
 
     async def _guard_session_open(self, plan_session_id: int) -> None:
         """Allow edits only when the parent session status key == 'open'."""

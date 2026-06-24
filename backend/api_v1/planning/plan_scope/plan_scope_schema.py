@@ -11,6 +11,7 @@ from backend.api_v1.job_group.job_group_schema import JobGroup as JobGroupSchema
 from backend.api_v1.talent_status.talent_status_schema import (
     TalentStatus as TalentStatusSchema,
 )
+from backend.api_v1.region.region_schema import RegionSlim
 
 
 class PlanScopeBase(BaseModel):
@@ -35,3 +36,4 @@ class PlanScope(PlanScopeBase):
     department: Optional[DepartmentFlatSchema] = None
     job_group: Optional[JobGroupSchema] = None
     talent_status: Optional[TalentStatusSchema] = None
+    region: Optional[RegionSlim] = None

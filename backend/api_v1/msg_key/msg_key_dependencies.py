@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import Depends, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.database import db_helper
+from backend.database.db_helper import db_helper
 from backend.api_v1.msg_key.msg_key_service import MsgKeyService
 from backend.api_v1.msg_key.msg_key_repository import MsgKeyRepository
 
