@@ -8,6 +8,8 @@ from backend.api_v1.department.department_schema import (
     DepartmentFlat,
     DepartmentCreate,
     DepartmentUpdate,
+    DepartmentSubtreeGenerateResult,
+    DepartmentTopResolution,
 )
 from backend.api_v1.department.department_dependencies import (
     get_department_service,
@@ -79,6 +81,24 @@ async def get_root_departments(
 
 
 @router.get(
+    "/top_org_units",
+    response_model=List[DepartmentTopResolution],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT)],
+)
+async def get_top_org_units(
+    service: Annotated[DepartmentService, Depends(get_department_service)],
+    ids: str = Query(..., description="Comma-separated department ids"),
+):
+    """
+    Resolve each department id to its top-level org unit (board / directorate /
+    store) by walking up the tree. Static path — declared BEFORE /{department_id}
+    so it is not captured by the dynamic id route.
+    """
+    id_list = [int(x) for x in ids.split(",") if x.strip()]
+    return await service.resolve_top_org_units(id_list)
+
+
+@router.get(
     "/{department_id}/tree",
     response_model=DepartmentSchema,
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT)],
@@ -89,6 +109,28 @@ async def get_department_subtree(
 ):
     """Full subtree rooted at department_id."""
     return await service.get_department_tree_node(department_id)
+
+
+@router.post(
+    "/{department_id}/generate_subtree",
+    response_model=DepartmentSubtreeGenerateResult,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.DEPARTMENT)],
+)
+async def generate_department_subtree(
+    department_id: int,
+    service: Annotated[DepartmentService, Depends(get_department_service)],
+):
+    """
+    Recursively create missing department instances below `department_id`,
+    following the department-TYPE parental graph (active links only).
+
+    For each child type of the current node's type: if a direct child of that
+    type already exists it is reused (and descended into), otherwise a new
+    department is created (name = type name, category resolved from the root's
+    category key). Runs in a single transaction. Idempotent.
+    """
+    return await service.generate_subtree(department_id)
 
 
 @router.get(

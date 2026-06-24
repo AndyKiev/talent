@@ -18,11 +18,13 @@ from backend.api_v1.department.department_errors import (
     DepartmentDeleteError,
     DepartmentNotFoundByName,
     DepartmentCircularReferenceError,
+    DepartmentGenerateCategoryNotFound,
 )
 from backend.api_v1.department.department_success import (
     DepartmentDeleteSuccess,
     DepartmentCreateSuccess,
     DepartmentUpdateSuccess,
+    DepartmentSubtreeGenerateSuccess,
 )
 from backend.api_v1.department_category.department_category_schema import (
     DepartmentCategory as DepartmentCategorySchema,
@@ -30,6 +32,18 @@ from backend.api_v1.department_category.department_category_schema import (
 from backend.api_v1.department_type.department_type_schema import (
     DepartmentType as DepartmentTypeSchema,
 )
+from backend.api_v1.department.department_model import Department
+from backend.api_v1.department.department_schema import DepartmentSubtreeGenerateResult
+from backend.api_v1.department.department_schema import DepartmentTopResolution
+from backend.api_v1.department.department_org_units import resolve_top_org_unit
+from backend.api_v1.department_category.department_category_model import (
+    DepartmentCategory,
+)
+from backend.api_v1.department_type.department_type_model import DepartmentType
+from backend.api_v1.department_type_parental_links.department_type_parental_link_repository import (
+    DepartmentTypeParentalLinkRepository,
+)
+from sqlalchemy import select
 
 
 class DepartmentService(BaseService):
@@ -68,6 +82,24 @@ class DepartmentService(BaseService):
         """Return all departments with parent_id IS NULL."""
         records = await self.repository.get_roots_with_rels()
         return [DepartmentFlat.model_validate(r) for r in records]
+
+    async def resolve_top_org_units(
+        self, department_ids: List[int]
+    ) -> List[DepartmentTopResolution]:
+        """
+        For each department id, resolve its top-level org unit (board /
+        directorate / store) by walking up the tree. Reuses the flat org-unit
+        index, so it's one query regardless of how many ids are passed.
+        Used by the employee job-history view (main + subordinate department).
+        """
+        index = await self.repository.get_org_unit_index()
+        return [
+            DepartmentTopResolution(
+                department_id=did,
+                top=resolve_top_org_unit(did, index),
+            )
+            for did in department_ids
+        ]
 
     async def get_tree(self) -> List[DepartmentSchema]:
         """Return full tree as a list of root departments with nested children."""
@@ -199,4 +231,142 @@ class DepartmentService(BaseService):
             name=record.name,
             delete_error_exc=DepartmentDeleteError,
             delete_success_exc=DepartmentDeleteSuccess,
+        )
+
+    # ------------------------------------------------------------------
+    # Subtree generation (mass-create department instances from the
+    # department-type parental graph). All work happens in ONE session /
+    # transaction: instances are added + flushed to obtain ids as we
+    # descend, and committed exactly once at the end (full rollback on error).
+    # ------------------------------------------------------------------
+
+    # category key on the SELECTED department  ->  target category key for new rows
+    _CATEGORY_KEY_MAP = {
+        "store": "store_departments",
+        "directorate": "office_departments",
+    }
+    _FALLBACK_CATEGORY_KEY = "not_specified"
+
+    async def _resolve_target_category(self, root: Department) -> DepartmentCategory:
+        """
+        Decide which category newly generated departments get, based on the
+        selected (root) department's own category key, then load that category
+        by key. Raises if the target category does not exist.
+        """
+        source_key = root.department_category.key if root.department_category else None
+        target_key = self._CATEGORY_KEY_MAP.get(source_key, self._FALLBACK_CATEGORY_KEY)
+
+        category = (
+            await self.session.execute(
+                select(DepartmentCategory).where(DepartmentCategory.key == target_key)
+            )
+        ).scalar_one_or_none()
+
+        if category is None:
+            raise await self._resolve_domain_error(
+                DepartmentGenerateCategoryNotFound(target_key)
+            )
+        return category
+
+    async def generate_subtree(
+        self, department_id: int
+    ) -> DepartmentSubtreeGenerateResult:
+        # Load EVERY department once, with category + type eager-loaded. This is
+        # the key to staying greenlet-safe: we never touch a lazy relationship
+        # (e.g. node.children) during the async walk — we traverse an in-memory
+        # map instead, so no SQL is emitted implicitly mid-recursion.
+        all_depts = list(await self.repository.get_all_with_rels())
+        dept_by_id = {d.id: d for d in all_depts}
+
+        root = dept_by_id.get(department_id)
+        if root is None:
+            raise await self._resolve_domain_error(DepartmentNotFound(department_id))
+
+        # parent_id -> [child Department, ...] (only existing rows for now)
+        children_by_parent: dict[int, list[Department]] = {}
+        for d in all_depts:
+            if d.parent_id is not None:
+                children_by_parent.setdefault(d.parent_id, []).append(d)
+
+        # Target category for every newly created instance (root.department_category
+        # was eager-loaded by get_all_with_rels, so this access is safe).
+        category = await self._resolve_target_category(root)
+
+        # Active type graph: parent_type_id -> [child_type_id, ...]
+        link_repo = DepartmentTypeParentalLinkRepository(session=self.session)
+        child_type_map = await link_repo.get_active_child_map()
+
+        # Type id -> name (for naming new departments).
+        type_rows = (await self.session.execute(select(DepartmentType))).scalars().all()
+        type_name_by_id = {t.id: t.name for t in type_rows}
+
+        created: list[Department] = []
+        # Guard against type-graph cycles within a single root-to-leaf path.
+        visited_types: set[int] = set()
+
+        async def walk(node: Department) -> None:
+            node_type_id = node.department_type_id
+            if node_type_id in visited_types:
+                return
+            visited_types.add(node_type_id)
+
+            child_type_ids = child_type_map.get(node_type_id, [])
+            if child_type_ids:
+                # Existing direct children of `node`, indexed by their type id —
+                # read from the in-memory map, NOT node.children.
+                existing_by_type: dict[int, Department] = {}
+                for child in children_by_parent.get(node.id, []):
+                    existing_by_type.setdefault(child.department_type_id, child)
+
+                for child_type_id in child_type_ids:
+                    existing = existing_by_type.get(child_type_id)
+                    if existing is not None:
+                        # Already present — descend, do not create.
+                        await walk(existing)
+                        continue
+
+                    # Missing — create the instance for this child type.
+                    new_dept = Department(
+                        name=type_name_by_id.get(child_type_id, str(child_type_id)),
+                        is_active=True,
+                        parent_id=node.id,
+                        department_category_id=category.id,
+                        department_type_id=child_type_id,
+                    )
+                    self.session.add(new_dept)
+                    # Flush to assign new_dept.id (grandchildren reference it),
+                    # all within the same uncommitted transaction.
+                    await self.session.flush()
+                    # Update the in-memory map so deeper recursion sees it.
+                    children_by_parent.setdefault(node.id, []).append(new_dept)
+                    created.append(new_dept)
+
+                    await walk(new_dept)
+
+            # Allow the same type to appear under different branches.
+            visited_types.discard(node_type_id)
+
+        await walk(root)
+
+        # Single commit for the whole subtree.
+        await self.session.commit()
+
+        # Re-fetch the created rows by id WITH category + type eager-loaded, so
+        # validating DepartmentFlat (which reads those relationships and the
+        # server-defaulted created_at) never triggers a lazy load. Order by id
+        # to keep the response stable.
+        created_flat: list[DepartmentFlat] = []
+        if created:
+            created_ids = [d.id for d in created]
+            refreshed = await self.repository.get_by_ids_with_rels(created_ids)
+            created_flat = [DepartmentFlat.model_validate(r) for r in refreshed]
+
+        detail = await self._resolve_domain_success(
+            DepartmentSubtreeGenerateSuccess(len(created), root.name)
+        )
+        return DepartmentSubtreeGenerateResult(
+            detail=detail,
+            root_id=department_id,
+            created_count=len(created),
+            created=created_flat,
         )

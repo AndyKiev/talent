@@ -31,3 +31,16 @@ class DepartmentUpdateSuccess(UpdateSuccess):
         self.template_vars = {"name": name}
         self.fallback = f"Department '{name}' successfully updated"
         DomainSuccess.__init__(self, self.fallback)
+
+
+class DepartmentSubtreeGenerateSuccess(CreateSuccess):
+    message_key = "departmentSubtreeGenerateSuccess"
+
+    def __init__(self, count: int, name: str) -> None:
+        self.template_vars = {"count": count, "name": name}
+        self.fallback = (
+            f"{count} department(s) created under '{name}'"
+            if count
+            else f"No new departments needed under '{name}' — subtree already complete"
+        )
+        DomainSuccess.__init__(self, self.fallback)

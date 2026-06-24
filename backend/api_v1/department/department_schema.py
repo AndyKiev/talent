@@ -10,6 +10,7 @@ from backend.api_v1.department_category.department_category_schema import (
 from backend.api_v1.department_type.department_type_schema import (
     DepartmentType as DepartmentTypeSchema,
 )
+from backend.api_v1.department.department_org_units import TopOrgUnit
 
 
 class DepartmentBase(BaseModel):
@@ -66,3 +67,25 @@ class DepartmentFlat(DepartmentBase):
     created_at: datetime
     department_category: Optional[DepartmentCategorySchema] = None
     department_type: Optional[DepartmentTypeSchema] = None
+
+
+class DepartmentSubtreeGenerateResult(BaseModel):
+    """
+    Summary returned by POST /departments/{id}/generate_subtree.
+    `created` holds the newly inserted departments (flat); `created_count`
+    is their number; `root_id` echoes the department the walk started from.
+    """
+
+    detail: str
+    root_id: int
+    created_count: int = 0
+    created: List[DepartmentFlat] = []
+
+
+class DepartmentTopResolution(BaseModel):
+    """Maps a department id to its resolved top-level org unit (board /
+    directorate / store), or null if none is found up the tree. Used by the
+    employee job-history view to show main (top) + subordinate department."""
+
+    department_id: int
+    top: Optional[TopOrgUnit] = None

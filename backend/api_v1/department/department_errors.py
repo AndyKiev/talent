@@ -47,3 +47,21 @@ class DepartmentCircularReferenceError(DomainError):
             f"the selected parent is a descendant of this department"
         )
         super().__init__(self.fallback)
+
+
+class DepartmentGenerateCategoryNotFound(NotFoundError):
+    """
+    Raised during subtree generation when the resolved target category
+    (e.g. 'store_departments', 'office_departments', 'not_specified') has
+    no matching row in department_categories (lookup by key).
+    """
+
+    message_key = "departmentGenerateCategoryNotFound"
+
+    def __init__(self, category_key: str) -> None:
+        self.template_vars = {"categoryKey": category_key}
+        self.fallback = (
+            f"Cannot generate subtree: no department category with key "
+            f"'{category_key}' exists. Create it first."
+        )
+        super().__init__("DepartmentCategory", "key", category_key)
