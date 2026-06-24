@@ -20,9 +20,9 @@ from backend.api_v1.talent_audit.talent_audit_schema import (
 from backend.api_v1.talent_audit.talent_audit_success import (
     TalentAuditCreateSuccess,
     TalentAuditDeleteSuccess,
-    TalentAuditUpdateSuccess,
     TalentAuditTalentPlusDisableSuccess,
     TalentAuditTalentPlusEnableSuccess,
+    TalentAuditUpdateSuccess,
 )
 
 
@@ -101,6 +101,19 @@ class TalentAuditService(BaseService):
         )
         return MutationResponse(detail=detail, data=schema)
 
+    async def delete_talent_audit(self, audit_id: int) -> None:
+        await self.get_by_id(audit_id)
+        await self.delete_by_id(
+            audit_id,
+            name=str(audit_id),
+            delete_error_exc=TalentAuditDeleteError,
+            delete_success_exc=TalentAuditDeleteSuccess,
+        )
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
     @staticmethod
     def _pick_update_success(audit_id: int, update_data: dict):
         """
@@ -113,12 +126,3 @@ class TalentAuditService(BaseService):
                 return TalentAuditTalentPlusEnableSuccess(audit_id)
             return TalentAuditTalentPlusDisableSuccess(audit_id)
         return TalentAuditUpdateSuccess(audit_id)
-
-    async def delete_talent_audit(self, audit_id: int) -> None:
-        await self.get_by_id(audit_id)
-        await self.delete_by_id(
-            audit_id,
-            name=str(audit_id),
-            delete_error_exc=TalentAuditDeleteError,
-            delete_success_exc=TalentAuditDeleteSuccess,
-        )

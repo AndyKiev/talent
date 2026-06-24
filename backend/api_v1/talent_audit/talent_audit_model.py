@@ -12,10 +12,10 @@ if TYPE_CHECKING:
     from backend.api_v1.talent_audit_interview.talent_audit_interview_model import (
         TalentAuditInterview,
     )
+    from backend.api_v1.talent_audit_job.talent_audit_job_model import TalentAuditJob
     from backend.api_v1.talent_audit_status.talent_audit_status_model import (
         TalentAuditStatus,
     )
-    from backend.api_v1.talent_audit_job.talent_audit_job_model import TalentAuditJob
 
 
 class TalentAudit(IntIdPkMixin, Base):
