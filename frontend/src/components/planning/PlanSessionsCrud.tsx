@@ -32,9 +32,10 @@ import {PlanSessionResyncDialog} from "./PlanSessionResyncDialog.tsx";
 
 interface Props {
     onEditPlan: (session: PlanSession) => void;
+    onShowReport: (session: PlanSession) => void;
 }
 
-export function PlanSessionsCrud({ onEditPlan }: Props) {
+export function PlanSessionsCrud({ onEditPlan, onShowReport }: Props) {
     const getString = useString({ str });
 
     const [snackbar, setSnackbar] = useState({
@@ -101,6 +102,7 @@ export function PlanSessionsCrud({ onEditPlan }: Props) {
     const columns = usePlanSessionColumns({
         getString,
         onOpenPlan: onEditPlan,
+        onShowReport,
         onOpen: (row) => setPendingStatus({ session: row, action: 'open' }),
         onClose: (row) => setPendingStatus({ session: row, action: 'close' }),
         onRevert: (row) => setPendingStatus({ session: row, action: 'revert' }),

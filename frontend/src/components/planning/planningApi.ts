@@ -70,6 +70,13 @@ export interface PlanScopeTalentStatus {
     name: string;
 }
 
+export interface PlanRegion {
+    id: number;
+    key: string;
+    name: string;
+    sort_order: number;
+}
+
 export interface PlanScope {
     id: number;
     plan_session_id: number;
@@ -82,6 +89,7 @@ export interface PlanScope {
     department: PlanScopeDepartment | null;
     job_group: PlanScopeJobGroup | null;
     talent_status: PlanScopeTalentStatus | null;
+    region: PlanRegion | null;
 }
 
 export interface PlanScopeUpdate {
@@ -177,4 +185,35 @@ export const updatePlanScope = async ({
 export const deletePlanScope = async (id: number): Promise<MutationResponse<null>> => {
     const res = await axiosInstance.delete<MutationResponse<null>>(`${SCOPES}/${id}`);
     return res.data;
+};
+
+// ── Plan report (plan vs fact) ────────────────────────────────────────────────
+
+const REPORTS = `${BASE_URL}/admin/plan_reports`;
+
+export interface PlanReportRow {
+    plan_scope_id: number;
+    department_id: number;
+    job_group_id: number;
+    talent_status_id: number | null;
+    plan: number;
+    fact: number;
+    department: PlanScopeDepartment | null;
+    job_group: PlanScopeJobGroup | null;
+    talent_status: PlanScopeTalentStatus | null;
+    region: PlanRegion | null;
+}
+
+export interface PlanReport {
+    plan_session_id: number;
+    rows: PlanReportRow[];
+}
+
+export const fetchPlanReportBySession = async (
+    planSessionId: number,
+): Promise<PlanReport> => {
+    const res = await axiosInstance.get<PlanReport>(
+        `${REPORTS}/by_session/${planSessionId}`,
+    );
+    return res.data ?? { plan_session_id: planSessionId, rows: [] };
 };

@@ -1,12 +1,12 @@
 // src/components/planning/PlanningPage.tsx
 import { useState } from 'react';
 import AppShell from '../layout/AppShell';
-import { Box, Breadcrumbs, Button, Link as MuiLink, Typography } from '@mui/material';
+import { Box, Breadcrumbs, Link as MuiLink, Typography } from '@mui/material';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Link } from '@tanstack/react-router';
 import { PlanSessionsCrud } from './PlanSessionsCrud';
 import { PlanScopeGrid } from './PlanScopeGrid';
+import { PlanReportGrid } from './PlanReportGrid';
 import type { PlanSession } from './planningApi';
 import useString from '../../hooks/useString';
 import str from '../../strings/str';
@@ -15,6 +15,8 @@ import cfl from '../../utils/helpers.ts';
 export function PlanningPage() {
     const getString = useString({ str });
     const [editing, setEditing] = useState<PlanSession | null>(null);
+    const [reporting, setReporting] = useState<PlanSession | null>(null);
+    const active = editing ?? reporting;
 
     return (
         <AppShell>
@@ -25,12 +27,12 @@ export function PlanningPage() {
                             {cfl(getString('home') || 'Home')}
                         </Typography>
                     </Link>
-                    {editing ? (
+                    {active ? (
                         <MuiLink
                             component="button"
                             underline="none"
                             color="text.secondary"
-                            onClick={() => setEditing(null)}
+                            onClick={() => { setEditing(null); setReporting(null); }}
                         >
                             <Typography variant="body2" color="text.secondary">
                                 {cfl(getString('planning') || 'Planning')}
@@ -41,28 +43,24 @@ export function PlanningPage() {
                             {cfl(getString('planning') || 'Planning')}
                         </Typography>
                     )}
-                    {editing && (
+                    {active && (
                         <Typography variant="body2" color="text.primary" fontWeight={600}>
-                            {editing.name}
+                            {reporting
+                                ? `${reporting.name} — ${cfl(getString('planVsFact')) || 'Plan vs Fact'}`
+                                : active.name}
                         </Typography>
                     )}
                 </Breadcrumbs>
 
                 {editing ? (
-                    <Box>
-                        <Button
-                            variant="text"
-                            size="small"
-                            startIcon={<ArrowBackIcon />}
-                            onClick={() => setEditing(null)}
-                            sx={{ mb: 2 }}
-                        >
-                            {getString('backToSessions') || 'Back to sessions'}
-                        </Button>
-                        <PlanScopeGrid session={editing} />
-                    </Box>
+                    <PlanScopeGrid session={editing} />
+                ) : reporting ? (
+                    <PlanReportGrid session={reporting} />
                 ) : (
-                    <PlanSessionsCrud onEditPlan={setEditing} />
+                    <PlanSessionsCrud
+                        onEditPlan={(s) => { setReporting(null); setEditing(s); }}
+                        onShowReport={(s) => { setEditing(null); setReporting(s); }}
+                    />
                 )}
             </Box>
         </AppShell>

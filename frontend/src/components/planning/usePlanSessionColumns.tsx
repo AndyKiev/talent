@@ -7,6 +7,7 @@ import LockIcon from '@mui/icons-material/Lock';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SyncIcon from '@mui/icons-material/Sync';
 import EditNoteIcon from '@mui/icons-material/EditNote';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 
 import type { PlanSession } from './planningApi.ts';
 import cfl from '../../utils/helpers.ts';
@@ -24,6 +25,7 @@ function statusChipColor(key: string | undefined): StatusColor {
 interface Params {
     getString: GetStringFn;
     onOpenPlan: (row: PlanSession) => void;
+    onShowReport: (row: PlanSession) => void;
     onOpen: (row: PlanSession) => void;
     onClose: (row: PlanSession) => void;
     onRevert: (row: PlanSession) => void;
@@ -37,6 +39,7 @@ interface Params {
 export function usePlanSessionColumns({
     getString,
     onOpenPlan,
+    onShowReport,
     onOpen,
     onClose,
     onRevert,
@@ -94,7 +97,7 @@ export function usePlanSessionColumns({
         {
             field: '_actions',
             headerName: cfl(getString('actions')) || '',
-            width: 250,
+            width: 290,
             sortable: false,
             filterable: false,
             disableColumnMenu: true,
@@ -115,6 +118,19 @@ export function usePlanSessionColumns({
                                     disabled={!isOpen}
                                 >
                                     <EditNoteIcon fontSize="small" />
+                                </IconButton>
+                            </span>
+                        </Tooltip>
+
+                        {/* Plan vs Fact report — always available */}
+                        <Tooltip title={getString('showPlanReport') || 'Plan vs fact report'}>
+                            <span>
+                                <IconButton
+                                    size="small"
+                                    color="secondary"
+                                    onClick={(e) => { e.stopPropagation(); onShowReport(params.row); }}
+                                >
+                                    <AssessmentIcon fontSize="small" />
                                 </IconButton>
                             </span>
                         </Tooltip>

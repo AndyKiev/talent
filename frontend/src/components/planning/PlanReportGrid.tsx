@@ -1,35 +1,40 @@
-// src/components/planning/PlanScopeGrid.tsx
-import { useCallback, useMemo, useState } from 'react';
+// src/components/planning/PlanReportGrid.tsx
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
     Alert,
     Autocomplete,
     Box,
-    Chip,
+    Button,
     CircularProgress,
     Paper,
-    Snackbar,
     TextField,
-    ToggleButton,
-    ToggleButtonGroup,
     Typography,
 } from '@mui/material';
-import LockIcon from '@mui/icons-material/Lock';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import GridOnIcon from '@mui/icons-material/GridOn';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { DataGrid } from '@mui/x-data-grid';
 
 import {
-    fetchPlanScopesBySession,
-    type PlanScope,
+    fetchPlanReportBySession,
+    type PlanReportRow,
     type PlanSession,
 } from './planningApi';
-import { usePlanScopeMutations } from './usePlanScopeMutations';
-import { usePlanScopeColumns, type ScopeEditingState } from './usePlanScopeColumns';
-import { PlanScopeDeleteDialog } from './PlanScopeDeleteDialog';
+import { fetchPlanMatrixBySession } from './planMatrixApi';
+import PlanMatrixGrid from './PlanMatrixGrid';
+import { usePlanReportColumns } from './usePlanReportColumns';
 import { useDataGridLocale } from '../../hooks/useDataGridLocale';
-import { PLAN_SCOPE_QK } from '../../utils/queryKeys.ts';
 import useString from '../../hooks/useString';
 import str from '../../strings/str';
 import cfl from '../../utils/helpers.ts';
+
+// Local query keys — keep report/matrix caches separate from the scope grid.
+const PLAN_REPORT_QK = ['plan_report'] as const;
+const PLAN_MATRIX_QK = ['plan_matrix'] as const;
+
+// Sentinel id for the combined (talent_status = NULL) rows in the status filter.
+const COMBINED_TS_ID = -1;
 
 interface Props {
     session: PlanSession;
@@ -40,46 +45,36 @@ interface DeptOption {
     label: string;
 }
 
-type StatusFilter = 'all' | 'active' | 'inactive';
-
-// Sentinel id for the combined (talent_status = NULL) rows in the status filter.
-const COMBINED_TS_ID = -1;
-
-export function PlanScopeGrid({ session }: Props) {
+export function PlanReportGrid({ session }: Props) {
     const getString = useString({ str });
-    const editable = session.status?.key === 'open';
 
-    const [snackbar, setSnackbar] = useState({
-        open: false,
-        message: '',
-        severity: 'success' as 'success' | 'error',
-    });
-    const [editingState, setEditingState] = useState<ScopeEditingState>({ rowId: null });
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
     const [deptFilter, setDeptFilter] = useState<DeptOption | null>(null);
     const [jobGroupFilter, setJobGroupFilter] = useState<DeptOption | null>(null);
     const [talentStatusFilter, setTalentStatusFilter] = useState<DeptOption | null>(null);
     const [regionFilter, setRegionFilter] = useState<DeptOption | null>(null);
-    const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-    const [rowToDelete, setRowToDelete] = useState<PlanScope | null>(null);
+    const [showMatrix, setShowMatrix] = useState(false);
 
-    const { data: rows = [], isLoading, error } = useQuery({
-        queryKey: [...PLAN_SCOPE_QK, session.id],
-        queryFn: () => fetchPlanScopesBySession(session.id),
+    const {
+        data: matrix,
+        isLoading: matrixLoading,
+        error: matrixError,
+    } = useQuery({
+        queryKey: [...PLAN_MATRIX_QK, session.id],
+        queryFn: () => fetchPlanMatrixBySession(session.id),
+        enabled: showMatrix,
         staleTime: 60 * 1000,
     });
 
-    const { updateMutation, deleteMutation } = usePlanScopeMutations({
-        planSessionId: session.id,
-        setSnackbar,
-        onUpdateSuccess: () => setEditingState({ rowId: null }),
-        onDeleteSuccess: () => setRowToDelete(null),
-        onDeleteError: () => setRowToDelete(null),
+    const { data, isLoading, error } = useQuery({
+        queryKey: [...PLAN_REPORT_QK, session.id],
+        queryFn: () => fetchPlanReportBySession(session.id),
+        staleTime: 60 * 1000,
     });
 
+    const rows: PlanReportRow[] = data?.rows ?? [];
     const localeText = useDataGridLocale();
 
-    // Distinct departments present in this session's scopes (for the filter).
     const departmentOptions = useMemo<DeptOption[]>(() => {
         const map = new Map<number, string>();
         for (const r of rows) {
@@ -133,10 +128,8 @@ export function PlanScopeGrid({ session }: Props) {
             );
         }
         if (regionFilter) r = r.filter((x) => (x.region?.id ?? -1) === regionFilter.id);
-        if (statusFilter === 'active') r = r.filter((x) => x.is_active);
-        else if (statusFilter === 'inactive') r = r.filter((x) => !x.is_active);
         return r;
-    }, [rows, jobGroupFilter, deptFilter, talentStatusFilter, regionFilter, statusFilter]);
+    }, [rows, jobGroupFilter, deptFilter, talentStatusFilter, regionFilter]);
 
     const regionOptions = useMemo<DeptOption[]>(() => {
         const map = new Map<number, string>();
@@ -150,81 +143,60 @@ export function PlanScopeGrid({ session }: Props) {
         );
     }, [rows]);
 
-    const handleActivate = useCallback((rowId: number) => {
-        setEditingState({ rowId });
-    }, []);
+    const columns = usePlanReportColumns({ getString });
 
-    const handleCancel = useCallback(() => {
-        setEditingState({ rowId: null });
-    }, []);
-
-    const handleConfirmDelete = useCallback(() => {
-        if (!rowToDelete) return;
-        deleteMutation.mutate(rowToDelete.id);
-    }, [rowToDelete, deleteMutation]);
-
-    const handleCommit = useCallback(
-        (row: PlanScope, newValue: string) => {
-            const trimmed = newValue.trim();
-            const current = row.value == null ? '' : String(row.value);
-            // No-op if unchanged — just close the editor.
-            if (trimmed === current) {
-                setEditingState({ rowId: null });
-                return;
-            }
-            if (trimmed === '') {
-                updateMutation.mutate({ id: row.id, data: { value: null } });
-                return;
-            }
-            const parsed = Number(trimmed);
-            if (!Number.isInteger(parsed) || parsed < 0 || parsed > 100) {
-                setSnackbar({
-                    open: true,
-                    message: getString('planValueOutOfRange') || 'Value must be an integer between 0 and 100',
-                    severity: 'error',
-                });
-                setEditingState({ rowId: null });
-                return;
-            }
-            updateMutation.mutate({ id: row.id, data: { value: parsed } });
-        },
-        [updateMutation, getString],
-    );
-
-    const columns = usePlanScopeColumns({
-        getString,
-        editable,
-        editingState,
-        onActivate: handleActivate,
-        onCommit: handleCommit,
-        onCancel: handleCancel,
-        onDeleteClick: setRowToDelete,
-        updateIsPending: updateMutation.isPending,
-        deleteIsPending: deleteMutation.isPending,
-    });
+    // Pivot matrix view (store departments) — temporary back button until the
+    // breadcrumb is wired to this sub-view.
+    if (showMatrix) {
+        return (
+            <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+                <Box sx={{ mb: 1 }}>
+                    <Button
+                        variant="text"
+                        size="small"
+                        startIcon={<ArrowBackIcon />}
+                        onClick={() => setShowMatrix(false)}
+                    >
+                        {getString('backToReportGrid') || 'Back to grid'}
+                    </Button>
+                </Box>
+                {matrixLoading && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                        <CircularProgress />
+                    </Box>
+                )}
+                {!matrixLoading && matrixError && (
+                    <Alert severity="error" sx={{ m: 2 }}>
+                        {(matrixError as Error).message}
+                    </Alert>
+                )}
+                {!matrixLoading && !matrixError && matrix && (
+                    matrix.data.length === 0 ? (
+                        <Box sx={{ p: 4, textAlign: 'center' }}>
+                            <Typography variant="body2" color="text.secondary">
+                                {getString('noStoreMatrixRows') ||
+                                    'No store departments with plan values for this session.'}
+                            </Typography>
+                        </Box>
+                    ) : (
+                        <Box sx={{ width: '100%' }}>
+                            <PlanMatrixGrid matrix={matrix} />
+                        </Box>
+                    )
+                )}
+            </Box>
+        );
+    }
 
     return (
         <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, flexWrap: 'wrap' }}>
+                <AssessmentIcon color="action" />
                 <Typography variant="h6" fontWeight={600} sx={{ flex: 1 }}>
-                    {cfl(getString('planValues')) || 'Plan Values'} — {session.name}
+                    {cfl(getString('planVsFact')) || 'Plan vs Fact'} — {session.name}
                 </Typography>
-                {!editable && (
-                    <Chip
-                        icon={<LockIcon fontSize="small" />}
-                        label={
-                            session.status?.key === 'pending'
-                                ? getString('sessionPendingLocked') || 'Pending — open to edit'
-                                : getString('sessionClosedLocked') || 'Closed — revert to edit'
-                        }
-                        size="small"
-                        color="default"
-                        variant="outlined"
-                    />
-                )}
             </Box>
 
-            {/* Filters: department (searchable single-select) + status toggle */}
             <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
                 <Autocomplete<DeptOption>
                     options={departmentOptions}
@@ -277,6 +249,7 @@ export function PlanScopeGrid({ session }: Props) {
                         />
                     )}
                 />
+
                 <Autocomplete<DeptOption>
                     options={regionOptions}
                     value={regionFilter}
@@ -294,16 +267,16 @@ export function PlanScopeGrid({ session }: Props) {
                         />
                     )}
                 />
-                <ToggleButtonGroup
+
+                <Button
+                    variant="outlined"
                     size="small"
-                    exclusive
-                    value={statusFilter}
-                    onChange={(_, val: StatusFilter | null) => { if (val) setStatusFilter(val); }}
+                    startIcon={<GridOnIcon />}
+                    onClick={() => setShowMatrix(true)}
+                    sx={{ ml: 'auto' }}
                 >
-                    <ToggleButton value="all">{getString('filterAll') || 'All'}</ToggleButton>
-                    <ToggleButton value="active">{getString('active') || 'Active'}</ToggleButton>
-                    <ToggleButton value="inactive">{getString('inactive') || 'Inactive'}</ToggleButton>
-                </ToggleButtonGroup>
+                    {getString('storePivotReport') || 'Store pivot'}
+                </Button>
             </Box>
 
             {isLoading && (
@@ -323,8 +296,8 @@ export function PlanScopeGrid({ session }: Props) {
                     {rows.length === 0 ? (
                         <Box sx={{ p: 4, textAlign: 'center' }}>
                             <Typography variant="body2" color="text.secondary">
-                                {getString('noPlanScopesYet') ||
-                                    'No plan rows. Configure category and scope defaults, then create a session.'}
+                                {getString('noPlanReportRows') ||
+                                    'No plan rows with values yet. Set plan values to see plan vs fact.'}
                             </Typography>
                         </Box>
                     ) : (
@@ -335,7 +308,7 @@ export function PlanScopeGrid({ session }: Props) {
                             onPaginationModelChange={setPaginationModel}
                             pageSizeOptions={[10, 25, 50, 100]}
                             disableRowSelectionOnClick
-                            getRowId={(row) => row.id}
+                            getRowId={(row) => row.plan_scope_id}
                             getRowHeight={() => 'auto'}
                             localeText={localeText}
                             hideFooterSelectedRowCount
@@ -344,28 +317,6 @@ export function PlanScopeGrid({ session }: Props) {
                     )}
                 </Paper>
             )}
-
-            <PlanScopeDeleteDialog
-                row={rowToDelete}
-                isPending={deleteMutation.isPending}
-                onConfirm={handleConfirmDelete}
-                onCancel={() => setRowToDelete(null)}
-            />
-
-            <Snackbar
-                open={snackbar.open}
-                autoHideDuration={6000}
-                onClose={() => setSnackbar((p) => ({ ...p, open: false }))}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            >
-                <Alert
-                    severity={snackbar.severity}
-                    onClose={() => setSnackbar((p) => ({ ...p, open: false }))}
-                    sx={{ width: '100%' }}
-                >
-                    {snackbar.message}
-                </Alert>
-            </Snackbar>
         </Box>
     );
 }
