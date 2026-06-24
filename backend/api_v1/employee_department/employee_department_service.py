@@ -27,6 +27,13 @@ from backend.api_v1.employee_department.employee_department_success import (
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 
+# Top-level org-unit derivation (board / directorate / store).
+from backend.api_v1.department.department_repository import DepartmentRepository
+from backend.api_v1.department.department_org_units import (
+    resolve_top_org_unit,
+    DepartmentIndex,
+)
+
 
 def _link_label(department_id: int) -> str:
     """Human-readable identifier used in success/error messages."""
@@ -45,8 +52,22 @@ class EmployeeDepartmentService(BaseService):
 
     # ── Internal helpers ───────────────────────────────────────────────────────
 
-    def _to_schema(self, orm_record) -> EmployeeDepartmentSchema:
-        return EmployeeDepartmentSchema.model_validate(orm_record)
+    async def _get_org_index(self) -> DepartmentIndex:
+        """Flat department index (id -> (parent_id, name, category_key)) for
+        deriving each assignment's top-level org unit. Uses the repository's
+        session (always present) rather than self.session, which can be None on
+        sessionless construction paths."""
+        dept_repo = DepartmentRepository(session=self.repository.session)
+        return await dept_repo.get_org_unit_index()
+
+    def _to_schema(
+        self, orm_record, org_index: DepartmentIndex
+    ) -> EmployeeDepartmentSchema:
+        schema = EmployeeDepartmentSchema.model_validate(orm_record)
+        schema.top_department = resolve_top_org_unit(
+            orm_record.department_id, org_index
+        )
+        return schema
 
     async def _assert_double_is_free(
         self,
@@ -78,11 +99,13 @@ class EmployeeDepartmentService(BaseService):
             raise await self._resolve_domain_error(
                 EmployeeOrgUnitDepartmentNotFound(link_id)
             )
-        return self._to_schema(record)
+        org_index = await self._get_org_index()
+        return self._to_schema(record, org_index)
 
     async def get_by_employee(self, employee_id: int) -> List[EmployeeDepartmentSchema]:
         records = await self.repository.get_by_employee(employee_id)
-        return [self._to_schema(r) for r in records]
+        org_index = await self._get_org_index()
+        return [self._to_schema(r, org_index) for r in records]
 
     async def count_by_employee(self, employee_id: int) -> EmployeeDepartmentCount:
         count = await self.repository.count_by_employee(employee_id)
@@ -113,7 +136,8 @@ class EmployeeDepartmentService(BaseService):
             await self.repository.session.refresh(orm_record)
             orm_record = await self.repository.get_by_id(orm_record.id)
 
-            schema = self._to_schema(orm_record)
+            org_index = await self._get_org_index()
+            schema = self._to_schema(orm_record, org_index)
             label = _link_label(link_in.department_id)
             detail = await self._resolve_domain_success(
                 EmployeeOrgUnitDepartmentCreateSuccess(label)
@@ -151,7 +175,8 @@ class EmployeeDepartmentService(BaseService):
 
         try:
             updated = await self.update(orm_record, link_update, partial=True)
-            schema = self._to_schema(updated)
+            org_index = await self._get_org_index()
+            schema = self._to_schema(updated, org_index)
             label = _link_label(effective_department_id)
             detail = await self._resolve_domain_success(
                 EmployeeOrgUnitDepartmentUpdateSuccess(label)

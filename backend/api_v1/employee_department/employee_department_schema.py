@@ -7,6 +7,7 @@ from datetime import datetime
 from backend.api_v1.department.department_schema import (
     DepartmentFlat as DepartmentSchema,
 )
+from backend.api_v1.department.department_org_units import TopOrgUnit
 
 
 # ── Input schemas ──────────────────────────────────────────────────────────────
@@ -33,6 +34,9 @@ class EmployeeDepartmentSchema(BaseModel):
     is_main: bool
     created_at: datetime
     department: Optional[DepartmentSchema] = None
+    # Derived top-level org unit (board / directorate / store) for this
+    # assignment's department — resolved server-side by walking up the tree.
+    top_department: Optional[TopOrgUnit] = None
 
 
 # ── Count response ─────────────────────────────────────────────────────────────

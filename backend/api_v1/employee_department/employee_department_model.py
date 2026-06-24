@@ -28,6 +28,7 @@ class EmployeeDepartment(IntIdPkMixin, TimestampMixin, Base):
         UniqueConstraint(
             "employee_id",
             "department_id",
+            "is_main",
             name="uq_employee_department",
         ),
     )
