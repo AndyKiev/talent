@@ -10,9 +10,7 @@ if TYPE_CHECKING:
 
 class Process(IntIdPkMixin, TimestampMixin, Base):
     __tablename__ = "processes"
-    __table_args__ = (
-        UniqueConstraint("key", name="uq_process_key"),
-    )
+    __table_args__ = (UniqueConstraint("key", name="uq_process_key"),)
 
     name: Mapped[str] = mapped_column(String(128), nullable=False)
     key: Mapped[str | None] = mapped_column(String(64), nullable=True)

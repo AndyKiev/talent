@@ -25,6 +25,7 @@ class HrmScopeStartAfterEnd(DomainError):
 
 class HrmScopeEmployeeNotHrm(DomainError):
     """Refuse to scope an employee that does not hold the HRM group."""
+
     message_key = "hrmScopeEmployeeNotHrm"
 
     def __init__(self, employee_name: str) -> None:

@@ -16,6 +16,8 @@ from backend.api_v1.employee_department.employee_department_dependencies import 
 from backend.api_v1.employee_department.employee_department_service import (
     EmployeeDepartmentService,
 )
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 # All routes are nested under /employees/{employee_id}/departments
 router = APIRouter(
@@ -27,10 +29,14 @@ router = APIRouter(
 
 # ── Read ───────────────────────────────────────────────────────────────────────
 
+
 @router.get(
     "",
     response_model=List[EmployeeDepartmentSchema],
     summary="List all assignments for an employee",
+    dependencies=[
+        Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE, EssenceName.DEPARTMENT)
+    ],
 )
 async def get_employee_links(
     employee_id: int,
@@ -51,8 +57,10 @@ async def get_employee_links(
         "for the employee. Use this before creating a new link to decide "
         "whether to prompt the user for confirmation."
     ),
+    dependencies=[
+        Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE, EssenceName.DEPARTMENT)
+    ],
 )
-
 async def count_employee_links(
     employee_id: int,
     service: Annotated[
@@ -67,6 +75,9 @@ async def count_employee_links(
     "/{link_id}",
     response_model=EmployeeDepartmentSchema,
     summary="Get a single assignment by ID",
+    dependencies=[
+        Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE, EssenceName.DEPARTMENT)
+    ],
 )
 async def get_employee_link(
     record: EmployeeDepartmentSchema = Depends(link_by_id),
@@ -75,6 +86,7 @@ async def get_employee_link(
 
 
 # ── Write ──────────────────────────────────────────────────────────────────────
+
 
 @router.post(
     "",
@@ -86,6 +98,9 @@ async def get_employee_link(
         "Returns 409 if the exact triple already exists. "
         "Call GET /count first and confirm with the user if count > 0."
     ),
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.EMPLOYEE, EssenceName.DEPARTMENT)
+    ],
 )
 async def create_employee_link(
     employee_id: int,
@@ -106,6 +121,9 @@ async def create_employee_link(
         "Change the department of an existing link. "
         "Returns 409 if the resulting triple already exists for this employee."
     ),
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.EMPLOYEE, EssenceName.DEPARTMENT)
+    ],
 )
 async def update_employee_link(
     link_id: int,
@@ -123,6 +141,9 @@ async def update_employee_link(
     "/{link_id}",
     status_code=status.HTTP_200_OK,
     summary="Delete an assignment",
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.EMPLOYEE, EssenceName.DEPARTMENT)
+    ],
 )
 async def delete_employee_link(
     link_id: int,

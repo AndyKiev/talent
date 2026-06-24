@@ -13,6 +13,8 @@ from backend.api_v1.employee_status.employee_status_dependencies import (
     employee_status_by_id,
 )
 from backend.api_v1.employee_status.employee_status_service import EmployeeStatusService
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/employee_status",
@@ -21,7 +23,11 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[EmployeeStatusSchema])
+@router.get(
+    "",
+    response_model=List[EmployeeStatusSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE_STATUS)],
+)
 async def get_employee_statuses(
     service: Annotated[EmployeeStatusService, Depends(get_employee_status_service)],
     name: Optional[str] = None,
@@ -33,7 +39,11 @@ async def get_employee_statuses(
     return await service.get_employee_statuses(name=name, sort=sort)
 
 
-@router.get("/{employee_status_id}", response_model=EmployeeStatusSchema)
+@router.get(
+    "/{employee_status_id}",
+    response_model=EmployeeStatusSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE_STATUS)],
+)
 async def get_employee_status(
     record: EmployeeStatusSchema = Depends(employee_status_by_id),
 ):
@@ -44,6 +54,7 @@ async def get_employee_status(
     "",
     response_model=MutationResponse[EmployeeStatusSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.EMPLOYEE_STATUS)],
 )
 async def create_employee_status(
     status_in: EmployeeStatusCreate,
@@ -55,6 +66,7 @@ async def create_employee_status(
 @router.patch(
     "/{employee_status_id}",
     response_model=MutationResponse[EmployeeStatusSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.EMPLOYEE_STATUS)],
 )
 async def update_employee_status(
     type_update: EmployeeStatusUpdate,
@@ -66,7 +78,11 @@ async def update_employee_status(
     return await service.update_employee_status(record.id, type_update)
 
 
-@router.delete("/{employee_status_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{employee_status_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.EMPLOYEE_STATUS)],
+)
 async def delete_employee_status(
     employee_status_id: int,
     service: Annotated[EmployeeStatusService, Depends(get_employee_status_service)],

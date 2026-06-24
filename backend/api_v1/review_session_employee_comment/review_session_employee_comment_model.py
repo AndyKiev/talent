@@ -33,9 +33,7 @@ class ReviewSessionEmployeeComment(IntIdPkMixin, TimestampMixin, Base):
         ForeignKey("review_session_employees.id", ondelete="CASCADE"),
         nullable=False,
     )
-    author_id: Mapped[int] = mapped_column(
-        ForeignKey("employees.id"), nullable=False
-    )
+    author_id: Mapped[int] = mapped_column(ForeignKey("employees.id"), nullable=False)
     # Role the note was written under: 'oversight' (link_target 'employee') |
     # 'supervision' (link_target 'department'). Fixes the audience even if the
     # author later switches active mode.

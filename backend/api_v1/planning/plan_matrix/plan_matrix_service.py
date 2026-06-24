@@ -79,13 +79,17 @@ class PlanMatrixService(BaseService):
         # Job group → mode: by_status if any per-status (non-NULL) plan row
         # exists for it; otherwise total (only the combined row).
         jg_order: List[int] = []
-        jg_meta: Dict[int, Tuple[str, str]] = {}      # id -> (key, name)
+        jg_meta: Dict[int, Tuple[str, str]] = {}  # id -> (key, name)
         jg_by_status: Dict[int, bool] = {}
-        ts_meta: Dict[int, Tuple[str, str]] = {}      # id -> (key, name)
+        ts_meta: Dict[int, Tuple[str, str]] = {}  # id -> (key, name)
         dept_order: List[int] = []
         dept_name: Dict[int, str] = {}
-        dept_region: Dict[int, Optional[Tuple[str, str, str, int]]] = {}  # did -> (id,key,name,sort)
-        region_seen: Dict[int, Tuple[str, str, int]] = {}  # region_id -> (key,name,sort)
+        dept_region: Dict[int, Optional[Tuple[str, str, str, int]]] = (
+            {}
+        )  # did -> (id,key,name,sort)
+        region_seen: Dict[int, Tuple[str, str, int]] = (
+            {}
+        )  # region_id -> (key,name,sort)
 
         for s in scopes:
             if s.job_group_id not in jg_meta:
@@ -199,8 +203,10 @@ class PlanMatrixService(BaseService):
                         pct=_pct(fact_sum, tgt_sum),
                     )
                     g = gt_cells[jid]
-                    g["t_pa"] += t_pa; g["t_po"] += t_po
-                    g["f_pa"] += f_pa; g["f_po"] += f_po
+                    g["t_pa"] += t_pa
+                    g["t_po"] += t_po
+                    g["f_pa"] += f_pa
+                    g["f_po"] += f_po
                 else:
                     tv = plan_value.get((did, jid, None)) or 0
                     fv = fact_counts.get((did, jid, None), 0)

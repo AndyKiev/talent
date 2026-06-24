@@ -15,6 +15,8 @@ from backend.api_v1.planning.plan_session_status.plan_session_status_dependencie
 from backend.api_v1.planning.plan_session_status.plan_session_status_service import (
     PlanSessionStatusService,
 )
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/admin/plan_session_statuses",
@@ -23,15 +25,25 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[PlanSessionStatusSchema])
+@router.get(
+    "",
+    response_model=List[PlanSessionStatusSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.PLAN_SESSION_STATUS)],
+)
 async def get_plan_session_statuses(
-    service: Annotated[PlanSessionStatusService, Depends(get_plan_session_status_service)],
+    service: Annotated[
+        PlanSessionStatusService, Depends(get_plan_session_status_service)
+    ],
     sort: Optional[str] = Query(None, description='JSON: {"field": "asc|desc"}'),
 ):
     return await service.get_plan_session_statuses(sort=sort)
 
 
-@router.get("/{plan_session_status_id}", response_model=PlanSessionStatusSchema)
+@router.get(
+    "/{plan_session_status_id}",
+    response_model=PlanSessionStatusSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.PLAN_SESSION_STATUS)],
+)
 async def get_plan_session_status(
     record: PlanSessionStatusSchema = Depends(plan_session_status_by_id),
 ):
@@ -42,10 +54,13 @@ async def get_plan_session_status(
     "",
     response_model=MutationResponse[PlanSessionStatusSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.PLAN_SESSION_STATUS)],
 )
 async def create_plan_session_status(
     status_in: PlanSessionStatusCreate,
-    service: Annotated[PlanSessionStatusService, Depends(get_plan_session_status_service)],
+    service: Annotated[
+        PlanSessionStatusService, Depends(get_plan_session_status_service)
+    ],
 ):
     return await service.create_plan_session_status(status_in)
 
@@ -53,18 +68,27 @@ async def create_plan_session_status(
 @router.patch(
     "/{plan_session_status_id}",
     response_model=MutationResponse[PlanSessionStatusSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.PLAN_SESSION_STATUS)],
 )
 async def update_plan_session_status(
     status_update: PlanSessionStatusUpdate,
     record: PlanSessionStatusSchema = Depends(plan_session_status_by_id),
-    service: Annotated[PlanSessionStatusService, Depends(get_plan_session_status_service)] = None,
+    service: Annotated[
+        PlanSessionStatusService, Depends(get_plan_session_status_service)
+    ] = None,
 ):
     return await service.update_plan_session_status(record.id, status_update)
 
 
-@router.delete("/{plan_session_status_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{plan_session_status_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.PLAN_SESSION_STATUS)],
+)
 async def delete_plan_session_status(
     plan_session_status_id: int,
-    service: Annotated[PlanSessionStatusService, Depends(get_plan_session_status_service)],
+    service: Annotated[
+        PlanSessionStatusService, Depends(get_plan_session_status_service)
+    ],
 ):
     await service.delete_plan_session_status(plan_session_status_id)

@@ -3,7 +3,9 @@ from typing import Sequence
 from sqlalchemy import select
 
 from backend.api_v1.base.base_repository import BaseRepository
-from backend.api_v1.talent_audit_interview.talent_audit_interview_model import TalentAuditInterview
+from backend.api_v1.talent_audit_interview.talent_audit_interview_model import (
+    TalentAuditInterview,
+)
 
 
 class TalentAuditInterviewRepository(BaseRepository):

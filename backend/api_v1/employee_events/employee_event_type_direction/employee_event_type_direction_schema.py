@@ -16,6 +16,7 @@ class EmployeeEventTypeDirectionCreate(BaseModel):
     Used when configuring a new direction slot for an event type.
     `event_type_id` comes from the URL path, so it is not in the body.
     """
+
     direction_type_id: int
     is_required: bool = True
     sort_order: int = 0
@@ -28,6 +29,7 @@ class EmployeeEventTypeDirectionUpdate(BaseModel):
 
 class EmployeeEventTypeDirection(EmployeeEventTypeDirectionBase):
     """Full read schema — includes the resolved direction type."""
+
     model_config = ConfigDict(from_attributes=True)
     id: int
     direction_type: Optional["EmployeeEventDirectionType"] = None
@@ -38,6 +40,7 @@ class EmployeeEventTypeDirectionNested(BaseModel):
     Slim read schema — embedded inside EmployeeEventType to show
     which directions belong to it without circular nesting.
     """
+
     model_config = ConfigDict(from_attributes=True)
     id: int
     direction_type_id: int

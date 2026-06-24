@@ -1,4 +1,9 @@
-from backend.api_v1.base.success import DomainSuccess, DeleteSuccess, CreateSuccess, UpdateSuccess
+from backend.api_v1.base.success import (
+    DomainSuccess,
+    DeleteSuccess,
+    CreateSuccess,
+    UpdateSuccess,
+)
 
 
 class TalentAuditCreateSuccess(CreateSuccess):
@@ -6,7 +11,9 @@ class TalentAuditCreateSuccess(CreateSuccess):
 
     def __init__(self, employee_id: int) -> None:
         self.template_vars = {"employeeId": employee_id}
-        self.fallback = f"Talent audit for employee ID {employee_id} successfully created"
+        self.fallback = (
+            f"Talent audit for employee ID {employee_id} successfully created"
+        )
         DomainSuccess.__init__(self, self.fallback)
 
 

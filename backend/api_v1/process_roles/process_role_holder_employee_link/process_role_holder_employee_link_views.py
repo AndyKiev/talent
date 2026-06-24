@@ -31,7 +31,9 @@ async def get_links(
     process_role_holder_id: Optional[int] = None,
     process_role_id: Optional[int] = None,
     employee_id: Optional[int] = None,
-    sort: Optional[str] = Query(None, description='JSON sort, e.g. {"created_at": "desc"}'),
+    sort: Optional[str] = Query(
+        None, description='JSON sort, e.g. {"created_at": "desc"}'
+    ),
 ):
     return await service.get_links(
         process_role_holder_id=process_role_holder_id,
@@ -64,9 +66,7 @@ async def reorder_links(
         Depends(get_process_role_holder_employee_link_service),
     ],
 ):
-    return await service.set_order(
-        payload.process_role_holder_id, payload.ordered_ids
-    )
+    return await service.set_order(payload.process_role_holder_id, payload.ordered_ids)
 
 
 @router.delete("/{link_id}", status_code=status.HTTP_200_OK)

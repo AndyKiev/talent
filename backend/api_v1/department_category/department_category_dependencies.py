@@ -6,8 +6,12 @@ from backend.api_v1.department_category.department_category_schema import (
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
 from backend.database.db_helper import db_helper
-from backend.api_v1.department_category.department_category_repository import DepartmentCategoryRepository
-from backend.api_v1.department_category.department_category_service import DepartmentCategoryService
+from backend.api_v1.department_category.department_category_repository import (
+    DepartmentCategoryRepository,
+)
+from backend.api_v1.department_category.department_category_service import (
+    DepartmentCategoryService,
+)
 from backend.auth.jwt_auth import get_current_active_auth_user
 
 

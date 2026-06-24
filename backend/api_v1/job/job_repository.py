@@ -6,7 +6,9 @@ from sqlalchemy.orm import selectinload
 from backend.api_v1.base.base_repository import BaseRepository
 from backend.api_v1.job.job_model import Job
 from backend.api_v1.user_group.user_group_model import UserGroup
-from backend.api_v1.table_relationship_links.job_user_group_link_model import JobUserGroupLink
+from backend.api_v1.table_relationship_links.job_user_group_link_model import (
+    JobUserGroupLink,
+)
 from backend.api_v1.department_type_job_link.department_type_job_link_model import (
     DepartmentTypeJobLink,
 )

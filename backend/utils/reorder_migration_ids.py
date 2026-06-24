@@ -33,7 +33,7 @@ def extract_parens(text: str, start: int):
         elif text[j] == ")":
             depth -= 1
             if depth == 0:
-                return text[start: j + 1], j + 1
+                return text[start : j + 1], j + 1
         j += 1
     return text[start:], len(text)
 
@@ -67,7 +67,7 @@ def reorder_block(block: str) -> str:
     indent = m.group(1)
 
     paren_pos = block.index("(")
-    inner_str = block[paren_pos + 1: block.rfind(")")]
+    inner_str = block[paren_pos + 1 : block.rfind(")")]
     args = split_top_level(inner_str)
     if not args:
         return block
@@ -103,7 +103,7 @@ def process_file(path: Path) -> None:
             break
 
         rel = m.start()
-        parts.append(text[i: i + rel])
+        parts.append(text[i : i + rel])
         abs_start = i + rel
 
         paren_pos = abs_start + len("op.create_table")

@@ -70,7 +70,9 @@ class EmployeeStatusService(BaseService):
             )
             return MutationResponse(detail=detail, data=schema)
         except IntegrityError:
-            raise await self._resolve_domain_error(EmployeeStatusNameTaken(status_in.name))
+            raise await self._resolve_domain_error(
+                EmployeeStatusNameTaken(status_in.name)
+            )
 
     async def update_employee_status(
         self, status_id: int, type_update: EmployeeStatusUpdate

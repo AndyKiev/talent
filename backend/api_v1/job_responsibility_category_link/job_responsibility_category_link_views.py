@@ -16,6 +16,8 @@ from backend.api_v1.job_responsibility_category_link.job_responsibility_category
 from backend.api_v1.job_responsibility_category_link.job_responsibility_category_link_service import (
     JobResponsibilityCategoryLinkService,
 )
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/job_responsibility_category_links",
@@ -24,7 +26,13 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[JobResponsibilityCategoryLinkSchema])
+@router.get(
+    "",
+    response_model=List[JobResponsibilityCategoryLinkSchema],
+    dependencies=[
+        Guard(OperationVerb.VIEW, EssenceName.JOB, EssenceName.DEPARTMENT_CATEGORY)
+    ],
+)
 async def get_links(
     service: Annotated[
         JobResponsibilityCategoryLinkService,
@@ -47,6 +55,9 @@ async def get_links(
 @router.get(
     "/by_job/{job_id}/categories",
     response_model=List[ResponsibilityCategoryOption],
+    dependencies=[
+        Guard(OperationVerb.VIEW, EssenceName.JOB, EssenceName.DEPARTMENT_CATEGORY)
+    ],
 )
 async def get_categories_for_job(
     job_id: int,
@@ -66,6 +77,9 @@ async def get_categories_for_job(
 @router.get(
     "/{job_responsibility_category_link_id}",
     response_model=JobResponsibilityCategoryLinkSchema,
+    dependencies=[
+        Guard(OperationVerb.VIEW, EssenceName.JOB, EssenceName.DEPARTMENT_CATEGORY)
+    ],
 )
 async def get_link(
     record: JobResponsibilityCategoryLinkSchema = Depends(
@@ -79,6 +93,9 @@ async def get_link(
     "",
     response_model=MutationResponse[JobResponsibilityCategoryLinkSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.JOB, EssenceName.DEPARTMENT_CATEGORY)
+    ],
 )
 async def create_link(
     link_in: JobResponsibilityCategoryLinkCreate,
@@ -93,6 +110,9 @@ async def create_link(
 @router.patch(
     "/{job_responsibility_category_link_id}",
     response_model=MutationResponse[JobResponsibilityCategoryLinkSchema],
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.JOB, EssenceName.DEPARTMENT_CATEGORY)
+    ],
 )
 async def update_link(
     link_update: JobResponsibilityCategoryLinkUpdate,
@@ -110,6 +130,9 @@ async def update_link(
 @router.delete(
     "/{job_responsibility_category_link_id}",
     status_code=status.HTTP_200_OK,
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.JOB, EssenceName.DEPARTMENT_CATEGORY)
+    ],
 )
 async def delete_link(
     job_responsibility_category_link_id: int,

@@ -28,9 +28,7 @@ class EmployeeUserGroupLinkRepository(BaseRepository):
             )
         ).scalar_one_or_none()
 
-    async def get_by_employee(
-        self, employee_id: int
-    ) -> List[EmployeeUserGroupLink]:
+    async def get_by_employee(self, employee_id: int) -> List[EmployeeUserGroupLink]:
         """All links for one employee, with the user_group (+ its type) eager-loaded."""
         stmt = (
             select(EmployeeUserGroupLink)

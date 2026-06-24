@@ -123,7 +123,9 @@ class ReviewSessionEmployeeService(BaseService):
             schema.employee_name = record.employee.name
             schema.employee_code = record.employee.code
         evals = getattr(record, "evaluations", []) or []
-        schema.scored_count = sum(1 for e in evals if e.score is not None and e.score > 0)
+        schema.scored_count = sum(
+            1 for e in evals if e.score is not None and e.score > 0
+        )
         schema.facts_count = sum(1 for e in evals if e.facts and e.facts.strip())
         schema.total_dimensions = len(evals)
         # queue_position is filled by get_session_employees from the reviewer's
@@ -162,7 +164,9 @@ class ReviewSessionEmployeeService(BaseService):
             if dept_id is None:
                 return visible  # supervision on but no department picked yet
             dept_service = ProcessRoleHolderDepartmentLinkService(
-                repository=ProcessRoleHolderDepartmentLinkRepository(session=self.session),
+                repository=ProcessRoleHolderDepartmentLinkRepository(
+                    session=self.session
+                ),
                 user=self.user,
                 session=self.session,
             )
@@ -179,7 +183,9 @@ class ReviewSessionEmployeeService(BaseService):
             ).get_main_employee_ids_in_departments(subtree)
         else:
             roster_service = ProcessRoleHolderEmployeeLinkService(
-                repository=ProcessRoleHolderEmployeeLinkRepository(session=self.session),
+                repository=ProcessRoleHolderEmployeeLinkRepository(
+                    session=self.session
+                ),
                 user=self.user,
                 session=self.session,
             )
@@ -464,8 +470,10 @@ class ReviewSessionEmployeeService(BaseService):
         birth = getattr(emp, "birth_date", None)
         age = None
         if birth:
-            age = today.year - birth.year - (
-                (today.month, today.day) < (birth.month, birth.day)
+            age = (
+                today.year
+                - birth.year
+                - ((today.month, today.day) < (birth.month, birth.day))
             )
         children_rows = (
             await self.session.scalars(
@@ -474,23 +482,17 @@ class ReviewSessionEmployeeService(BaseService):
         ).all()
         children = None
         if children_rows:
-            ages = sorted(
-                (today.year - c.birth_date.year) for c in children_rows
-            )
+            ages = sorted((today.year - c.birth_date.year) for c in children_rows)
             children = ", ".join(f"{a} р." for a in ages)
 
-        education = (
-            await self.session.scalar(
-                select(EmployeeEducation)
-                .where(EmployeeEducation.employee_id == emp_id)
-                .order_by(EmployeeEducation.graduation_year.desc())
-            )
+        education = await self.session.scalar(
+            select(EmployeeEducation)
+            .where(EmployeeEducation.employee_id == emp_id)
+            .order_by(EmployeeEducation.graduation_year.desc())
         )
         education_str = None
         if education:
-            parts = [
-                p for p in (education.speciality, education.institution) if p
-            ]
+            parts = [p for p in (education.speciality, education.institution) if p]
             if education.graduation_year:
                 parts.append(str(education.graduation_year))
             education_str = ", ".join(parts)
@@ -665,7 +667,8 @@ class ReviewSessionEmployeeService(BaseService):
         hire = getattr(emp, "hire_date", None) if emp else None
         if hire:
             tenure = str(
-                today.year - hire.year
+                today.year
+                - hire.year
                 - ((today.month, today.day) < (hire.month, hire.day))
             )
 
@@ -692,7 +695,9 @@ class ReviewSessionEmployeeService(BaseService):
 
             def _job_months(j) -> int:
                 link = j.talent_status_period_link
-                return link.talent_period.qty_months if link and link.talent_period else 0
+                return (
+                    link.talent_period.qty_months if link and link.talent_period else 0
+                )
 
             for j in sorted(audit_jobs, key=_job_months):
                 link = j.talent_status_period_link
@@ -815,9 +820,7 @@ class ReviewSessionEmployeeService(BaseService):
     @staticmethod
     def _pascal_dim_key(key: str) -> str:
         """PEOPLE_PLANET -> PeoplePlanet (frontend competence-key convention)."""
-        return "".join(
-            part.capitalize() for part in str(key).split("_") if part
-        )
+        return "".join(part.capitalize() for part in str(key).split("_") if part)
 
     @staticmethod
     def _development_missions(

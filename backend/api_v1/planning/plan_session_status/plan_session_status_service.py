@@ -46,9 +46,7 @@ class PlanSessionStatusService(BaseService):
         """Resolve a status id from its stable key (no magic numbers)."""
         status_id = await self.repository.get_id_by_field("key", key)
         if status_id is None:
-            raise await self._resolve_domain_error(
-                PlanSessionStatusNotFoundByKey(key)
-            )
+            raise await self._resolve_domain_error(PlanSessionStatusNotFoundByKey(key))
         return status_id
 
     async def get_plan_session_statuses(

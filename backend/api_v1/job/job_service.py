@@ -28,7 +28,10 @@ from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 from fastapi import UploadFile
 from backend.api_v1.job.job_schema import JobBulkRow, JobBulkUploadResult
-from backend.api_v1.job.job_errors import JobBulkUploadNothingToInsert, JobBulkUploadInvalidFile
+from backend.api_v1.job.job_errors import (
+    JobBulkUploadNothingToInsert,
+    JobBulkUploadInvalidFile,
+)
 from backend.api_v1.job.job_success import JobBulkUploadSuccess
 
 
@@ -137,7 +140,6 @@ class JobService(BaseService):
         )
         return await user_service.sync_job_users_groups(job_id)
 
-
     async def bulk_upload_jobs(self, file: "UploadFile") -> "JobBulkUploadResult":
         """
         Parse an Excel file with columns [name, description], filter out rows
@@ -170,7 +172,9 @@ class JobService(BaseService):
 
         # Expect first row to be a header containing "name" and "description"
         try:
-            header = [str(c).strip().lower() if c is not None else "" for c in next(rows_iter)]
+            header = [
+                str(c).strip().lower() if c is not None else "" for c in next(rows_iter)
+            ]
         except StopIteration:
             raise await self._resolve_domain_error(
                 JobBulkUploadInvalidFile("File is empty.")
@@ -208,7 +212,7 @@ class JobService(BaseService):
             )
 
         # ── 2. Fetch existing jobs from the DB ────────────────────────────────
-        existing_jobs = await self.get_all()          # returns list of ORM Job objects
+        existing_jobs = await self.get_all()  # returns list of ORM Job objects
         existing_names: set[str] = {j.name.strip().lower() for j in existing_jobs}
         existing_descs: set[str] = {
             j.description.strip().lower()
@@ -225,10 +229,7 @@ class JobService(BaseService):
             if row.name.lower() in existing_names:
                 skipped_by_name.append(row.name)
                 continue
-            if (
-                row.description
-                and row.description.strip().lower() in existing_descs
-            ):
+            if row.description and row.description.strip().lower() in existing_descs:
                 skipped_by_desc.append(row.name)
                 continue
             to_insert.append(row)

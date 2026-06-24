@@ -17,6 +17,8 @@ from backend.api_v1.operation.operation_service import OperationService
 from backend.auth.jwt_auth import require_operation
 from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
 from backend.utils.enums import OperationTypes
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/operations",
@@ -25,7 +27,11 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[OperationSchema])
+@router.get(
+    "",
+    response_model=List[OperationSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.OPERATION)],
+)
 async def get_operations(
     service: Annotated[OperationService, Depends(get_operation_service)],
     name: Optional[str] = None,
@@ -33,7 +39,11 @@ async def get_operations(
     return await service.get_operations(name=name)
 
 
-@router.get("/{operation_id}", response_model=OperationSchema)
+@router.get(
+    "/{operation_id}",
+    response_model=OperationSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.OPERATION)],
+)
 async def get_operation(operation: OperationSchema = Depends(operation_by_id)):
     return operation
 
@@ -42,6 +52,7 @@ async def get_operation(operation: OperationSchema = Depends(operation_by_id)):
     "",
     response_model=MutationResponse[OperationSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.OPERATION)],
 )
 async def create_operation(
     operation_in: OperationCreate,
@@ -54,7 +65,11 @@ async def create_operation(
     return await service.create_operation(operation_in)
 
 
-@router.patch("/{operation_id}", response_model=MutationResponse[OperationSchema])
+@router.patch(
+    "/{operation_id}",
+    response_model=MutationResponse[OperationSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.OPERATION)],
+)
 async def update_operation(
     operation_update: OperationUpdate,
     operation: OperationSchema = Depends(operation_by_id),
@@ -67,7 +82,11 @@ async def update_operation(
     return await service.update_operation(operation.id, operation_update)
 
 
-@router.delete("/{operation_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{operation_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.OPERATION)],
+)
 async def delete_operation(
     operation_id: int,
     service: Annotated[OperationService, Depends(get_operation_service)],
@@ -79,7 +98,11 @@ async def delete_operation(
     await service.delete_operation(operation_id)
 
 
-@router.get("/{operation_id}/user_groups", response_model=List[str])
+@router.get(
+    "/{operation_id}/user_groups",
+    response_model=List[str],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.OPERATION)],
+)
 async def get_operation_user_groups(
     operation: OperationSchema = Depends(operation_by_id),
 ):
@@ -93,6 +116,9 @@ class OperationUserGroupsUpdate(BaseModel):
 @router.post(
     "/{operation_id}/user_groups/{user_group_id}",
     response_model=OperationSchema,
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.OPERATION, EssenceName.USER_GROUP)
+    ],
 )
 async def add_operation_to_user_group(
     user_group_id: int,
@@ -107,7 +133,11 @@ async def add_operation_to_user_group(
 
 
 @router.delete(
-    "/{operation_id}/user_groups/{user_group_id}", response_model=OperationSchema
+    "/{operation_id}/user_groups/{user_group_id}",
+    response_model=OperationSchema,
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.OPERATION, EssenceName.USER_GROUP)
+    ],
 )
 async def remove_operation_from_user_group(
     user_group_id: int,
@@ -121,7 +151,13 @@ async def remove_operation_from_user_group(
     return await service.remove_from_group(operation.id, user_group_id)
 
 
-@router.put("/{operation_id}/user_groups", response_model=OperationSchema)
+@router.put(
+    "/{operation_id}/user_groups",
+    response_model=OperationSchema,
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.OPERATION, EssenceName.USER_GROUP)
+    ],
+)
 async def set_operation_user_groups(
     groups_update: OperationUserGroupsUpdate,
     operation: OperationSchema = Depends(operation_by_id),

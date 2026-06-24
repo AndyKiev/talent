@@ -38,7 +38,7 @@ def upgrade() -> None:
             ["employees.id"],
             name=op.f("fk_employee_children_employee_id_employees"),
         ),
-        sa.PrimaryKeyConstraint("id", name=op.f("pk_employee_children"))
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_employee_children")),
     )
     op.add_column(
         "employee_personal_data",

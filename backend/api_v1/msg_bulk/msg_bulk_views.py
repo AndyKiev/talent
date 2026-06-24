@@ -8,6 +8,8 @@ from starlette.responses import StreamingResponse
 from backend.api_v1.msg_bulk.msg_bulk_dependencies import get_msg_bulk_service
 from backend.api_v1.msg_bulk.msg_bulk_schema import BulkImportResult
 from backend.api_v1.msg_bulk.msg_bulk_service import MsgBulkService
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(prefix="/msg_bulk", tags=["Message Bulk"])
 
@@ -15,6 +17,7 @@ ServiceDep = Annotated[MsgBulkService, Depends(get_msg_bulk_service)]
 
 
 # ── JSON ───────────────────────────────────────────────────────────────────────
+
 
 @router.get(
     "/export_json",
@@ -37,6 +40,7 @@ async def export_json(
     "/import_json_file",
     response_model=BulkImportResult,
     summary="Import translations from a .json file upload",
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.MSG_KEY, EssenceName.MSG)],
 )
 async def import_json_file(
     service: ServiceDep,
@@ -55,6 +59,7 @@ async def import_json_file(
     "/import_json_text",
     response_model=BulkImportResult,
     summary="Import translations from raw JSON text (paste from clipboard)",
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.MSG_KEY, EssenceName.MSG)],
 )
 async def import_json_text(
     service: ServiceDep,
@@ -68,6 +73,7 @@ async def import_json_text(
 
 
 # ── Excel ──────────────────────────────────────────────────────────────────────
+
 
 @router.get(
     "/export_excel",
@@ -90,6 +96,7 @@ async def export_excel(
     "/import_excel",
     response_model=BulkImportResult,
     summary="Import translations from an Excel (.xlsx) file upload",
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.MSG_KEY, EssenceName.MSG)],
 )
 async def import_excel(
     service: ServiceDep,

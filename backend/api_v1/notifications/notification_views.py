@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
 # ── Read-acknowledgement email config ─────────────────────────────────────────
-SEND_READ_EMAIL: bool = True          # set False to disable entirely
+SEND_READ_EMAIL: bool = True  # set False to disable entirely
 READ_EMAIL_RECIPIENT: str = "andrey.bakulin@gmail.com"
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -48,7 +48,9 @@ async def get_notifications(user_code: str = "UKR7101004"):
 async def mark_read(notification_id: str, user_code: str = "UKR7101004"):
     notification = store.mark_read(user_code, notification_id)
     if notification is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found"
+        )
     asyncio.create_task(_send_read_email(notification.message, user_code))
     return {"ok": True}
 
@@ -63,7 +65,9 @@ async def mark_all_read(user_code: str = "UKR7101004"):
 async def delete_notification(notification_id: str, user_code: str = "UKR7101004"):
     notification = store.delete_one(user_code, notification_id)
     if notification is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found"
+        )
     asyncio.create_task(_send_read_email(notification.message, user_code))
     return {"ok": True}
 
@@ -77,7 +81,10 @@ async def delete_all_notifications(user_code: str = "UKR7101004"):
 @router.post("/trigger_process")
 async def trigger_process(user_code: str = "UKR7101004"):
     asyncio.create_task(run_heavy_process())
-    return {"status": "started", "message": "Heavy process started, you will be notified when it finishes."}
+    return {
+        "status": "started",
+        "message": "Heavy process started, you will be notified when it finishes.",
+    }
 
 
 @router.websocket("/ws/{user_code}")
@@ -86,7 +93,9 @@ async def notification_ws(websocket: WebSocket, user_code: str):
     store.register_ws(user_code, websocket)
     try:
         # Send current notifications on connect
-        await websocket.send_json({"type": "init", "notifications": store.get_all(user_code)})
+        await websocket.send_json(
+            {"type": "init", "notifications": store.get_all(user_code)}
+        )
         # Keep connection alive — client messages are ignored
         while True:
             await websocket.receive_text()

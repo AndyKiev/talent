@@ -97,6 +97,7 @@ class EmployeeEventChangeService(BaseService):
                 from backend.api_v1.employee_events.employee_event_change_department.employee_event_change_department_repository import (
                     EmployeeEventChangeDepartmentRepository,
                 )
+
                 dept_repo = EmployeeEventChangeDepartmentRepository(
                     session=self.session
                 )

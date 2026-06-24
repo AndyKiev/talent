@@ -19,6 +19,7 @@ class EmployeeEventCreate(EmployeeEventBase):
     `employee_id` comes from the URL path; `created_by` is injected
     by the service from the authenticated HRM session.
     """
+
     changes: List["EmployeeEventChangeCreate"] = []
 
 
@@ -29,6 +30,7 @@ class EmployeeEventUpdate(BaseModel):
     `status_id` is also patchable directly for admin corrections.
     Changes are managed via their own nested endpoints.
     """
+
     status_id: Optional[int] = None
     effective_date: Optional[date] = None
     description: Optional[str] = Field(None, max_length=512)
@@ -50,6 +52,7 @@ class EmployeeEventFlat(EmployeeEventBase):
     Slim read schema for list views — omits the full changes tree.
     Use the detail endpoint to get the full change breakdown.
     """
+
     model_config = ConfigDict(from_attributes=True)
     id: int
     employee_id: int

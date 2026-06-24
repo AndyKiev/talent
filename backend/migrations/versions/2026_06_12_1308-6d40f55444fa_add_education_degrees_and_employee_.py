@@ -35,9 +35,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_education_degrees")),
-        sa.UniqueConstraint(
-            "name_key", name=op.f("uq_education_degrees_name_key")
-        )
+        sa.UniqueConstraint("name_key", name=op.f("uq_education_degrees_name_key")),
     )
     # Seed the three degrees. name_key matches the translation keys loaded into
     # the DB strings (degreeBachelor / degreeSpecialist / degreeMaster).
@@ -71,7 +69,7 @@ def upgrade() -> None:
             ["employees.id"],
             name=op.f("fk_employee_educations_employee_id_employees"),
         ),
-        sa.PrimaryKeyConstraint("id", name=op.f("pk_employee_educations"))
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_employee_educations")),
     )
     # ### end Alembic commands ###
 

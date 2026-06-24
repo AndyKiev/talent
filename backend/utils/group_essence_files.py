@@ -57,7 +57,9 @@ def find_files_by_suffix(api_v1_dir: Path, suffix: str) -> list[Path]:
 def build_header(file_path: Path, api_v1_dir: Path) -> str:
     """Build a readable section header showing the file's relative path."""
     try:
-        rel = file_path.relative_to(api_v1_dir.parent.parent)  # relative to project root
+        rel = file_path.relative_to(
+            api_v1_dir.parent.parent
+        )  # relative to project root
     except ValueError:
         rel = file_path
     return f"\n{SEPARATOR}\n# FILE: {rel}\n{SEPARATOR}\n"
@@ -72,7 +74,9 @@ def group_files(api_v1_dir: Path, output_dir: Path) -> None:
         files = find_files_by_suffix(api_v1_dir, suffix)
 
         if not files:
-            print(f"  ⚠️  No files found for suffix '{suffix}{FILE_EXTENSION}' — skipping.")
+            print(
+                f"  ⚠️  No files found for suffix '{suffix}{FILE_EXTENSION}' — skipping."
+            )
             continue
 
         output_file = output_dir / f"joint{suffix}.txt"
@@ -90,7 +94,9 @@ def group_files(api_v1_dir: Path, output_dir: Path) -> None:
                     out.write(f"# ERROR reading file: {exc}\n")
                 out.write("\n")
 
-        print(f"  ✅  {output_file.name:35s}  ({len(files)} file{'s' if len(files) != 1 else ''})")
+        print(
+            f"  ✅  {output_file.name:35s}  ({len(files)} file{'s' if len(files) != 1 else ''})"
+        )
         total_written += 1
 
     print(f"\n✨  Done — {total_written} joint file(s) written to: {output_dir}")
@@ -99,6 +105,7 @@ def group_files(api_v1_dir: Path, output_dir: Path) -> None:
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     project_root = get_project_root()

@@ -29,7 +29,9 @@ router = APIRouter(
 @router.get(
     "",
     response_model=List[DepartmentRegionLinkSchema],
-    dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT, EssenceName.REGION)],
+    dependencies=[
+        Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT, EssenceName.REGION)
+    ],
 )
 async def get_department_region_links(
     service: Annotated[
@@ -52,7 +54,9 @@ async def get_department_region_links(
 @router.get(
     "/by_department/{department_id}",
     response_model=DepartmentRegionLinkSchema,
-    dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT, EssenceName.REGION)],
+    dependencies=[
+        Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT, EssenceName.REGION)
+    ],
 )
 async def get_link_by_department(
     department_id: int,
@@ -67,7 +71,9 @@ async def get_link_by_department(
 @router.get(
     "/{department_region_link_id}",
     response_model=DepartmentRegionLinkSchema,
-    dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT, EssenceName.REGION)],
+    dependencies=[
+        Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT, EssenceName.REGION)
+    ],
 )
 async def get_department_region_link(
     record: DepartmentRegionLinkSchema = Depends(department_region_link_by_id),
@@ -79,7 +85,9 @@ async def get_department_region_link(
     "",
     response_model=MutationResponse[DepartmentRegionLinkSchema],
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Guard(OperationVerb.LINK, EssenceName.DEPARTMENT, EssenceName.REGION)],
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.DEPARTMENT, EssenceName.REGION)
+    ],
 )
 async def create_department_region_link(
     link_in: DepartmentRegionLinkCreate,
@@ -98,7 +106,9 @@ async def create_department_region_link(
 @router.patch(
     "/{department_region_link_id}",
     response_model=MutationResponse[DepartmentRegionLinkSchema],
-    dependencies=[Guard(OperationVerb.LINK, EssenceName.DEPARTMENT, EssenceName.REGION)],
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.DEPARTMENT, EssenceName.REGION)
+    ],
 )
 async def update_department_region_link(
     link_update: DepartmentRegionLinkUpdate,
@@ -114,7 +124,9 @@ async def update_department_region_link(
 @router.delete(
     "/{department_region_link_id}",
     status_code=status.HTTP_200_OK,
-    dependencies=[Guard(OperationVerb.LINK, EssenceName.DEPARTMENT, EssenceName.REGION)],
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.DEPARTMENT, EssenceName.REGION)
+    ],
 )
 async def delete_department_region_link(
     department_region_link_id: int,

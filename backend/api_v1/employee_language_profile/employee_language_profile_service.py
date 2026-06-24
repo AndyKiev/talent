@@ -5,7 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee_language.employee_language_model import EmployeeLanguage
-from backend.api_v1.employee_language.employee_language_schema import EmployeeLanguageItem
+from backend.api_v1.employee_language.employee_language_schema import (
+    EmployeeLanguageItem,
+)
 from backend.api_v1.employee_language_profile.employee_language_profile_model import (
     EmployeeLanguageProfile,
 )

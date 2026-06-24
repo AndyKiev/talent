@@ -7,6 +7,7 @@ from backend.api_v1.base.errors import (
     # DeleteError,
 )
 
+
 class MsgKeyNotFound(NotFoundError):
     message_key = "msgKeyNotFound"
 

@@ -50,8 +50,12 @@ def _prep(data: dict) -> dict:
         name, value, color = (c + (None,) * 3)[:3]
         pct = max(0.0, min(100.0, (float(value or 0) / max_grade) * 100))
         competences.append(
-            {"name": name, "value": _fmt_value(value), "pct": pct,
-             "color": color or "#1565C0"}
+            {
+                "name": name,
+                "value": _fmt_value(value),
+                "pct": pct,
+                "color": color or "#1565C0",
+            }
         )
 
     proposed = g("proposed_level")
@@ -83,11 +87,23 @@ def _prep(data: dict) -> dict:
         {"title": L.get("results"), "accent": False, "body": g("results_achievements")},
         {"title": L.get("not_achieved"), "accent": False, "body": g("not_achieved")},
         {"title": L.get("strengths"), "accent": True, "comps": g("strengths_items")},
-        {"title": L.get("development"), "accent": True, "comps": g("development_items")},
+        {
+            "title": L.get("development"),
+            "accent": True,
+            "comps": g("development_items"),
+        },
         {"title": L.get("idp"), "accent": True, "missions": idp},
         {"title": L.get("training"), "accent": False, "body": g("training_done")},
-        {"title": L.get("employee_feedback"), "accent": False, "body": g("employee_feedback")},
-        {"title": L.get("manager_feedback"), "accent": False, "body": g("manager_feedback")},
+        {
+            "title": L.get("employee_feedback"),
+            "accent": False,
+            "body": g("employee_feedback"),
+        },
+        {
+            "title": L.get("manager_feedback"),
+            "accent": False,
+            "body": g("manager_feedback"),
+        },
     ]
 
     reqs = []
@@ -329,6 +345,4 @@ def render_tempo_presentation(sheets_data: list[dict], title: str = "TEMPO") -> 
     if not sheets:
         sheets = []
     tmpl = _ENV.from_string(_DOC)
-    return tmpl.render(
-        title=title, css=_CSS, sheets=sheets, render_sheet=_render_sheet
-    )
+    return tmpl.render(title=title, css=_CSS, sheets=sheets, render_sheet=_render_sheet)

@@ -31,11 +31,13 @@ class PlanSessionCreate(PlanSessionBase):
     department_category_ids: optional explicit category selection. When empty
     or omitted, the service falls back to plan_category_defaults.
     """
+
     department_category_ids: Optional[List[int]] = None
 
 
 class PlanSessionResyncRequest(BaseModel):
     """Optional category ids to ADD to the session before reconciling."""
+
     add_category_ids: Optional[List[int]] = None
 
 

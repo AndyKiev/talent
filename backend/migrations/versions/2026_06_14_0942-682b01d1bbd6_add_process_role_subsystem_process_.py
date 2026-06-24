@@ -35,7 +35,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_processes")),
-        sa.UniqueConstraint("key", name="uq_process_key")
+        sa.UniqueConstraint("key", name="uq_process_key"),
     )
     op.create_table(
         "process_roles",
@@ -57,9 +57,7 @@ def upgrade() -> None:
             ondelete="RESTRICT",
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_process_roles")),
-        sa.UniqueConstraint(
-            "process_id", "key", name="uq_process_role_process_key"
-        )
+        sa.UniqueConstraint("process_id", "key", name="uq_process_role_process_key"),
     )
     op.create_index(
         op.f("ix_process_roles_process_id"),
@@ -101,7 +99,7 @@ def upgrade() -> None:
         sa.UniqueConstraint("id", "process_role_id", name="uq_prh_id_role"),
         sa.UniqueConstraint(
             "process_role_id", "holder_employee_id", name="uq_prh_role_holder"
-        )
+        ),
     )
     op.create_index(
         op.f("ix_process_role_holders_holder_employee_id"),
@@ -130,9 +128,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["employee_id"],
             ["employees.id"],
-            name=op.f(
-                "fk_process_role_holder_employee_links_employee_id_employees"
-            ),
+            name=op.f("fk_process_role_holder_employee_links_employee_id_employees"),
             ondelete="RESTRICT",
         ),
         sa.ForeignKeyConstraint(
@@ -149,7 +145,7 @@ def upgrade() -> None:
         ),
         sa.UniqueConstraint(
             "process_role_id", "employee_id", name="uq_prhe_role_employee"
-        )
+        ),
     )
     op.create_index(
         op.f("ix_process_role_holder_employee_links_employee_id"),
@@ -187,9 +183,7 @@ def downgrade() -> None:
         table_name="process_role_holders",
     )
     op.drop_table("process_role_holders")
-    op.drop_index(
-        op.f("ix_process_roles_process_id"), table_name="process_roles"
-    )
+    op.drop_index(op.f("ix_process_roles_process_id"), table_name="process_roles")
     op.drop_table("process_roles")
     op.drop_table("processes")
     # ### end Alembic commands ###

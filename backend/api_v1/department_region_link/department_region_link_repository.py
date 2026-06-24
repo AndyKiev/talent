@@ -23,9 +23,7 @@ class DepartmentRegionLinkRepository(BaseRepository):
             )
         ).scalar_one_or_none()
 
-    async def get_by_region_id(
-        self, region_id: int
-    ) -> List[DepartmentRegionLink]:
+    async def get_by_region_id(self, region_id: int) -> List[DepartmentRegionLink]:
         """All department links for a region."""
         result = await self.session.execute(
             select(DepartmentRegionLink).where(

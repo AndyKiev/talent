@@ -10,8 +10,12 @@ from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
 if TYPE_CHECKING:
     from backend.api_v1.employee.employee_model import Employee
     from backend.api_v1.talent_audit.talent_audit_model import TalentAudit
-    from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_model import TalentAuditInterviewStatus
-    from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_model import TalentAuditInterviewJob
+    from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_model import (
+        TalentAuditInterviewStatus,
+    )
+    from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_model import (
+        TalentAuditInterviewJob,
+    )
 
 
 class TalentAuditInterview(IntIdPkMixin, Base):

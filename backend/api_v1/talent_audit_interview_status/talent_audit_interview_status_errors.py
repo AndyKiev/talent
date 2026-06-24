@@ -1,4 +1,9 @@
-from backend.api_v1.base.errors import AlreadyExistsError, DeleteError, DomainError, NotFoundError
+from backend.api_v1.base.errors import (
+    AlreadyExistsError,
+    DeleteError,
+    DomainError,
+    NotFoundError,
+)
 
 
 class TalentAuditInterviewStatusNotFound(NotFoundError):
@@ -24,7 +29,9 @@ class TalentAuditInterviewStatusNameTaken(AlreadyExistsError):
 
     def __init__(self, name: str) -> None:
         self.template_vars = {"name": name}
-        self.fallback = f"Talent audit interview status with name '{name}' already exists"
+        self.fallback = (
+            f"Talent audit interview status with name '{name}' already exists"
+        )
         super().__init__("TalentAuditInterviewStatus", "name", name)
 
 

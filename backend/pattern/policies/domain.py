@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 
+
 @dataclass
 class User:
     name: str
@@ -7,6 +8,7 @@ class User:
     roles: set[str]
     has_mfa: bool
     subscription_tier: str
+
 
 @dataclass
 class Request:

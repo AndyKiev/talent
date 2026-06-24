@@ -37,25 +37,19 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["child_id"],
             ["department_types.id"],
-            name=op.f(
-                "fk_department_type_parental_links_child_id_department_types"
-            ),
+            name=op.f("fk_department_type_parental_links_child_id_department_types"),
         ),
         sa.ForeignKeyConstraint(
             ["parent_id"],
             ["department_types.id"],
-            name=op.f(
-                "fk_department_type_parental_links_parent_id_department_types"
-            ),
+            name=op.f("fk_department_type_parental_links_parent_id_department_types"),
         ),
-        sa.PrimaryKeyConstraint(
-            "id", name=op.f("pk_department_type_parental_links")
-        ),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_department_type_parental_links")),
         sa.UniqueConstraint(
             "child_id",
             "parent_id",
             name="uq_dept_type_parental_link_child_parent",
-        )
+        ),
     )
     # ### end Alembic commands ###
 

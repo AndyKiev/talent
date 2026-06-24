@@ -1,4 +1,9 @@
-from backend.api_v1.base.success import CreateSuccess, DeleteSuccess, DomainSuccess, UpdateSuccess
+from backend.api_v1.base.success import (
+    CreateSuccess,
+    DeleteSuccess,
+    DomainSuccess,
+    UpdateSuccess,
+)
 
 
 class TalentAuditInterviewStatusCreateSuccess(CreateSuccess):

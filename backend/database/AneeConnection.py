@@ -5,12 +5,12 @@ import cx_Oracle
 
 class AsyncAnneConnection:
     def __init__(
-            self,
-            user: str,
-            password: str,
-            hostname: str,
-            sid: str,
-            port: int = 1521,
+        self,
+        user: str,
+        password: str,
+        hostname: str,
+        sid: str,
+        port: int = 1521,
     ):
         self.user = user
         self.password = password
@@ -29,7 +29,7 @@ class AsyncAnneConnection:
                 cx_Oracle.connect,
                 self.user,
                 self.password,
-                cx_Oracle.makedsn(self.hostname, self.port, self.sid)
+                cx_Oracle.makedsn(self.hostname, self.port, self.sid),
             )
         self.cursor = self.db_conn.cursor()
         return self.cursor
@@ -59,7 +59,9 @@ async def main():
     async with db_anee_helper as cursor:
         # Run execute in thread pool since cx_Oracle is synchronous
         loop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, cursor.execute, "SELECT * FROM dboanee.agreement")
+        await loop.run_in_executor(
+            None, cursor.execute, "SELECT * FROM dboanee.agreement"
+        )
         rows = await loop.run_in_executor(None, cursor.fetchall)
         for row in rows:
             print(row)

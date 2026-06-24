@@ -12,7 +12,6 @@ if TYPE_CHECKING:
     from backend.api_v1.talent_audit_job.talent_audit_job_model import TalentAuditJob
 
 
-
 class TalentStatusPeriodLink(IntIdPkMixin, Base):
     __tablename__ = "talent_status_period_link"
     __table_args__ = (
@@ -54,7 +53,6 @@ class TalentStatusPeriodLink(IntIdPkMixin, Base):
         back_populates="talent_status_period_link",
         lazy="noload",
     )
-
 
     def __repr__(self) -> str:
         return (

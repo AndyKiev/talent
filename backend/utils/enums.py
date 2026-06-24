@@ -90,18 +90,19 @@ class OperationVerb(str, Enum):
     This enum is the *only* enum that must stay in sync with the DB seed.
     It should rarely grow — think twice before adding a new verb.
     """
-    VIEW    = "view"
-    CREATE  = "create"
-    COPY    = "copy"
-    MODIFY  = "modify"
-    DELETE  = "delete"
-    EXPORT  = "export"
+
+    VIEW = "view"
+    CREATE = "create"
+    COPY = "copy"
+    MODIFY = "modify"
+    DELETE = "delete"
+    EXPORT = "export"
     APPROVE = "approve"
-    APPLY   = "apply"
-    ASSIGN  = "assign"
-    LINK    = "link"
-    SYNC    = "sync"
-    REVERT  = "revert"
+    APPLY = "apply"
+    ASSIGN = "assign"
+    LINK = "link"
+    SYNC = "sync"
+    REVERT = "revert"
 
 
 class EssenceName(str, Enum):
@@ -111,29 +112,30 @@ class EssenceName(str, Enum):
     The string value must match the `name` column in the `essences` table
     (populated via seed / Alembic data migration).
     """
+
     # ── Language / messages ──────────────────────────────────────────────────
     LANG = "lang"
     MSG_KEY = "msg_key"
     MSG = "msg"
 
     # ── Auth / admin ──────────────────────────────────────────────────────────
-    USER_GROUP          = "user_group"
-    USER_GROUP_TYPE     = "user_group_type"
-    OPERATION           = "operation"
-    ESSENCE             = "essence"
+    USER_GROUP = "user_group"
+    USER_GROUP_TYPE = "user_group_type"
+    OPERATION = "operation"
+    ESSENCE = "essence"
 
     # ── HR core ──────────────────────────────────────────────────────────────
-    EMPLOYEE            = "employee"
-    EMPLOYEE_STATUS     = "employee_status"
-    DEPARTMENT          = "department"
-    DEPARTMENT_TYPE     = "department_type"
+    EMPLOYEE = "employee"
+    EMPLOYEE_STATUS = "employee_status"
+    DEPARTMENT = "department"
+    DEPARTMENT_TYPE = "department_type"
     DEPARTMENT_CATEGORY = "department_category"
-    JOB                 = "job"
-    JOB_GROUP           = "job_group"
-    JOB_GROUP_TYPE      = "job_group_type"
+    JOB = "job"
+    JOB_GROUP = "job_group"
+    JOB_GROUP_TYPE = "job_group_type"
 
     # ── HR events ────────────────────────────────────────────────────────────
-    EMPLOYEE_EVENT      = "employee_event"
+    EMPLOYEE_EVENT = "employee_event"
     EMPLOYEE_EVENT_TYPE = "employee_event_type"
     EMPLOYEE_EVENT_STATUS = "employee_event_status"
     EMPLOYEE_EVENT_DIRECTION_TYPE = "employee_event_direction_type"
@@ -141,33 +143,33 @@ class EssenceName(str, Enum):
     EMPLOYEE_EVENT_CHANGE_DEPT_TYPE = "employee_event_change_dept_type"
 
     # ── Talent audit ─────────────────────────────────────────────────────────
-    TALENT_AUDIT        = "talent_audit"
-    TALENT_AUDIT_JOB    = "talent_audit_job"
+    TALENT_AUDIT = "talent_audit"
+    TALENT_AUDIT_JOB = "talent_audit_job"
     TALENT_AUDIT_STATUS = "talent_audit_status"
-    TALENT_PERIOD       = "talent_period"
-    TALENT_STATUS       = "talent_status"
+    TALENT_PERIOD = "talent_period"
+    TALENT_STATUS = "talent_status"
     TALENT_AUDIT_JOB_STATUS = "talent_audit_job_status"
     TALENT_AUDIT_INTERVIEW_STATUS = "talent_audit_interview_status"
     TALENT_AUDIT_INTERVIEW = "talent_audit_interview"
 
     # ── Ported from talent-test ────────────────────────────────────────────────
-    HRM_SCOPE       = "hrm_scope"
-    REGION          = "region"
-    CHANGE_SESSION  = "change_session"
-    CHANGE_LOG      = "change_log"
+    HRM_SCOPE = "hrm_scope"
+    REGION = "region"
+    CHANGE_SESSION = "change_session"
+    CHANGE_LOG = "change_log"
 
     # ── Planning ─────────────────────────────────────────────────────────────
-    PLAN_SESSION       = "plan_session"
+    PLAN_SESSION = "plan_session"
     PLAN_SESSION_STATUS = "plan_session_status"
-    PLAN_SCOPE         = "plan_scope"
+    PLAN_SCOPE = "plan_scope"
     PLAN_SCOPE_DEFAULT = "plan_scope_default"
     PLAN_CATEGORY_DEFAULT = "plan_category_default"
 
 
 class PlanSessionStatusKey(str, Enum):
     PENDING = "pending"
-    OPEN    = "open"
-    CLOSED  = "closed"
+    OPEN = "open"
+    CLOSED = "closed"
 
 
 PLAN_SESSION_ACTIVE_STATUS_KEYS = frozenset(

@@ -15,9 +15,7 @@ class ProcessRoleActiveContext(IntIdPkMixin, TimestampMixin, Base):
     """
 
     __tablename__ = "process_role_active_contexts"
-    __table_args__ = (
-        UniqueConstraint("employee_id", name="uq_prac_employee"),
-    )
+    __table_args__ = (UniqueConstraint("employee_id", name="uq_prac_employee"),)
 
     employee_id: Mapped[int] = mapped_column(
         ForeignKey("employees.id", ondelete="RESTRICT"),

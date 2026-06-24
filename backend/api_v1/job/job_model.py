@@ -6,9 +6,15 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from backend.api_v1.employee.employee_model import Employee
-    from backend.api_v1.table_relationship_links.job_user_group_link_model import JobUserGroupLink
-    from backend.api_v1.department_type_job_link.department_type_job_link_model import DepartmentTypeJobLink
-    from backend.api_v1.job_job_group_link.job_job_group_link_model import JobJobGroupLink
+    from backend.api_v1.table_relationship_links.job_user_group_link_model import (
+        JobUserGroupLink,
+    )
+    from backend.api_v1.department_type_job_link.department_type_job_link_model import (
+        DepartmentTypeJobLink,
+    )
+    from backend.api_v1.job_job_group_link.job_job_group_link_model import (
+        JobJobGroupLink,
+    )
 
 
 class Job(IntIdPkMixin, TimestampMixin, Base):
@@ -39,7 +45,11 @@ class Job(IntIdPkMixin, TimestampMixin, Base):
 
     @property
     def department_types(self) -> list:
-        return [link.department_type for link in self._department_types if link.department_type]
+        return [
+            link.department_type
+            for link in self._department_types
+            if link.department_type
+        ]
 
     @property
     def department_type_links(self) -> list[dict]:

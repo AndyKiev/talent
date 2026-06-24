@@ -22,6 +22,7 @@ def camel_case_to_snake_case(input_str: str) -> str:
         chars.append(char.lower())
     return "".join(chars)
 
+
 def to_camel_case(text: str) -> str:
     """
     Convert snake_case or space-separated text to camelCase.
@@ -36,7 +37,9 @@ def to_camel_case(text: str) -> str:
     """
     if not text:
         return text
-    if not any(c in text for c in (" ", "_", "-")) and any(c.isupper() for c in text[1:]):
+    if not any(c in text for c in (" ", "_", "-")) and any(
+        c.isupper() for c in text[1:]
+    ):
         return text
     words = text.replace("_", " ").replace("-", " ").split()
     if not words:

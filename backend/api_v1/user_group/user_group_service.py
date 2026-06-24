@@ -109,7 +109,9 @@ class UserGroupService(BaseService):
     ) -> MutationResponse[UserGroupSchema]:
         existing = await self.repository.get_user_group_by_name(user_group_in.name)
         if existing:
-            raise await self._resolve_domain_error(UserGroupNameTaken(user_group_in.name))
+            raise await self._resolve_domain_error(
+                UserGroupNameTaken(user_group_in.name)
+            )
 
         user_group = self.repository.model(**user_group_in.model_dump())
         created = await self.repository.create(user_group)
@@ -118,10 +120,10 @@ class UserGroupService(BaseService):
         return MutationResponse(detail=detail, data=schema)
 
     async def update_user_group(
-            self,
-            user_group_id: int,
-            user_group_update: UserGroupUpdate,
-            partial: bool = False,
+        self,
+        user_group_id: int,
+        user_group_update: UserGroupUpdate,
+        partial: bool = False,
     ) -> MutationResponse[UserGroupSchema]:
         orm_group = await self.repository.get_user_group_by_id(user_group_id)
         if not orm_group:

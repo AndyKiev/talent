@@ -12,6 +12,7 @@ class TalentAuditInterviewJobBase(BaseModel):
 
 class TalentAuditInterviewJobCreate(BaseModel):
     """Used inside the interview creation payload — interview_id not yet known."""
+
     talent_audit_job_id: int
     talent_status_period_link_id: int
 
@@ -48,8 +49,9 @@ class TalentAuditInterviewJob(TalentAuditInterviewJobBase):
             period = getattr(link, "talent_period", None)
             if status and period:
                 # Set on the ORM object so from_attributes picks it up
-                object.__setattr__(obj, "hrs_status_period_label",
-                                   f"{status.key} - {period.name}")
+                object.__setattr__(
+                    obj, "hrs_status_period_label", f"{status.key} - {period.name}"
+                )
 
         # Job name + HRM label — from talent_audit_job relationship
         audit_job = getattr(obj, "talent_audit_job", None)
@@ -63,7 +65,10 @@ class TalentAuditInterviewJob(TalentAuditInterviewJobBase):
                 hrm_status = getattr(hrm_link, "talent_status", None)
                 hrm_period = getattr(hrm_link, "talent_period", None)
                 if hrm_status and hrm_period:
-                    object.__setattr__(obj, "hrm_status_period_label",
-                                       f"{hrm_status.key} - {hrm_period.name}")
+                    object.__setattr__(
+                        obj,
+                        "hrm_status_period_label",
+                        f"{hrm_status.key} - {hrm_period.name}",
+                    )
 
         return obj

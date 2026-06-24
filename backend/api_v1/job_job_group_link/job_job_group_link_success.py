@@ -15,7 +15,9 @@ class JobJobGroupLinkDeleteSuccess(DeleteSuccess):
 
     def __init__(self, job_name: str, group_name: str) -> None:
         self.template_vars = {"jobName": job_name, "groupName": group_name}
-        self.fallback = f"Job '{job_name}' successfully removed from group '{group_name}'"
+        self.fallback = (
+            f"Job '{job_name}' successfully removed from group '{group_name}'"
+        )
         DomainSuccess.__init__(self, self.fallback)
 
 

@@ -23,6 +23,7 @@ class EmployeeEventChangeCreate(EmployeeEventChangeBase):
     For RESPONSIBILITY_DEPTS_CHANGE the caller also provides `dept_changes`.
     `event_id` is set by the service from the parent event.
     """
+
     dept_changes: List["EmployeeEventChangeDepartmentCreate"] = []
 
 
@@ -32,6 +33,7 @@ class EmployeeEventChangeUpdate(BaseModel):
     may be updated. `direction_type_id` is immutable after creation.
     Department child rows are managed via their own nested endpoints.
     """
+
     prev_job_id: Optional[int] = None
     new_job_id: Optional[int] = None
     prev_status_id: Optional[int] = None
@@ -64,7 +66,9 @@ from backend.api_v1.employee_events.employee_event_direction_type.employee_event
     EmployeeEventDirectionType,
 )
 from backend.api_v1.job.job_schema import Job  # noqa: E402
-from backend.api_v1.employee_status.employee_status_schema import EmployeeStatus  # noqa: E402
+from backend.api_v1.employee_status.employee_status_schema import (
+    EmployeeStatus,
+)  # noqa: E402
 from backend.api_v1.department.department_schema import DepartmentFlat  # noqa: E402
 
 EmployeeEventChangeCreate.model_rebuild()

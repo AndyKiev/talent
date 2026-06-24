@@ -75,9 +75,7 @@ class PlanScopeService(BaseService):
                 PlanScopeSessionPending(session_name)
             )
         if status_row.key == PlanSessionStatusKey.CLOSED.value:
-            raise await self._resolve_domain_error(
-                PlanScopeSessionClosed(session_name)
-            )
+            raise await self._resolve_domain_error(PlanScopeSessionClosed(session_name))
 
     async def update_plan_scope(
         self, scope_id: int, scope_update: PlanScopeUpdate
@@ -86,7 +84,9 @@ class PlanScopeService(BaseService):
         await self._guard_session_open(orm_record.plan_session_id)
         if not orm_record.is_active:
             raise await self._resolve_domain_error(
-                PlanScopeInactive(_scope_label(PlanScopeSchema.model_validate(orm_record)))
+                PlanScopeInactive(
+                    _scope_label(PlanScopeSchema.model_validate(orm_record))
+                )
             )
         updated = await self.update(orm_record, scope_update, partial=True)
         schema = PlanScopeSchema.model_validate(updated)

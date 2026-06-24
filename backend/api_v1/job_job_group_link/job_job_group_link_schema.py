@@ -10,6 +10,7 @@ class JobJobGroupLinkCreate(BaseModel):
 
 class JobJobGroupLinkBulkSet(BaseModel):
     """Replace all job_group links for a given job at once."""
+
     job_group_ids: list[int]
 
 

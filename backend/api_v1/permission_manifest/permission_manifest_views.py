@@ -34,7 +34,9 @@ router = APIRouter(
 @router.get(
     "/permission_manifest",
     response_model=PermissionManifest,
-    dependencies=[Guard(OperationVerb.VIEW, EssenceName.OPERATION, EssenceName.ESSENCE)],
+    dependencies=[
+        Guard(OperationVerb.VIEW, EssenceName.OPERATION, EssenceName.ESSENCE)
+    ],
 )
 async def get_permission_manifest(
     request: Request,

@@ -50,7 +50,7 @@ def upgrade() -> None:
             "user_group_id",
             "operation_essence_link_id",
             name="uq_ugoel_group_oel",
-        )
+        ),
     )
     # ### end Alembic commands ###
 

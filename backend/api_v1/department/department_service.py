@@ -24,8 +24,12 @@ from backend.api_v1.department.department_success import (
     DepartmentCreateSuccess,
     DepartmentUpdateSuccess,
 )
-from backend.api_v1.department_category.department_category_schema import DepartmentCategory as DepartmentCategorySchema
-from backend.api_v1.department_type.department_type_schema import DepartmentType as DepartmentTypeSchema
+from backend.api_v1.department_category.department_category_schema import (
+    DepartmentCategory as DepartmentCategorySchema,
+)
+from backend.api_v1.department_type.department_type_schema import (
+    DepartmentType as DepartmentTypeSchema,
+)
 
 
 class DepartmentService(BaseService):
@@ -46,7 +50,9 @@ class DepartmentService(BaseService):
         sort: Optional[str] = None,
     ) -> List[DepartmentFlat]:
         if name:
-            record = await self.get_by_name(name, not_found_exc=DepartmentNotFoundByName)
+            record = await self.get_by_name(
+                name, not_found_exc=DepartmentNotFoundByName
+            )
             return [DepartmentFlat.model_validate(record)]
         filters = {}
         if is_active is not None:
@@ -84,11 +90,17 @@ class DepartmentService(BaseService):
                 department_category_id=dept.department_category_id,
                 department_type_id=dept.department_type_id,
                 created_at=dept.created_at,
-                department_category=DepartmentCategorySchema.model_validate(dept.department_category)
-                if dept.department_category else None,
-                department_type=DepartmentTypeSchema.model_validate(dept.department_type)
-                if dept.department_type else None,
-                children=[build_schema(child) for child in children_map[dept.id]]
+                department_category=(
+                    DepartmentCategorySchema.model_validate(dept.department_category)
+                    if dept.department_category
+                    else None
+                ),
+                department_type=(
+                    DepartmentTypeSchema.model_validate(dept.department_type)
+                    if dept.department_type
+                    else None
+                ),
+                children=[build_schema(child) for child in children_map[dept.id]],
             )
 
         return [build_schema(root) for root in roots]
@@ -115,11 +127,17 @@ class DepartmentService(BaseService):
                 department_category_id=dept.department_category_id,
                 department_type_id=dept.department_type_id,
                 created_at=dept.created_at,
-                department_category=DepartmentCategorySchema.model_validate(dept.department_category)
-                if dept.department_category else None,
-                department_type=DepartmentTypeSchema.model_validate(dept.department_type)
-                if dept.department_type else None,
-                children=[build_schema(child) for child in children_map[dept.id]]
+                department_category=(
+                    DepartmentCategorySchema.model_validate(dept.department_category)
+                    if dept.department_category
+                    else None
+                ),
+                department_type=(
+                    DepartmentTypeSchema.model_validate(dept.department_type)
+                    if dept.department_type
+                    else None
+                ),
+                children=[build_schema(child) for child in children_map[dept.id]],
             )
 
         return build_schema(node)
@@ -128,24 +146,32 @@ class DepartmentService(BaseService):
         self, department_id: int, new_parent_id: int, name: str
     ) -> None:
         if new_parent_id == department_id:
-            raise await self._resolve_domain_error(DepartmentCircularReferenceError(name))
+            raise await self._resolve_domain_error(
+                DepartmentCircularReferenceError(name)
+            )
         descendant_ids = await self.repository.get_descendant_ids(department_id)
         if new_parent_id in descendant_ids:
-            raise await self._resolve_domain_error(DepartmentCircularReferenceError(name))
+            raise await self._resolve_domain_error(
+                DepartmentCircularReferenceError(name)
+            )
 
     async def create_department(
-            self, dept_in: DepartmentCreate
+        self, dept_in: DepartmentCreate
     ) -> MutationResponse[DepartmentSchema]:
         try:
             record = await self.create(dept_in)
             schema = await self.get_department_tree_node(record.id)
-            detail = await self._resolve_domain_success(DepartmentCreateSuccess(schema.name))
+            detail = await self._resolve_domain_success(
+                DepartmentCreateSuccess(schema.name)
+            )
             return MutationResponse(detail=detail, data=schema)
         except IntegrityError:
-            raise await self._resolve_domain_error(DepartmentNotFound(dept_in.parent_id or 0))
+            raise await self._resolve_domain_error(
+                DepartmentNotFound(dept_in.parent_id or 0)
+            )
 
     async def update_department(
-            self, dept_id: int, dept_update: DepartmentUpdate
+        self, dept_id: int, dept_update: DepartmentUpdate
     ) -> MutationResponse[DepartmentSchema]:
         orm_record = await self.get_by_id(dept_id)
 
@@ -157,10 +183,14 @@ class DepartmentService(BaseService):
         try:
             await self.update(orm_record, dept_update, partial=True)
             schema = await self.get_department_tree_node(dept_id)
-            detail = await self._resolve_domain_success(DepartmentUpdateSuccess(schema.name))
+            detail = await self._resolve_domain_success(
+                DepartmentUpdateSuccess(schema.name)
+            )
             return MutationResponse(detail=detail, data=schema)
         except IntegrityError:
-            raise await self._resolve_domain_error(DepartmentNotFound(dept_update.parent_id or 0))
+            raise await self._resolve_domain_error(
+                DepartmentNotFound(dept_update.parent_id or 0)
+            )
 
     async def delete_department(self, dept_id: int) -> None:
         record = await self.get_by_id(dept_id)

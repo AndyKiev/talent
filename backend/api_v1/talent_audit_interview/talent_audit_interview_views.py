@@ -16,6 +16,8 @@ from backend.api_v1.talent_audit_interview.talent_audit_interview_schema import 
 from backend.api_v1.talent_audit_interview.talent_audit_interview_service import (
     TalentAuditInterviewService,
 )
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/talent_audit_interviews",
@@ -24,9 +26,15 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[TalentAuditInterviewSchema])
+@router.get(
+    "",
+    response_model=List[TalentAuditInterviewSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT_INTERVIEW)],
+)
 async def get_talent_audit_interviews(
-    service: Annotated[TalentAuditInterviewService, Depends(get_talent_audit_interview_service)],
+    service: Annotated[
+        TalentAuditInterviewService, Depends(get_talent_audit_interview_service)
+    ],
     sort: Optional[str] = Query(
         None,
         description='JSON for sorting: {"field": "asc|desc"} or [{"field1": "asc"}, "field2"]',
@@ -37,13 +45,17 @@ async def get_talent_audit_interviews(
 
 # ── Static path segments before dynamic /{id} ────────────────────────────────
 
+
 @router.get(
     "/by_talent_audit/{talent_audit_id}",
     response_model=List[TalentAuditInterviewSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT_INTERVIEW)],
 )
 async def get_interviews_by_audit(
     talent_audit_id: int,
-    service: Annotated[TalentAuditInterviewService, Depends(get_talent_audit_interview_service)],
+    service: Annotated[
+        TalentAuditInterviewService, Depends(get_talent_audit_interview_service)
+    ],
 ):
     return await service.get_by_talent_audit_id(talent_audit_id)
 
@@ -56,15 +68,22 @@ async def get_interviews_by_audit(
         "Returns talent_audit_job records that have 'created' status "
         "and are not yet linked to any interview."
     ),
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT_INTERVIEW)],
 )
 async def get_free_audit_jobs(
     talent_audit_id: int,
-    service: Annotated[TalentAuditInterviewService, Depends(get_talent_audit_interview_service)],
+    service: Annotated[
+        TalentAuditInterviewService, Depends(get_talent_audit_interview_service)
+    ],
 ):
     return await service.get_free_audit_jobs_for_audit(talent_audit_id)
 
 
-@router.get("/{talent_audit_interview_id}", response_model=TalentAuditInterviewSchema)
+@router.get(
+    "/{talent_audit_interview_id}",
+    response_model=TalentAuditInterviewSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT_INTERVIEW)],
+)
 async def get_talent_audit_interview(
     record: TalentAuditInterviewSchema = Depends(talent_audit_interview_by_id),
 ):
@@ -75,10 +94,13 @@ async def get_talent_audit_interview(
     "",
     response_model=MutationResponse[TalentAuditInterviewSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.TALENT_AUDIT_INTERVIEW)],
 )
 async def create_talent_audit_interview(
     interview_in: TalentAuditInterviewCreate,
-    service: Annotated[TalentAuditInterviewService, Depends(get_talent_audit_interview_service)],
+    service: Annotated[
+        TalentAuditInterviewService, Depends(get_talent_audit_interview_service)
+    ],
 ):
     return await service.create_talent_audit_interview(interview_in)
 
@@ -86,6 +108,7 @@ async def create_talent_audit_interview(
 @router.patch(
     "/{talent_audit_interview_id}",
     response_model=MutationResponse[TalentAuditInterviewSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.TALENT_AUDIT_INTERVIEW)],
 )
 async def update_talent_audit_interview(
     interview_update: TalentAuditInterviewUpdate,
@@ -97,9 +120,15 @@ async def update_talent_audit_interview(
     return await service.update_talent_audit_interview(record.id, interview_update)
 
 
-@router.delete("/{talent_audit_interview_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{talent_audit_interview_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.TALENT_AUDIT_INTERVIEW)],
+)
 async def delete_talent_audit_interview(
     talent_audit_interview_id: int,
-    service: Annotated[TalentAuditInterviewService, Depends(get_talent_audit_interview_service)],
+    service: Annotated[
+        TalentAuditInterviewService, Depends(get_talent_audit_interview_service)
+    ],
 ):
     await service.delete_talent_audit_interview(talent_audit_interview_id)

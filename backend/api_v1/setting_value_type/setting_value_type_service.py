@@ -52,7 +52,9 @@ class SettingValueTypeService(BaseService):
     ) -> MutationResponse[SettingValueTypeSchema]:
         existing = await self.repository.get_by_field("key", type_in.key)
         if existing:
-            raise await self._resolve_domain_error(SettingValueTypeKeyTaken(type_in.key))
+            raise await self._resolve_domain_error(
+                SettingValueTypeKeyTaken(type_in.key)
+            )
         try:
             record = await self.create(type_in)
             schema = SettingValueTypeSchema.model_validate(record)
@@ -61,7 +63,9 @@ class SettingValueTypeService(BaseService):
             )
             return MutationResponse(detail=detail, data=schema)
         except IntegrityError:
-            raise await self._resolve_domain_error(SettingValueTypeKeyTaken(type_in.key))
+            raise await self._resolve_domain_error(
+                SettingValueTypeKeyTaken(type_in.key)
+            )
 
     async def update_setting_value_type(
         self, type_id: int, type_update: SettingValueTypeUpdate

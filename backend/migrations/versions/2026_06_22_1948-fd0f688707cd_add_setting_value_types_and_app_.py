@@ -35,7 +35,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_setting_value_types")),
-        sa.UniqueConstraint("key", name=op.f("uq_setting_value_types_key"))
+        sa.UniqueConstraint("key", name=op.f("uq_setting_value_types_key")),
     )
     op.create_table(
         "app_settings",
@@ -66,7 +66,7 @@ def upgrade() -> None:
             ondelete="RESTRICT",
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_app_settings")),
-        sa.UniqueConstraint("key", name=op.f("uq_app_settings_key"))
+        sa.UniqueConstraint("key", name=op.f("uq_app_settings_key")),
     )
     # ### end Alembic commands ###
 

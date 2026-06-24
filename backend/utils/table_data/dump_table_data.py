@@ -83,7 +83,9 @@ def dump() -> None:
     engine = create_engine(_sync_url(), poolclass=None)
     metadata = MetaData()
 
-    print(f"Reflecting schema from {engine.url.render_as_string(hide_password=True)} ...")
+    print(
+        f"Reflecting schema from {engine.url.render_as_string(hide_password=True)} ..."
+    )
     metadata.reflect(bind=engine)
 
     # ``sorted_tables`` orders by FK dependency (parents before children).
@@ -109,10 +111,7 @@ def dump() -> None:
             ]
             primary_key = [col.name for col in table.primary_key.columns]
 
-            rows = [
-                dict(row._mapping)
-                for row in conn.execute(select(table))
-            ]
+            rows = [dict(row._mapping) for row in conn.execute(select(table))]
 
             export["tables"][table.name] = {
                 "columns": columns,

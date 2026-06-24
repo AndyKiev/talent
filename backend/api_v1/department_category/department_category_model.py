@@ -22,4 +22,6 @@ class DepartmentCategory(IntIdPkMixin, TimestampMixin, Base):
     )
 
     def __repr__(self) -> str:
-        return f"<DepartmentCategory(id={self.id}, name='{self.name}', key='{self.key}')>"
+        return (
+            f"<DepartmentCategory(id={self.id}, name='{self.name}', key='{self.key}')>"
+        )

@@ -4,12 +4,14 @@ from pydantic import BaseModel
 
 class PermissionRef(BaseModel):
     """A single (operation, essence-set) requirement on an endpoint."""
+
     operation: str
     essences: list[str] = []
 
 
 class EndpointEntry(BaseModel):
     """One guarded HTTP endpoint and what it requires."""
+
     method: str
     path: str
     name: str
@@ -22,6 +24,7 @@ class PermissionEntry(BaseModel):
     A distinct permission — the real unit the BA grants to groups.
     Multiple endpoints can share one permission; `endpoints` lists them all.
     """
+
     key: str
     operation: str
     essences: list[str] = []
@@ -31,6 +34,7 @@ class PermissionEntry(BaseModel):
 
 class SeedDiff(BaseModel):
     """Operations / essences referenced in code but missing from the DB tables."""
+
     missing_operations: list[str] = []
     missing_essences: list[str] = []
 

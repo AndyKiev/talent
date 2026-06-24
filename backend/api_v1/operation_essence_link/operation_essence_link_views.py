@@ -31,6 +31,7 @@ router = APIRouter(
     dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
 
+
 async def get_oel_service(
     session: AsyncSession = Depends(db_helper.session_getter),
 ) -> OperationEssenceLinkService:
@@ -38,6 +39,7 @@ async def get_oel_service(
 
 
 # ── Permission pair CRUD ──────────────────────────────────────────────────────
+
 
 @router.get("", response_model=List[PermissionPairSchema])
 async def list_permission_pairs(
@@ -113,6 +115,7 @@ async def delete_permission_pair(
 
 
 # ── Group grant endpoints ─────────────────────────────────────────────────────
+
 
 @router.get("/user_groups/{user_group_id}", response_model=List[PermissionPairSchema])
 async def get_group_permissions(

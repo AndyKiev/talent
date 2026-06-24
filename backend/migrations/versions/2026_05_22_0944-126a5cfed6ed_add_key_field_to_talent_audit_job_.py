@@ -35,7 +35,9 @@ def upgrade() -> None:
 
     # 3. Make NOT NULL + UNIQUE
     op.alter_column("talent_audit_job_statuses", "key", nullable=False)
-    op.create_unique_constraint("uq_talent_audit_job_statuses_key", "talent_audit_job_statuses", ["key"])
+    op.create_unique_constraint(
+        "uq_talent_audit_job_statuses_key", "talent_audit_job_statuses", ["key"]
+    )
     # ### end Alembic commands ###
 
 

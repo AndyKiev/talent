@@ -13,6 +13,8 @@ from backend.api_v1.talent_status.talent_status_dependencies import (
     talent_status_by_id,
 )
 from backend.api_v1.talent_status.talent_status_service import TalentStatusService
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/admin/talent_statuses",
@@ -21,7 +23,11 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[TalentStatusSchema])
+@router.get(
+    "",
+    response_model=List[TalentStatusSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_STATUS)],
+)
 async def get_talent_statuses(
     service: Annotated[TalentStatusService, Depends(get_talent_status_service)],
     name: Optional[str] = None,
@@ -31,7 +37,11 @@ async def get_talent_statuses(
     return await service.get_talent_statuses(name=name, is_active=is_active, sort=sort)
 
 
-@router.get("/{talent_status_id}", response_model=TalentStatusSchema)
+@router.get(
+    "/{talent_status_id}",
+    response_model=TalentStatusSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_STATUS)],
+)
 async def get_talent_status(
     record: TalentStatusSchema = Depends(talent_status_by_id),
 ):
@@ -42,6 +52,7 @@ async def get_talent_status(
     "",
     response_model=MutationResponse[TalentStatusSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.TALENT_STATUS)],
 )
 async def create_talent_status(
     status_in: TalentStatusCreate,
@@ -53,6 +64,7 @@ async def create_talent_status(
 @router.patch(
     "/{talent_status_id}",
     response_model=MutationResponse[TalentStatusSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.TALENT_STATUS)],
 )
 async def update_talent_status(
     status_update: TalentStatusUpdate,
@@ -62,7 +74,11 @@ async def update_talent_status(
     return await service.update_talent_status(record.id, status_update)
 
 
-@router.delete("/{talent_status_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{talent_status_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.TALENT_STATUS)],
+)
 async def delete_talent_status(
     talent_status_id: int,
     service: Annotated[TalentStatusService, Depends(get_talent_status_service)],

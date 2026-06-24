@@ -57,7 +57,9 @@ class ProcessService(BaseService):
         try:
             record = await self.create(process_in)
             schema = ProcessSchema.model_validate(record)
-            detail = await self._resolve_domain_success(ProcessCreateSuccess(schema.name))
+            detail = await self._resolve_domain_success(
+                ProcessCreateSuccess(schema.name)
+            )
             return MutationResponse(detail=detail, data=schema)
         except IntegrityError:
             raise await self._resolve_domain_error(ProcessNameTaken(process_in.name))
@@ -73,7 +75,9 @@ class ProcessService(BaseService):
             orm_record = await self.get_by_id(process_id)
             updated = await self.update(orm_record, process_update, partial=True)
             schema = ProcessSchema.model_validate(updated)
-            detail = await self._resolve_domain_success(ProcessUpdateSuccess(schema.name))
+            detail = await self._resolve_domain_success(
+                ProcessUpdateSuccess(schema.name)
+            )
             return MutationResponse(detail=detail, data=schema)
         except IntegrityError:
             raise await self._resolve_domain_error(

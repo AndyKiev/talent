@@ -6,7 +6,9 @@ from backend.api_v1.base.base_model import Base
 
 if TYPE_CHECKING:
     from backend.api_v1.job_group_type.job_group_type_model import JobGroupType
-    from backend.api_v1.job_job_group_link.job_job_group_link_model import JobJobGroupLink
+    from backend.api_v1.job_job_group_link.job_job_group_link_model import (
+        JobJobGroupLink,
+    )
 
 
 class JobGroup(IntIdPkMixin, Base):

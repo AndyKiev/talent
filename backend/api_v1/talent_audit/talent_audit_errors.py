@@ -1,4 +1,9 @@
-from backend.api_v1.base.errors import NotFoundError, AlreadyExistsError, DeleteError, DomainError
+from backend.api_v1.base.errors import (
+    NotFoundError,
+    AlreadyExistsError,
+    DeleteError,
+    DomainError,
+)
 
 
 class TalentAuditNotFound(NotFoundError):

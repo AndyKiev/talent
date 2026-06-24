@@ -2,7 +2,9 @@ from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional
 from datetime import datetime
 
-from backend.api_v1.department_type.department_type_schema import DepartmentType as DepartmentTypeSchema
+from backend.api_v1.department_type.department_type_schema import (
+    DepartmentType as DepartmentTypeSchema,
+)
 from backend.api_v1.job.job_schema import Job as JobSchema
 
 
@@ -34,6 +36,7 @@ class JobWithLinkId(JobSchema):
     Used by the /by-department-type/{id}/jobs endpoint so the caller
     has the link_id needed to delete the relationship.
     """
+
     model_config = ConfigDict(from_attributes=True)
     link_id: int
     link_is_active: bool

@@ -21,6 +21,7 @@ TOP_ORG_UNIT_KEYS: frozenset[str] = frozenset({"board", "directorate", "store"})
 
 class TopOrgUnit(BaseModel):
     """Slim resolved top-level org unit (board / directorate / store)."""
+
     id: int
     name: str
 

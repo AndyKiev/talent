@@ -1,6 +1,7 @@
 from datetime import datetime
 from sqlalchemy import DateTime, Integer
 from sqlalchemy.sql import func
+
 # from sqlalchemy import Sequence
 from sqlalchemy.orm import Mapped, declared_attr, mapped_column
 
@@ -9,9 +10,9 @@ from sqlalchemy.orm import Mapped, declared_attr, mapped_column
 #     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
 
-
 class IntIdPkMixin:
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+
 
 # class IntIdPkMixin:
 #     @declared_attr

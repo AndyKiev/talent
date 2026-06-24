@@ -32,6 +32,7 @@ class UserGroupTypeNameTaken(AlreadyExistsError):
         self.fallback = f"User group type with name '{name}' already exists"
         super().__init__("UserGroupType", "name", name)
 
+
 class UserGroupTypeDeleteError(DeleteError):  # was DomainError
     message_key = "userGroupTypeDeleteError"
 
@@ -42,7 +43,6 @@ class UserGroupTypeDeleteError(DeleteError):  # was DomainError
             f"because it is referenced by other records"
         )
         DomainError.__init__(self, self.fallback)
-
 
 
 # class UserGroupTypeDeleteError(DomainError):

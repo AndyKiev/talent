@@ -58,13 +58,11 @@ def upgrade() -> None:
             "review_session_employee_evaluation_id",
             "criterion_index",
             name="uq_criterion_score_eval_index",
-        )
+        ),
     )
     op.add_column(
         "review_session_employee_evaluations",
-        sa.Column(
-            "mean_score", sa.Numeric(precision=3, scale=2), nullable=True
-        ),
+        sa.Column("mean_score", sa.Numeric(precision=3, scale=2), nullable=True),
     )
     # ### end Alembic commands ###
 

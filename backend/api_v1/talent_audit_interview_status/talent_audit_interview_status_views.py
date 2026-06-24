@@ -16,6 +16,8 @@ from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_
 from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_service import (
     TalentAuditInterviewStatusService,
 )
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/talent_audit_interview_statuses",
@@ -24,7 +26,11 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[TalentAuditInterviewStatusSchema])
+@router.get(
+    "",
+    response_model=List[TalentAuditInterviewStatusSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT_INTERVIEW_STATUS)],
+)
 async def get_talent_audit_interview_statuses(
     service: Annotated[
         TalentAuditInterviewStatusService,
@@ -42,9 +48,12 @@ async def get_talent_audit_interview_statuses(
 @router.get(
     "/{talent_audit_interview_status_id}",
     response_model=TalentAuditInterviewStatusSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT_INTERVIEW_STATUS)],
 )
 async def get_talent_audit_interview_status(
-    record: TalentAuditInterviewStatusSchema = Depends(talent_audit_interview_status_by_id),
+    record: TalentAuditInterviewStatusSchema = Depends(
+        talent_audit_interview_status_by_id
+    ),
 ):
     return record
 
@@ -53,6 +62,9 @@ async def get_talent_audit_interview_status(
     "",
     response_model=MutationResponse[TalentAuditInterviewStatusSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[
+        Guard(OperationVerb.CREATE, EssenceName.TALENT_AUDIT_INTERVIEW_STATUS)
+    ],
 )
 async def create_talent_audit_interview_status(
     status_in: TalentAuditInterviewStatusCreate,
@@ -67,10 +79,15 @@ async def create_talent_audit_interview_status(
 @router.patch(
     "/{talent_audit_interview_status_id}",
     response_model=MutationResponse[TalentAuditInterviewStatusSchema],
+    dependencies=[
+        Guard(OperationVerb.MODIFY, EssenceName.TALENT_AUDIT_INTERVIEW_STATUS)
+    ],
 )
 async def update_talent_audit_interview_status(
     status_update: TalentAuditInterviewStatusUpdate,
-    record: TalentAuditInterviewStatusSchema = Depends(talent_audit_interview_status_by_id),
+    record: TalentAuditInterviewStatusSchema = Depends(
+        talent_audit_interview_status_by_id
+    ),
     service: Annotated[
         TalentAuditInterviewStatusService,
         Depends(get_talent_audit_interview_status_service),
@@ -79,7 +96,13 @@ async def update_talent_audit_interview_status(
     return await service.update_talent_audit_interview_status(record.id, status_update)
 
 
-@router.delete("/{talent_audit_interview_status_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{talent_audit_interview_status_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[
+        Guard(OperationVerb.DELETE, EssenceName.TALENT_AUDIT_INTERVIEW_STATUS)
+    ],
+)
 async def delete_talent_audit_interview_status(
     talent_audit_interview_status_id: int,
     service: Annotated[

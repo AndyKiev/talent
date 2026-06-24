@@ -29,9 +29,7 @@ async def get_employee_department_service(
 async def link_by_id(
     link_id: int,
     employee_id: int,
-    service: EmployeeDepartmentService = Depends(
-        get_employee_department_service
-    ),
+    service: EmployeeDepartmentService = Depends(get_employee_department_service),
 ) -> EmployeeDepartmentSchema:
     """
     Resolves a link by its own ID, scoped to the employee_id path parameter.

@@ -48,12 +48,10 @@ def upgrade() -> None:
             name=op.f("fk_department_type_job_links_job_id_jobs"),
             ondelete="RESTRICT",
         ),
-        sa.PrimaryKeyConstraint(
-            "id", name=op.f("pk_department_type_job_links")
-        ),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_department_type_job_links")),
         sa.UniqueConstraint(
             "department_type_id", "job_id", name="idx_uq_department_type_job"
-        )
+        ),
     )
     # ### end Alembic commands ###
 

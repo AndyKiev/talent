@@ -19,7 +19,9 @@ async def get_operation_essence_set_link_service(
 ) -> OperationEssenceSetLinkService:
     # Both services share the same session so set creation and permission
     # creation commit together.
-    essence_set_service = EssenceSetService(EssenceSetRepository(session), session=session)
+    essence_set_service = EssenceSetService(
+        EssenceSetRepository(session), session=session
+    )
     return OperationEssenceSetLinkService(
         OperationEssenceSetLinkRepository(session),
         essence_set_service=essence_set_service,
@@ -37,6 +39,7 @@ async def operation_essence_set_link_by_id(
     from backend.api_v1.operation_essence_set_link.operation_essence_set_link_errors import (
         OperationEssenceSetLinkNotFound,
     )
+
     try:
         return await service.get_by_id(link_id)
     except OperationEssenceSetLinkNotFound as exc:

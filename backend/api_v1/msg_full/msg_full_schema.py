@@ -11,6 +11,7 @@ class LangRead(BaseModel):
 
 class MsgItem(BaseModel):
     """Single translation entry in a FullMsg create/update payload — no msg_key_id needed, it comes from the parent."""
+
     value: str = Field(..., examples=["Translation text"])
     lang_id: int = Field(..., examples=[1])
 

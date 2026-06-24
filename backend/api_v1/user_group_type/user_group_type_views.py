@@ -13,6 +13,8 @@ from backend.api_v1.user_group_type.user_group_type_dependencies import (
     user_group_type_by_id,
 )
 from backend.api_v1.user_group_type.user_group_type_service import UserGroupTypeService
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/admin/user_group_types",
@@ -21,7 +23,11 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[UserGroupTypeSchema])
+@router.get(
+    "",
+    response_model=List[UserGroupTypeSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.USER_GROUP_TYPE)],
+)
 async def get_user_group_types(
     service: Annotated[UserGroupTypeService, Depends(get_user_group_type_service)],
     name: Optional[str] = None,
@@ -33,7 +39,11 @@ async def get_user_group_types(
     return await service.get_user_group_types(name=name, sort=sort)
 
 
-@router.get("/{user_group_type_id}", response_model=UserGroupTypeSchema)
+@router.get(
+    "/{user_group_type_id}",
+    response_model=UserGroupTypeSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.USER_GROUP_TYPE)],
+)
 async def get_user_group_type(
     record: UserGroupTypeSchema = Depends(user_group_type_by_id),
 ):
@@ -44,6 +54,7 @@ async def get_user_group_type(
     "",
     response_model=MutationResponse[UserGroupTypeSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.USER_GROUP_TYPE)],
 )
 async def create_user_group_type(
     type_in: UserGroupTypeCreate,
@@ -55,6 +66,7 @@ async def create_user_group_type(
 @router.patch(
     "/{user_group_type_id}",
     response_model=MutationResponse[UserGroupTypeSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.USER_GROUP_TYPE)],
 )
 async def update_user_group_type(
     type_update: UserGroupTypeUpdate,
@@ -66,7 +78,11 @@ async def update_user_group_type(
     return await service.update_user_group_type(record.id, type_update)
 
 
-@router.delete("/{user_group_type_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{user_group_type_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.USER_GROUP_TYPE)],
+)
 async def delete_user_group_type(
     user_group_type_id: int,
     service: Annotated[UserGroupTypeService, Depends(get_user_group_type_service)],

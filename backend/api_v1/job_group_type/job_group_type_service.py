@@ -4,7 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.job_group_type.job_group_type_repository import JobGroupTypeRepository
+from backend.api_v1.job_group_type.job_group_type_repository import (
+    JobGroupTypeRepository,
+)
 from backend.api_v1.job_group_type.job_group_type_schema import (
     JobGroupType as JobGroupTypeSchema,
     JobGroupTypeCreate,
@@ -58,10 +60,14 @@ class JobGroupTypeService(BaseService):
     async def create_job_group_type(
         self, type_in: JobGroupTypeCreate
     ) -> MutationResponse[JobGroupTypeSchema]:
-        await self.exists_by_name(type_in.name, already_exists_exc=JobGroupTypeNameTaken)
+        await self.exists_by_name(
+            type_in.name, already_exists_exc=JobGroupTypeNameTaken
+        )
         record = await self.create(type_in)
         schema = JobGroupTypeSchema.model_validate(record)
-        detail = await self._resolve_domain_success(JobGroupTypeCreateSuccess(schema.name))
+        detail = await self._resolve_domain_success(
+            JobGroupTypeCreateSuccess(schema.name)
+        )
         return MutationResponse(detail=detail, data=schema)
 
     async def update_job_group_type(
@@ -74,7 +80,9 @@ class JobGroupTypeService(BaseService):
             )
         updated = await self.update(orm_record, type_update, partial=True)
         schema = JobGroupTypeSchema.model_validate(updated)
-        detail = await self._resolve_domain_success(JobGroupTypeUpdateSuccess(schema.name))
+        detail = await self._resolve_domain_success(
+            JobGroupTypeUpdateSuccess(schema.name)
+        )
         return MutationResponse(detail=detail, data=schema)
 
     async def delete_job_group_type(self, job_group_type_id: int) -> None:

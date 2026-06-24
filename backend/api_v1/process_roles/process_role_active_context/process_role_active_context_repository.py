@@ -32,7 +32,9 @@ class ProcessRoleActiveContextRepository(BaseRepository):
         """Distinct process_roles the employee holds within the given process."""
         stmt = (
             select(ProcessRole)
-            .join(ProcessRoleHolder, ProcessRoleHolder.process_role_id == ProcessRole.id)
+            .join(
+                ProcessRoleHolder, ProcessRoleHolder.process_role_id == ProcessRole.id
+            )
             .join(Process, ProcessRole.process_id == Process.id)
             .where(
                 ProcessRoleHolder.holder_employee_id == employee_id,

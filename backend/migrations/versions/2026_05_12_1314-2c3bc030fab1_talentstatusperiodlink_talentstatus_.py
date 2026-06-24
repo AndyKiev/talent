@@ -34,7 +34,7 @@ def upgrade() -> None:
             server_default=sa.text("now()"),
             nullable=False,
         ),
-        sa.PrimaryKeyConstraint("id", name=op.f("pk_talent_periods"))
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_talent_periods")),
     )
     op.create_table(
         "talent_statuses",
@@ -50,7 +50,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_talent_statuses")),
-        sa.UniqueConstraint("key", name=op.f("uq_talent_statuses_key"))
+        sa.UniqueConstraint("key", name=op.f("uq_talent_statuses_key")),
     )
     op.create_table(
         "talent_status_period_link",
@@ -74,27 +74,21 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["talent_period_id"],
             ["talent_periods.id"],
-            name=op.f(
-                "fk_talent_status_period_link_talent_period_id_talent_periods"
-            ),
+            name=op.f("fk_talent_status_period_link_talent_period_id_talent_periods"),
             ondelete="RESTRICT",
         ),
         sa.ForeignKeyConstraint(
             ["talent_status_id"],
             ["talent_statuses.id"],
-            name=op.f(
-                "fk_talent_status_period_link_talent_status_id_talent_statuses"
-            ),
+            name=op.f("fk_talent_status_period_link_talent_status_id_talent_statuses"),
             ondelete="RESTRICT",
         ),
-        sa.PrimaryKeyConstraint(
-            "id", name=op.f("pk_talent_status_period_link")
-        ),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_talent_status_period_link")),
         sa.UniqueConstraint(
             "talent_period_id",
             "talent_status_id",
             name="idx_uq_talent_status_period",
-        )
+        ),
     )
     # ### end Alembic commands ###
 

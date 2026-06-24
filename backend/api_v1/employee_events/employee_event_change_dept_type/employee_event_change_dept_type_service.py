@@ -39,7 +39,9 @@ class EmployeeEventChangeDeptTypeService(BaseService):
     async def get_by_id(self, id: int) -> EmployeeEventChangeDeptTypeSchema:
         result = await self.repository.get_by_id(id)
         if not result:
-            raise await self._resolve_domain_error(EmployeeEventChangeDeptTypeNotFound(id))
+            raise await self._resolve_domain_error(
+                EmployeeEventChangeDeptTypeNotFound(id)
+            )
         return result
 
     async def get_employee_event_change_dept_types(
@@ -59,7 +61,9 @@ class EmployeeEventChangeDeptTypeService(BaseService):
         self, type_in: EmployeeEventChangeDeptTypeCreate
     ) -> MutationResponse[EmployeeEventChangeDeptTypeSchema]:
         await self.exists_by_field(
-            "code", type_in.code, already_exists_exc=EmployeeEventChangeDeptTypeCodeTaken
+            "code",
+            type_in.code,
+            already_exists_exc=EmployeeEventChangeDeptTypeCodeTaken,
         )
         try:
             record = await self.create(type_in)

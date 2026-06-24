@@ -20,6 +20,7 @@ class TalentAuditInterviewCreate(TalentAuditInterviewBase):
     Payload from the frontend: interview header + per-job assessments.
     The service creates the interview, then bulk-creates interview_job rows.
     """
+
     job_assessments: List[TalentAuditInterviewJobCreate]
 
 

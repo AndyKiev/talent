@@ -5,8 +5,14 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from starlette.responses import StreamingResponse
 
 from backend.api_v1.msg_full.msg_full_dependencies import get_msg_full_service
-from backend.api_v1.msg_full.msg_full_schema import FullMsgCreate, FullMsgUpdate, FullMsgRead
+from backend.api_v1.msg_full.msg_full_schema import (
+    FullMsgCreate,
+    FullMsgUpdate,
+    FullMsgRead,
+)
 from backend.api_v1.msg_full.msg_full_service import MsgFullService
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(prefix="/full_msgs", tags=["Full Messages"])
 
@@ -26,16 +32,27 @@ async def get_full_message(
     return await service.get_full_message_by_id(msg_key_id)
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.MSG_KEY, EssenceName.MSG)],
+)
 async def create_full_messages(
     data_in: List[FullMsgCreate],
     service: Annotated[MsgFullService, Depends(get_msg_full_service)],
 ):
     await service.create_full_messages(data_in)
-    raise HTTPException(status_code=status.HTTP_201_CREATED, detail=f"Created {len(data_in)} message key(s)")
+    raise HTTPException(
+        status_code=status.HTTP_201_CREATED,
+        detail=f"Created {len(data_in)} message key(s)",
+    )
 
 
-@router.patch("/{msg_key_id}", response_model=FullMsgRead)
+@router.patch(
+    "/{msg_key_id}",
+    response_model=FullMsgRead,
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.MSG_KEY, EssenceName.MSG)],
+)
 async def update_full_message(
     msg_key_id: int,
     data_update: FullMsgUpdate,
@@ -59,7 +76,12 @@ async def update_full_message(
 #     # a single delete endpoint there. This stub keeps the full_msg router self-contained.
 #     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Use DELETE /msg_keys/{id}")
 
-@router.delete("/{msg_key_id}", status_code=status.HTTP_200_OK)
+
+@router.delete(
+    "/{msg_key_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.MSG_KEY, EssenceName.MSG)],
+)
 async def delete_full_message(
     msg_key_id: int,
     service: Annotated[MsgFullService, Depends(get_msg_full_service)],
@@ -68,13 +90,19 @@ async def delete_full_message(
     return {"message": f"Message key {msg_key_id} deleted"}
 
 
-@router.post("/import_json", status_code=status.HTTP_200_OK)
+@router.post(
+    "/import_json",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.MSG_KEY, EssenceName.MSG)],
+)
 async def import_json(
     file: UploadFile = File(...),
     service: MsgFullService = Depends(get_msg_full_service),
 ):
     if not file.filename.endswith(".json"):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File must be .json")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="File must be .json"
+        )
     contents = await file.read()
     result = await service.import_from_json(contents)
     return {"message": "JSON imported", **result}

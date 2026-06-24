@@ -11,7 +11,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from backend.api_v1.msg_full.msg_full_repository import MsgFullRepository
-from backend.api_v1.msg_full.msg_full_schema import FullMsgCreate, FullMsgUpdate, MsgItem
+from backend.api_v1.msg_full.msg_full_schema import (
+    FullMsgCreate,
+    FullMsgUpdate,
+    MsgItem,
+)
 from backend.api_v1.msg_full.msg_full_service import MsgFullService
 from backend.api_v1.msg_bulk.msg_bulk_schema import BulkImportResult
 from backend.api_v1.msg_key.msg_key_model import MsgKey
@@ -45,11 +49,13 @@ class MsgBulkService:
 
     async def _lang_short_to_id(self) -> dict[str, int]:
         from backend.api_v1.lang.lang_model import Lang
+
         result = await self._session.execute(select(Lang))
         return {lang.short_name: lang.id for lang in result.scalars().all()}
 
     async def _lang_id_to_short(self) -> dict[int, str]:
         from backend.api_v1.lang.lang_model import Lang
+
         result = await self._session.execute(select(Lang))
         return {lang.id: lang.short_name for lang in result.scalars().all()}
 
@@ -69,7 +75,9 @@ class MsgBulkService:
                 if msg.lang_data
             }
             out[to_camel_case(mk.name)] = lang_map
-        return json.dumps(dict(sorted(out.items())), ensure_ascii=False, indent=2).encode("utf-8")
+        return json.dumps(
+            dict(sorted(out.items())), ensure_ascii=False, indent=2
+        ).encode("utf-8")
 
     # ── JSON import ────────────────────────────────────────────────────────
 
@@ -108,7 +116,7 @@ class MsgBulkService:
         lang_short_names: list[str] = []
         seen: set[str] = set()
         for mk in msg_keys:
-            for msg in (mk.msg or []):
+            for msg in mk.msg or []:
                 if msg.lang_data and msg.lang_data.short_name not in seen:
                     lang_short_names.append(msg.lang_data.short_name)
                     seen.add(msg.lang_data.short_name)
@@ -135,7 +143,11 @@ class MsgBulkService:
             }
             ws.cell(row=row_idx, column=1, value=mk.name).fill = _KEY_FILL
             for col_idx, short_name in enumerate(lang_short_names, start=2):
-                ws.cell(row=row_idx, column=col_idx, value=lang_value_map.get(short_name, ""))
+                ws.cell(
+                    row=row_idx,
+                    column=col_idx,
+                    value=lang_value_map.get(short_name, ""),
+                )
 
         # Column widths
         ws.column_dimensions[get_column_letter(1)].width = 40
@@ -203,7 +215,9 @@ class MsgBulkService:
 
     # ── Shared upsert logic ────────────────────────────────────────────────
 
-    async def _upsert_from_dict(self, data: dict[str, dict[str, str]]) -> BulkImportResult:
+    async def _upsert_from_dict(
+        self, data: dict[str, dict[str, str]]
+    ) -> BulkImportResult:
         """
         table_data shape: { "key_name": { "lang_short": "value", ... }, ... }
         Uses MsgFullService for consistent create/update rules.

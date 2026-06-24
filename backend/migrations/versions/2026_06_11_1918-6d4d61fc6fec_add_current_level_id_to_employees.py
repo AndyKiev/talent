@@ -36,9 +36,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_review_levels")),
-        sa.UniqueConstraint(
-            "name_key", name=op.f("uq_review_levels_name_key")
-        )
+        sa.UniqueConstraint("name_key", name=op.f("uq_review_levels_name_key")),
     )
     op.create_table(
         "review_level_requirements",
@@ -58,9 +56,7 @@ def upgrade() -> None:
             ["review_levels.id"],
             name=op.f("fk_review_level_requirements_level_id_review_levels"),
         ),
-        sa.PrimaryKeyConstraint(
-            "id", name=op.f("pk_review_level_requirements")
-        )
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_review_level_requirements")),
     )
     op.create_table(
         "review_session_employee_levels",
@@ -76,9 +72,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["level_id"],
             ["review_levels.id"],
-            name=op.f(
-                "fk_review_session_employee_levels_level_id_review_levels"
-            ),
+            name=op.f("fk_review_session_employee_levels_level_id_review_levels"),
         ),
         sa.ForeignKeyConstraint(
             ["review_session_employee_id"],
@@ -87,22 +81,16 @@ def upgrade() -> None:
                 "fk_review_session_employee_levels_review_session_employee_id_review_session_employees"
             ),
         ),
-        sa.PrimaryKeyConstraint(
-            "id", name=op.f("pk_review_session_employee_levels")
-        ),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_review_session_employee_levels")),
         sa.UniqueConstraint(
             "review_session_employee_id",
-            name=op.f(
-                "uq_review_session_employee_levels_review_session_employee_id"
-            ),
-        )
+            name=op.f("uq_review_session_employee_levels_review_session_employee_id"),
+        ),
     )
     op.create_table(
         "review_session_employee_level_answers",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column(
-            "review_session_employee_level_id", sa.Integer(), nullable=False
-        ),
+        sa.Column("review_session_employee_level_id", sa.Integer(), nullable=False),
         sa.Column("requirement_id", sa.Integer(), nullable=False),
         sa.Column("facts", sa.Text(), nullable=True),
         sa.Column(
@@ -127,7 +115,7 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint(
             "id", name=op.f("pk_review_session_employee_level_answers")
-        )
+        ),
     )
     op.drop_constraint(
         op.f("uq_employee_department"), "employee_departments", type_="unique"
@@ -159,9 +147,7 @@ def downgrade() -> None:
         type_="foreignkey",
     )
     op.drop_column("employees", "current_level_id")
-    op.drop_constraint(
-        "uq_employee_department", "employee_departments", type_="unique"
-    )
+    op.drop_constraint("uq_employee_department", "employee_departments", type_="unique")
     op.create_unique_constraint(
         op.f("uq_employee_department"),
         "employee_departments",

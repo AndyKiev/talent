@@ -63,7 +63,9 @@ class PlanSessionRevertSuccess(DomainSuccess):
 class PlanSessionResyncSuccess(DomainSuccess):
     message_key = "planSessionResyncSuccess"
 
-    def __init__(self, name: str, added: int, reactivated: int, deactivated: int) -> None:
+    def __init__(
+        self, name: str, added: int, reactivated: int, deactivated: int
+    ) -> None:
         self.template_vars = {
             "name": name,
             "added": added,

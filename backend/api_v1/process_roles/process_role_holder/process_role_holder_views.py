@@ -29,7 +29,9 @@ async def get_holders(
     ],
     process_role_id: Optional[int] = None,
     holder_employee_id: Optional[int] = None,
-    sort: Optional[str] = Query(None, description='JSON sort, e.g. {"created_at": "desc"}'),
+    sort: Optional[str] = Query(
+        None, description='JSON sort, e.g. {"created_at": "desc"}'
+    ),
 ):
     return await service.get_holders(
         process_role_id=process_role_id,

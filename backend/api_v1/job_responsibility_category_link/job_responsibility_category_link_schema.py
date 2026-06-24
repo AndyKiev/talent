@@ -39,6 +39,7 @@ class ResponsibilityCategoryOption(BaseModel):
     `is_fallback` is true when the job has no explicit links and we returned
     the is_main=false default set.
     """
+
     model_config = ConfigDict(from_attributes=True)
     id: int
     name: str

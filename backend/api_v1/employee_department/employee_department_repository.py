@@ -36,12 +36,9 @@ class EmployeeDepartmentRepository(BaseRepository):
 
     async def get_main_by_employee(self, employee_id: int) -> EmployeeDepartment | None:
         """Return the main assignment for a given employee, if any."""
-        stmt = (
-            select(self.model)
-            .where(
-                self.model.employee_id == employee_id,
-                self.model.is_main == True,
-            )
+        stmt = select(self.model).where(
+            self.model.employee_id == employee_id,
+            self.model.is_main == True,
         )
         result = await self.session.scalars(stmt)
         return result.one_or_none()

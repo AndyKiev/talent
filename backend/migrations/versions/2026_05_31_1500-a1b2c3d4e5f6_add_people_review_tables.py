@@ -34,7 +34,9 @@ def upgrade() -> None:
         sa.Column("name", sa.String(length=128), nullable=False),
         sa.Column("key", sa.String(length=64), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
+        sa.Column(
+            "is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")
+        ),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
@@ -51,7 +53,9 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("dimension_id", sa.Integer(), nullable=False),
         sa.Column("text", sa.Text(), nullable=False),
-        sa.Column("sort_order", sa.Integer(), nullable=False, server_default=sa.text("0")),
+        sa.Column(
+            "sort_order", sa.Integer(), nullable=False, server_default=sa.text("0")
+        ),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
@@ -105,8 +109,12 @@ def upgrade() -> None:
             server_default=sa.text("now()"),
             nullable=False,
         ),
-        sa.ForeignKeyConstraint(["session_id"], ["review_sessions.id"], name="fk_rse_session"),
-        sa.ForeignKeyConstraint(["employee_id"], ["employees.id"], name="fk_rse_employee"),
+        sa.ForeignKeyConstraint(
+            ["session_id"], ["review_sessions.id"], name="fk_rse_session"
+        ),
+        sa.ForeignKeyConstraint(
+            ["employee_id"], ["employees.id"], name="fk_rse_employee"
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
 

@@ -29,7 +29,9 @@ def get_employee_user_group_link_service(
     user: EmployeeSchema = Depends(get_current_active_auth_user),
     session: AsyncSession = Depends(db_helper.session_getter),
 ) -> EmployeeUserGroupLinkService:
-    return EmployeeUserGroupLinkService(repository=repository, user=user, session=session)
+    return EmployeeUserGroupLinkService(
+        repository=repository, user=user, session=session
+    )
 
 
 async def employee_user_group_link_by_id(

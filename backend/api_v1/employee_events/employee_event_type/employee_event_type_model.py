@@ -10,7 +10,9 @@ if TYPE_CHECKING:
     from backend.api_v1.employee_events.employee_event_type_direction.employee_event_type_direction_model import (
         EmployeeEventTypeDirection,
     )
-    from backend.api_v1.employee_events.employee_event.employee_event_model import EmployeeEvent
+    from backend.api_v1.employee_events.employee_event.employee_event_model import (
+        EmployeeEvent,
+    )
 
 
 class EmployeeEventType(IntIdPkMixin, TimestampMixin, Base):

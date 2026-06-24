@@ -25,9 +25,7 @@ router = APIRouter(
 
 @router.get("", response_model=List[ReviewDimensionSchema])
 async def get_review_dimensions(
-    service: Annotated[
-        ReviewDimensionService, Depends(get_review_dimension_service)
-    ],
+    service: Annotated[ReviewDimensionService, Depends(get_review_dimension_service)],
     name: Optional[str] = None,
     is_active: Optional[bool] = None,
     sort: Optional[str] = Query(None),
@@ -51,9 +49,7 @@ async def get_review_dimension(
 )
 async def create_review_dimension(
     dim_in: ReviewDimensionCreate,
-    service: Annotated[
-        ReviewDimensionService, Depends(get_review_dimension_service)
-    ],
+    service: Annotated[ReviewDimensionService, Depends(get_review_dimension_service)],
 ):
     return await service.create_review_dimension(dim_in)
 
@@ -75,8 +71,6 @@ async def update_review_dimension(
 @router.delete("/{review_dimension_id}", status_code=status.HTTP_200_OK)
 async def delete_review_dimension(
     review_dimension_id: int,
-    service: Annotated[
-        ReviewDimensionService, Depends(get_review_dimension_service)
-    ],
+    service: Annotated[ReviewDimensionService, Depends(get_review_dimension_service)],
 ):
     await service.delete_review_dimension(review_dimension_id)

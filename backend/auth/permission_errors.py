@@ -9,6 +9,7 @@ class PermissionDeniedSet(DomainError):
     Routed through the standard message_key translation pipeline so the user
     sees the message in their language (ukr/eng), not the English fallback.
     """
+
     message_key = "permissionDeniedSet"
 
     def __init__(self, operation: str, essences: list[str]) -> None:

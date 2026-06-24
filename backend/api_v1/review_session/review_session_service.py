@@ -165,6 +165,7 @@ class ReviewSessionService(BaseService):
         from backend.api_v1.review_session_employee.review_session_employee_model import (
             ReviewSessionEmployee as RSEModel,
         )
+
         orm_record = await self.get_by_id(rs_id)
         if "closed" not in VALID_TRANSITIONS.get(orm_record.status, []):
             exc = ReviewSessionStatusError(orm_record.status, "closed")
@@ -231,32 +232,44 @@ class ReviewSessionService(BaseService):
         try:
             # Collect employee-review ids for this session.
             rse_ids = (
-                await self.session.execute(
-                    sa_select(ReviewSessionEmployee.id).where(
-                        ReviewSessionEmployee.session_id == rs_id
+                (
+                    await self.session.execute(
+                        sa_select(ReviewSessionEmployee.id).where(
+                            ReviewSessionEmployee.session_id == rs_id
+                        )
                     )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
 
             if rse_ids:
                 eval_ids = (
-                    await self.session.execute(
-                        sa_select(ReviewSessionEmployeeEvaluation.id).where(
-                            ReviewSessionEmployeeEvaluation.review_session_employee_id.in_(
-                                rse_ids
+                    (
+                        await self.session.execute(
+                            sa_select(ReviewSessionEmployeeEvaluation.id).where(
+                                ReviewSessionEmployeeEvaluation.review_session_employee_id.in_(
+                                    rse_ids
+                                )
                             )
                         )
                     )
-                ).scalars().all()
+                    .scalars()
+                    .all()
+                )
                 level_ids = (
-                    await self.session.execute(
-                        sa_select(ReviewSessionEmployeeLevel.id).where(
-                            ReviewSessionEmployeeLevel.review_session_employee_id.in_(
-                                rse_ids
+                    (
+                        await self.session.execute(
+                            sa_select(ReviewSessionEmployeeLevel.id).where(
+                                ReviewSessionEmployeeLevel.review_session_employee_id.in_(
+                                    rse_ids
+                                )
                             )
                         )
                     )
-                ).scalars().all()
+                    .scalars()
+                    .all()
+                )
 
                 # 1) grandchildren
                 if eval_ids:
@@ -330,7 +343,9 @@ class ReviewSessionService(BaseService):
         from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_model import (
             ReviewSessionEmployeeEvaluation as EvalModel,
         )
-        from backend.api_v1.review_dimension.review_dimension_model import ReviewDimension
+        from backend.api_v1.review_dimension.review_dimension_model import (
+            ReviewDimension,
+        )
 
         stmt = (
             sa_select(
@@ -373,7 +388,9 @@ class ReviewSessionService(BaseService):
                 "dimension_sort_order": r.sort_order,
                 "total_evaluations": r.total_evaluations,
                 "scored_count": r.scored_count,
-                "avg_score": round(float(r.avg_score), 2) if r.avg_score is not None else None,
+                "avg_score": (
+                    round(float(r.avg_score), 2) if r.avg_score is not None else None
+                ),
                 "min_score": r.min_score,
                 "max_score": r.max_score,
             }

@@ -92,10 +92,13 @@ class TalentStatusPeriodLinkService(BaseService):
 
         if is_active is True:
             records = [
-                r for r in records
+                r
+                for r in records
                 if r.is_active
-                and r.talent_status is not None and r.talent_status.is_active
-                and r.talent_period is not None and r.talent_period.is_active
+                and r.talent_status is not None
+                and r.talent_status.is_active
+                and r.talent_period is not None
+                and r.talent_period.is_active
             ]
 
         return [TalentStatusPeriodLinkWithLabel.model_validate(r) for r in records]
@@ -123,11 +126,14 @@ class TalentStatusPeriodLinkService(BaseService):
             from backend.api_v1.talent_status_period_link.talent_status_period_link_model import (
                 TalentStatusPeriodLink,
             )
+
             instance = TalentStatusPeriodLink(**create_data)
             record = await self.repository.create(instance)
             schema = TalentStatusPeriodLinkSchema.model_validate(record)
             label = _link_label(schema.talent_status_id, schema.talent_period_id)
-            detail = await self._resolve_domain_success(TalentStatusPeriodLinkCreateSuccess(label))
+            detail = await self._resolve_domain_success(
+                TalentStatusPeriodLinkCreateSuccess(label)
+            )
             return MutationResponse(detail=detail, data=schema)
         except IntegrityError:
             raise await self._resolve_domain_error(
@@ -147,7 +153,9 @@ class TalentStatusPeriodLinkService(BaseService):
         )
         if not result:
             raise await self._resolve_domain_error(
-                TalentStatusPeriodLinkNotFoundByCompositeKey(talent_status_id, talent_period_id)
+                TalentStatusPeriodLinkNotFoundByCompositeKey(
+                    talent_status_id, talent_period_id
+                )
             )
         return result
 
@@ -159,7 +167,9 @@ class TalentStatusPeriodLinkService(BaseService):
         updated = await self.update(orm_record, link_update, partial=True)
         schema = TalentStatusPeriodLinkSchema.model_validate(updated)
         label = _link_label(schema.talent_status_id, schema.talent_period_id)
-        detail = await self._resolve_domain_success(TalentStatusPeriodLinkUpdateSuccess(label))
+        detail = await self._resolve_domain_success(
+            TalentStatusPeriodLinkUpdateSuccess(label)
+        )
         return MutationResponse(detail=detail, data=schema)
 
     async def delete_link(self, link_id: int) -> None:

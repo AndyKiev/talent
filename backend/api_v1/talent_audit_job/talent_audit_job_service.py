@@ -41,7 +41,9 @@ def _enrich(orm_record) -> dict:
         data["status_name"] = orm_record.status.name
     link = getattr(orm_record, "talent_status_period_link", None)
     if link and link.talent_status and link.talent_period:
-        data["hrm_status_period_label"] = f"{link.talent_status.key} - {link.talent_period.name}"
+        data["hrm_status_period_label"] = (
+            f"{link.talent_status.key} - {link.talent_period.name}"
+        )
     return data
 
 
@@ -68,14 +70,18 @@ class TalentAuditJobService(BaseService):
 
     async def _get_qty_months_for_link(self, link_id: int) -> int:
         """Resolve qty_months from talent_status_period_link → talent_period."""
-        stmt = select(TalentStatusPeriodLink).where(TalentStatusPeriodLink.id == link_id)
+        stmt = select(TalentStatusPeriodLink).where(
+            TalentStatusPeriodLink.id == link_id
+        )
         result = await self.session.execute(stmt)
         link = result.scalar_one_or_none()
         if not link or not link.talent_period:
             return 0
         return link.talent_period.qty_months
 
-    async def _get_existing_audit_jobs(self, talent_audit_id: int) -> List[TalentAuditJob]:
+    async def _get_existing_audit_jobs(
+        self, talent_audit_id: int
+    ) -> List[TalentAuditJob]:
         """Get all existing audit jobs for this audit via repository (selectin loaded)."""
         records = await self.repository.get_all(
             filters={"talent_audit_id": talent_audit_id}

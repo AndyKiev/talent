@@ -30,6 +30,7 @@ class ChangeLogCreate(ChangeLogBase):
 
 class ChangeLogEmployee(BaseModel):
     """Slim subject-employee projection for the audit UI."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int

@@ -1,7 +1,9 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api_v1.talent_period.talent_period_schema import TalentPeriod as TalentPeriodSchema
+from backend.api_v1.talent_period.talent_period_schema import (
+    TalentPeriod as TalentPeriodSchema,
+)
 from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
 from backend.database.db_helper import db_helper
 from backend.api_v1.talent_period.talent_period_repository import TalentPeriodRepository

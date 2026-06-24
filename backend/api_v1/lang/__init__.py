@@ -3,4 +3,3 @@ __all__ = {
 }
 
 from backend.api_v1.lang.lang_model import Lang
-

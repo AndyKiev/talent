@@ -22,16 +22,22 @@ def get_department_type_job_link_repository(
 
 
 def get_department_type_job_link_service(
-    repository: DepartmentTypeJobLinkRepository = Depends(get_department_type_job_link_repository),
+    repository: DepartmentTypeJobLinkRepository = Depends(
+        get_department_type_job_link_repository
+    ),
     user: EmployeeSchema = Depends(get_current_active_auth_user),
     session: AsyncSession = Depends(db_helper.session_getter),
 ) -> DepartmentTypeJobLinkService:
-    return DepartmentTypeJobLinkService(repository=repository, user=user, session=session)
+    return DepartmentTypeJobLinkService(
+        repository=repository, user=user, session=session
+    )
 
 
 async def department_type_job_link_by_id(
     department_type_job_link_id: int,
-    service: DepartmentTypeJobLinkService = Depends(get_department_type_job_link_service),
+    service: DepartmentTypeJobLinkService = Depends(
+        get_department_type_job_link_service
+    ),
 ) -> DepartmentTypeJobLinkSchema:
     return await service.get_by_id(department_type_job_link_id)
 
@@ -39,6 +45,8 @@ async def department_type_job_link_by_id(
 async def department_type_job_link_by_composite_key(
     department_type_id: int = Query(...),
     job_id: int = Query(...),
-    service: DepartmentTypeJobLinkService = Depends(get_department_type_job_link_service),
+    service: DepartmentTypeJobLinkService = Depends(
+        get_department_type_job_link_service
+    ),
 ) -> DepartmentTypeJobLinkSchema:
     return await service.get_by_composite_key(department_type_id, job_id)

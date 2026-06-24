@@ -2,8 +2,12 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field
 from typing import Optional
 from datetime import datetime
 
-from backend.api_v1.talent_status.talent_status_schema import TalentStatus as TalentStatusSchema
-from backend.api_v1.talent_period.talent_period_schema import TalentPeriod as TalentPeriodSchema
+from backend.api_v1.talent_status.talent_status_schema import (
+    TalentStatus as TalentStatusSchema,
+)
+from backend.api_v1.talent_period.talent_period_schema import (
+    TalentPeriod as TalentPeriodSchema,
+)
 
 
 class TalentStatusPeriodLinkBase(BaseModel):
@@ -39,6 +43,12 @@ class TalentStatusPeriodLinkWithLabel(TalentStatusPeriodLink):
     @computed_field
     @property
     def label(self) -> str:
-        status_key = self.talent_status.key if self.talent_status else str(self.talent_status_id)
-        period_name = self.talent_period.name if self.talent_period else str(self.talent_period_id)
+        status_key = (
+            self.talent_status.key if self.talent_status else str(self.talent_status_id)
+        )
+        period_name = (
+            self.talent_period.name
+            if self.talent_period
+            else str(self.talent_period_id)
+        )
         return f"{status_key} - {period_name}"

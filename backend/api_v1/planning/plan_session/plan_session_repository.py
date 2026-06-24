@@ -81,7 +81,10 @@ class PlanSessionRepository(BaseRepository):
         """Count sessions whose status key is in `keys`."""
         stmt = (
             select(func.count(self.model.id))
-            .join(PlanSessionStatus, self.model.plan_session_status_id == PlanSessionStatus.id)
+            .join(
+                PlanSessionStatus,
+                self.model.plan_session_status_id == PlanSessionStatus.id,
+            )
             .where(PlanSessionStatus.key.in_(keys))
         )
         if exclude_id is not None:

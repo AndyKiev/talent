@@ -39,7 +39,9 @@ class TalentAuditJobStatusService(BaseService):
     async def get_by_id(self, status_id: int) -> TalentAuditJobStatusSchema:
         result = await self.repository.get_by_id(status_id)
         if not result:
-            raise await self._resolve_domain_error(TalentAuditJobStatusNotFound(status_id))
+            raise await self._resolve_domain_error(
+                TalentAuditJobStatusNotFound(status_id)
+            )
         return result
 
     async def get_talent_audit_job_statuses(

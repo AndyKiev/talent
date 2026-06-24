@@ -17,6 +17,8 @@ from backend.api_v1.employee.employee_dependencies import (
 from backend.api_v1.employee.employee_service import EmployeeService, SyncUserResult
 from backend.auth.jwt_auth import require_operation
 from backend.utils.enums import OperationTypes
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/employees",
@@ -29,7 +31,11 @@ router = APIRouter(
 # ---------------------------------------------------------------------------
 
 
-@router.get("", response_model=List[EmployeeSchema])
+@router.get(
+    "",
+    response_model=List[EmployeeSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE)],
+)
 async def get_employees(
     service: Annotated[EmployeeService, Depends(get_employee_service)],
     job_id: Optional[int] = Query(None, description="Filter users by job ID"),
@@ -39,7 +45,11 @@ async def get_employees(
     return await service.get_all(params=filters)
 
 
-@router.get("/by_job/{job_id}", response_model=List[EmployeeSchema])
+@router.get(
+    "/by_job/{job_id}",
+    response_model=List[EmployeeSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE)],
+)
 async def get_users_by_job_id_legacy(
     job_id: int,
     service: Annotated[EmployeeService, Depends(get_employee_service)],
@@ -48,17 +58,30 @@ async def get_users_by_job_id_legacy(
     return await service.get_all(params={"job_id": job_id})
 
 
-@router.get("/{employee_id}", response_model=EmployeeSchema)
+@router.get(
+    "/{employee_id}",
+    response_model=EmployeeSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE)],
+)
 async def get_user_by_id(user: EmployeeSchema = Depends(employee_by_id)):
     return user
 
 
-@router.get("/code/{employee_code}", response_model=EmployeeSchema)
+@router.get(
+    "/code/{employee_code}",
+    response_model=EmployeeSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE)],
+)
 async def get_user_by_code(user: EmployeeSchema = Depends(employee_by_code)):
     return user
 
 
-@router.post("", response_model=EmployeeSchema, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=EmployeeSchema,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.EMPLOYEE)],
+)
 async def create_user(
     user_in: EmployeeCreate,
     service: Annotated[EmployeeService, Depends(get_employee_service)],
@@ -67,7 +90,11 @@ async def create_user(
     return await service.create_user(user_in)
 
 
-@router.patch("/{employee_id}", response_model=EmployeeSchema)
+@router.patch(
+    "/{employee_id}",
+    response_model=EmployeeSchema,
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.EMPLOYEE)],
+)
 async def update_user(
     user_update: EmployeeUpdate,
     user: EmployeeSchema = Depends(employee_by_id),
@@ -76,7 +103,11 @@ async def update_user(
     return await service.update_user(user.id, user_update)
 
 
-@router.patch("/{employee_id}/status/{is_active}", response_model=EmployeeSchema)
+@router.patch(
+    "/{employee_id}/status/{is_active}",
+    response_model=EmployeeSchema,
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.EMPLOYEE)],
+)
 async def update_user_status(
     is_active: bool,
     user: EmployeeSchema = Depends(employee_by_id),
@@ -85,7 +116,11 @@ async def update_user_status(
     return await service.update_user(user.id, EmployeeUpdate(is_active=is_active))
 
 
-@router.patch("/{employee_id}/lang/{lang_id}", response_model=EmployeeSchema)
+@router.patch(
+    "/{employee_id}/lang/{lang_id}",
+    response_model=EmployeeSchema,
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.EMPLOYEE)],
+)
 async def update_user_lang(
     lang_id: int,
     user: EmployeeSchema = Depends(employee_by_id),
@@ -112,7 +147,11 @@ async def update_user_personal_data(
     return await service.set_personal_data(user.id, data)
 
 
-@router.patch("/{employee_id}/job/{job_id}", response_model=EmployeeSchema)
+@router.patch(
+    "/{employee_id}/job/{job_id}",
+    response_model=EmployeeSchema,
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.EMPLOYEE)],
+)
 async def update_user_job(
     job_id: int,
     employee: EmployeeSchema = Depends(employee_by_id),
@@ -121,7 +160,11 @@ async def update_user_job(
     return await service.update_user(employee.id, EmployeeUpdate(job_id=job_id))
 
 
-@router.delete("/{employee_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{employee_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.EMPLOYEE)],
+)
 async def delete_user(
     employee_id: int,
     service: Annotated[EmployeeService, Depends(get_employee_service)],
@@ -139,17 +182,31 @@ async def delete_user(
 # ---------------------------------------------------------------------------
 
 
-@router.get("/{user_id}/groups", response_model=List[str])
+@router.get(
+    "/{user_id}/groups",
+    response_model=List[str],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE)],
+)
 async def get_user_groups(user: EmployeeSchema = Depends(employee_by_id)):
     return user.groups
 
 
-@router.get("/code/{user_code}/groups", response_model=List[str])
+@router.get(
+    "/code/{user_code}/groups",
+    response_model=List[str],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE)],
+)
 async def get_user_groups_by_code(user: EmployeeSchema = Depends(employee_by_code)):
     return user.groups
 
 
-@router.post("/{user_id}/groups/{user_group_id}", response_model=EmployeeSchema)
+@router.post(
+    "/{user_id}/groups/{user_group_id}",
+    response_model=EmployeeSchema,
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.EMPLOYEE, EssenceName.USER_GROUP)
+    ],
+)
 async def add_user_to_group(
     user_group_id: int,
     user: EmployeeSchema = Depends(employee_by_id),
@@ -158,7 +215,13 @@ async def add_user_to_group(
     return await service.add_to_group(user.id, user_group_id)
 
 
-@router.delete("/{user_id}/groups/{user_group_id}", response_model=EmployeeSchema)
+@router.delete(
+    "/{user_id}/groups/{user_group_id}",
+    response_model=EmployeeSchema,
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.EMPLOYEE, EssenceName.USER_GROUP)
+    ],
+)
 async def remove_user_from_group(
     user_group_id: int,
     user: EmployeeSchema = Depends(employee_by_id),
@@ -171,7 +234,13 @@ class UserGroupsUpdate(BaseModel):
     group_ids: List[int]
 
 
-@router.put("/{user_id}/groups", response_model=EmployeeSchema)
+@router.put(
+    "/{user_id}/groups",
+    response_model=EmployeeSchema,
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.EMPLOYEE, EssenceName.USER_GROUP)
+    ],
+)
 async def set_user_groups(
     groups_update: UserGroupsUpdate,
     user: EmployeeSchema = Depends(employee_by_id),
@@ -194,6 +263,9 @@ async def set_user_groups(
         "doesn't have yet, and removes groups the employee has that are no longer "
         "linked to their job."
     ),
+    dependencies=[
+        Guard(OperationVerb.SYNC, EssenceName.EMPLOYEE, EssenceName.USER_GROUP)
+    ],
 )
 async def sync_user_groups_from_job(
     user: EmployeeSchema = Depends(employee_by_id),

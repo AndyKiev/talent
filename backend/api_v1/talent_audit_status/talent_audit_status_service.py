@@ -5,7 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.talent_audit_status.talent_audit_status_repository import TalentAuditStatusRepository
+from backend.api_v1.talent_audit_status.talent_audit_status_repository import (
+    TalentAuditStatusRepository,
+)
 from backend.api_v1.talent_audit_status.talent_audit_status_schema import (
     TalentAuditStatus as TalentAuditStatusSchema,
     TalentAuditStatusCreate,

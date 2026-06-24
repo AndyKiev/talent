@@ -24,7 +24,8 @@ class JobResponsibilityCategoryLinkDuplicate(AlreadyExistsError):
             f"Job {job_id} is already linked to department category {category_id}"
         )
         super().__init__(
-            "JobResponsibilityCategoryLink", "job_id+department_category_id",
+            "JobResponsibilityCategoryLink",
+            "job_id+department_category_id",
             f"{job_id}+{category_id}",
         )
 

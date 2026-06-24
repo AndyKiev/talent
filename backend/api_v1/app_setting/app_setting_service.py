@@ -154,9 +154,7 @@ class AppSettingService(BaseService):
             instance=orm_record, instance_update=update_data
         )
         schema = AppSettingSchema.model_validate(updated)
-        detail = await self._resolve_domain_success(
-            AppSettingUpdateSuccess(schema.key)
-        )
+        detail = await self._resolve_domain_success(AppSettingUpdateSuccess(schema.key))
         return MutationResponse(detail=detail, data=schema)
 
     async def delete_app_setting(self, setting_id: int) -> None:

@@ -45,7 +45,9 @@ class EmployeeUserGroupLinkService(BaseService):
     async def get_by_id(self, link_id: int) -> EmployeeUserGroupLinkSchema:
         result = await self.repository.get_by_id(link_id)
         if not result:
-            raise await self._resolve_domain_error(EmployeeUserGroupLinkNotFound(link_id))
+            raise await self._resolve_domain_error(
+                EmployeeUserGroupLinkNotFound(link_id)
+            )
         return result
 
     async def get_by_composite_key(

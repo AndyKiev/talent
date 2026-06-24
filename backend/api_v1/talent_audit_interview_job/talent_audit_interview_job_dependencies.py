@@ -28,7 +28,9 @@ async def get_talent_audit_interview_job_service(
 
 async def talent_audit_interview_job_by_id(
     talent_audit_interview_job_id: int,
-    service: TalentAuditInterviewJobService = Depends(get_talent_audit_interview_job_service),
+    service: TalentAuditInterviewJobService = Depends(
+        get_talent_audit_interview_job_service
+    ),
 ) -> TalentAuditInterviewJobSchema:
     record = await service.get_by_id(talent_audit_interview_job_id)
     return TalentAuditInterviewJobSchema.model_validate(record)

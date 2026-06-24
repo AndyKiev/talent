@@ -21,7 +21,9 @@ class EmployeeUserGroupLink(IntIdPkMixin, TimestampMixin, Base):
     employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id"))
     user_group_id: Mapped[int] = mapped_column(ForeignKey("user_groups.id"))
 
-    employee: Mapped["Employee"] = relationship(back_populates="user_groups", lazy="selectin")
+    employee: Mapped["Employee"] = relationship(
+        back_populates="user_groups", lazy="selectin"
+    )
     user_group: Mapped["UserGroup"] = relationship(
         back_populates="employees", lazy="selectin"
     )

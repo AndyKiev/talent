@@ -1,7 +1,9 @@
 from sqlalchemy import MetaData
 from sqlalchemy.orm import (
     DeclarativeBase,
-    declared_attr, mapped_column, Mapped,
+    declared_attr,
+    mapped_column,
+    Mapped,
 )
 
 from backend.config import settings

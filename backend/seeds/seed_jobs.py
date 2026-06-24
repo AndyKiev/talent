@@ -3,6 +3,7 @@ from backend.database.db_helper import db_helper
 from backend.api_v1.job.job_model import Job
 from sqlalchemy import select
 
+
 async def seed_jobs():
     async with db_helper.session_factory() as session:
         result = await session.execute(select(Job).where(Job.id == 1))
@@ -13,6 +14,7 @@ async def seed_jobs():
             print("Seeded: Developer job")
         else:
             print("Jobs already seeded, skipping.")
+
 
 if __name__ == "__main__":
     asyncio.run(seed_jobs())

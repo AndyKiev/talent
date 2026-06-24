@@ -14,7 +14,11 @@ class DepartmentRepository(BaseRepository):
 
     async def get_roots(self) -> Sequence[Department]:
         """Return all top-level departments (parent_id IS NULL)."""
-        stmt = select(self.model).where(self.model.parent_id.is_(None)).order_by(self.model.id)
+        stmt = (
+            select(self.model)
+            .where(self.model.parent_id.is_(None))
+            .order_by(self.model.id)
+        )
         result = await self.session.scalars(stmt)
         return result.all()
 

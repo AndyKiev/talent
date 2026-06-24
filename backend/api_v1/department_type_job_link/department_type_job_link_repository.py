@@ -3,7 +3,9 @@ from typing import List, Optional
 from sqlalchemy import select
 
 from backend.api_v1.base.base_repository import BaseRepository
-from backend.api_v1.department_type_job_link.department_type_job_link_model import DepartmentTypeJobLink
+from backend.api_v1.department_type_job_link.department_type_job_link_model import (
+    DepartmentTypeJobLink,
+)
 from backend.api_v1.job.job_model import Job
 
 

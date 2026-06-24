@@ -13,7 +13,11 @@ from backend.api_v1.talent_audit_job.talent_audit_job_schema import (
     TalentAuditJobCreate,
     TalentAuditJobUpdate,
 )
-from backend.api_v1.talent_audit_job.talent_audit_job_service import TalentAuditJobService
+from backend.api_v1.talent_audit_job.talent_audit_job_service import (
+    TalentAuditJobService,
+)
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/talent_audit_jobs",
@@ -22,7 +26,11 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[TalentAuditJobSchema])
+@router.get(
+    "",
+    response_model=List[TalentAuditJobSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT_JOB)],
+)
 async def get_talent_audit_jobs(
     service: Annotated[TalentAuditJobService, Depends(get_talent_audit_job_service)],
     sort: Optional[str] = Query(
@@ -34,7 +42,11 @@ async def get_talent_audit_jobs(
 
 
 # Static path before dynamic
-@router.get("/by_talent_audit/{talent_audit_id}", response_model=List[TalentAuditJobSchema])
+@router.get(
+    "/by_talent_audit/{talent_audit_id}",
+    response_model=List[TalentAuditJobSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT_JOB)],
+)
 async def get_talent_audit_jobs_by_audit(
     talent_audit_id: int,
     service: Annotated[TalentAuditJobService, Depends(get_talent_audit_job_service)],
@@ -42,7 +54,11 @@ async def get_talent_audit_jobs_by_audit(
     return await service.get_by_talent_audit_id(talent_audit_id)
 
 
-@router.get("/{talent_audit_job_id}", response_model=TalentAuditJobSchema)
+@router.get(
+    "/{talent_audit_job_id}",
+    response_model=TalentAuditJobSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT_JOB)],
+)
 async def get_talent_audit_job(
     record: TalentAuditJobSchema = Depends(talent_audit_job_by_id),
 ):
@@ -53,6 +69,7 @@ async def get_talent_audit_job(
     "",
     response_model=MutationResponse[TalentAuditJobSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.TALENT_AUDIT_JOB)],
 )
 async def create_talent_audit_job(
     job_in: TalentAuditJobCreate,
@@ -64,16 +81,23 @@ async def create_talent_audit_job(
 @router.patch(
     "/{talent_audit_job_id}",
     response_model=MutationResponse[TalentAuditJobSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.TALENT_AUDIT_JOB)],
 )
 async def update_talent_audit_job(
     job_update: TalentAuditJobUpdate,
     record: TalentAuditJobSchema = Depends(talent_audit_job_by_id),
-    service: Annotated[TalentAuditJobService, Depends(get_talent_audit_job_service)] = None,
+    service: Annotated[
+        TalentAuditJobService, Depends(get_talent_audit_job_service)
+    ] = None,
 ):
     return await service.update_talent_audit_job(record.id, job_update)
 
 
-@router.delete("/{talent_audit_job_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{talent_audit_job_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.TALENT_AUDIT_JOB)],
+)
 async def delete_talent_audit_job(
     talent_audit_job_id: int,
     service: Annotated[TalentAuditJobService, Depends(get_talent_audit_job_service)],

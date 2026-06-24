@@ -31,7 +31,11 @@ from backend.api_v1.department_type_job_link.department_type_job_link_success im
 
 def _link_label(link: DepartmentTypeJobLinkSchema) -> str:
     """Human-readable label: '<DepartmentType name> – <Job name>'"""
-    dt_name = link.department_type.name if link.department_type else str(link.department_type_id)
+    dt_name = (
+        link.department_type.name
+        if link.department_type
+        else str(link.department_type_id)
+    )
     job_name = link.job.name if link.job else str(link.job_id)
     return f"{dt_name} – {job_name}"
 
@@ -52,7 +56,9 @@ class DepartmentTypeJobLinkService(BaseService):
     async def get_by_id(self, link_id: int) -> DepartmentTypeJobLinkSchema:
         result = await self.repository.get_by_id(link_id)
         if not result:
-            raise await self._resolve_domain_error(DepartmentTypeJobLinkNotFound(link_id))
+            raise await self._resolve_domain_error(
+                DepartmentTypeJobLinkNotFound(link_id)
+            )
         return result
 
     async def get_links(
@@ -83,9 +89,9 @@ class DepartmentTypeJobLinkService(BaseService):
         return DepartmentTypeJobLinkSchema.model_validate(result)
 
     async def get_jobs_by_department_type(
-            self,
-            department_type_id: int,
-            is_active: Optional[bool] = None,  # Changed from True to None
+        self,
+        department_type_id: int,
+        is_active: Optional[bool] = None,  # Changed from True to None
     ) -> List[JobWithLinkId]:
         """
         Return enriched Job objects for a given department type.
@@ -119,17 +125,23 @@ class DepartmentTypeJobLinkService(BaseService):
         )
         if existing:
             raise await self._resolve_domain_error(
-                DepartmentTypeJobLinkAlreadyExists(link_in.department_type_id, link_in.job_id)
+                DepartmentTypeJobLinkAlreadyExists(
+                    link_in.department_type_id, link_in.job_id
+                )
             )
         try:
             record = await self.create(link_in)
             schema = DepartmentTypeJobLinkSchema.model_validate(record)
             label = _link_label(schema)
-            detail = await self._resolve_domain_success(DepartmentTypeJobLinkCreateSuccess(label))
+            detail = await self._resolve_domain_success(
+                DepartmentTypeJobLinkCreateSuccess(label)
+            )
             return MutationResponse(detail=detail, data=schema)
         except IntegrityError:
             raise await self._resolve_domain_error(
-                DepartmentTypeJobLinkAlreadyExists(link_in.department_type_id, link_in.job_id)
+                DepartmentTypeJobLinkAlreadyExists(
+                    link_in.department_type_id, link_in.job_id
+                )
             )
 
     async def update_link(
@@ -140,7 +152,9 @@ class DepartmentTypeJobLinkService(BaseService):
             updated = await self.update(orm_record, link_update, partial=True)
             schema = DepartmentTypeJobLinkSchema.model_validate(updated)
             label = _link_label(schema)
-            detail = await self._resolve_domain_success(DepartmentTypeJobLinkUpdateSuccess(label))
+            detail = await self._resolve_domain_success(
+                DepartmentTypeJobLinkUpdateSuccess(label)
+            )
             return MutationResponse(detail=detail, data=schema)
         except IntegrityError:
             raise await self._resolve_domain_error(

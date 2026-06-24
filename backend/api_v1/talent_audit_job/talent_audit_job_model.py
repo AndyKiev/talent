@@ -11,9 +11,15 @@ if TYPE_CHECKING:
     from backend.api_v1.employee.employee_model import Employee
     from backend.api_v1.job.job_model import Job
     from backend.api_v1.talent_audit.talent_audit_model import TalentAudit
-    from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_model import TalentAuditInterviewJob
-    from backend.api_v1.talent_audit_job_status.talent_audit_job_status_model import TalentAuditJobStatus
-    from backend.api_v1.talent_status_period_link.talent_status_period_link_model import TalentStatusPeriodLink
+    from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_model import (
+        TalentAuditInterviewJob,
+    )
+    from backend.api_v1.talent_audit_job_status.talent_audit_job_status_model import (
+        TalentAuditJobStatus,
+    )
+    from backend.api_v1.talent_status_period_link.talent_status_period_link_model import (
+        TalentStatusPeriodLink,
+    )
 
 
 class TalentAuditJob(IntIdPkMixin, Base):

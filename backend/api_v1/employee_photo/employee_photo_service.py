@@ -69,7 +69,9 @@ class EmployeePhotoService(BaseService):
             img.convert("RGBA").save(out, format="PNG", optimize=True)
             content_type = "image/png"
         else:
-            img.convert("RGB").save(out, format="JPEG", quality=JPEG_QUALITY, optimize=True)
+            img.convert("RGB").save(
+                out, format="JPEG", quality=JPEG_QUALITY, optimize=True
+            )
             content_type = "image/jpeg"
         return out.getvalue(), content_type
 

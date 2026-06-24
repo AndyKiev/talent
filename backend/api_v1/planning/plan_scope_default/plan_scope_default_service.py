@@ -62,9 +62,7 @@ class PlanScopeDefaultService(BaseService):
         )
         if existing:
             raise await self._resolve_domain_error(
-                PlanScopeDefaultExists(
-                    f"{data.job_group_id}/{data.talent_status_id}"
-                )
+                PlanScopeDefaultExists(f"{data.job_group_id}/{data.talent_status_id}")
             )
         try:
             record = await self.create(data)
@@ -75,9 +73,7 @@ class PlanScopeDefaultService(BaseService):
             return MutationResponse(detail=detail, data=schema)
         except IntegrityError:
             raise await self._resolve_domain_error(
-                PlanScopeDefaultExists(
-                    f"{data.job_group_id}/{data.talent_status_id}"
-                )
+                PlanScopeDefaultExists(f"{data.job_group_id}/{data.talent_status_id}")
             )
 
     async def delete_plan_scope_default(self, default_id: int) -> None:

@@ -9,6 +9,7 @@ class BaseDatabaseConfig(BaseModel):
     password: str
     user_test: str
     password_test: str
+
     @property
     def url(self) -> str:
         return f"oracle+oracledb://{self.user}:{self.password}@{self.host}:{self.port}/{self.sid}"
@@ -16,9 +17,11 @@ class BaseDatabaseConfig(BaseModel):
 
 class BaseDatabaseOracleConfig(BaseDatabaseConfig):
     sid: str
+
     @property
     def url(self) -> str:
         return f"oracle+oracledb://{self.user}:{self.password}@{self.host}:{self.port}/{self.sid}"
+
     @property
     def active_url(self) -> str:
         if self.debug:
@@ -28,9 +31,11 @@ class BaseDatabaseOracleConfig(BaseDatabaseConfig):
 
 class BaseDatabasePostgres(BaseDatabaseConfig):
     name: str  # was: sid
+
     @property
     def url(self) -> str:
         return f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
+
     @property
     def active_url(self) -> str:
         if self.debug:

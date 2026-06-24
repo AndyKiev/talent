@@ -36,10 +36,10 @@ def _link_label(department_id: int) -> str:
 class EmployeeDepartmentService(BaseService):
 
     def __init__(
-            self,
-            repository: EmployeeDepartmentRepository,
-            user: Optional[EmployeeSchema] = None,
-            session: Optional[AsyncSession] = None,
+        self,
+        repository: EmployeeDepartmentRepository,
+        user: Optional[EmployeeSchema] = None,
+        session: Optional[AsyncSession] = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -49,10 +49,10 @@ class EmployeeDepartmentService(BaseService):
         return EmployeeDepartmentSchema.model_validate(orm_record)
 
     async def _assert_double_is_free(
-            self,
-            employee_id: int,
-            department_id: int,
-            exclude_link_id: Optional[int] = None,
+        self,
+        employee_id: int,
+        department_id: int,
+        exclude_link_id: Optional[int] = None,
     ) -> None:
         """
         Raise EmployeeDepartmentAlreadyExists if the (employee_id, department_id)
@@ -71,7 +71,7 @@ class EmployeeDepartmentService(BaseService):
     # ── Read ───────────────────────────────────────────────────────────────────
 
     async def get_by_id(
-            self, link_id: int, employee_id: int
+        self, link_id: int, employee_id: int
     ) -> EmployeeDepartmentSchema:
         record = await self.repository.get_by_id(link_id)
         if not record or record.employee_id != employee_id:
@@ -80,9 +80,7 @@ class EmployeeDepartmentService(BaseService):
             )
         return self._to_schema(record)
 
-    async def get_by_employee(
-            self, employee_id: int
-    ) -> List[EmployeeDepartmentSchema]:
+    async def get_by_employee(self, employee_id: int) -> List[EmployeeDepartmentSchema]:
         records = await self.repository.get_by_employee(employee_id)
         return [self._to_schema(r) for r in records]
 
@@ -93,9 +91,9 @@ class EmployeeDepartmentService(BaseService):
     # ── Write ──────────────────────────────────────────────────────────────────
 
     async def create_link(
-            self,
-            employee_id: int,
-            link_in: EmployeeDepartmentCreate,
+        self,
+        employee_id: int,
+        link_in: EmployeeDepartmentCreate,
     ) -> MutationResponse[EmployeeDepartmentSchema]:
         # Only uniqueness is enforced — multiple is_main=True records are allowed.
         await self._assert_double_is_free(employee_id, link_in.department_id)
@@ -104,6 +102,7 @@ class EmployeeDepartmentService(BaseService):
             from backend.api_v1.employee_department.employee_department_model import (
                 EmployeeDepartment,
             )
+
             orm_record = EmployeeDepartment(
                 employee_id=employee_id,
                 department_id=link_in.department_id,
@@ -126,10 +125,10 @@ class EmployeeDepartmentService(BaseService):
             )
 
     async def update_link(
-            self,
-            link_id: int,
-            employee_id: int,
-            link_update: EmployeeDepartmentUpdate,
+        self,
+        link_id: int,
+        employee_id: int,
+        link_update: EmployeeDepartmentUpdate,
     ) -> MutationResponse[EmployeeDepartmentSchema]:
         orm_record = await self.repository.get_by_id(link_id)
         if not orm_record or orm_record.employee_id != employee_id:

@@ -42,7 +42,11 @@ async def get_review_session_employees(
     )
 
 
-@router.post("", response_model=MutationResponse[RSEListSchema], status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=MutationResponse[RSEListSchema],
+    status_code=status.HTTP_201_CREATED,
+)
 async def add_session_employee(
     payload: ReviewSessionEmployeeCreate,
     service: Annotated[
@@ -131,9 +135,7 @@ async def get_tempo_pdf(
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={
-            "Content-Disposition": f'attachment; filename="tempo_{rse_id}.pdf"'
-        },
+        headers={"Content-Disposition": f'attachment; filename="tempo_{rse_id}.pdf"'},
     )
 
 

@@ -112,22 +112,40 @@ from backend.api_v1.operation.operation_model import Operation
 from backend.api_v1.employee_status.employee_status_model import EmployeeStatus
 from backend.api_v1.department.department_model import Department
 from backend.api_v1.department_type.department_type_model import DepartmentType
-from backend.api_v1.department_type_job_link.department_type_job_link_model import DepartmentTypeJobLink
+from backend.api_v1.department_type_job_link.department_type_job_link_model import (
+    DepartmentTypeJobLink,
+)
 
-from backend.api_v1.department_type_parental_links.department_type_parental_link_model import DepartmentTypeParentalLink
-from backend.api_v1.department_category.department_category_model import DepartmentCategory
+from backend.api_v1.department_type_parental_links.department_type_parental_link_model import (
+    DepartmentTypeParentalLink,
+)
+from backend.api_v1.department_category.department_category_model import (
+    DepartmentCategory,
+)
 
-from backend.api_v1.talent_status_period_link.talent_status_period_link_model import TalentStatusPeriodLink
+from backend.api_v1.talent_status_period_link.talent_status_period_link_model import (
+    TalentStatusPeriodLink,
+)
 from backend.api_v1.talent_status.talent_status_model import TalentStatus
 from backend.api_v1.talent_period.talent_period_model import TalentPeriod
 
-from backend.api_v1.employee_department.employee_department_model import EmployeeDepartment
-from backend.api_v1.talent_audit_status.talent_audit_status_model import TalentAuditStatus
+from backend.api_v1.employee_department.employee_department_model import (
+    EmployeeDepartment,
+)
+from backend.api_v1.talent_audit_status.talent_audit_status_model import (
+    TalentAuditStatus,
+)
 from backend.api_v1.talent_audit.talent_audit_model import TalentAudit
-from backend.api_v1.talent_audit_job_status.talent_audit_job_status_model import TalentAuditJobStatus
+from backend.api_v1.talent_audit_job_status.talent_audit_job_status_model import (
+    TalentAuditJobStatus,
+)
 from backend.api_v1.talent_audit_job.talent_audit_job_model import TalentAuditJob
-from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_model import TalentAuditInterviewStatus
-from backend.api_v1.talent_audit_interview.talent_audit_interview_model import TalentAuditInterview
+from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_model import (
+    TalentAuditInterviewStatus,
+)
+from backend.api_v1.talent_audit_interview.talent_audit_interview_model import (
+    TalentAuditInterview,
+)
 
 from backend.api_v1.table_relationship_links.employee_user_group_link_model import (
     EmployeeUserGroupLink,
@@ -150,14 +168,23 @@ from backend.api_v1.table_relationship_links.operation_user_group_link_model imp
 from backend.api_v1.employee_events.employee_event_direction_type.employee_event_direction_type_model import (
     EmployeeEventDirectionType,
 )
-from backend.api_v1.employee_events.employee_event_type.employee_event_type_model import EmployeeEventType
+from backend.api_v1.employee_events.employee_event_type.employee_event_type_model import (
+    EmployeeEventType,
+)
 from backend.api_v1.employee_events.employee_event_type_direction.employee_event_type_direction_model import (
     EmployeeEventTypeDirection,
 )
+
 # EmployeeEventStatus must be imported before EmployeeEvent (FK dependency)
-from backend.api_v1.employee_events.employee_event_status.employee_event_status_model import EmployeeEventStatus
-from backend.api_v1.employee_events.employee_event.employee_event_model import EmployeeEvent
-from backend.api_v1.employee_events.employee_event_change.employee_event_change_model import EmployeeEventChange
+from backend.api_v1.employee_events.employee_event_status.employee_event_status_model import (
+    EmployeeEventStatus,
+)
+from backend.api_v1.employee_events.employee_event.employee_event_model import (
+    EmployeeEvent,
+)
+from backend.api_v1.employee_events.employee_event_change.employee_event_change_model import (
+    EmployeeEventChange,
+)
 
 from backend.api_v1.employee_events.employee_event_change_dept_type.employee_event_change_dept_type_model import (
     EmployeeEventChangeDeptType,
@@ -167,15 +194,23 @@ from backend.api_v1.employee_events.employee_event_change_department.employee_ev
 )
 
 # ── Essence-set access control & job/audit additions ──────────────────────────
-from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_model import TalentAuditInterviewJob
+from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_model import (
+    TalentAuditInterviewJob,
+)
 from backend.api_v1.job_group_type.job_group_type_model import JobGroupType
 from backend.api_v1.job_group.job_group_model import JobGroup
 from backend.api_v1.job_job_group_link.job_job_group_link_model import JobJobGroupLink
 
-from backend.api_v1.operation_essence_link.operation_essence_link_model import OperationEssenceLink
+from backend.api_v1.operation_essence_link.operation_essence_link_model import (
+    OperationEssenceLink,
+)
 from backend.api_v1.essence.essence_model import Essence
-from backend.api_v1.table_relationship_links.user_group_operation_essence_link_model import UserGroupOperationEssenceLink
-from backend.api_v1.job_responsibility_category_link.job_responsibility_category_link_model import JobResponsibilityCategoryLink
+from backend.api_v1.table_relationship_links.user_group_operation_essence_link_model import (
+    UserGroupOperationEssenceLink,
+)
+from backend.api_v1.job_responsibility_category_link.job_responsibility_category_link_model import (
+    JobResponsibilityCategoryLink,
+)
 
 from backend.api_v1.essence_set.essence_set_model import EssenceSet
 from backend.api_v1.essence_set.essence_set_member_model import EssenceSetMember
@@ -188,11 +223,19 @@ from backend.api_v1.table_relationship_links.user_group_operation_essence_set_li
 
 # Planning — import order matters: status (lookup) first, then the session,
 # then defaults, then the per-session snapshot tables that FK into them.
-from backend.api_v1.planning.plan_session_status.plan_session_status_model import PlanSessionStatus
+from backend.api_v1.planning.plan_session_status.plan_session_status_model import (
+    PlanSessionStatus,
+)
 from backend.api_v1.planning.plan_session.plan_session_model import PlanSession
-from backend.api_v1.planning.plan_category_default.plan_category_default_model import PlanCategoryDefault
-from backend.api_v1.planning.plan_session_category.plan_session_category_model import PlanSessionCategory
-from backend.api_v1.planning.plan_scope_default.plan_scope_default_model import PlanScopeDefault
+from backend.api_v1.planning.plan_category_default.plan_category_default_model import (
+    PlanCategoryDefault,
+)
+from backend.api_v1.planning.plan_session_category.plan_session_category_model import (
+    PlanSessionCategory,
+)
+from backend.api_v1.planning.plan_scope_default.plan_scope_default_model import (
+    PlanScopeDefault,
+)
 from backend.api_v1.planning.plan_scope.plan_scope_model import PlanScope
 
 # People review — dimension (lookup) + criteria, session, per-employee, evaluation.

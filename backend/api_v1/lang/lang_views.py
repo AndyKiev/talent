@@ -1,14 +1,19 @@
 from fastapi import APIRouter, Depends, status
+
 # from fastapi import APIRouter, Depends, status, Query
 # from fastapi.security import HTTPBearer
 from typing import Annotated, Optional, List
+
 # from pydantic import BaseModel
 from backend.api_v1.lang.lang_model import Lang as LangModel
 from backend.api_v1.base.errors import NotFoundError
 from backend.api_v1.lang.lang_dependencies import get_lang_service, lang_by_id
+
 # from backend.api_v1.lang.lang_errors import LangNotFoundByName
 from backend.api_v1.lang.lang_schema import Lang as LangSchema, LangCreate, LangUpdate
 from backend.api_v1.lang.lang_service import LangService
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 
 router = APIRouter(
@@ -31,13 +36,19 @@ async def get_langs(
     langs = await service.get_all()
     return [LangSchema.model_validate(l) for l in langs]
 
+
 #
 @router.get("/{lang_id}", response_model=LangSchema)
 async def get_lang(job: LangSchema = Depends(lang_by_id)):
     return job
 
 
-@router.post("", response_model=LangSchema, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=LangSchema,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.LANG)],
+)
 async def create_lang(
     lang_in: LangCreate,
     service: Annotated[LangService, Depends(get_lang_service)],
@@ -45,18 +56,26 @@ async def create_lang(
     return await service.create(lang_in)
 
 
-@router.patch("/{lang_id}", response_model=LangSchema)
+@router.patch(
+    "/{lang_id}",
+    response_model=LangSchema,
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.LANG)],
+)
 async def update_lang(
     lang_update: LangUpdate,
-    lang: LangModel = Depends(lang_by_id),   # ← LangModel not LangSchema
+    lang: LangModel = Depends(lang_by_id),  # ← LangModel not LangSchema
     service: Annotated[LangService, Depends(get_lang_service)] = None,
 ):
     return await service.update(lang, lang_update)
 
 
-@router.delete("/{lang_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{lang_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.LANG)],
+)
 async def delete_lang(
     service: Annotated[LangService, Depends(get_lang_service)],
-    lang: LangModel = Depends(lang_by_id),   # ← LangModel not LangSchema
+    lang: LangModel = Depends(lang_by_id),  # ← LangModel not LangSchema
 ):
     await service.delete(lang)

@@ -6,5 +6,7 @@ class EmployeeEventChangeDepartmentNotFound(NotFoundError):
 
     def __init__(self, record_id: int) -> None:
         self.template_vars = {"recordId": record_id}
-        self.fallback = f"Employee event change department with ID {record_id} not found"
+        self.fallback = (
+            f"Employee event change department with ID {record_id} not found"
+        )
         super().__init__("EmployeeEventChangeDepartment", "id", record_id)

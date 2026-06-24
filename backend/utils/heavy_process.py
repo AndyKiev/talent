@@ -4,6 +4,7 @@ Sleeps 7 seconds (imitating real computation), then:
   1. Sends an email to the hardcoded recipient.
   2. Publishes a notification message to RabbitMQ.
 """
+
 import asyncio
 import logging
 

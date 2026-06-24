@@ -47,18 +47,22 @@ class UserGroup(IntIdPkMixin, Base):
     )
 
     # Tier 1: (verb, essence) permission grants for this group
-    operation_essence_links: Mapped[list["UserGroupOperationEssenceLink"]] = relationship(
-        back_populates="user_group",
-        lazy="selectin",
-        cascade="all, delete-orphan",
+    operation_essence_links: Mapped[list["UserGroupOperationEssenceLink"]] = (
+        relationship(
+            back_populates="user_group",
+            lazy="selectin",
+            cascade="all, delete-orphan",
+        )
     )
 
     # Tier 1 (new set grain): (verb, {essence, ...}) grants for this group.
     # Coexists with the legacy grain above during transition.
-    operation_essence_set_links: Mapped[list["UserGroupOperationEssenceSetLink"]] = relationship(
-        back_populates="user_group",
-        lazy="selectin",
-        cascade="all, delete-orphan",
+    operation_essence_set_links: Mapped[list["UserGroupOperationEssenceSetLink"]] = (
+        relationship(
+            back_populates="user_group",
+            lazy="selectin",
+            cascade="all, delete-orphan",
+        )
     )
 
     # ── Computed helpers ──────────────────────────────────────────────────────
@@ -80,8 +84,7 @@ class UserGroup(IntIdPkMixin, Base):
     def oel_ids(self) -> list[int]:
         """IDs of OperationEssenceLink rows currently granted to this group (legacy grain)."""
         return [
-            ugoel.operation_essence_link_id
-            for ugoel in self.operation_essence_links
+            ugoel.operation_essence_link_id for ugoel in self.operation_essence_links
         ]
 
     @property

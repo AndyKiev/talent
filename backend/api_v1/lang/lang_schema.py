@@ -1,4 +1,5 @@
 from pydantic import BaseModel, ConfigDict, Field
+
 # from datetime import datetime
 
 
@@ -18,4 +19,3 @@ class LangUpdate(LangBase):
 class Lang(LangBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
-

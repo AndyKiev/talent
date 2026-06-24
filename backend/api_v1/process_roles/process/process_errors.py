@@ -29,7 +29,5 @@ class ProcessDeleteError(DeleteError):
 
     def __init__(self, name: str) -> None:
         self.template_vars = {"name": name}
-        self.fallback = (
-            f"Process '{name}' cannot be deleted because it is referenced by other records"
-        )
+        self.fallback = f"Process '{name}' cannot be deleted because it is referenced by other records"
         DomainError.__init__(self, self.fallback)

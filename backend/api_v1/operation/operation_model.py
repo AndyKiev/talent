@@ -4,6 +4,7 @@ from sqlalchemy import String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
 from backend.api_v1.base.base_model import Base
+
 # backend/api_v1/operation/operation_model.py
 
 if TYPE_CHECKING:
@@ -33,7 +34,6 @@ class Operation(IntIdPkMixin, Base):
         cascade="all, delete-orphan",
     )
 
-
     @property
     def user_groups(self) -> list[str]:
         return [
@@ -45,11 +45,7 @@ class Operation(IntIdPkMixin, Base):
     @property
     def essences(self) -> list[str]:
         """Names of essences that have this operation enabled."""
-        return [
-            link.essence.name
-            for link in self.essence_links
-            if link.essence
-        ]
+        return [link.essence.name for link in self.essence_links if link.essence]
 
     def __repr__(self):
         return f"<Operation(id={self.id}, name='{self.name}')>"

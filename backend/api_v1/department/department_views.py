@@ -14,6 +14,8 @@ from backend.api_v1.department.department_dependencies import (
     department_by_id,
 )
 from backend.api_v1.department.department_service import DepartmentService
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/departments",
@@ -22,7 +24,11 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[DepartmentFlat])
+@router.get(
+    "",
+    response_model=List[DepartmentFlat],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT)],
+)
 async def get_departments(
     service: Annotated[DepartmentService, Depends(get_department_service)],
     name: Optional[str] = None,
@@ -41,7 +47,11 @@ async def get_departments(
     )
 
 
-@router.get("/tree", response_model=List[DepartmentSchema])
+@router.get(
+    "/tree",
+    response_model=List[DepartmentSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT)],
+)
 async def get_department_tree(
     service: Annotated[DepartmentService, Depends(get_department_service)],
 ):
@@ -52,7 +62,11 @@ async def get_department_tree(
     return await service.get_tree()
 
 
-@router.get("/roots", response_model=List[DepartmentFlat])
+@router.get(
+    "/roots",
+    response_model=List[DepartmentFlat],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT)],
+)
 async def get_root_departments(
     service: Annotated[DepartmentService, Depends(get_department_service)],
 ):
@@ -64,7 +78,11 @@ async def get_root_departments(
     return await service.get_root_departments()
 
 
-@router.get("/{department_id}/tree", response_model=DepartmentSchema)
+@router.get(
+    "/{department_id}/tree",
+    response_model=DepartmentSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT)],
+)
 async def get_department_subtree(
     department_id: int,
     service: Annotated[DepartmentService, Depends(get_department_service)],
@@ -73,7 +91,11 @@ async def get_department_subtree(
     return await service.get_department_tree_node(department_id)
 
 
-@router.get("/{department_id}", response_model=DepartmentSchema)
+@router.get(
+    "/{department_id}",
+    response_model=DepartmentSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT)],
+)
 async def get_department(
     department_id: int,
     service: Annotated[DepartmentService, Depends(get_department_service)],
@@ -85,6 +107,7 @@ async def get_department(
     "",
     response_model=MutationResponse[DepartmentSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.DEPARTMENT)],
 )
 async def create_department(
     dept_in: DepartmentCreate,
@@ -96,6 +119,7 @@ async def create_department(
 @router.patch(
     "/{department_id}",
     response_model=MutationResponse[DepartmentSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.DEPARTMENT)],
 )
 async def update_department(
     department_id: int,
@@ -105,7 +129,11 @@ async def update_department(
     return await service.update_department(department_id, dept_update)
 
 
-@router.delete("/{department_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{department_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.DEPARTMENT)],
+)
 async def delete_department(
     department_id: int,
     service: Annotated[DepartmentService, Depends(get_department_service)],

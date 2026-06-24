@@ -27,24 +27,20 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("code", sa.String(length=64), nullable=False),
         sa.Column("name", sa.String(length=128), nullable=False),
-        sa.PrimaryKeyConstraint(
-            "id", name=op.f("pk_employee_event_change_dept_types")
-        ),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_employee_event_change_dept_types")),
         sa.UniqueConstraint(
             "code", name=op.f("uq_employee_event_change_dept_types_code")
-        )
+        ),
     )
     op.create_table(
         "employee_event_direction_types",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("code", sa.String(length=64), nullable=False),
         sa.Column("name", sa.String(length=128), nullable=False),
-        sa.PrimaryKeyConstraint(
-            "id", name=op.f("pk_employee_event_direction_types")
-        ),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_employee_event_direction_types")),
         sa.UniqueConstraint(
             "code", name=op.f("uq_employee_event_direction_types_code")
-        )
+        ),
     )
     op.create_table(
         "employee_event_types",
@@ -58,7 +54,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_employee_event_types")),
-        sa.UniqueConstraint("name", name=op.f("uq_employee_event_types_name"))
+        sa.UniqueConstraint("name", name=op.f("uq_employee_event_types_name")),
     )
     op.create_table(
         "employee_event_type_directions",
@@ -83,14 +79,12 @@ def upgrade() -> None:
             ),
             ondelete="CASCADE",
         ),
-        sa.PrimaryKeyConstraint(
-            "id", name=op.f("pk_employee_event_type_directions")
-        ),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_employee_event_type_directions")),
         sa.UniqueConstraint(
             "event_type_id",
             "direction_type_id",
             name="uq_event_type_direction",
-        )
+        ),
     )
     op.create_index(
         op.f("ix_employee_event_type_directions_event_type_id"),
@@ -131,7 +125,7 @@ def upgrade() -> None:
             name=op.f("fk_employee_events_event_type_id_employee_event_types"),
             ondelete="RESTRICT",
         ),
-        sa.PrimaryKeyConstraint("id", name=op.f("pk_employee_events"))
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_employee_events")),
     )
     op.create_index(
         op.f("ix_employee_events_employee_id"),
@@ -167,9 +161,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["new_department_id"],
             ["departments.id"],
-            name=op.f(
-                "fk_employee_event_changes_new_department_id_departments"
-            ),
+            name=op.f("fk_employee_event_changes_new_department_id_departments"),
             ondelete="SET NULL",
         ),
         sa.ForeignKeyConstraint(
@@ -181,17 +173,13 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["new_status_id"],
             ["employee_statuses.id"],
-            name=op.f(
-                "fk_employee_event_changes_new_status_id_employee_statuses"
-            ),
+            name=op.f("fk_employee_event_changes_new_status_id_employee_statuses"),
             ondelete="SET NULL",
         ),
         sa.ForeignKeyConstraint(
             ["prev_department_id"],
             ["departments.id"],
-            name=op.f(
-                "fk_employee_event_changes_prev_department_id_departments"
-            ),
+            name=op.f("fk_employee_event_changes_prev_department_id_departments"),
             ondelete="SET NULL",
         ),
         sa.ForeignKeyConstraint(
@@ -203,12 +191,10 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["prev_status_id"],
             ["employee_statuses.id"],
-            name=op.f(
-                "fk_employee_event_changes_prev_status_id_employee_statuses"
-            ),
+            name=op.f("fk_employee_event_changes_prev_status_id_employee_statuses"),
             ondelete="SET NULL",
         ),
-        sa.PrimaryKeyConstraint("id", name=op.f("pk_employee_event_changes"))
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_employee_event_changes")),
     )
     op.create_index(
         op.f("ix_employee_event_changes_event_id"),
@@ -233,9 +219,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["department_id"],
             ["departments.id"],
-            name=op.f(
-                "fk_employee_event_change_departments_department_id_departments"
-            ),
+            name=op.f("fk_employee_event_change_departments_department_id_departments"),
             ondelete="RESTRICT",
         ),
         sa.ForeignKeyConstraint(
@@ -254,7 +238,7 @@ def upgrade() -> None:
             "department_id",
             "change_dept_type_id",
             name="uq_event_change_department",
-        )
+        ),
     )
     op.create_index(
         op.f("ix_employee_event_change_departments_event_change_id"),
@@ -278,9 +262,7 @@ def downgrade() -> None:
         table_name="employee_event_changes",
     )
     op.drop_table("employee_event_changes")
-    op.drop_index(
-        op.f("ix_employee_events_employee_id"), table_name="employee_events"
-    )
+    op.drop_index(op.f("ix_employee_events_employee_id"), table_name="employee_events")
     op.drop_table("employee_events")
     op.drop_index(
         op.f("ix_employee_event_type_directions_event_type_id"),

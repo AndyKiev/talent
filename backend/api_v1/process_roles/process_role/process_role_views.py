@@ -54,9 +54,7 @@ async def create_process_role(
     return await service.create_process_role(role_in)
 
 
-@router.patch(
-    "/{process_role_id}", response_model=MutationResponse[ProcessRoleSchema]
-)
+@router.patch("/{process_role_id}", response_model=MutationResponse[ProcessRoleSchema])
 async def update_process_role(
     role_update: ProcessRoleUpdate,
     record: ProcessRoleSchema = Depends(process_role_by_id),

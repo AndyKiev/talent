@@ -2,7 +2,9 @@ from typing import Annotated, List
 
 from fastapi import APIRouter, Depends, status
 
-from backend.api_v1.language_level.language_level_model import LanguageLevel as LanguageLevelModel
+from backend.api_v1.language_level.language_level_model import (
+    LanguageLevel as LanguageLevelModel,
+)
 from backend.api_v1.language_level.language_level_dependencies import (
     get_language_level_service,
     language_level_by_id,
@@ -26,11 +28,15 @@ async def get_language_levels(
 
 
 @router.get("/{language_level_id}", response_model=LanguageLevelSchema)
-async def get_language_level(record: LanguageLevelSchema = Depends(language_level_by_id)):
+async def get_language_level(
+    record: LanguageLevelSchema = Depends(language_level_by_id),
+):
     return record
 
 
-@router.post("", response_model=LanguageLevelSchema, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=LanguageLevelSchema, status_code=status.HTTP_201_CREATED
+)
 async def create_language_level(
     payload: LanguageLevelCreate,
     service: Annotated[LanguageLevelService, Depends(get_language_level_service)],
@@ -42,7 +48,9 @@ async def create_language_level(
 async def update_language_level(
     payload: LanguageLevelUpdate,
     record: LanguageLevelModel = Depends(language_level_by_id),
-    service: Annotated[LanguageLevelService, Depends(get_language_level_service)] = None,
+    service: Annotated[
+        LanguageLevelService, Depends(get_language_level_service)
+    ] = None,
 ):
     return await service.update(record, payload)
 

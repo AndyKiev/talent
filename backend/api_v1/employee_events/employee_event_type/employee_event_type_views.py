@@ -15,6 +15,8 @@ from backend.api_v1.employee_events.employee_event_type.employee_event_type_depe
 from backend.api_v1.employee_events.employee_event_type.employee_event_type_service import (
     EmployeeEventTypeService,
 )
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/admin/employee_events/employee_event_types",
@@ -23,9 +25,15 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[EmployeeEventTypeSchema])
+@router.get(
+    "",
+    response_model=List[EmployeeEventTypeSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE_EVENT_TYPE)],
+)
 async def get_employee_event_types(
-    service: Annotated[EmployeeEventTypeService, Depends(get_employee_event_type_service)],
+    service: Annotated[
+        EmployeeEventTypeService, Depends(get_employee_event_type_service)
+    ],
     name: Optional[str] = None,
     sort: Optional[str] = Query(
         None,
@@ -35,7 +43,11 @@ async def get_employee_event_types(
     return await service.get_employee_event_types(name=name, sort=sort)
 
 
-@router.get("/{employee_event_type_id}", response_model=EmployeeEventTypeSchema)
+@router.get(
+    "/{employee_event_type_id}",
+    response_model=EmployeeEventTypeSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE_EVENT_TYPE)],
+)
 async def get_employee_event_type(
     record: EmployeeEventTypeSchema = Depends(employee_event_type_by_id),
 ):
@@ -46,10 +58,13 @@ async def get_employee_event_type(
     "",
     response_model=MutationResponse[EmployeeEventTypeSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.EMPLOYEE_EVENT_TYPE)],
 )
 async def create_employee_event_type(
     type_in: EmployeeEventTypeCreate,
-    service: Annotated[EmployeeEventTypeService, Depends(get_employee_event_type_service)],
+    service: Annotated[
+        EmployeeEventTypeService, Depends(get_employee_event_type_service)
+    ],
 ):
     return await service.create_employee_event_type(type_in)
 
@@ -57,6 +72,7 @@ async def create_employee_event_type(
 @router.patch(
     "/{employee_event_type_id}",
     response_model=MutationResponse[EmployeeEventTypeSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.EMPLOYEE_EVENT_TYPE)],
 )
 async def update_employee_event_type(
     type_update: EmployeeEventTypeUpdate,
@@ -68,9 +84,15 @@ async def update_employee_event_type(
     return await service.update_employee_event_type(record.id, type_update)
 
 
-@router.delete("/{employee_event_type_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{employee_event_type_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.EMPLOYEE_EVENT_TYPE)],
+)
 async def delete_employee_event_type(
     employee_event_type_id: int,
-    service: Annotated[EmployeeEventTypeService, Depends(get_employee_event_type_service)],
+    service: Annotated[
+        EmployeeEventTypeService, Depends(get_employee_event_type_service)
+    ],
 ):
     await service.delete_employee_event_type(employee_event_type_id)

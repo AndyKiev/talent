@@ -55,7 +55,7 @@ def upgrade() -> None:
             "job_id",
             "department_category_id",
             name="idx_uq_job_responsibility_category",
-        )
+        ),
     )
     # ### end Alembic commands ###
 

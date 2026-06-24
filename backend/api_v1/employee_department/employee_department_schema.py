@@ -4,10 +4,13 @@ from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from datetime import datetime
 
-from backend.api_v1.department.department_schema import DepartmentFlat as DepartmentSchema
+from backend.api_v1.department.department_schema import (
+    DepartmentFlat as DepartmentSchema,
+)
 
 
 # ── Input schemas ──────────────────────────────────────────────────────────────
+
 
 class EmployeeDepartmentCreate(BaseModel):
     department_id: int
@@ -21,6 +24,7 @@ class EmployeeDepartmentUpdate(BaseModel):
 
 # ── Read schema ────────────────────────────────────────────────────────────────
 
+
 class EmployeeDepartmentSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
@@ -32,6 +36,7 @@ class EmployeeDepartmentSchema(BaseModel):
 
 
 # ── Count response ─────────────────────────────────────────────────────────────
+
 
 class EmployeeDepartmentCount(BaseModel):
     employee_id: int

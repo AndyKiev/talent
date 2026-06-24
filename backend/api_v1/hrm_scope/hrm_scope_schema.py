@@ -26,6 +26,7 @@ class HrmScopeCreate(HrmScopeBase):
 class HrmScopeCreateInternal(HrmScopeBase):
     """Service-only create payload: adds the resolved HRM-link FK before the
     row is handed to BaseService.create()."""
+
     employee_user_group_link_id: int
 
 
@@ -52,6 +53,7 @@ class HrmScopeSchema(HrmScopeBase):
 
 class HrmEmployeeRow(BaseModel):
     """An HRM-eligible employee (has the HRM authorisation group) for the grid."""
+
     model_config = ConfigDict(from_attributes=True)
     id: int
     code: str

@@ -55,9 +55,7 @@ class PlanSessionActiveLimit(DomainError):
 
     def __init__(self) -> None:
         self.template_vars = {}
-        self.fallback = (
-            "The maximum of two active sessions is already reached."
-        )
+        self.fallback = "The maximum of two active sessions is already reached."
         super().__init__(self.fallback)
 
 
@@ -122,8 +120,7 @@ class PlanSessionResyncNotOpen(DomainError):
     def __init__(self, name: str) -> None:
         self.template_vars = {"name": name}
         self.fallback = (
-            f"Session '{name}' must be open to re-sync. "
-            f"Open or revert it first."
+            f"Session '{name}' must be open to re-sync. " f"Open or revert it first."
         )
         super().__init__(self.fallback)
 

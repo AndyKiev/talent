@@ -4,8 +4,12 @@ from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List
 from datetime import datetime
 
-from backend.api_v1.department_category.department_category_schema import DepartmentCategory as DepartmentCategorySchema
-from backend.api_v1.department_type.department_type_schema import DepartmentType as DepartmentTypeSchema
+from backend.api_v1.department_category.department_category_schema import (
+    DepartmentCategory as DepartmentCategorySchema,
+)
+from backend.api_v1.department_type.department_type_schema import (
+    DepartmentType as DepartmentTypeSchema,
+)
 
 
 class DepartmentBase(BaseModel):
@@ -36,6 +40,7 @@ class Department(DepartmentBase):
     the class body is defined. SQLAlchemy populates `children` via the
     selectin relationship on the ORM model.
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -54,6 +59,7 @@ class DepartmentFlat(DepartmentBase):
     Flat (non-recursive) department node — used for list endpoints
     where you do not need the full subtree (avoids loading the entire tree).
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int

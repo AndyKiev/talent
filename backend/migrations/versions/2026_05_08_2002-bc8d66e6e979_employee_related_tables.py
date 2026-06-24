@@ -138,13 +138,9 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["user_group_id"],
             ["user_groups.id"],
-            name=op.f(
-                "fk_employee_user_group_links_user_group_id_user_groups"
-            ),
+            name=op.f("fk_employee_user_group_links_user_group_id_user_groups"),
         ),
-        sa.PrimaryKeyConstraint(
-            "id", name=op.f("pk_employee_user_group_links")
-        ),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_employee_user_group_links")),
         sa.UniqueConstraint(
             "employee_id", "user_group_id", name="idx_uq_user_user_group"
         ),
@@ -171,9 +167,7 @@ def upgrade() -> None:
             name=op.f("fk_job_user_group_links_user_group_id_user_groups"),
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_job_user_group_links")),
-        sa.UniqueConstraint(
-            "job_id", "user_group_id", name="idx_uq_job_user_group"
-        ),
+        sa.UniqueConstraint("job_id", "user_group_id", name="idx_uq_job_user_group"),
     )
     op.create_table(
         "operation_user_group_links",
@@ -188,13 +182,9 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["user_group_id"],
             ["user_groups.id"],
-            name=op.f(
-                "fk_operation_user_group_links_user_group_id_user_groups"
-            ),
+            name=op.f("fk_operation_user_group_links_user_group_id_user_groups"),
         ),
-        sa.PrimaryKeyConstraint(
-            "id", name=op.f("pk_operation_user_group_links")
-        ),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_operation_user_group_links")),
         sa.UniqueConstraint(
             "operation_id", "user_group_id", name="idx_uq_operation_user_group"
         ),

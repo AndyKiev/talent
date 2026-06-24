@@ -21,6 +21,7 @@ Firing an event:
 
 Raises InvalidTransitionError on undefined (state, event) pairs.
 """
+
 from typing import Callable, Generic, Hashable, TypeVar, Union
 
 StateT = TypeVar("StateT", bound=Hashable)
@@ -49,9 +50,9 @@ class StateMachine(Generic[StateT, EventT, CtxT]):
 
     def __init__(self) -> None:
         # { (from_state, event): (to_state, action) }
-        self._table: dict[
-            tuple[StateT, EventT], tuple[StateT, Action[CtxT] | None]
-        ] = {}
+        self._table: dict[tuple[StateT, EventT], tuple[StateT, Action[CtxT] | None]] = (
+            {}
+        )
 
     # ------------------------------------------------------------------
     # Registration helpers

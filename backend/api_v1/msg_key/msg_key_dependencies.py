@@ -8,6 +8,7 @@ from backend.api_v1.msg_key.msg_key_repository import MsgKeyRepository
 
 from backend.api_v1.msg_key.msg_key_model import MsgKey
 
+
 async def get_msg_key_service(
     session: AsyncSession = Depends(db_helper.session_getter),
 ) -> MsgKeyService:

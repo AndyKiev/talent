@@ -1,5 +1,10 @@
 # backend/api_v1/essence/essence_errors.py
-from backend.api_v1.base.errors import NotFoundError, AlreadyExistsError, DeleteError, DomainError
+from backend.api_v1.base.errors import (
+    NotFoundError,
+    AlreadyExistsError,
+    DeleteError,
+    DomainError,
+)
 
 
 class EssenceNotFound(NotFoundError):

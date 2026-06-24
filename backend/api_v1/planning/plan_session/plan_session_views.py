@@ -14,6 +14,8 @@ from backend.api_v1.planning.plan_session.plan_session_dependencies import (
     plan_session_by_id,
 )
 from backend.api_v1.planning.plan_session.plan_session_service import PlanSessionService
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/admin/plan_sessions",
@@ -22,14 +24,22 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[PlanSessionSchema])
+@router.get(
+    "",
+    response_model=List[PlanSessionSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.PLAN_SESSION)],
+)
 async def get_plan_sessions(
     service: Annotated[PlanSessionService, Depends(get_plan_session_service)],
 ):
     return await service.get_plan_sessions()
 
 
-@router.get("/{plan_session_id}", response_model=PlanSessionSchema)
+@router.get(
+    "/{plan_session_id}",
+    response_model=PlanSessionSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.PLAN_SESSION)],
+)
 async def get_plan_session(
     record: PlanSessionSchema = Depends(plan_session_by_id),
 ):
@@ -40,6 +50,7 @@ async def get_plan_session(
     "",
     response_model=MutationResponse[PlanSessionSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.PLAN_SESSION)],
 )
 async def create_plan_session(
     data: PlanSessionCreate,
@@ -51,6 +62,7 @@ async def create_plan_session(
 @router.patch(
     "/{plan_session_id}/open",
     response_model=MutationResponse[PlanSessionSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.PLAN_SESSION)],
 )
 async def open_plan_session(
     plan_session_id: int,
@@ -62,6 +74,7 @@ async def open_plan_session(
 @router.patch(
     "/{plan_session_id}/close",
     response_model=MutationResponse[PlanSessionSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.PLAN_SESSION)],
 )
 async def close_plan_session(
     plan_session_id: int,
@@ -73,6 +86,7 @@ async def close_plan_session(
 @router.patch(
     "/{plan_session_id}/revert",
     response_model=MutationResponse[PlanSessionSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.PLAN_SESSION)],
 )
 async def revert_plan_session(
     plan_session_id: int,
@@ -84,6 +98,7 @@ async def revert_plan_session(
 @router.patch(
     "/{plan_session_id}/resync",
     response_model=MutationResponse[PlanSessionSchema],
+    dependencies=[Guard(OperationVerb.SYNC, EssenceName.PLAN_SESSION)],
 )
 async def resync_plan_session(
     plan_session_id: int,
@@ -101,6 +116,7 @@ async def resync_plan_session(
 @router.patch(
     "/{plan_session_id}",
     response_model=MutationResponse[PlanSessionSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.PLAN_SESSION)],
 )
 async def update_plan_session(
     data: PlanSessionUpdate,
@@ -110,7 +126,11 @@ async def update_plan_session(
     return await service.update_plan_session(record.id, data)
 
 
-@router.delete("/{plan_session_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{plan_session_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.PLAN_SESSION)],
+)
 async def delete_plan_session(
     plan_session_id: int,
     service: Annotated[PlanSessionService, Depends(get_plan_session_service)],

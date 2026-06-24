@@ -38,6 +38,7 @@ class TalentStatusPeriodLinkDeleteError(DeleteError):
         )
         DomainError.__init__(self, self.fallback)
 
+
 class TalentStatusPeriodLinkNotFoundByCompositeKey(NotFoundError):
     message_key = "talentStatusPeriodLinkNotFoundByCompositeKey"
 

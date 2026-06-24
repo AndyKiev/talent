@@ -35,11 +35,7 @@ class Essence(IntIdPkMixin, TimestampMixin, Base):
     @property
     def allowed_operations(self) -> list[str]:
         """Names of operations (verbs) linked to this essence."""
-        return [
-            link.operation.name
-            for link in self.operation_links
-            if link.operation
-        ]
+        return [link.operation.name for link in self.operation_links if link.operation]
 
     def __repr__(self) -> str:
         return f"<Essence(id={self.id}, name='{self.name}')>"

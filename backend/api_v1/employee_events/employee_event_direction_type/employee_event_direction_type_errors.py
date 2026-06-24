@@ -29,7 +29,9 @@ class EmployeeEventDirectionTypeCodeTaken(AlreadyExistsError):
 
     def __init__(self, code: str) -> None:
         self.template_vars = {"code": code}
-        self.fallback = f"Employee event direction type with code '{code}' already exists"
+        self.fallback = (
+            f"Employee event direction type with code '{code}' already exists"
+        )
         super().__init__("EmployeeEventDirectionType", "code", code)
 
 

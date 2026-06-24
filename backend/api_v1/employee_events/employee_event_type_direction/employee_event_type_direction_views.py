@@ -15,6 +15,8 @@ from backend.api_v1.employee_events.employee_event_type_direction.employee_event
 from backend.api_v1.employee_events.employee_event_type_direction.employee_event_type_direction_service import (
     EmployeeEventTypeDirectionService,
 )
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 # Mount on the main router with prefix="/employee_event_types"
 router = APIRouter(
@@ -26,6 +28,7 @@ router = APIRouter(
 @router.get(
     "/{event_type_id}/directions",
     response_model=List[EmployeeEventTypeDirectionSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE_EVENT_TYPE_DIRECTION)],
 )
 async def get_type_directions(
     event_type_id: int,
@@ -44,10 +47,13 @@ async def get_type_directions(
 @router.get(
     "/{event_type_id}/directions/{direction_id}",
     response_model=EmployeeEventTypeDirectionSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE_EVENT_TYPE_DIRECTION)],
 )
 async def get_type_direction(
     event_type_id: int,
-    record: EmployeeEventTypeDirectionSchema = Depends(employee_event_type_direction_by_id),
+    record: EmployeeEventTypeDirectionSchema = Depends(
+        employee_event_type_direction_by_id
+    ),
 ):
     return record
 
@@ -56,6 +62,9 @@ async def get_type_direction(
     "/{event_type_id}/directions",
     response_model=MutationResponse[EmployeeEventTypeDirectionSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[
+        Guard(OperationVerb.CREATE, EssenceName.EMPLOYEE_EVENT_TYPE_DIRECTION)
+    ],
 )
 async def create_type_direction(
     event_type_id: int,
@@ -73,11 +82,16 @@ async def create_type_direction(
 @router.patch(
     "/{event_type_id}/directions/{direction_id}",
     response_model=MutationResponse[EmployeeEventTypeDirectionSchema],
+    dependencies=[
+        Guard(OperationVerb.MODIFY, EssenceName.EMPLOYEE_EVENT_TYPE_DIRECTION)
+    ],
 )
 async def update_type_direction(
     event_type_id: int,
     direction_update: EmployeeEventTypeDirectionUpdate,
-    record: EmployeeEventTypeDirectionSchema = Depends(employee_event_type_direction_by_id),
+    record: EmployeeEventTypeDirectionSchema = Depends(
+        employee_event_type_direction_by_id
+    ),
     service: Annotated[
         EmployeeEventTypeDirectionService,
         Depends(get_employee_event_type_direction_service),
@@ -89,6 +103,9 @@ async def update_type_direction(
 @router.delete(
     "/{event_type_id}/directions/{direction_id}",
     status_code=status.HTTP_200_OK,
+    dependencies=[
+        Guard(OperationVerb.DELETE, EssenceName.EMPLOYEE_EVENT_TYPE_DIRECTION)
+    ],
 )
 async def delete_type_direction(
     event_type_id: int,

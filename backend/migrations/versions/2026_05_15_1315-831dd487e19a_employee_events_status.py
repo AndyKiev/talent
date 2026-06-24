@@ -28,9 +28,7 @@ def upgrade() -> None:
         sa.Column("name", sa.String(length=32), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_employee_event_statuses")),
-        sa.UniqueConstraint(
-            "name", name=op.f("uq_employee_event_statuses_name")
-        )
+        sa.UniqueConstraint("name", name=op.f("uq_employee_event_statuses_name")),
     )
     op.add_column(
         "employee_events", sa.Column("status_id", sa.Integer(), nullable=False)

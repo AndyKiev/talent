@@ -26,5 +26,5 @@ class UserGroup(UserGroupBase):
     users_qty: Optional[Dict[str, int]] = None
     # Exposed via ORM properties — populated automatically by model_validate
     user_group_type_name: Optional[str] = None
-    oel_ids: List[int] = []          # legacy single-essence grants
-    oesl_ids: List[int] = []         # set-grain grants
+    oel_ids: List[int] = []  # legacy single-essence grants
+    oesl_ids: List[int] = []  # set-grain grants

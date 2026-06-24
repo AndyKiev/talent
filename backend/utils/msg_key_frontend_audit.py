@@ -39,9 +39,10 @@ from datetime import datetime
 # Data types
 # ---------------------------------------------------------------------------
 
+
 class FoundKey(NamedTuple):
-    key: str            # e.g. "talentStatusNotFound"
-    variables: list     # e.g. ["statusId"]  — empty if getString called without vars
+    key: str  # e.g. "talentStatusNotFound"
+    variables: list  # e.g. ["statusId"]  — empty if getString called without vars
     file: Path
     line: int
 
@@ -75,17 +76,18 @@ _RE_DYNAMIC_KEY = re.compile(r"""\$\{""")
 # File scanner
 # ---------------------------------------------------------------------------
 
+
 def _extract_keys_from_source(source: str, path: Path) -> list[FoundKey]:
     """
     Returns one FoundKey per getString / getErrorMessage call found in source.
     Dynamic keys (containing ${…}) are skipped with a warning.
     """
     found: list[FoundKey] = []
-    seen: set[tuple[str, frozenset]] = set()   # dedup within file
+    seen: set[tuple[str, frozenset]] = set()  # dedup within file
 
     # Track line numbers via cumulative offsets
     line_starts = [0]
-    for m in re.finditer(r'\n', source):
+    for m in re.finditer(r"\n", source):
         line_starts.append(m.end())
 
     def _line_of(pos: int) -> int:
@@ -96,7 +98,7 @@ def _extract_keys_from_source(source: str, path: Path) -> list[FoundKey]:
                 lo = mid
             else:
                 hi = mid - 1
-        return lo + 1   # 1-based
+        return lo + 1  # 1-based
 
     # ── calls WITH explicit variable object ──────────────────────────────────
     for m in _RE_GET_STRING_WITH_VARS.finditer(source):
@@ -108,8 +110,14 @@ def _extract_keys_from_source(source: str, path: Path) -> list[FoundKey]:
         sig = (key, frozenset(vars_))
         if sig not in seen:
             seen.add(sig)
-            found.append(FoundKey(key=key, variables=sorted(vars_),
-                                  file=path, line=_line_of(m.start())))
+            found.append(
+                FoundKey(
+                    key=key,
+                    variables=sorted(vars_),
+                    file=path,
+                    line=_line_of(m.start()),
+                )
+            )
 
     # ── calls WITHOUT variable object ────────────────────────────────────────
     for m in _RE_GET_STRING_NO_VARS.finditer(source):
@@ -119,18 +127,16 @@ def _extract_keys_from_source(source: str, path: Path) -> list[FoundKey]:
         sig = (key, frozenset())
         if sig not in seen:
             seen.add(sig)
-            found.append(FoundKey(key=key, variables=[],
-                                  file=path, line=_line_of(m.start())))
+            found.append(
+                FoundKey(key=key, variables=[], file=path, line=_line_of(m.start()))
+            )
 
     return found
 
 
 def scan_frontend_keys(frontend_src: Path) -> list[FoundKey]:
     """Walk frontend/src and collect every getString / getErrorMessage call."""
-    targets = (
-        sorted(frontend_src.rglob("*.ts"))
-        + sorted(frontend_src.rglob("*.tsx"))
-    )
+    targets = sorted(frontend_src.rglob("*.ts")) + sorted(frontend_src.rglob("*.tsx"))
     if not targets:
         print(
             "[WARN] No .ts / .tsx files found under {}".format(frontend_src),
@@ -151,6 +157,7 @@ def scan_frontend_keys(frontend_src: Path) -> list[FoundKey]:
 # Database query  (same helper as the backend script)
 # ---------------------------------------------------------------------------
 
+
 async def fetch_db_keys(backend_root: Path) -> set[str]:
     from sqlalchemy import text
     from backend.database.db_helper import db_helper  # type: ignore
@@ -165,12 +172,12 @@ async def fetch_db_keys(backend_root: Path) -> set[str]:
 # JSON stub builder
 # ---------------------------------------------------------------------------
 
+
 def build_json_stub(missing: list[FoundKey]) -> dict:
     stub = {}
     for fk in missing:
         placeholder = (
-            " ".join("${" + v + "}" for v in fk.variables)
-            if fk.variables else ""
+            " ".join("${" + v + "}" for v in fk.variables) if fk.variables else ""
         )
         stub[fk.key] = {"ukr": placeholder, "eng": placeholder}
     return stub
@@ -179,6 +186,7 @@ def build_json_stub(missing: list[FoundKey]) -> dict:
 # ---------------------------------------------------------------------------
 # Translation prompt builder
 # ---------------------------------------------------------------------------
+
 
 def build_translation_prompt(missing: list[FoundKey]) -> str:
     lines = []
@@ -206,7 +214,7 @@ def build_translation_prompt(missing: list[FoundKey]) -> str:
     lines.append(
         "- If there is no obvious English wording for a key, derive it from the "
         "camelCase key name itself (e.g. `talentStatusNotFound` → "
-        "\"Talent status not found\")."
+        '"Talent status not found").'
     )
     lines.append(
         "- For `ukr`, produce a natural Ukrainian translation that mirrors the English "
@@ -252,7 +260,7 @@ def build_translation_prompt(missing: list[FoundKey]) -> str:
             eng_val = " ".join("${" + v + "}" for v in fk.variables)
         else:
             # Derive a readable English string from the camelCase key
-            eng_val = re.sub(r'([A-Z])', r' \1', fk.key).strip().capitalize()
+            eng_val = re.sub(r"([A-Z])", r" \1", fk.key).strip().capitalize()
         example_lines.append(
             '  "{}": {{\n    "ukr": "<Ukrainian translation>",\n    "eng": "{}"\n  }}'.format(
                 fk.key, eng_val
@@ -275,6 +283,7 @@ def write_prompt_file(missing: list[FoundKey], script_dir: Path) -> Path:
 # ---------------------------------------------------------------------------
 # Report
 # ---------------------------------------------------------------------------
+
 
 def _relative(path: Path, base: Path) -> str:
     try:
@@ -318,8 +327,7 @@ def report(
         print("  {}".format(_relative(path, frontend_root)))
         for e in entries:
             vars_str = (
-                ", ".join("${" + v + "}" for v in e.variables)
-                if e.variables else "-"
+                ", ".join("${" + v + "}" for v in e.variables) if e.variables else "-"
             )
             print("    L{:<5}  {:<45}  [{}]".format(e.line, e.key, vars_str))
 
@@ -337,18 +345,19 @@ def report(
 
     # ── list missing keys ────────────────────────────────────────────────────
     if db_keys is not None:
-        print("\n  {} key(s) in FRONTEND CODE but MISSING from database:\n".format(
-            len(missing_found)
-        ))
+        print(
+            "\n  {} key(s) in FRONTEND CODE but MISSING from database:\n".format(
+                len(missing_found)
+            )
+        )
         for fk in missing_found:
             vars_str = (
                 "  vars: " + ", ".join("${" + v + "}" for v in fk.variables)
-                if fk.variables else "  (no variables)"
+                if fk.variables
+                else "  (no variables)"
             )
-            print("    \"{}\"{}".format(fk.key, vars_str))
-            print("         {}:{}".format(
-                _relative(fk.file, frontend_root), fk.line
-            ))
+            print('    "{}"{}'.format(fk.key, vars_str))
+            print("         {}:{}".format(_relative(fk.file, frontend_root), fk.line))
 
     # ── JSON stub (optional) ─────────────────────────────────────────────────
     if emit_json_stub and missing_found:
@@ -372,6 +381,7 @@ def report(
 # Root resolution helpers
 # ---------------------------------------------------------------------------
 
+
 def _resolve_frontend_root(arg: str | None) -> Path:
     if arg:
         p = Path(arg).resolve()
@@ -379,7 +389,7 @@ def _resolve_frontend_root(arg: str | None) -> Path:
             raise SystemExit("[ERROR] --frontend-root does not exist: {}".format(p))
         return p
 
-    script_dir = Path(__file__).resolve().parent   # backend/utils/
+    script_dir = Path(__file__).resolve().parent  # backend/utils/
     cwd = Path.cwd()
 
     # Build candidate list: walk up from both the script location and cwd,
@@ -418,8 +428,8 @@ def _resolve_backend_root(arg: str | None) -> Path | None:
     if (cwd / "api_v1").is_dir():
         return cwd
 
-    script_dir = Path(__file__).resolve().parent   # backend/utils/
-    candidate = script_dir.parent                   # backend/
+    script_dir = Path(__file__).resolve().parent  # backend/utils/
+    candidate = script_dir.parent  # backend/
     if (candidate / "api_v1").is_dir():
         return candidate
 
@@ -428,12 +438,13 @@ def _resolve_backend_root(arg: str | None) -> Path | None:
         if (candidate / "api_v1").is_dir():
             return candidate.resolve()
 
-    return None   # caller will decide whether this is fatal
+    return None  # caller will decide whether this is fatal
 
 
 # ---------------------------------------------------------------------------
 # Async main
 # ---------------------------------------------------------------------------
+
 
 async def _async_main(
     frontend_root: Path,
@@ -478,6 +489,7 @@ async def _async_main(
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def main():
     parser = argparse.ArgumentParser(

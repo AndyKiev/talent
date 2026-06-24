@@ -31,10 +31,13 @@ router = APIRouter(
 
 # Static paths first (declared before dynamic /{id}) ---------------------------
 
+
 @router.get(
     "/employees_with_groups",
     response_model=List[EmployeeWithGroups],
-    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE, EssenceName.USER_GROUP)],
+    dependencies=[
+        Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE, EssenceName.USER_GROUP)
+    ],
 )
 async def get_employees_with_groups(
     service: Annotated[
@@ -48,7 +51,9 @@ async def get_employees_with_groups(
 @router.get(
     "/by_employee/{employee_id}",
     response_model=List[GroupOfType],
-    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE, EssenceName.USER_GROUP)],
+    dependencies=[
+        Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE, EssenceName.USER_GROUP)
+    ],
 )
 async def get_groups_by_employee(
     employee_id: int,
@@ -63,7 +68,9 @@ async def get_groups_by_employee(
 @router.get(
     "/by_composite_key",
     response_model=EmployeeUserGroupLinkSchema,
-    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE, EssenceName.USER_GROUP)],
+    dependencies=[
+        Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE, EssenceName.USER_GROUP)
+    ],
 )
 async def get_link_by_composite_key(
     record: EmployeeUserGroupLinkSchema = Depends(
@@ -76,9 +83,12 @@ async def get_link_by_composite_key(
 
 # Dynamic paths ----------------------------------------------------------------
 
+
 @router.get(
     "/{employee_user_group_link_id}/deletion_preview",
-    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE, EssenceName.USER_GROUP)],
+    dependencies=[
+        Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE, EssenceName.USER_GROUP)
+    ],
 )
 async def preview_link_deletion(
     employee_user_group_link_id: int,
@@ -93,7 +103,9 @@ async def preview_link_deletion(
 @router.get(
     "/{employee_user_group_link_id}",
     response_model=EmployeeUserGroupLinkSchema,
-    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE, EssenceName.USER_GROUP)],
+    dependencies=[
+        Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE, EssenceName.USER_GROUP)
+    ],
 )
 async def get_link(
     record: EmployeeUserGroupLinkSchema = Depends(employee_user_group_link_by_id),
@@ -105,7 +117,9 @@ async def get_link(
     "",
     response_model=MutationResponse[EmployeeUserGroupLinkSchema],
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Guard(OperationVerb.LINK, EssenceName.EMPLOYEE, EssenceName.USER_GROUP)],
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.EMPLOYEE, EssenceName.USER_GROUP)
+    ],
 )
 async def create_link(
     link_in: EmployeeUserGroupLinkCreate,
@@ -120,7 +134,9 @@ async def create_link(
 @router.delete(
     "/{employee_user_group_link_id}",
     status_code=status.HTTP_200_OK,
-    dependencies=[Guard(OperationVerb.LINK, EssenceName.EMPLOYEE, EssenceName.USER_GROUP)],
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.EMPLOYEE, EssenceName.USER_GROUP)
+    ],
 )
 async def delete_link(
     employee_user_group_link_id: int,

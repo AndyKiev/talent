@@ -37,9 +37,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["department_id"],
             ["departments.id"],
-            name=op.f(
-                "fk_process_role_active_contexts_department_id_departments"
-            ),
+            name=op.f("fk_process_role_active_contexts_department_id_departments"),
             ondelete="RESTRICT",
         ),
         sa.ForeignKeyConstraint(
@@ -51,15 +49,11 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["process_role_id"],
             ["process_roles.id"],
-            name=op.f(
-                "fk_process_role_active_contexts_process_role_id_process_roles"
-            ),
+            name=op.f("fk_process_role_active_contexts_process_role_id_process_roles"),
             ondelete="RESTRICT",
         ),
-        sa.PrimaryKeyConstraint(
-            "id", name=op.f("pk_process_role_active_contexts")
-        ),
-        sa.UniqueConstraint("employee_id", name="uq_prac_employee")
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_process_role_active_contexts")),
+        sa.UniqueConstraint("employee_id", name="uq_prac_employee"),
     )
     op.create_index(
         op.f("ix_process_role_active_contexts_employee_id"),
@@ -98,7 +92,7 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint(
             "id", name=op.f("pk_process_role_holder_department_links")
-        )
+        ),
     )
     op.create_index(
         op.f("ix_process_role_holder_department_links_department_id"),

@@ -20,6 +20,7 @@ from typing import List
 
 # ── Pydantic schemas (inline — simple enough to not need a separate file) ──────
 
+
 class PermissionPairSchema(BaseModel):
     id: int
     operation_id: int
@@ -38,10 +39,12 @@ class GrantPermissionRequest(BaseModel):
 
 class SetGroupPermissionsRequest(BaseModel):
     """Replace all OEL grants for a user group with this new list."""
+
     operation_essence_link_ids: List[int]
 
 
 # ── Service ───────────────────────────────────────────────────────────────────
+
 
 class OperationEssenceLinkService:
 
@@ -78,7 +81,9 @@ class OperationEssenceLinkService:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def get_for_user_group(self, user_group_id: int) -> list[OperationEssenceLink]:
+    async def get_for_user_group(
+        self, user_group_id: int
+    ) -> list[OperationEssenceLink]:
         """All permission pairs currently granted to a user group."""
         stmt = (
             select(OperationEssenceLink)
@@ -110,10 +115,16 @@ class OperationEssenceLinkService:
         es = await self.session.get(Essence, essence_id)
         if not op:
             from fastapi import HTTPException
-            raise HTTPException(status_code=404, detail=f"Operation {operation_id} not found.")
+
+            raise HTTPException(
+                status_code=404, detail=f"Operation {operation_id} not found."
+            )
         if not es:
             from fastapi import HTTPException
-            raise HTTPException(status_code=404, detail=f"Essence {essence_id} not found.")
+
+            raise HTTPException(
+                status_code=404, detail=f"Essence {essence_id} not found."
+            )
 
         link = OperationEssenceLink(operation_id=operation_id, essence_id=essence_id)
         self.session.add(link)

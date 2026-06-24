@@ -36,6 +36,7 @@ class ChangeSessionUpdate(BaseModel):
 
 class ChangeSessionUser(BaseModel):
     """Slim employee projection for the audit UI (actor or subject)."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int

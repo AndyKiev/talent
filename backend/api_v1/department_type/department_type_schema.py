@@ -27,10 +27,10 @@ class DepartmentType(DepartmentTypeBase):
 
 class DepartmentTypeWithParentalLink(DepartmentTypeBase):
     """DepartmentType with parental link metadata for hierarchy queries"""
+
     model_config = ConfigDict(from_attributes=True)
     id: int
     created_at: datetime
     # Link-specific fields
     parent_id: int | None = None
     link_id: int | None = None
-

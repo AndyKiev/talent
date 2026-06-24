@@ -125,7 +125,9 @@ class HrmScopeService(BaseService):
         record = await self.repository.get_by_id_with_rels(scope_id)
         if not record:
             raise await self._resolve_domain_error(HrmScopeNotFound(scope_id))
-        name = record.department.name if record.department else str(record.department_id)
+        name = (
+            record.department.name if record.department else str(record.department_id)
+        )
         await self.delete_by_id(
             scope_id,
             name=name,
@@ -146,8 +148,12 @@ class HrmScopeService(BaseService):
         schema = HrmScopeSchema.model_validate(record)
         dept = record.department
         cat = dept.department_category if dept else None
-        setattr(schema, "employee_code", record.employee.code if record.employee else None)
-        setattr(schema, "employee_name", record.employee.name if record.employee else None)
+        setattr(
+            schema, "employee_code", record.employee.code if record.employee else None
+        )
+        setattr(
+            schema, "employee_name", record.employee.name if record.employee else None
+        )
         setattr(schema, "department_name", dept.name if dept else None)
         setattr(schema, "department_category_id", cat.id if cat else None)
         setattr(schema, "department_category_name", cat.name if cat else None)
@@ -190,7 +196,5 @@ class HrmScopeService(BaseService):
             None,
         )
         if hrm_link is None:
-            raise await self._resolve_domain_error(
-                HrmScopeEmployeeNotHrm(emp.name)
-            )
+            raise await self._resolve_domain_error(HrmScopeEmployeeNotHrm(emp.name))
         return emp, hrm_link

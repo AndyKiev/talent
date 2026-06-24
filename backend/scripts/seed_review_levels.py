@@ -10,6 +10,7 @@ Run from the repo root after the migration is applied:
 or simply:
     python backend/scripts/seed_review_levels.py
 """
+
 import asyncio
 import json
 import os
@@ -17,7 +18,9 @@ import sys
 from pathlib import Path
 
 # Make the repo root importable so `backend...` resolves regardless of CWD.
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(
+    0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
 from sqlalchemy import select  # noqa: E402
 
@@ -72,7 +75,9 @@ async def main() -> None:
         await session.commit()
 
     await db_helper.dispose()
-    print(f"seed done — levels created: {created_levels}, requirements created: {created_reqs}")
+    print(
+        f"seed done — levels created: {created_levels}, requirements created: {created_reqs}"
+    )
 
 
 if __name__ == "__main__":

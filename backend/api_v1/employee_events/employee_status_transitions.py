@@ -24,6 +24,7 @@ that returns the resulting status name or raises InvalidStatusTransition.
 Both today's one-shot apply (Model A) and a future replay engine (Model B)
 call this same function — no behavioural drift between them.
 """
+
 from dataclasses import dataclass, field
 from typing import List
 
@@ -43,6 +44,7 @@ ACTIVATION_TARGET = STATUS_WORKING
 @dataclass
 class StatusTransitionCtx:
     """Context passed through the SM — currently just an audit trail."""
+
     employee_id: int | None = None
     audit: List[str] = field(default_factory=list)
 
@@ -112,8 +114,6 @@ def allowed_targets(current_status_name: str) -> list[str]:
     """
     return [
         dst
-        for (src, _ev), dst in (
-            ((s, e), d) for (s, e, d) in status_sm.transitions()
-        )
+        for (src, _ev), dst in (((s, e), d) for (s, e, d) in status_sm.transitions())
         if src == current_status_name
     ]

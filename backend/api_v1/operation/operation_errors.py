@@ -107,5 +107,3 @@ class OperationDeleteError(DeleteError):
             f"referenced by other records"
         )
         DomainError.__init__(self, self.fallback)
-
-

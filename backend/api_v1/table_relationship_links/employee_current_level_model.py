@@ -15,9 +15,7 @@ class EmployeeCurrentLevel(IntIdPkMixin, TimestampMixin, Base):
     __table_args__ = (
         UniqueConstraint("employee_id", name="uq_employee_current_level_employee_id"),
     )
-    employee_id: Mapped[int] = mapped_column(
-        ForeignKey("employees.id"), nullable=False
-    )
+    employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id"), nullable=False)
     level_id: Mapped[int] = mapped_column(
         ForeignKey("review_levels.id"), nullable=False
     )

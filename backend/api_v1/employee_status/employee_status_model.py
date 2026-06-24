@@ -19,5 +19,3 @@ class EmployeeStatus(IntIdPkMixin, TimestampMixin, Base):
 
     def __repr__(self) -> str:
         return f"<EmployeeStatus(id={self.id}, name='{self.name}')>"
-
-

@@ -6,11 +6,14 @@ from sqlalchemy import select, text
 
 from backend.database.db_helper import db_helper
 from backend.api_v1.msg_key.msg_key_model import MsgKey
+
 # NOTE: use Msg from msg_pg, NOT from message.message_model — the latter also defines a
 # duplicate MsgKey class that conflicts with msg_key.msg_key_model.MsgKey at MetaData level.
 from backend.api_v1.msg_pg.msg_model import Msg
 
-JSON_PATH = Path(__file__).resolve().parent.parent / "utils" / "table_data" / "table_data.json"
+JSON_PATH = (
+    Path(__file__).resolve().parent.parent / "utils" / "table_data" / "table_data.json"
+)
 
 BATCH_SIZE = 500
 
@@ -33,7 +36,9 @@ async def seed_msg_keys(session, data: list[dict]) -> int:
         missing.append(row)
 
     if skipped_name_conflict:
-        print(f"  msg_keys: {skipped_name_conflict} rows skipped (name already exists with different ID)")
+        print(
+            f"  msg_keys: {skipped_name_conflict} rows skipped (name already exists with different ID)"
+        )
 
     if not missing:
         print("  msg_keys: all already present, nothing to insert")
@@ -46,7 +51,9 @@ async def seed_msg_keys(session, data: list[dict]) -> int:
             session.add(MsgKey(id=row["id"], name=row["name"]))
         await session.commit()
         inserted += len(batch)
-        print(f"  msg_keys: {min(i + BATCH_SIZE, len(missing))}/{len(missing)} committed")
+        print(
+            f"  msg_keys: {min(i + BATCH_SIZE, len(missing))}/{len(missing)} committed"
+        )
     print(f"  msg_keys done — {inserted} new records inserted")
     return inserted
 
@@ -79,7 +86,9 @@ async def seed_msgs(session, data: list[dict]) -> int:
     if skipped_no_key:
         print(f"  msgs: {skipped_no_key} rows skipped (msg_key_id not in DB)")
     if skipped_pair_conflict:
-        print(f"  msgs: {skipped_pair_conflict} rows skipped (msg_key_id+lang_id already exists)")
+        print(
+            f"  msgs: {skipped_pair_conflict} rows skipped (msg_key_id+lang_id already exists)"
+        )
 
     if not missing:
         print("  msgs: all already present, nothing to insert")

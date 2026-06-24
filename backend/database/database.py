@@ -13,7 +13,6 @@ class BaseDatabaseConfig(BaseModel):
         return f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
 
 
-
 class TalentDatabaseConfig(BaseDatabaseConfig):
     echo: bool = False
     echo_pool: bool = False

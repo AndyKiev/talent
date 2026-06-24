@@ -11,9 +11,15 @@ from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 
 if TYPE_CHECKING:
     from backend.api_v1.employee.employee_model import Employee
-    from backend.api_v1.employee_events.employee_event_type.employee_event_type_model import EmployeeEventType
-    from backend.api_v1.employee_events.employee_event_change.employee_event_change_model import EmployeeEventChange
-    from backend.api_v1.employee_events.employee_event_status.employee_event_status_model import EmployeeEventStatus
+    from backend.api_v1.employee_events.employee_event_type.employee_event_type_model import (
+        EmployeeEventType,
+    )
+    from backend.api_v1.employee_events.employee_event_change.employee_event_change_model import (
+        EmployeeEventChange,
+    )
+    from backend.api_v1.employee_events.employee_event_status.employee_event_status_model import (
+        EmployeeEventStatus,
+    )
 
 
 class EmployeeEvent(IntIdPkMixin, TimestampMixin, Base):

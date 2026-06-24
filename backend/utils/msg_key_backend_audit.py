@@ -36,17 +36,19 @@ from datetime import datetime
 # Data types
 # ---------------------------------------------------------------------------
 
+
 class FoundKey(NamedTuple):
-    key: str             # e.g. "userGroupTypeNotFound"
-    class_name: str      # e.g. "UserGroupTypeNotFound"
+    key: str  # e.g. "userGroupTypeNotFound"
+    class_name: str  # e.g. "UserGroupTypeNotFound"
     template_vars: list  # e.g. ["typeId"]  — empty if no template_vars
-    fallback: str        # reconstructed English fallback string
+    fallback: str  # reconstructed English fallback string
     file: Path
 
 
 # ---------------------------------------------------------------------------
 # AST helpers
 # ---------------------------------------------------------------------------
+
 
 def _extract_template_vars(init_body):
     """
@@ -152,13 +154,15 @@ def _extract_message_keys_from_file(path):
         init_body = _find_init(node)
         template_vars = _extract_template_vars(init_body) if init_body else []
         fallback = _extract_fallback(init_body) if init_body else ""
-        found.append(FoundKey(
-            key=message_key,
-            class_name=node.name,
-            template_vars=template_vars,
-            fallback=fallback,
-            file=path,
-        ))
+        found.append(
+            FoundKey(
+                key=message_key,
+                class_name=node.name,
+                template_vars=template_vars,
+                fallback=fallback,
+                file=path,
+            )
+        )
     return found
 
 
@@ -166,14 +170,16 @@ def _extract_message_keys_from_file(path):
 # Step 1 - scan source files
 # ---------------------------------------------------------------------------
 
+
 def scan_code_keys(api_v1_root):
-    targets = (
-        sorted(api_v1_root.rglob("*_errors.py"))
-        + sorted(api_v1_root.rglob("*_success.py"))
+    targets = sorted(api_v1_root.rglob("*_errors.py")) + sorted(
+        api_v1_root.rglob("*_success.py")
     )
     if not targets:
         print(
-            "[WARN] No *_errors.py / *_success.py files found under {}".format(api_v1_root),
+            "[WARN] No *_errors.py / *_success.py files found under {}".format(
+                api_v1_root
+            ),
             file=sys.stderr,
         )
     all_keys = []
@@ -185,6 +191,7 @@ def scan_code_keys(api_v1_root):
 # ---------------------------------------------------------------------------
 # Step 2 - query the database
 # ---------------------------------------------------------------------------
+
 
 async def fetch_db_keys(backend_root):
     from sqlalchemy import text
@@ -200,6 +207,7 @@ async def fetch_db_keys(backend_root):
 # Step 3 - build JSON stub (for --json-stub console output)
 # ---------------------------------------------------------------------------
 
+
 def build_json_stub(missing_keys):
     """
     Returns a dict ready for json.dumps with ${varName} placeholders so you
@@ -209,7 +217,8 @@ def build_json_stub(missing_keys):
     for fk in missing_keys:
         placeholder = (
             " ".join("${" + v + "}" for v in fk.template_vars)
-            if fk.template_vars else ""
+            if fk.template_vars
+            else ""
         )
         stub[fk.key] = {"ukr": placeholder, "eng": placeholder}
     return stub
@@ -219,6 +228,7 @@ def build_json_stub(missing_keys):
 # Step 4 - write translation prompt file
 # ---------------------------------------------------------------------------
 
+
 def build_translation_prompt(missing_keys):
     """
     Build a Markdown prompt document describing every missing key with enough
@@ -227,9 +237,7 @@ def build_translation_prompt(missing_keys):
     lines = []
     lines.append("# Translation Prompt — Missing Message Keys")
     lines.append("")
-    lines.append(
-        "Generated: {}".format(datetime.now().strftime("%Y-%m-%d %H:%M"))
-    )
+    lines.append("Generated: {}".format(datetime.now().strftime("%Y-%m-%d %H:%M")))
     lines.append("Missing keys: {}".format(len(missing_keys)))
     lines.append("")
     lines.append("---")
@@ -261,9 +269,7 @@ def build_translation_prompt(missing_keys):
     lines.append(
         "- verify twice not to forget to use $ in front of curly braces like `${variable}`."
     )
-    lines.append(
-        "- Keys with no variables get plain strings with no placeholders."
-    )
+    lines.append("- Keys with no variables get plain strings with no placeholders.")
     lines.append(
         "- Return **only** a single valid JSON object — no markdown fences, "
         "no commentary, no trailing commas."
@@ -288,7 +294,9 @@ def build_translation_prompt(missing_keys):
             # Convert {var} to ${var} in the displayed fallback
             converted_fallback = fk.fallback
             for var in fk.template_vars:
-                converted_fallback = converted_fallback.replace("{" + var + "}", "${" + var + "}")
+                converted_fallback = converted_fallback.replace(
+                    "{" + var + "}", "${" + var + "}"
+                )
             lines.append("- **English fallback:** {}".format(converted_fallback))
         lines.append("")
 
@@ -331,6 +339,7 @@ def write_prompt_file(missing_keys, script_dir):
 # Step 5 - report
 # ---------------------------------------------------------------------------
 
+
 def _relative(path, base):
     try:
         return str(path.relative_to(base))
@@ -351,9 +360,11 @@ def report(code_keys, db_keys, backend_root, emit_json_stub, script_dir):
     print("=" * 68)
 
     # -- keys found in code --------------------------------------------------
-    print("\n[CODE]  {} declaration(s) across {} file(s):\n".format(
-        len(code_keys), len({fk.file for fk in code_keys})
-    ))
+    print(
+        "\n[CODE]  {} declaration(s) across {} file(s):\n".format(
+            len(code_keys), len({fk.file for fk in code_keys})
+        )
+    )
 
     by_file = defaultdict(list)
     for fk in sorted(code_keys, key=lambda x: (str(x.file), x.class_name)):
@@ -364,9 +375,10 @@ def report(code_keys, db_keys, backend_root, emit_json_stub, script_dir):
         for e in entries:
             vars_str = (
                 ", ".join("${" + v + "}" for v in e.template_vars)
-                if e.template_vars else "-"
+                if e.template_vars
+                else "-"
             )
-            print("    {:<45}  \"{}\"   [{}]".format(e.class_name, e.key, vars_str))
+            print('    {:<45}  "{}"   [{}]'.format(e.class_name, e.key, vars_str))
 
     # -- DB comparison -------------------------------------------------------
     if db_keys is None:
@@ -383,18 +395,25 @@ def report(code_keys, db_keys, backend_root, emit_json_stub, script_dir):
 
     # -- missing (code -> DB) ------------------------------------------------
     if db_keys is not None:
-        print("\n  {} key(s) in CODE but MISSING from database:\n".format(len(missing_found)))
+        print(
+            "\n  {} key(s) in CODE but MISSING from database:\n".format(
+                len(missing_found)
+            )
+        )
         for fk in missing_found:
             vars_str = (
                 "  vars: " + ", ".join("${" + v + "}" for v in fk.template_vars)
-                if fk.template_vars else "  (no variables)"
+                if fk.template_vars
+                else "  (no variables)"
             )
-            print("    \"{}\"{}".format(fk.key, vars_str))
+            print('    "{}"{}'.format(fk.key, vars_str))
             if fk.fallback:
                 print("         fallback : {}".format(fk.fallback))
-            print("         class    : {}  ({})".format(
-                fk.class_name, _relative(fk.file, backend_root)
-            ))
+            print(
+                "         class    : {}  ({})".format(
+                    fk.class_name, _relative(fk.file, backend_root)
+                )
+            )
 
     # -- JSON stub (optional console output) ---------------------------------
     if emit_json_stub and missing_found:
@@ -418,6 +437,7 @@ def report(code_keys, db_keys, backend_root, emit_json_stub, script_dir):
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def _resolve_backend_root(arg):
     if arg:
         p = Path(arg).resolve()
@@ -429,8 +449,8 @@ def _resolve_backend_root(arg):
     if (cwd / "api_v1").is_dir():
         return cwd
 
-    script_dir = Path(__file__).resolve().parent   # backend/utils/
-    candidate  = script_dir.parent                  # backend/
+    script_dir = Path(__file__).resolve().parent  # backend/utils/
+    candidate = script_dir.parent  # backend/
     if (candidate / "api_v1").is_dir():
         return candidate
 
@@ -461,7 +481,10 @@ async def _async_main(backend_root, skip_db, emit_json_stub):
             db_keys = await fetch_db_keys(backend_root)
         except Exception as exc:
             print("[ERROR] DB query failed: {}".format(exc), file=sys.stderr)
-            print("        Re-run with --no-db to see only the code scan.", file=sys.stderr)
+            print(
+                "        Re-run with --no-db to see only the code scan.",
+                file=sys.stderr,
+            )
             return 2
 
     return report(code_keys, db_keys, backend_root, emit_json_stub, script_dir)

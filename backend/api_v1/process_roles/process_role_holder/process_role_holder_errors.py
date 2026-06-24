@@ -29,7 +29,5 @@ class ProcessRoleHolderDeleteError(DeleteError):
 
     def __init__(self, employee: str) -> None:
         self.template_vars = {"employee": employee}
-        self.fallback = (
-            f"Holder '{employee}' cannot be removed while employees are assigned to them"
-        )
+        self.fallback = f"Holder '{employee}' cannot be removed while employees are assigned to them"
         DomainError.__init__(self, self.fallback)

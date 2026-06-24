@@ -28,7 +28,7 @@ def upgrade() -> None:
         sa.Column("hint", sa.Text(), nullable=False),
         sa.Column("sort_order", sa.Integer(), nullable=False),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_language_levels")),
-        sa.UniqueConstraint("code", name=op.f("uq_language_levels_code"))
+        sa.UniqueConstraint("code", name=op.f("uq_language_levels_code")),
     )
     op.create_table(
         "employee_language_profiles",
@@ -49,7 +49,7 @@ def upgrade() -> None:
         sa.UniqueConstraint(
             "employee_id",
             name=op.f("uq_employee_language_profiles_employee_id"),
-        )
+        ),
     )
     op.create_table(
         "employee_languages",
@@ -67,7 +67,7 @@ def upgrade() -> None:
             ["employee_language_profiles.id"],
             name=op.f("fk_employee_languages_profile_id_employee_language_profiles"),
         ),
-        sa.PrimaryKeyConstraint("id", name=op.f("pk_employee_languages"))
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_employee_languages")),
     )
 
 

@@ -27,24 +27,18 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("name", sa.String(length=32), nullable=False),
         sa.Column("description", sa.String(length=128), nullable=True),
-        sa.PrimaryKeyConstraint(
-            "id", name=op.f("pk_talent_audit_interview_statuses")
-        ),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_talent_audit_interview_statuses")),
         sa.UniqueConstraint(
             "name", name=op.f("uq_talent_audit_interview_statuses_name")
-        )
+        ),
     )
     op.create_table(
         "talent_audit_job_statuses",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("name", sa.String(length=32), nullable=False),
         sa.Column("description", sa.String(length=128), nullable=True),
-        sa.PrimaryKeyConstraint(
-            "id", name=op.f("pk_talent_audit_job_statuses")
-        ),
-        sa.UniqueConstraint(
-            "name", name=op.f("uq_talent_audit_job_statuses_name")
-        )
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_talent_audit_job_statuses")),
+        sa.UniqueConstraint("name", name=op.f("uq_talent_audit_job_statuses_name")),
     )
     op.create_table(
         "talent_audit_statuses",
@@ -52,9 +46,7 @@ def upgrade() -> None:
         sa.Column("name", sa.String(length=32), nullable=False),
         sa.Column("description", sa.String(length=128), nullable=True),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_talent_audit_statuses")),
-        sa.UniqueConstraint(
-            "name", name=op.f("uq_talent_audit_statuses_name")
-        )
+        sa.UniqueConstraint("name", name=op.f("uq_talent_audit_statuses_name")),
     )
     op.create_table(
         "talent_audit",
@@ -87,9 +79,7 @@ def upgrade() -> None:
             ondelete="RESTRICT",
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_talent_audit")),
-        sa.UniqueConstraint(
-            "employee_id", name=op.f("uq_talent_audit_employee_id")
-        )
+        sa.UniqueConstraint("employee_id", name=op.f("uq_talent_audit_employee_id")),
     )
     op.create_table(
         "talent_audit_job",
@@ -97,9 +87,7 @@ def upgrade() -> None:
         sa.Column("talent_audit_id", sa.Integer(), nullable=False),
         sa.Column("target_job_id", sa.Integer(), nullable=False),
         sa.Column("status_id", sa.Integer(), nullable=False),
-        sa.Column(
-            "talent_status_period_link_id", sa.Integer(), nullable=False
-        ),
+        sa.Column("talent_status_period_link_id", sa.Integer(), nullable=False),
         sa.Column("created_by", sa.Integer(), nullable=False),
         sa.Column(
             "created_at",
@@ -116,9 +104,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["status_id"],
             ["talent_audit_job_statuses.id"],
-            name=op.f(
-                "fk_talent_audit_job_status_id_talent_audit_job_statuses"
-            ),
+            name=op.f("fk_talent_audit_job_status_id_talent_audit_job_statuses"),
             ondelete="RESTRICT",
         ),
         sa.ForeignKeyConstraint(
@@ -141,7 +127,7 @@ def upgrade() -> None:
             name=op.f("fk_talent_audit_job_target_job_id_jobs"),
             ondelete="RESTRICT",
         ),
-        sa.PrimaryKeyConstraint("id", name=op.f("pk_talent_audit_job"))
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_talent_audit_job")),
     )
     op.create_table(
         "talent_audit_interview",
@@ -149,9 +135,7 @@ def upgrade() -> None:
         sa.Column("talent_audit_job_id", sa.Integer(), nullable=False),
         sa.Column("status_id", sa.Integer(), nullable=False),
         sa.Column("interview_date", sa.Date(), nullable=False),
-        sa.Column(
-            "talent_status_period_link_id", sa.Integer(), nullable=False
-        ),
+        sa.Column("talent_status_period_link_id", sa.Integer(), nullable=False),
         sa.Column("created_by", sa.Integer(), nullable=False),
         sa.Column(
             "created_at",
@@ -176,9 +160,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["talent_audit_job_id"],
             ["talent_audit_job.id"],
-            name=op.f(
-                "fk_talent_audit_interview_talent_audit_job_id_talent_audit_job"
-            ),
+            name=op.f("fk_talent_audit_interview_talent_audit_job_id_talent_audit_job"),
             ondelete="RESTRICT",
         ),
         sa.ForeignKeyConstraint(
@@ -189,7 +171,7 @@ def upgrade() -> None:
             ),
             ondelete="RESTRICT",
         ),
-        sa.PrimaryKeyConstraint("id", name=op.f("pk_talent_audit_interview"))
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_talent_audit_interview")),
     )
     # ### end Alembic commands ###
 

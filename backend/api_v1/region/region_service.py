@@ -83,7 +83,9 @@ class RegionService(BaseService):
                 {**region_in.model_dump(), SORT_FIELD: next_order}
             )
             schema = RegionSchema.model_validate(record)
-            detail = await self._resolve_domain_success(RegionCreateSuccess(schema.name))
+            detail = await self._resolve_domain_success(
+                RegionCreateSuccess(schema.name)
+            )
             return MutationResponse(detail=detail, data=schema)
         except IntegrityError:
             raise await self._resolve_domain_error(RegionNameTaken(region_in.name))
@@ -108,7 +110,9 @@ class RegionService(BaseService):
             orm_record = await self.get_by_id(region_id)
             updated = await self.update(orm_record, region_update, partial=True)
             schema = RegionSchema.model_validate(updated)
-            detail = await self._resolve_domain_success(RegionUpdateSuccess(schema.name))
+            detail = await self._resolve_domain_success(
+                RegionUpdateSuccess(schema.name)
+            )
             return MutationResponse(detail=detail, data=schema)
         except IntegrityError:
             raise await self._resolve_domain_error(RegionNameTaken(region_update.name))

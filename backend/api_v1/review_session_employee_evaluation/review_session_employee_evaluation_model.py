@@ -45,8 +45,10 @@ class ReviewSessionEmployeeEvaluation(IntIdPkMixin, TimestampMixin, Base):
         lazy="selectin",
     )
     dimension: Mapped["ReviewDimension"] = relationship(lazy="selectin")
-    criterion_scores: Mapped[List["ReviewSessionEmployeeCriterionScore"]] = relationship(
-        back_populates="evaluation",
-        lazy="selectin",
-        cascade="all, delete-orphan",
+    criterion_scores: Mapped[List["ReviewSessionEmployeeCriterionScore"]] = (
+        relationship(
+            back_populates="evaluation",
+            lazy="selectin",
+            cascade="all, delete-orphan",
+        )
     )

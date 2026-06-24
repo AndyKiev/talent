@@ -2,7 +2,6 @@ __all__ = [
     "db_helper",
     "DatabaseHelper",
     # Основні класи
-
 ]
 
 

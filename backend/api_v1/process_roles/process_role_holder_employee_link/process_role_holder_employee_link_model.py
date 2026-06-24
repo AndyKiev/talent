@@ -24,7 +24,9 @@ class ProcessRoleHolderEmployeeLink(IntIdPkMixin, TimestampMixin, Base):
             name="fk_prhe_holder_role",
         ),
         # one holder per employee, per role -> the single-reviewer guarantee
-        UniqueConstraint("process_role_id", "employee_id", name="uq_prhe_role_employee"),
+        UniqueConstraint(
+            "process_role_id", "employee_id", name="uq_prhe_role_employee"
+        ),
     )
 
     process_role_holder_id: Mapped[int] = mapped_column(nullable=False, index=True)

@@ -28,7 +28,9 @@ def get_department_region_link_service(
     user: EmployeeSchema = Depends(get_current_active_auth_user),
     session: AsyncSession = Depends(db_helper.session_getter),
 ) -> DepartmentRegionLinkService:
-    return DepartmentRegionLinkService(repository=repository, user=user, session=session)
+    return DepartmentRegionLinkService(
+        repository=repository, user=user, session=session
+    )
 
 
 async def department_region_link_by_id(

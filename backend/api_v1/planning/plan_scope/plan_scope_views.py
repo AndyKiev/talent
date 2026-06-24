@@ -12,6 +12,8 @@ from backend.api_v1.planning.plan_scope.plan_scope_dependencies import (
     plan_scope_by_id,
 )
 from backend.api_v1.planning.plan_scope.plan_scope_service import PlanScopeService
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/admin/plan_scopes",
@@ -20,7 +22,11 @@ router = APIRouter(
 )
 
 
-@router.get("/by_session/{plan_session_id}", response_model=List[PlanScopeSchema])
+@router.get(
+    "/by_session/{plan_session_id}",
+    response_model=List[PlanScopeSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.PLAN_SCOPE)],
+)
 async def get_plan_scopes_by_session(
     plan_session_id: int,
     service: Annotated[PlanScopeService, Depends(get_plan_scope_service)],
@@ -28,7 +34,11 @@ async def get_plan_scopes_by_session(
     return await service.get_scopes_by_session(plan_session_id)
 
 
-@router.get("/{plan_scope_id}", response_model=PlanScopeSchema)
+@router.get(
+    "/{plan_scope_id}",
+    response_model=PlanScopeSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.PLAN_SCOPE)],
+)
 async def get_plan_scope(
     record: PlanScopeSchema = Depends(plan_scope_by_id),
 ):
@@ -38,6 +48,7 @@ async def get_plan_scope(
 @router.patch(
     "/{plan_scope_id}",
     response_model=MutationResponse[PlanScopeSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.PLAN_SCOPE)],
 )
 async def update_plan_scope(
     scope_update: PlanScopeUpdate,
@@ -47,7 +58,11 @@ async def update_plan_scope(
     return await service.update_plan_scope(record.id, scope_update)
 
 
-@router.delete("/{plan_scope_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{plan_scope_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.PLAN_SCOPE)],
+)
 async def delete_plan_scope(
     plan_scope_id: int,
     service: Annotated[PlanScopeService, Depends(get_plan_scope_service)],

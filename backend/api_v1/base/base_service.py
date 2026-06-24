@@ -647,7 +647,6 @@ class BaseService(Generic[RepositoryType]):
         if not items:
             return 0
         return getattr(items[0], sort_field)
-    
 
     async def _resolve_domain_success(self, success) -> str:
         """

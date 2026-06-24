@@ -12,6 +12,8 @@ from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
 if TYPE_CHECKING:
     from backend.api_v1.msg_pg.msg_model import Msg
     from backend.api_v1.employee.employee_model import Employee
+
+
 # Add this relationship to the Lang class
 class Lang(IntIdPkMixin, Base):
     name: Mapped[str] = mapped_column(String(128), nullable=False)

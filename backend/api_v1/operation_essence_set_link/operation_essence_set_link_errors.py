@@ -26,13 +26,17 @@ class OperationEssenceSetLinkDuplicate(AlreadyExistsError):
             f"Operation '{operation_name}' is already linked to essence set "
             f"'{fingerprint}'"
         )
-        super().__init__("OperationEssenceSetLink", "operation_essence_set", fingerprint)
+        super().__init__(
+            "OperationEssenceSetLink", "operation_essence_set", fingerprint
+        )
 
 
 class OperationEssenceSetLinkHasGroups(RelationshipError):
     message_key = "operationEssenceSetLinkHasGroups"
 
-    def __init__(self, operation_name: str, fingerprint: str, group_names: list[str]) -> None:
+    def __init__(
+        self, operation_name: str, fingerprint: str, group_names: list[str]
+    ) -> None:
         groups_str = ", ".join(group_names)
         self.template_vars = {
             "operation": operation_name,

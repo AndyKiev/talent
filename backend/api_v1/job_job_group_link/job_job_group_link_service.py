@@ -61,6 +61,7 @@ class JobJobGroupLinkService(BaseService):
     async def _get_job_or_raise(self, job_id: int) -> Job:
         from sqlalchemy import select
         from backend.api_v1.job.job_model import Job as JobModel
+
         result = await self.session.execute(
             select(JobModel).where(JobModel.id == job_id)
         )
@@ -71,6 +72,7 @@ class JobJobGroupLinkService(BaseService):
 
     async def _get_group_or_raise(self, job_group_id: int) -> JobGroup:
         from sqlalchemy import select
+
         result = await self.session.execute(
             select(JobGroup).where(JobGroup.id == job_group_id)
         )
@@ -111,9 +113,7 @@ class JobJobGroupLinkService(BaseService):
         links = await self.repository.get_links_for_job(job_id)
         return [self._to_schema(lnk) for lnk in links]
 
-    async def get_link(
-        self, job_id: int, job_group_id: int
-    ) -> JobJobGroupLinkSchema:
+    async def get_link(self, job_id: int, job_group_id: int) -> JobJobGroupLinkSchema:
         link = await self.repository.get_link(job_id, job_group_id)
         if not link:
             raise await self._resolve_domain_error(
@@ -155,9 +155,7 @@ class JobJobGroupLinkService(BaseService):
     # Write — remove single link
     # ------------------------------------------------------------------
 
-    async def remove_link(
-        self, job_id: int, job_group_id: int
-    ) -> None:
+    async def remove_link(self, job_id: int, job_group_id: int) -> None:
         job = await self._get_job_or_raise(job_id)
         group = await self._get_group_or_raise(job_group_id)
 
@@ -173,6 +171,7 @@ class JobJobGroupLinkService(BaseService):
         )
         from fastapi import HTTPException
         from starlette import status
+
         raise HTTPException(status_code=status.HTTP_200_OK, detail=detail)
 
     # ------------------------------------------------------------------

@@ -52,7 +52,9 @@ class JobGroupService(BaseService):
     async def get_job_groups(
         self, job_group_type_id: Optional[int] = None
     ) -> List[JobGroupSchema]:
-        filters = {"job_group_type_id": job_group_type_id} if job_group_type_id else None
+        filters = (
+            {"job_group_type_id": job_group_type_id} if job_group_type_id else None
+        )
         records = await self.get_all(params=filters)
         return [self._to_schema(r) for r in records]
 

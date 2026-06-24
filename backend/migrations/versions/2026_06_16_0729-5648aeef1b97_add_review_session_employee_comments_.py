@@ -45,9 +45,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["author_id"],
             ["employees.id"],
-            name=op.f(
-                "fk_review_session_employee_comments_author_id_employees"
-            ),
+            name=op.f("fk_review_session_employee_comments_author_id_employees"),
         ),
         sa.ForeignKeyConstraint(
             ["review_session_employee_id"],
@@ -57,9 +55,7 @@ def upgrade() -> None:
             ),
             ondelete="CASCADE",
         ),
-        sa.PrimaryKeyConstraint(
-            "id", name=op.f("pk_review_session_employee_comments")
-        )
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_review_session_employee_comments")),
     )
     op.create_unique_constraint(
         "uq_rse_session_employee",

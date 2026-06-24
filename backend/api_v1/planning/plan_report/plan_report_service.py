@@ -125,9 +125,7 @@ class PlanReportService(BaseService):
         per_status_counts: Dict[FactKey, int] = {}
         for employee_id, pairs in emp_pairs.items():
             main_dept_id = emp_main_dept[employee_id]
-            matching = cls._matching_plan_depts(
-                main_dept_id, plan_dept_ids, org_index
-            )
+            matching = cls._matching_plan_depts(main_dept_id, plan_dept_ids, org_index)
             if not matching:
                 continue
             for job_group_id, talent_status_id in pairs:

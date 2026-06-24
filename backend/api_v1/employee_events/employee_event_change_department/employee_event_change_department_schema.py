@@ -14,6 +14,7 @@ class EmployeeEventChangeDepartmentCreate(EmployeeEventChangeDepartmentBase):
     Used when building the dept-change rows while creating an event.
     `event_change_id` is set by the service, not the caller.
     """
+
     pass
 
 

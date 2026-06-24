@@ -27,6 +27,7 @@ router = APIRouter(
 
 # Static paths first ----------------------------------------------------------
 
+
 @router.get(
     "/hrm_employees",
     response_model=List[HrmEmployeeRow],
@@ -53,6 +54,7 @@ async def get_scopes_by_employee(
 
 
 # Dynamic paths ---------------------------------------------------------------
+
 
 @router.get(
     "/{hrm_scope_id}",

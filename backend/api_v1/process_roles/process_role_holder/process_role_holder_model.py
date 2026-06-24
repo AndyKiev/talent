@@ -64,9 +64,7 @@ class ProcessRoleHolder(IntIdPkMixin, TimestampMixin, Base):
             "ProcessRoleHolder.id "
             "== ProcessRoleHolderEmployeeLink.process_role_holder_id"
         ),
-        foreign_keys=(
-            "[ProcessRoleHolderEmployeeLink.process_role_holder_id]"
-        ),
+        foreign_keys=("[ProcessRoleHolderEmployeeLink.process_role_holder_id]"),
         back_populates="holder",
         lazy="selectin",
     )
@@ -76,9 +74,7 @@ class ProcessRoleHolder(IntIdPkMixin, TimestampMixin, Base):
             "ProcessRoleHolder.id "
             "== ProcessRoleHolderDepartmentLink.process_role_holder_id"
         ),
-        foreign_keys=(
-            "[ProcessRoleHolderDepartmentLink.process_role_holder_id]"
-        ),
+        foreign_keys=("[ProcessRoleHolderDepartmentLink.process_role_holder_id]"),
         back_populates="holder",
         lazy="selectin",
     )

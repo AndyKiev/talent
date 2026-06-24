@@ -25,7 +25,9 @@ router = APIRouter(
 
 @router.get("", response_model=List[SettingValueTypeSchema])
 async def get_setting_value_types(
-    service: Annotated[SettingValueTypeService, Depends(get_setting_value_type_service)],
+    service: Annotated[
+        SettingValueTypeService, Depends(get_setting_value_type_service)
+    ],
     sort: Optional[str] = Query(
         None,
         description='JSON for sorting: {"field": "asc|desc"} or [{"field1": "asc"}, "field2"]',
@@ -48,7 +50,9 @@ async def get_setting_value_type(
 )
 async def create_setting_value_type(
     type_in: SettingValueTypeCreate,
-    service: Annotated[SettingValueTypeService, Depends(get_setting_value_type_service)],
+    service: Annotated[
+        SettingValueTypeService, Depends(get_setting_value_type_service)
+    ],
 ):
     return await service.create_setting_value_type(type_in)
 
@@ -70,6 +74,8 @@ async def update_setting_value_type(
 @router.delete("/{setting_value_type_id}", status_code=status.HTTP_200_OK)
 async def delete_setting_value_type(
     setting_value_type_id: int,
-    service: Annotated[SettingValueTypeService, Depends(get_setting_value_type_service)],
+    service: Annotated[
+        SettingValueTypeService, Depends(get_setting_value_type_service)
+    ],
 ):
     await service.delete_setting_value_type(setting_value_type_id)

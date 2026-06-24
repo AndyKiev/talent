@@ -26,13 +26,15 @@ def upgrade() -> None:
     )
 
     # 2. Backfill from name (e.g. "6" → 6, "12" → 12, "24" → 24)
-    op.execute("""
+    op.execute(
+        """
         UPDATE talent_periods
         SET qty_months = CAST(
             regexp_replace(name, '[^0-9]', '', 'g') AS INTEGER
         )
         WHERE qty_months IS NULL
-    """)
+    """
+    )
 
     # 3. Now make NOT NULL
     op.alter_column("talent_periods", "qty_months", nullable=False)

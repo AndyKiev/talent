@@ -27,6 +27,7 @@ STORE_CATEGORY_KEY = "store"
 @dataclass(frozen=True)
 class ScopeRow:
     """Flattened valued plan scope restricted to store departments."""
+
     department_id: int
     department_name: str
     job_group_id: int
@@ -46,9 +47,7 @@ class PlanMatrixRepository(BaseRepository):
     # No own table; report is read-only over plan_scopes.
     model = PlanScope
 
-    async def get_store_valued_scopes(
-        self, plan_session_id: int
-    ) -> list[ScopeRow]:
+    async def get_store_valued_scopes(self, plan_session_id: int) -> list[ScopeRow]:
         """Active, valued (NOT NULL) plan scopes of a session whose department
         is a STORE instance (department_category.key == 'store').
 
@@ -77,9 +76,7 @@ class PlanMatrixRepository(BaseRepository):
                 DepartmentCategory.id == Department.department_category_id,
             )
             .join(JobGroup, JobGroup.id == PlanScope.job_group_id)
-            .outerjoin(
-                TalentStatus, TalentStatus.id == PlanScope.talent_status_id
-            )
+            .outerjoin(TalentStatus, TalentStatus.id == PlanScope.talent_status_id)
             .outerjoin(
                 DepartmentRegionLink,
                 DepartmentRegionLink.department_id == PlanScope.department_id,

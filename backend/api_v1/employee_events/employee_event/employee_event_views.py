@@ -16,6 +16,8 @@ from backend.api_v1.employee_events.employee_event.employee_event_dependencies i
 from backend.api_v1.employee_events.employee_event.employee_event_service import (
     EmployeeEventService,
 )
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 # ── Router nested under /employees/{employee_id}/events ───────────────────────
 # Mount this router on the employee router with prefix="/employees".
@@ -28,6 +30,7 @@ router = APIRouter(
 @router.get(
     "/{employee_id}/events",
     response_model=List[EmployeeEventFlat],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE_EVENT)],
 )
 async def get_employee_events(
     employee_id: int,
@@ -43,6 +46,7 @@ async def get_employee_events(
 @router.get(
     "/{employee_id}/events/{event_id}",
     response_model=EmployeeEventSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE_EVENT)],
 )
 async def get_employee_event(
     employee_id: int,
@@ -55,18 +59,22 @@ async def get_employee_event(
     "/{employee_id}/events",
     response_model=MutationResponse[EmployeeEventSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.EMPLOYEE_EVENT)],
 )
 async def create_employee_event(
     employee_id: int,
     event_in: EmployeeEventCreate,
     service: Annotated[EmployeeEventService, Depends(get_employee_event_service)],
 ):
-    return await service.create_employee_event(employee_id=employee_id, event_in=event_in)
+    return await service.create_employee_event(
+        employee_id=employee_id, event_in=event_in
+    )
 
 
 @router.patch(
     "/{employee_id}/events/{event_id}",
     response_model=MutationResponse[EmployeeEventSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.EMPLOYEE_EVENT)],
 )
 async def update_employee_event(
     employee_id: int,
@@ -82,6 +90,7 @@ async def update_employee_event(
 @router.post(
     "/{employee_id}/events/{event_id}/apply",
     response_model=MutationResponse[EmployeeEventSchema],
+    dependencies=[Guard(OperationVerb.APPROVE, EssenceName.EMPLOYEE_EVENT)],
 )
 async def apply_employee_event(
     employee_id: int,
@@ -102,6 +111,7 @@ async def apply_employee_event(
 @router.delete(
     "/{employee_id}/events/{event_id}",
     status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.EMPLOYEE_EVENT)],
 )
 async def delete_employee_event(
     employee_id: int,

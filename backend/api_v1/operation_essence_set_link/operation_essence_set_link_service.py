@@ -61,14 +61,16 @@ class OperationEssenceSetLinkService(BaseService):
     @staticmethod
     def _label(link: OperationEssenceSetLink) -> str:
         """Human-readable label, e.g. 'delete · 3-7' or 'delete · talent_period'."""
-        names = ", ".join(link.essence_names) if link.essence_names else link.fingerprint
+        names = (
+            ", ".join(link.essence_names) if link.essence_names else link.fingerprint
+        )
         return f"{link.operation_name} · {names}"
 
-    def _to_schema(self, link: OperationEssenceSetLink) -> OperationEssenceSetLinkSchema:
+    def _to_schema(
+        self, link: OperationEssenceSetLink
+    ) -> OperationEssenceSetLinkSchema:
         group_names = [
-            ug.user_group.name
-            for ug in link.user_group_links
-            if ug.user_group
+            ug.user_group.name for ug in link.user_group_links if ug.user_group
         ]
         return OperationEssenceSetLinkSchema(
             id=link.id,
@@ -211,9 +213,7 @@ class OperationEssenceSetLinkService(BaseService):
             UserGroupOperationEssenceSetLink.user_group_id == user_group_id
         )
         result = await self.session.execute(current_stmt)
-        current = {
-            r.operation_essence_set_link_id: r for r in result.scalars().all()
-        }
+        current = {r.operation_essence_set_link_id: r for r in result.scalars().all()}
 
         target = set(oesl_ids)
         current_ids = set(current.keys())
@@ -312,7 +312,9 @@ class OperationEssenceSetLinkService(BaseService):
                 call = getattr(dep, "call", None)
                 if call is not None and getattr(call, "_is_access_guard", False):
                     op = getattr(call, "_access_operation", None)
-                    essences = tuple(sorted(getattr(call, "_access_essences", []) or []))
+                    essences = tuple(
+                        sorted(getattr(call, "_access_essences", []) or [])
+                    )
                     if op and essences:
                         seen.add((op, essences))
                 stack.extend(getattr(dep, "dependencies", []))

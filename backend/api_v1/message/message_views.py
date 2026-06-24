@@ -130,9 +130,8 @@ async def get_all_msg_keys(
 
     raise HTTPException(
         status_code=status.HTTP_204_NO_CONTENT,
-        description= "message key does not exist",
+        description="message key does not exist",
     )
-
 
 
 @router.post(
@@ -147,7 +146,6 @@ async def create_msg_key(
 ):
 
     return await msg_key_service.create(model=msg_key_in)
-
 
 
 @router.delete(
@@ -259,7 +257,7 @@ async def delete_msg(
 @router.get(
     "/full_msg",
     response_model=list[FullMsgRead],
-    responses={204: {"description":"message does not exist"}},
+    responses={204: {"description": "message does not exist"}},
 )
 # @require_groups(["admin", "pricing_team", "vtm_team", "vtm_assist", "quality_team"])
 async def get_full_msg(

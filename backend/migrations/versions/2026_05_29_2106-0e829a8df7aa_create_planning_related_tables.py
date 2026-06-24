@@ -35,7 +35,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_plan_session_statuses")),
-        sa.UniqueConstraint("key", name=op.f("uq_plan_session_statuses_key"))
+        sa.UniqueConstraint("key", name=op.f("uq_plan_session_statuses_key")),
     )
     op.create_table(
         "plan_category_defaults",
@@ -57,7 +57,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id", name=op.f("pk_plan_category_defaults")),
         sa.UniqueConstraint(
             "department_category_id", name="uq_plan_category_default_category"
-        )
+        ),
     )
     op.create_table(
         "plan_sessions",
@@ -76,11 +76,9 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["plan_session_status_id"],
             ["plan_session_statuses.id"],
-            name=op.f(
-                "fk_plan_sessions_plan_session_status_id_plan_session_statuses"
-            ),
+            name=op.f("fk_plan_sessions_plan_session_status_id_plan_session_statuses"),
         ),
-        sa.PrimaryKeyConstraint("id", name=op.f("pk_plan_sessions"))
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_plan_sessions")),
     )
     op.create_table(
         "plan_scope_defaults",
@@ -101,16 +99,14 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["talent_status_id"],
             ["talent_statuses.id"],
-            name=op.f(
-                "fk_plan_scope_defaults_talent_status_id_talent_statuses"
-            ),
+            name=op.f("fk_plan_scope_defaults_talent_status_id_talent_statuses"),
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_plan_scope_defaults")),
         sa.UniqueConstraint(
             "job_group_id",
             "talent_status_id",
             name="uq_plan_scope_default_jg_ts",
-        )
+        ),
     )
     op.create_table(
         "plan_scopes",
@@ -158,7 +154,7 @@ def upgrade() -> None:
             "job_group_id",
             "talent_status_id",
             name="uq_plan_scope_session_dept_jg_ts",
-        )
+        ),
     )
     op.create_table(
         "plan_session_categories",
@@ -181,9 +177,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["plan_session_id"],
             ["plan_sessions.id"],
-            name=op.f(
-                "fk_plan_session_categories_plan_session_id_plan_sessions"
-            ),
+            name=op.f("fk_plan_session_categories_plan_session_id_plan_sessions"),
             ondelete="CASCADE",
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_plan_session_categories")),
@@ -191,7 +185,7 @@ def upgrade() -> None:
             "plan_session_id",
             "department_category_id",
             name="uq_plan_session_category",
-        )
+        ),
     )
     # ### end Alembic commands ###
 

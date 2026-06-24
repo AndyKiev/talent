@@ -77,7 +77,9 @@ class DepartmentRegionLinkService(BaseService):
     async def get_by_id(self, link_id: int) -> DepartmentRegionLinkSchema:
         result = await self.repository.get_by_id(link_id)
         if not result:
-            raise await self._resolve_domain_error(DepartmentRegionLinkNotFound(link_id))
+            raise await self._resolve_domain_error(
+                DepartmentRegionLinkNotFound(link_id)
+            )
         return result
 
     async def get_links(
@@ -97,9 +99,7 @@ class DepartmentRegionLinkService(BaseService):
         records = await self.get_all(params=filters or None, sort_json=sort)
         return [DepartmentRegionLinkSchema.model_validate(r) for r in records]
 
-    async def get_by_department(
-        self, department_id: int
-    ) -> DepartmentRegionLinkSchema:
+    async def get_by_department(self, department_id: int) -> DepartmentRegionLinkSchema:
         result = await self.repository.get_by_department_id(department_id)
         if not result:
             raise await self._resolve_domain_error(

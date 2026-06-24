@@ -48,7 +48,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id", name=op.f("pk_employee_departments")),
         sa.UniqueConstraint(
             "employee_id", "department_id", name="uq_employee_department"
-        )
+        ),
     )
     op.create_index(
         op.f("ix_employee_departments_employee_id"),

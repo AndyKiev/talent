@@ -81,7 +81,9 @@ class TalentAuditInterviewService(BaseService):
 
     async def _get_link_details(self, link_id: int) -> Optional[TalentStatusPeriodLink]:
         """Get the full link with talent_period and talent_status loaded."""
-        stmt = select(TalentStatusPeriodLink).where(TalentStatusPeriodLink.id == link_id)
+        stmt = select(TalentStatusPeriodLink).where(
+            TalentStatusPeriodLink.id == link_id
+        )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
@@ -171,9 +173,7 @@ class TalentAuditInterviewService(BaseService):
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_free_audit_jobs_for_audit(
-        self, talent_audit_id: int
-    ) -> List[dict]:
+    async def get_free_audit_jobs_for_audit(self, talent_audit_id: int) -> List[dict]:
         jobs = await self._get_free_audit_jobs(talent_audit_id)
         result = []
         for j in jobs:
@@ -185,15 +185,19 @@ class TalentAuditInterviewService(BaseService):
                 hrm_label = f"{link.talent_status.key} - {link.talent_period.name}"
                 qty_months = link.talent_period.qty_months
                 hrm_status_key = link.talent_status.key
-            result.append({
-                "id": j.id,
-                "target_job_id": j.target_job_id,
-                "job_name": j.target_job.name if j.target_job else str(j.target_job_id),
-                "hrm_status_period_label": hrm_label,
-                "hrm_qty_months": qty_months,
-                "hrm_status_key": hrm_status_key,
-                "hrm_talent_status_period_link_id": j.talent_status_period_link_id,
-            })
+            result.append(
+                {
+                    "id": j.id,
+                    "target_job_id": j.target_job_id,
+                    "job_name": (
+                        j.target_job.name if j.target_job else str(j.target_job_id)
+                    ),
+                    "hrm_status_period_label": hrm_label,
+                    "hrm_qty_months": qty_months,
+                    "hrm_status_key": hrm_status_key,
+                    "hrm_talent_status_period_link_id": j.talent_status_period_link_id,
+                }
+            )
         # Sort by qty_months ascending so frontend gets them in order
         result.sort(key=lambda x: x["hrm_qty_months"])
         return result
@@ -207,7 +211,9 @@ class TalentAuditInterviewService(BaseService):
     ) -> MutationResponse[TalentAuditInterviewSchema]:
         free_jobs = await self._get_free_audit_jobs(interview_in.talent_audit_id)
         free_job_ids = {j.id for j in free_jobs}
-        requested_job_ids = {a.talent_audit_job_id for a in interview_in.job_assessments}
+        requested_job_ids = {
+            a.talent_audit_job_id for a in interview_in.job_assessments
+        }
 
         if not requested_job_ids:
             raise await self._resolve_domain_error(
@@ -283,8 +289,7 @@ class TalentAuditInterviewService(BaseService):
     async def delete_talent_audit_interview(self, interview_id: int) -> None:
         interview = await self.get_by_id(interview_id)
         audit_job_ids = [
-            ij.talent_audit_job_id
-            for ij in (interview.interview_jobs or [])
+            ij.talent_audit_job_id for ij in (interview.interview_jobs or [])
         ]
         if audit_job_ids:
             await self._set_audit_jobs_status(audit_job_ids, STATUS_KEY_CREATED)

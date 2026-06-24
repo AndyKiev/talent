@@ -13,17 +13,25 @@ async def seed_langs():
             # Check if language exists by id OR short_name
             result = await session.execute(
                 select(Lang).where(
-                    (Lang.id == lang_data["id"]) | (Lang.short_name == lang_data["short_name"])
+                    (Lang.id == lang_data["id"])
+                    | (Lang.short_name == lang_data["short_name"])
                 )
             )
             existing = result.scalar_one_or_none()
 
             if not existing:
-                session.add(Lang(id=lang_data["id"], short_name=lang_data["short_name"], name=lang_data["name"]))
+                session.add(
+                    Lang(
+                        id=lang_data["id"],
+                        short_name=lang_data["short_name"],
+                        name=lang_data["name"],
+                    )
+                )
                 print(f"Seeded: {lang_data['name']}")
             else:
                 print(
-                    f"Language with id={lang_data['id']} or short_name='{lang_data['short_name']}' already exists, skipping.")
+                    f"Language with id={lang_data['id']} or short_name='{lang_data['short_name']}' already exists, skipping."
+                )
         await session.commit()
 
 

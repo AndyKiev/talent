@@ -7,7 +7,9 @@ from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
 
 if TYPE_CHECKING:
-    from backend.api_v1.talent_audit_interview.talent_audit_interview_model import TalentAuditInterview
+    from backend.api_v1.talent_audit_interview.talent_audit_interview_model import (
+        TalentAuditInterview,
+    )
 
 
 class TalentAuditInterviewStatus(IntIdPkMixin, Base):

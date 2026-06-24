@@ -19,12 +19,8 @@ class ProcessRoleHolderDepartmentExists(AlreadyExistsError):
 
     def __init__(self, department: str) -> None:
         self.template_vars = {"department": department}
-        self.fallback = (
-            f"Department '{department}' is already assigned to this holder"
-        )
-        super().__init__(
-            "ProcessRoleHolderDepartmentLink", "department_id", department
-        )
+        self.fallback = f"Department '{department}' is already assigned to this holder"
+        super().__init__("ProcessRoleHolderDepartmentLink", "department_id", department)
 
 
 class ProcessRoleHolderDepartmentDeleteError(DeleteError):

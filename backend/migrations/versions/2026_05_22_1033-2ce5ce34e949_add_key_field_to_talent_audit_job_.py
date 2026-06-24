@@ -35,7 +35,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_job_group_types")),
-        sa.UniqueConstraint("name", name=op.f("uq_job_group_types_name"))
+        sa.UniqueConstraint("name", name=op.f("uq_job_group_types_name")),
     )
     op.create_table(
         "job_groups",
@@ -50,7 +50,7 @@ def upgrade() -> None:
             name=op.f("fk_job_groups_job_group_type_id_job_group_types"),
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_job_groups")),
-        sa.UniqueConstraint("name", name=op.f("uq_job_groups_name"))
+        sa.UniqueConstraint("name", name=op.f("uq_job_groups_name")),
     )
     op.create_table(
         "job_job_group_links",
@@ -74,7 +74,7 @@ def upgrade() -> None:
             name=op.f("fk_job_job_group_links_job_id_jobs"),
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_job_job_group_links")),
-        sa.UniqueConstraint("job_id", "job_group_id", name="uq_job_job_group")
+        sa.UniqueConstraint("job_id", "job_group_id", name="uq_job_job_group"),
     )
     # ### end Alembic commands ###
 

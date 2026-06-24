@@ -1,4 +1,9 @@
-from backend.api_v1.base.success import DomainSuccess, DeleteSuccess, CreateSuccess, UpdateSuccess
+from backend.api_v1.base.success import (
+    DomainSuccess,
+    DeleteSuccess,
+    CreateSuccess,
+    UpdateSuccess,
+)
 
 
 class EmployeeEventChangeDeleteSuccess(DeleteSuccess):
@@ -6,7 +11,9 @@ class EmployeeEventChangeDeleteSuccess(DeleteSuccess):
 
     def __init__(self, change_id: int) -> None:
         self.template_vars = {"changeId": change_id}
-        self.fallback = f"Employee event change with ID {change_id} successfully deleted"
+        self.fallback = (
+            f"Employee event change with ID {change_id} successfully deleted"
+        )
         DomainSuccess.__init__(self, self.fallback)
 
 
@@ -15,7 +22,9 @@ class EmployeeEventChangeCreateSuccess(CreateSuccess):
 
     def __init__(self, change_id: int) -> None:
         self.template_vars = {"changeId": change_id}
-        self.fallback = f"Employee event change with ID {change_id} successfully created"
+        self.fallback = (
+            f"Employee event change with ID {change_id} successfully created"
+        )
         DomainSuccess.__init__(self, self.fallback)
 
 
@@ -24,5 +33,7 @@ class EmployeeEventChangeUpdateSuccess(UpdateSuccess):
 
     def __init__(self, change_id: int) -> None:
         self.template_vars = {"changeId": change_id}
-        self.fallback = f"Employee event change with ID {change_id} successfully updated"
+        self.fallback = (
+            f"Employee event change with ID {change_id} successfully updated"
+        )
         DomainSuccess.__init__(self, self.fallback)

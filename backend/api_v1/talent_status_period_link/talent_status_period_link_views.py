@@ -17,6 +17,8 @@ from backend.api_v1.talent_status_period_link.talent_status_period_link_dependen
 from backend.api_v1.talent_status_period_link.talent_status_period_link_service import (
     TalentStatusPeriodLinkService,
 )
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/talent_status_period_links",
@@ -25,9 +27,17 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[TalentStatusPeriodLinkSchema])
+@router.get(
+    "",
+    response_model=List[TalentStatusPeriodLinkSchema],
+    dependencies=[
+        Guard(OperationVerb.VIEW, EssenceName.TALENT_STATUS, EssenceName.TALENT_PERIOD)
+    ],
+)
 async def get_talent_status_period_links(
-    service: Annotated[TalentStatusPeriodLinkService, Depends(get_talent_status_period_link_service)],
+    service: Annotated[
+        TalentStatusPeriodLinkService, Depends(get_talent_status_period_link_service)
+    ],
     talent_period_id: Optional[int] = None,
     talent_status_id: Optional[int] = None,
     is_active: Optional[bool] = None,
@@ -45,9 +55,17 @@ async def get_talent_status_period_links(
     )
 
 
-@router.get("/active_pairs", response_model=List[TalentStatusPeriodLinkWithLabel])
+@router.get(
+    "/active_pairs",
+    response_model=List[TalentStatusPeriodLinkWithLabel],
+    dependencies=[
+        Guard(OperationVerb.VIEW, EssenceName.TALENT_STATUS, EssenceName.TALENT_PERIOD)
+    ],
+)
 async def get_talent_status_period_active_pairs(
-    service: Annotated[TalentStatusPeriodLinkService, Depends(get_talent_status_period_link_service)],
+    service: Annotated[
+        TalentStatusPeriodLinkService, Depends(get_talent_status_period_link_service)
+    ],
     is_active: Optional[bool] = Query(
         None,
         description=(
@@ -67,9 +85,17 @@ async def get_talent_status_period_active_pairs(
     return await service.get_active_pairs(is_active=is_active)
 
 
-@router.get("/by_composite_key", response_model=TalentStatusPeriodLinkSchema)
+@router.get(
+    "/by_composite_key",
+    response_model=TalentStatusPeriodLinkSchema,
+    dependencies=[
+        Guard(OperationVerb.VIEW, EssenceName.TALENT_STATUS, EssenceName.TALENT_PERIOD)
+    ],
+)
 async def get_talent_status_period_link_by_composite_key(
-    record: TalentStatusPeriodLinkSchema = Depends(talent_status_period_link_by_composite_key),
+    record: TalentStatusPeriodLinkSchema = Depends(
+        talent_status_period_link_by_composite_key
+    ),
 ):
     """
     Fetch a single link by its unique (talent_status_id, talent_period_id) pair.
@@ -78,7 +104,13 @@ async def get_talent_status_period_link_by_composite_key(
     return record
 
 
-@router.get("/{talent_status_period_link_id}", response_model=TalentStatusPeriodLinkSchema)
+@router.get(
+    "/{talent_status_period_link_id}",
+    response_model=TalentStatusPeriodLinkSchema,
+    dependencies=[
+        Guard(OperationVerb.VIEW, EssenceName.TALENT_STATUS, EssenceName.TALENT_PERIOD)
+    ],
+)
 async def get_talent_status_period_link(
     record: TalentStatusPeriodLinkSchema = Depends(talent_status_period_link_by_id),
 ):
@@ -89,10 +121,15 @@ async def get_talent_status_period_link(
     "",
     response_model=MutationResponse[TalentStatusPeriodLinkSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.TALENT_STATUS, EssenceName.TALENT_PERIOD)
+    ],
 )
 async def create_talent_status_period_link(
     link_in: TalentStatusPeriodLinkCreate,
-    service: Annotated[TalentStatusPeriodLinkService, Depends(get_talent_status_period_link_service)],
+    service: Annotated[
+        TalentStatusPeriodLinkService, Depends(get_talent_status_period_link_service)
+    ],
 ):
     """Link a talent status to a talent period. The (status, period) pair must be unique."""
     return await service.create_link(link_in)
@@ -101,6 +138,9 @@ async def create_talent_status_period_link(
 @router.patch(
     "/{talent_status_period_link_id}",
     response_model=MutationResponse[TalentStatusPeriodLinkSchema],
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.TALENT_STATUS, EssenceName.TALENT_PERIOD)
+    ],
 )
 async def update_talent_status_period_link(
     link_update: TalentStatusPeriodLinkUpdate,
@@ -113,10 +153,18 @@ async def update_talent_status_period_link(
     return await service.update_link(record.id, link_update)
 
 
-@router.delete("/{talent_status_period_link_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{talent_status_period_link_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.TALENT_STATUS, EssenceName.TALENT_PERIOD)
+    ],
+)
 async def delete_talent_status_period_link(
     talent_status_period_link_id: int,
-    service: Annotated[TalentStatusPeriodLinkService, Depends(get_talent_status_period_link_service)],
+    service: Annotated[
+        TalentStatusPeriodLinkService, Depends(get_talent_status_period_link_service)
+    ],
 ):
     """Unlink a talent status from a talent period."""
     await service.delete_link(talent_status_period_link_id)

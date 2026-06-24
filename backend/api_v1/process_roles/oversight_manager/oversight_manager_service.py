@@ -166,9 +166,7 @@ class OversightManagerService(BaseService):
             holder_name=holder.holder_name,
         )
         label = (
-            holder.holder_name
-            or holder.holder_code
-            or str(holder.holder_employee_id)
+            holder.holder_name or holder.holder_code or str(holder.holder_employee_id)
         )
         detail = await self._resolve_domain_success(OversightManagerSetSuccess(label))
         return MutationResponse(detail=detail, data=data)

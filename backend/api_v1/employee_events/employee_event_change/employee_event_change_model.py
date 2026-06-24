@@ -9,7 +9,9 @@ from backend.api_v1.base.models import IntIdPkMixin
 
 
 if TYPE_CHECKING:
-    from backend.api_v1.employee_events.employee_event.employee_event_model import EmployeeEvent
+    from backend.api_v1.employee_events.employee_event.employee_event_model import (
+        EmployeeEvent,
+    )
     from backend.api_v1.employee_events.employee_event_direction_type.employee_event_direction_type_model import (
         EmployeeEventDirectionType,
     )

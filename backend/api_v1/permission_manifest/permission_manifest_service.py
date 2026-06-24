@@ -19,6 +19,7 @@ from backend.api_v1.essence.essence_model import Essence
 
 # ── Pure route-walking helpers ────────────────────────────────────────────────
 
+
 def _iter_dependants(dependant):
     """Depth-first walk over a route's dependant tree (signature + decorator deps)."""
     yield dependant
@@ -117,14 +118,13 @@ def _distinct_permissions(endpoints: list[dict]) -> list[dict]:
 
 # ── Service ───────────────────────────────────────────────────────────────────
 
+
 class PermissionManifestService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
     async def _db_catalog(self) -> tuple[set[str], set[str]]:
-        ops = set(
-            (await self.session.execute(select(Operation.name))).scalars().all()
-        )
+        ops = set((await self.session.execute(select(Operation.name))).scalars().all())
         essences = set(
             (await self.session.execute(select(Essence.name))).scalars().all()
         )

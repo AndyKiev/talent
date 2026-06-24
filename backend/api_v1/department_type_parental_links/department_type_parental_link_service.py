@@ -3,7 +3,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.department_type_parental_links.department_type_parental_link_repository import DepartmentTypeParentalLinkRepository
+from backend.api_v1.department_type_parental_links.department_type_parental_link_repository import (
+    DepartmentTypeParentalLinkRepository,
+)
 from backend.api_v1.department_type_parental_links.department_type_parental_link_schema import (
     DepartmentTypeParentalLink as DepartmentTypeParentalLinkSchema,
     DepartmentTypeParentalLinkCreate,
@@ -21,6 +23,7 @@ from backend.api_v1.department_type_parental_links.department_type_parental_link
     DepartmentTypeParentalLinkUpdateSuccess,
 )
 
+
 class DepartmentTypeParentalLinkService(BaseService):
     def __init__(
         self,
@@ -33,7 +36,9 @@ class DepartmentTypeParentalLinkService(BaseService):
     async def get_by_id(self, id: int) -> DepartmentTypeParentalLinkSchema:
         result = await self.repository.get_by_id(id)
         if not result:
-            raise await self._resolve_domain_error(DepartmentTypeParentalLinkNotFound(id))
+            raise await self._resolve_domain_error(
+                DepartmentTypeParentalLinkNotFound(id)
+            )
         return result
 
     async def get_links(
@@ -67,7 +72,9 @@ class DepartmentTypeParentalLinkService(BaseService):
             return MutationResponse(detail=detail, data=schema)
         except IntegrityError:
             raise await self._resolve_domain_error(
-                DepartmentTypeParentalLinkAlreadyExists(link_in.child_id, link_in.parent_id)
+                DepartmentTypeParentalLinkAlreadyExists(
+                    link_in.child_id, link_in.parent_id
+                )
             )
 
     async def update_link(
@@ -88,13 +95,15 @@ class DepartmentTypeParentalLinkService(BaseService):
             raise await self._resolve_domain_error(
                 DepartmentTypeParentalLinkAlreadyExists(
                     link_update.child_id or record.child_id,
-                    link_update.parent_id or record.parent_id
+                    link_update.parent_id or record.parent_id,
                 )
             )
 
     async def delete_link(self, link_id: int) -> None:
         record = await self.get_by_id(link_id)
-        link_name = f"{record.child_id}-{record.parent_id}"  # Format name BEFORE deletion
+        link_name = (
+            f"{record.child_id}-{record.parent_id}"  # Format name BEFORE deletion
+        )
         await self.delete_by_id(
             link_id,
             name=link_name,  # Pass formatted name

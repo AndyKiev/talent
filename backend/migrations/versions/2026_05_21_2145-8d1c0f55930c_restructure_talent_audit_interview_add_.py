@@ -27,9 +27,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("talent_audit_interview_id", sa.Integer(), nullable=False),
         sa.Column("talent_audit_job_id", sa.Integer(), nullable=False),
-        sa.Column(
-            "talent_status_period_link_id", sa.Integer(), nullable=False
-        ),
+        sa.Column("talent_status_period_link_id", sa.Integer(), nullable=False),
         sa.Column("created_by", sa.Integer(), nullable=False),
         sa.Column(
             "created_at",
@@ -67,14 +65,12 @@ def upgrade() -> None:
             ),
             ondelete="RESTRICT",
         ),
-        sa.PrimaryKeyConstraint(
-            "id", name=op.f("pk_talent_audit_interview_job")
-        ),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_talent_audit_interview_job")),
         sa.UniqueConstraint(
             "talent_audit_interview_id",
             "talent_audit_job_id",
             name="uq_interview_job",
-        )
+        ),
     )
     op.add_column(
         "talent_audit_interview",

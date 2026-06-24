@@ -105,7 +105,8 @@ class ReviewSessionEmployeeCommentService(BaseService):
         """(is_subject, is_oversighter, is_supervisor) for the current user vs this
         employee. Oversighter/supervisor are decided by the viewer's ACTIVE mode AND
         the employee being inside that mode's expanded scope, so a stale/foreign
-        context (which collapses _visible_employee_ids to self) classifies as neither."""
+        context (which collapses _visible_employee_ids to self) classifies as neither.
+        """
         rse_service = self._rse_service()
         me = self.user.id if self.user else None
         is_subject = me is not None and me == rse.employee_id

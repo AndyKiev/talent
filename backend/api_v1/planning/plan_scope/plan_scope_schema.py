@@ -24,6 +24,7 @@ class PlanScopeBase(BaseModel):
 
 class PlanScopeUpdate(BaseModel):
     """Only the plan value is user-editable (when session is 'open')."""
+
     value: Optional[int] = Field(None, ge=0, le=100)
 
 

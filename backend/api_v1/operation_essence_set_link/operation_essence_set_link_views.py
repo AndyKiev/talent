@@ -31,6 +31,7 @@ from backend.api_v1.operation_essence_set_link.operation_essence_set_link_servic
 from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
 from backend.auth.jwt_auth import has_access
 from backend.utils.enums import OperationVerb, EssenceName
+from backend.auth.guards import Guard
 
 
 router = APIRouter(
@@ -42,12 +43,18 @@ router = APIRouter(
 
 class SetGroupPermissionSetsRequest(BaseModel):
     """Full-replace payload: the exact list of OESL ids the group should hold."""
+
     operation_essence_set_link_ids: List[int]
 
 
 # ── Permission CRUD ────────────────────────────────────────────────────────────
 
-@router.get("", response_model=List[OperationEssenceSetLinkSchema])
+
+@router.get(
+    "",
+    response_model=List[OperationEssenceSetLinkSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.OPERATION)],
+)
 async def get_permissions(
     service: Annotated[
         OperationEssenceSetLinkService,
@@ -66,6 +73,7 @@ async def get_permissions(
     "",
     response_model=MutationResponse[OperationEssenceSetLinkSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.OPERATION)],
 )
 async def create_permission(
     link_in: OperationEssenceSetLinkCreate,
@@ -84,9 +92,11 @@ async def create_permission(
 
 # ── Group grant endpoints (STATIC paths — must precede /{link_id}) ─────────────
 
+
 @router.get(
     "/user_groups/{user_group_id}",
     response_model=List[OperationEssenceSetLinkSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.USER_GROUP)],
 )
 async def get_group_permission_sets(
     user_group_id: int,
@@ -106,6 +116,7 @@ async def get_group_permission_sets(
 @router.post(
     "/user_groups/{user_group_id}/{link_id}",
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.ASSIGN, EssenceName.USER_GROUP)],
 )
 async def grant_permission_set_to_group(
     user_group_id: int,
@@ -126,6 +137,7 @@ async def grant_permission_set_to_group(
 @router.delete(
     "/user_groups/{user_group_id}/{link_id}",
     status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.ASSIGN, EssenceName.USER_GROUP)],
 )
 async def revoke_permission_set_from_group(
     user_group_id: int,
@@ -143,7 +155,11 @@ async def revoke_permission_set_from_group(
     await service.revoke_from_group(user_group_id, link_id)
 
 
-@router.put("/user_groups/{user_group_id}", status_code=status.HTTP_200_OK)
+@router.put(
+    "/user_groups/{user_group_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.ASSIGN, EssenceName.USER_GROUP)],
+)
 async def set_group_permission_sets(
     user_group_id: int,
     body: SetGroupPermissionSetsRequest,
@@ -167,7 +183,12 @@ async def set_group_permission_sets(
 
 # ── Dynamic route LAST so it can't shadow the static /user_groups paths ────────
 
-@router.delete("/{link_id}", status_code=status.HTTP_200_OK)
+
+@router.delete(
+    "/{link_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.OPERATION)],
+)
 async def delete_permission(
     link_id: int,
     service: Annotated[

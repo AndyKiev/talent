@@ -39,5 +39,7 @@ class TalentAuditJobDuplicatePeriod(DomainError):
 
     def __init__(self, qty_months: int) -> None:
         self.template_vars = {"qtyMonths": qty_months}
-        self.fallback = f"A job with period {qty_months} months already exists for this audit"
+        self.fallback = (
+            f"A job with period {qty_months} months already exists for this audit"
+        )
         super().__init__(self.fallback)

@@ -15,7 +15,9 @@ class JobJobGroupLinkNotFound(NotFoundError):
         self.fallback = (
             f"Link between job ID {job_id} and job group ID {job_group_id} not found"
         )
-        super().__init__("JobJobGroupLink", "job_id/job_group_id", f"{job_id}/{job_group_id}")
+        super().__init__(
+            "JobJobGroupLink", "job_id/job_group_id", f"{job_id}/{job_group_id}"
+        )
 
 
 class JobAlreadyInJobGroup(AlreadyExistsError):
@@ -23,7 +25,9 @@ class JobAlreadyInJobGroup(AlreadyExistsError):
 
     def __init__(self, job_name: str, group_name: str) -> None:
         self.template_vars = {"jobName": job_name, "groupName": group_name}
-        self.fallback = f"Job '{job_name}' is already linked to job group '{group_name}'"
+        self.fallback = (
+            f"Job '{job_name}' is already linked to job group '{group_name}'"
+        )
         super().__init__("JobJobGroupLink", "job/group", f"{job_name}/{group_name}")
 
 
@@ -32,9 +36,7 @@ class JobJobGroupLinkDeleteError(DeleteError):
 
     def __init__(self, name: str) -> None:
         self.template_vars = {"name": name}
-        self.fallback = (
-            f"Job group link '{name}' cannot be deleted because it is referenced by other records"
-        )
+        self.fallback = f"Job group link '{name}' cannot be deleted because it is referenced by other records"
         DomainError.__init__(self, self.fallback)
 
 

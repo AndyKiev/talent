@@ -27,7 +27,5 @@ class TalentAuditInterviewJobDuplicate(DomainError):
 
     def __init__(self, interview_id: int, audit_job_id: int) -> None:
         self.template_vars = {"interviewId": interview_id, "auditJobId": audit_job_id}
-        self.fallback = (
-            f"Interview {interview_id} already has an assessment for audit job {audit_job_id}"
-        )
+        self.fallback = f"Interview {interview_id} already has an assessment for audit job {audit_job_id}"
         super().__init__(self.fallback)

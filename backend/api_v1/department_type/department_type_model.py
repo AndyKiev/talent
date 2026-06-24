@@ -6,7 +6,9 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from backend.api_v1.department.department_model import Department
-    from backend.api_v1.department_type_job_link.department_type_job_link_model import DepartmentTypeJobLink
+    from backend.api_v1.department_type_job_link.department_type_job_link_model import (
+        DepartmentTypeJobLink,
+    )
 
 
 class DepartmentType(IntIdPkMixin, TimestampMixin, Base):

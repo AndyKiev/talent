@@ -41,6 +41,7 @@ from typing import Optional
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _unparse(node) -> str:
     """Best-effort stringify an AST node (column type / default)."""
     try:
@@ -72,19 +73,27 @@ def _extract_table_args(class_body: list) -> list[str]:
                         if isinstance(call, ast.Call):
                             func = call.func
                             fname = (
-                                func.id if isinstance(func, ast.Name)
-                                else func.attr if isinstance(func, ast.Attribute)
-                                else ""
+                                func.id
+                                if isinstance(func, ast.Name)
+                                else (
+                                    func.attr if isinstance(func, ast.Attribute) else ""
+                                )
                             )
                             if fname == "UniqueConstraint":
                                 cols = [
-                                    a.value for a in call.args
-                                    if isinstance(a, ast.Constant) and isinstance(a.value, str)
+                                    a.value
+                                    for a in call.args
+                                    if isinstance(a, ast.Constant)
+                                    and isinstance(a.value, str)
                                 ]
                                 name_kw = next(
-                                    (kw.value.value for kw in call.keywords
-                                     if kw.arg == "name" and isinstance(kw.value, ast.Constant)),
-                                    None
+                                    (
+                                        kw.value.value
+                                        for kw in call.keywords
+                                        if kw.arg == "name"
+                                        and isinstance(kw.value, ast.Constant)
+                                    ),
+                                    None,
                                 )
                                 if cols:
                                     s = "UNIQUE(" + ", ".join(cols) + ")"
@@ -100,8 +109,12 @@ def _parse_mapped_column(call_node: ast.Call) -> dict:
     Returns dict with keys: fk, type_, nullable, unique, default, ondelete
     """
     info: dict = {
-        "type_": None, "fk": None, "nullable": None,
-        "unique": None, "default": None, "ondelete": None,
+        "type_": None,
+        "fk": None,
+        "nullable": None,
+        "unique": None,
+        "default": None,
+        "ondelete": None,
         "server_default": None,
     }
 
@@ -144,9 +157,9 @@ def _find_mapped_column_call(annotation_node, value_node) -> Optional[dict]:
         if isinstance(node, ast.Call):
             func = node.func
             fname = (
-                func.id if isinstance(func, ast.Name)
-                else func.attr if isinstance(func, ast.Attribute)
-                else ""
+                func.id
+                if isinstance(func, ast.Name)
+                else func.attr if isinstance(func, ast.Attribute) else ""
             )
             if fname == "mapped_column":
                 return _parse_mapped_column(node)
@@ -179,12 +192,18 @@ def _is_relationship(value_node) -> Optional[dict]:
         if isinstance(node, ast.Call):
             func = node.func
             fname = (
-                func.id if isinstance(func, ast.Name)
-                else func.attr if isinstance(func, ast.Attribute)
-                else ""
+                func.id
+                if isinstance(func, ast.Name)
+                else func.attr if isinstance(func, ast.Attribute) else ""
             )
             if fname == "relationship":
-                info = {"target": None, "lazy": None, "fk": None, "secondary": None, "back_populates": None}
+                info = {
+                    "target": None,
+                    "lazy": None,
+                    "fk": None,
+                    "secondary": None,
+                    "back_populates": None,
+                }
                 # First positional arg = target model string
                 if node.args:
                     a = node.args[0]
@@ -196,7 +215,7 @@ def _is_relationship(value_node) -> Optional[dict]:
                         info["lazy"] = val.strip("\"'")
                     elif kw.arg == "foreign_keys":
                         # e.g. "[EmployeeEvent.employee_id]" or "foreign_keys=[...]"
-                        fk_names = re.findall(r'\w+\.(\w+)', val)
+                        fk_names = re.findall(r"\w+\.(\w+)", val)
                         info["fk"] = ", ".join(fk_names) if fk_names else val
                     elif kw.arg == "secondary":
                         info["secondary"] = val.strip("\"'")
@@ -281,12 +300,14 @@ def parse_model_file(path: Path) -> list[dict]:
                             rel_info["target"] = m2.group(1)
                         else:
                             # plain type name
-                            rel_info["target"] = ann_inner.strip('"\'')
+                            rel_info["target"] = ann_inner.strip("\"'")
 
-                relationships.append({
-                    "name": attr_name,
-                    **rel_info,
-                })
+                relationships.append(
+                    {
+                        "name": attr_name,
+                        **rel_info,
+                    }
+                )
                 continue
 
             # Check if it's a mapped_column
@@ -298,20 +319,24 @@ def parse_model_file(path: Path) -> list[dict]:
             if col_info["type_"] is None:
                 col_info["type_"] = _extract_mapped_type(stmt.annotation)
 
-            columns.append({
-                "name": attr_name,
-                **col_info,
-            })
+            columns.append(
+                {
+                    "name": attr_name,
+                    **col_info,
+                }
+            )
 
-        models.append({
-            "class_name": node.name,
-            "table_name": table_name,
-            "mixins": mixins_str,
-            "columns": columns,
-            "relationships": relationships,
-            "unique_constraints": unique_constraints,
-            "source": str(path),
-        })
+        models.append(
+            {
+                "class_name": node.name,
+                "table_name": table_name,
+                "mixins": mixins_str,
+                "columns": columns,
+                "relationships": relationships,
+                "unique_constraints": unique_constraints,
+                "source": str(path),
+            }
+        )
 
     return models
 
@@ -419,7 +444,9 @@ def scan_models(api_v1_root: str, output_file: str) -> None:
         parsed = parse_model_file(mf)
         all_models.extend(parsed)
         if parsed:
-            print(f"  ✓ {mf.relative_to(root.parent)} — {len(parsed)} model(s): {', '.join(m['class_name'] for m in parsed)}")
+            print(
+                f"  ✓ {mf.relative_to(root.parent)} — {len(parsed)} model(s): {', '.join(m['class_name'] for m in parsed)}"
+            )
         else:
             print(f"  ~ {mf.relative_to(root.parent)} — (skipped / no Base subclasses)")
 

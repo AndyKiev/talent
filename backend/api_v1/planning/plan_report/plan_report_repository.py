@@ -42,6 +42,7 @@ class FactRow:
     qty_months wins). `main_department_id` is the employee's is_main department
     instance, from which we walk up the tree to match a plan-row department.
     """
+
     employee_id: int
     main_department_id: int
     job_group_id: Optional[int]
@@ -54,9 +55,7 @@ class PlanReportRepository(BaseRepository):
     # generic helpers stay valid. Report is read-only.
     model = PlanScope
 
-    async def get_active_valued_scopes(
-        self, plan_session_id: int
-    ) -> list[PlanScope]:
+    async def get_active_valued_scopes(self, plan_session_id: int) -> list[PlanScope]:
         """Active scopes of a session that already carry a plan value (NOT NULL).
 
         Rows with value IS NULL are intentionally excluded — the report never
@@ -86,9 +85,7 @@ class PlanReportRepository(BaseRepository):
         result = await self.session.scalars(stmt)
         return list(result.all())
 
-    async def get_region_map(
-        self, department_ids: set[int]
-    ) -> dict[int, Region]:
+    async def get_region_map(self, department_ids: set[int]) -> dict[int, Region]:
         """department_id -> Region (only for departments that have a link).
 
         Region↔department is one-to-one, so each department maps to at most

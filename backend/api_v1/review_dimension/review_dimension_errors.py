@@ -38,9 +38,7 @@ class ReviewDimensionInvalidColor(DomainError):
 
     def __init__(self, color: str) -> None:
         self.template_vars = {"color": color}
-        self.fallback = (
-            f"Invalid color '{color}'. Use a hex value like #2E7D32."
-        )
+        self.fallback = f"Invalid color '{color}'. Use a hex value like #2E7D32."
         super().__init__(self.fallback)
 
 

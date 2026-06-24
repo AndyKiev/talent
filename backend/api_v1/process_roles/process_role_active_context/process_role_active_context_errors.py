@@ -15,5 +15,7 @@ class ActiveContextDepartmentNotAssigned(DomainError):
 
     def __init__(self, department_id: int) -> None:
         self.template_vars = {"id": department_id}
-        self.fallback = f"Department {department_id} is not assigned to you for this role"
+        self.fallback = (
+            f"Department {department_id} is not assigned to you for this role"
+        )
         DomainError.__init__(self, self.fallback)

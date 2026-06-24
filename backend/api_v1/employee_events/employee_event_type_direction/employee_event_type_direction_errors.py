@@ -10,7 +10,9 @@ class EmployeeEventTypeDirectionNotFound(NotFoundError):
 
     def __init__(self, direction_id: int) -> None:
         self.template_vars = {"directionId": direction_id}
-        self.fallback = f"Employee event type direction with ID {direction_id} not found"
+        self.fallback = (
+            f"Employee event type direction with ID {direction_id} not found"
+        )
         super().__init__("EmployeeEventTypeDirection", "id", direction_id)
 
 

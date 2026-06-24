@@ -44,7 +44,9 @@ class MsgFullService(BaseService):
             exc.message_key = "essenceNotFoundById"
             exc.template_vars = {"essence": "MsgKey", "id": msg_key_id}
             exc.fallback = f"MsgKey with id {msg_key_id} not found"
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=exc.fallback)
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=exc.fallback
+            )
         return self._to_schema(msg_key)
 
     # ── Write ──────────────────────────────────────────────────────────────
@@ -66,14 +68,20 @@ class MsgFullService(BaseService):
                     await self.session.refresh(new_key)
                     msg_key_id = new_key.id
 
-                for msg_item in (item.msg or []):
+                for msg_item in item.msg or []:
                     self.session.add(
-                        Msg(value=msg_item.value, msg_key_id=msg_key_id, lang_id=msg_item.lang_id)
+                        Msg(
+                            value=msg_item.value,
+                            msg_key_id=msg_key_id,
+                            lang_id=msg_item.lang_id,
+                        )
                     )
             await self.session.commit()
         except IntegrityError as e:
             await self.session.rollback()
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e.orig))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=str(e.orig)
+            )
 
     async def update_full_message(
         self, msg_key_id: int, data_update: FullMsgUpdate
@@ -86,7 +94,10 @@ class MsgFullService(BaseService):
         """
         msg_key = await self.repository.get_by_id_full(msg_key_id)
         if not msg_key:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"MsgKey {msg_key_id} not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"MsgKey {msg_key_id} not found",
+            )
 
         try:
             if data_update.name:
@@ -103,7 +114,11 @@ class MsgFullService(BaseService):
                             existing.value = msg_item.value
                     elif msg_item.value:
                         self.session.add(
-                            Msg(value=msg_item.value, msg_key_id=msg_key_id, lang_id=msg_item.lang_id)
+                            Msg(
+                                value=msg_item.value,
+                                msg_key_id=msg_key_id,
+                                lang_id=msg_item.lang_id,
+                            )
                         )
 
             await self.session.commit()
@@ -122,9 +137,8 @@ class MsgFullService(BaseService):
             )
         await self.session.delete(msg_key)
         await self.session.commit()
+
     # ── Import / Export ────────────────────────────────────────────────────
-
-
 
     async def export_to_json(self) -> str:
         msg_keys = await self.repository.get_all()
@@ -149,6 +163,7 @@ class MsgFullService(BaseService):
 
         # lang short_name → id
         from backend.api_v1.lang.lang_model import Lang
+
         result = await self.session.execute(select(Lang))
         lang_by_short = {lang.short_name: lang.id for lang in result.scalars().all()}
 
@@ -175,9 +190,13 @@ class MsgFullService(BaseService):
             try:
                 existing = await self.repository.get_by_field("name", name)
                 if existing:
-                    await self.update_full_message(existing.id, FullMsgUpdate(name=name, msg=msg_items))
+                    await self.update_full_message(
+                        existing.id, FullMsgUpdate(name=name, msg=msg_items)
+                    )
                 else:
-                    await self.create_full_messages([FullMsgCreate(name=name, msg=msg_items)])
+                    await self.create_full_messages(
+                        [FullMsgCreate(name=name, msg=msg_items)]
+                    )
                 success += 1
             except Exception as e:
                 errors.append(f"Key '{name}': {e}")

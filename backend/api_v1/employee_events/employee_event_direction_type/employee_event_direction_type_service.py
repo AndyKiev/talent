@@ -39,7 +39,9 @@ class EmployeeEventDirectionTypeService(BaseService):
     async def get_by_id(self, id: int) -> EmployeeEventDirectionTypeSchema:
         result = await self.repository.get_by_id(id)
         if not result:
-            raise await self._resolve_domain_error(EmployeeEventDirectionTypeNotFound(id))
+            raise await self._resolve_domain_error(
+                EmployeeEventDirectionTypeNotFound(id)
+            )
         return result
 
     async def get_employee_event_direction_types(

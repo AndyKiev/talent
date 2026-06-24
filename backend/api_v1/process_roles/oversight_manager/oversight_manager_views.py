@@ -26,18 +26,14 @@ router = APIRouter(
 
 @router.get("/oversight_managers", response_model=List[OversightManagerOption])
 async def get_oversight_managers(
-    service: Annotated[
-        OversightManagerService, Depends(get_oversight_manager_service)
-    ],
+    service: Annotated[OversightManagerService, Depends(get_oversight_manager_service)],
 ):
     return await service.get_candidate_managers()
 
 
 @router.get("/my_oversight_manager", response_model=Optional[MyOversightManager])
 async def get_my_oversight_manager(
-    service: Annotated[
-        OversightManagerService, Depends(get_oversight_manager_service)
-    ],
+    service: Annotated[OversightManagerService, Depends(get_oversight_manager_service)],
 ):
     return await service.get_my_manager()
 
@@ -48,9 +44,7 @@ async def get_my_oversight_manager(
 )
 async def set_my_oversight_manager(
     payload: SetOversightManager,
-    service: Annotated[
-        OversightManagerService, Depends(get_oversight_manager_service)
-    ],
+    service: Annotated[OversightManagerService, Depends(get_oversight_manager_service)],
 ):
     return await service.set_my_manager(payload)
 
@@ -60,8 +54,6 @@ async def set_my_oversight_manager(
     response_model=MutationResponse[None],
 )
 async def clear_my_oversight_manager(
-    service: Annotated[
-        OversightManagerService, Depends(get_oversight_manager_service)
-    ],
+    service: Annotated[OversightManagerService, Depends(get_oversight_manager_service)],
 ):
     return await service.clear_my_manager()

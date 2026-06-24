@@ -77,7 +77,9 @@ def _topo_order(tables: dict[str, Any], present: set[str]) -> list[str]:
     return ordered
 
 
-def _insert_rows(conn, table: str, columns: list[str], rows: list[dict[str, Any]]) -> int:
+def _insert_rows(
+    conn, table: str, columns: list[str], rows: list[dict[str, Any]]
+) -> int:
     if not rows:
         return 0
     cols = ", ".join(f'"{c}"' for c in columns)

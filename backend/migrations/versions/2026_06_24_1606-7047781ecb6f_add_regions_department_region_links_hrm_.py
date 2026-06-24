@@ -28,9 +28,7 @@ def upgrade() -> None:
         sa.Column("name", sa.String(length=128), nullable=False),
         sa.Column("key", sa.String(length=64), nullable=False),
         sa.Column("is_active", sa.Boolean(), nullable=False),
-        sa.Column(
-            "sort_order", sa.Integer(), server_default="10", nullable=False
-        ),
+        sa.Column("sort_order", sa.Integer(), server_default="10", nullable=False),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
@@ -39,7 +37,7 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_regions")),
         sa.UniqueConstraint("key", name="idx_uq_region_key"),
-        sa.UniqueConstraint("name", name="idx_uq_region_name")
+        sa.UniqueConstraint("name", name="idx_uq_region_name"),
     )
     op.create_index(
         op.f("ix_regions_sort_order"), "regions", ["sort_order"], unique=False
@@ -64,9 +62,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("finished_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column(
-            "summary", postgresql.JSONB(astext_type=sa.Text()), nullable=True
-        ),
+        sa.Column("summary", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.ForeignKeyConstraint(
             ["employee_id"],
             ["employees.id"],
@@ -79,7 +75,7 @@ def upgrade() -> None:
             name=op.f("fk_change_session_triggered_by_user_id_employees"),
             ondelete="SET NULL",
         ),
-        sa.PrimaryKeyConstraint("id", name=op.f("pk_change_session"))
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_change_session")),
     )
     op.create_index(
         op.f("ix_change_session_employee_id"),
@@ -114,7 +110,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id", name=op.f("pk_department_region_links")),
         sa.UniqueConstraint(
             "department_id", name="idx_uq_department_region_department"
-        )
+        ),
     )
     op.create_table(
         "change_log",
@@ -124,9 +120,7 @@ def upgrade() -> None:
         sa.Column("essence_key", sa.String(length=64), nullable=False),
         sa.Column("entity_id", sa.Integer(), nullable=True),
         sa.Column("action", sa.String(length=32), nullable=False),
-        sa.Column(
-            "changes", postgresql.JSONB(astext_type=sa.Text()), nullable=True
-        ),
+        sa.Column("changes", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.Column("employee_id", sa.Integer(), nullable=True),
         sa.Column(
             "created_at",
@@ -152,7 +146,7 @@ def upgrade() -> None:
             name=op.f("fk_change_log_parent_id_change_log"),
             ondelete="SET NULL",
         ),
-        sa.PrimaryKeyConstraint("id", name=op.f("pk_change_log"))
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_change_log")),
     )
     op.create_index(
         op.f("ix_change_log_employee_id"),
@@ -194,7 +188,7 @@ def upgrade() -> None:
             ),
             ondelete="CASCADE",
         ),
-        sa.PrimaryKeyConstraint("id", name=op.f("pk_hrm_scopes"))
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_hrm_scopes")),
     )
     op.create_index(
         "ix_hrm_scopes_department_id",
@@ -222,9 +216,7 @@ def upgrade() -> None:
     )
     op.add_column(
         "talent_audit",
-        sa.Column(
-            "talent_plus", sa.Boolean(), server_default="false", nullable=False
-        ),
+        sa.Column("talent_plus", sa.Boolean(), server_default="false", nullable=False),
     )
     # ### end Alembic commands ###
 
@@ -241,9 +233,7 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_change_log_employee_id"), table_name="change_log")
     op.drop_table("change_log")
     op.drop_table("department_region_links")
-    op.drop_index(
-        op.f("ix_change_session_employee_id"), table_name="change_session"
-    )
+    op.drop_index(op.f("ix_change_session_employee_id"), table_name="change_session")
     op.drop_table("change_session")
     op.drop_index(op.f("ix_regions_sort_order"), table_name="regions")
     op.drop_table("regions")

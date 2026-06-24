@@ -8,7 +8,9 @@ from typing import Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from backend.api_v1.department_type.department_type_model import DepartmentType
-    from backend.api_v1.department_category.department_category_model import DepartmentCategory
+    from backend.api_v1.department_category.department_category_model import (
+        DepartmentCategory,
+    )
 
 
 class Department(IntIdPkMixin, TimestampMixin, Base):

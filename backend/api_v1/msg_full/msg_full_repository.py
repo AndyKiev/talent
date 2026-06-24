@@ -14,6 +14,7 @@ class MsgFullRepository(BaseRepository):
     Write operations (create/update/delete of child Msgs) use the session directly
     in the service, since they span two models with no single aggregate table.
     """
+
     model = MsgKey  # aggregate root for queries
 
     async def get_all(self, filters=None, sort=None) -> Sequence[MsgKey]:

@@ -12,7 +12,11 @@ from backend.api_v1.talent_audit_status.talent_audit_status_dependencies import 
     get_talent_audit_status_service,
     talent_audit_status_by_id,
 )
-from backend.api_v1.talent_audit_status.talent_audit_status_service import TalentAuditStatusService
+from backend.api_v1.talent_audit_status.talent_audit_status_service import (
+    TalentAuditStatusService,
+)
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/talent_audit_statuses",
@@ -21,9 +25,15 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[TalentAuditStatusSchema])
+@router.get(
+    "",
+    response_model=List[TalentAuditStatusSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT_STATUS)],
+)
 async def get_talent_audit_statuses(
-    service: Annotated[TalentAuditStatusService, Depends(get_talent_audit_status_service)],
+    service: Annotated[
+        TalentAuditStatusService, Depends(get_talent_audit_status_service)
+    ],
     name: Optional[str] = None,
     sort: Optional[str] = Query(
         None,
@@ -33,7 +43,11 @@ async def get_talent_audit_statuses(
     return await service.get_talent_audit_statuses(name=name, sort=sort)
 
 
-@router.get("/{talent_audit_status_id}", response_model=TalentAuditStatusSchema)
+@router.get(
+    "/{talent_audit_status_id}",
+    response_model=TalentAuditStatusSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT_STATUS)],
+)
 async def get_talent_audit_status(
     record: TalentAuditStatusSchema = Depends(talent_audit_status_by_id),
 ):
@@ -44,10 +58,13 @@ async def get_talent_audit_status(
     "",
     response_model=MutationResponse[TalentAuditStatusSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.TALENT_AUDIT_STATUS)],
 )
 async def create_talent_audit_status(
     status_in: TalentAuditStatusCreate,
-    service: Annotated[TalentAuditStatusService, Depends(get_talent_audit_status_service)],
+    service: Annotated[
+        TalentAuditStatusService, Depends(get_talent_audit_status_service)
+    ],
 ):
     return await service.create_talent_audit_status(status_in)
 
@@ -55,6 +72,7 @@ async def create_talent_audit_status(
 @router.patch(
     "/{talent_audit_status_id}",
     response_model=MutationResponse[TalentAuditStatusSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.TALENT_AUDIT_STATUS)],
 )
 async def update_talent_audit_status(
     status_update: TalentAuditStatusUpdate,
@@ -66,9 +84,15 @@ async def update_talent_audit_status(
     return await service.update_talent_audit_status(record.id, status_update)
 
 
-@router.delete("/{talent_audit_status_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{talent_audit_status_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.TALENT_AUDIT_STATUS)],
+)
 async def delete_talent_audit_status(
     talent_audit_status_id: int,
-    service: Annotated[TalentAuditStatusService, Depends(get_talent_audit_status_service)],
+    service: Annotated[
+        TalentAuditStatusService, Depends(get_talent_audit_status_service)
+    ],
 ):
     await service.delete_talent_audit_status(talent_audit_status_id)

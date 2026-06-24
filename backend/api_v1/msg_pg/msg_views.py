@@ -6,6 +6,8 @@ from backend.api_v1.msg_pg.msg_dependencies import get_msg_service, msg_by_id
 from backend.api_v1.msg_pg.msg_model import Msg as MsgModel
 from backend.api_v1.msg_pg.msg_schema import Msg as MsgSchema, MsgCreate, MsgUpdate
 from backend.api_v1.msg_pg.msg_service import MsgService
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 
 router = APIRouter(
@@ -27,7 +29,12 @@ async def get_msg(msg: MsgSchema = Depends(msg_by_id)):
     return msg
 
 
-@router.post("", response_model=MsgSchema, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=MsgSchema,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.MSG)],
+)
 async def create_msg(
     msg_in: MsgCreate,
     service: Annotated[MsgService, Depends(get_msg_service)],
@@ -35,7 +42,11 @@ async def create_msg(
     return await service.create(msg_in)
 
 
-@router.patch("/{msg_id}", response_model=MsgSchema)
+@router.patch(
+    "/{msg_id}",
+    response_model=MsgSchema,
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.MSG)],
+)
 async def update_msg(
     msg_update: MsgUpdate,
     msg: MsgModel = Depends(msg_by_id),
@@ -44,7 +55,11 @@ async def update_msg(
     return await service.update(msg, msg_update)
 
 
-@router.delete("/{msg_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{msg_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.MSG)],
+)
 async def delete_msg(
     service: Annotated[MsgService, Depends(get_msg_service)],
     msg: MsgModel = Depends(msg_by_id),

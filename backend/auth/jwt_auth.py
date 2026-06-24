@@ -96,6 +96,7 @@ async def get_current_active_auth_user(
         )
     return user
 
+
 @router.post("/login", response_model=AuthResponse)
 async def auth_user_issue_jwt(
     user_ldap: LDAPUser = Depends(validate_auth_user_ldap),
@@ -117,7 +118,7 @@ async def auth_user_issue_jwt(
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Login failed: employee record could not be created. "
-                       "Required reference data (job, status, lang) may be missing.",
+                "Required reference data (job, status, lang) may be missing.",
             ) from e
 
     user_db = await service._to_schema(orm_user)
@@ -129,6 +130,7 @@ async def auth_user_issue_jwt(
     }
     access_token = auth_utils.encode_jwt(jwt_payload)
     return AuthResponse(access_token=access_token, token_type="Bearer")
+
 
 # @router.post("/login", response_model=AuthResponse)
 # async def auth_user_issue_jwt(
@@ -266,6 +268,7 @@ def has_access_set(
 # ── Backwards-compatibility shim ──────────────────────────────────────────────
 # `has_access(verb, essence)` is the legacy single-essence API. We forward to
 # has_access_set with a singleton set — semantics are identical.
+
 
 def has_access(
     operation: "str | OperationVerb",

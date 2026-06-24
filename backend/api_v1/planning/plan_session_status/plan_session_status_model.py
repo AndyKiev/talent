@@ -28,4 +28,6 @@ class PlanSessionStatus(IntIdPkMixin, TimestampMixin, Base):
         return self.key in PLAN_SESSION_ACTIVE_STATUS_KEYS
 
     def __repr__(self) -> str:
-        return f"<PlanSessionStatus(id={self.id}, key='{self.key}', name='{self.name}')>"
+        return (
+            f"<PlanSessionStatus(id={self.id}, key='{self.key}', name='{self.name}')>"
+        )

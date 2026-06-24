@@ -22,9 +22,7 @@ class ReviewSessionEmployee(IntIdPkMixin, TimestampMixin, Base):
     session_id: Mapped[int] = mapped_column(
         ForeignKey("review_sessions.id"), nullable=False
     )
-    employee_id: Mapped[int] = mapped_column(
-        ForeignKey("employees.id"), nullable=False
-    )
+    employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id"), nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="open")
 
     # Presentation-queue order for oversight mode (multiples of 10: 10, 20, 30 …).

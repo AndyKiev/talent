@@ -26,7 +26,7 @@ def upgrade() -> None:
         "essence_sets",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("fingerprint", sa.String(length=256), nullable=False),
-        sa.PrimaryKeyConstraint("id", name=op.f("pk_essence_sets"))
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_essence_sets")),
     )
     op.create_index(
         op.f("ix_essence_sets_fingerprint"),
@@ -54,7 +54,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id", name=op.f("pk_essence_set_members")),
         sa.UniqueConstraint(
             "essence_set_id", "essence_id", name="uq_essence_set_member"
-        )
+        ),
     )
     op.create_table(
         "operation_essence_set_links",
@@ -64,35 +64,27 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["essence_set_id"],
             ["essence_sets.id"],
-            name=op.f(
-                "fk_operation_essence_set_links_essence_set_id_essence_sets"
-            ),
+            name=op.f("fk_operation_essence_set_links_essence_set_id_essence_sets"),
             ondelete="CASCADE",
         ),
         sa.ForeignKeyConstraint(
             ["operation_id"],
             ["operations.id"],
-            name=op.f(
-                "fk_operation_essence_set_links_operation_id_operations"
-            ),
+            name=op.f("fk_operation_essence_set_links_operation_id_operations"),
             ondelete="CASCADE",
         ),
-        sa.PrimaryKeyConstraint(
-            "id", name=op.f("pk_operation_essence_set_links")
-        ),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_operation_essence_set_links")),
         sa.UniqueConstraint(
             "operation_id",
             "essence_set_id",
             name="uq_oesl_operation_essence_set",
-        )
+        ),
     )
     op.create_table(
         "user_group_operation_essence_set_links",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("user_group_id", sa.Integer(), nullable=False),
-        sa.Column(
-            "operation_essence_set_link_id", sa.Integer(), nullable=False
-        ),
+        sa.Column("operation_essence_set_link_id", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(
             ["operation_essence_set_link_id"],
             ["operation_essence_set_links.id"],
@@ -116,7 +108,7 @@ def upgrade() -> None:
             "user_group_id",
             "operation_essence_set_link_id",
             name="uq_ugoesl_group_oesl",
-        )
+        ),
     )
     # ### end Alembic commands ###
 
@@ -127,8 +119,6 @@ def downgrade() -> None:
     op.drop_table("user_group_operation_essence_set_links")
     op.drop_table("operation_essence_set_links")
     op.drop_table("essence_set_members")
-    op.drop_index(
-        op.f("ix_essence_sets_fingerprint"), table_name="essence_sets"
-    )
+    op.drop_index(op.f("ix_essence_sets_fingerprint"), table_name="essence_sets")
     op.drop_table("essence_sets")
     # ### end Alembic commands ###

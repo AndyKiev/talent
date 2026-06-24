@@ -43,9 +43,7 @@ class ReviewDimensionService(BaseService):
 
     async def _validate_color(self, color: Optional[str]) -> None:
         if color is not None and not self._HEX_COLOR_RE.match(color):
-            raise await self._resolve_domain_error(
-                ReviewDimensionInvalidColor(color)
-            )
+            raise await self._resolve_domain_error(ReviewDimensionInvalidColor(color))
 
     async def get_by_id(self, id: int):
         result = await self.repository.get_by_id(id)

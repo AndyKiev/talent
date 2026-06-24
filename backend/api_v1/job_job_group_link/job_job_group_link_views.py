@@ -14,6 +14,8 @@ from backend.api_v1.job_job_group_link.job_job_group_link_dependencies import (
 from backend.api_v1.job_job_group_link.job_job_group_link_service import (
     JobJobGroupLinkService,
 )
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/job_job_group_links",
@@ -22,7 +24,11 @@ router = APIRouter(
 )
 
 
-@router.get("/job/{job_id}", response_model=List[JobJobGroupLinkSchema])
+@router.get(
+    "/job/{job_id}",
+    response_model=List[JobJobGroupLinkSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.JOB, EssenceName.JOB_GROUP)],
+)
 async def get_links_for_job(
     job_id: int,
     service: Annotated[JobJobGroupLinkService, Depends(get_job_job_group_link_service)],
@@ -34,6 +40,7 @@ async def get_links_for_job(
 @router.get(
     "/job/{job_id}/group/{job_group_id}",
     response_model=JobJobGroupLinkSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.JOB, EssenceName.JOB_GROUP)],
 )
 async def get_link(
     job_id: int,
@@ -48,6 +55,7 @@ async def get_link(
     "",
     response_model=MutationResponse[JobJobGroupLinkSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.LINK, EssenceName.JOB, EssenceName.JOB_GROUP)],
 )
 async def add_link(
     payload: JobJobGroupLinkCreate,
@@ -66,6 +74,7 @@ async def add_link(
 @router.delete(
     "/job/{job_id}/group/{job_group_id}",
     status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.LINK, EssenceName.JOB, EssenceName.JOB_GROUP)],
 )
 async def remove_link(
     job_id: int,
@@ -79,6 +88,7 @@ async def remove_link(
 @router.put(
     "/job/{job_id}",
     response_model=List[JobJobGroupLinkSchema],
+    dependencies=[Guard(OperationVerb.LINK, EssenceName.JOB, EssenceName.JOB_GROUP)],
 )
 async def set_links(
     job_id: int,

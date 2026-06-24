@@ -1,4 +1,5 @@
 """In-memory notification store + WebSocket connection manager."""
+
 import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime

@@ -37,6 +37,7 @@ class DepartmentDeleteError(DeleteError):
 
 class DepartmentCircularReferenceError(DomainError):
     """Raised when assigning a department as its own ancestor."""
+
     message_key = "departmentCircularReference"
 
     def __init__(self, name: str) -> None:

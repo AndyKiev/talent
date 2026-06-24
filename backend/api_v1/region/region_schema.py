@@ -35,6 +35,7 @@ class Region(RegionBase):
 
 class RegionSlim(BaseModel):
     """Lightweight region for embedding in other read schemas (filters)."""
+
     model_config = ConfigDict(from_attributes=True)
     id: int
     key: str

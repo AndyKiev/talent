@@ -8,7 +8,9 @@ from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
 
 if TYPE_CHECKING:
-    from backend.api_v1.employee_events.employee_event.employee_event_model import EmployeeEvent
+    from backend.api_v1.employee_events.employee_event.employee_event_model import (
+        EmployeeEvent,
+    )
 
 
 class EmployeeEventStatus(IntIdPkMixin, Base):

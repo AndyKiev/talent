@@ -16,7 +16,9 @@ from backend.utils.enums import (
 )
 
 from backend.api_v1.department.department_model import Department
-from backend.api_v1.department_category.department_category_model import DepartmentCategory
+from backend.api_v1.department_category.department_category_model import (
+    DepartmentCategory,
+)
 from backend.api_v1.job.job_model import Job
 from backend.api_v1.job_job_group_link.job_job_group_link_model import JobJobGroupLink
 from backend.api_v1.department_type_job_link.department_type_job_link_model import (
@@ -75,9 +77,12 @@ from backend.api_v1.planning.plan_scope.plan_scope_model import PlanScope
 @dataclass
 class _MatchResult:
     """Result of computing which scopes match the current config."""
-    matching_tuples: list[tuple[int, int, int | None]]  # (dept_id, job_group_id, talent_status_id)
+
+    matching_tuples: list[
+        tuple[int, int, int | None]
+    ]  # (dept_id, job_group_id, talent_status_id)
     config_departments: list[int]
-    scope_defaults: list[tuple[int, int | None]]        # (job_group_id, talent_status_id)
+    scope_defaults: list[tuple[int, int | None]]  # (job_group_id, talent_status_id)
     group_active_jobs: dict[int, set[int]]
     covered_jobs_for: Callable[[int, set[int]], set[int]]
 
@@ -111,9 +116,7 @@ class PlanSessionService(BaseService):
     async def get_status_id_by_key(self, key: str) -> int:
         status_id = await self.status_repo.get_id_by_field("key", key)
         if status_id is None:
-            raise await self._resolve_domain_error(
-                PlanSessionStatusNotFoundByKey(key)
-            )
+            raise await self._resolve_domain_error(PlanSessionStatusNotFoundByKey(key))
         return status_id
 
     async def _get_with_status(self, session_id: int):
@@ -239,7 +242,9 @@ class PlanSessionService(BaseService):
         scope_job_group_ids = {jg for jg, _ in scope_defaults}
 
         # 3a) Active jobs per scope-default job group.
-        group_active_jobs: dict[int, set[int]] = {gid: set() for gid in scope_job_group_ids}
+        group_active_jobs: dict[int, set[int]] = {
+            gid: set() for gid in scope_job_group_ids
+        }
         if scope_job_group_ids:
             jjg_stmt = (
                 select(JobJobGroupLink.job_group_id, JobJobGroupLink.job_id)
@@ -429,6 +434,7 @@ class PlanSessionService(BaseService):
             all_job_ids |= jids
 
         from backend.api_v1.job_group.job_group_model import JobGroup as JobGroupModel
+
         group_names: dict[int, str] = {}
         if group_ids:
             grows = (
@@ -546,9 +552,7 @@ class PlanSessionService(BaseService):
     ) -> MutationResponse[PlanSessionSchema]:
         updated = await self._set_status(session_id, PlanSessionStatusKey.OPEN.value)
         schema = PlanSessionSchema.model_validate(updated)
-        detail = await self._resolve_domain_success(
-            PlanSessionOpenSuccess(schema.name)
-        )
+        detail = await self._resolve_domain_success(PlanSessionOpenSuccess(schema.name))
         return MutationResponse(detail=detail, data=schema)
 
     async def close_plan_session(
@@ -622,7 +626,9 @@ class PlanSessionService(BaseService):
                 )
             )
             existing_ids = set(existing.scalars().all())
-            to_add = [c for c in dict.fromkeys(add_category_ids) if c not in existing_ids]
+            to_add = [
+                c for c in dict.fromkeys(add_category_ids) if c not in existing_ids
+            ]
             if to_add:
                 # New categories must respect the per-category overlap rule.
                 await self._assert_no_category_overlap(
@@ -654,7 +660,9 @@ class PlanSessionService(BaseService):
                 await self.session.execute(
                     select(PlanScope).where(PlanScope.plan_session_id == session_id)
                 )
-            ).scalars().all()
+            )
+            .scalars()
+            .all()
         )
         existing_by_key: dict[tuple[int, int, int | None], PlanScope] = {
             (r.department_id, r.job_group_id, r.talent_status_id): r
@@ -695,7 +703,10 @@ class PlanSessionService(BaseService):
         schema = PlanSessionSchema.model_validate(refreshed)
         detail = await self._resolve_domain_success(
             PlanSessionResyncSuccess(
-                schema.name, added=added, reactivated=reactivated, deactivated=deactivated
+                schema.name,
+                added=added,
+                reactivated=reactivated,
+                deactivated=deactivated,
             )
         )
         return MutationResponse(detail=detail, data=schema)

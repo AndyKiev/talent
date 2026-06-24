@@ -80,9 +80,7 @@ class ProcessRoleHolderService(BaseService):
     async def delete_holder(self, holder_id: int) -> None:
         record = await self.get_by_id(holder_id)
         label = (
-            record.holder_name
-            or record.holder_code
-            or str(record.holder_employee_id)
+            record.holder_name or record.holder_code or str(record.holder_employee_id)
         )
         await self.delete_by_id(
             holder_id,

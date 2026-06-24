@@ -18,5 +18,6 @@ class MutationResponse(BaseModel, Generic[DataT]):
     HTTPException messages, so the existing Axios response interceptor
     (which reads `error.response?.data?.detail`) works without changes.
     """
+
     detail: str
     data: DataT

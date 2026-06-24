@@ -7,6 +7,7 @@ class DomainSuccess(Exception):
 
 class DeleteSuccess(DomainSuccess):
     """Generic successful-deletion signal."""
+
     message_key = "essenceDeleteSuccess"
 
     def __init__(self, model: str, name: str) -> None:
@@ -17,6 +18,7 @@ class DeleteSuccess(DomainSuccess):
 
 class CreateSuccess(DomainSuccess):
     """Generic successful-creation signal."""
+
     message_key = "essenceCreateSuccess"
 
     def __init__(self, model: str, name: str) -> None:
@@ -27,6 +29,7 @@ class CreateSuccess(DomainSuccess):
 
 class UpdateSuccess(DomainSuccess):
     """Generic successful-update signal."""
+
     message_key = "essenceUpdateSuccess"
 
     def __init__(self, model: str, name: str) -> None:

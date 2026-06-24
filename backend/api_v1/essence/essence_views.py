@@ -4,12 +4,20 @@ from fastapi.security import HTTPBearer
 from typing import Annotated, List, Optional
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.essence.essence_schema import EssenceSchema, EssenceCreate, EssenceUpdate
-from backend.api_v1.essence.essence_dependencies import get_essence_service, essence_by_id
+from backend.api_v1.essence.essence_schema import (
+    EssenceSchema,
+    EssenceCreate,
+    EssenceUpdate,
+)
+from backend.api_v1.essence.essence_dependencies import (
+    get_essence_service,
+    essence_by_id,
+)
 from backend.api_v1.essence.essence_service import EssenceService
 from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
 from backend.auth.jwt_auth import has_access
 from backend.utils.enums import OperationVerb, EssenceName
+from backend.auth.guards import Guard
 
 router = APIRouter(
     prefix="/admin/essences",
@@ -18,7 +26,11 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[EssenceSchema])
+@router.get(
+    "",
+    response_model=List[EssenceSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.ESSENCE)],
+)
 async def get_essences(
     service: Annotated[EssenceService, Depends(get_essence_service)],
     name: Optional[str] = None,
@@ -30,7 +42,11 @@ async def get_essences(
     return await service.get_all(name=name)
 
 
-@router.get("/{essence_id}", response_model=EssenceSchema)
+@router.get(
+    "/{essence_id}",
+    response_model=EssenceSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.ESSENCE)],
+)
 async def get_essence(
     essence: Annotated[EssenceSchema, Depends(essence_by_id)],
     # _auth_user: Annotated[
@@ -45,6 +61,7 @@ async def get_essence(
     "",
     response_model=MutationResponse[EssenceSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.ESSENCE)],
 )
 async def create_essence(
     essence_in: EssenceCreate,
@@ -57,7 +74,11 @@ async def create_essence(
     return await service.create(essence_in)
 
 
-@router.patch("/{essence_id}", response_model=MutationResponse[EssenceSchema])
+@router.patch(
+    "/{essence_id}",
+    response_model=MutationResponse[EssenceSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.ESSENCE)],
+)
 async def update_essence(
     essence_update: EssenceUpdate,
     essence: Annotated[EssenceSchema, Depends(essence_by_id)],
@@ -70,7 +91,11 @@ async def update_essence(
     return await service.update(essence.id, essence_update)
 
 
-@router.delete("/{essence_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{essence_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.ESSENCE)],
+)
 async def delete_essence(
     essence_id: int,
     service: Annotated[EssenceService, Depends(get_essence_service)],

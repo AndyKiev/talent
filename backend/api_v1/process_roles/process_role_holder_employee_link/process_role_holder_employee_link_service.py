@@ -142,9 +142,7 @@ class ProcessRoleHolderEmployeeLinkService(BaseService):
                     r.id,
                 ),
             )
-        return [
-            ProcessRoleHolderEmployeeLinkSchema.model_validate(r) for r in records
-        ]
+        return [ProcessRoleHolderEmployeeLinkSchema.model_validate(r) for r in records]
 
     async def _renumber_holder_links(
         self, process_role_holder_id: int, ordered_employee_ids: List[int]
@@ -207,9 +205,7 @@ class ProcessRoleHolderEmployeeLinkService(BaseService):
         ordered_employee_ids = [
             link_to_emp[lid] for lid in ordered_ids if lid in link_to_emp
         ]
-        await self._renumber_holder_links(
-            process_role_holder_id, ordered_employee_ids
-        )
+        await self._renumber_holder_links(process_role_holder_id, ordered_employee_ids)
         await self.session.commit()
 
         detail = await self._resolve_domain_success(
@@ -230,15 +226,15 @@ class ProcessRoleHolderEmployeeLinkService(BaseService):
             raise await self._resolve_domain_error(ProcessRoleHolderEmployeeSelf())
 
         data = link_in.model_dump()
-        data["process_role_id"] = holder.process_role_id  # set from holder, never client
+        data["process_role_id"] = (
+            holder.process_role_id
+        )  # set from holder, never client
         try:
             record = await self.create_from_dict(data)
             fresh = await self.repository.get_by_id(record.id)
             schema = ProcessRoleHolderEmployeeLinkSchema.model_validate(fresh)
             label = (
-                schema.employee_name
-                or schema.employee_code
-                or str(schema.employee_id)
+                schema.employee_name or schema.employee_code or str(schema.employee_id)
             )
             detail = await self._resolve_domain_success(
                 ProcessRoleHolderEmployeeCreateSuccess(label)
@@ -251,9 +247,7 @@ class ProcessRoleHolderEmployeeLinkService(BaseService):
 
     async def delete_link(self, link_id: int) -> None:
         record = await self.get_by_id(link_id)
-        label = (
-            record.employee_name or record.employee_code or str(record.employee_id)
-        )
+        label = record.employee_name or record.employee_code or str(record.employee_id)
         await self.delete_by_id(
             link_id,
             name=label,

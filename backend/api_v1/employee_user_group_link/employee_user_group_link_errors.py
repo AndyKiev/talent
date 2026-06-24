@@ -54,6 +54,7 @@ class EmployeeUserGroupLinkNotFoundByCompositeKey(NotFoundError):
 
 class EmployeeEmailRequiredForGroup(DomainError):
     """Block linking a group to an employee that has no email on file."""
+
     message_key = "employeeEmailRequiredForGroup"
 
     def __init__(self, employee_name: str) -> None:

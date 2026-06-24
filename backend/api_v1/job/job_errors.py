@@ -79,8 +79,10 @@ class JobDeleteError(DeleteError):
         self.fallback = f"Job '{job_name}' cannot be deleted because it is referenced by other records"
         DomainError.__init__(self, self.fallback)
 
+
 class JobBulkUploadNothingToInsert(DomainError):
     """All rows in the uploaded file were duplicates — nothing was inserted."""
+
     message_key = "jobBulkUploadNothingToInsert"
 
     def __init__(self, skipped: int) -> None:
@@ -94,9 +96,12 @@ class JobBulkUploadNothingToInsert(DomainError):
 
 class JobBulkUploadInvalidFile(DomainError):
     """Uploaded file is not a valid Excel workbook or is missing required columns."""
+
     message_key = "jobBulkUploadInvalidFile"
 
     def __init__(self, reason: str = "") -> None:
         self.template_vars = {"reason": reason}
-        self.fallback = f"Invalid file: {reason}" if reason else "Invalid or unreadable Excel file."
+        self.fallback = (
+            f"Invalid file: {reason}" if reason else "Invalid or unreadable Excel file."
+        )
         super().__init__(self.fallback)

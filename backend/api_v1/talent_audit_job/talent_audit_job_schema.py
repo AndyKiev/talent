@@ -38,4 +38,5 @@ class TalentAuditJobEnriched(TalentAuditJob):
     Extended schema with enriched names resolved from ORM relationships.
     Used by the views layer — the service populates these before returning.
     """
+
     pass

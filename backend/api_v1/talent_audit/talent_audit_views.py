@@ -14,6 +14,8 @@ from backend.api_v1.talent_audit.talent_audit_schema import (
     TalentAuditUpdate,
 )
 from backend.api_v1.talent_audit.talent_audit_service import TalentAuditService
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/talent_audits",
@@ -22,7 +24,11 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[TalentAuditSchema])
+@router.get(
+    "",
+    response_model=List[TalentAuditSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT)],
+)
 async def get_talent_audits(
     service: Annotated[TalentAuditService, Depends(get_talent_audit_service)],
     sort: Optional[str] = Query(
@@ -33,14 +39,22 @@ async def get_talent_audits(
     return await service.get_talent_audits(sort=sort)
 
 
-@router.get("/{talent_audit_id}", response_model=TalentAuditSchema)
+@router.get(
+    "/{talent_audit_id}",
+    response_model=TalentAuditSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT)],
+)
 async def get_talent_audit(
     record: TalentAuditSchema = Depends(talent_audit_by_id),
 ):
     return record
 
 
-@router.get("/by_employee/{employee_id}", response_model=TalentAuditSchema)
+@router.get(
+    "/by_employee/{employee_id}",
+    response_model=TalentAuditSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT)],
+)
 async def get_talent_audit_by_employee(
     employee_id: int,
     service: Annotated[TalentAuditService, Depends(get_talent_audit_service)],
@@ -52,6 +66,7 @@ async def get_talent_audit_by_employee(
     "",
     response_model=MutationResponse[TalentAuditSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.TALENT_AUDIT)],
 )
 async def create_talent_audit(
     audit_in: TalentAuditCreate,
@@ -63,6 +78,7 @@ async def create_talent_audit(
 @router.patch(
     "/{talent_audit_id}",
     response_model=MutationResponse[TalentAuditSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.TALENT_AUDIT)],
 )
 async def update_talent_audit(
     audit_update: TalentAuditUpdate,
@@ -72,7 +88,11 @@ async def update_talent_audit(
     return await service.update_talent_audit(record.id, audit_update)
 
 
-@router.delete("/{talent_audit_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{talent_audit_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.TALENT_AUDIT)],
+)
 async def delete_talent_audit(
     talent_audit_id: int,
     service: Annotated[TalentAuditService, Depends(get_talent_audit_service)],

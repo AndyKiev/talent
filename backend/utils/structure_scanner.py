@@ -16,28 +16,28 @@ class ProjectStructureScanner:
 
     # Common directories/files to exclude
     DEFAULT_EXCLUDES = {
-        '__pycache__',
-        '.git',
-        '.gitignore',
-        '.env',
-        '.venv',
-        'venv',
-        'node_modules',
-        '.next',
-        'dist',
-        'build',
-        '.DS_Store',
-        '*.pyc',
-        '.idea',
-        '.vscode'
+        "__pycache__",
+        ".git",
+        ".gitignore",
+        ".env",
+        ".venv",
+        "venv",
+        "node_modules",
+        ".next",
+        "dist",
+        "build",
+        ".DS_Store",
+        "*.pyc",
+        ".idea",
+        ".vscode",
     }
 
     def __init__(
-            self,
-            root_path: str,
-            exclude: Optional[Set[str]] = None,
-            include_extensions: Optional[Set[str]] = None,
-            max_depth: Optional[int] = None
+        self,
+        root_path: str,
+        exclude: Optional[Set[str]] = None,
+        include_extensions: Optional[Set[str]] = None,
+        max_depth: Optional[int] = None,
     ):
         """
         Initialize the scanner.
@@ -62,7 +62,7 @@ class ProjectStructureScanner:
         """Check if a file/directory should be excluded."""
         if name in self.exclude:
             return True
-        if name.startswith('.'):
+        if name.startswith("."):
             return True
         return False
 
@@ -72,7 +72,9 @@ class ProjectStructureScanner:
             return True
         return file_path.suffix in self.include_extensions
 
-    def _get_tree_structure(self, directory: Path, prefix: str = "", depth: int = 0) -> List[str]:
+    def _get_tree_structure(
+        self, directory: Path, prefix: str = "", depth: int = 0
+    ) -> List[str]:
         """
         Recursively build the tree structure.
 
@@ -92,8 +94,7 @@ class ProjectStructureScanner:
         try:
             # Get all entries in the directory, sorted: directories first, then files
             entries = sorted(
-                directory.iterdir(),
-                key=lambda x: (not x.is_dir(), x.name.lower())
+                directory.iterdir(), key=lambda x: (not x.is_dir(), x.name.lower())
             )
         except PermissionError:
             return [f"{prefix}└── [Permission Denied]"]
@@ -156,8 +157,8 @@ class ProjectStructureScanner:
         output_file = Path(output_path)
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(output_path, 'w', encoding='utf-8') as f:
-            f.write(tree + '\n')
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(tree + "\n")
 
         return str(output_file)
 
@@ -247,10 +248,7 @@ def scan_all_structures() -> dict:
 
     print("\n✨ All structures generated successfully!")
 
-    return {
-        'frontend': frontend_tree,
-        'backend': backend_tree
-    }
+    return {"frontend": frontend_tree, "backend": backend_tree}
 
 
 # Command-line interface
@@ -277,7 +275,8 @@ if __name__ == "__main__":
             scan_all_structures()
 
         elif command == "help" or command == "--help" or command == "-h":
-            print("""
+            print(
+                """
 📁 Project Structure Scanner
 ============================
 
@@ -303,7 +302,8 @@ Examples:
 Default output locations:
   - Frontend: talent/frontend/src/frontend_structure.txt
   - Backend:  talent/backend/backend_structure.txt
-            """)
+            """
+            )
         else:
             # Assume it's a path argument (backward compatibility)
             path = sys.argv[1]

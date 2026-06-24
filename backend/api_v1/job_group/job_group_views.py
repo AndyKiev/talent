@@ -13,6 +13,8 @@ from backend.api_v1.job_group.job_group_dependencies import (
     job_group_by_id,
 )
 from backend.api_v1.job_group.job_group_service import JobGroupService
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/job_groups",
@@ -21,7 +23,11 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[JobGroupSchema])
+@router.get(
+    "",
+    response_model=List[JobGroupSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.JOB_GROUP)],
+)
 async def get_job_groups(
     service: Annotated[JobGroupService, Depends(get_job_group_service)],
     job_group_type_id: Optional[int] = Query(
@@ -31,7 +37,11 @@ async def get_job_groups(
     return await service.get_job_groups(job_group_type_id=job_group_type_id)
 
 
-@router.get("/{job_group_id}", response_model=JobGroupSchema)
+@router.get(
+    "/{job_group_id}",
+    response_model=JobGroupSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.JOB_GROUP)],
+)
 async def get_job_group(
     record: JobGroupSchema = Depends(job_group_by_id),
 ):
@@ -42,6 +52,7 @@ async def get_job_group(
     "",
     response_model=MutationResponse[JobGroupSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.JOB_GROUP)],
 )
 async def create_job_group(
     group_in: JobGroupCreate,
@@ -50,7 +61,11 @@ async def create_job_group(
     return await service.create_job_group(group_in)
 
 
-@router.patch("/{job_group_id}", response_model=MutationResponse[JobGroupSchema])
+@router.patch(
+    "/{job_group_id}",
+    response_model=MutationResponse[JobGroupSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.JOB_GROUP)],
+)
 async def update_job_group(
     group_update: JobGroupUpdate,
     record: JobGroupSchema = Depends(job_group_by_id),
@@ -59,7 +74,11 @@ async def update_job_group(
     return await service.update_job_group(record.id, group_update, partial=True)
 
 
-@router.delete("/{job_group_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{job_group_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.JOB_GROUP)],
+)
 async def delete_job_group(
     job_group_id: int,
     service: Annotated[JobGroupService, Depends(get_job_group_service)],

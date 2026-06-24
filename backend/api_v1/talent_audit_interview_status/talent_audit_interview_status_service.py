@@ -39,7 +39,9 @@ class TalentAuditInterviewStatusService(BaseService):
     async def get_by_id(self, status_id: int) -> TalentAuditInterviewStatusSchema:
         result = await self.repository.get_by_id(status_id)
         if not result:
-            raise await self._resolve_domain_error(TalentAuditInterviewStatusNotFound(status_id))
+            raise await self._resolve_domain_error(
+                TalentAuditInterviewStatusNotFound(status_id)
+            )
         return result
 
     async def get_talent_audit_interview_statuses(
@@ -78,7 +80,8 @@ class TalentAuditInterviewStatusService(BaseService):
     ) -> MutationResponse[TalentAuditInterviewStatusSchema]:
         if status_update.name:
             await self.exists_by_name(
-                status_update.name, already_exists_exc=TalentAuditInterviewStatusNameTaken
+                status_update.name,
+                already_exists_exc=TalentAuditInterviewStatusNameTaken,
             )
         try:
             orm_record = await self.get_by_id(status_id)

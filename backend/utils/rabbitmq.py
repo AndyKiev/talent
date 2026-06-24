@@ -1,4 +1,5 @@
 """RabbitMQ connection helper + publish/consume utilities."""
+
 import asyncio
 import json
 import logging
@@ -72,5 +73,7 @@ async def start_consumer(on_message: Callable[[dict], Awaitable[None]]) -> None:
                             except Exception as exc:
                                 logger.error("Error processing notification: %s", exc)
         except Exception as exc:
-            logger.warning("RabbitMQ consumer disconnected (%s), retrying in 5s...", exc)
+            logger.warning(
+                "RabbitMQ consumer disconnected (%s), retrying in 5s...", exc
+            )
             await asyncio.sleep(5)

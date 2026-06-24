@@ -20,6 +20,7 @@ class EmployeeDepartmentAlreadyExists(AlreadyExistsError):
     Raised when the (employee_id, department_id) triple
     already exists — either on create or after a partial update.
     """
+
     message_key = "employeeDepartmentAlreadyExists"
 
     def __init__(self, employee_id: int, department_id: int) -> None:
@@ -48,6 +49,7 @@ class EmployeeDepartmentDeleteError(DeleteError):
 
 class EmployeeDepartmentMainAlreadyExistsError(DomainError):
     """Raised when trying to set is_main=True but a main department already exists."""
+
     message_key = "employeeDepartmentMainAlreadyExists"
 
     def __init__(self, employee_id: int, existing_main_id: int) -> None:
@@ -64,6 +66,7 @@ class EmployeeDepartmentMainAlreadyExistsError(DomainError):
 
 class EmployeeDepartmentMainDeleteError(DomainError):
     """Raised when trying to delete a main department."""
+
     message_key = "employeeDepartmentMainDeleteError"
 
     def __init__(self, link_id: int) -> None:

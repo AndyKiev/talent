@@ -5,7 +5,9 @@ from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin, TimestampMixin
 
 if TYPE_CHECKING:
-    from backend.api_v1.talent_status_period_link.talent_status_period_link_model import TalentStatusPeriodLink
+    from backend.api_v1.talent_status_period_link.talent_status_period_link_model import (
+        TalentStatusPeriodLink,
+    )
 
 
 class TalentPeriod(IntIdPkMixin, TimestampMixin, Base):

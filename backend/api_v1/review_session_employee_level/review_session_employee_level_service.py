@@ -55,9 +55,7 @@ class ReviewSessionEmployeeLevelService(BaseService):
         super().__init__(repository, user=user, session=session)
 
     async def _get_by_rse(self, rse_id: int) -> Optional[ReviewSessionEmployeeLevel]:
-        return await self.repository.get_by_field(
-            "review_session_employee_id", rse_id
-        )
+        return await self.repository.get_by_field("review_session_employee_id", rse_id)
 
     async def _assert_rse_visible(self, rse_id: int) -> None:
         """Delegate to the RSE service's people-review visibility guard so an
@@ -69,9 +67,7 @@ class ReviewSessionEmployeeLevelService(BaseService):
         )
         await rse_service.assert_rse_visible(rse_id)
 
-    async def get_proposed_level(
-        self, rse_id: int
-    ) -> Optional[ProposedLevelSchema]:
+    async def get_proposed_level(self, rse_id: int) -> Optional[ProposedLevelSchema]:
         await self._assert_rse_visible(rse_id)
         record = await self._get_by_rse(rse_id)
         if not record:

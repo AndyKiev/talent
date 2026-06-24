@@ -17,6 +17,8 @@ from backend.api_v1.department_type_job_link.department_type_job_link_dependenci
 from backend.api_v1.department_type_job_link.department_type_job_link_service import (
     DepartmentTypeJobLinkService,
 )
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/department_type_job_links",
@@ -25,9 +27,17 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[DepartmentTypeJobLinkSchema])
+@router.get(
+    "",
+    response_model=List[DepartmentTypeJobLinkSchema],
+    dependencies=[
+        Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT_TYPE, EssenceName.JOB)
+    ],
+)
 async def get_department_type_job_links(
-    service: Annotated[DepartmentTypeJobLinkService, Depends(get_department_type_job_link_service)],
+    service: Annotated[
+        DepartmentTypeJobLinkService, Depends(get_department_type_job_link_service)
+    ],
     department_type_id: Optional[int] = None,
     job_id: Optional[int] = None,
     is_active: Optional[bool] = None,
@@ -44,9 +54,17 @@ async def get_department_type_job_links(
     )
 
 
-@router.get("/by_composite_key", response_model=DepartmentTypeJobLinkSchema)
+@router.get(
+    "/by_composite_key",
+    response_model=DepartmentTypeJobLinkSchema,
+    dependencies=[
+        Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT_TYPE, EssenceName.JOB)
+    ],
+)
 async def get_department_type_job_link_by_composite_key(
-    record: DepartmentTypeJobLinkSchema = Depends(department_type_job_link_by_composite_key),
+    record: DepartmentTypeJobLinkSchema = Depends(
+        department_type_job_link_by_composite_key
+    ),
 ):
     """
     Fetch a single link by its unique (department_type_id, job_id) pair.
@@ -58,10 +76,15 @@ async def get_department_type_job_link_by_composite_key(
 @router.get(
     "/by_department_type/{department_type_id}/jobs",
     response_model=List[JobWithLinkId],
+    dependencies=[
+        Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT_TYPE, EssenceName.JOB)
+    ],
 )
 async def get_jobs_by_department_type(
     department_type_id: int,
-    service: Annotated[DepartmentTypeJobLinkService, Depends(get_department_type_job_link_service)],
+    service: Annotated[
+        DepartmentTypeJobLinkService, Depends(get_department_type_job_link_service)
+    ],
     is_active: Optional[bool] = Query(
         None,  # Changed from True to None
         description=(
@@ -81,7 +104,14 @@ async def get_jobs_by_department_type(
         is_active=is_active,
     )
 
-@router.get("/{department_type_job_link_id}", response_model=DepartmentTypeJobLinkSchema)
+
+@router.get(
+    "/{department_type_job_link_id}",
+    response_model=DepartmentTypeJobLinkSchema,
+    dependencies=[
+        Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT_TYPE, EssenceName.JOB)
+    ],
+)
 async def get_department_type_job_link(
     record: DepartmentTypeJobLinkSchema = Depends(department_type_job_link_by_id),
 ):
@@ -92,10 +122,15 @@ async def get_department_type_job_link(
     "",
     response_model=MutationResponse[DepartmentTypeJobLinkSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.DEPARTMENT_TYPE, EssenceName.JOB)
+    ],
 )
 async def create_department_type_job_link(
     link_in: DepartmentTypeJobLinkCreate,
-    service: Annotated[DepartmentTypeJobLinkService, Depends(get_department_type_job_link_service)],
+    service: Annotated[
+        DepartmentTypeJobLinkService, Depends(get_department_type_job_link_service)
+    ],
 ):
     """Link a department type to a job. The (department_type_id, job_id) pair must be unique."""
     return await service.create_link(link_in)
@@ -104,6 +139,9 @@ async def create_department_type_job_link(
 @router.patch(
     "/{department_type_job_link_id}",
     response_model=MutationResponse[DepartmentTypeJobLinkSchema],
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.DEPARTMENT_TYPE, EssenceName.JOB)
+    ],
 )
 async def update_department_type_job_link(
     link_update: DepartmentTypeJobLinkUpdate,
@@ -116,10 +154,18 @@ async def update_department_type_job_link(
     return await service.update_link(record.id, link_update)
 
 
-@router.delete("/{department_type_job_link_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{department_type_job_link_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.DEPARTMENT_TYPE, EssenceName.JOB)
+    ],
+)
 async def delete_department_type_job_link(
     department_type_job_link_id: int,
-    service: Annotated[DepartmentTypeJobLinkService, Depends(get_department_type_job_link_service)],
+    service: Annotated[
+        DepartmentTypeJobLinkService, Depends(get_department_type_job_link_service)
+    ],
 ):
     """Unlink a department type from a job."""
     await service.delete_link(department_type_job_link_id)

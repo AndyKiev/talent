@@ -23,7 +23,6 @@ async def get_essence_service(
         repository=EssenceRepository(session=session),
         user=user,
         session=session,
-
     )
 
 
@@ -32,6 +31,7 @@ async def essence_by_id(
     service: Annotated[EssenceService, Depends(get_essence_service)],
 ) -> EssenceSchema:
     from backend.api_v1.essence.essence_errors import EssenceNotFound
+
     try:
         return await service.get_by_id(essence_id)
     except EssenceNotFound as exc:

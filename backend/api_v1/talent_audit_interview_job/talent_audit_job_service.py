@@ -40,7 +40,9 @@ def _enrich(orm_record) -> dict:
         data["status_name"] = orm_record.status.name
     link = getattr(orm_record, "talent_status_period_link", None)
     if link and link.talent_status and link.talent_period:
-        data["hrm_status_period_label"] = f"{link.talent_status.key} - {link.talent_period.name}"
+        data["hrm_status_period_label"] = (
+            f"{link.talent_status.key} - {link.talent_period.name}"
+        )
     return data
 
 
@@ -67,7 +69,9 @@ class TalentAuditJobService(BaseService):
 
     async def _get_qty_months_for_link(self, link_id: int) -> int:
         """Resolve qty_months from talent_status_period_link → talent_period."""
-        stmt = select(TalentStatusPeriodLink).where(TalentStatusPeriodLink.id == link_id)
+        stmt = select(TalentStatusPeriodLink).where(
+            TalentStatusPeriodLink.id == link_id
+        )
         result = await self.session.execute(stmt)
         link = result.scalar_one_or_none()
         if not link or not link.talent_period:
@@ -76,9 +80,8 @@ class TalentAuditJobService(BaseService):
 
     async def _get_existing_qty_months(self, talent_audit_id: int) -> List[int]:
         """Get sorted list of qty_months for existing audit jobs in this audit."""
-        stmt = (
-            select(TalentAuditJob)
-            .where(TalentAuditJob.talent_audit_id == talent_audit_id)
+        stmt = select(TalentAuditJob).where(
+            TalentAuditJob.talent_audit_id == talent_audit_id
         )
         result = await self.session.execute(stmt)
         jobs = result.scalars().all()

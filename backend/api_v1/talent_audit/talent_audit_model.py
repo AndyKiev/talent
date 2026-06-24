@@ -9,8 +9,12 @@ from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
 
 if TYPE_CHECKING:
     from backend.api_v1.employee.employee_model import Employee
-    from backend.api_v1.talent_audit_interview.talent_audit_interview_model import TalentAuditInterview
-    from backend.api_v1.talent_audit_status.talent_audit_status_model import TalentAuditStatus
+    from backend.api_v1.talent_audit_interview.talent_audit_interview_model import (
+        TalentAuditInterview,
+    )
+    from backend.api_v1.talent_audit_status.talent_audit_status_model import (
+        TalentAuditStatus,
+    )
     from backend.api_v1.talent_audit_job.talent_audit_job_model import TalentAuditJob
 
 
@@ -18,10 +22,15 @@ class TalentAudit(IntIdPkMixin, Base):
     __tablename__ = "talent_audit"
 
     employee_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("employees.id", ondelete="RESTRICT"), nullable=False, unique=True
+        Integer,
+        ForeignKey("employees.id", ondelete="RESTRICT"),
+        nullable=False,
+        unique=True,
     )
     status_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("talent_audit_statuses.id", ondelete="RESTRICT"), nullable=False
+        Integer,
+        ForeignKey("talent_audit_statuses.id", ondelete="RESTRICT"),
+        nullable=False,
     )
     talent_plus: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default="false", default=False

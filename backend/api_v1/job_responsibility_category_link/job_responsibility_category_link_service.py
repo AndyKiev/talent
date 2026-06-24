@@ -63,9 +63,7 @@ class JobResponsibilityCategoryLinkService(BaseService):
         if is_active is not None:
             filters["is_active"] = is_active
         records = await self.repository.get_all(filters=filters or None, sort=sort)
-        return [
-            JobResponsibilityCategoryLinkSchema.model_validate(r) for r in records
-        ]
+        return [JobResponsibilityCategoryLinkSchema.model_validate(r) for r in records]
 
     async def get_categories_for_job(
         self, job_id: int

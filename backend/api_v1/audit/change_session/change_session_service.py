@@ -65,9 +65,7 @@ class ChangeSessionService(BaseService):
             filters["status"] = status
 
         records = await self.get_all(params=filters or None)
-        records = sorted(
-            records, key=lambda r: (r.started_at, r.id), reverse=True
-        )
+        records = sorted(records, key=lambda r: (r.started_at, r.id), reverse=True)
         if limit is not None and limit > 0:
             records = records[:limit]
         return [ChangeSessionSchema.model_validate(r) for r in records]
@@ -114,9 +112,7 @@ class ChangeSessionService(BaseService):
     ):
         """Close a run with an outcome (and optional aggregate summary)."""
         record = await self.get_by_id(session_id)
-        record.status = (
-            status.value if isinstance(status, ChangeRunStatus) else status
-        )
+        record.status = status.value if isinstance(status, ChangeRunStatus) else status
         record.finished_at = datetime.datetime.now(datetime.timezone.utc)
         if summary is not None:
             record.summary = summary

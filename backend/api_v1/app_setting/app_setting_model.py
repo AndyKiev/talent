@@ -5,7 +5,9 @@ from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin, TimestampMixin
 
 if TYPE_CHECKING:
-    from backend.api_v1.setting_value_type.setting_value_type_model import SettingValueType
+    from backend.api_v1.setting_value_type.setting_value_type_model import (
+        SettingValueType,
+    )
 
 
 class AppSetting(IntIdPkMixin, TimestampMixin, Base):

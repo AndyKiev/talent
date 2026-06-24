@@ -7,7 +7,9 @@ from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 
 if TYPE_CHECKING:
-    from backend.api_v1.employee_language.employee_language_model import EmployeeLanguage
+    from backend.api_v1.employee_language.employee_language_model import (
+        EmployeeLanguage,
+    )
 
 
 class EmployeeLanguageProfile(IntIdPkMixin, TimestampMixin, Base):

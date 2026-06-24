@@ -46,7 +46,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id", name=op.f("pk_employee_current_levels")),
         sa.UniqueConstraint(
             "employee_id", name="uq_employee_current_level_employee_id"
-        )
+        ),
     )
     # Carry existing assignments into the new link table BEFORE dropping the
     # column — autogenerate does not migrate data.

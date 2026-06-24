@@ -34,7 +34,7 @@ def upgrade() -> None:
             server_default=sa.text("now()"),
             nullable=False,
         ),
-        sa.PrimaryKeyConstraint("id", name=op.f("pk_department_categories"))
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_department_categories")),
     )
     op.create_table(
         "department_types",
@@ -48,7 +48,7 @@ def upgrade() -> None:
             server_default=sa.text("now()"),
             nullable=False,
         ),
-        sa.PrimaryKeyConstraint("id", name=op.f("pk_department_types"))
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_department_types")),
     )
     op.create_table(
         "departments",
@@ -67,9 +67,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["department_category_id"],
             ["department_categories.id"],
-            name=op.f(
-                "fk_departments_department_category_id_department_categories"
-            ),
+            name=op.f("fk_departments_department_category_id_department_categories"),
             ondelete="RESTRICT",
         ),
         sa.ForeignKeyConstraint(
@@ -84,7 +82,7 @@ def upgrade() -> None:
             name=op.f("fk_departments_parent_id_departments"),
             ondelete="RESTRICT",
         ),
-        sa.PrimaryKeyConstraint("id", name=op.f("pk_departments"))
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_departments")),
     )
     op.create_index(
         op.f("ix_departments_parent_id"),

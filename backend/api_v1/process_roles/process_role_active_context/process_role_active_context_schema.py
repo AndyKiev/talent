@@ -5,6 +5,7 @@ from typing import Optional, List
 class ActiveContextUpdate(BaseModel):
     """PUT body — set the current user's active mode (role) + department.
     process_role_id = null means 'no mode on' (sees only self)."""
+
     process_role_id: Optional[int] = None
     department_id: Optional[int] = None
 
@@ -32,6 +33,7 @@ class MyScopes(BaseModel):
     """Everything the people-review scope controls need: the roles the current
     user holds, the departments they supervise (per dept-target role), and the
     persisted active context."""
+
     roles: List[MyRole] = []
     departments: List[MyDepartment] = []
     active: ActiveContextRead = ActiveContextRead()
