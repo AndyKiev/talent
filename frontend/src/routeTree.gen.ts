@@ -19,7 +19,10 @@ import { Route as People_reviewMyRouteImport } from './routes/people_review/my'
 import { Route as EmployeesNewRouteImport } from './routes/employees/new'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as EmployeesEmployeeIdRouteRouteImport } from './routes/employees/$employeeId/route'
+import { Route as DeveloperSecurityRouteRouteImport } from './routes/developer/security/route'
 import { Route as DeveloperProcess_rolesRouteRouteImport } from './routes/developer/process_roles/route'
+import { Route as DeveloperCatalogRouteRouteImport } from './routes/developer/catalog/route'
+import { Route as AdminUser_groups_groupRouteRouteImport } from './routes/admin/user_groups_group/route'
 import { Route as AdminReviewersRouteRouteImport } from './routes/admin/reviewers/route'
 import { Route as AdminReview_setupRouteRouteImport } from './routes/admin/review_setup/route'
 import { Route as AdminPlanning_setupRouteRouteImport } from './routes/admin/planning_setup/route'
@@ -29,10 +32,12 @@ import { Route as People_reviewSessionIdIndexRouteImport } from './routes/people
 import { Route as EmployeesEmployeeIdIndexRouteImport } from './routes/employees/$employeeId/index'
 import { Route as DeveloperTranslationsIndexRouteImport } from './routes/developer/translations/index'
 import { Route as DeveloperSettingsIndexRouteImport } from './routes/developer/settings/index'
+import { Route as DeveloperSecurityIndexRouteImport } from './routes/developer/security/index'
 import { Route as DeveloperProcess_rolesIndexRouteImport } from './routes/developer/process_roles/index'
+import { Route as DeveloperEvent_applyIndexRouteImport } from './routes/developer/event_apply/index'
+import { Route as DeveloperCatalogIndexRouteImport } from './routes/developer/catalog/index'
+import { Route as DeveloperAudit_logIndexRouteImport } from './routes/developer/audit_log/index'
 import { Route as AdminUser_groups_groupIndexRouteImport } from './routes/admin/user_groups_group/index'
-import { Route as AdminUserGroupsIndexRouteImport } from './routes/admin/user-groups/index'
-import { Route as AdminUserGroupTypesIndexRouteImport } from './routes/admin/user-group-types/index'
 import { Route as AdminTalentIndexRouteImport } from './routes/admin/talent/index'
 import { Route as AdminTalentStatusesIndexRouteImport } from './routes/admin/talent-statuses/index'
 import { Route as AdminTalentStatusPeriodLinksIndexRouteImport } from './routes/admin/talent-status-period-links/index'
@@ -56,11 +61,23 @@ import { Route as AdminReview_setupDimensionsRouteRouteImport } from './routes/a
 import { Route as AdminDepartments_groupDepartment_typesRouteRouteImport } from './routes/admin/departments_group/department_types/route'
 import { Route as EmployeesEmployeeIdTalent_auditIndexRouteImport } from './routes/employees/$employeeId/talent_audit/index'
 import { Route as EmployeesEmployeeIdSummaryIndexRouteImport } from './routes/employees/$employeeId/summary/index'
+import { Route as EmployeesEmployeeIdJob_historyIndexRouteImport } from './routes/employees/$employeeId/job_history/index'
 import { Route as EmployeesEmployeeIdEventsIndexRouteImport } from './routes/employees/$employeeId/events/index'
 import { Route as EmployeesEmployeeIdDr_historyIndexRouteImport } from './routes/employees/$employeeId/dr_history/index'
 import { Route as EmployeesEmployeeIdDepartmentsIndexRouteImport } from './routes/employees/$employeeId/departments/index'
+import { Route as DeveloperSecurityUser_groupsIndexRouteImport } from './routes/developer/security/user_groups/index'
+import { Route as DeveloperSecurityUser_group_typesIndexRouteImport } from './routes/developer/security/user_group_types/index'
+import { Route as DeveloperSecurityPermissions_overviewIndexRouteImport } from './routes/developer/security/permissions_overview/index'
+import { Route as DeveloperSecurityPermission_matrixIndexRouteImport } from './routes/developer/security/permission_matrix/index'
+import { Route as DeveloperSecurityOeslIndexRouteImport } from './routes/developer/security/oesl/index'
 import { Route as DeveloperProcess_rolesProcess_roleIndexRouteImport } from './routes/developer/process_roles/process_role/index'
 import { Route as DeveloperProcess_rolesProcessIndexRouteImport } from './routes/developer/process_roles/process/index'
+import { Route as DeveloperCatalogOperationsIndexRouteImport } from './routes/developer/catalog/operations/index'
+import { Route as DeveloperCatalogEssencesIndexRouteImport } from './routes/developer/catalog/essences/index'
+import { Route as AdminUser_groups_groupUsersIndexRouteImport } from './routes/admin/user_groups_group/users/index'
+import { Route as AdminUser_groups_groupUser_groupsIndexRouteImport } from './routes/admin/user_groups_group/user_groups/index'
+import { Route as AdminUser_groups_groupUser_group_typesIndexRouteImport } from './routes/admin/user_groups_group/user_group_types/index'
+import { Route as AdminUser_groups_groupHrm_scopesIndexRouteImport } from './routes/admin/user_groups_group/hrm_scopes/index'
 import { Route as AdminReviewersHoldersIndexRouteImport } from './routes/admin/reviewers/holders/index'
 import { Route as AdminReviewersEmployeesIndexRouteImport } from './routes/admin/reviewers/employees/index'
 import { Route as AdminReview_setupLevelsIndexRouteImport } from './routes/admin/review_setup/levels/index'
@@ -76,6 +93,7 @@ import { Route as AdminEmployee_eventsEmployee_event_statusesIndexRouteImport } 
 import { Route as AdminEmployee_eventsEmployee_event_direction_typesIndexRouteImport } from './routes/admin/employee_events/employee_event_direction_types/index'
 import { Route as AdminEmployee_eventsEmployee_event_change_dept_typesIndexRouteImport } from './routes/admin/employee_events/employee_event_change_dept_types/index'
 import { Route as AdminDepartments_groupStructureIndexRouteImport } from './routes/admin/departments_group/structure/index'
+import { Route as AdminDepartments_groupRegionsIndexRouteImport } from './routes/admin/departments_group/regions/index'
 import { Route as AdminDepartments_groupDepartment_typesIndexRouteImport } from './routes/admin/departments_group/department_types/index'
 import { Route as AdminDepartments_groupDepartment_categoriesIndexRouteImport } from './routes/admin/departments_group/department_categories/index'
 import { Route as People_reviewSessionIdEmployeeEmployeeIdRouteImport } from './routes/people_review/$sessionId/employee/$employeeId'
@@ -138,10 +156,26 @@ const EmployeesEmployeeIdRouteRoute =
     path: '/employees/$employeeId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const DeveloperSecurityRouteRoute = DeveloperSecurityRouteRouteImport.update({
+  id: '/developer/security',
+  path: '/developer/security',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DeveloperProcess_rolesRouteRoute =
   DeveloperProcess_rolesRouteRouteImport.update({
     id: '/developer/process_roles',
     path: '/developer/process_roles',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DeveloperCatalogRouteRoute = DeveloperCatalogRouteRouteImport.update({
+  id: '/developer/catalog',
+  path: '/developer/catalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminUser_groups_groupRouteRoute =
+  AdminUser_groups_groupRouteRouteImport.update({
+    id: '/admin/user_groups_group',
+    path: '/admin/user_groups_group',
     getParentRoute: () => rootRouteImport,
   } as any)
 const AdminReviewersRouteRoute = AdminReviewersRouteRouteImport.update({
@@ -194,28 +228,38 @@ const DeveloperSettingsIndexRoute = DeveloperSettingsIndexRouteImport.update({
   path: '/developer/settings/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DeveloperSecurityIndexRoute = DeveloperSecurityIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DeveloperSecurityRouteRoute,
+} as any)
 const DeveloperProcess_rolesIndexRoute =
   DeveloperProcess_rolesIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => DeveloperProcess_rolesRouteRoute,
   } as any)
-const AdminUser_groups_groupIndexRoute =
-  AdminUser_groups_groupIndexRouteImport.update({
-    id: '/admin/user_groups_group/',
-    path: '/admin/user_groups_group/',
+const DeveloperEvent_applyIndexRoute =
+  DeveloperEvent_applyIndexRouteImport.update({
+    id: '/developer/event_apply/',
+    path: '/developer/event_apply/',
     getParentRoute: () => rootRouteImport,
   } as any)
-const AdminUserGroupsIndexRoute = AdminUserGroupsIndexRouteImport.update({
-  id: '/admin/user-groups/',
-  path: '/admin/user-groups/',
+const DeveloperCatalogIndexRoute = DeveloperCatalogIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DeveloperCatalogRouteRoute,
+} as any)
+const DeveloperAudit_logIndexRoute = DeveloperAudit_logIndexRouteImport.update({
+  id: '/developer/audit_log/',
+  path: '/developer/audit_log/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminUserGroupTypesIndexRoute =
-  AdminUserGroupTypesIndexRouteImport.update({
-    id: '/admin/user-group-types/',
-    path: '/admin/user-group-types/',
-    getParentRoute: () => rootRouteImport,
+const AdminUser_groups_groupIndexRoute =
+  AdminUser_groups_groupIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AdminUser_groups_groupRouteRoute,
   } as any)
 const AdminTalentIndexRoute = AdminTalentIndexRouteImport.update({
   id: '/admin/talent/',
@@ -346,6 +390,12 @@ const EmployeesEmployeeIdSummaryIndexRoute =
     path: '/summary/',
     getParentRoute: () => EmployeesEmployeeIdRouteRoute,
   } as any)
+const EmployeesEmployeeIdJob_historyIndexRoute =
+  EmployeesEmployeeIdJob_historyIndexRouteImport.update({
+    id: '/job_history/',
+    path: '/job_history/',
+    getParentRoute: () => EmployeesEmployeeIdRouteRoute,
+  } as any)
 const EmployeesEmployeeIdEventsIndexRoute =
   EmployeesEmployeeIdEventsIndexRouteImport.update({
     id: '/events/',
@@ -364,6 +414,36 @@ const EmployeesEmployeeIdDepartmentsIndexRoute =
     path: '/departments/',
     getParentRoute: () => EmployeesEmployeeIdRouteRoute,
   } as any)
+const DeveloperSecurityUser_groupsIndexRoute =
+  DeveloperSecurityUser_groupsIndexRouteImport.update({
+    id: '/user_groups/',
+    path: '/user_groups/',
+    getParentRoute: () => DeveloperSecurityRouteRoute,
+  } as any)
+const DeveloperSecurityUser_group_typesIndexRoute =
+  DeveloperSecurityUser_group_typesIndexRouteImport.update({
+    id: '/user_group_types/',
+    path: '/user_group_types/',
+    getParentRoute: () => DeveloperSecurityRouteRoute,
+  } as any)
+const DeveloperSecurityPermissions_overviewIndexRoute =
+  DeveloperSecurityPermissions_overviewIndexRouteImport.update({
+    id: '/permissions_overview/',
+    path: '/permissions_overview/',
+    getParentRoute: () => DeveloperSecurityRouteRoute,
+  } as any)
+const DeveloperSecurityPermission_matrixIndexRoute =
+  DeveloperSecurityPermission_matrixIndexRouteImport.update({
+    id: '/permission_matrix/',
+    path: '/permission_matrix/',
+    getParentRoute: () => DeveloperSecurityRouteRoute,
+  } as any)
+const DeveloperSecurityOeslIndexRoute =
+  DeveloperSecurityOeslIndexRouteImport.update({
+    id: '/oesl/',
+    path: '/oesl/',
+    getParentRoute: () => DeveloperSecurityRouteRoute,
+  } as any)
 const DeveloperProcess_rolesProcess_roleIndexRoute =
   DeveloperProcess_rolesProcess_roleIndexRouteImport.update({
     id: '/process_role/',
@@ -375,6 +455,42 @@ const DeveloperProcess_rolesProcessIndexRoute =
     id: '/process/',
     path: '/process/',
     getParentRoute: () => DeveloperProcess_rolesRouteRoute,
+  } as any)
+const DeveloperCatalogOperationsIndexRoute =
+  DeveloperCatalogOperationsIndexRouteImport.update({
+    id: '/operations/',
+    path: '/operations/',
+    getParentRoute: () => DeveloperCatalogRouteRoute,
+  } as any)
+const DeveloperCatalogEssencesIndexRoute =
+  DeveloperCatalogEssencesIndexRouteImport.update({
+    id: '/essences/',
+    path: '/essences/',
+    getParentRoute: () => DeveloperCatalogRouteRoute,
+  } as any)
+const AdminUser_groups_groupUsersIndexRoute =
+  AdminUser_groups_groupUsersIndexRouteImport.update({
+    id: '/users/',
+    path: '/users/',
+    getParentRoute: () => AdminUser_groups_groupRouteRoute,
+  } as any)
+const AdminUser_groups_groupUser_groupsIndexRoute =
+  AdminUser_groups_groupUser_groupsIndexRouteImport.update({
+    id: '/user_groups/',
+    path: '/user_groups/',
+    getParentRoute: () => AdminUser_groups_groupRouteRoute,
+  } as any)
+const AdminUser_groups_groupUser_group_typesIndexRoute =
+  AdminUser_groups_groupUser_group_typesIndexRouteImport.update({
+    id: '/user_group_types/',
+    path: '/user_group_types/',
+    getParentRoute: () => AdminUser_groups_groupRouteRoute,
+  } as any)
+const AdminUser_groups_groupHrm_scopesIndexRoute =
+  AdminUser_groups_groupHrm_scopesIndexRouteImport.update({
+    id: '/hrm_scopes/',
+    path: '/hrm_scopes/',
+    getParentRoute: () => AdminUser_groups_groupRouteRoute,
   } as any)
 const AdminReviewersHoldersIndexRoute =
   AdminReviewersHoldersIndexRouteImport.update({
@@ -466,6 +582,12 @@ const AdminDepartments_groupStructureIndexRoute =
     path: '/structure/',
     getParentRoute: () => AdminDepartments_groupRouteRoute,
   } as any)
+const AdminDepartments_groupRegionsIndexRoute =
+  AdminDepartments_groupRegionsIndexRouteImport.update({
+    id: '/regions/',
+    path: '/regions/',
+    getParentRoute: () => AdminDepartments_groupRouteRoute,
+  } as any)
 const AdminDepartments_groupDepartment_typesIndexRoute =
   AdminDepartments_groupDepartment_typesIndexRouteImport.update({
     id: '/',
@@ -535,7 +657,10 @@ export interface FileRoutesByFullPath {
   '/admin/planning_setup': typeof AdminPlanning_setupRouteRouteWithChildren
   '/admin/review_setup': typeof AdminReview_setupRouteRouteWithChildren
   '/admin/reviewers': typeof AdminReviewersRouteRouteWithChildren
+  '/admin/user_groups_group': typeof AdminUser_groups_groupRouteRouteWithChildren
+  '/developer/catalog': typeof DeveloperCatalogRouteRouteWithChildren
   '/developer/process_roles': typeof DeveloperProcess_rolesRouteRouteWithChildren
+  '/developer/security': typeof DeveloperSecurityRouteRouteWithChildren
   '/employees/$employeeId': typeof EmployeesEmployeeIdRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/employees/new': typeof EmployeesNewRoute
@@ -565,10 +690,12 @@ export interface FileRoutesByFullPath {
   '/admin/talent-status-period-links': typeof AdminTalentStatusPeriodLinksIndexRoute
   '/admin/talent-statuses': typeof AdminTalentStatusesIndexRoute
   '/admin/talent': typeof AdminTalentIndexRoute
-  '/admin/user-group-types': typeof AdminUserGroupTypesIndexRoute
-  '/admin/user-groups': typeof AdminUserGroupsIndexRoute
-  '/admin/user_groups_group': typeof AdminUser_groups_groupIndexRoute
+  '/admin/user_groups_group/': typeof AdminUser_groups_groupIndexRoute
+  '/developer/audit_log': typeof DeveloperAudit_logIndexRoute
+  '/developer/catalog/': typeof DeveloperCatalogIndexRoute
+  '/developer/event_apply': typeof DeveloperEvent_applyIndexRoute
   '/developer/process_roles/': typeof DeveloperProcess_rolesIndexRoute
+  '/developer/security/': typeof DeveloperSecurityIndexRoute
   '/developer/settings': typeof DeveloperSettingsIndexRoute
   '/developer/translations': typeof DeveloperTranslationsIndexRoute
   '/employees/$employeeId/': typeof EmployeesEmployeeIdIndexRoute
@@ -576,6 +703,7 @@ export interface FileRoutesByFullPath {
   '/people_review/$sessionId/employee/$employeeId': typeof People_reviewSessionIdEmployeeEmployeeIdRoute
   '/admin/departments_group/department_categories': typeof AdminDepartments_groupDepartment_categoriesIndexRoute
   '/admin/departments_group/department_types/': typeof AdminDepartments_groupDepartment_typesIndexRoute
+  '/admin/departments_group/regions': typeof AdminDepartments_groupRegionsIndexRoute
   '/admin/departments_group/structure': typeof AdminDepartments_groupStructureIndexRoute
   '/admin/employee_events/employee_event_change_dept_types': typeof AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute
   '/admin/employee_events/employee_event_direction_types': typeof AdminEmployee_eventsEmployee_event_direction_typesIndexRoute
@@ -591,11 +719,23 @@ export interface FileRoutesByFullPath {
   '/admin/review_setup/levels/': typeof AdminReview_setupLevelsIndexRoute
   '/admin/reviewers/employees': typeof AdminReviewersEmployeesIndexRoute
   '/admin/reviewers/holders': typeof AdminReviewersHoldersIndexRoute
+  '/admin/user_groups_group/hrm_scopes': typeof AdminUser_groups_groupHrm_scopesIndexRoute
+  '/admin/user_groups_group/user_group_types': typeof AdminUser_groups_groupUser_group_typesIndexRoute
+  '/admin/user_groups_group/user_groups': typeof AdminUser_groups_groupUser_groupsIndexRoute
+  '/admin/user_groups_group/users': typeof AdminUser_groups_groupUsersIndexRoute
+  '/developer/catalog/essences': typeof DeveloperCatalogEssencesIndexRoute
+  '/developer/catalog/operations': typeof DeveloperCatalogOperationsIndexRoute
   '/developer/process_roles/process': typeof DeveloperProcess_rolesProcessIndexRoute
   '/developer/process_roles/process_role': typeof DeveloperProcess_rolesProcess_roleIndexRoute
+  '/developer/security/oesl': typeof DeveloperSecurityOeslIndexRoute
+  '/developer/security/permission_matrix': typeof DeveloperSecurityPermission_matrixIndexRoute
+  '/developer/security/permissions_overview': typeof DeveloperSecurityPermissions_overviewIndexRoute
+  '/developer/security/user_group_types': typeof DeveloperSecurityUser_group_typesIndexRoute
+  '/developer/security/user_groups': typeof DeveloperSecurityUser_groupsIndexRoute
   '/employees/$employeeId/departments': typeof EmployeesEmployeeIdDepartmentsIndexRoute
   '/employees/$employeeId/dr_history': typeof EmployeesEmployeeIdDr_historyIndexRoute
   '/employees/$employeeId/events': typeof EmployeesEmployeeIdEventsIndexRoute
+  '/employees/$employeeId/job_history': typeof EmployeesEmployeeIdJob_historyIndexRoute
   '/employees/$employeeId/summary': typeof EmployeesEmployeeIdSummaryIndexRoute
   '/employees/$employeeId/talent_audit': typeof EmployeesEmployeeIdTalent_auditIndexRoute
   '/admin/departments_group/department_types/hierarchy': typeof AdminDepartments_groupDepartment_typesHierarchyIndexRoute
@@ -634,10 +774,12 @@ export interface FileRoutesByTo {
   '/admin/talent-status-period-links': typeof AdminTalentStatusPeriodLinksIndexRoute
   '/admin/talent-statuses': typeof AdminTalentStatusesIndexRoute
   '/admin/talent': typeof AdminTalentIndexRoute
-  '/admin/user-group-types': typeof AdminUserGroupTypesIndexRoute
-  '/admin/user-groups': typeof AdminUserGroupsIndexRoute
   '/admin/user_groups_group': typeof AdminUser_groups_groupIndexRoute
+  '/developer/audit_log': typeof DeveloperAudit_logIndexRoute
+  '/developer/catalog': typeof DeveloperCatalogIndexRoute
+  '/developer/event_apply': typeof DeveloperEvent_applyIndexRoute
   '/developer/process_roles': typeof DeveloperProcess_rolesIndexRoute
+  '/developer/security': typeof DeveloperSecurityIndexRoute
   '/developer/settings': typeof DeveloperSettingsIndexRoute
   '/developer/translations': typeof DeveloperTranslationsIndexRoute
   '/employees/$employeeId': typeof EmployeesEmployeeIdIndexRoute
@@ -645,6 +787,7 @@ export interface FileRoutesByTo {
   '/people_review/$sessionId/employee/$employeeId': typeof People_reviewSessionIdEmployeeEmployeeIdRoute
   '/admin/departments_group/department_categories': typeof AdminDepartments_groupDepartment_categoriesIndexRoute
   '/admin/departments_group/department_types': typeof AdminDepartments_groupDepartment_typesIndexRoute
+  '/admin/departments_group/regions': typeof AdminDepartments_groupRegionsIndexRoute
   '/admin/departments_group/structure': typeof AdminDepartments_groupStructureIndexRoute
   '/admin/employee_events/employee_event_change_dept_types': typeof AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute
   '/admin/employee_events/employee_event_direction_types': typeof AdminEmployee_eventsEmployee_event_direction_typesIndexRoute
@@ -660,11 +803,23 @@ export interface FileRoutesByTo {
   '/admin/review_setup/levels': typeof AdminReview_setupLevelsIndexRoute
   '/admin/reviewers/employees': typeof AdminReviewersEmployeesIndexRoute
   '/admin/reviewers/holders': typeof AdminReviewersHoldersIndexRoute
+  '/admin/user_groups_group/hrm_scopes': typeof AdminUser_groups_groupHrm_scopesIndexRoute
+  '/admin/user_groups_group/user_group_types': typeof AdminUser_groups_groupUser_group_typesIndexRoute
+  '/admin/user_groups_group/user_groups': typeof AdminUser_groups_groupUser_groupsIndexRoute
+  '/admin/user_groups_group/users': typeof AdminUser_groups_groupUsersIndexRoute
+  '/developer/catalog/essences': typeof DeveloperCatalogEssencesIndexRoute
+  '/developer/catalog/operations': typeof DeveloperCatalogOperationsIndexRoute
   '/developer/process_roles/process': typeof DeveloperProcess_rolesProcessIndexRoute
   '/developer/process_roles/process_role': typeof DeveloperProcess_rolesProcess_roleIndexRoute
+  '/developer/security/oesl': typeof DeveloperSecurityOeslIndexRoute
+  '/developer/security/permission_matrix': typeof DeveloperSecurityPermission_matrixIndexRoute
+  '/developer/security/permissions_overview': typeof DeveloperSecurityPermissions_overviewIndexRoute
+  '/developer/security/user_group_types': typeof DeveloperSecurityUser_group_typesIndexRoute
+  '/developer/security/user_groups': typeof DeveloperSecurityUser_groupsIndexRoute
   '/employees/$employeeId/departments': typeof EmployeesEmployeeIdDepartmentsIndexRoute
   '/employees/$employeeId/dr_history': typeof EmployeesEmployeeIdDr_historyIndexRoute
   '/employees/$employeeId/events': typeof EmployeesEmployeeIdEventsIndexRoute
+  '/employees/$employeeId/job_history': typeof EmployeesEmployeeIdJob_historyIndexRoute
   '/employees/$employeeId/summary': typeof EmployeesEmployeeIdSummaryIndexRoute
   '/employees/$employeeId/talent_audit': typeof EmployeesEmployeeIdTalent_auditIndexRoute
   '/admin/departments_group/department_types/hierarchy': typeof AdminDepartments_groupDepartment_typesHierarchyIndexRoute
@@ -684,7 +839,10 @@ export interface FileRoutesById {
   '/admin/planning_setup': typeof AdminPlanning_setupRouteRouteWithChildren
   '/admin/review_setup': typeof AdminReview_setupRouteRouteWithChildren
   '/admin/reviewers': typeof AdminReviewersRouteRouteWithChildren
+  '/admin/user_groups_group': typeof AdminUser_groups_groupRouteRouteWithChildren
+  '/developer/catalog': typeof DeveloperCatalogRouteRouteWithChildren
   '/developer/process_roles': typeof DeveloperProcess_rolesRouteRouteWithChildren
+  '/developer/security': typeof DeveloperSecurityRouteRouteWithChildren
   '/employees/$employeeId': typeof EmployeesEmployeeIdRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/employees/new': typeof EmployeesNewRoute
@@ -714,10 +872,12 @@ export interface FileRoutesById {
   '/admin/talent-status-period-links/': typeof AdminTalentStatusPeriodLinksIndexRoute
   '/admin/talent-statuses/': typeof AdminTalentStatusesIndexRoute
   '/admin/talent/': typeof AdminTalentIndexRoute
-  '/admin/user-group-types/': typeof AdminUserGroupTypesIndexRoute
-  '/admin/user-groups/': typeof AdminUserGroupsIndexRoute
   '/admin/user_groups_group/': typeof AdminUser_groups_groupIndexRoute
+  '/developer/audit_log/': typeof DeveloperAudit_logIndexRoute
+  '/developer/catalog/': typeof DeveloperCatalogIndexRoute
+  '/developer/event_apply/': typeof DeveloperEvent_applyIndexRoute
   '/developer/process_roles/': typeof DeveloperProcess_rolesIndexRoute
+  '/developer/security/': typeof DeveloperSecurityIndexRoute
   '/developer/settings/': typeof DeveloperSettingsIndexRoute
   '/developer/translations/': typeof DeveloperTranslationsIndexRoute
   '/employees/$employeeId/': typeof EmployeesEmployeeIdIndexRoute
@@ -725,6 +885,7 @@ export interface FileRoutesById {
   '/people_review/$sessionId/employee/$employeeId': typeof People_reviewSessionIdEmployeeEmployeeIdRoute
   '/admin/departments_group/department_categories/': typeof AdminDepartments_groupDepartment_categoriesIndexRoute
   '/admin/departments_group/department_types/': typeof AdminDepartments_groupDepartment_typesIndexRoute
+  '/admin/departments_group/regions/': typeof AdminDepartments_groupRegionsIndexRoute
   '/admin/departments_group/structure/': typeof AdminDepartments_groupStructureIndexRoute
   '/admin/employee_events/employee_event_change_dept_types/': typeof AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute
   '/admin/employee_events/employee_event_direction_types/': typeof AdminEmployee_eventsEmployee_event_direction_typesIndexRoute
@@ -740,11 +901,23 @@ export interface FileRoutesById {
   '/admin/review_setup/levels/': typeof AdminReview_setupLevelsIndexRoute
   '/admin/reviewers/employees/': typeof AdminReviewersEmployeesIndexRoute
   '/admin/reviewers/holders/': typeof AdminReviewersHoldersIndexRoute
+  '/admin/user_groups_group/hrm_scopes/': typeof AdminUser_groups_groupHrm_scopesIndexRoute
+  '/admin/user_groups_group/user_group_types/': typeof AdminUser_groups_groupUser_group_typesIndexRoute
+  '/admin/user_groups_group/user_groups/': typeof AdminUser_groups_groupUser_groupsIndexRoute
+  '/admin/user_groups_group/users/': typeof AdminUser_groups_groupUsersIndexRoute
+  '/developer/catalog/essences/': typeof DeveloperCatalogEssencesIndexRoute
+  '/developer/catalog/operations/': typeof DeveloperCatalogOperationsIndexRoute
   '/developer/process_roles/process/': typeof DeveloperProcess_rolesProcessIndexRoute
   '/developer/process_roles/process_role/': typeof DeveloperProcess_rolesProcess_roleIndexRoute
+  '/developer/security/oesl/': typeof DeveloperSecurityOeslIndexRoute
+  '/developer/security/permission_matrix/': typeof DeveloperSecurityPermission_matrixIndexRoute
+  '/developer/security/permissions_overview/': typeof DeveloperSecurityPermissions_overviewIndexRoute
+  '/developer/security/user_group_types/': typeof DeveloperSecurityUser_group_typesIndexRoute
+  '/developer/security/user_groups/': typeof DeveloperSecurityUser_groupsIndexRoute
   '/employees/$employeeId/departments/': typeof EmployeesEmployeeIdDepartmentsIndexRoute
   '/employees/$employeeId/dr_history/': typeof EmployeesEmployeeIdDr_historyIndexRoute
   '/employees/$employeeId/events/': typeof EmployeesEmployeeIdEventsIndexRoute
+  '/employees/$employeeId/job_history/': typeof EmployeesEmployeeIdJob_historyIndexRoute
   '/employees/$employeeId/summary/': typeof EmployeesEmployeeIdSummaryIndexRoute
   '/employees/$employeeId/talent_audit/': typeof EmployeesEmployeeIdTalent_auditIndexRoute
   '/admin/departments_group/department_types/hierarchy/': typeof AdminDepartments_groupDepartment_typesHierarchyIndexRoute
@@ -765,7 +938,10 @@ export interface FileRouteTypes {
     | '/admin/planning_setup'
     | '/admin/review_setup'
     | '/admin/reviewers'
+    | '/admin/user_groups_group'
+    | '/developer/catalog'
     | '/developer/process_roles'
+    | '/developer/security'
     | '/employees/$employeeId'
     | '/auth/login'
     | '/employees/new'
@@ -795,10 +971,12 @@ export interface FileRouteTypes {
     | '/admin/talent-status-period-links'
     | '/admin/talent-statuses'
     | '/admin/talent'
-    | '/admin/user-group-types'
-    | '/admin/user-groups'
-    | '/admin/user_groups_group'
+    | '/admin/user_groups_group/'
+    | '/developer/audit_log'
+    | '/developer/catalog/'
+    | '/developer/event_apply'
     | '/developer/process_roles/'
+    | '/developer/security/'
     | '/developer/settings'
     | '/developer/translations'
     | '/employees/$employeeId/'
@@ -806,6 +984,7 @@ export interface FileRouteTypes {
     | '/people_review/$sessionId/employee/$employeeId'
     | '/admin/departments_group/department_categories'
     | '/admin/departments_group/department_types/'
+    | '/admin/departments_group/regions'
     | '/admin/departments_group/structure'
     | '/admin/employee_events/employee_event_change_dept_types'
     | '/admin/employee_events/employee_event_direction_types'
@@ -821,11 +1000,23 @@ export interface FileRouteTypes {
     | '/admin/review_setup/levels/'
     | '/admin/reviewers/employees'
     | '/admin/reviewers/holders'
+    | '/admin/user_groups_group/hrm_scopes'
+    | '/admin/user_groups_group/user_group_types'
+    | '/admin/user_groups_group/user_groups'
+    | '/admin/user_groups_group/users'
+    | '/developer/catalog/essences'
+    | '/developer/catalog/operations'
     | '/developer/process_roles/process'
     | '/developer/process_roles/process_role'
+    | '/developer/security/oesl'
+    | '/developer/security/permission_matrix'
+    | '/developer/security/permissions_overview'
+    | '/developer/security/user_group_types'
+    | '/developer/security/user_groups'
     | '/employees/$employeeId/departments'
     | '/employees/$employeeId/dr_history'
     | '/employees/$employeeId/events'
+    | '/employees/$employeeId/job_history'
     | '/employees/$employeeId/summary'
     | '/employees/$employeeId/talent_audit'
     | '/admin/departments_group/department_types/hierarchy'
@@ -864,10 +1055,12 @@ export interface FileRouteTypes {
     | '/admin/talent-status-period-links'
     | '/admin/talent-statuses'
     | '/admin/talent'
-    | '/admin/user-group-types'
-    | '/admin/user-groups'
     | '/admin/user_groups_group'
+    | '/developer/audit_log'
+    | '/developer/catalog'
+    | '/developer/event_apply'
     | '/developer/process_roles'
+    | '/developer/security'
     | '/developer/settings'
     | '/developer/translations'
     | '/employees/$employeeId'
@@ -875,6 +1068,7 @@ export interface FileRouteTypes {
     | '/people_review/$sessionId/employee/$employeeId'
     | '/admin/departments_group/department_categories'
     | '/admin/departments_group/department_types'
+    | '/admin/departments_group/regions'
     | '/admin/departments_group/structure'
     | '/admin/employee_events/employee_event_change_dept_types'
     | '/admin/employee_events/employee_event_direction_types'
@@ -890,11 +1084,23 @@ export interface FileRouteTypes {
     | '/admin/review_setup/levels'
     | '/admin/reviewers/employees'
     | '/admin/reviewers/holders'
+    | '/admin/user_groups_group/hrm_scopes'
+    | '/admin/user_groups_group/user_group_types'
+    | '/admin/user_groups_group/user_groups'
+    | '/admin/user_groups_group/users'
+    | '/developer/catalog/essences'
+    | '/developer/catalog/operations'
     | '/developer/process_roles/process'
     | '/developer/process_roles/process_role'
+    | '/developer/security/oesl'
+    | '/developer/security/permission_matrix'
+    | '/developer/security/permissions_overview'
+    | '/developer/security/user_group_types'
+    | '/developer/security/user_groups'
     | '/employees/$employeeId/departments'
     | '/employees/$employeeId/dr_history'
     | '/employees/$employeeId/events'
+    | '/employees/$employeeId/job_history'
     | '/employees/$employeeId/summary'
     | '/employees/$employeeId/talent_audit'
     | '/admin/departments_group/department_types/hierarchy'
@@ -913,7 +1119,10 @@ export interface FileRouteTypes {
     | '/admin/planning_setup'
     | '/admin/review_setup'
     | '/admin/reviewers'
+    | '/admin/user_groups_group'
+    | '/developer/catalog'
     | '/developer/process_roles'
+    | '/developer/security'
     | '/employees/$employeeId'
     | '/auth/login'
     | '/employees/new'
@@ -943,10 +1152,12 @@ export interface FileRouteTypes {
     | '/admin/talent-status-period-links/'
     | '/admin/talent-statuses/'
     | '/admin/talent/'
-    | '/admin/user-group-types/'
-    | '/admin/user-groups/'
     | '/admin/user_groups_group/'
+    | '/developer/audit_log/'
+    | '/developer/catalog/'
+    | '/developer/event_apply/'
     | '/developer/process_roles/'
+    | '/developer/security/'
     | '/developer/settings/'
     | '/developer/translations/'
     | '/employees/$employeeId/'
@@ -954,6 +1165,7 @@ export interface FileRouteTypes {
     | '/people_review/$sessionId/employee/$employeeId'
     | '/admin/departments_group/department_categories/'
     | '/admin/departments_group/department_types/'
+    | '/admin/departments_group/regions/'
     | '/admin/departments_group/structure/'
     | '/admin/employee_events/employee_event_change_dept_types/'
     | '/admin/employee_events/employee_event_direction_types/'
@@ -969,11 +1181,23 @@ export interface FileRouteTypes {
     | '/admin/review_setup/levels/'
     | '/admin/reviewers/employees/'
     | '/admin/reviewers/holders/'
+    | '/admin/user_groups_group/hrm_scopes/'
+    | '/admin/user_groups_group/user_group_types/'
+    | '/admin/user_groups_group/user_groups/'
+    | '/admin/user_groups_group/users/'
+    | '/developer/catalog/essences/'
+    | '/developer/catalog/operations/'
     | '/developer/process_roles/process/'
     | '/developer/process_roles/process_role/'
+    | '/developer/security/oesl/'
+    | '/developer/security/permission_matrix/'
+    | '/developer/security/permissions_overview/'
+    | '/developer/security/user_group_types/'
+    | '/developer/security/user_groups/'
     | '/employees/$employeeId/departments/'
     | '/employees/$employeeId/dr_history/'
     | '/employees/$employeeId/events/'
+    | '/employees/$employeeId/job_history/'
     | '/employees/$employeeId/summary/'
     | '/employees/$employeeId/talent_audit/'
     | '/admin/departments_group/department_types/hierarchy/'
@@ -993,7 +1217,10 @@ export interface RootRouteChildren {
   AdminPlanning_setupRouteRoute: typeof AdminPlanning_setupRouteRouteWithChildren
   AdminReview_setupRouteRoute: typeof AdminReview_setupRouteRouteWithChildren
   AdminReviewersRouteRoute: typeof AdminReviewersRouteRouteWithChildren
+  AdminUser_groups_groupRouteRoute: typeof AdminUser_groups_groupRouteRouteWithChildren
+  DeveloperCatalogRouteRoute: typeof DeveloperCatalogRouteRouteWithChildren
   DeveloperProcess_rolesRouteRoute: typeof DeveloperProcess_rolesRouteRouteWithChildren
+  DeveloperSecurityRouteRoute: typeof DeveloperSecurityRouteRouteWithChildren
   EmployeesEmployeeIdRouteRoute: typeof EmployeesEmployeeIdRouteRouteWithChildren
   AuthLoginRoute: typeof AuthLoginRoute
   EmployeesNewRoute: typeof EmployeesNewRoute
@@ -1014,9 +1241,8 @@ export interface RootRouteChildren {
   AdminTalentStatusPeriodLinksIndexRoute: typeof AdminTalentStatusPeriodLinksIndexRoute
   AdminTalentStatusesIndexRoute: typeof AdminTalentStatusesIndexRoute
   AdminTalentIndexRoute: typeof AdminTalentIndexRoute
-  AdminUserGroupTypesIndexRoute: typeof AdminUserGroupTypesIndexRoute
-  AdminUserGroupsIndexRoute: typeof AdminUserGroupsIndexRoute
-  AdminUser_groups_groupIndexRoute: typeof AdminUser_groups_groupIndexRoute
+  DeveloperAudit_logIndexRoute: typeof DeveloperAudit_logIndexRoute
+  DeveloperEvent_applyIndexRoute: typeof DeveloperEvent_applyIndexRoute
   DeveloperSettingsIndexRoute: typeof DeveloperSettingsIndexRoute
   DeveloperTranslationsIndexRoute: typeof DeveloperTranslationsIndexRoute
   People_reviewSessionIdIndexRoute: typeof People_reviewSessionIdIndexRoute
@@ -1099,11 +1325,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmployeesEmployeeIdRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/developer/security': {
+      id: '/developer/security'
+      path: '/developer/security'
+      fullPath: '/developer/security'
+      preLoaderRoute: typeof DeveloperSecurityRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/developer/process_roles': {
       id: '/developer/process_roles'
       path: '/developer/process_roles'
       fullPath: '/developer/process_roles'
       preLoaderRoute: typeof DeveloperProcess_rolesRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/developer/catalog': {
+      id: '/developer/catalog'
+      path: '/developer/catalog'
+      fullPath: '/developer/catalog'
+      preLoaderRoute: typeof DeveloperCatalogRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/user_groups_group': {
+      id: '/admin/user_groups_group'
+      path: '/admin/user_groups_group'
+      fullPath: '/admin/user_groups_group'
+      preLoaderRoute: typeof AdminUser_groups_groupRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/reviewers': {
@@ -1169,6 +1416,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DeveloperSettingsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/developer/security/': {
+      id: '/developer/security/'
+      path: '/'
+      fullPath: '/developer/security/'
+      preLoaderRoute: typeof DeveloperSecurityIndexRouteImport
+      parentRoute: typeof DeveloperSecurityRouteRoute
+    }
     '/developer/process_roles/': {
       id: '/developer/process_roles/'
       path: '/'
@@ -1176,26 +1430,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DeveloperProcess_rolesIndexRouteImport
       parentRoute: typeof DeveloperProcess_rolesRouteRoute
     }
+    '/developer/event_apply/': {
+      id: '/developer/event_apply/'
+      path: '/developer/event_apply'
+      fullPath: '/developer/event_apply'
+      preLoaderRoute: typeof DeveloperEvent_applyIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/developer/catalog/': {
+      id: '/developer/catalog/'
+      path: '/'
+      fullPath: '/developer/catalog/'
+      preLoaderRoute: typeof DeveloperCatalogIndexRouteImport
+      parentRoute: typeof DeveloperCatalogRouteRoute
+    }
+    '/developer/audit_log/': {
+      id: '/developer/audit_log/'
+      path: '/developer/audit_log'
+      fullPath: '/developer/audit_log'
+      preLoaderRoute: typeof DeveloperAudit_logIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/user_groups_group/': {
       id: '/admin/user_groups_group/'
-      path: '/admin/user_groups_group'
-      fullPath: '/admin/user_groups_group'
+      path: '/'
+      fullPath: '/admin/user_groups_group/'
       preLoaderRoute: typeof AdminUser_groups_groupIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/user-groups/': {
-      id: '/admin/user-groups/'
-      path: '/admin/user-groups'
-      fullPath: '/admin/user-groups'
-      preLoaderRoute: typeof AdminUserGroupsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/user-group-types/': {
-      id: '/admin/user-group-types/'
-      path: '/admin/user-group-types'
-      fullPath: '/admin/user-group-types'
-      preLoaderRoute: typeof AdminUserGroupTypesIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminUser_groups_groupRouteRoute
     }
     '/admin/talent/': {
       id: '/admin/talent/'
@@ -1358,6 +1619,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmployeesEmployeeIdSummaryIndexRouteImport
       parentRoute: typeof EmployeesEmployeeIdRouteRoute
     }
+    '/employees/$employeeId/job_history/': {
+      id: '/employees/$employeeId/job_history/'
+      path: '/job_history'
+      fullPath: '/employees/$employeeId/job_history'
+      preLoaderRoute: typeof EmployeesEmployeeIdJob_historyIndexRouteImport
+      parentRoute: typeof EmployeesEmployeeIdRouteRoute
+    }
     '/employees/$employeeId/events/': {
       id: '/employees/$employeeId/events/'
       path: '/events'
@@ -1379,6 +1647,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmployeesEmployeeIdDepartmentsIndexRouteImport
       parentRoute: typeof EmployeesEmployeeIdRouteRoute
     }
+    '/developer/security/user_groups/': {
+      id: '/developer/security/user_groups/'
+      path: '/user_groups'
+      fullPath: '/developer/security/user_groups'
+      preLoaderRoute: typeof DeveloperSecurityUser_groupsIndexRouteImport
+      parentRoute: typeof DeveloperSecurityRouteRoute
+    }
+    '/developer/security/user_group_types/': {
+      id: '/developer/security/user_group_types/'
+      path: '/user_group_types'
+      fullPath: '/developer/security/user_group_types'
+      preLoaderRoute: typeof DeveloperSecurityUser_group_typesIndexRouteImport
+      parentRoute: typeof DeveloperSecurityRouteRoute
+    }
+    '/developer/security/permissions_overview/': {
+      id: '/developer/security/permissions_overview/'
+      path: '/permissions_overview'
+      fullPath: '/developer/security/permissions_overview'
+      preLoaderRoute: typeof DeveloperSecurityPermissions_overviewIndexRouteImport
+      parentRoute: typeof DeveloperSecurityRouteRoute
+    }
+    '/developer/security/permission_matrix/': {
+      id: '/developer/security/permission_matrix/'
+      path: '/permission_matrix'
+      fullPath: '/developer/security/permission_matrix'
+      preLoaderRoute: typeof DeveloperSecurityPermission_matrixIndexRouteImport
+      parentRoute: typeof DeveloperSecurityRouteRoute
+    }
+    '/developer/security/oesl/': {
+      id: '/developer/security/oesl/'
+      path: '/oesl'
+      fullPath: '/developer/security/oesl'
+      preLoaderRoute: typeof DeveloperSecurityOeslIndexRouteImport
+      parentRoute: typeof DeveloperSecurityRouteRoute
+    }
     '/developer/process_roles/process_role/': {
       id: '/developer/process_roles/process_role/'
       path: '/process_role'
@@ -1392,6 +1695,48 @@ declare module '@tanstack/react-router' {
       fullPath: '/developer/process_roles/process'
       preLoaderRoute: typeof DeveloperProcess_rolesProcessIndexRouteImport
       parentRoute: typeof DeveloperProcess_rolesRouteRoute
+    }
+    '/developer/catalog/operations/': {
+      id: '/developer/catalog/operations/'
+      path: '/operations'
+      fullPath: '/developer/catalog/operations'
+      preLoaderRoute: typeof DeveloperCatalogOperationsIndexRouteImport
+      parentRoute: typeof DeveloperCatalogRouteRoute
+    }
+    '/developer/catalog/essences/': {
+      id: '/developer/catalog/essences/'
+      path: '/essences'
+      fullPath: '/developer/catalog/essences'
+      preLoaderRoute: typeof DeveloperCatalogEssencesIndexRouteImport
+      parentRoute: typeof DeveloperCatalogRouteRoute
+    }
+    '/admin/user_groups_group/users/': {
+      id: '/admin/user_groups_group/users/'
+      path: '/users'
+      fullPath: '/admin/user_groups_group/users'
+      preLoaderRoute: typeof AdminUser_groups_groupUsersIndexRouteImport
+      parentRoute: typeof AdminUser_groups_groupRouteRoute
+    }
+    '/admin/user_groups_group/user_groups/': {
+      id: '/admin/user_groups_group/user_groups/'
+      path: '/user_groups'
+      fullPath: '/admin/user_groups_group/user_groups'
+      preLoaderRoute: typeof AdminUser_groups_groupUser_groupsIndexRouteImport
+      parentRoute: typeof AdminUser_groups_groupRouteRoute
+    }
+    '/admin/user_groups_group/user_group_types/': {
+      id: '/admin/user_groups_group/user_group_types/'
+      path: '/user_group_types'
+      fullPath: '/admin/user_groups_group/user_group_types'
+      preLoaderRoute: typeof AdminUser_groups_groupUser_group_typesIndexRouteImport
+      parentRoute: typeof AdminUser_groups_groupRouteRoute
+    }
+    '/admin/user_groups_group/hrm_scopes/': {
+      id: '/admin/user_groups_group/hrm_scopes/'
+      path: '/hrm_scopes'
+      fullPath: '/admin/user_groups_group/hrm_scopes'
+      preLoaderRoute: typeof AdminUser_groups_groupHrm_scopesIndexRouteImport
+      parentRoute: typeof AdminUser_groups_groupRouteRoute
     }
     '/admin/reviewers/holders/': {
       id: '/admin/reviewers/holders/'
@@ -1498,6 +1843,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDepartments_groupStructureIndexRouteImport
       parentRoute: typeof AdminDepartments_groupRouteRoute
     }
+    '/admin/departments_group/regions/': {
+      id: '/admin/departments_group/regions/'
+      path: '/regions'
+      fullPath: '/admin/departments_group/regions'
+      preLoaderRoute: typeof AdminDepartments_groupRegionsIndexRouteImport
+      parentRoute: typeof AdminDepartments_groupRouteRoute
+    }
     '/admin/departments_group/department_types/': {
       id: '/admin/departments_group/department_types/'
       path: '/'
@@ -1599,6 +1951,7 @@ interface AdminDepartments_groupRouteRouteChildren {
   AdminDepartments_groupDepartment_typesRouteRoute: typeof AdminDepartments_groupDepartment_typesRouteRouteWithChildren
   AdminDepartments_groupIndexRoute: typeof AdminDepartments_groupIndexRoute
   AdminDepartments_groupDepartment_categoriesIndexRoute: typeof AdminDepartments_groupDepartment_categoriesIndexRoute
+  AdminDepartments_groupRegionsIndexRoute: typeof AdminDepartments_groupRegionsIndexRoute
   AdminDepartments_groupStructureIndexRoute: typeof AdminDepartments_groupStructureIndexRoute
 }
 
@@ -1609,6 +1962,8 @@ const AdminDepartments_groupRouteRouteChildren: AdminDepartments_groupRouteRoute
     AdminDepartments_groupIndexRoute: AdminDepartments_groupIndexRoute,
     AdminDepartments_groupDepartment_categoriesIndexRoute:
       AdminDepartments_groupDepartment_categoriesIndexRoute,
+    AdminDepartments_groupRegionsIndexRoute:
+      AdminDepartments_groupRegionsIndexRoute,
     AdminDepartments_groupStructureIndexRoute:
       AdminDepartments_groupStructureIndexRoute,
   }
@@ -1735,6 +2090,49 @@ const AdminReviewersRouteRouteChildren: AdminReviewersRouteRouteChildren = {
 const AdminReviewersRouteRouteWithChildren =
   AdminReviewersRouteRoute._addFileChildren(AdminReviewersRouteRouteChildren)
 
+interface AdminUser_groups_groupRouteRouteChildren {
+  AdminUser_groups_groupIndexRoute: typeof AdminUser_groups_groupIndexRoute
+  AdminUser_groups_groupHrm_scopesIndexRoute: typeof AdminUser_groups_groupHrm_scopesIndexRoute
+  AdminUser_groups_groupUser_group_typesIndexRoute: typeof AdminUser_groups_groupUser_group_typesIndexRoute
+  AdminUser_groups_groupUser_groupsIndexRoute: typeof AdminUser_groups_groupUser_groupsIndexRoute
+  AdminUser_groups_groupUsersIndexRoute: typeof AdminUser_groups_groupUsersIndexRoute
+}
+
+const AdminUser_groups_groupRouteRouteChildren: AdminUser_groups_groupRouteRouteChildren =
+  {
+    AdminUser_groups_groupIndexRoute: AdminUser_groups_groupIndexRoute,
+    AdminUser_groups_groupHrm_scopesIndexRoute:
+      AdminUser_groups_groupHrm_scopesIndexRoute,
+    AdminUser_groups_groupUser_group_typesIndexRoute:
+      AdminUser_groups_groupUser_group_typesIndexRoute,
+    AdminUser_groups_groupUser_groupsIndexRoute:
+      AdminUser_groups_groupUser_groupsIndexRoute,
+    AdminUser_groups_groupUsersIndexRoute:
+      AdminUser_groups_groupUsersIndexRoute,
+  }
+
+const AdminUser_groups_groupRouteRouteWithChildren =
+  AdminUser_groups_groupRouteRoute._addFileChildren(
+    AdminUser_groups_groupRouteRouteChildren,
+  )
+
+interface DeveloperCatalogRouteRouteChildren {
+  DeveloperCatalogIndexRoute: typeof DeveloperCatalogIndexRoute
+  DeveloperCatalogEssencesIndexRoute: typeof DeveloperCatalogEssencesIndexRoute
+  DeveloperCatalogOperationsIndexRoute: typeof DeveloperCatalogOperationsIndexRoute
+}
+
+const DeveloperCatalogRouteRouteChildren: DeveloperCatalogRouteRouteChildren = {
+  DeveloperCatalogIndexRoute: DeveloperCatalogIndexRoute,
+  DeveloperCatalogEssencesIndexRoute: DeveloperCatalogEssencesIndexRoute,
+  DeveloperCatalogOperationsIndexRoute: DeveloperCatalogOperationsIndexRoute,
+}
+
+const DeveloperCatalogRouteRouteWithChildren =
+  DeveloperCatalogRouteRoute._addFileChildren(
+    DeveloperCatalogRouteRouteChildren,
+  )
+
 interface DeveloperProcess_rolesRouteRouteChildren {
   DeveloperProcess_rolesIndexRoute: typeof DeveloperProcess_rolesIndexRoute
   DeveloperProcess_rolesProcessIndexRoute: typeof DeveloperProcess_rolesProcessIndexRoute
@@ -1755,12 +2153,41 @@ const DeveloperProcess_rolesRouteRouteWithChildren =
     DeveloperProcess_rolesRouteRouteChildren,
   )
 
+interface DeveloperSecurityRouteRouteChildren {
+  DeveloperSecurityIndexRoute: typeof DeveloperSecurityIndexRoute
+  DeveloperSecurityOeslIndexRoute: typeof DeveloperSecurityOeslIndexRoute
+  DeveloperSecurityPermission_matrixIndexRoute: typeof DeveloperSecurityPermission_matrixIndexRoute
+  DeveloperSecurityPermissions_overviewIndexRoute: typeof DeveloperSecurityPermissions_overviewIndexRoute
+  DeveloperSecurityUser_group_typesIndexRoute: typeof DeveloperSecurityUser_group_typesIndexRoute
+  DeveloperSecurityUser_groupsIndexRoute: typeof DeveloperSecurityUser_groupsIndexRoute
+}
+
+const DeveloperSecurityRouteRouteChildren: DeveloperSecurityRouteRouteChildren =
+  {
+    DeveloperSecurityIndexRoute: DeveloperSecurityIndexRoute,
+    DeveloperSecurityOeslIndexRoute: DeveloperSecurityOeslIndexRoute,
+    DeveloperSecurityPermission_matrixIndexRoute:
+      DeveloperSecurityPermission_matrixIndexRoute,
+    DeveloperSecurityPermissions_overviewIndexRoute:
+      DeveloperSecurityPermissions_overviewIndexRoute,
+    DeveloperSecurityUser_group_typesIndexRoute:
+      DeveloperSecurityUser_group_typesIndexRoute,
+    DeveloperSecurityUser_groupsIndexRoute:
+      DeveloperSecurityUser_groupsIndexRoute,
+  }
+
+const DeveloperSecurityRouteRouteWithChildren =
+  DeveloperSecurityRouteRoute._addFileChildren(
+    DeveloperSecurityRouteRouteChildren,
+  )
+
 interface EmployeesEmployeeIdRouteRouteChildren {
   EmployeesEmployeeIdEditRoute: typeof EmployeesEmployeeIdEditRoute
   EmployeesEmployeeIdIndexRoute: typeof EmployeesEmployeeIdIndexRoute
   EmployeesEmployeeIdDepartmentsIndexRoute: typeof EmployeesEmployeeIdDepartmentsIndexRoute
   EmployeesEmployeeIdDr_historyIndexRoute: typeof EmployeesEmployeeIdDr_historyIndexRoute
   EmployeesEmployeeIdEventsIndexRoute: typeof EmployeesEmployeeIdEventsIndexRoute
+  EmployeesEmployeeIdJob_historyIndexRoute: typeof EmployeesEmployeeIdJob_historyIndexRoute
   EmployeesEmployeeIdSummaryIndexRoute: typeof EmployeesEmployeeIdSummaryIndexRoute
   EmployeesEmployeeIdTalent_auditIndexRoute: typeof EmployeesEmployeeIdTalent_auditIndexRoute
 }
@@ -1774,6 +2201,8 @@ const EmployeesEmployeeIdRouteRouteChildren: EmployeesEmployeeIdRouteRouteChildr
     EmployeesEmployeeIdDr_historyIndexRoute:
       EmployeesEmployeeIdDr_historyIndexRoute,
     EmployeesEmployeeIdEventsIndexRoute: EmployeesEmployeeIdEventsIndexRoute,
+    EmployeesEmployeeIdJob_historyIndexRoute:
+      EmployeesEmployeeIdJob_historyIndexRoute,
     EmployeesEmployeeIdSummaryIndexRoute: EmployeesEmployeeIdSummaryIndexRoute,
     EmployeesEmployeeIdTalent_auditIndexRoute:
       EmployeesEmployeeIdTalent_auditIndexRoute,
@@ -1793,8 +2222,12 @@ const rootRouteChildren: RootRouteChildren = {
   AdminPlanning_setupRouteRoute: AdminPlanning_setupRouteRouteWithChildren,
   AdminReview_setupRouteRoute: AdminReview_setupRouteRouteWithChildren,
   AdminReviewersRouteRoute: AdminReviewersRouteRouteWithChildren,
+  AdminUser_groups_groupRouteRoute:
+    AdminUser_groups_groupRouteRouteWithChildren,
+  DeveloperCatalogRouteRoute: DeveloperCatalogRouteRouteWithChildren,
   DeveloperProcess_rolesRouteRoute:
     DeveloperProcess_rolesRouteRouteWithChildren,
+  DeveloperSecurityRouteRoute: DeveloperSecurityRouteRouteWithChildren,
   EmployeesEmployeeIdRouteRoute: EmployeesEmployeeIdRouteRouteWithChildren,
   AuthLoginRoute: AuthLoginRoute,
   EmployeesNewRoute: EmployeesNewRoute,
@@ -1816,9 +2249,8 @@ const rootRouteChildren: RootRouteChildren = {
     AdminTalentStatusPeriodLinksIndexRoute,
   AdminTalentStatusesIndexRoute: AdminTalentStatusesIndexRoute,
   AdminTalentIndexRoute: AdminTalentIndexRoute,
-  AdminUserGroupTypesIndexRoute: AdminUserGroupTypesIndexRoute,
-  AdminUserGroupsIndexRoute: AdminUserGroupsIndexRoute,
-  AdminUser_groups_groupIndexRoute: AdminUser_groups_groupIndexRoute,
+  DeveloperAudit_logIndexRoute: DeveloperAudit_logIndexRoute,
+  DeveloperEvent_applyIndexRoute: DeveloperEvent_applyIndexRoute,
   DeveloperSettingsIndexRoute: DeveloperSettingsIndexRoute,
   DeveloperTranslationsIndexRoute: DeveloperTranslationsIndexRoute,
   People_reviewSessionIdIndexRoute: People_reviewSessionIdIndexRoute,

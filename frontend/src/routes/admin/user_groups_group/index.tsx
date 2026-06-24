@@ -1,7 +1,9 @@
 // src/routes/admin/user_groups_group/index.tsx
-import { createFileRoute } from '@tanstack/react-router';
-import { UserGroupsGroupPage } from '../../../components/admin/user-groups/UserGroupsGroupPage';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/admin/user_groups_group/')({
-    component: UserGroupsGroupPage,
+    beforeLoad: () => {
+        throw redirect({ to: '/admin/user_groups_group/users' });
+    },
 });
+ 
