@@ -8,6 +8,7 @@ from backend.api_v1.department_type.department_type_schema import (
     DepartmentTypeCreate,
     DepartmentTypeUpdate,
     DepartmentTypeWithParentalLink,
+    DepartmentTypeWithLinkStats,
 )
 from backend.api_v1.department_type.department_type_dependencies import (
     get_department_type_service,
@@ -26,7 +27,7 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[DepartmentTypeSchema],
+    response_model=List[DepartmentTypeWithLinkStats],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT_TYPE)],
 )
 async def get_department_types(

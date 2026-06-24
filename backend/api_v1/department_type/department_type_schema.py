@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 
@@ -34,3 +34,19 @@ class DepartmentTypeWithParentalLink(DepartmentTypeBase):
     # Link-specific fields
     parent_id: int | None = None
     link_id: int | None = None
+    link_is_active: bool | None = None
+
+
+class DepartmentTypeWithLinkStats(DepartmentTypeBase):
+    """
+    DepartmentType enriched with aggregated metadata for the list view:
+    - parent_names: names of all parent department types (M2M)
+    - job_count: number of linked jobs
+    Computed in a single aggregated query (see repository.get_with_link_stats).
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    created_at: datetime
+    parent_names: List[str] = []
+    job_count: int = 0

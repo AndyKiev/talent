@@ -13,6 +13,7 @@ from backend.api_v1.department_type.department_type_schema import (
     DepartmentTypeCreate,
     DepartmentTypeUpdate,
     DepartmentTypeWithParentalLink,
+    DepartmentTypeWithLinkStats,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.department_type.department_type_errors import (
@@ -48,17 +49,22 @@ class DepartmentTypeService(BaseService):
         name: Optional[str] = None,
         is_active: Optional[bool] = None,
         sort: Optional[str] = None,
-    ) -> List[DepartmentTypeSchema]:
+    ) -> List[DepartmentTypeWithLinkStats]:
         if name:
             record = await self.get_by_name(
                 name, not_found_exc=DepartmentTypeNotFoundByName
             )
-            return [DepartmentTypeSchema.model_validate(record)]
-        filters = {}
-        if is_active is not None:
-            filters["is_active"] = is_active
-        records = await self.get_all(params=filters or None, sort_json=sort)
-        return [DepartmentTypeSchema.model_validate(r) for r in records]
+            data = DepartmentTypeSchema.model_validate(record).model_dump()
+            return [DepartmentTypeWithLinkStats(**data)]
+
+        rows = await self.repository.get_with_link_stats(is_active=is_active)
+        enriched: List[DepartmentTypeWithLinkStats] = []
+        for record, parent_names, job_count in rows:
+            data = DepartmentTypeSchema.model_validate(record).model_dump()
+            data["parent_names"] = parent_names
+            data["job_count"] = job_count
+            enriched.append(DepartmentTypeWithLinkStats(**data))
+        return enriched
 
     async def create_department_type(
         self, type_in: DepartmentTypeCreate
@@ -114,35 +120,32 @@ class DepartmentTypeService(BaseService):
         sort: Optional[str] = None,
     ) -> List[DepartmentTypeWithParentalLink]:
         """
-        Get all active child department types for a given parent,
-        including link_id and parent_id in the response.
+        Get all child department types for a given parent, including
+        link_id, link_is_active, and parent_id in the response.
+        Both active and inactive links are returned; callers may filter via is_active.
         """
         from sqlalchemy import select
         from backend.api_v1.department_type_parental_links.department_type_parental_link_model import (
             DepartmentTypeParentalLink,
         )
 
-        # Build query joining department_types with parental links
         stmt = (
             select(
-                self.repository.model, DepartmentTypeParentalLink.id.label("link_id")
+                self.repository.model,
+                DepartmentTypeParentalLink.id.label("link_id"),
+                DepartmentTypeParentalLink.is_active.label("link_is_active"),
             )
             .join(
                 DepartmentTypeParentalLink,
                 self.repository.model.id == DepartmentTypeParentalLink.child_id,
             )
-            .where(
-                DepartmentTypeParentalLink.parent_id == parent_id,
-                DepartmentTypeParentalLink.is_active == True,
-                self.repository.model.is_active == True,
-            )
+            .where(DepartmentTypeParentalLink.parent_id == parent_id)
         )
 
-        # Apply optional is_active filter on children
+        # Optional filter on the department type's own is_active
         if is_active is not None:
             stmt = stmt.where(self.repository.model.is_active == is_active)
 
-        # Apply sorting if provided
         if sort:
             from backend.api_v1.base.models.utils.mixins import parse_sort_json
 
@@ -155,14 +158,14 @@ class DepartmentTypeService(BaseService):
                     )
 
         result = await self.session.execute(stmt)
-        rows = result.all()  # List of tuples: (DepartmentType, link_id)
+        rows = result.all()  # List of tuples: (DepartmentType, link_id, link_is_active)
 
-        # Enrich with link metadata
         enriched = []
-        for record, link_id in rows:
+        for record, link_id, link_is_active in rows:
             data = DepartmentTypeSchema.model_validate(record).model_dump()
             data["parent_id"] = parent_id
             data["link_id"] = link_id
+            data["link_is_active"] = link_is_active
             enriched.append(DepartmentTypeWithParentalLink(**data))
 
         return enriched
