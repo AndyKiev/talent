@@ -3,18 +3,40 @@ from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List, FrozenSet, Tuple, Literal
 from datetime import datetime, date
 
+from backend.api_v1.department.department_org_units import TopOrgUnit
+
 
 class EmployeeBase(BaseModel):
     code: str = Field(..., max_length=10)
     name: str = Field(..., max_length=100)
     email: Optional[str] = Field(None, max_length=100)
     is_active: bool = True
-    job_id: int = Field(default=1)
+    job_id: Optional[int] = Field(default=None)
     lang_id: int = Field(default=3)
 
 
 class EmployeeCreate(EmployeeBase):
     pass
+
+
+class EmployeeWithActivationCreate(EmployeeBase):
+    """
+    One-shot employee creation with an activation event.
+    Reuses EmployeeBase for employee fields; adds activation fields.
+    """
+
+    effective_date: date = Field(..., description="Activation date")
+    department_id: int = Field(..., description="Main department for the employee")
+    job_id: int = Field(..., description="Job for the employee")
+    description: Optional[str] = Field(None, max_length=512)
+
+
+class EmployeeStatusNested(BaseModel):
+    """Slim employee-status for nesting in EmployeeSchema."""
+
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    name: str
 
 
 class EmployeePersonalDataUpdate(BaseModel):
@@ -62,6 +84,7 @@ class EmployeeSchema(EmployeeBase):
     # Superadmin / bypass-group flag, set in jwt_auth.get_current_auth_user.
     # Excluded from serialization — used only by the has_access dependencies.
     is_bypass: bool = Field(default=False, exclude=True)
+    status: Optional[EmployeeStatusNested] = None
     job: Optional["Job"] = None
     lang: Optional["Lang"] = None
     # Populated by EmployeeService._to_schema from the selectin-loaded relationship.
@@ -80,6 +103,9 @@ class MainDepartmentSchema(BaseModel):
     id: int  # EmployeeDepartment.id  (link id, useful for delete)
     department_id: int
     name: str  # department name — populated manually in _to_schema
+    # Derived top-level org unit (board / directorate / store) for this
+    # department. Resolved server-side by walking up the department tree.
+    top_department: Optional[TopOrgUnit] = None
 
 
 # ── Late imports to avoid circular references ─────────────────────────────────

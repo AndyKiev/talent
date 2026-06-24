@@ -1,9 +1,12 @@
-from typing import List
+from typing import List, Optional
 
-from sqlalchemy import select, delete, distinct
+from sqlalchemy import select, delete, distinct, and_
 
-from backend.api_v1.base.base_repository import BaseRepository
+from backend.api_v1.base.base_repository import BaseRepository, SortSpec
 from backend.api_v1.employee.employee_model import Employee
+from backend.api_v1.employee_department.employee_department_model import (
+    EmployeeDepartment,
+)
 from backend.api_v1.user_group.user_group_errors import (
     UserGroupNotFound,
     UserGroupsNotFound,
@@ -34,6 +37,65 @@ from backend.api_v1.employee.employee_errors import (
 
 class EmployeeRepository(BaseRepository):
     model = Employee
+
+    # -----------------------------------------------------------------------
+    # List with optional HRM-scope restriction
+    # -----------------------------------------------------------------------
+
+    async def get_all(
+        self,
+        filters: dict | None = None,
+        sort: SortSpec = None,
+        main_department_ids: Optional[set[int]] = None,
+    ):
+        """
+        Override of BaseRepository.get_all that additionally supports restricting
+        the result to employees whose MAIN department (EmployeeDepartment with
+        is_main=True) is one of ``main_department_ids``.
+
+        Restriction semantics (set by the service from the current user's role):
+          - ``main_department_ids is None``  -> NO restriction (see all).
+          - empty set                        -> see NOTHING (returns []).
+          - non-empty set                    -> only employees whose main dept
+                                                is in the set.
+
+        Relationships stay lazy="selectin" on the model, so they auto-load for
+        _to_schema regardless of this query.
+        """
+        # Hard stop: an explicit empty restriction means "no visible employees".
+        if main_department_ids is not None and not main_department_ids:
+            return []
+
+        stmt = select(self.model)
+
+        # Same scalar/list filter handling as the base implementation.
+        if filters:
+            conditions = []
+            if all(isinstance(value, list) for value in filters.values()):
+                conditions.extend(
+                    getattr(self.model, key).in_(values)
+                    for key, values in filters.items()
+                )
+            else:
+                conditions.extend(
+                    getattr(self.model, key) == value for key, value in filters.items()
+                )
+            stmt = stmt.filter(and_(*conditions))
+
+        # HRM-scope restriction: main department must be in the allowed set.
+        if main_department_ids is not None:
+            main_dept_subq = select(EmployeeDepartment.employee_id).where(
+                EmployeeDepartment.is_main.is_(True),
+                EmployeeDepartment.department_id.in_(main_department_ids),
+            )
+            stmt = stmt.where(self.model.id.in_(main_dept_subq))
+
+        order_by_clauses = self._parse_sort_spec(sort)
+        if order_by_clauses:
+            stmt = stmt.order_by(*order_by_clauses)
+
+        result = await self.session.scalars(stmt)
+        return result.all()
 
     # -----------------------------------------------------------------------
     # Custom multi-join query — no base equivalent

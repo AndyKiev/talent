@@ -36,6 +36,27 @@ class EmployeeNotFoundByCode(NotFoundError):
         super().__init__("Employee", "code", code)
 
 
+class EmployeeHasReferencesError(DomainError):
+    """
+    Raised when an employee cannot be deleted because other records still
+    reference it. `summary` is a pre-translated, comma-separated list of
+    blocking relationships with counts (built by the service).
+    """
+
+    message_key = "employeeHasReferencesError"
+
+    def __init__(self, employee_code: str, summary: str) -> None:
+        self.template_vars = {
+            "code": employee_code,
+            "blockers": summary,
+        }
+        self.fallback = (
+            f"Employee '{employee_code}' cannot be deleted — still referenced by: "
+            f"{summary}. Remove these first."
+        )
+        super().__init__(self.fallback)
+
+
 class EmployeeCodeTaken(AlreadyExistsError):
     message_key = "employeeCodeTaken"
 
