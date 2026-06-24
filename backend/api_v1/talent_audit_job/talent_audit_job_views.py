@@ -16,6 +16,7 @@ from backend.api_v1.talent_audit_job.talent_audit_job_schema import (
 from backend.api_v1.talent_audit_job.talent_audit_job_service import (
     TalentAuditJobService,
 )
+
 from backend.auth.guards import Guard
 from backend.utils.enums import OperationVerb, EssenceName
 

@@ -31,6 +31,18 @@ from backend.api_v1.talent_audit_job.talent_audit_job_model import TalentAuditJo
 from backend.api_v1.talent_status_period_link.talent_status_period_link_model import (
     TalentStatusPeriodLink,
 )
+from backend.api_v1.talent_audit.talent_audit_repository import TalentAuditRepository
+from backend.api_v1.talent_audit_job_status.talent_audit_job_status_repository import (
+    TalentAuditJobStatusRepository,
+)
+
+
+# ── Reconcile status keys ────────────────────────────────────────────────────
+# "Open" audit jobs eligible for auto-transition when an employee's job change
+# is applied. Match on status.key (stable), never name (Ukrainian, mutable).
+OPEN_STATUS_KEYS = frozenset({"created", "closed"})
+APPLIED_STATUS_KEY = "applied"
+SKIPPED_STATUS_KEY = "skipped"
 
 
 def _enrich(orm_record) -> dict:
@@ -198,6 +210,128 @@ class TalentAuditJobService(BaseService):
             TalentAuditJobUpdateSuccess(schema.id)
         )
         return MutationResponse(detail=detail, data=schema)
+
+    # ------------------------------------------------------------------
+    # Reconcile (called when an employee's job change is applied)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _qty_months_of(job: TalentAuditJob) -> int:
+        """qty_months for an audit job via its selectin-loaded link → period."""
+        link = job.talent_status_period_link
+        if link and link.talent_period:
+            return link.talent_period.qty_months
+        return 0
+
+    async def reconcile_after_job_applied(
+        self,
+        employee_id: int,
+        applied_job_id: int,
+    ) -> dict:
+        """
+        Reconcile this employee's talent-audit jobs after an employee event that
+        moves them INTO `applied_job_id` is applied.
+
+        Rule (open jobs = status.key in {created, closed}, periods strictly
+        ascending so qty_months are unique within an audit):
+          • the open job whose target_job_id == applied_job_id  → `applied`
+          • open jobs with SMALLER qty_months than the matched one → `skipped`
+          • open jobs with LARGER qty_months                      → untouched
+          • no audit / no open jobs / no match                    → no-op
+
+        Mutates the matched/skipped ORM rows IN PLACE without committing — the
+        caller's apply commit flushes them in the same transaction, so the whole
+        event-apply (employee projection + event status + these statuses) lands
+        atomically and is rolled back together on any error.
+
+        Returns a small stats dict for logging/response:
+          {"matched_audit_job_id": int|None, "applied": int,
+           "skipped": int, "skipped_audit_job_ids": [int, ...],
+           "changes": [  # per-job old/new, for audit logging by the caller
+             {"talent_audit_job_id": int,
+              "old_status_id": int, "new_status_id": int,
+              "old_status_key": str|None, "new_status_key": str},
+             ...
+           ]}
+        """
+        stats = {
+            "matched_audit_job_id": None,
+            "applied": 0,
+            "skipped": 0,
+            "skipped_audit_job_ids": [],
+            "changes": [],
+        }
+
+        audit_repo = TalentAuditRepository(session=self.session)
+        audit = await audit_repo.get_by_employee_id(employee_id)
+        if audit is None:
+            return stats
+
+        open_jobs = [
+            j
+            for j in (audit.jobs or [])
+            if j.status and j.status.key in OPEN_STATUS_KEYS
+        ]
+        if not open_jobs:
+            return stats
+
+        matched = next(
+            (j for j in open_jobs if j.target_job_id == applied_job_id), None
+        )
+        if matched is None:
+            return stats
+
+        matched_qty = self._qty_months_of(matched)
+
+        status_repo = TalentAuditJobStatusRepository(session=self.session)
+        applied_status_id = await status_repo.get_id_by_field("key", APPLIED_STATUS_KEY)
+        skipped_status_id = await status_repo.get_id_by_field("key", SKIPPED_STATUS_KEY)
+        if applied_status_id is None:
+            raise ValueError(
+                f"talent_audit_job_status with key '{APPLIED_STATUS_KEY}' not found"
+            )
+        if skipped_status_id is None:
+            raise ValueError(
+                f"talent_audit_job_status with key '{SKIPPED_STATUS_KEY}' not found"
+            )
+
+        # matched → applied
+        matched_old_status_id = matched.status_id
+        matched_old_status_key = matched.status.key if matched.status else None
+        matched.status_id = applied_status_id
+        stats["matched_audit_job_id"] = matched.id
+        stats["applied"] = 1
+        stats["changes"].append(
+            {
+                "talent_audit_job_id": matched.id,
+                "old_status_id": matched_old_status_id,
+                "new_status_id": applied_status_id,
+                "old_status_key": matched_old_status_key,
+                "new_status_key": APPLIED_STATUS_KEY,
+            }
+        )
+
+        # open jobs below the matched period → skipped (later ones untouched)
+        for j in open_jobs:
+            if j.id == matched.id:
+                continue
+            if self._qty_months_of(j) < matched_qty:
+                j_old_status_id = j.status_id
+                j_old_status_key = j.status.key if j.status else None
+                j.status_id = skipped_status_id
+                stats["skipped"] += 1
+                stats["skipped_audit_job_ids"].append(j.id)
+                stats["changes"].append(
+                    {
+                        "talent_audit_job_id": j.id,
+                        "old_status_id": j_old_status_id,
+                        "new_status_id": skipped_status_id,
+                        "old_status_key": j_old_status_key,
+                        "new_status_key": SKIPPED_STATUS_KEY,
+                    }
+                )
+
+        return stats
 
     async def delete_talent_audit_job(self, job_id: int) -> None:
         await self.get_by_id(job_id)
