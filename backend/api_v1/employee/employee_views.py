@@ -8,6 +8,7 @@ from backend.api_v1.employee.employee_schema import (
     EmployeeCreate,
     EmployeeUpdate,
     EmployeePersonalDataUpdate,
+    EmployeeWithActivationCreate,
 )
 from backend.api_v1.employee.employee_dependencies import (
     get_employee_service,
@@ -15,6 +16,12 @@ from backend.api_v1.employee.employee_dependencies import (
     employee_by_code,
 )
 from backend.api_v1.employee.employee_service import EmployeeService, SyncUserResult
+from backend.api_v1.employee_events.employee_event.employee_event_dependencies import (
+    get_employee_event_service,
+)
+from backend.api_v1.employee_events.employee_event.employee_event_service import (
+    EmployeeEventService,
+)
 from backend.auth.jwt_auth import require_operation
 from backend.utils.enums import OperationTypes
 from backend.auth.guards import Guard
@@ -59,6 +66,21 @@ async def get_users_by_job_id_legacy(
 
 
 @router.get(
+    "/scope_departments",
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE)],
+)
+async def get_scope_departments(
+    service: Annotated[EmployeeService, Depends(get_employee_service)],
+):
+    """
+    Ordered departments for the employees-page filter Select:
+    store (by region sort_order) -> directorate (by region sort_order) -> other.
+    admin/HRS get all; HRM gets their active responsibility departments; others []
+    """
+    return await service.get_scope_select_departments()
+
+
+@router.get(
     "/{employee_id}",
     response_model=EmployeeSchema,
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE)],
@@ -88,6 +110,50 @@ async def create_user(
     # _: EmployeeSchema = Depends(require_operation(OperationTypes.CREATE_USER.value)),
 ):
     return await service.create_user(user_in)
+
+
+@router.post(
+    "/with_activation",
+    response_model=EmployeeSchema,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.EMPLOYEE)],
+)
+async def create_employee_with_activation(
+    payload: EmployeeWithActivationCreate,
+    employee_service: Annotated[EmployeeService, Depends(get_employee_service)],
+    event_service: Annotated[EmployeeEventService, Depends(get_employee_event_service)],
+):
+    """
+    Atomic creation of a new employee (pending status, no job, no departments)
+    plus an activation event pre-filled with MAIN_DEPT_CHANGE, JOB_CHANGE,
+    and auto STATUS_CHANGE -> working.
+    """
+    # 1) Create the employee
+    employee = await employee_service.create_user(
+        EmployeeCreate(
+            code=payload.code,
+            name=payload.name,
+            email=payload.email,
+            is_active=payload.is_active,
+            lang_id=payload.lang_id,
+        )
+    )
+
+    # 2) Create the activation event with change rows.
+    try:
+        await event_service.create_activation_for_employee(
+            employee_id=employee.id,
+            effective_date=payload.effective_date,
+            department_id=payload.department_id,
+            job_id=payload.job_id,
+            description=payload.description,
+        )
+    except Exception:
+        await employee_service.repository.delete_by_id(employee.id)
+        raise
+
+    # 3) Re-fetch the employee to include fresh data in the response
+    return await employee_service.get_by_id(employee.id)
 
 
 @router.patch(
