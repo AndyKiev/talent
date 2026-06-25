@@ -4,6 +4,9 @@ from typing import Optional, List, Literal
 from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_constants import (
     MAX_GRADE,
 )
+from backend.api_v1.review_session_criterion.review_session_criterion_schema import (
+    FrozenCriterionSchema,
+)
 
 
 class CriterionScoreSchema(BaseModel):
@@ -36,6 +39,9 @@ class Evaluation(EvaluationBase):
     facts: Optional[str] = None
     improvement: Optional[str] = None
     criterion_scores: List[CriterionScoreSchema] = []
+    # Frozen behaviour descriptors for this evaluation's dimension, in display
+    # order. Populated on the list read; `criterion_index` indexes into this.
+    criteria: List[FrozenCriterionSchema] = []
     dimension_name: str = ""
     dimension_key: str = ""
     dimension_description: Optional[str] = None

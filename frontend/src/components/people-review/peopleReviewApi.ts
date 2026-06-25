@@ -55,6 +55,13 @@ export interface CriterionScore {
     score: number;
 }
 
+/** A behaviour descriptor frozen into the session at open time (text copy). */
+export interface FrozenCriterion {
+    id: number;
+    text: string;
+    sort_order: number;
+}
+
 export interface Evaluation {
     id: number;
     review_session_employee_id: number;
@@ -64,6 +71,9 @@ export interface Evaluation {
     facts: string | null;
     improvement: string | null;
     criterion_scores: CriterionScore[];
+    // Frozen descriptors for this dimension (display order). Empty for sessions
+    // opened before the freeze existed — the store then falls back to the hint.
+    criteria: FrozenCriterion[];
     dimension_name: string;
     dimension_key: string;
     dimension_description: string | null;

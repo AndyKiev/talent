@@ -61,6 +61,7 @@ __all__ = {
     "ReviewDimension",
     "ReviewDimensionCriteria",
     "ReviewSession",
+    "ReviewSessionCriterion",
     "ReviewSessionEmployee",
     "ReviewSessionEmployeeEvaluation",
     "ReviewSessionEmployeeCriterionScore",
@@ -244,6 +245,9 @@ from backend.api_v1.review_dimension_criteria.review_dimension_criteria_model im
     ReviewDimensionCriteria,
 )
 from backend.api_v1.review_session.review_session_model import ReviewSession
+from backend.api_v1.review_session_criterion.review_session_criterion_model import (
+    ReviewSessionCriterion,
+)
 from backend.api_v1.review_session_employee.review_session_employee_model import (
     ReviewSessionEmployee,
 )

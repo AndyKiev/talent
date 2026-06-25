@@ -9,6 +9,7 @@ export interface ReviewDimensionCriteria {
     dimension_id: number;
     text: string;
     sort_order: number;
+    is_active: boolean;
 }
 
 export interface ReviewDimension {
@@ -78,11 +79,13 @@ export interface CriteriaCreate {
     dimension_id: number;
     text: string;
     sort_order?: number;
+    is_active?: boolean;
 }
 
 export interface CriteriaUpdate {
     text?: string;
     sort_order?: number;
+    is_active?: boolean;
 }
 
 export const fetchCriteria = async (dimensionId: number): Promise<ReviewDimensionCriteria[]> => {

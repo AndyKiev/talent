@@ -30,6 +30,16 @@ from backend.api_v1.review_session_employee.review_session_employee_repository i
 from backend.api_v1.review_session_employee.review_session_employee_service import (
     ReviewSessionEmployeeService,
 )
+from backend.api_v1.review_session_employee.review_session_employee_model import (
+    ReviewSessionEmployee,
+)
+from backend.api_v1.review_session_criterion.review_session_criterion_model import (
+    ReviewSessionCriterion,
+)
+from backend.api_v1.review_session_criterion.review_session_criterion_schema import (
+    FrozenCriterionSchema,
+)
+from sqlalchemy import select
 
 import json
 
@@ -79,7 +89,49 @@ class ReviewSessionEmployeeEvaluationService(BaseService):
         records = await self.get_all(
             params={"review_session_employee_id": review_session_employee_id}
         )
-        return [self._to_schema(r) for r in records]
+        frozen_by_dim = await self._frozen_criteria_by_dimension(
+            review_session_employee_id
+        )
+        schemas = []
+        for r in records:
+            schema = self._to_schema(r)
+            schema.criteria = frozen_by_dim.get(r.dimension_id, [])
+            schemas.append(schema)
+        return schemas
+
+    async def _frozen_criteria_by_dimension(
+        self, review_session_employee_id: int
+    ) -> dict[int, List[FrozenCriterionSchema]]:
+        """The session's frozen criteria (this RSE's session), grouped by
+        dimension and ordered for display. Empty when the session predates the
+        freeze — the frontend then falls back to parsing the live hint."""
+        session_id = await self.session.scalar(
+            select(ReviewSessionEmployee.session_id).where(
+                ReviewSessionEmployee.id == review_session_employee_id
+            )
+        )
+        if session_id is None:
+            return {}
+        rows = (
+            (
+                await self.session.execute(
+                    select(ReviewSessionCriterion)
+                    .where(ReviewSessionCriterion.session_id == session_id)
+                    .order_by(
+                        ReviewSessionCriterion.sort_order,
+                        ReviewSessionCriterion.id,
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+        grouped: dict[int, List[FrozenCriterionSchema]] = {}
+        for row in rows:
+            grouped.setdefault(row.dimension_id, []).append(
+                FrozenCriterionSchema.model_validate(row)
+            )
+        return grouped
 
     async def update_evaluation(
         self, eval_id: int, eval_update: EvaluationUpdate

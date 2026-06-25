@@ -10,6 +10,7 @@ import {
     Paper,
     Snackbar,
     Stack,
+    Switch,
     TextField,
     Typography,
 } from '@mui/material';
@@ -61,8 +62,17 @@ export function ReviewCriteriaManager() {
         staleTime: 60 * 1000,
     });
 
+    // Active first (inactive sink to the bottom), then by sort_order. Only active
+    // criteria are frozen into a new session, so keeping them grouped on top makes
+    // the "what will a new review use" set obvious at a glance.
     const rows = useMemo(
-        () => [...criteria].sort((a, b) => a.sort_order - b.sort_order || a.id - b.id),
+        () =>
+            [...criteria].sort(
+                (a, b) =>
+                    Number(b.is_active) - Number(a.is_active) ||
+                    a.sort_order - b.sort_order ||
+                    a.id - b.id,
+            ),
         [criteria],
     );
 
@@ -94,6 +104,24 @@ export function ReviewCriteriaManager() {
     const columns: GridColDef<ReviewDimensionCriteria>[] = [
         orderColumn,
         { field: 'text', headerName: getString('criterionText'), flex: 1, minWidth: 320 },
+        {
+            field: 'is_active',
+            headerName: getString('active'),
+            width: 110,
+            sortable: false,
+            renderCell: (params) => (
+                <Switch
+                    checked={params.row.is_active}
+                    onChange={(e) =>
+                        updateMutation.mutate({
+                            id: params.row.id,
+                            data: { is_active: e.target.checked },
+                        })
+                    }
+                    disabled={updateMutation.isPending}
+                />
+            ),
+        },
         {
             field: 'actions',
             headerName: '',
@@ -177,9 +205,15 @@ export function ReviewCriteriaManager() {
                         disableRowSelectionOnClick
                         getRowId={(row) => row.id}
                         getRowHeight={() => 'auto'}
+                        getRowClassName={(params) =>
+                            params.row.is_active ? '' : 'criteria-row-inactive'
+                        }
                         localeText={localeText}
                         hideFooterSelectedRowCount
-                        sx={{ '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
+                        sx={{
+                            '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 },
+                            '& .criteria-row-inactive': { opacity: 0.5 },
+                        }}
                     />
                 </Paper>
             )}

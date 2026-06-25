@@ -79,10 +79,19 @@ export function buildLocalEvals(evaluations: Evaluation[], getString: GetStringF
         (a, b) => (a.dimension_sort_order - b.dimension_sort_order) || (a.id - b.id),
     );
     return ordered.map((e) => {
-        // Behaviour descriptors come from the competence hint (•-bulleted);
-        // fall back to a single descriptor (the competence name) when there is none.
-        const hintText = competenceHint(getString, e.dimension_key, e.dimension_description ?? '');
-        let descriptors = parseDescriptors(hintText);
+        // Behaviour descriptors come from the criteria FROZEN into this session at
+        // open time (their order is fixed, so the per-index scores stay valid even
+        // if the live criteria are later edited/deleted). Sessions opened before
+        // the freeze carry no frozen criteria → fall back to the competence hint
+        // (•-bulleted), then to a single descriptor (the competence name).
+        let descriptors = (e.criteria ?? [])
+            .slice()
+            .sort((a, b) => a.sort_order - b.sort_order || a.id - b.id)
+            .map((c) => c.text);
+        if (descriptors.length === 0) {
+            const hintText = competenceHint(getString, e.dimension_key, e.dimension_description ?? '');
+            descriptors = parseDescriptors(hintText);
+        }
         if (descriptors.length === 0) {
             descriptors = [competenceName(getString, e.dimension_key, e.dimension_name)];
         }

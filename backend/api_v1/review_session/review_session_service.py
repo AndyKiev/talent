@@ -47,6 +47,12 @@ from backend.api_v1.review_session_employee_level_answer.review_session_employee
 )
 from backend.api_v1.employee.employee_model import Employee
 from backend.api_v1.review_dimension.review_dimension_model import ReviewDimension
+from backend.api_v1.review_dimension_criteria.review_dimension_criteria_model import (
+    ReviewDimensionCriteria,
+)
+from backend.api_v1.review_session_criterion.review_session_criterion_model import (
+    ReviewSessionCriterion,
+)
 
 
 VALID_TRANSITIONS = {
@@ -124,6 +130,33 @@ class ReviewSessionService(BaseService):
         dim_stmt = select(ReviewDimension).where(ReviewDimension.is_active == True)
         dim_result = await self.session.execute(dim_stmt)
         dimensions = dim_result.scalars().all()
+
+        # Freeze this session's criteria: copy each active dimension's ACTIVE
+        # criteria text into review_session_criterions. The copy is the source of
+        # the behaviour descriptors scored in the review and keeps the per-index
+        # scores valid even if the live criteria are later edited/deleted.
+        crit_stmt = (
+            select(ReviewDimensionCriteria)
+            .where(ReviewDimensionCriteria.is_active == True)
+            .order_by(
+                ReviewDimensionCriteria.sort_order,
+                ReviewDimensionCriteria.id,
+            )
+        )
+        crit_result = await self.session.execute(crit_stmt)
+        active_dim_ids = {d.id for d in dimensions}
+        for crit in crit_result.scalars().all():
+            if crit.dimension_id not in active_dim_ids:
+                continue
+            self.session.add(
+                ReviewSessionCriterion(
+                    session_id=rs_id,
+                    dimension_id=crit.dimension_id,
+                    source_criteria_id=crit.id,
+                    text=crit.text,
+                    sort_order=crit.sort_order,
+                )
+            )
 
         for emp in employees:
             rse = ReviewSessionEmployee(
@@ -311,6 +344,13 @@ class ReviewSessionService(BaseService):
                         ReviewSessionEmployee.session_id == rs_id
                     )
                 )
+
+            # 3b) the session's frozen criteria snapshot (no FK from anything else)
+            await self.session.execute(
+                sa_delete(ReviewSessionCriterion).where(
+                    ReviewSessionCriterion.session_id == rs_id
+                )
+            )
 
             # 4) the session
             await self.session.execute(

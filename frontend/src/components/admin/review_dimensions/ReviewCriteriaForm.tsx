@@ -7,6 +7,8 @@ import {
     Button,
     TextField,
     Stack,
+    FormControlLabel,
+    Switch,
 } from '@mui/material';
 import type { UseMutationResult } from '@tanstack/react-query';
 import useString from '../../../hooks/useString';
@@ -44,10 +46,12 @@ export function ReviewCriteriaForm({
 }: Props) {
     const getString = useString();
     const [text, setText] = useState('');
+    const [isActive, setIsActive] = useState(true);
 
     useEffect(() => {
         if (!open) return;
         setText(editing?.text ?? '');
+        setIsActive(editing?.is_active ?? true);
     }, [open, editing]);
 
     const isEdit = !!editing;
@@ -57,9 +61,14 @@ export function ReviewCriteriaForm({
         const trimmed = text.trim();
         if (!trimmed) return;
         if (isEdit && editing) {
-            updateMutation.mutate({ id: editing.id, data: { text: trimmed } });
+            updateMutation.mutate({ id: editing.id, data: { text: trimmed, is_active: isActive } });
         } else {
-            createMutation.mutate({ dimension_id: dimensionId, text: trimmed, sort_order: nextSortOrder });
+            createMutation.mutate({
+                dimension_id: dimensionId,
+                text: trimmed,
+                sort_order: nextSortOrder,
+                is_active: isActive,
+            });
         }
     };
 
@@ -77,6 +86,15 @@ export function ReviewCriteriaForm({
                         multiline
                         rows={3}
                         autoFocus
+                    />
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={isActive}
+                                onChange={(e) => setIsActive(e.target.checked)}
+                            />
+                        }
+                        label={getString('active')}
                     />
                 </Stack>
             </DialogContent>

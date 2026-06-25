@@ -6,6 +6,7 @@ class ReviewDimensionCriteriaBase(BaseModel):
     dimension_id: int
     text: str
     sort_order: int = 0
+    is_active: bool = True
 
 
 class ReviewDimensionCriteriaCreate(ReviewDimensionCriteriaBase):
@@ -15,6 +16,7 @@ class ReviewDimensionCriteriaCreate(ReviewDimensionCriteriaBase):
 class ReviewDimensionCriteriaUpdate(BaseModel):
     text: Optional[str] = None
     sort_order: Optional[int] = None
+    is_active: Optional[bool] = None
 
 
 class ReviewDimensionCriteria(ReviewDimensionCriteriaBase):
