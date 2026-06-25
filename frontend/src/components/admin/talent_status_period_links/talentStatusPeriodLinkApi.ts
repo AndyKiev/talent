@@ -1,7 +1,7 @@
-// src/components/admin/talent-status-period-links/talentStatusPeriodLinkApi.ts
+// src/components/admin/talent_status_period_links/talentStatusPeriodLinkApi.ts
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums';
-import type { TalentPeriod } from '../talent-periods/talentPeriodApi';
+import type { TalentPeriod } from '../talent_periods/talentPeriodApi';
 
 const BASE = `${BASE_URL}/talent_status_period_links`;
 

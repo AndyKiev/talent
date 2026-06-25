@@ -1,7 +1,9 @@
 // src/routes/admin/talent/index.tsx
-import { createFileRoute } from '@tanstack/react-router';
-import { TalentPage } from '../../../components/admin/talent/TalentPage';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
+// /admin/talent has no own screen — land on the first tab.
 export const Route = createFileRoute('/admin/talent/')({
-    component: TalentPage,
+    beforeLoad: () => {
+        throw redirect({ to: '/admin/talent/status_period_links' });
+    },
 });

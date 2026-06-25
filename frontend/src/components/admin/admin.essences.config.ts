@@ -40,7 +40,7 @@ export const ESSENCES: RawEssenceConfig[] = [
   },
   {
     parent: 'admin',
-    key: 'talent-status-period-links',
+    key: 'status_period_links',
     labelKey: 'talentStatusPeriodLinks',
     descriptionKey: 'talentStatusPeriodLinksDesc',
     Icon: LinkIcon,
@@ -49,7 +49,7 @@ export const ESSENCES: RawEssenceConfig[] = [
   },
   {
     parent: 'admin',
-    key: 'talent-periods',
+    key: 'periods',
     labelKey: 'talentPeriods',
     descriptionKey: 'talentPeriodsDesc',
     Icon: TimelineIcon,
@@ -58,7 +58,7 @@ export const ESSENCES: RawEssenceConfig[] = [
   },
   {
     parent: 'admin',
-    key: 'talent-statuses',
+    key: 'statuses',
     labelKey: 'talentStatuses',
     descriptionKey: 'talentStatusesDesc',
     Icon: TuneIcon,

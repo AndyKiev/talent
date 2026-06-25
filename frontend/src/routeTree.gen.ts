@@ -23,6 +23,7 @@ import { Route as DeveloperSecurityRouteRouteImport } from './routes/developer/s
 import { Route as DeveloperProcess_rolesRouteRouteImport } from './routes/developer/process_roles/route'
 import { Route as DeveloperCatalogRouteRouteImport } from './routes/developer/catalog/route'
 import { Route as AdminUser_groups_groupRouteRouteImport } from './routes/admin/user_groups_group/route'
+import { Route as AdminTalentRouteRouteImport } from './routes/admin/talent/route'
 import { Route as AdminReviewersRouteRouteImport } from './routes/admin/reviewers/route'
 import { Route as AdminReview_setupRouteRouteImport } from './routes/admin/review_setup/route'
 import { Route as AdminPlanning_setupRouteRouteImport } from './routes/admin/planning_setup/route'
@@ -39,9 +40,6 @@ import { Route as DeveloperCatalogIndexRouteImport } from './routes/developer/ca
 import { Route as DeveloperAudit_logIndexRouteImport } from './routes/developer/audit_log/index'
 import { Route as AdminUser_groups_groupIndexRouteImport } from './routes/admin/user_groups_group/index'
 import { Route as AdminTalentIndexRouteImport } from './routes/admin/talent/index'
-import { Route as AdminTalentStatusesIndexRouteImport } from './routes/admin/talent-statuses/index'
-import { Route as AdminTalentStatusPeriodLinksIndexRouteImport } from './routes/admin/talent-status-period-links/index'
-import { Route as AdminTalentPeriodsIndexRouteImport } from './routes/admin/talent-periods/index'
 import { Route as AdminStructureIndexRouteImport } from './routes/admin/structure/index'
 import { Route as AdminReviewersIndexRouteImport } from './routes/admin/reviewers/index'
 import { Route as AdminReview_setupIndexRouteImport } from './routes/admin/review_setup/index'
@@ -78,6 +76,9 @@ import { Route as AdminUser_groups_groupUsersIndexRouteImport } from './routes/a
 import { Route as AdminUser_groups_groupUser_groupsIndexRouteImport } from './routes/admin/user_groups_group/user_groups/index'
 import { Route as AdminUser_groups_groupUser_group_typesIndexRouteImport } from './routes/admin/user_groups_group/user_group_types/index'
 import { Route as AdminUser_groups_groupHrm_scopesIndexRouteImport } from './routes/admin/user_groups_group/hrm_scopes/index'
+import { Route as AdminTalentStatusesIndexRouteImport } from './routes/admin/talent/statuses/index'
+import { Route as AdminTalentStatus_period_linksIndexRouteImport } from './routes/admin/talent/status_period_links/index'
+import { Route as AdminTalentPeriodsIndexRouteImport } from './routes/admin/talent/periods/index'
 import { Route as AdminReviewersHoldersIndexRouteImport } from './routes/admin/reviewers/holders/index'
 import { Route as AdminReviewersEmployeesIndexRouteImport } from './routes/admin/reviewers/employees/index'
 import { Route as AdminReview_setupLevelsIndexRouteImport } from './routes/admin/review_setup/levels/index'
@@ -178,6 +179,11 @@ const AdminUser_groups_groupRouteRoute =
     path: '/admin/user_groups_group',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AdminTalentRouteRoute = AdminTalentRouteRouteImport.update({
+  id: '/admin/talent',
+  path: '/admin/talent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminReviewersRouteRoute = AdminReviewersRouteRouteImport.update({
   id: '/admin/reviewers',
   path: '/admin/reviewers',
@@ -262,26 +268,9 @@ const AdminUser_groups_groupIndexRoute =
     getParentRoute: () => AdminUser_groups_groupRouteRoute,
   } as any)
 const AdminTalentIndexRoute = AdminTalentIndexRouteImport.update({
-  id: '/admin/talent/',
-  path: '/admin/talent/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminTalentStatusesIndexRoute =
-  AdminTalentStatusesIndexRouteImport.update({
-    id: '/admin/talent-statuses/',
-    path: '/admin/talent-statuses/',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AdminTalentStatusPeriodLinksIndexRoute =
-  AdminTalentStatusPeriodLinksIndexRouteImport.update({
-    id: '/admin/talent-status-period-links/',
-    path: '/admin/talent-status-period-links/',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AdminTalentPeriodsIndexRoute = AdminTalentPeriodsIndexRouteImport.update({
-  id: '/admin/talent-periods/',
-  path: '/admin/talent-periods/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminTalentRouteRoute,
 } as any)
 const AdminStructureIndexRoute = AdminStructureIndexRouteImport.update({
   id: '/admin/structure/',
@@ -492,6 +481,23 @@ const AdminUser_groups_groupHrm_scopesIndexRoute =
     path: '/hrm_scopes/',
     getParentRoute: () => AdminUser_groups_groupRouteRoute,
   } as any)
+const AdminTalentStatusesIndexRoute =
+  AdminTalentStatusesIndexRouteImport.update({
+    id: '/statuses/',
+    path: '/statuses/',
+    getParentRoute: () => AdminTalentRouteRoute,
+  } as any)
+const AdminTalentStatus_period_linksIndexRoute =
+  AdminTalentStatus_period_linksIndexRouteImport.update({
+    id: '/status_period_links/',
+    path: '/status_period_links/',
+    getParentRoute: () => AdminTalentRouteRoute,
+  } as any)
+const AdminTalentPeriodsIndexRoute = AdminTalentPeriodsIndexRouteImport.update({
+  id: '/periods/',
+  path: '/periods/',
+  getParentRoute: () => AdminTalentRouteRoute,
+} as any)
 const AdminReviewersHoldersIndexRoute =
   AdminReviewersHoldersIndexRouteImport.update({
     id: '/holders/',
@@ -657,6 +663,7 @@ export interface FileRoutesByFullPath {
   '/admin/planning_setup': typeof AdminPlanning_setupRouteRouteWithChildren
   '/admin/review_setup': typeof AdminReview_setupRouteRouteWithChildren
   '/admin/reviewers': typeof AdminReviewersRouteRouteWithChildren
+  '/admin/talent': typeof AdminTalentRouteRouteWithChildren
   '/admin/user_groups_group': typeof AdminUser_groups_groupRouteRouteWithChildren
   '/developer/catalog': typeof DeveloperCatalogRouteRouteWithChildren
   '/developer/process_roles': typeof DeveloperProcess_rolesRouteRouteWithChildren
@@ -686,10 +693,7 @@ export interface FileRoutesByFullPath {
   '/admin/review_setup/': typeof AdminReview_setupIndexRoute
   '/admin/reviewers/': typeof AdminReviewersIndexRoute
   '/admin/structure': typeof AdminStructureIndexRoute
-  '/admin/talent-periods': typeof AdminTalentPeriodsIndexRoute
-  '/admin/talent-status-period-links': typeof AdminTalentStatusPeriodLinksIndexRoute
-  '/admin/talent-statuses': typeof AdminTalentStatusesIndexRoute
-  '/admin/talent': typeof AdminTalentIndexRoute
+  '/admin/talent/': typeof AdminTalentIndexRoute
   '/admin/user_groups_group/': typeof AdminUser_groups_groupIndexRoute
   '/developer/audit_log': typeof DeveloperAudit_logIndexRoute
   '/developer/catalog/': typeof DeveloperCatalogIndexRoute
@@ -719,6 +723,9 @@ export interface FileRoutesByFullPath {
   '/admin/review_setup/levels/': typeof AdminReview_setupLevelsIndexRoute
   '/admin/reviewers/employees': typeof AdminReviewersEmployeesIndexRoute
   '/admin/reviewers/holders': typeof AdminReviewersHoldersIndexRoute
+  '/admin/talent/periods': typeof AdminTalentPeriodsIndexRoute
+  '/admin/talent/status_period_links': typeof AdminTalentStatus_period_linksIndexRoute
+  '/admin/talent/statuses': typeof AdminTalentStatusesIndexRoute
   '/admin/user_groups_group/hrm_scopes': typeof AdminUser_groups_groupHrm_scopesIndexRoute
   '/admin/user_groups_group/user_group_types': typeof AdminUser_groups_groupUser_group_typesIndexRoute
   '/admin/user_groups_group/user_groups': typeof AdminUser_groups_groupUser_groupsIndexRoute
@@ -770,9 +777,6 @@ export interface FileRoutesByTo {
   '/admin/review_setup': typeof AdminReview_setupIndexRoute
   '/admin/reviewers': typeof AdminReviewersIndexRoute
   '/admin/structure': typeof AdminStructureIndexRoute
-  '/admin/talent-periods': typeof AdminTalentPeriodsIndexRoute
-  '/admin/talent-status-period-links': typeof AdminTalentStatusPeriodLinksIndexRoute
-  '/admin/talent-statuses': typeof AdminTalentStatusesIndexRoute
   '/admin/talent': typeof AdminTalentIndexRoute
   '/admin/user_groups_group': typeof AdminUser_groups_groupIndexRoute
   '/developer/audit_log': typeof DeveloperAudit_logIndexRoute
@@ -803,6 +807,9 @@ export interface FileRoutesByTo {
   '/admin/review_setup/levels': typeof AdminReview_setupLevelsIndexRoute
   '/admin/reviewers/employees': typeof AdminReviewersEmployeesIndexRoute
   '/admin/reviewers/holders': typeof AdminReviewersHoldersIndexRoute
+  '/admin/talent/periods': typeof AdminTalentPeriodsIndexRoute
+  '/admin/talent/status_period_links': typeof AdminTalentStatus_period_linksIndexRoute
+  '/admin/talent/statuses': typeof AdminTalentStatusesIndexRoute
   '/admin/user_groups_group/hrm_scopes': typeof AdminUser_groups_groupHrm_scopesIndexRoute
   '/admin/user_groups_group/user_group_types': typeof AdminUser_groups_groupUser_group_typesIndexRoute
   '/admin/user_groups_group/user_groups': typeof AdminUser_groups_groupUser_groupsIndexRoute
@@ -839,6 +846,7 @@ export interface FileRoutesById {
   '/admin/planning_setup': typeof AdminPlanning_setupRouteRouteWithChildren
   '/admin/review_setup': typeof AdminReview_setupRouteRouteWithChildren
   '/admin/reviewers': typeof AdminReviewersRouteRouteWithChildren
+  '/admin/talent': typeof AdminTalentRouteRouteWithChildren
   '/admin/user_groups_group': typeof AdminUser_groups_groupRouteRouteWithChildren
   '/developer/catalog': typeof DeveloperCatalogRouteRouteWithChildren
   '/developer/process_roles': typeof DeveloperProcess_rolesRouteRouteWithChildren
@@ -868,9 +876,6 @@ export interface FileRoutesById {
   '/admin/review_setup/': typeof AdminReview_setupIndexRoute
   '/admin/reviewers/': typeof AdminReviewersIndexRoute
   '/admin/structure/': typeof AdminStructureIndexRoute
-  '/admin/talent-periods/': typeof AdminTalentPeriodsIndexRoute
-  '/admin/talent-status-period-links/': typeof AdminTalentStatusPeriodLinksIndexRoute
-  '/admin/talent-statuses/': typeof AdminTalentStatusesIndexRoute
   '/admin/talent/': typeof AdminTalentIndexRoute
   '/admin/user_groups_group/': typeof AdminUser_groups_groupIndexRoute
   '/developer/audit_log/': typeof DeveloperAudit_logIndexRoute
@@ -901,6 +906,9 @@ export interface FileRoutesById {
   '/admin/review_setup/levels/': typeof AdminReview_setupLevelsIndexRoute
   '/admin/reviewers/employees/': typeof AdminReviewersEmployeesIndexRoute
   '/admin/reviewers/holders/': typeof AdminReviewersHoldersIndexRoute
+  '/admin/talent/periods/': typeof AdminTalentPeriodsIndexRoute
+  '/admin/talent/status_period_links/': typeof AdminTalentStatus_period_linksIndexRoute
+  '/admin/talent/statuses/': typeof AdminTalentStatusesIndexRoute
   '/admin/user_groups_group/hrm_scopes/': typeof AdminUser_groups_groupHrm_scopesIndexRoute
   '/admin/user_groups_group/user_group_types/': typeof AdminUser_groups_groupUser_group_typesIndexRoute
   '/admin/user_groups_group/user_groups/': typeof AdminUser_groups_groupUser_groupsIndexRoute
@@ -938,6 +946,7 @@ export interface FileRouteTypes {
     | '/admin/planning_setup'
     | '/admin/review_setup'
     | '/admin/reviewers'
+    | '/admin/talent'
     | '/admin/user_groups_group'
     | '/developer/catalog'
     | '/developer/process_roles'
@@ -967,10 +976,7 @@ export interface FileRouteTypes {
     | '/admin/review_setup/'
     | '/admin/reviewers/'
     | '/admin/structure'
-    | '/admin/talent-periods'
-    | '/admin/talent-status-period-links'
-    | '/admin/talent-statuses'
-    | '/admin/talent'
+    | '/admin/talent/'
     | '/admin/user_groups_group/'
     | '/developer/audit_log'
     | '/developer/catalog/'
@@ -1000,6 +1006,9 @@ export interface FileRouteTypes {
     | '/admin/review_setup/levels/'
     | '/admin/reviewers/employees'
     | '/admin/reviewers/holders'
+    | '/admin/talent/periods'
+    | '/admin/talent/status_period_links'
+    | '/admin/talent/statuses'
     | '/admin/user_groups_group/hrm_scopes'
     | '/admin/user_groups_group/user_group_types'
     | '/admin/user_groups_group/user_groups'
@@ -1051,9 +1060,6 @@ export interface FileRouteTypes {
     | '/admin/review_setup'
     | '/admin/reviewers'
     | '/admin/structure'
-    | '/admin/talent-periods'
-    | '/admin/talent-status-period-links'
-    | '/admin/talent-statuses'
     | '/admin/talent'
     | '/admin/user_groups_group'
     | '/developer/audit_log'
@@ -1084,6 +1090,9 @@ export interface FileRouteTypes {
     | '/admin/review_setup/levels'
     | '/admin/reviewers/employees'
     | '/admin/reviewers/holders'
+    | '/admin/talent/periods'
+    | '/admin/talent/status_period_links'
+    | '/admin/talent/statuses'
     | '/admin/user_groups_group/hrm_scopes'
     | '/admin/user_groups_group/user_group_types'
     | '/admin/user_groups_group/user_groups'
@@ -1119,6 +1128,7 @@ export interface FileRouteTypes {
     | '/admin/planning_setup'
     | '/admin/review_setup'
     | '/admin/reviewers'
+    | '/admin/talent'
     | '/admin/user_groups_group'
     | '/developer/catalog'
     | '/developer/process_roles'
@@ -1148,9 +1158,6 @@ export interface FileRouteTypes {
     | '/admin/review_setup/'
     | '/admin/reviewers/'
     | '/admin/structure/'
-    | '/admin/talent-periods/'
-    | '/admin/talent-status-period-links/'
-    | '/admin/talent-statuses/'
     | '/admin/talent/'
     | '/admin/user_groups_group/'
     | '/developer/audit_log/'
@@ -1181,6 +1188,9 @@ export interface FileRouteTypes {
     | '/admin/review_setup/levels/'
     | '/admin/reviewers/employees/'
     | '/admin/reviewers/holders/'
+    | '/admin/talent/periods/'
+    | '/admin/talent/status_period_links/'
+    | '/admin/talent/statuses/'
     | '/admin/user_groups_group/hrm_scopes/'
     | '/admin/user_groups_group/user_group_types/'
     | '/admin/user_groups_group/user_groups/'
@@ -1217,6 +1227,7 @@ export interface RootRouteChildren {
   AdminPlanning_setupRouteRoute: typeof AdminPlanning_setupRouteRouteWithChildren
   AdminReview_setupRouteRoute: typeof AdminReview_setupRouteRouteWithChildren
   AdminReviewersRouteRoute: typeof AdminReviewersRouteRouteWithChildren
+  AdminTalentRouteRoute: typeof AdminTalentRouteRouteWithChildren
   AdminUser_groups_groupRouteRoute: typeof AdminUser_groups_groupRouteRouteWithChildren
   DeveloperCatalogRouteRoute: typeof DeveloperCatalogRouteRouteWithChildren
   DeveloperProcess_rolesRouteRoute: typeof DeveloperProcess_rolesRouteRouteWithChildren
@@ -1237,10 +1248,6 @@ export interface RootRouteChildren {
   AdminJob_groupsIndexRoute: typeof AdminJob_groupsIndexRoute
   AdminJobsIndexRoute: typeof AdminJobsIndexRoute
   AdminStructureIndexRoute: typeof AdminStructureIndexRoute
-  AdminTalentPeriodsIndexRoute: typeof AdminTalentPeriodsIndexRoute
-  AdminTalentStatusPeriodLinksIndexRoute: typeof AdminTalentStatusPeriodLinksIndexRoute
-  AdminTalentStatusesIndexRoute: typeof AdminTalentStatusesIndexRoute
-  AdminTalentIndexRoute: typeof AdminTalentIndexRoute
   DeveloperAudit_logIndexRoute: typeof DeveloperAudit_logIndexRoute
   DeveloperEvent_applyIndexRoute: typeof DeveloperEvent_applyIndexRoute
   DeveloperSettingsIndexRoute: typeof DeveloperSettingsIndexRoute
@@ -1353,6 +1360,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUser_groups_groupRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/talent': {
+      id: '/admin/talent'
+      path: '/admin/talent'
+      fullPath: '/admin/talent'
+      preLoaderRoute: typeof AdminTalentRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/reviewers': {
       id: '/admin/reviewers'
       path: '/admin/reviewers'
@@ -1460,31 +1474,10 @@ declare module '@tanstack/react-router' {
     }
     '/admin/talent/': {
       id: '/admin/talent/'
-      path: '/admin/talent'
-      fullPath: '/admin/talent'
+      path: '/'
+      fullPath: '/admin/talent/'
       preLoaderRoute: typeof AdminTalentIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/talent-statuses/': {
-      id: '/admin/talent-statuses/'
-      path: '/admin/talent-statuses'
-      fullPath: '/admin/talent-statuses'
-      preLoaderRoute: typeof AdminTalentStatusesIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/talent-status-period-links/': {
-      id: '/admin/talent-status-period-links/'
-      path: '/admin/talent-status-period-links'
-      fullPath: '/admin/talent-status-period-links'
-      preLoaderRoute: typeof AdminTalentStatusPeriodLinksIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/talent-periods/': {
-      id: '/admin/talent-periods/'
-      path: '/admin/talent-periods'
-      fullPath: '/admin/talent-periods'
-      preLoaderRoute: typeof AdminTalentPeriodsIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminTalentRouteRoute
     }
     '/admin/structure/': {
       id: '/admin/structure/'
@@ -1737,6 +1730,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/user_groups_group/hrm_scopes'
       preLoaderRoute: typeof AdminUser_groups_groupHrm_scopesIndexRouteImport
       parentRoute: typeof AdminUser_groups_groupRouteRoute
+    }
+    '/admin/talent/statuses/': {
+      id: '/admin/talent/statuses/'
+      path: '/statuses'
+      fullPath: '/admin/talent/statuses'
+      preLoaderRoute: typeof AdminTalentStatusesIndexRouteImport
+      parentRoute: typeof AdminTalentRouteRoute
+    }
+    '/admin/talent/status_period_links/': {
+      id: '/admin/talent/status_period_links/'
+      path: '/status_period_links'
+      fullPath: '/admin/talent/status_period_links'
+      preLoaderRoute: typeof AdminTalentStatus_period_linksIndexRouteImport
+      parentRoute: typeof AdminTalentRouteRoute
+    }
+    '/admin/talent/periods/': {
+      id: '/admin/talent/periods/'
+      path: '/periods'
+      fullPath: '/admin/talent/periods'
+      preLoaderRoute: typeof AdminTalentPeriodsIndexRouteImport
+      parentRoute: typeof AdminTalentRouteRoute
     }
     '/admin/reviewers/holders/': {
       id: '/admin/reviewers/holders/'
@@ -2090,6 +2104,24 @@ const AdminReviewersRouteRouteChildren: AdminReviewersRouteRouteChildren = {
 const AdminReviewersRouteRouteWithChildren =
   AdminReviewersRouteRoute._addFileChildren(AdminReviewersRouteRouteChildren)
 
+interface AdminTalentRouteRouteChildren {
+  AdminTalentIndexRoute: typeof AdminTalentIndexRoute
+  AdminTalentPeriodsIndexRoute: typeof AdminTalentPeriodsIndexRoute
+  AdminTalentStatus_period_linksIndexRoute: typeof AdminTalentStatus_period_linksIndexRoute
+  AdminTalentStatusesIndexRoute: typeof AdminTalentStatusesIndexRoute
+}
+
+const AdminTalentRouteRouteChildren: AdminTalentRouteRouteChildren = {
+  AdminTalentIndexRoute: AdminTalentIndexRoute,
+  AdminTalentPeriodsIndexRoute: AdminTalentPeriodsIndexRoute,
+  AdminTalentStatus_period_linksIndexRoute:
+    AdminTalentStatus_period_linksIndexRoute,
+  AdminTalentStatusesIndexRoute: AdminTalentStatusesIndexRoute,
+}
+
+const AdminTalentRouteRouteWithChildren =
+  AdminTalentRouteRoute._addFileChildren(AdminTalentRouteRouteChildren)
+
 interface AdminUser_groups_groupRouteRouteChildren {
   AdminUser_groups_groupIndexRoute: typeof AdminUser_groups_groupIndexRoute
   AdminUser_groups_groupHrm_scopesIndexRoute: typeof AdminUser_groups_groupHrm_scopesIndexRoute
@@ -2222,6 +2254,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminPlanning_setupRouteRoute: AdminPlanning_setupRouteRouteWithChildren,
   AdminReview_setupRouteRoute: AdminReview_setupRouteRouteWithChildren,
   AdminReviewersRouteRoute: AdminReviewersRouteRouteWithChildren,
+  AdminTalentRouteRoute: AdminTalentRouteRouteWithChildren,
   AdminUser_groups_groupRouteRoute:
     AdminUser_groups_groupRouteRouteWithChildren,
   DeveloperCatalogRouteRoute: DeveloperCatalogRouteRouteWithChildren,
@@ -2244,11 +2277,6 @@ const rootRouteChildren: RootRouteChildren = {
   AdminJob_groupsIndexRoute: AdminJob_groupsIndexRoute,
   AdminJobsIndexRoute: AdminJobsIndexRoute,
   AdminStructureIndexRoute: AdminStructureIndexRoute,
-  AdminTalentPeriodsIndexRoute: AdminTalentPeriodsIndexRoute,
-  AdminTalentStatusPeriodLinksIndexRoute:
-    AdminTalentStatusPeriodLinksIndexRoute,
-  AdminTalentStatusesIndexRoute: AdminTalentStatusesIndexRoute,
-  AdminTalentIndexRoute: AdminTalentIndexRoute,
   DeveloperAudit_logIndexRoute: DeveloperAudit_logIndexRoute,
   DeveloperEvent_applyIndexRoute: DeveloperEvent_applyIndexRoute,
   DeveloperSettingsIndexRoute: DeveloperSettingsIndexRoute,

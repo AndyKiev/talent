@@ -2,7 +2,7 @@
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from "../../../utils/eNums.ts"
 
-const BASE = `${BASE_URL}/admin/talent-periods`;
+const BASE = `${BASE_URL}/admin/talent_periods`;
 
 export interface TalentPeriod {
     id: number;

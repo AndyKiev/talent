@@ -24,7 +24,7 @@ import type {
     MutationResponse,
     TalentStatusPeriodLink,
 } from './talentStatusPeriodLinkApi';
-import { fetchTalentPeriods } from '../talent-periods/talentPeriodApi';
+import { fetchTalentPeriods } from '../talent_periods/talentPeriodApi';
 import useString from '../../../hooks/useString';
 import cfl from '../../../utils/helpers.ts';
 import str from '../../../strings/str';
@@ -45,7 +45,7 @@ interface TalentStatusOption {
 }
 
 const fetchTalentStatuses = async (): Promise<TalentStatusOption[]> => {
-    const res = await axiosInstance.get<TalentStatusOption[]>(`${BASE_URL}/admin/talent-statuses`);
+    const res = await axiosInstance.get<TalentStatusOption[]>(`${BASE_URL}/admin/talent_statuses`);
     return res.data ?? [];
 };
 

@@ -25,7 +25,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
     fetchActivePairs,
     type TalentStatusPeriodLinkWithLabel,
-} from "../../admin/talent-status-period-links/talentStatusPeriodLinkApi.ts";
+} from "../../admin/talent_status_period_links/talentStatusPeriodLinkApi.ts";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const MOCK_ORG_UNITS = [
