@@ -300,48 +300,125 @@ class EmployeeService(BaseService):
     #         delete_error_exc=EmployeeDeleteError,
     #         delete_success_exc=EmployeeDeleteSuccess,
     #     )
+    # ── Employee delete: reference map ──────────────────────────────────────
+    # Every FK that points at employees.id and is NOT auto-resolved by the DB
+    # (i.e. NOT ondelete=CASCADE / SET NULL) must be accounted for here, or the
+    # final DELETE raises a cryptic IntegrityError. Two groups:
+    #
+    #   OWNED    — the employee's own data / links / participation / scope.
+    #              Reported as a blocker on a normal delete; CASCADE-deleted
+    #              (children first) on a dev force-delete.
+    #   AUTHORED — content the employee created ABOUT OTHER employees. ALWAYS a
+    #              blocker — never silently destroyed, even on force.
+    #
+    # KEEP _OWNED_BLOCKERS in sync with _force_cascade_sql(): every OWNED table
+    # counted here must be cleared there.
+
+    # (blocker_key, count_sql) — count_sql counts rows referencing :eid
+    _OWNED_BLOCKERS: list[tuple[str, str]] = [
+        ("departmentLinks", "SELECT COUNT(*) FROM employee_departments WHERE employee_id = :eid"),
+        ("events", "SELECT COUNT(*) FROM employee_events WHERE employee_id = :eid"),
+        ("userGroupLinks", "SELECT COUNT(*) FROM employee_user_group_links WHERE employee_id = :eid"),
+        ("personalData", "SELECT COUNT(*) FROM employee_personal_data WHERE employee_id = :eid"),
+        ("currentLevel", "SELECT COUNT(*) FROM employee_current_levels WHERE employee_id = :eid"),
+        ("languageProfile", "SELECT COUNT(*) FROM employee_language_profiles WHERE employee_id = :eid"),
+        ("educations", "SELECT COUNT(*) FROM employee_educations WHERE employee_id = :eid"),
+        ("children", "SELECT COUNT(*) FROM employee_children WHERE employee_id = :eid"),
+        ("reviewParticipation", "SELECT COUNT(*) FROM review_session_employees WHERE employee_id = :eid"),
+        ("hrmScopes", "SELECT COUNT(*) FROM hrm_scopes WHERE employee_id = :eid"),
+        ("processRoleHolder", "SELECT COUNT(*) FROM process_role_holders WHERE holder_employee_id = :eid"),
+        ("processRoleEmployeeLinks", "SELECT COUNT(*) FROM process_role_holder_employee_links WHERE employee_id = :eid"),
+        ("processRoleActiveContexts", "SELECT COUNT(*) FROM process_role_active_contexts WHERE employee_id = :eid"),
+    ]
+
+    # (blocker_key, count_sql) — content authored about OTHERS; never cascaded
+    _AUTHORED_BLOCKERS: list[tuple[str, str]] = [
+        ("authoredEvents", "SELECT COUNT(*) FROM employee_events WHERE created_by = :eid"),
+        ("authoredTalentAudits", "SELECT COUNT(*) FROM talent_audit WHERE created_by = :eid"),
+        ("authoredTalentInterviews", "SELECT COUNT(*) FROM talent_audit_interview WHERE created_by = :eid"),
+        ("authoredTalentInterviewJobs", "SELECT COUNT(*) FROM talent_audit_interview_job WHERE created_by = :eid"),
+        ("authoredTalentJobs", "SELECT COUNT(*) FROM talent_audit_job WHERE created_by = :eid"),
+        ("authoredReviewComments", "SELECT COUNT(*) FROM review_session_employee_comments WHERE author_id = :eid"),
+        ("assignedProcessRoles", "SELECT COUNT(*) FROM process_role_holders WHERE assigned_by = :eid"),
+    ]
+
     DELETE_BLOCKER_LABELS = {
+        # OWNED
         "departmentLinks": ("blockerDepartmentLinks", "department links"),
         "events": ("blockerEvents", "events"),
-        "authoredEvents": ("blockerAuthoredEvents", "authored events"),
+        "userGroupLinks": ("blockerUserGroupLinks", "user group memberships"),
+        "personalData": ("blockerPersonalData", "personal data"),
+        "currentLevel": ("blockerCurrentLevel", "current level"),
+        "languageProfile": ("blockerLanguageProfile", "language profile"),
+        "educations": ("blockerEducations", "education records"),
+        "children": ("blockerChildren", "children records"),
+        "reviewParticipation": ("blockerReviewParticipation", "review participations"),
+        "hrmScopes": ("blockerHrmScopes", "HRM responsibility scopes"),
+        "processRoleHolder": ("blockerProcessRoleHolder", "process role assignments"),
+        "processRoleEmployeeLinks": ("blockerProcessRoleEmployeeLinks", "process role links"),
+        "processRoleActiveContexts": ("blockerProcessRoleActiveContexts", "active process role contexts"),
         "talentAudits": ("blockerTalentAudits", "talent audits"),
-        "authoredTalentAudits": (
-            "blockerAuthoredTalentAudits",
-            "authored talent audits",
-        ),
-        "authoredTalentInterviews": (
-            "blockerAuthoredTalentInterviews",
-            "authored talent interviews",
-        ),
-        "authoredTalentInterviewJobs": (
-            "blockerAuthoredTalentInterviewJobs",
-            "authored talent interview jobs",
-        ),
+        # AUTHORED
+        "authoredEvents": ("blockerAuthoredEvents", "authored events"),
+        "authoredTalentAudits": ("blockerAuthoredTalentAudits", "authored talent audits"),
+        "authoredTalentInterviews": ("blockerAuthoredTalentInterviews", "authored talent interviews"),
+        "authoredTalentInterviewJobs": ("blockerAuthoredTalentInterviewJobs", "authored talent interview jobs"),
         "authoredTalentJobs": ("blockerAuthoredTalentJobs", "authored talent jobs"),
+        "authoredReviewComments": ("blockerAuthoredReviewComments", "authored review comments"),
+        "assignedProcessRoles": ("blockerAssignedProcessRoles", "process roles assigned to others"),
     }
+
+    def _force_cascade_sql(self) -> list[str]:
+        """
+        Ordered DELETEs (children first) that clear all of the employee's OWN
+        data / links / participation / scope so the final employee DELETE can
+        succeed. Run ONLY on a dev force-delete. Must stay in sync with
+        _OWNED_BLOCKERS. AUTHORED content (about other employees) is never here.
+        """
+        return [
+            # review-session participation subtree (deepest children first)
+            "DELETE FROM review_session_employee_criterion_scores WHERE review_session_employee_evaluation_id IN (SELECT id FROM review_session_employee_evaluations WHERE review_session_employee_id IN (SELECT id FROM review_session_employees WHERE employee_id = :eid))",
+            "DELETE FROM review_session_employee_level_answers WHERE review_session_employee_level_id IN (SELECT id FROM review_session_employee_levels WHERE review_session_employee_id IN (SELECT id FROM review_session_employees WHERE employee_id = :eid))",
+            "DELETE FROM review_session_employee_evaluations WHERE review_session_employee_id IN (SELECT id FROM review_session_employees WHERE employee_id = :eid)",
+            "DELETE FROM review_session_employee_levels WHERE review_session_employee_id IN (SELECT id FROM review_session_employees WHERE employee_id = :eid)",
+            "DELETE FROM review_session_employee_comments WHERE review_session_employee_id IN (SELECT id FROM review_session_employees WHERE employee_id = :eid)",
+            "DELETE FROM review_session_employees WHERE employee_id = :eid",
+            # language-profile subtree
+            "DELETE FROM employee_languages WHERE profile_id IN (SELECT id FROM employee_language_profiles WHERE employee_id = :eid)",
+            "DELETE FROM employee_language_profiles WHERE employee_id = :eid",
+            # process-role subtree (holder rows the employee HOLDS)
+            "DELETE FROM process_role_holder_department_links WHERE process_role_holder_id IN (SELECT id FROM process_role_holders WHERE holder_employee_id = :eid)",
+            "DELETE FROM process_role_holder_employee_links WHERE process_role_holder_id IN (SELECT id FROM process_role_holders WHERE holder_employee_id = :eid)",
+            "DELETE FROM process_role_holder_employee_links WHERE employee_id = :eid",
+            "DELETE FROM process_role_active_contexts WHERE employee_id = :eid",
+            "DELETE FROM process_role_holders WHERE holder_employee_id = :eid",
+            # hrm scope + group links (hrm_scopes also cascades via user_group_links)
+            "DELETE FROM hrm_scopes WHERE employee_id = :eid",
+            "DELETE FROM employee_user_group_links WHERE employee_id = :eid",
+            # simple owned 1:1 / child data
+            "DELETE FROM employee_personal_data WHERE employee_id = :eid",
+            "DELETE FROM employee_current_levels WHERE employee_id = :eid",
+            "DELETE FROM employee_educations WHERE employee_id = :eid",
+            "DELETE FROM employee_children WHERE employee_id = :eid",
+            # events + departments (event change rows cascade at the DB)
+            "DELETE FROM employee_events WHERE employee_id = :eid",
+            "DELETE FROM employee_departments WHERE employee_id = :eid",
+        ]
 
     async def check_delete_blockers(self, employee_id: int) -> dict[str, int]:
         """
-        Count every record that references this employee via a RESTRICT FK.
-        Returns {blocker_key: count} for all non-zero blockers.
+        Count every record that blocks deletion of this employee (OWNED +
+        AUTHORED references). Returns {blocker_key: count} for all non-zero
+        blockers. On a dev force-delete the OWNED tables are cleared first, so
+        only AUTHORED references survive to be reported here.
         """
         from sqlalchemy import text
 
-        checks = [
-            ("departmentLinks", "employee_departments", "employee_id"),
-            ("events", "employee_events", "employee_id"),
-            ("authoredEvents", "employee_events", "created_by"),
-            ("authoredTalentAudits", "talent_audit", "created_by"),
-            ("authoredTalentInterviews", "talent_audit_interview", "created_by"),
-            ("authoredTalentInterviewJobs", "talent_audit_interview_job", "created_by"),
-            ("authoredTalentJobs", "talent_audit_job", "created_by"),
-        ]
-
         blockers: dict[str, int] = {}
-        for label, table, column in checks:
-            stmt = text(f"SELECT COUNT(*) FROM {table} WHERE {column} = :eid")
-            result = await self.session.execute(stmt, {"eid": employee_id})
-            count = result.scalar() or 0
+        for label, sql in (*self._OWNED_BLOCKERS, *self._AUTHORED_BLOCKERS):
+            count = (
+                await self.session.execute(text(sql), {"eid": employee_id})
+            ).scalar() or 0
             if count:
                 blockers[label] = count
 
@@ -379,20 +456,14 @@ class EmployeeService(BaseService):
         record = await self.get_by_id(user_id)
         from sqlalchemy import text
 
-        # Dev/superadmin force-delete: cascade the employee's OWN dependent records
-        # before the pre-flight check — events (their change rows cascade at the DB)
-        # and department links. Records that belong to OTHER employees (authored_*)
+        # Dev/superadmin force-delete: cascade ALL of the employee's OWN dependent
+        # records (children first) before the pre-flight check — see
+        # _force_cascade_sql(). Records that belong to OTHER employees (authored_*)
         # are intentionally NOT touched and will still block below.
         is_dev = bool(self.user and getattr(self.user, "is_bypass", False))
         if force and is_dev:
-            await self.session.execute(
-                text("DELETE FROM employee_events WHERE employee_id = :eid"),
-                {"eid": user_id},
-            )
-            await self.session.execute(
-                text("DELETE FROM employee_departments WHERE employee_id = :eid"),
-                {"eid": user_id},
-            )
+            for stmt in self._force_cascade_sql():
+                await self.session.execute(text(stmt), {"eid": user_id})
 
         # Pre-flight: collect every blocking reference and report them all at once,
         # with each label translated into the user's language.
