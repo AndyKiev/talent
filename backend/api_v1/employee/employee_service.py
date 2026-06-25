@@ -375,8 +375,24 @@ class EmployeeService(BaseService):
 
     # ── CHANGE delete_user to run the pre-flight check ──────────────────────────────
 
-    async def delete_user(self, user_id: int) -> None:
+    async def delete_user(self, user_id: int, force: bool = False) -> None:
         record = await self.get_by_id(user_id)
+        from sqlalchemy import text
+
+        # Dev/superadmin force-delete: cascade the employee's OWN dependent records
+        # before the pre-flight check — events (their change rows cascade at the DB)
+        # and department links. Records that belong to OTHER employees (authored_*)
+        # are intentionally NOT touched and will still block below.
+        is_dev = bool(self.user and getattr(self.user, "is_bypass", False))
+        if force and is_dev:
+            await self.session.execute(
+                text("DELETE FROM employee_events WHERE employee_id = :eid"),
+                {"eid": user_id},
+            )
+            await self.session.execute(
+                text("DELETE FROM employee_departments WHERE employee_id = :eid"),
+                {"eid": user_id},
+            )
 
         # Pre-flight: collect every blocking reference and report them all at once,
         # with each label translated into the user's language.
@@ -391,8 +407,6 @@ class EmployeeService(BaseService):
         # interviews) so the RESTRICT FK doesn't block the delete. Non-empty
         # audits were already reported as blockers above, so we never reach
         # here while one exists.
-        from sqlalchemy import text
-
         await self.session.execute(
             text(
                 "DELETE FROM talent_audit ta WHERE ta.employee_id = :eid AND "

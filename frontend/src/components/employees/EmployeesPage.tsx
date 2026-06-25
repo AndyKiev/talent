@@ -36,12 +36,18 @@ import str from '../../strings/str';
 import cfl from '../../utils/helpers.ts';
 import { useDataGridStyles } from '../../hooks/useDataGridStyles';
 import { useDataGridLocale } from '../../hooks/useDataGridLocale';
+import { useAuthStore } from '../../store/authStore';
 
 export function EmployeesPage() {
     const getString = useString({ str });
     const dataGridSx = useDataGridStyles();
     const localeText = useDataGridLocale();
     const navigate = useNavigate();
+
+    // Dev/superadmin (bypass) users may force-cascade related records on delete.
+    const isDev = useAuthStore(
+        (s) => (s.user?.groups ?? []).some((g) => g.trim().toLowerCase() === 'dev'),
+    );
 
     // ── Dialog / drawer state ─────────────────────────────────────────────────
     const [createOpen, setCreateOpen] = useState(false);
@@ -212,7 +218,11 @@ export function EmployeesPage() {
             <EmployeeDeleteDialog
                 employee={employeeToDelete}
                 isPending={deleteMutation.isPending}
-                onConfirm={() => employeeToDelete && deleteMutation.mutate(employeeToDelete.id)}
+                isDev={isDev}
+                onConfirm={(force) =>
+                    employeeToDelete &&
+                    deleteMutation.mutate({ id: employeeToDelete.id, force })
+                }
                 onCancel={() => setEmployeeToDelete(null)}
             />
 

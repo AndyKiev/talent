@@ -234,13 +234,18 @@ async def update_user_job(
 async def delete_user(
     employee_id: int,
     service: Annotated[EmployeeService, Depends(get_employee_service)],
+    force: bool = False,
 ):
     """
     Delegates entirely to the service.
     On success the service raises HTTPException(200) with translated message.
     On error the service raises a typed DomainError converted by the global handler.
+
+    `force=true` is honoured ONLY for superadmin/dev users: it cascade-deletes the
+    employee's own dependent records (events + their changes, department links)
+    before deleting. Records that belong to OTHER employees (authored_*) still block.
     """
-    await service.delete_user(employee_id)
+    await service.delete_user(employee_id, force=force)
 
 
 # ---------------------------------------------------------------------------

@@ -103,8 +103,14 @@ export const updateEmployeeJob = async ({
     return res.data;
 };
 
-export const deleteEmployee = async (id: number): Promise<{ detail: string }> => {
-    const res = await axiosInstance.delete<{ detail: string }>(`${BASE}/${id}`);
+export const deleteEmployee = async (
+    id: number,
+    force = false,
+): Promise<{ detail: string }> => {
+    const res = await axiosInstance.delete<{ detail: string }>(
+        `${BASE}/${id}`,
+        { params: force ? { force: true } : undefined },
+    );
     return res.data;
 };
 

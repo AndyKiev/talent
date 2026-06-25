@@ -1,4 +1,5 @@
 // src/components/employees/EmployeeDeleteDialog.tsx
+import { useEffect, useState } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -9,6 +10,8 @@ import {
     CircularProgress,
     Chip,
     Box,
+    Checkbox,
+    FormControlLabel,
 } from '@mui/material';
 import type { Employee } from './employeeApi';
 import useString from '../../hooks/useString';
@@ -18,12 +21,20 @@ import cfl from '../../utils/helpers.ts';
 interface Props {
     employee: Employee | null;
     isPending: boolean;
-    onConfirm: () => void;
+    /** Dev/superadmin only: shows the "also delete related records" option. */
+    isDev?: boolean;
+    onConfirm: (force: boolean) => void;
     onCancel: () => void;
 }
 
-export function EmployeeDeleteDialog({ employee, isPending, onConfirm, onCancel }: Props) {
+export function EmployeeDeleteDialog({ employee, isPending, isDev, onConfirm, onCancel }: Props) {
     const getString = useString({ str });
+    const [force, setForce] = useState(false);
+
+    // Reset the force option whenever the dialog (re)opens for an employee.
+    useEffect(() => {
+        if (employee) setForce(false);
+    }, [employee]);
 
     return (
         <Dialog open={!!employee} onClose={onCancel} maxWidth="xs" fullWidth>
@@ -44,6 +55,21 @@ export function EmployeeDeleteDialog({ employee, isPending, onConfirm, onCancel 
                         <Chip label={employee.name} size="small" variant="outlined" />
                     </Box>
                 )}
+                {isDev && (
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                size="small"
+                                checked={force}
+                                onChange={(e) => setForce(e.target.checked)}
+                            />
+                        }
+                        label={
+                            getString('forceDeleteRelated') ||
+                            'Also delete related records (events, department links)'
+                        }
+                    />
+                )}
             </DialogContent>
             <DialogActions>
                 <Button variant="outlined" onClick={onCancel} disabled={isPending}>
@@ -52,7 +78,7 @@ export function EmployeeDeleteDialog({ employee, isPending, onConfirm, onCancel 
                 <Button
                     variant="contained"
                     color="error"
-                    onClick={onConfirm}
+                    onClick={() => onConfirm(force)}
                     disabled={isPending}
                     startIcon={
                         isPending ? <CircularProgress size={16} color="inherit" /> : undefined

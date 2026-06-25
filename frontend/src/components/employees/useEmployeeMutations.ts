@@ -80,7 +80,8 @@ export function useEmployeeMutations({
     // ── Delete employee ───────────────────────────────────────────────────────
 
     const deleteMutation = useMutation({
-        mutationFn: deleteEmployee,
+        mutationFn: ({ id, force }: { id: number; force?: boolean }) =>
+            deleteEmployee(id, force ?? false),
         onSuccess: async (res) => {
             await invalidate();
             setSnackbar({ open: true, message: res.detail, severity: 'success' });
