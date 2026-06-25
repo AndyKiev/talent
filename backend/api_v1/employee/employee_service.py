@@ -331,7 +331,6 @@ class EmployeeService(BaseService):
             ("departmentLinks", "employee_departments", "employee_id"),
             ("events", "employee_events", "employee_id"),
             ("authoredEvents", "employee_events", "created_by"),
-            ("talentAudits", "talent_audit", "employee_id"),
             ("authoredTalentAudits", "talent_audit", "created_by"),
             ("authoredTalentInterviews", "talent_audit_interview", "created_by"),
             ("authoredTalentInterviewJobs", "talent_audit_interview_job", "created_by"),
@@ -345,6 +344,21 @@ class EmployeeService(BaseService):
             count = result.scalar() or 0
             if count:
                 blockers[label] = count
+
+        # The employee's OWN talent_audit blocks deletion only when it actually
+        # holds data (>=1 job or >=1 interview). Empty audits are cascade-deleted
+        # in delete_user, so they must NOT count as a blocker here.
+        nonempty_audits = text(
+            "SELECT COUNT(*) FROM talent_audit ta "
+            "WHERE ta.employee_id = :eid AND ("
+            "EXISTS (SELECT 1 FROM talent_audit_job j WHERE j.talent_audit_id = ta.id) OR "
+            "EXISTS (SELECT 1 FROM talent_audit_interview i WHERE i.talent_audit_id = ta.id))"
+        )
+        cnt = (
+            await self.session.execute(nonempty_audits, {"eid": employee_id})
+        ).scalar() or 0
+        if cnt:
+            blockers["talentAudits"] = cnt
         return blockers
 
     async def _build_blocker_summary(self, blockers: dict[str, int]) -> str:
@@ -372,6 +386,21 @@ class EmployeeService(BaseService):
             raise await self._resolve_domain_error(
                 EmployeeHasReferencesError(record.code, summary)
             )
+
+        # Cascade-delete the employee's EMPTY talent audits (no jobs, no
+        # interviews) so the RESTRICT FK doesn't block the delete. Non-empty
+        # audits were already reported as blockers above, so we never reach
+        # here while one exists.
+        from sqlalchemy import text
+
+        await self.session.execute(
+            text(
+                "DELETE FROM talent_audit ta WHERE ta.employee_id = :eid AND "
+                "NOT EXISTS (SELECT 1 FROM talent_audit_job j WHERE j.talent_audit_id = ta.id) AND "
+                "NOT EXISTS (SELECT 1 FROM talent_audit_interview i WHERE i.talent_audit_id = ta.id)"
+            ),
+            {"eid": user_id},
+        )
 
         await self.delete_by_id(
             user_id,
