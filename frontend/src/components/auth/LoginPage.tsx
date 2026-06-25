@@ -25,7 +25,7 @@ import cfl from "../../utils/helpers.ts";
 const LoginPage: FC = () => {
     const { t } = useTheme();
     const navigate = useNavigate();
-    const { setToken, setUser } = useAuthStore();
+    const { access_token, setToken } = useAuthStore();
     const getString = useString({ str });
 
     const [username, setUsername] = useState("");
@@ -44,16 +44,14 @@ const LoginPage: FC = () => {
         setLoading(true);
 
         try {
-            // 1. Get token
+            // 1. Get token. RootLayout's effect fetches the user profile on
+            //    access_token change, so we don't await /me here — navigating
+            //    immediately keeps the redirect tight.
             const { access_token } = await authApi.login(username.trim(), password);
             setToken(access_token);
 
-            // 2. Fetch full user profile
-            const user = await authApi.me();
-            setUser(user);
-
-            // 3. Navigate to main page
-            await navigate({ to: "/employees" });
+            // 2. Navigate to main page (replace so Back doesn't return to login)
+            await navigate({ to: "/employees", replace: true });
         } catch (err: unknown) {
             const message =
                 err instanceof Error
@@ -68,6 +66,25 @@ const LoginPage: FC = () => {
     const handleKeyDown = async (e: React.KeyboardEvent) => {
         if (e.key === "Enter") await handleSubmit();
     };
+
+    // Once authenticated we're mid-redirect. If the translations gate in
+    // RootLayout remounts this route during the transition, show a spinner
+    // (matching RootLayout's) instead of a fresh, empty login form.
+    if (access_token) {
+        return (
+            <Box
+                sx={{
+                    minHeight: "100vh",
+                    background: t.bg,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                }}
+            >
+                <CircularProgress />
+            </Box>
+        );
+    }
 
     return (
         <Box
