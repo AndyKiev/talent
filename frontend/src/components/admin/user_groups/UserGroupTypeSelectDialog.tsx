@@ -1,4 +1,4 @@
-// src/components/admin/user-groups/UserGroupTypeSelectDialog.tsx
+// src/components/admin/user_groups/UserGroupTypeSelectDialog.tsx
 //
 // Opened when the user clicks the Group Type chip in a row.
 // Shows all available UserGroupTypes as a radio-style list; confirms via PATCH.
@@ -20,7 +20,7 @@ import {
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
-import { fetchUserGroupTypes } from '../user-group-types/userGroupTypeApi';
+import { fetchUserGroupTypes } from '../user_group_types/userGroupTypeApi';
 import type { UserGroup } from './userGroupApi';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';

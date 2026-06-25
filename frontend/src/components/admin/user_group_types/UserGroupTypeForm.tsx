@@ -1,4 +1,4 @@
-// src/components/admin/user-group-types/UserGroupTypeForm.tsx
+// src/components/admin/user_group_types/UserGroupTypeForm.tsx
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod/v4';

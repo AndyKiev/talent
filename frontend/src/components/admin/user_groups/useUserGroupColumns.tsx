@@ -1,4 +1,4 @@
-// src/components/admin/user-groups/useUserGroupColumns.tsx
+// src/components/admin/user_groups/useUserGroupColumns.tsx
 import React from 'react';
 import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { Box, Chip, IconButton, Switch, Tooltip } from '@mui/material';
@@ -7,7 +7,7 @@ import LockIcon from '@mui/icons-material/Lock';
 import KeyIcon from '@mui/icons-material/Key';
 
 import type { UserGroup } from './userGroupApi';
-import type { UserGroupType } from '../user-group-types/userGroupTypeApi';
+import type { UserGroupType } from '../user_group_types/userGroupTypeApi';
 import type { GetStringFn } from '../../../types/getStringFn';
 import { TextEditCell } from '../TextEditCell';
 import { ReadonlyCell } from '../ReadonlyCell';

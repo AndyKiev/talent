@@ -1,4 +1,4 @@
-// src/components/admin/user-groups/useUserGroupMutations.ts
+// src/components/admin/user_groups/useUserGroupMutations.ts
 import {useMutation, useQueryClient} from '@tanstack/react-query';
 import {createUserGroup, deleteUserGroup, updateUserGroup} from './userGroupApi';
 import {USER_GROUP_QK} from "../../../utils/queryKeys.ts";

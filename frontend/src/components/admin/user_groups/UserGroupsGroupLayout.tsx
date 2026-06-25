@@ -1,4 +1,4 @@
-// src/components/admin/user-groups/UserGroupsGroupLayout.tsx
+// src/components/admin/user_groups/UserGroupsGroupLayout.tsx
 import { Outlet, useRouter, useLocation, Link } from '@tanstack/react-router';
 import { Box, Breadcrumbs, Tab, Tabs, Typography } from '@mui/material';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';

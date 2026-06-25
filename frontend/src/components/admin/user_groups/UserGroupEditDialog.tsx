@@ -1,4 +1,4 @@
-// src/components/admin/user-group-types/UserGroupTypeEditDialog.tsx
+// src/components/admin/user_groups/UserGroupEditDialog.tsx
 import {
     Dialog,
     DialogTitle,
@@ -11,14 +11,14 @@ import {
     Divider,
 } from '@mui/material';
 import useString from '../../../hooks/useString';
-import str from "../../../strings/str";
+import str from '../../../strings/str';
 
 export interface PendingEdit {
     id: number;
     fieldLabel: string;
     field: string;
-    newValue: string | boolean;
-    oldValue: string | boolean;
+    newValue: string | boolean | number;
+    oldValue: string | boolean | number;
 }
 
 interface Props {
@@ -28,7 +28,7 @@ interface Props {
     onCancel: () => void;
 }
 
-export function UserGroupTypeEditDialog({ pending, isPending, onConfirm, onCancel }: Props) {
+export function UserGroupEditDialog({ pending, isPending, onConfirm, onCancel }: Props) {
     const getString = useString({ str });
 
     return (
@@ -56,7 +56,9 @@ export function UserGroupTypeEditDialog({ pending, isPending, onConfirm, onCance
                                 >
                                     {String(pending.oldValue) || '—'}
                                 </Typography>
-                                <Typography variant="body2" color="text.disabled">→</Typography>
+                                <Typography variant="body2" color="text.disabled">
+                                    →
+                                </Typography>
                                 <Typography
                                     variant="body2"
                                     fontWeight={600}

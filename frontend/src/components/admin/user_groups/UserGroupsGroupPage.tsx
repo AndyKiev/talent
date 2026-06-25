@@ -1,11 +1,11 @@
-// // src/components/admin/user-groups/UserGroupsGroupPage.tsx
+// // src/components/admin/user_groups/UserGroupsGroupPage.tsx
 // import { useState } from 'react';
 // import { Box, Breadcrumbs, Tab, Tabs, Typography } from '@mui/material';
 // import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 // import { Link } from '@tanstack/react-router';
 // import AppShell from '../../layout/AppShell';
 // import { UserGroupCrud } from './UserGroupCrud';
-// import { UserGroupTypeCrud } from '../user-group-types/UserGroupTypeCrud';
+// import { UserGroupTypeCrud } from '../user_group_types/UserGroupTypeCrud';
 // import { EssenceCrud } from '../essences/EssenceCrud';
 // import { OperationCrud } from '../operations/OperationCrud';
 // import { OeslCrud } from '../operation_essence_set_links/OeslCrud';

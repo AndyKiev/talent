@@ -71,7 +71,7 @@ export const fetchActivePairs = async (
 ): Promise<TalentStatusPeriodLinkWithLabel[]> => {
     const params = is_active !== undefined ? { is_active } : {};
     const res = await axiosInstance.get<TalentStatusPeriodLinkWithLabel[]>(
-        `${BASE}/active-pairs`,
+        `${BASE}/active_pairs`,
         { params },
     );
     return res.data ?? [];

@@ -92,7 +92,7 @@ export function TalentAuditInterviewDialog({
     queryKey: ['talent_status_period_links', 'active-pairs-with-months'],
     queryFn: async () => {
       const res = await axiosInstance.get(
-        `${BASE_URL}/talent_status_period_links/active-pairs?is_active=true`,
+        `${BASE_URL}/talent_status_period_links/active_pairs?is_active=true`,
       );
       return (res.data ?? []).map((p: { id: number; label: string; talent_period?: { qty_months?: number }; talent_status?: { key?: string } }) => ({
         id: p.id,

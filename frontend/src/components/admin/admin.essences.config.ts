@@ -118,7 +118,7 @@ export const ESSENCES: RawEssenceConfig[] = [
   },
   {
     parent: 'admin',
-    key: 'user-groups',
+    key: 'user_groups',
     labelKey: 'userGroups',
     descriptionKey: 'userGroupsDesc',
     Icon: GroupIcon,
@@ -127,7 +127,7 @@ export const ESSENCES: RawEssenceConfig[] = [
   },
   {
     parent: 'admin',
-    key: 'user-group-types',
+    key: 'user_group_types',
     labelKey: 'userGroupTypes',
     descriptionKey: 'userGroupTypesDesc',
     Icon: CategoryIcon,

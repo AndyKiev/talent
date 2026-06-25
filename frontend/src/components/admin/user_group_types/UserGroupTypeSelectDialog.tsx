@@ -1,4 +1,4 @@
-// src/components/admin/user-group-types/UserGroupTypeSelectDialog.tsx
+// src/components/admin/user_group_types/UserGroupTypeSelectDialog.tsx
 import { useState } from 'react';
 import {
     Dialog,

@@ -22,7 +22,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 
-import { fetchUserGroups } from '../user-groups/userGroupApi';
+import { fetchUserGroups } from '../user_groups/userGroupApi';
 import type { EmployeeWithGroups, GroupOfType } from './employeeUserGroupApi';
 import { fetchLinkDeletionPreview } from './employeeUserGroupApi';
 import { useEmployeeUserGroupMutations } from './useEmployeeUserGroupMutations';

@@ -1,4 +1,4 @@
-// src/components/admin/user-group-types/UserGroupTypeCrud.tsx
+// src/components/admin/user_groups/UserGroupCrud.tsx
 import React, { useCallback, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -12,19 +12,24 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { DataGrid } from '@mui/x-data-grid';
-import { fetchUserGroupTypes, type UserGroupType } from './userGroupTypeApi';
-import { useUserGroupTypeMutations } from './useUserGroupTypeMutations';
-import { useUserGroupTypeColumns, type EditingState } from './useUserGroupTypeColumns';
-import { UserGroupTypeForm } from './UserGroupTypeForm';
-import { UserGroupTypeEditDialog, type PendingEdit } from './UserGroupTypeEditDialog';
-import { UserGroupTypeDeleteDialog } from './UserGroupTypeDeleteDialog';
+
+import { fetchUserGroups, type UserGroup } from './userGroupApi';
+import { useUserGroupMutations } from './useUserGroupMutations';
+import { useUserGroupColumns, type EditingState } from './useUserGroupColumns';
+
+import { UserGroupEditDialog, type PendingEdit } from './UserGroupEditDialog';
+import { UserGroupDeleteDialog } from './UserGroupDeleteDialog';
+import { UserGroupTypeSelectDialog } from './UserGroupTypeSelectDialog';
+import { UserGroupPermissionSetsDialog } from './UserGroupPermissionSetsDialog';
+import { fetchUserGroupTypes } from '../user_group_types/userGroupTypeApi';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import cfl from '../../../utils/helpers.ts';
-import {USER_GROUP_TYPE_QK} from "../../../utils/queryKeys.ts";
+import { UserGroupForm } from './UserGroupForm';
+import {USER_GROUP_QK, USER_GROUP_TYPE_QK} from "../../../utils/queryKeys.ts";
 
-export function UserGroupTypeCrud() {
+export function UserGroupCrud() {
     const getString = useString({ str });
 
     const [snackbar, setSnackbar] = useState({
@@ -34,23 +39,34 @@ export function UserGroupTypeCrud() {
     });
 
     const [formOpen, setFormOpen] = useState(false);
-    const [editingState, setEditingState] = useState<EditingState>({ id: null, field: null });
+    const [editingState, setEditingState] = useState<EditingState>({ rowId: null, field: null });
     const [pendingEdit, setPendingEdit] = useState<PendingEdit | null>(null);
-    const [rowToDelete, setRowToDelete] = useState<UserGroupType | null>(null);
+    const [rowToDelete, setRowToDelete] = useState<UserGroup | null>(null);
+    const [typeSelectGroup, setTypeSelectGroup] = useState<UserGroup | null>(null);
+    const [permissionSetsGroup, setPermissionSetsGroup] = useState<UserGroup | null>(null);
+
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
 
     const { data: rows = [], isLoading, error } = useQuery({
-        queryKey: USER_GROUP_TYPE_QK,
-        queryFn: fetchUserGroupTypes,
+        queryKey: USER_GROUP_QK,
+        queryFn: fetchUserGroups,
         staleTime: 2 * 60 * 1000,
     });
 
-    const { createMutation, updateMutation, deleteMutation } = useUserGroupTypeMutations({
+    const { data: groupTypes = [] } = useQuery({
+        queryKey: USER_GROUP_TYPE_QK,
+        queryFn: fetchUserGroupTypes,
+        staleTime: 5 * 60 * 1000,
+    });
+
+    const { createMutation, updateMutation, deleteMutation } = useUserGroupMutations({
         setSnackbar,
+        deleteSuccessMessage: getString('userGroupDeleteSuccess') || 'Group deleted successfully',
         onCreateSuccess: () => setFormOpen(false),
         onUpdateSuccess: () => {
-            setEditingState({ id: null, field: null });
+            setEditingState({ rowId: null, field: null });
             setPendingEdit(null);
+            setTypeSelectGroup(null);
         },
         onDeleteSuccess: () => setRowToDelete(null),
         onDeleteError: () => setRowToDelete(null),
@@ -59,15 +75,15 @@ export function UserGroupTypeCrud() {
     const localeText = useDataGridLocale();
 
     const handleEditFieldClick = useCallback(
-        (row: UserGroupType, field: string, e: React.MouseEvent) => {
+        (row: UserGroup, field: string, e: React.MouseEvent) => {
             e.stopPropagation();
-            setEditingState({ id: row.id, field });
+            setEditingState({ rowId: row.id, field });
         },
         [],
     );
 
     const handleRequestSave = useCallback(
-        (row: UserGroupType, field: string, newValue: string) => {
+        (row: UserGroup, field: string, newValue: string) => {
             const fieldLabelMap: Record<string, string> = {
                 name: getString('name') || 'Name',
                 description: getString('description') || 'Description',
@@ -92,15 +108,39 @@ export function UserGroupTypeCrud() {
     }, [pendingEdit, updateMutation]);
 
     const handleCancelEdit = useCallback(() => {
-        setEditingState({ id: null, field: null });
+        setEditingState({ rowId: null, field: null });
     }, []);
 
     const handleCancelPending = useCallback(() => {
         setPendingEdit(null);
-        setEditingState({ id: null, field: null });
+        setEditingState({ rowId: null, field: null });
     }, []);
 
-    const handleDeleteClick = useCallback((row: UserGroupType) => {
+    const handleToggleProtected = useCallback(
+        (row: UserGroup) => {
+            setPendingEdit({
+                id: row.id,
+                fieldLabel: getString('isProtected') || 'Protected',
+                field: 'is_protected',
+                newValue: !row.is_protected,
+                oldValue: row.is_protected,
+            });
+        },
+        [getString],
+    );
+
+    const handleEditTypeClick = useCallback((row: UserGroup) => {
+        setTypeSelectGroup(row);
+    }, []);
+
+    const handleConfirmTypeChange = useCallback(
+        (groupId: number, newTypeId: number) => {
+            updateMutation.mutate({ id: groupId, data: { user_group_type_id: newTypeId } });
+        },
+        [updateMutation],
+    );
+
+    const handleDeleteClick = useCallback((row: UserGroup) => {
         setRowToDelete(row);
     }, []);
 
@@ -109,13 +149,18 @@ export function UserGroupTypeCrud() {
         deleteMutation.mutate(rowToDelete.id);
     }, [rowToDelete, deleteMutation]);
 
-    const columns = useUserGroupTypeColumns({
+    const columns = useUserGroupColumns({
         getString,
+        groupTypes,
         editingState,
         onEditFieldClick: handleEditFieldClick,
         onRequestSave: handleRequestSave,
         onCancelEdit: handleCancelEdit,
         updateIsPending: updateMutation.isPending,
+        onToggleProtected: handleToggleProtected,
+        toggleIsPending: updateMutation.isPending,
+        onEditTypeClick: handleEditTypeClick,
+        onPermissionSetsClick: setPermissionSetsGroup,
         onDeleteClick: handleDeleteClick,
         deleteIsPending: deleteMutation.isPending,
     });
@@ -124,7 +169,7 @@ export function UserGroupTypeCrud() {
         <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                 <Typography variant="h6" fontWeight={600} sx={{ flex: 1 }}>
-                    {getString('userGroupTypes') || 'User Group Types'}
+                    {getString('userGroups') || 'User Groups'}
                 </Typography>
                 <Button
                     variant="contained"
@@ -132,7 +177,7 @@ export function UserGroupTypeCrud() {
                     startIcon={<AddIcon />}
                     onClick={() => setFormOpen(true)}
                 >
-                    {cfl(getString('addUserGroupType')) || 'Add Type'}
+                    {cfl(getString('addUserGroup')) || 'Add Group'}
                 </Button>
             </Box>
 
@@ -166,25 +211,39 @@ export function UserGroupTypeCrud() {
                 </Paper>
             )}
 
-            <UserGroupTypeForm
+            <UserGroupForm
                 open={formOpen}
                 onClose={() => setFormOpen(false)}
                 createMutation={createMutation}
             />
 
-            <UserGroupTypeEditDialog
+            <UserGroupEditDialog
                 pending={pendingEdit}
                 isPending={updateMutation.isPending}
                 onConfirm={handleConfirmEdit}
                 onCancel={handleCancelPending}
             />
 
-            <UserGroupTypeDeleteDialog
+            <UserGroupDeleteDialog
                 row={rowToDelete}
                 isPending={deleteMutation.isPending}
-                hasGroups={!!(rowToDelete?.groups && rowToDelete.groups.length > 0)}
                 onConfirm={handleConfirmDelete}
                 onCancel={() => setRowToDelete(null)}
+            />
+
+            <UserGroupTypeSelectDialog
+                group={typeSelectGroup}
+                isPending={updateMutation.isPending}
+                onConfirm={handleConfirmTypeChange}
+                onCancel={() => setTypeSelectGroup(null)}
+            />
+
+            {/* Set-grain permissions — re-mounted per group for fresh oesl_ids */}
+            <UserGroupPermissionSetsDialog
+                key={`set-${permissionSetsGroup?.id ?? 'none'}`}
+                group={permissionSetsGroup}
+                onClose={() => setPermissionSetsGroup(null)}
+                getString={getString}
             />
 
             <Snackbar

@@ -1,4 +1,4 @@
-// src/components/admin/user-group-types/useUserGroupTypeColumns.tsx
+// src/components/admin/user_group_types/useUserGroupTypeColumns.tsx
 import React from 'react';
 import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { Box, IconButton, Tooltip, Chip } from '@mui/material';

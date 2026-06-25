@@ -1,4 +1,4 @@
-// src/components/admin/user-group-types/UserGroupTypeDeleteDialog.tsx
+// src/components/admin/user_groups/UserGroupDeleteDialog.tsx
 import {
     Dialog,
     DialogTitle,
@@ -7,37 +7,27 @@ import {
     Button,
     Typography,
     CircularProgress,
-    Alert,
 } from '@mui/material';
-import type { UserGroupType } from './userGroupTypeApi';
+import type { UserGroup } from './userGroupApi';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 
 interface Props {
-    row: UserGroupType | null;
+    row: UserGroup | null;
     isPending: boolean;
-    hasGroups?: boolean;
     onConfirm: () => void;
     onCancel: () => void;
 }
 
-export function UserGroupTypeDeleteDialog({ row, isPending, hasGroups = false, onConfirm, onCancel }: Props) {
+export function UserGroupDeleteDialog({ row, isPending, onConfirm, onCancel }: Props) {
     const getString = useString({ str });
-
-    const hasGroupsWarning = hasGroups && row?.groups && row.groups.length > 0;
 
     return (
         <Dialog open={!!row} onClose={onCancel} maxWidth="xs" fullWidth>
-            <DialogTitle>{getString('deleteUserGroupType') || 'Delete User Group Type'}</DialogTitle>
+            <DialogTitle>{getString('deleteUserGroup') || 'Delete Group'}</DialogTitle>
             <DialogContent>
-                {hasGroupsWarning && (
-                    <Alert severity="warning" sx={{ mb: 2 }}>
-                        {getString('userGroupTypeHasGroups') ||
-                            `This type is used by ${row?.groups?.length} group(s). Deleting it may affect these groups.`}
-                    </Alert>
-                )}
                 <Typography variant="body2">
-                    {getString('areYouSureDeleteUserGroupType') ||
+                    {getString('areYouSureDeleteUserGroup') ||
                         `Are you sure you want to delete "${row?.name}"? This action cannot be undone.`}
                 </Typography>
             </DialogContent>

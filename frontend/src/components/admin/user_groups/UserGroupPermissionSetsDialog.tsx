@@ -1,4 +1,4 @@
-// src/components/admin/user-groups/UserGroupPermissionSetsDialog.tsx
+// src/components/admin/user_groups/UserGroupPermissionSetsDialog.tsx
 import {
   Box,
   Button,

@@ -28,7 +28,7 @@ import { type Job} from './jobApi';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import cfl from '../../../utils/helpers.ts';
-import {fetchUserGroups, type UserGroup} from "../user-groups/userGroupApi.ts";
+import {fetchUserGroups, type UserGroup} from "../user_groups/userGroupApi.ts";
 import {USER_GROUPS_QK} from "../../../utils/queryKeys.ts";
 
 interface SetGroupsVars {

@@ -1,4 +1,4 @@
-// src/components/admin/user-groups/UserGroupForm.tsx
+// src/components/admin/user_groups/UserGroupForm.tsx
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod/v4';
@@ -22,7 +22,7 @@ import {
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import type { UseMutationResult } from '@tanstack/react-query';
-import { fetchUserGroupTypes } from '../user-group-types/userGroupTypeApi';
+import { fetchUserGroupTypes } from '../user_group_types/userGroupTypeApi';
 import type { UserGroupCreate, MutationResponse, UserGroup } from './userGroupApi';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';

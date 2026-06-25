@@ -35,7 +35,7 @@ import {
   type MatrixGroupGrants,
   type MatrixApplyResult,
 } from './oeslApi.ts';
-import {fetchUserGroups, type UserGroup} from '../../../admin/user-groups/userGroupApi.ts';
+import {fetchUserGroups, type UserGroup} from '../../../admin/user_groups/userGroupApi.ts';
 import {OeslGroupsDialog} from './OeslGroupsDialog.tsx';
 import {fetchOperations} from '../../catalog/operations/operationApi.ts';
 import {fetchEssences} from '../../catalog/essences/essenceApi.ts';

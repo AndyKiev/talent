@@ -19,7 +19,7 @@ import {
   revokePermissionSetFromGroup,
   type OESL,
 } from './oeslApi.ts';
-import type { UserGroup } from '../../../admin/user-groups/userGroupApi.ts';
+import type { UserGroup } from '../../../admin/user_groups/userGroupApi.ts';
 import type { GetStringFn } from '../../../../types/getStringFn.ts';
 import cfl from '../../../../utils/helpers.ts';
 

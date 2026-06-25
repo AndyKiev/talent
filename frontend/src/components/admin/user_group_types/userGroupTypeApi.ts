@@ -1,4 +1,4 @@
-// src/components/admin/user-group-types/userGroupTypeApi.ts
+// src/components/admin/user_group_types/userGroupTypeApi.ts
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from "../../../utils/eNums.ts";
 

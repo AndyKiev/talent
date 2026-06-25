@@ -15,7 +15,7 @@
 import { axiosInstance } from '../../../../api/axiosInstance';
 import { BASE_URL } from '../../../../utils/eNums';
 import { fetchOESLs, type OESL } from '../operation_essence_set_links/oeslApi';
-import { fetchUserGroups, type UserGroup } from '../../../admin/user-groups/userGroupApi';
+import { fetchUserGroups, type UserGroup } from '../../../admin/user_groups/userGroupApi';
 
 export { fetchOESLs, fetchUserGroups };
 export type { OESL, UserGroup };

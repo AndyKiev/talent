@@ -1,14 +1,14 @@
-// src/components/admin/user-groups/UserGroupsPage.tsx
+// src/components/admin/user_group_types/UserGroupTypePage.tsx
 import AppShell from '../../layout/AppShell';
 import { Box, Breadcrumbs, Typography } from '@mui/material';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { Link } from '@tanstack/react-router';
-import { UserGroupCrud } from './UserGroupCrud';
+import { UserGroupTypeCrud } from './UserGroupTypeCrud';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import cfl from '../../../utils/capitalizeFirstLetter';
 
-export function UserGroupsPage() {
+export function UserGroupTypePage() {
     const getString = useString({ str });
 
     return (
@@ -24,11 +24,11 @@ export function UserGroupsPage() {
                         </Typography>
                     </Link>
                     <Typography variant="body2" color="text.primary" fontWeight={600}>
-                        {cfl(getString('userGroups'))}
+                        {cfl(getString('userGroupTypes')) || 'User Group Types'}
                     </Typography>
                 </Breadcrumbs>
 
-                <UserGroupCrud />
+                <UserGroupTypeCrud />
             </Box>
         </AppShell>
     );

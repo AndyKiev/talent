@@ -97,7 +97,7 @@ export function TalentAuditJobDialog({
     queryKey: [...TSPL_QK, 'active-pairs', true],
     queryFn: async () => {
       const res = await axiosInstance.get(
-          `${BASE_URL}/talent_status_period_links/active-pairs?is_active=true`,
+          `${BASE_URL}/talent_status_period_links/active_pairs?is_active=true`,
       );
       return res.data ?? [];
     },
