@@ -18,11 +18,11 @@ class TalentStatusPeriodLinkNotFound(NotFoundError):
 class TalentStatusPeriodLinkAlreadyExists(AlreadyExistsError):
     message_key = "talentStatusPeriodLinkAlreadyExists"
 
-    def __init__(self, status_id: int, period_id: int) -> None:
-        self.template_vars = {"statusId": status_id, "periodId": period_id}
+    def __init__(self, status_name: str, period_name: str) -> None:
+        self.template_vars = {"statusName": status_name, "periodName": period_name}
         self.fallback = (
-            f"Link between talent status ID {status_id} "
-            f"and talent period ID {period_id} already exists"
+            f"Link between talent status '{status_name}' "
+            f"and talent period '{period_name}' already exists"
         )
         DomainError.__init__(self, self.fallback)
 
@@ -30,10 +30,11 @@ class TalentStatusPeriodLinkAlreadyExists(AlreadyExistsError):
 class TalentStatusPeriodLinkDeleteError(DeleteError):
     message_key = "talentStatusPeriodLinkDeleteError"
 
-    def __init__(self, link_id: int) -> None:
-        self.template_vars = {"linkId": link_id}
+    def __init__(self, name: str) -> None:
+        # `name` is the human label ("status – period"), passed by delete_by_id.
+        self.template_vars = {"name": name}
         self.fallback = (
-            f"Talent status–period link ID {link_id} cannot be deleted "
+            f"Talent status–period link '{name}' cannot be deleted "
             f"because it is referenced by other records"
         )
         DomainError.__init__(self, self.fallback)

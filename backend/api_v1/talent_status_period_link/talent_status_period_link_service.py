@@ -28,9 +28,9 @@ from backend.api_v1.talent_status_period_link.talent_status_period_link_success 
 )
 
 
-def _link_label(talent_status_id: int, talent_period_id: int) -> str:
-    """Human-readable label used in success/error messages."""
-    return f"status {talent_status_id} – period {talent_period_id}"
+def _link_label(status_name: str, period_name: str) -> str:
+    """Human-readable label ("PO – 24") used in success/error messages."""
+    return f"{status_name} – {period_name}"
 
 
 class TalentStatusPeriodLinkService(BaseService):
@@ -47,6 +47,20 @@ class TalentStatusPeriodLinkService(BaseService):
         if not result:
             raise await self._resolve_domain_error(TalentStatusPeriodLinkNotFound(id))
         return result
+
+    async def _link_label_by_ids(self, status_id: int, period_id: int) -> str:
+        """Resolve a name-based link label from the status/period ids. Uses
+        session.get (identity-map cached / by-PK) so it is safe to call after a
+        commit, unlike lazy relationship access on an expired ORM instance."""
+        from backend.api_v1.talent_status.talent_status_model import TalentStatus
+        from backend.api_v1.talent_period.talent_period_model import TalentPeriod
+
+        status = await self.session.get(TalentStatus, status_id)
+        period = await self.session.get(TalentPeriod, period_id)
+        return _link_label(
+            status.name if status else str(status_id),
+            period.name if period else str(period_id),
+        )
 
     async def get_links(
         self,
@@ -114,7 +128,7 @@ class TalentStatusPeriodLinkService(BaseService):
         if existing:
             raise await self._resolve_domain_error(
                 TalentStatusPeriodLinkAlreadyExists(
-                    link_in.talent_status_id, link_in.talent_period_id
+                    existing.talent_status.name, existing.talent_period.name
                 )
             )
 
@@ -130,16 +144,30 @@ class TalentStatusPeriodLinkService(BaseService):
             instance = TalentStatusPeriodLink(**create_data)
             record = await self.repository.create(instance)
             schema = TalentStatusPeriodLinkSchema.model_validate(record)
-            label = _link_label(schema.talent_status_id, schema.talent_period_id)
+            label = await self._link_label_by_ids(
+                schema.talent_status_id, schema.talent_period_id
+            )
             detail = await self._resolve_domain_success(
                 TalentStatusPeriodLinkCreateSuccess(label)
             )
             return MutationResponse(detail=detail, data=schema)
         except IntegrityError:
+            # Race: another request inserted the same pair between the pre-check
+            # and our insert. The failed commit poisons the transaction, so roll
+            # back before re-fetching the duplicate to build a name-based message.
+            await self.session.rollback()
+            dup = await self.repository.get_by_composite_key(
+                talent_period_id=link_in.talent_period_id,
+                talent_status_id=link_in.talent_status_id,
+            )
+            status_name = (
+                dup.talent_status.name if dup else str(link_in.talent_status_id)
+            )
+            period_name = (
+                dup.talent_period.name if dup else str(link_in.talent_period_id)
+            )
             raise await self._resolve_domain_error(
-                TalentStatusPeriodLinkAlreadyExists(
-                    link_in.talent_status_id, link_in.talent_period_id
-                )
+                TalentStatusPeriodLinkAlreadyExists(status_name, period_name)
             )
 
     async def get_by_composite_key(
@@ -166,7 +194,9 @@ class TalentStatusPeriodLinkService(BaseService):
         orm_record = await self.get_by_id(link_id)
         updated = await self.update(orm_record, link_update, partial=True)
         schema = TalentStatusPeriodLinkSchema.model_validate(updated)
-        label = _link_label(schema.talent_status_id, schema.talent_period_id)
+        label = await self._link_label_by_ids(
+            schema.talent_status_id, schema.talent_period_id
+        )
         detail = await self._resolve_domain_success(
             TalentStatusPeriodLinkUpdateSuccess(label)
         )
@@ -175,7 +205,9 @@ class TalentStatusPeriodLinkService(BaseService):
     async def delete_link(self, link_id: int) -> None:
         """Unlink a talent status from a talent period."""
         record = await self.get_by_id(link_id)
-        label = _link_label(record.talent_status_id, record.talent_period_id)
+        label = await self._link_label_by_ids(
+            record.talent_status_id, record.talent_period_id
+        )
         await self.delete_by_id(
             link_id,
             name=label,
