@@ -90,6 +90,9 @@ CLAUDE.md
 .claude/
 **/SKILL.md
 
+# DeepSeek Code — local only, not pushed to remote
+.deepseek/
+
 
 
 # Messages live in the DB (msg_key/msg). translations.json is local scratch only.
