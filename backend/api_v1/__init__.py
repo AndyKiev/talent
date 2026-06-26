@@ -49,6 +49,7 @@ __all__ = {
     "JobGroupType",
     "JobGroup",
     "JobJobGroupLink",
+    "JobProcessRoleLink",
     "JobResponsibilityCategoryLink",
     # Planning
     "PlanSessionStatus",
@@ -203,6 +204,9 @@ from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_model 
 from backend.api_v1.job_group_type.job_group_type_model import JobGroupType
 from backend.api_v1.job_group.job_group_model import JobGroup
 from backend.api_v1.job_job_group_link.job_job_group_link_model import JobJobGroupLink
+from backend.api_v1.job_process_role_link.job_process_role_link_model import (
+    JobProcessRoleLink,
+)
 
 from backend.api_v1.operation_essence_link.operation_essence_link_model import (
     OperationEssenceLink,

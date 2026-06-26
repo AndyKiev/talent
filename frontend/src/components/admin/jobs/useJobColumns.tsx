@@ -6,6 +6,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import GroupsIcon from '@mui/icons-material/Groups';
 import WorkspacesIcon from '@mui/icons-material/Workspaces';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import BadgeIcon from '@mui/icons-material/Badge';
 
 import type { Job } from './jobApi';
 import type { GetStringFn } from '../../../types/getStringFn';
@@ -30,6 +31,7 @@ interface Params {
   toggleIsPending: boolean;
   onGroupsClick: (row: Job) => void;       // user-groups dialog
   onJobGroupsClick: (row: Job) => void;    // job-groups dialog (new)
+  onProcessRoleClick: (row: Job) => void;  // process-role dialog
   onDeleteClick: (row: Job) => void;
   deleteIsPending: boolean;
 }
@@ -43,9 +45,10 @@ export function useJobColumns({
                                 updateIsPending,
                                 onToggleActive,
                                 toggleIsPending,
-                                onGroupsClick,
-                                onJobGroupsClick,
-                                onDeleteClick,
+                                 onGroupsClick,
+                                 onJobGroupsClick,
+                                 onProcessRoleClick,
+                                 onDeleteClick,
                                 deleteIsPending,
                               }: Params): GridColDef[] {
   function textEditCol(
@@ -155,6 +158,44 @@ export function useJobColumns({
               ) : (
                   jobGroups.map((g) => (
                       <Chip key={g} label={g} size="small" variant="outlined" color="secondary" />
+                  ))
+              )}
+            </Box>
+        );
+      },
+    },
+
+    // New: process-role links column
+    {
+      field: 'process_role_link_names',
+      headerName: cfl(getString('processRoles')) || 'Process Roles',
+      width: 260,
+      sortable: true,
+      sortComparator: (v1: string[], v2: string[]) => {
+        const a = (v1 ?? []).join(', ');
+        const b = (v2 ?? []).join(', ');
+        return a.localeCompare(b);
+      },
+      renderCell: (params: GridRenderCellParams<Job>) => {
+        const row = params.row;
+        const links: string[] = row.process_role_link_names ?? [];
+        return (
+            <Box
+                sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', py: 0.5, cursor: 'pointer' }}
+                onClick={() => onProcessRoleClick(row)}
+            >
+              {links.length === 0 ? (
+                  <Chip
+                      label={getString('noProcessRoles') || 'No process roles'}
+                      size="small"
+                      variant="outlined"
+                      color="default"
+                      icon={<BadgeIcon />}
+                      onClick={() => onProcessRoleClick(row)}
+                  />
+              ) : (
+                  links.map((name) => (
+                      <Chip key={name} label={name} size="small" variant="outlined" color="success" />
                   ))
               )}
             </Box>

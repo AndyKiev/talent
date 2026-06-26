@@ -25,6 +25,7 @@ import { JobEditDialog, type PendingEdit } from './JobEditDialog';
 import { JobDeleteDialog } from './JobDeleteDialog';
 import { JobGroupsDialog } from './JobGroupsDialog';
 import { JobJobGroupsDialog } from './JobJobGroupsDialog';
+import { JobProcessRoleDialog } from './JobProcessRoleDialog';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
@@ -68,6 +69,9 @@ export function JobCrud() {
 
   // ── Job-groups dialog (new) ───────────────────────────────────────────────
   const [jobGroupsJob, setJobGroupsJob] = useState<Job | null>(null);
+
+  // ── Process-role dialog ──────────────────────────────────────────────────
+  const [processRoleJob, setProcessRoleJob] = useState<Job | null>(null);
 
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -120,6 +124,8 @@ export function JobCrud() {
     deleteMutation,
     setGroupsMutation,
     setJobJobGroupsMutation,
+    addProcessRoleLinkMutation,
+    removeProcessRoleLinkMutation,
     bulkUploadMutation,
   } = useJobMutations({
     setSnackbar,
@@ -132,6 +138,8 @@ export function JobCrud() {
     onDeleteError: () => setRowToDelete(null),
     onSetGroupsSuccess: () => setGroupsJob(null),
     onSetJobGroupsSuccess: () => setJobGroupsJob(null),
+    onAddProcessRoleSuccess: () => setProcessRoleJob(null),
+    onRemoveProcessRoleSuccess: () => setProcessRoleJob(null),
     onBulkUploadSuccess: (result) => setBulkUploadResult(result),
   });
 
@@ -211,6 +219,7 @@ export function JobCrud() {
 
   const handleGroupsClick = useCallback((row: Job) => setGroupsJob(row), []);
   const handleJobGroupsClick = useCallback((row: Job) => setJobGroupsJob(row), []);
+  const handleProcessRoleClick = useCallback((row: Job) => setProcessRoleJob(row), []);
   const handleDeleteClick = useCallback((row: Job) => setRowToDelete(row), []);
 
   const handleConfirmDelete = useCallback(() => {
@@ -230,6 +239,7 @@ export function JobCrud() {
     toggleIsPending: updateMutation.isPending,
     onGroupsClick: handleGroupsClick,
     onJobGroupsClick: handleJobGroupsClick,
+    onProcessRoleClick: handleProcessRoleClick,
     onDeleteClick: handleDeleteClick,
     deleteIsPending: deleteMutation.isPending,
   });
@@ -382,6 +392,16 @@ export function JobCrud() {
             isPending={setJobJobGroupsMutation.isPending}
             setJobGroupsMutation={setJobJobGroupsMutation}
             onClose={() => setJobGroupsJob(null)}
+        />
+
+        {/* Process-role dialog */}
+        <JobProcessRoleDialog
+            job={processRoleJob}
+            addIsPending={addProcessRoleLinkMutation.isPending}
+            removeIsPending={removeProcessRoleLinkMutation.isPending}
+            addLinkMutation={addProcessRoleLinkMutation}
+            removeLinkMutation={removeProcessRoleLinkMutation}
+            onClose={() => setProcessRoleJob(null)}
         />
 
         <JobBulkUploadDialog

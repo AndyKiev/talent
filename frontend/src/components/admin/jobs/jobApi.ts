@@ -21,6 +21,7 @@ export interface Job {
   created_at: string;
   groups: string[];           // user group names (existing)
   job_group_names: string[];  // job group names (new)
+  process_role_link_names: string[];  // "process_name / role_name" per link
   department_type_links: DepartmentTypeLinkInfo[];  // dept types + link is_active
 }
 
@@ -139,4 +140,47 @@ export const bulkUploadJobs = async (file: File): Promise<JobBulkUploadResult> =
       { headers: { 'Content-Type': 'multipart/form-data' } },
   );
   return res.data;
+};
+
+// ── Process-role assignment ──────────────────────────────────────────────────
+
+const JOB_PROCESS_ROLE_LINKS_BASE = `${BASE_URL}/job_process_role_links`;
+
+export interface JobProcessRoleLink {
+  id: number;
+  job_id: number;
+  process_role_id: number;
+  created_at: string;
+  job_name: string | null;
+  process_name: string | null;
+  role_name: string | null;
+}
+
+export const fetchJobProcessRoleLinks = async (
+  jobId: number,
+): Promise<JobProcessRoleLink[]> => {
+  const res = await axiosInstance.get<JobProcessRoleLink[]>(
+    `${JOB_PROCESS_ROLE_LINKS_BASE}/job/${jobId}`,
+  );
+  return res.data ?? [];
+};
+
+export const createJobProcessRoleLink = async (body: {
+  job_id: number;
+  process_role_id: number;
+}): Promise<MutationResponse<JobProcessRoleLink>> => {
+  const res = await axiosInstance.post<MutationResponse<JobProcessRoleLink>>(
+    JOB_PROCESS_ROLE_LINKS_BASE,
+    body,
+  );
+  return res.data;
+};
+
+export const deleteJobProcessRoleLink = async (
+  jobId: number,
+  processRoleId: number,
+): Promise<void> => {
+  await axiosInstance.delete(
+    `${JOB_PROCESS_ROLE_LINKS_BASE}/job/${jobId}/process_role/${processRoleId}`,
+  );
 };

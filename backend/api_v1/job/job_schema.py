@@ -37,6 +37,7 @@ class Job(JobBase):
     created_at: datetime
     groups: List[str] = []  # user group names linked to this job
     job_group_names: List[str] = []  # job group names linked to this job
+    process_role_link_names: List[str] = []  # "process_name / role_name" per link
     department_type_links: List[DepartmentTypeLinkInfo] = (
         []
     )  # dept types + link is_active

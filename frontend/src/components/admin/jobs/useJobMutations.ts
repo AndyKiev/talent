@@ -1,7 +1,16 @@
 // src/components/admin/jobs/useJobMutations.ts
 import {useMutation, useQueryClient} from '@tanstack/react-query';
 import type {JobBulkUploadResult} from './jobApi';
-import {bulkUploadJobs, createJob, deleteJob, setJobGroups, setJobJobGroups, updateJob} from './jobApi';
+import {
+  bulkUploadJobs,
+  createJob,
+  createJobProcessRoleLink,
+  deleteJob,
+  deleteJobProcessRoleLink,
+  setJobGroups,
+  setJobJobGroups,
+  updateJob,
+} from './jobApi';
 import {JOB_QK} from "../../../utils/queryKeys.ts";
 import type {SnackbarType} from "../../../types/types.ts";
 
@@ -13,6 +22,8 @@ interface Props {
   onDeleteError?: () => void;
   onSetGroupsSuccess?: () => void;
   onSetJobGroupsSuccess?: () => void;
+  onAddProcessRoleSuccess?: () => void;
+  onRemoveProcessRoleSuccess?: () => void;
   onBulkUploadSuccess?: (result: JobBulkUploadResult) => void;
 }
 
@@ -24,6 +35,8 @@ export function useJobMutations({
   onDeleteError,
   onSetGroupsSuccess,
   onSetJobGroupsSuccess,
+  onAddProcessRoleSuccess,
+  onRemoveProcessRoleSuccess,
   onBulkUploadSuccess
 }: Props) {
   const qc = useQueryClient();
@@ -100,5 +113,39 @@ export function useJobMutations({
     },
   });
 
-  return { createMutation, updateMutation, deleteMutation, setGroupsMutation, setJobJobGroupsMutation, bulkUploadMutation };
+  // Process-role link: add
+  const addProcessRoleLinkMutation = useMutation({
+    mutationFn: createJobProcessRoleLink,
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: JOB_QK });
+      onAddProcessRoleSuccess?.();
+    },
+    onError: (err: Error) => {
+      setSnackbar({ open: true, message: err.message, severity: 'error' });
+    },
+  });
+
+  // Process-role link: remove
+  const removeProcessRoleLinkMutation = useMutation({
+    mutationFn: ({ jobId, processRoleId }: { jobId: number; processRoleId: number }) =>
+      deleteJobProcessRoleLink(jobId, processRoleId),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: JOB_QK });
+      onRemoveProcessRoleSuccess?.();
+    },
+    onError: (err: Error) => {
+      setSnackbar({ open: true, message: err.message, severity: 'error' });
+    },
+  });
+
+  return {
+    createMutation,
+    updateMutation,
+    deleteMutation,
+    setGroupsMutation,
+    setJobJobGroupsMutation,
+    addProcessRoleLinkMutation,
+    removeProcessRoleLinkMutation,
+    bulkUploadMutation,
+  };
 }

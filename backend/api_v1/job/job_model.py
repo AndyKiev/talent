@@ -15,6 +15,9 @@ if TYPE_CHECKING:
     from backend.api_v1.job_job_group_link.job_job_group_link_model import (
         JobJobGroupLink,
     )
+    from backend.api_v1.job_process_role_link.job_process_role_link_model import (
+        JobProcessRoleLink,
+    )
 
 
 class Job(IntIdPkMixin, TimestampMixin, Base):
@@ -33,6 +36,11 @@ class Job(IntIdPkMixin, TimestampMixin, Base):
     )
 
     job_groups: Mapped[list["JobJobGroupLink"]] = relationship(
+        back_populates="job",
+        lazy="selectin",
+    )
+
+    process_role_links: Mapped[list["JobProcessRoleLink"]] = relationship(
         back_populates="job",
         lazy="selectin",
     )
@@ -79,4 +87,13 @@ class Job(IntIdPkMixin, TimestampMixin, Base):
             link.job_group.name
             for link in self.job_groups
             if link.job_group and link.job_group.name
+        ]
+
+    @property
+    def process_role_link_names(self) -> list[str]:
+        return [
+            f"{link.process_role.process.name} / {link.process_role.name}"
+            if link.process_role and link.process_role.process
+            else f"? / {link.process_role.name if link.process_role else '?'}"
+            for link in self.process_role_links
         ]

@@ -11,7 +11,7 @@ export function useDataGridLocale(): Partial<GridLocaleText> {
 
     return useMemo(() => ({
         //'noEmployeesFound'
-        noRowsLabel: getString('noDocumentsFound') || 'No items found',
+        noRowsLabel: getString('noRecordsFound') || 'No items found',
         footerRowSelected: (count: number) =>
             count !== 1
                 ? `${count} ${getString('rowsSelected') || 'rows selected'}`

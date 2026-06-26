@@ -133,6 +133,9 @@ from backend.api_v1.job_group.job_group_views import router as job_group_router
 from backend.api_v1.job_job_group_link.job_job_group_link_views import (
     router as job_job_group_link_router,
 )
+from backend.api_v1.job_process_role_link.job_process_role_link_views import (
+    router as job_process_role_link_router,
+)
 from backend.api_v1.essence.essence_views import router as essence_router
 from backend.api_v1.job_responsibility_category_link.job_responsibility_category_link_views import (
     router as job_responsibility_category_link_router,
@@ -285,6 +288,7 @@ router.include_router(review_session_employee_comment_router)
 router.include_router(job_group_type_router)
 router.include_router(job_group_router)
 router.include_router(job_job_group_link_router)
+router.include_router(job_process_role_link_router)
 router.include_router(essence_router)
 router.include_router(operation_essence_set_link_router)
 router.include_router(job_responsibility_category_link_router)

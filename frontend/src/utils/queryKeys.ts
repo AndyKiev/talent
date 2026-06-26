@@ -12,6 +12,7 @@ export const USER_GROUPS_QK = ['user_groups'] as const;
 export const JOB_QK = ['jobs'] as const;
 export const JOB_GROUP_QK = ['job_groups'] as const;
 export const JOB_GROUP_TYPE_QK = ['job_group_types'] as const;
+export const JOB_PROCESS_ROLE_LINK_QK = (jobId: number) => ['job_process_role_links', jobId] as const;
 export const ESSENCE_QK = ['essences'];
 export const EMPLOYEE_EVENT_CHANGE_DEPT_TYPE_QK = ['employee_event_change_dept_types'] as const;
 export const EMPLOYEE_EVENT_DIRECTION_TYPE_QK = ['employee_event_direction_types'] as const;
