@@ -25,9 +25,11 @@ from backend.api_v1.employee.employee_schema import EmployeeSchema
 # Hard cap on the *raw* upload, checked before we ever decode it (a guard against
 # decompression bombs). The stored blob is far smaller after downscaling.
 MAX_RAW_BYTES = 8 * 1024 * 1024
-# Longest edge of the stored image.
-MAX_DIMENSION = 512
-JPEG_QUALITY = 85
+# Longest edge of the stored image. The photo is never displayed larger than the
+# TEMPO 96x120 box (~240px at 2x DPI); avatars are <=48px. 320px keeps headroom
+# while keeping blobs small. (To re-shrink existing rows: scripts/shrink_employee_photos.py)
+MAX_DIMENSION = 320
+JPEG_QUALITY = 80
 
 
 class EmployeePhotoService(BaseService):
