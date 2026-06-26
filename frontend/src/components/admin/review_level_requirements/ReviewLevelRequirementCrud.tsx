@@ -1,16 +1,16 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
     Alert,
     Box,
     Button,
-    Chip,
     CircularProgress,
     IconButton,
     MenuItem,
     Paper,
     Snackbar,
     Stack,
+    Switch,
     TextField,
     Typography,
 } from '@mui/material';
@@ -23,14 +23,18 @@ import { fetchReviewLevels } from '../review_levels/reviewLevelApi';
 import { REVIEW_LEVEL_QK } from '../review_levels/useReviewLevelMutations';
 import {
     fetchReviewLevelRequirements,
+    updateReviewLevelRequirement,
     type ReviewLevelRequirement,
 } from './reviewLevelRequirementApi';
 import {
     REVIEW_LEVEL_REQUIREMENT_QK,
     useReviewLevelRequirementMutations,
 } from './useReviewLevelRequirementMutations';
+import { useArrowReorder } from '../review_dimensions/useArrowReorder';
 import { ReviewLevelRequirementForm } from './ReviewLevelRequirementForm';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
+import ConfirmDialog from '../../ui/ConfirmDialog';
+import ConfirmDeleteDialog from '../../people-review/ConfirmDeleteDialog';
 
 export function ReviewLevelRequirementCrud() {
     const getString = useString();
@@ -41,14 +45,21 @@ export function ReviewLevelRequirementCrud() {
     });
     const [formOpen, setFormOpen] = useState(false);
     const [editing, setEditing] = useState<ReviewLevelRequirement | null>(null);
-    const [levelFilter, setLevelFilter] = useState<number | ''>('');
-    const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
+    // A level is always selected (like the criteria manager's dimension) so the
+    // per-level sort_order arrows reorder a single, fully-visible list. 0 means
+    // "not yet chosen" -> fall back to the first level (derived, see below).
+    const [levelId, setLevelId] = useState<number>(0);
+    const [pendingToggle, setPendingToggle] = useState<ReviewLevelRequirement | null>(null);
+    const [pendingDelete, setPendingDelete] = useState<ReviewLevelRequirement | null>(null);
 
     const { data: levels = [] } = useQuery({
         queryKey: REVIEW_LEVEL_QK,
         queryFn: fetchReviewLevels,
         staleTime: 2 * 60 * 1000,
     });
+
+    // Default to the first level until the user picks one (no setState-in-effect).
+    const effectiveLevelId = levelId || levels[0]?.id || 0;
 
     const { data: allRows = [], isLoading, error } = useQuery({
         queryKey: REVIEW_LEVEL_REQUIREMENT_QK,
@@ -74,34 +85,35 @@ export function ReviewLevelRequirementCrud() {
 
     const localeText = useDataGridLocale();
 
-    const levelName = useCallback(
-        (levelId: number) => {
-            const lvl = levels.find((l) => l.id === levelId);
-            return lvl ? getString(lvl.name_key) : String(levelId);
-        },
-        [levels, getString],
-    );
-
+    // Requirements of the selected level only, active-first then by sort_order so
+    // inactive sink to the bottom (matches the criteria manager).
     const rows = useMemo(
-        () => (levelFilter === '' ? allRows : allRows.filter((r) => r.level_id === levelFilter)),
-        [allRows, levelFilter],
+        () =>
+            allRows
+                .filter((r) => r.level_id === effectiveLevelId)
+                .sort(
+                    (a, b) =>
+                        Number(b.is_active) - Number(a.is_active) ||
+                        a.sort_order - b.sort_order ||
+                        a.id - b.id,
+                ),
+        [allRows, effectiveLevelId],
     );
 
-    const handleToggleActive = useCallback(
-        (row: ReviewLevelRequirement) => {
-            updateMutation.mutate({ id: row.id, data: { is_active: !row.is_active } });
-        },
-        [updateMutation],
-    );
+    // Shared up/down-arrow reordering. Invalidate the requirement list AND the
+    // levels list (its requirement-count chip).
+    const { orderColumn } = useArrowReorder<ReviewLevelRequirement>({
+        rows,
+        updateSortOrder: (id, sort_order) =>
+            updateReviewLevelRequirement({ id, data: { sort_order } }),
+        invalidateKeys: [REVIEW_LEVEL_REQUIREMENT_QK, REVIEW_LEVEL_QK],
+        getString,
+        onError: (message) => setSnackbar({ open: true, message, severity: 'error' }),
+    });
 
     const columns: GridColDef<ReviewLevelRequirement>[] = [
+        orderColumn,
         { field: 'id', headerName: getString('idColumn'), width: 60 },
-        {
-            field: 'level_id',
-            headerName: getString('levelCol'),
-            width: 150,
-            renderCell: (params) => levelName(params.row.level_id),
-        },
         {
             field: 'text_key',
             headerName: getString('textKeyCol'),
@@ -116,18 +128,17 @@ export function ReviewLevelRequirementCrud() {
                 </Stack>
             ),
         },
-        { field: 'sort_order', headerName: getString('sortOrderCol'), width: 90 },
         {
             field: 'is_active',
-            headerName: getString('isActiveCol'),
+            headerName: getString('active'),
             width: 90,
+            sortable: false,
             renderCell: (params) => (
-                <Chip
-                    label={params.row.is_active ? getString('yes') : getString('no')}
-                    color={params.row.is_active ? 'success' : 'default'}
+                <Switch
                     size="small"
-                    onClick={() => handleToggleActive(params.row)}
-                    sx={{ cursor: 'pointer' }}
+                    checked={params.row.is_active}
+                    onChange={() => setPendingToggle(params.row)}
+                    disabled={updateMutation.isPending}
                 />
             ),
         },
@@ -144,7 +155,7 @@ export function ReviewLevelRequirementCrud() {
                     <IconButton
                         size="small"
                         color="error"
-                        onClick={() => deleteMutation.mutate(params.row.id)}
+                        onClick={() => setPendingDelete(params.row)}
                         disabled={deleteMutation.isPending}
                     >
                         <DeleteIcon fontSize="small" />
@@ -157,7 +168,7 @@ export function ReviewLevelRequirementCrud() {
     return (
         <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                <Typography variant="h6" fontWeight={600} sx={{ flex: 1 }}>
+                <Typography variant="h6" fontWeight={600}>
                     {getString('reviewLevelRequirements')}
                 </Typography>
                 <TextField
@@ -165,20 +176,24 @@ export function ReviewLevelRequirementCrud() {
                     variant="outlined"
                     size="small"
                     label={getString('levelCol')}
-                    value={levelFilter === '' ? '' : String(levelFilter)}
-                    onChange={(e) =>
-                        setLevelFilter(e.target.value === '' ? '' : Number(e.target.value))
-                    }
+                    value={effectiveLevelId ? String(effectiveLevelId) : ''}
+                    onChange={(e) => setLevelId(Number(e.target.value))}
                     sx={{ minWidth: 180 }}
                 >
-                    <MenuItem value="">{getString('all')}</MenuItem>
                     {levels.map((lvl) => (
                         <MenuItem key={lvl.id} value={String(lvl.id)}>
                             {getString(lvl.name_key)}
                         </MenuItem>
                     ))}
                 </TextField>
-                <Button variant="contained" size="medium" startIcon={<AddIcon />} onClick={openCreate}>
+                <Box sx={{ flex: 1 }} />
+                <Button
+                    variant="contained"
+                    size="medium"
+                    startIcon={<AddIcon />}
+                    onClick={openCreate}
+                    disabled={!effectiveLevelId}
+                >
                     {getString('addReviewLevelRequirement')}
                 </Button>
             </Box>
@@ -200,15 +215,19 @@ export function ReviewLevelRequirementCrud() {
                     <DataGrid
                         rows={rows}
                         columns={columns}
-                        paginationModel={paginationModel}
-                        onPaginationModelChange={setPaginationModel}
-                        pageSizeOptions={[5, 10, 25]}
+                        hideFooter
                         disableRowSelectionOnClick
                         getRowId={(row) => row.id}
                         getRowHeight={() => 'auto'}
+                        getRowClassName={(params) =>
+                            params.row.is_active ? '' : 'review-row-inactive'
+                        }
                         localeText={localeText}
                         hideFooterSelectedRowCount
-                        sx={{ '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
+                        sx={{
+                            '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 },
+                            '& .review-row-inactive': { opacity: 0.5 },
+                        }}
                     />
                 </Paper>
             )}
@@ -217,10 +236,46 @@ export function ReviewLevelRequirementCrud() {
                 open={formOpen}
                 onClose={() => setFormOpen(false)}
                 levels={levels}
-                defaultLevelId={levelFilter}
+                defaultLevelId={effectiveLevelId}
                 editing={editing}
                 createMutation={createMutation}
                 updateMutation={updateMutation}
+            />
+
+            <ConfirmDialog
+                open={pendingToggle !== null}
+                title={getString('confirmToggleActiveTitle')}
+                message={
+                    pendingToggle?.is_active
+                        ? getString('confirmDeactivateMessage')
+                        : getString('confirmActivateMessage')
+                }
+                confirmColor="warning"
+                isPending={updateMutation.isPending}
+                getString={getString}
+                onConfirm={() => {
+                    if (pendingToggle) {
+                        updateMutation.mutate({
+                            id: pendingToggle.id,
+                            data: { is_active: !pendingToggle.is_active },
+                        });
+                    }
+                    setPendingToggle(null);
+                }}
+                onClose={() => setPendingToggle(null)}
+            />
+
+            <ConfirmDeleteDialog
+                open={pendingDelete !== null}
+                message={getString('confirmDeleteMessage')}
+                itemLabel={pendingDelete ? getString(pendingDelete.text_key) : undefined}
+                isDeleting={deleteMutation.isPending}
+                getString={getString}
+                onConfirm={() => {
+                    if (pendingDelete) deleteMutation.mutate(pendingDelete.id);
+                    setPendingDelete(null);
+                }}
+                onClose={() => setPendingDelete(null)}
             />
 
             <Snackbar

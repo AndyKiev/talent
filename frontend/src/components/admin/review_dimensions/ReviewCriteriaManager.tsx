@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
     Alert,
@@ -30,6 +30,8 @@ import { REVIEW_CRITERIA_QK, useReviewCriteriaMutations } from './useReviewCrite
 import { useArrowReorder } from './useArrowReorder';
 import { ReviewCriteriaForm } from './ReviewCriteriaForm';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
+import ConfirmDialog from '../../ui/ConfirmDialog';
+import ConfirmDeleteDialog from '../../people-review/ConfirmDeleteDialog';
 
 export function ReviewCriteriaManager() {
     const getString = useString();
@@ -43,6 +45,8 @@ export function ReviewCriteriaManager() {
     const [dimensionId, setDimensionId] = useState<number>(0);
     const [formOpen, setFormOpen] = useState(false);
     const [editing, setEditing] = useState<ReviewDimensionCriteria | null>(null);
+    const [pendingToggle, setPendingToggle] = useState<ReviewDimensionCriteria | null>(null);
+    const [pendingDelete, setPendingDelete] = useState<ReviewDimensionCriteria | null>(null);
 
     const { data: dimensions = [] } = useQuery({
         queryKey: REVIEW_DIMENSION_QK,
@@ -50,15 +54,13 @@ export function ReviewCriteriaManager() {
         staleTime: 2 * 60 * 1000,
     });
 
-    // Default to the first dimension once the list loads.
-    useEffect(() => {
-        if (!dimensionId && dimensions.length > 0) setDimensionId(dimensions[0].id);
-    }, [dimensions, dimensionId]);
+    // Default to the first dimension until the user picks one (no setState-in-effect).
+    const effectiveDimensionId = dimensionId || dimensions[0]?.id || 0;
 
     const { data: criteria = [], isLoading, error } = useQuery({
-        queryKey: REVIEW_CRITERIA_QK(dimensionId),
-        queryFn: () => fetchCriteria(dimensionId),
-        enabled: !!dimensionId,
+        queryKey: REVIEW_CRITERIA_QK(effectiveDimensionId),
+        queryFn: () => fetchCriteria(effectiveDimensionId),
+        enabled: !!effectiveDimensionId,
         staleTime: 60 * 1000,
     });
 
@@ -77,7 +79,7 @@ export function ReviewCriteriaManager() {
     );
 
     const { createMutation, updateMutation, deleteMutation } = useReviewCriteriaMutations({
-        dimensionId,
+        dimensionId: effectiveDimensionId,
         setSnackbar,
         onCreateSuccess: () => setFormOpen(false),
         onUpdateSuccess: () => setFormOpen(false),
@@ -88,7 +90,8 @@ export function ReviewCriteriaManager() {
     const { orderColumn } = useArrowReorder<ReviewDimensionCriteria>({
         rows,
         updateSortOrder: (id, sort_order) => updateCriteria({ id, data: { sort_order } }),
-        invalidateKeys: [REVIEW_CRITERIA_QK(dimensionId), REVIEW_DIMENSION_QK],
+        invalidateKeys: [REVIEW_CRITERIA_QK(effectiveDimensionId), REVIEW_DIMENSION_QK],
+        getString,
         onError: (message) => setSnackbar({ open: true, message, severity: 'error' }),
     });
 
@@ -111,13 +114,9 @@ export function ReviewCriteriaManager() {
             sortable: false,
             renderCell: (params) => (
                 <Switch
+                    size="small"
                     checked={params.row.is_active}
-                    onChange={(e) =>
-                        updateMutation.mutate({
-                            id: params.row.id,
-                            data: { is_active: e.target.checked },
-                        })
-                    }
+                    onChange={() => setPendingToggle(params.row)}
                     disabled={updateMutation.isPending}
                 />
             ),
@@ -135,7 +134,7 @@ export function ReviewCriteriaManager() {
                     <IconButton
                         size="small"
                         color="error"
-                        onClick={() => deleteMutation.mutate(params.row.id)}
+                        onClick={() => setPendingDelete(params.row)}
                         disabled={deleteMutation.isPending}
                     >
                         <DeleteIcon fontSize="small" />
@@ -156,7 +155,7 @@ export function ReviewCriteriaManager() {
                     variant="outlined"
                     size="small"
                     label={getString('selectDimension')}
-                    value={dimensionId ? String(dimensionId) : ''}
+                    value={effectiveDimensionId ? String(effectiveDimensionId) : ''}
                     onChange={(e) => setDimensionId(Number(e.target.value))}
                     sx={{ minWidth: 240 }}
                 >
@@ -172,31 +171,31 @@ export function ReviewCriteriaManager() {
                     size="medium"
                     startIcon={<AddIcon />}
                     onClick={openCreate}
-                    disabled={!dimensionId}
+                    disabled={!effectiveDimensionId}
                 >
                     {getString('addCriterion')}
                 </Button>
             </Box>
 
-            {!dimensionId && (
+            {!effectiveDimensionId && (
                 <Alert severity="info" sx={{ borderRadius: '10px' }}>
                     {getString('selectDimension')}
                 </Alert>
             )}
 
-            {!!dimensionId && isLoading && (
+            {!!effectiveDimensionId && isLoading && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
                     <CircularProgress />
                 </Box>
             )}
 
-            {!!dimensionId && !isLoading && error && (
+            {!!effectiveDimensionId && !isLoading && error && (
                 <Alert severity="error" sx={{ m: 2 }}>
                     {(error as Error).message}
                 </Alert>
             )}
 
-            {!!dimensionId && !isLoading && !error && (
+            {!!effectiveDimensionId && !isLoading && !error && (
                 <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
                     <DataGrid
                         rows={rows}
@@ -221,11 +220,47 @@ export function ReviewCriteriaManager() {
             <ReviewCriteriaForm
                 open={formOpen}
                 onClose={() => setFormOpen(false)}
-                dimensionId={dimensionId}
+                dimensionId={effectiveDimensionId}
                 editing={editing}
                 nextSortOrder={rows.length}
                 createMutation={createMutation}
                 updateMutation={updateMutation}
+            />
+
+            <ConfirmDialog
+                open={pendingToggle !== null}
+                title={getString('confirmToggleActiveTitle')}
+                message={
+                    pendingToggle?.is_active
+                        ? getString('confirmDeactivateMessage')
+                        : getString('confirmActivateMessage')
+                }
+                confirmColor="warning"
+                isPending={updateMutation.isPending}
+                getString={getString}
+                onConfirm={() => {
+                    if (pendingToggle) {
+                        updateMutation.mutate({
+                            id: pendingToggle.id,
+                            data: { is_active: !pendingToggle.is_active },
+                        });
+                    }
+                    setPendingToggle(null);
+                }}
+                onClose={() => setPendingToggle(null)}
+            />
+
+            <ConfirmDeleteDialog
+                open={pendingDelete !== null}
+                message={getString('confirmDeleteMessage')}
+                itemLabel={pendingDelete?.text}
+                isDeleting={deleteMutation.isPending}
+                getString={getString}
+                onConfirm={() => {
+                    if (pendingDelete) deleteMutation.mutate(pendingDelete.id);
+                    setPendingDelete(null);
+                }}
+                onClose={() => setPendingDelete(null)}
             />
 
             <Snackbar

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
     Alert,
@@ -10,6 +10,7 @@ import {
     Paper,
     Snackbar,
     Stack,
+    Switch,
     Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
@@ -22,6 +23,8 @@ import { REVIEW_DIMENSION_QK, useReviewDimensionMutations } from './useReviewDim
 import { useArrowReorder } from './useArrowReorder';
 import { ReviewDimensionForm } from './ReviewDimensionForm';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
+import ConfirmDialog from '../../ui/ConfirmDialog';
+import ConfirmDeleteDialog from '../../people-review/ConfirmDeleteDialog';
 
 export function ReviewDimensionCrud() {
     const getString = useString();
@@ -32,6 +35,8 @@ export function ReviewDimensionCrud() {
     });
     const [formOpen, setFormOpen] = useState(false);
     const [editing, setEditing] = useState<ReviewDimension | null>(null);
+    const [pendingToggle, setPendingToggle] = useState<ReviewDimension | null>(null);
+    const [pendingDelete, setPendingDelete] = useState<ReviewDimension | null>(null);
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
 
     const { data: rows = [], isLoading, error } = useQuery({
@@ -60,15 +65,9 @@ export function ReviewDimensionCrud() {
         rows: sortedRows,
         updateSortOrder: (id, sort_order) => updateReviewDimension({ id, data: { sort_order } }),
         invalidateKeys: [REVIEW_DIMENSION_QK],
+        getString,
         onError: (message) => setSnackbar({ open: true, message, severity: 'error' }),
     });
-
-    const handleToggleActive = useCallback(
-        (row: ReviewDimension) => {
-            updateMutation.mutate({ id: row.id, data: { is_active: !row.is_active } });
-        },
-        [updateMutation],
-    );
 
     const openCreate = () => {
         setEditing(null);
@@ -114,15 +113,15 @@ export function ReviewDimensionCrud() {
         },
         {
             field: 'is_active',
-            headerName: getString('isActiveCol'),
+            headerName: getString('active'),
             width: 90,
+            sortable: false,
             renderCell: (params) => (
-                <Chip
-                    label={params.row.is_active ? getString('yes') : getString('no')}
-                    color={params.row.is_active ? 'success' : 'default'}
+                <Switch
                     size="small"
-                    onClick={() => handleToggleActive(params.row)}
-                    sx={{ cursor: 'pointer' }}
+                    checked={params.row.is_active}
+                    onChange={() => setPendingToggle(params.row)}
+                    disabled={updateMutation.isPending}
                 />
             ),
         },
@@ -139,7 +138,7 @@ export function ReviewDimensionCrud() {
                     <IconButton
                         size="small"
                         color="error"
-                        onClick={() => deleteMutation.mutate(params.row.id)}
+                        onClick={() => setPendingDelete(params.row)}
                         disabled={deleteMutation.isPending}
                     >
                         <DeleteIcon fontSize="small" />
@@ -197,6 +196,42 @@ export function ReviewDimensionCrud() {
                 nextSortOrder={sortedRows.length}
                 createMutation={createMutation}
                 updateMutation={updateMutation}
+            />
+
+            <ConfirmDialog
+                open={pendingToggle !== null}
+                title={getString('confirmToggleActiveTitle')}
+                message={
+                    pendingToggle?.is_active
+                        ? getString('confirmDeactivateMessage')
+                        : getString('confirmActivateMessage')
+                }
+                confirmColor="warning"
+                isPending={updateMutation.isPending}
+                getString={getString}
+                onConfirm={() => {
+                    if (pendingToggle) {
+                        updateMutation.mutate({
+                            id: pendingToggle.id,
+                            data: { is_active: !pendingToggle.is_active },
+                        });
+                    }
+                    setPendingToggle(null);
+                }}
+                onClose={() => setPendingToggle(null)}
+            />
+
+            <ConfirmDeleteDialog
+                open={pendingDelete !== null}
+                message={getString('confirmDeleteMessage')}
+                itemLabel={pendingDelete?.name}
+                isDeleting={deleteMutation.isPending}
+                getString={getString}
+                onConfirm={() => {
+                    if (pendingDelete) deleteMutation.mutate(pendingDelete.id);
+                    setPendingDelete(null);
+                }}
+                onClose={() => setPendingDelete(null)}
             />
 
             <Snackbar
