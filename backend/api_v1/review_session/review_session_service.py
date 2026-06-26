@@ -53,6 +53,13 @@ from backend.api_v1.review_dimension_criteria.review_dimension_criteria_model im
 from backend.api_v1.review_session_criterion.review_session_criterion_model import (
     ReviewSessionCriterion,
 )
+from backend.api_v1.review_level.review_level_model import ReviewLevel
+from backend.api_v1.review_session_level.review_session_level_model import (
+    ReviewSessionLevel,
+)
+from backend.api_v1.review_session_level_requirement.review_session_level_requirement_model import (
+    ReviewSessionLevelRequirement,
+)
 
 
 VALID_TRANSITIONS = {
@@ -157,6 +164,42 @@ class ReviewSessionService(BaseService):
                     sort_order=crit.sort_order,
                 )
             )
+
+        # Freeze this session's competency levels + their requirements (the "level
+        # descriptions"). Like the criteria above, the active set + order is copied
+        # so the proposed-level drawer's selectable levels/requirements stay fixed
+        # for this session even if the live levels are later edited, reordered or
+        # deactivated. source_*_id keeps the live id so saved employee answers
+        # (stored with live ids) still map to the frozen rows.
+        level_stmt = (
+            select(ReviewLevel)
+            .where(ReviewLevel.is_active == True)
+            .order_by(ReviewLevel.sort_order, ReviewLevel.id)
+        )
+        level_result = await self.session.execute(level_stmt)
+        for lvl in level_result.scalars().all():
+            session_level = ReviewSessionLevel(
+                session_id=rs_id,
+                source_level_id=lvl.id,
+                name_key=lvl.name_key,
+                description_key=lvl.description_key,
+                sort_order=lvl.sort_order,
+            )
+            self.session.add(session_level)
+            await self.session.flush()  # populate session_level.id for the children
+            active_reqs = sorted(
+                (r for r in lvl.requirements if r.is_active),
+                key=lambda r: (r.sort_order, r.id),
+            )
+            for req in active_reqs:
+                self.session.add(
+                    ReviewSessionLevelRequirement(
+                        session_level_id=session_level.id,
+                        source_requirement_id=req.id,
+                        text_key=req.text_key,
+                        sort_order=req.sort_order,
+                    )
+                )
 
         for emp in employees:
             rse = ReviewSessionEmployee(
@@ -349,6 +392,33 @@ class ReviewSessionService(BaseService):
             await self.session.execute(
                 sa_delete(ReviewSessionCriterion).where(
                     ReviewSessionCriterion.session_id == rs_id
+                )
+            )
+
+            # 3c) the session's frozen levels snapshot (requirements child first).
+            # Nothing else FKs into these (employee rows stay on live ids).
+            session_level_ids = (
+                (
+                    await self.session.execute(
+                        sa_select(ReviewSessionLevel.id).where(
+                            ReviewSessionLevel.session_id == rs_id
+                        )
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            if session_level_ids:
+                await self.session.execute(
+                    sa_delete(ReviewSessionLevelRequirement).where(
+                        ReviewSessionLevelRequirement.session_level_id.in_(
+                            session_level_ids
+                        )
+                    )
+                )
+            await self.session.execute(
+                sa_delete(ReviewSessionLevel).where(
+                    ReviewSessionLevel.session_id == rs_id
                 )
             )
 

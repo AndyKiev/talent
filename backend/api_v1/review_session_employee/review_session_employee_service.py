@@ -616,15 +616,34 @@ class ReviewSessionEmployeeService(BaseService):
             facts_by_req = {
                 a.requirement_id: a.facts for a in (registration.answers or [])
             }
-            level = await self.session.get(ReviewLevel, registration.level_id)
-            reqs = sorted(
-                (level.requirements if level else []),
-                key=lambda r: r.sort_order,
+            # Render the proposed level's FROZEN requirements (the exact set/order the
+            # employee saw in the drawer), falling back to the live active ones for
+            # pre-freeze sessions. Frozen requirements expose live ids, so facts_by_req
+            # (keyed by live id) matches unchanged.
+            from backend.api_v1.review_session_level.review_session_level_helper import (
+                frozen_levels_for_session,
             )
-            for req in reqs:
-                text = await self._translate(req.text_key, fallback=req.text_key)
+
+            frozen = await frozen_levels_for_session(self.session, record.session_id)
+            proposed_frozen = next(
+                (l for l in frozen if l.id == registration.level_id), None
+            )
+            if proposed_frozen is not None:
+                reqs = [(r.text_key, r.id) for r in proposed_frozen.requirements]
+            else:
+                level = await self.session.get(ReviewLevel, registration.level_id)
+                reqs = [
+                    (r.text_key, r.id)
+                    for r in sorted(
+                        (level.requirements if level else []),
+                        key=lambda r: r.sort_order,
+                    )
+                    if r.is_active
+                ]
+            for text_key, req_id in reqs:
+                text = await self._translate(text_key, fallback=text_key)
                 level_requirements.append(
-                    {"text": text, "facts": facts_by_req.get(req.id)}
+                    {"text": text, "facts": facts_by_req.get(req_id)}
                 )
 
         # Level "sense" — compares the proposed level against the employee's
@@ -992,15 +1011,31 @@ class ReviewSessionEmployeeService(BaseService):
         if is_decrease:
             return
 
-        active_reqs = [
-            r for r in (proposed.requirements if proposed else []) if r.is_active
-        ]
+        # Count against the proposed level's FROZEN requirement set (exactly what the
+        # employee saw in the drawer), so deactivating a live requirement mid-session
+        # can't let the gate pass short. Falls back to live active requirements for
+        # pre-freeze sessions.
+        from backend.api_v1.review_session_level.review_session_level_helper import (
+            frozen_levels_for_session,
+        )
+
+        frozen = await frozen_levels_for_session(self.session, record.session_id)
+        proposed_frozen = next(
+            (l for l in frozen if l.id == registration.level_id), None
+        )
+        required_req_ids = (
+            [r.id for r in proposed_frozen.requirements]
+            if proposed_frozen is not None
+            else [
+                r.id for r in (proposed.requirements if proposed else []) if r.is_active
+            ]
+        )
         answered = {
             a.requirement_id
             for a in (registration.answers or [])
             if (a.facts or "").strip()
         }
-        if any(r.id not in answered for r in active_reqs):
+        if any(rid not in answered for rid in required_req_ids):
             raise await self._resolve_domain_error(ProposedLevelDetailsIncomplete())
 
     async def change_status(

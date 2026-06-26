@@ -8,6 +8,9 @@ from backend.api_v1.review_session_employee_level.review_session_employee_level_
     ProposedLevelUpsert,
     ProposedLevelStatusUpdate,
 )
+from backend.api_v1.review_session_level.review_session_level_schema import (
+    SessionLevelSchema,
+)
 from backend.api_v1.review_session_employee_level.review_session_employee_level_dependencies import (
     get_review_session_employee_level_service,
 )
@@ -22,6 +25,22 @@ router = APIRouter(
     tags=["Review Session Employee Level"],
     dependencies=[Depends(HTTPBearer(auto_error=False))],
 )
+
+
+@router.get(
+    "/{rse_id}/available_levels",
+    response_model=list[SessionLevelSchema],
+)
+async def get_available_levels(
+    rse_id: int,
+    service: Annotated[
+        ReviewSessionEmployeeLevelService,
+        Depends(get_review_session_employee_level_service),
+    ],
+):
+    """The session's frozen competency levels (+ requirements) selectable for this
+    employee review — falls back to live active levels for pre-freeze sessions."""
+    return await service.get_session_levels(rse_id)
 
 
 @router.get(

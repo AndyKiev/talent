@@ -35,6 +35,12 @@ from backend.api_v1.review_session_employee.review_session_employee_repository i
 from backend.api_v1.review_session_employee.review_session_employee_service import (
     ReviewSessionEmployeeService,
 )
+from backend.api_v1.review_session_level.review_session_level_schema import (
+    SessionLevelSchema,
+)
+from backend.api_v1.review_session_level.review_session_level_helper import (
+    frozen_levels_for_session,
+)
 
 
 # Fixed namespace for the per-RSE advisory lock used by upsert_proposed_level.
@@ -74,30 +80,48 @@ class ReviewSessionEmployeeLevelService(BaseService):
             return None
         return ProposedLevelSchema.model_validate(record)
 
+    async def get_session_levels(self, rse_id: int) -> list[SessionLevelSchema]:
+        """The session's FROZEN competency levels (+ requirements) for this rse, in
+        the live-id shape the drawer expects. Falls back to live active levels for
+        pre-freeze sessions (handled by the shared helper)."""
+        from backend.api_v1.review_session_employee.review_session_employee_model import (
+            ReviewSessionEmployee,
+        )
+
+        await self._assert_rse_visible(rse_id)
+        session_id = await self.session.scalar(
+            select(ReviewSessionEmployee.session_id).where(
+                ReviewSessionEmployee.id == rse_id
+            )
+        )
+        if session_id is None:
+            return []
+        return await frozen_levels_for_session(self.session, session_id)
+
     async def _assert_step_allowed(self, rse_id: int, target_level_id: int) -> None:
         """Enforce the +1 rule: a proposed level may be at most one rank above the
         employee's current level (no +2 jumps). Decreases are unrestricted. Rank is
-        the position in the sort_order-ordered active-level list, so the rule stays
-        correct even when sort_order values have gaps."""
+        the position in the sort_order-ordered list of the session's FROZEN levels,
+        so the rule matches exactly what the drawer offers (and stays correct even
+        when sort_order values have gaps)."""
         from backend.api_v1.review_session_employee.review_session_employee_model import (
             ReviewSessionEmployee,
         )
         from backend.api_v1.employee.employee_model import Employee
-        from backend.api_v1.review_level.review_level_model import ReviewLevel
 
         rse = await self.session.get(ReviewSessionEmployee, rse_id)
         current_level_id = None
+        session_id = None
         if rse is not None:
+            session_id = rse.session_id
             emp = await self.session.get(Employee, rse.employee_id)
             current_level_id = getattr(emp, "current_level_id", None) if emp else None
 
         levels = (
-            await self.session.scalars(
-                select(ReviewLevel)
-                .where(ReviewLevel.is_active.is_(True))
-                .order_by(ReviewLevel.sort_order)
-            )
-        ).all()
+            await frozen_levels_for_session(self.session, session_id)
+            if session_id is not None
+            else []
+        )
         ranks = {lvl.id: i for i, lvl in enumerate(levels)}
         target_rank = ranks.get(target_level_id)
         if target_rank is None:
