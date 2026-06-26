@@ -27,6 +27,7 @@ import { Route as AdminTalentRouteRouteImport } from './routes/admin/talent/rout
 import { Route as AdminReviewersRouteRouteImport } from './routes/admin/reviewers/route'
 import { Route as AdminReview_setupRouteRouteImport } from './routes/admin/review_setup/route'
 import { Route as AdminPlanning_setupRouteRouteImport } from './routes/admin/planning_setup/route'
+import { Route as AdminPeople_reviewRouteRouteImport } from './routes/admin/people_review/route'
 import { Route as AdminJobs_groupRouteRouteImport } from './routes/admin/jobs_group/route'
 import { Route as AdminDepartments_groupRouteRouteImport } from './routes/admin/departments_group/route'
 import { Route as People_reviewSessionIdIndexRouteImport } from './routes/people_review/$sessionId/index'
@@ -44,6 +45,7 @@ import { Route as AdminStructureIndexRouteImport } from './routes/admin/structur
 import { Route as AdminReviewersIndexRouteImport } from './routes/admin/reviewers/index'
 import { Route as AdminReview_setupIndexRouteImport } from './routes/admin/review_setup/index'
 import { Route as AdminPlanning_setupIndexRouteImport } from './routes/admin/planning_setup/index'
+import { Route as AdminPeople_reviewIndexRouteImport } from './routes/admin/people_review/index'
 import { Route as AdminJobs_groupIndexRouteImport } from './routes/admin/jobs_group/index'
 import { Route as AdminJobsIndexRouteImport } from './routes/admin/jobs/index'
 import { Route as AdminJob_groupsIndexRouteImport } from './routes/admin/job_groups/index'
@@ -56,6 +58,8 @@ import { Route as EmployeesEmployeeIdEditRouteImport } from './routes/employees/
 import { Route as AdminStructureDepartmentIdRouteImport } from './routes/admin/structure/$departmentId'
 import { Route as AdminReview_setupLevelsRouteRouteImport } from './routes/admin/review_setup/levels/route'
 import { Route as AdminReview_setupDimensionsRouteRouteImport } from './routes/admin/review_setup/dimensions/route'
+import { Route as AdminPeople_reviewReviewersRouteRouteImport } from './routes/admin/people_review/reviewers/route'
+import { Route as AdminPeople_reviewReview_setupRouteRouteImport } from './routes/admin/people_review/review_setup/route'
 import { Route as AdminDepartments_groupDepartment_typesRouteRouteImport } from './routes/admin/departments_group/department_types/route'
 import { Route as EmployeesEmployeeIdTalent_auditIndexRouteImport } from './routes/employees/$employeeId/talent_audit/index'
 import { Route as EmployeesEmployeeIdSummaryIndexRouteImport } from './routes/employees/$employeeId/summary/index'
@@ -86,6 +90,8 @@ import { Route as AdminReview_setupDimensionsIndexRouteImport } from './routes/a
 import { Route as AdminPlanning_setupPlan_session_statusIndexRouteImport } from './routes/admin/planning_setup/plan_session_status/index'
 import { Route as AdminPlanning_setupPlan_scope_defaultsIndexRouteImport } from './routes/admin/planning_setup/plan_scope_defaults/index'
 import { Route as AdminPlanning_setupPlan_category_defaultsIndexRouteImport } from './routes/admin/planning_setup/plan_category_defaults/index'
+import { Route as AdminPeople_reviewReviewersIndexRouteImport } from './routes/admin/people_review/reviewers/index'
+import { Route as AdminPeople_reviewReview_setupIndexRouteImport } from './routes/admin/people_review/review_setup/index'
 import { Route as AdminJobs_groupJobsIndexRouteImport } from './routes/admin/jobs_group/jobs/index'
 import { Route as AdminJobs_groupJob_groupsIndexRouteImport } from './routes/admin/jobs_group/job_groups/index'
 import { Route as AdminJobs_groupJob_group_typesIndexRouteImport } from './routes/admin/jobs_group/job_group_types/index'
@@ -98,13 +104,23 @@ import { Route as AdminDepartments_groupRegionsIndexRouteImport } from './routes
 import { Route as AdminDepartments_groupDepartment_typesIndexRouteImport } from './routes/admin/departments_group/department_types/index'
 import { Route as AdminDepartments_groupDepartment_categoriesIndexRouteImport } from './routes/admin/departments_group/department_categories/index'
 import { Route as People_reviewSessionIdEmployeeEmployeeIdRouteImport } from './routes/people_review/$sessionId/employee/$employeeId'
+import { Route as AdminPeople_reviewReview_setupLevelsRouteRouteImport } from './routes/admin/people_review/review_setup/levels/route'
+import { Route as AdminPeople_reviewReview_setupDimensionsRouteRouteImport } from './routes/admin/people_review/review_setup/dimensions/route'
 import { Route as AdminReview_setupLevelsRequirementsIndexRouteImport } from './routes/admin/review_setup/levels/requirements/index'
 import { Route as AdminReview_setupLevelsListIndexRouteImport } from './routes/admin/review_setup/levels/list/index'
 import { Route as AdminReview_setupDimensionsListIndexRouteImport } from './routes/admin/review_setup/dimensions/list/index'
 import { Route as AdminReview_setupDimensionsCriteriaIndexRouteImport } from './routes/admin/review_setup/dimensions/criteria/index'
+import { Route as AdminPeople_reviewReviewersHoldersIndexRouteImport } from './routes/admin/people_review/reviewers/holders/index'
+import { Route as AdminPeople_reviewReviewersEmployeesIndexRouteImport } from './routes/admin/people_review/reviewers/employees/index'
+import { Route as AdminPeople_reviewReview_setupLevelsIndexRouteImport } from './routes/admin/people_review/review_setup/levels/index'
+import { Route as AdminPeople_reviewReview_setupDimensionsIndexRouteImport } from './routes/admin/people_review/review_setup/dimensions/index'
 import { Route as AdminDepartments_groupDepartment_typesListIndexRouteImport } from './routes/admin/departments_group/department_types/list/index'
 import { Route as AdminDepartments_groupDepartment_typesJob_linksIndexRouteImport } from './routes/admin/departments_group/department_types/job_links/index'
 import { Route as AdminDepartments_groupDepartment_typesHierarchyIndexRouteImport } from './routes/admin/departments_group/department_types/hierarchy/index'
+import { Route as AdminPeople_reviewReview_setupLevelsRequirementsIndexRouteImport } from './routes/admin/people_review/review_setup/levels/requirements/index'
+import { Route as AdminPeople_reviewReview_setupLevelsListIndexRouteImport } from './routes/admin/people_review/review_setup/levels/list/index'
+import { Route as AdminPeople_reviewReview_setupDimensionsListIndexRouteImport } from './routes/admin/people_review/review_setup/dimensions/list/index'
+import { Route as AdminPeople_reviewReview_setupDimensionsCriteriaIndexRouteImport } from './routes/admin/people_review/review_setup/dimensions/criteria/index'
 
 const PlanningRouteRoute = PlanningRouteRouteImport.update({
   id: '/planning',
@@ -200,6 +216,11 @@ const AdminPlanning_setupRouteRoute =
     path: '/admin/planning_setup',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AdminPeople_reviewRouteRoute = AdminPeople_reviewRouteRouteImport.update({
+  id: '/admin/people_review',
+  path: '/admin/people_review',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminJobs_groupRouteRoute = AdminJobs_groupRouteRouteImport.update({
   id: '/admin/jobs_group',
   path: '/admin/jobs_group',
@@ -293,6 +314,11 @@ const AdminPlanning_setupIndexRoute =
     path: '/',
     getParentRoute: () => AdminPlanning_setupRouteRoute,
   } as any)
+const AdminPeople_reviewIndexRoute = AdminPeople_reviewIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminPeople_reviewRouteRoute,
+} as any)
 const AdminJobs_groupIndexRoute = AdminJobs_groupIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -360,6 +386,18 @@ const AdminReview_setupDimensionsRouteRoute =
     id: '/dimensions',
     path: '/dimensions',
     getParentRoute: () => AdminReview_setupRouteRoute,
+  } as any)
+const AdminPeople_reviewReviewersRouteRoute =
+  AdminPeople_reviewReviewersRouteRouteImport.update({
+    id: '/reviewers',
+    path: '/reviewers',
+    getParentRoute: () => AdminPeople_reviewRouteRoute,
+  } as any)
+const AdminPeople_reviewReview_setupRouteRoute =
+  AdminPeople_reviewReview_setupRouteRouteImport.update({
+    id: '/review_setup',
+    path: '/review_setup',
+    getParentRoute: () => AdminPeople_reviewRouteRoute,
   } as any)
 const AdminDepartments_groupDepartment_typesRouteRoute =
   AdminDepartments_groupDepartment_typesRouteRouteImport.update({
@@ -540,6 +578,18 @@ const AdminPlanning_setupPlan_category_defaultsIndexRoute =
     path: '/plan_category_defaults/',
     getParentRoute: () => AdminPlanning_setupRouteRoute,
   } as any)
+const AdminPeople_reviewReviewersIndexRoute =
+  AdminPeople_reviewReviewersIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AdminPeople_reviewReviewersRouteRoute,
+  } as any)
+const AdminPeople_reviewReview_setupIndexRoute =
+  AdminPeople_reviewReview_setupIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AdminPeople_reviewReview_setupRouteRoute,
+  } as any)
 const AdminJobs_groupJobsIndexRoute =
   AdminJobs_groupJobsIndexRouteImport.update({
     id: '/jobs/',
@@ -612,6 +662,18 @@ const People_reviewSessionIdEmployeeEmployeeIdRoute =
     path: '/people_review/$sessionId/employee/$employeeId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AdminPeople_reviewReview_setupLevelsRouteRoute =
+  AdminPeople_reviewReview_setupLevelsRouteRouteImport.update({
+    id: '/levels',
+    path: '/levels',
+    getParentRoute: () => AdminPeople_reviewReview_setupRouteRoute,
+  } as any)
+const AdminPeople_reviewReview_setupDimensionsRouteRoute =
+  AdminPeople_reviewReview_setupDimensionsRouteRouteImport.update({
+    id: '/dimensions',
+    path: '/dimensions',
+    getParentRoute: () => AdminPeople_reviewReview_setupRouteRoute,
+  } as any)
 const AdminReview_setupLevelsRequirementsIndexRoute =
   AdminReview_setupLevelsRequirementsIndexRouteImport.update({
     id: '/requirements/',
@@ -636,6 +698,30 @@ const AdminReview_setupDimensionsCriteriaIndexRoute =
     path: '/criteria/',
     getParentRoute: () => AdminReview_setupDimensionsRouteRoute,
   } as any)
+const AdminPeople_reviewReviewersHoldersIndexRoute =
+  AdminPeople_reviewReviewersHoldersIndexRouteImport.update({
+    id: '/holders/',
+    path: '/holders/',
+    getParentRoute: () => AdminPeople_reviewReviewersRouteRoute,
+  } as any)
+const AdminPeople_reviewReviewersEmployeesIndexRoute =
+  AdminPeople_reviewReviewersEmployeesIndexRouteImport.update({
+    id: '/employees/',
+    path: '/employees/',
+    getParentRoute: () => AdminPeople_reviewReviewersRouteRoute,
+  } as any)
+const AdminPeople_reviewReview_setupLevelsIndexRoute =
+  AdminPeople_reviewReview_setupLevelsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AdminPeople_reviewReview_setupLevelsRouteRoute,
+  } as any)
+const AdminPeople_reviewReview_setupDimensionsIndexRoute =
+  AdminPeople_reviewReview_setupDimensionsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AdminPeople_reviewReview_setupDimensionsRouteRoute,
+  } as any)
 const AdminDepartments_groupDepartment_typesListIndexRoute =
   AdminDepartments_groupDepartment_typesListIndexRouteImport.update({
     id: '/list/',
@@ -654,12 +740,37 @@ const AdminDepartments_groupDepartment_typesHierarchyIndexRoute =
     path: '/hierarchy/',
     getParentRoute: () => AdminDepartments_groupDepartment_typesRouteRoute,
   } as any)
+const AdminPeople_reviewReview_setupLevelsRequirementsIndexRoute =
+  AdminPeople_reviewReview_setupLevelsRequirementsIndexRouteImport.update({
+    id: '/requirements/',
+    path: '/requirements/',
+    getParentRoute: () => AdminPeople_reviewReview_setupLevelsRouteRoute,
+  } as any)
+const AdminPeople_reviewReview_setupLevelsListIndexRoute =
+  AdminPeople_reviewReview_setupLevelsListIndexRouteImport.update({
+    id: '/list/',
+    path: '/list/',
+    getParentRoute: () => AdminPeople_reviewReview_setupLevelsRouteRoute,
+  } as any)
+const AdminPeople_reviewReview_setupDimensionsListIndexRoute =
+  AdminPeople_reviewReview_setupDimensionsListIndexRouteImport.update({
+    id: '/list/',
+    path: '/list/',
+    getParentRoute: () => AdminPeople_reviewReview_setupDimensionsRouteRoute,
+  } as any)
+const AdminPeople_reviewReview_setupDimensionsCriteriaIndexRoute =
+  AdminPeople_reviewReview_setupDimensionsCriteriaIndexRouteImport.update({
+    id: '/criteria/',
+    path: '/criteria/',
+    getParentRoute: () => AdminPeople_reviewReview_setupDimensionsRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/planning': typeof PlanningRouteRoute
   '/admin/departments_group': typeof AdminDepartments_groupRouteRouteWithChildren
   '/admin/jobs_group': typeof AdminJobs_groupRouteRouteWithChildren
+  '/admin/people_review': typeof AdminPeople_reviewRouteRouteWithChildren
   '/admin/planning_setup': typeof AdminPlanning_setupRouteRouteWithChildren
   '/admin/review_setup': typeof AdminReview_setupRouteRouteWithChildren
   '/admin/reviewers': typeof AdminReviewersRouteRouteWithChildren
@@ -677,6 +788,8 @@ export interface FileRoutesByFullPath {
   '/employees': typeof EmployeesIndexRoute
   '/people_review': typeof People_reviewIndexRoute
   '/admin/departments_group/department_types': typeof AdminDepartments_groupDepartment_typesRouteRouteWithChildren
+  '/admin/people_review/review_setup': typeof AdminPeople_reviewReview_setupRouteRouteWithChildren
+  '/admin/people_review/reviewers': typeof AdminPeople_reviewReviewersRouteRouteWithChildren
   '/admin/review_setup/dimensions': typeof AdminReview_setupDimensionsRouteRouteWithChildren
   '/admin/review_setup/levels': typeof AdminReview_setupLevelsRouteRouteWithChildren
   '/admin/structure/$departmentId': typeof AdminStructureDepartmentIdRoute
@@ -689,6 +802,7 @@ export interface FileRoutesByFullPath {
   '/admin/job_groups': typeof AdminJob_groupsIndexRoute
   '/admin/jobs': typeof AdminJobsIndexRoute
   '/admin/jobs_group/': typeof AdminJobs_groupIndexRoute
+  '/admin/people_review/': typeof AdminPeople_reviewIndexRoute
   '/admin/planning_setup/': typeof AdminPlanning_setupIndexRoute
   '/admin/review_setup/': typeof AdminReview_setupIndexRoute
   '/admin/reviewers/': typeof AdminReviewersIndexRoute
@@ -704,6 +818,8 @@ export interface FileRoutesByFullPath {
   '/developer/translations': typeof DeveloperTranslationsIndexRoute
   '/employees/$employeeId/': typeof EmployeesEmployeeIdIndexRoute
   '/people_review/$sessionId': typeof People_reviewSessionIdIndexRoute
+  '/admin/people_review/review_setup/dimensions': typeof AdminPeople_reviewReview_setupDimensionsRouteRouteWithChildren
+  '/admin/people_review/review_setup/levels': typeof AdminPeople_reviewReview_setupLevelsRouteRouteWithChildren
   '/people_review/$sessionId/employee/$employeeId': typeof People_reviewSessionIdEmployeeEmployeeIdRoute
   '/admin/departments_group/department_categories': typeof AdminDepartments_groupDepartment_categoriesIndexRoute
   '/admin/departments_group/department_types/': typeof AdminDepartments_groupDepartment_typesIndexRoute
@@ -716,6 +832,8 @@ export interface FileRoutesByFullPath {
   '/admin/jobs_group/job_group_types': typeof AdminJobs_groupJob_group_typesIndexRoute
   '/admin/jobs_group/job_groups': typeof AdminJobs_groupJob_groupsIndexRoute
   '/admin/jobs_group/jobs': typeof AdminJobs_groupJobsIndexRoute
+  '/admin/people_review/review_setup/': typeof AdminPeople_reviewReview_setupIndexRoute
+  '/admin/people_review/reviewers/': typeof AdminPeople_reviewReviewersIndexRoute
   '/admin/planning_setup/plan_category_defaults': typeof AdminPlanning_setupPlan_category_defaultsIndexRoute
   '/admin/planning_setup/plan_scope_defaults': typeof AdminPlanning_setupPlan_scope_defaultsIndexRoute
   '/admin/planning_setup/plan_session_status': typeof AdminPlanning_setupPlan_session_statusIndexRoute
@@ -748,10 +866,18 @@ export interface FileRoutesByFullPath {
   '/admin/departments_group/department_types/hierarchy': typeof AdminDepartments_groupDepartment_typesHierarchyIndexRoute
   '/admin/departments_group/department_types/job_links': typeof AdminDepartments_groupDepartment_typesJob_linksIndexRoute
   '/admin/departments_group/department_types/list': typeof AdminDepartments_groupDepartment_typesListIndexRoute
+  '/admin/people_review/review_setup/dimensions/': typeof AdminPeople_reviewReview_setupDimensionsIndexRoute
+  '/admin/people_review/review_setup/levels/': typeof AdminPeople_reviewReview_setupLevelsIndexRoute
+  '/admin/people_review/reviewers/employees': typeof AdminPeople_reviewReviewersEmployeesIndexRoute
+  '/admin/people_review/reviewers/holders': typeof AdminPeople_reviewReviewersHoldersIndexRoute
   '/admin/review_setup/dimensions/criteria': typeof AdminReview_setupDimensionsCriteriaIndexRoute
   '/admin/review_setup/dimensions/list': typeof AdminReview_setupDimensionsListIndexRoute
   '/admin/review_setup/levels/list': typeof AdminReview_setupLevelsListIndexRoute
   '/admin/review_setup/levels/requirements': typeof AdminReview_setupLevelsRequirementsIndexRoute
+  '/admin/people_review/review_setup/dimensions/criteria': typeof AdminPeople_reviewReview_setupDimensionsCriteriaIndexRoute
+  '/admin/people_review/review_setup/dimensions/list': typeof AdminPeople_reviewReview_setupDimensionsListIndexRoute
+  '/admin/people_review/review_setup/levels/list': typeof AdminPeople_reviewReview_setupLevelsListIndexRoute
+  '/admin/people_review/review_setup/levels/requirements': typeof AdminPeople_reviewReview_setupLevelsRequirementsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -773,6 +899,7 @@ export interface FileRoutesByTo {
   '/admin/job_groups': typeof AdminJob_groupsIndexRoute
   '/admin/jobs': typeof AdminJobsIndexRoute
   '/admin/jobs_group': typeof AdminJobs_groupIndexRoute
+  '/admin/people_review': typeof AdminPeople_reviewIndexRoute
   '/admin/planning_setup': typeof AdminPlanning_setupIndexRoute
   '/admin/review_setup': typeof AdminReview_setupIndexRoute
   '/admin/reviewers': typeof AdminReviewersIndexRoute
@@ -800,6 +927,8 @@ export interface FileRoutesByTo {
   '/admin/jobs_group/job_group_types': typeof AdminJobs_groupJob_group_typesIndexRoute
   '/admin/jobs_group/job_groups': typeof AdminJobs_groupJob_groupsIndexRoute
   '/admin/jobs_group/jobs': typeof AdminJobs_groupJobsIndexRoute
+  '/admin/people_review/review_setup': typeof AdminPeople_reviewReview_setupIndexRoute
+  '/admin/people_review/reviewers': typeof AdminPeople_reviewReviewersIndexRoute
   '/admin/planning_setup/plan_category_defaults': typeof AdminPlanning_setupPlan_category_defaultsIndexRoute
   '/admin/planning_setup/plan_scope_defaults': typeof AdminPlanning_setupPlan_scope_defaultsIndexRoute
   '/admin/planning_setup/plan_session_status': typeof AdminPlanning_setupPlan_session_statusIndexRoute
@@ -832,10 +961,18 @@ export interface FileRoutesByTo {
   '/admin/departments_group/department_types/hierarchy': typeof AdminDepartments_groupDepartment_typesHierarchyIndexRoute
   '/admin/departments_group/department_types/job_links': typeof AdminDepartments_groupDepartment_typesJob_linksIndexRoute
   '/admin/departments_group/department_types/list': typeof AdminDepartments_groupDepartment_typesListIndexRoute
+  '/admin/people_review/review_setup/dimensions': typeof AdminPeople_reviewReview_setupDimensionsIndexRoute
+  '/admin/people_review/review_setup/levels': typeof AdminPeople_reviewReview_setupLevelsIndexRoute
+  '/admin/people_review/reviewers/employees': typeof AdminPeople_reviewReviewersEmployeesIndexRoute
+  '/admin/people_review/reviewers/holders': typeof AdminPeople_reviewReviewersHoldersIndexRoute
   '/admin/review_setup/dimensions/criteria': typeof AdminReview_setupDimensionsCriteriaIndexRoute
   '/admin/review_setup/dimensions/list': typeof AdminReview_setupDimensionsListIndexRoute
   '/admin/review_setup/levels/list': typeof AdminReview_setupLevelsListIndexRoute
   '/admin/review_setup/levels/requirements': typeof AdminReview_setupLevelsRequirementsIndexRoute
+  '/admin/people_review/review_setup/dimensions/criteria': typeof AdminPeople_reviewReview_setupDimensionsCriteriaIndexRoute
+  '/admin/people_review/review_setup/dimensions/list': typeof AdminPeople_reviewReview_setupDimensionsListIndexRoute
+  '/admin/people_review/review_setup/levels/list': typeof AdminPeople_reviewReview_setupLevelsListIndexRoute
+  '/admin/people_review/review_setup/levels/requirements': typeof AdminPeople_reviewReview_setupLevelsRequirementsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -843,6 +980,7 @@ export interface FileRoutesById {
   '/planning': typeof PlanningRouteRoute
   '/admin/departments_group': typeof AdminDepartments_groupRouteRouteWithChildren
   '/admin/jobs_group': typeof AdminJobs_groupRouteRouteWithChildren
+  '/admin/people_review': typeof AdminPeople_reviewRouteRouteWithChildren
   '/admin/planning_setup': typeof AdminPlanning_setupRouteRouteWithChildren
   '/admin/review_setup': typeof AdminReview_setupRouteRouteWithChildren
   '/admin/reviewers': typeof AdminReviewersRouteRouteWithChildren
@@ -860,6 +998,8 @@ export interface FileRoutesById {
   '/employees/': typeof EmployeesIndexRoute
   '/people_review/': typeof People_reviewIndexRoute
   '/admin/departments_group/department_types': typeof AdminDepartments_groupDepartment_typesRouteRouteWithChildren
+  '/admin/people_review/review_setup': typeof AdminPeople_reviewReview_setupRouteRouteWithChildren
+  '/admin/people_review/reviewers': typeof AdminPeople_reviewReviewersRouteRouteWithChildren
   '/admin/review_setup/dimensions': typeof AdminReview_setupDimensionsRouteRouteWithChildren
   '/admin/review_setup/levels': typeof AdminReview_setupLevelsRouteRouteWithChildren
   '/admin/structure/$departmentId': typeof AdminStructureDepartmentIdRoute
@@ -872,6 +1012,7 @@ export interface FileRoutesById {
   '/admin/job_groups/': typeof AdminJob_groupsIndexRoute
   '/admin/jobs/': typeof AdminJobsIndexRoute
   '/admin/jobs_group/': typeof AdminJobs_groupIndexRoute
+  '/admin/people_review/': typeof AdminPeople_reviewIndexRoute
   '/admin/planning_setup/': typeof AdminPlanning_setupIndexRoute
   '/admin/review_setup/': typeof AdminReview_setupIndexRoute
   '/admin/reviewers/': typeof AdminReviewersIndexRoute
@@ -887,6 +1028,8 @@ export interface FileRoutesById {
   '/developer/translations/': typeof DeveloperTranslationsIndexRoute
   '/employees/$employeeId/': typeof EmployeesEmployeeIdIndexRoute
   '/people_review/$sessionId/': typeof People_reviewSessionIdIndexRoute
+  '/admin/people_review/review_setup/dimensions': typeof AdminPeople_reviewReview_setupDimensionsRouteRouteWithChildren
+  '/admin/people_review/review_setup/levels': typeof AdminPeople_reviewReview_setupLevelsRouteRouteWithChildren
   '/people_review/$sessionId/employee/$employeeId': typeof People_reviewSessionIdEmployeeEmployeeIdRoute
   '/admin/departments_group/department_categories/': typeof AdminDepartments_groupDepartment_categoriesIndexRoute
   '/admin/departments_group/department_types/': typeof AdminDepartments_groupDepartment_typesIndexRoute
@@ -899,6 +1042,8 @@ export interface FileRoutesById {
   '/admin/jobs_group/job_group_types/': typeof AdminJobs_groupJob_group_typesIndexRoute
   '/admin/jobs_group/job_groups/': typeof AdminJobs_groupJob_groupsIndexRoute
   '/admin/jobs_group/jobs/': typeof AdminJobs_groupJobsIndexRoute
+  '/admin/people_review/review_setup/': typeof AdminPeople_reviewReview_setupIndexRoute
+  '/admin/people_review/reviewers/': typeof AdminPeople_reviewReviewersIndexRoute
   '/admin/planning_setup/plan_category_defaults/': typeof AdminPlanning_setupPlan_category_defaultsIndexRoute
   '/admin/planning_setup/plan_scope_defaults/': typeof AdminPlanning_setupPlan_scope_defaultsIndexRoute
   '/admin/planning_setup/plan_session_status/': typeof AdminPlanning_setupPlan_session_statusIndexRoute
@@ -931,10 +1076,18 @@ export interface FileRoutesById {
   '/admin/departments_group/department_types/hierarchy/': typeof AdminDepartments_groupDepartment_typesHierarchyIndexRoute
   '/admin/departments_group/department_types/job_links/': typeof AdminDepartments_groupDepartment_typesJob_linksIndexRoute
   '/admin/departments_group/department_types/list/': typeof AdminDepartments_groupDepartment_typesListIndexRoute
+  '/admin/people_review/review_setup/dimensions/': typeof AdminPeople_reviewReview_setupDimensionsIndexRoute
+  '/admin/people_review/review_setup/levels/': typeof AdminPeople_reviewReview_setupLevelsIndexRoute
+  '/admin/people_review/reviewers/employees/': typeof AdminPeople_reviewReviewersEmployeesIndexRoute
+  '/admin/people_review/reviewers/holders/': typeof AdminPeople_reviewReviewersHoldersIndexRoute
   '/admin/review_setup/dimensions/criteria/': typeof AdminReview_setupDimensionsCriteriaIndexRoute
   '/admin/review_setup/dimensions/list/': typeof AdminReview_setupDimensionsListIndexRoute
   '/admin/review_setup/levels/list/': typeof AdminReview_setupLevelsListIndexRoute
   '/admin/review_setup/levels/requirements/': typeof AdminReview_setupLevelsRequirementsIndexRoute
+  '/admin/people_review/review_setup/dimensions/criteria/': typeof AdminPeople_reviewReview_setupDimensionsCriteriaIndexRoute
+  '/admin/people_review/review_setup/dimensions/list/': typeof AdminPeople_reviewReview_setupDimensionsListIndexRoute
+  '/admin/people_review/review_setup/levels/list/': typeof AdminPeople_reviewReview_setupLevelsListIndexRoute
+  '/admin/people_review/review_setup/levels/requirements/': typeof AdminPeople_reviewReview_setupLevelsRequirementsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -943,6 +1096,7 @@ export interface FileRouteTypes {
     | '/planning'
     | '/admin/departments_group'
     | '/admin/jobs_group'
+    | '/admin/people_review'
     | '/admin/planning_setup'
     | '/admin/review_setup'
     | '/admin/reviewers'
@@ -960,6 +1114,8 @@ export interface FileRouteTypes {
     | '/employees'
     | '/people_review'
     | '/admin/departments_group/department_types'
+    | '/admin/people_review/review_setup'
+    | '/admin/people_review/reviewers'
     | '/admin/review_setup/dimensions'
     | '/admin/review_setup/levels'
     | '/admin/structure/$departmentId'
@@ -972,6 +1128,7 @@ export interface FileRouteTypes {
     | '/admin/job_groups'
     | '/admin/jobs'
     | '/admin/jobs_group/'
+    | '/admin/people_review/'
     | '/admin/planning_setup/'
     | '/admin/review_setup/'
     | '/admin/reviewers/'
@@ -987,6 +1144,8 @@ export interface FileRouteTypes {
     | '/developer/translations'
     | '/employees/$employeeId/'
     | '/people_review/$sessionId'
+    | '/admin/people_review/review_setup/dimensions'
+    | '/admin/people_review/review_setup/levels'
     | '/people_review/$sessionId/employee/$employeeId'
     | '/admin/departments_group/department_categories'
     | '/admin/departments_group/department_types/'
@@ -999,6 +1158,8 @@ export interface FileRouteTypes {
     | '/admin/jobs_group/job_group_types'
     | '/admin/jobs_group/job_groups'
     | '/admin/jobs_group/jobs'
+    | '/admin/people_review/review_setup/'
+    | '/admin/people_review/reviewers/'
     | '/admin/planning_setup/plan_category_defaults'
     | '/admin/planning_setup/plan_scope_defaults'
     | '/admin/planning_setup/plan_session_status'
@@ -1031,10 +1192,18 @@ export interface FileRouteTypes {
     | '/admin/departments_group/department_types/hierarchy'
     | '/admin/departments_group/department_types/job_links'
     | '/admin/departments_group/department_types/list'
+    | '/admin/people_review/review_setup/dimensions/'
+    | '/admin/people_review/review_setup/levels/'
+    | '/admin/people_review/reviewers/employees'
+    | '/admin/people_review/reviewers/holders'
     | '/admin/review_setup/dimensions/criteria'
     | '/admin/review_setup/dimensions/list'
     | '/admin/review_setup/levels/list'
     | '/admin/review_setup/levels/requirements'
+    | '/admin/people_review/review_setup/dimensions/criteria'
+    | '/admin/people_review/review_setup/dimensions/list'
+    | '/admin/people_review/review_setup/levels/list'
+    | '/admin/people_review/review_setup/levels/requirements'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1056,6 +1225,7 @@ export interface FileRouteTypes {
     | '/admin/job_groups'
     | '/admin/jobs'
     | '/admin/jobs_group'
+    | '/admin/people_review'
     | '/admin/planning_setup'
     | '/admin/review_setup'
     | '/admin/reviewers'
@@ -1083,6 +1253,8 @@ export interface FileRouteTypes {
     | '/admin/jobs_group/job_group_types'
     | '/admin/jobs_group/job_groups'
     | '/admin/jobs_group/jobs'
+    | '/admin/people_review/review_setup'
+    | '/admin/people_review/reviewers'
     | '/admin/planning_setup/plan_category_defaults'
     | '/admin/planning_setup/plan_scope_defaults'
     | '/admin/planning_setup/plan_session_status'
@@ -1115,16 +1287,25 @@ export interface FileRouteTypes {
     | '/admin/departments_group/department_types/hierarchy'
     | '/admin/departments_group/department_types/job_links'
     | '/admin/departments_group/department_types/list'
+    | '/admin/people_review/review_setup/dimensions'
+    | '/admin/people_review/review_setup/levels'
+    | '/admin/people_review/reviewers/employees'
+    | '/admin/people_review/reviewers/holders'
     | '/admin/review_setup/dimensions/criteria'
     | '/admin/review_setup/dimensions/list'
     | '/admin/review_setup/levels/list'
     | '/admin/review_setup/levels/requirements'
+    | '/admin/people_review/review_setup/dimensions/criteria'
+    | '/admin/people_review/review_setup/dimensions/list'
+    | '/admin/people_review/review_setup/levels/list'
+    | '/admin/people_review/review_setup/levels/requirements'
   id:
     | '__root__'
     | '/'
     | '/planning'
     | '/admin/departments_group'
     | '/admin/jobs_group'
+    | '/admin/people_review'
     | '/admin/planning_setup'
     | '/admin/review_setup'
     | '/admin/reviewers'
@@ -1142,6 +1323,8 @@ export interface FileRouteTypes {
     | '/employees/'
     | '/people_review/'
     | '/admin/departments_group/department_types'
+    | '/admin/people_review/review_setup'
+    | '/admin/people_review/reviewers'
     | '/admin/review_setup/dimensions'
     | '/admin/review_setup/levels'
     | '/admin/structure/$departmentId'
@@ -1154,6 +1337,7 @@ export interface FileRouteTypes {
     | '/admin/job_groups/'
     | '/admin/jobs/'
     | '/admin/jobs_group/'
+    | '/admin/people_review/'
     | '/admin/planning_setup/'
     | '/admin/review_setup/'
     | '/admin/reviewers/'
@@ -1169,6 +1353,8 @@ export interface FileRouteTypes {
     | '/developer/translations/'
     | '/employees/$employeeId/'
     | '/people_review/$sessionId/'
+    | '/admin/people_review/review_setup/dimensions'
+    | '/admin/people_review/review_setup/levels'
     | '/people_review/$sessionId/employee/$employeeId'
     | '/admin/departments_group/department_categories/'
     | '/admin/departments_group/department_types/'
@@ -1181,6 +1367,8 @@ export interface FileRouteTypes {
     | '/admin/jobs_group/job_group_types/'
     | '/admin/jobs_group/job_groups/'
     | '/admin/jobs_group/jobs/'
+    | '/admin/people_review/review_setup/'
+    | '/admin/people_review/reviewers/'
     | '/admin/planning_setup/plan_category_defaults/'
     | '/admin/planning_setup/plan_scope_defaults/'
     | '/admin/planning_setup/plan_session_status/'
@@ -1213,10 +1401,18 @@ export interface FileRouteTypes {
     | '/admin/departments_group/department_types/hierarchy/'
     | '/admin/departments_group/department_types/job_links/'
     | '/admin/departments_group/department_types/list/'
+    | '/admin/people_review/review_setup/dimensions/'
+    | '/admin/people_review/review_setup/levels/'
+    | '/admin/people_review/reviewers/employees/'
+    | '/admin/people_review/reviewers/holders/'
     | '/admin/review_setup/dimensions/criteria/'
     | '/admin/review_setup/dimensions/list/'
     | '/admin/review_setup/levels/list/'
     | '/admin/review_setup/levels/requirements/'
+    | '/admin/people_review/review_setup/dimensions/criteria/'
+    | '/admin/people_review/review_setup/dimensions/list/'
+    | '/admin/people_review/review_setup/levels/list/'
+    | '/admin/people_review/review_setup/levels/requirements/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1224,6 +1420,7 @@ export interface RootRouteChildren {
   PlanningRouteRoute: typeof PlanningRouteRoute
   AdminDepartments_groupRouteRoute: typeof AdminDepartments_groupRouteRouteWithChildren
   AdminJobs_groupRouteRoute: typeof AdminJobs_groupRouteRouteWithChildren
+  AdminPeople_reviewRouteRoute: typeof AdminPeople_reviewRouteRouteWithChildren
   AdminPlanning_setupRouteRoute: typeof AdminPlanning_setupRouteRouteWithChildren
   AdminReview_setupRouteRoute: typeof AdminReview_setupRouteRouteWithChildren
   AdminReviewersRouteRoute: typeof AdminReviewersRouteRouteWithChildren
@@ -1388,6 +1585,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPlanning_setupRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/people_review': {
+      id: '/admin/people_review'
+      path: '/admin/people_review'
+      fullPath: '/admin/people_review'
+      preLoaderRoute: typeof AdminPeople_reviewRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/jobs_group': {
       id: '/admin/jobs_group'
       path: '/admin/jobs_group'
@@ -1507,6 +1711,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPlanning_setupIndexRouteImport
       parentRoute: typeof AdminPlanning_setupRouteRoute
     }
+    '/admin/people_review/': {
+      id: '/admin/people_review/'
+      path: '/'
+      fullPath: '/admin/people_review/'
+      preLoaderRoute: typeof AdminPeople_reviewIndexRouteImport
+      parentRoute: typeof AdminPeople_reviewRouteRoute
+    }
     '/admin/jobs_group/': {
       id: '/admin/jobs_group/'
       path: '/'
@@ -1590,6 +1801,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/review_setup/dimensions'
       preLoaderRoute: typeof AdminReview_setupDimensionsRouteRouteImport
       parentRoute: typeof AdminReview_setupRouteRoute
+    }
+    '/admin/people_review/reviewers': {
+      id: '/admin/people_review/reviewers'
+      path: '/reviewers'
+      fullPath: '/admin/people_review/reviewers'
+      preLoaderRoute: typeof AdminPeople_reviewReviewersRouteRouteImport
+      parentRoute: typeof AdminPeople_reviewRouteRoute
+    }
+    '/admin/people_review/review_setup': {
+      id: '/admin/people_review/review_setup'
+      path: '/review_setup'
+      fullPath: '/admin/people_review/review_setup'
+      preLoaderRoute: typeof AdminPeople_reviewReview_setupRouteRouteImport
+      parentRoute: typeof AdminPeople_reviewRouteRoute
     }
     '/admin/departments_group/department_types': {
       id: '/admin/departments_group/department_types'
@@ -1801,6 +2026,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPlanning_setupPlan_category_defaultsIndexRouteImport
       parentRoute: typeof AdminPlanning_setupRouteRoute
     }
+    '/admin/people_review/reviewers/': {
+      id: '/admin/people_review/reviewers/'
+      path: '/'
+      fullPath: '/admin/people_review/reviewers/'
+      preLoaderRoute: typeof AdminPeople_reviewReviewersIndexRouteImport
+      parentRoute: typeof AdminPeople_reviewReviewersRouteRoute
+    }
+    '/admin/people_review/review_setup/': {
+      id: '/admin/people_review/review_setup/'
+      path: '/'
+      fullPath: '/admin/people_review/review_setup/'
+      preLoaderRoute: typeof AdminPeople_reviewReview_setupIndexRouteImport
+      parentRoute: typeof AdminPeople_reviewReview_setupRouteRoute
+    }
     '/admin/jobs_group/jobs/': {
       id: '/admin/jobs_group/jobs/'
       path: '/jobs'
@@ -1885,6 +2124,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof People_reviewSessionIdEmployeeEmployeeIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/people_review/review_setup/levels': {
+      id: '/admin/people_review/review_setup/levels'
+      path: '/levels'
+      fullPath: '/admin/people_review/review_setup/levels'
+      preLoaderRoute: typeof AdminPeople_reviewReview_setupLevelsRouteRouteImport
+      parentRoute: typeof AdminPeople_reviewReview_setupRouteRoute
+    }
+    '/admin/people_review/review_setup/dimensions': {
+      id: '/admin/people_review/review_setup/dimensions'
+      path: '/dimensions'
+      fullPath: '/admin/people_review/review_setup/dimensions'
+      preLoaderRoute: typeof AdminPeople_reviewReview_setupDimensionsRouteRouteImport
+      parentRoute: typeof AdminPeople_reviewReview_setupRouteRoute
+    }
     '/admin/review_setup/levels/requirements/': {
       id: '/admin/review_setup/levels/requirements/'
       path: '/requirements'
@@ -1913,6 +2166,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminReview_setupDimensionsCriteriaIndexRouteImport
       parentRoute: typeof AdminReview_setupDimensionsRouteRoute
     }
+    '/admin/people_review/reviewers/holders/': {
+      id: '/admin/people_review/reviewers/holders/'
+      path: '/holders'
+      fullPath: '/admin/people_review/reviewers/holders'
+      preLoaderRoute: typeof AdminPeople_reviewReviewersHoldersIndexRouteImport
+      parentRoute: typeof AdminPeople_reviewReviewersRouteRoute
+    }
+    '/admin/people_review/reviewers/employees/': {
+      id: '/admin/people_review/reviewers/employees/'
+      path: '/employees'
+      fullPath: '/admin/people_review/reviewers/employees'
+      preLoaderRoute: typeof AdminPeople_reviewReviewersEmployeesIndexRouteImport
+      parentRoute: typeof AdminPeople_reviewReviewersRouteRoute
+    }
+    '/admin/people_review/review_setup/levels/': {
+      id: '/admin/people_review/review_setup/levels/'
+      path: '/'
+      fullPath: '/admin/people_review/review_setup/levels/'
+      preLoaderRoute: typeof AdminPeople_reviewReview_setupLevelsIndexRouteImport
+      parentRoute: typeof AdminPeople_reviewReview_setupLevelsRouteRoute
+    }
+    '/admin/people_review/review_setup/dimensions/': {
+      id: '/admin/people_review/review_setup/dimensions/'
+      path: '/'
+      fullPath: '/admin/people_review/review_setup/dimensions/'
+      preLoaderRoute: typeof AdminPeople_reviewReview_setupDimensionsIndexRouteImport
+      parentRoute: typeof AdminPeople_reviewReview_setupDimensionsRouteRoute
+    }
     '/admin/departments_group/department_types/list/': {
       id: '/admin/departments_group/department_types/list/'
       path: '/list'
@@ -1933,6 +2214,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/departments_group/department_types/hierarchy'
       preLoaderRoute: typeof AdminDepartments_groupDepartment_typesHierarchyIndexRouteImport
       parentRoute: typeof AdminDepartments_groupDepartment_typesRouteRoute
+    }
+    '/admin/people_review/review_setup/levels/requirements/': {
+      id: '/admin/people_review/review_setup/levels/requirements/'
+      path: '/requirements'
+      fullPath: '/admin/people_review/review_setup/levels/requirements'
+      preLoaderRoute: typeof AdminPeople_reviewReview_setupLevelsRequirementsIndexRouteImport
+      parentRoute: typeof AdminPeople_reviewReview_setupLevelsRouteRoute
+    }
+    '/admin/people_review/review_setup/levels/list/': {
+      id: '/admin/people_review/review_setup/levels/list/'
+      path: '/list'
+      fullPath: '/admin/people_review/review_setup/levels/list'
+      preLoaderRoute: typeof AdminPeople_reviewReview_setupLevelsListIndexRouteImport
+      parentRoute: typeof AdminPeople_reviewReview_setupLevelsRouteRoute
+    }
+    '/admin/people_review/review_setup/dimensions/list/': {
+      id: '/admin/people_review/review_setup/dimensions/list/'
+      path: '/list'
+      fullPath: '/admin/people_review/review_setup/dimensions/list'
+      preLoaderRoute: typeof AdminPeople_reviewReview_setupDimensionsListIndexRouteImport
+      parentRoute: typeof AdminPeople_reviewReview_setupDimensionsRouteRoute
+    }
+    '/admin/people_review/review_setup/dimensions/criteria/': {
+      id: '/admin/people_review/review_setup/dimensions/criteria/'
+      path: '/criteria'
+      fullPath: '/admin/people_review/review_setup/dimensions/criteria'
+      preLoaderRoute: typeof AdminPeople_reviewReview_setupDimensionsCriteriaIndexRouteImport
+      parentRoute: typeof AdminPeople_reviewReview_setupDimensionsRouteRoute
     }
   }
 }
@@ -2004,6 +2313,110 @@ const AdminJobs_groupRouteRouteChildren: AdminJobs_groupRouteRouteChildren = {
 
 const AdminJobs_groupRouteRouteWithChildren =
   AdminJobs_groupRouteRoute._addFileChildren(AdminJobs_groupRouteRouteChildren)
+
+interface AdminPeople_reviewReview_setupDimensionsRouteRouteChildren {
+  AdminPeople_reviewReview_setupDimensionsIndexRoute: typeof AdminPeople_reviewReview_setupDimensionsIndexRoute
+  AdminPeople_reviewReview_setupDimensionsCriteriaIndexRoute: typeof AdminPeople_reviewReview_setupDimensionsCriteriaIndexRoute
+  AdminPeople_reviewReview_setupDimensionsListIndexRoute: typeof AdminPeople_reviewReview_setupDimensionsListIndexRoute
+}
+
+const AdminPeople_reviewReview_setupDimensionsRouteRouteChildren: AdminPeople_reviewReview_setupDimensionsRouteRouteChildren =
+  {
+    AdminPeople_reviewReview_setupDimensionsIndexRoute:
+      AdminPeople_reviewReview_setupDimensionsIndexRoute,
+    AdminPeople_reviewReview_setupDimensionsCriteriaIndexRoute:
+      AdminPeople_reviewReview_setupDimensionsCriteriaIndexRoute,
+    AdminPeople_reviewReview_setupDimensionsListIndexRoute:
+      AdminPeople_reviewReview_setupDimensionsListIndexRoute,
+  }
+
+const AdminPeople_reviewReview_setupDimensionsRouteRouteWithChildren =
+  AdminPeople_reviewReview_setupDimensionsRouteRoute._addFileChildren(
+    AdminPeople_reviewReview_setupDimensionsRouteRouteChildren,
+  )
+
+interface AdminPeople_reviewReview_setupLevelsRouteRouteChildren {
+  AdminPeople_reviewReview_setupLevelsIndexRoute: typeof AdminPeople_reviewReview_setupLevelsIndexRoute
+  AdminPeople_reviewReview_setupLevelsListIndexRoute: typeof AdminPeople_reviewReview_setupLevelsListIndexRoute
+  AdminPeople_reviewReview_setupLevelsRequirementsIndexRoute: typeof AdminPeople_reviewReview_setupLevelsRequirementsIndexRoute
+}
+
+const AdminPeople_reviewReview_setupLevelsRouteRouteChildren: AdminPeople_reviewReview_setupLevelsRouteRouteChildren =
+  {
+    AdminPeople_reviewReview_setupLevelsIndexRoute:
+      AdminPeople_reviewReview_setupLevelsIndexRoute,
+    AdminPeople_reviewReview_setupLevelsListIndexRoute:
+      AdminPeople_reviewReview_setupLevelsListIndexRoute,
+    AdminPeople_reviewReview_setupLevelsRequirementsIndexRoute:
+      AdminPeople_reviewReview_setupLevelsRequirementsIndexRoute,
+  }
+
+const AdminPeople_reviewReview_setupLevelsRouteRouteWithChildren =
+  AdminPeople_reviewReview_setupLevelsRouteRoute._addFileChildren(
+    AdminPeople_reviewReview_setupLevelsRouteRouteChildren,
+  )
+
+interface AdminPeople_reviewReview_setupRouteRouteChildren {
+  AdminPeople_reviewReview_setupDimensionsRouteRoute: typeof AdminPeople_reviewReview_setupDimensionsRouteRouteWithChildren
+  AdminPeople_reviewReview_setupLevelsRouteRoute: typeof AdminPeople_reviewReview_setupLevelsRouteRouteWithChildren
+  AdminPeople_reviewReview_setupIndexRoute: typeof AdminPeople_reviewReview_setupIndexRoute
+}
+
+const AdminPeople_reviewReview_setupRouteRouteChildren: AdminPeople_reviewReview_setupRouteRouteChildren =
+  {
+    AdminPeople_reviewReview_setupDimensionsRouteRoute:
+      AdminPeople_reviewReview_setupDimensionsRouteRouteWithChildren,
+    AdminPeople_reviewReview_setupLevelsRouteRoute:
+      AdminPeople_reviewReview_setupLevelsRouteRouteWithChildren,
+    AdminPeople_reviewReview_setupIndexRoute:
+      AdminPeople_reviewReview_setupIndexRoute,
+  }
+
+const AdminPeople_reviewReview_setupRouteRouteWithChildren =
+  AdminPeople_reviewReview_setupRouteRoute._addFileChildren(
+    AdminPeople_reviewReview_setupRouteRouteChildren,
+  )
+
+interface AdminPeople_reviewReviewersRouteRouteChildren {
+  AdminPeople_reviewReviewersIndexRoute: typeof AdminPeople_reviewReviewersIndexRoute
+  AdminPeople_reviewReviewersEmployeesIndexRoute: typeof AdminPeople_reviewReviewersEmployeesIndexRoute
+  AdminPeople_reviewReviewersHoldersIndexRoute: typeof AdminPeople_reviewReviewersHoldersIndexRoute
+}
+
+const AdminPeople_reviewReviewersRouteRouteChildren: AdminPeople_reviewReviewersRouteRouteChildren =
+  {
+    AdminPeople_reviewReviewersIndexRoute:
+      AdminPeople_reviewReviewersIndexRoute,
+    AdminPeople_reviewReviewersEmployeesIndexRoute:
+      AdminPeople_reviewReviewersEmployeesIndexRoute,
+    AdminPeople_reviewReviewersHoldersIndexRoute:
+      AdminPeople_reviewReviewersHoldersIndexRoute,
+  }
+
+const AdminPeople_reviewReviewersRouteRouteWithChildren =
+  AdminPeople_reviewReviewersRouteRoute._addFileChildren(
+    AdminPeople_reviewReviewersRouteRouteChildren,
+  )
+
+interface AdminPeople_reviewRouteRouteChildren {
+  AdminPeople_reviewReview_setupRouteRoute: typeof AdminPeople_reviewReview_setupRouteRouteWithChildren
+  AdminPeople_reviewReviewersRouteRoute: typeof AdminPeople_reviewReviewersRouteRouteWithChildren
+  AdminPeople_reviewIndexRoute: typeof AdminPeople_reviewIndexRoute
+}
+
+const AdminPeople_reviewRouteRouteChildren: AdminPeople_reviewRouteRouteChildren =
+  {
+    AdminPeople_reviewReview_setupRouteRoute:
+      AdminPeople_reviewReview_setupRouteRouteWithChildren,
+    AdminPeople_reviewReviewersRouteRoute:
+      AdminPeople_reviewReviewersRouteRouteWithChildren,
+    AdminPeople_reviewIndexRoute: AdminPeople_reviewIndexRoute,
+  }
+
+const AdminPeople_reviewRouteRouteWithChildren =
+  AdminPeople_reviewRouteRoute._addFileChildren(
+    AdminPeople_reviewRouteRouteChildren,
+  )
 
 interface AdminPlanning_setupRouteRouteChildren {
   AdminPlanning_setupIndexRoute: typeof AdminPlanning_setupIndexRoute
@@ -2251,6 +2664,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminDepartments_groupRouteRoute:
     AdminDepartments_groupRouteRouteWithChildren,
   AdminJobs_groupRouteRoute: AdminJobs_groupRouteRouteWithChildren,
+  AdminPeople_reviewRouteRoute: AdminPeople_reviewRouteRouteWithChildren,
   AdminPlanning_setupRouteRoute: AdminPlanning_setupRouteRouteWithChildren,
   AdminReview_setupRouteRoute: AdminReview_setupRouteRouteWithChildren,
   AdminReviewersRouteRoute: AdminReviewersRouteRouteWithChildren,

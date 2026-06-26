@@ -9,8 +9,8 @@ import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 
 const TOP_TABS = [
-    { label: 'structure',            path: '/admin/departments_group/structure' },
     { label: 'departmentCategories', path: '/admin/departments_group/department_categories' },
+    { label: 'structure',            path: '/admin/departments_group/structure' },
     { label: 'departmentTypes',      path: '/admin/departments_group/department_types' },
     { label: 'regions',              path: '/admin/departments_group/regions' },
 ] as const;

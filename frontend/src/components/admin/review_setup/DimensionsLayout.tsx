@@ -5,8 +5,8 @@ import { Box, Tab, Tabs } from '@mui/material';
 import useString from '../../../hooks/useString';
 
 const SUB_TABS = [
-    { label: 'reviewDimensions', path: '/admin/review_setup/dimensions/list' },
-    { label: 'criteria', path: '/admin/review_setup/dimensions/criteria' },
+    { label: 'reviewDimensions', path: '/admin/people_review/review_setup/dimensions/list' },
+    { label: 'criteria', path: '/admin/people_review/review_setup/dimensions/criteria' },
 ] as const;
 
 export function DimensionsLayout() {

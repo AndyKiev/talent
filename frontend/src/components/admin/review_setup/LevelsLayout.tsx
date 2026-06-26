@@ -5,8 +5,8 @@ import { Box, Tab, Tabs } from '@mui/material';
 import useString from '../../../hooks/useString';
 
 const SUB_TABS = [
-    { label: 'reviewLevels', path: '/admin/review_setup/levels/list' },
-    { label: 'reviewLevelRequirements', path: '/admin/review_setup/levels/requirements' },
+    { label: 'reviewLevels', path: '/admin/people_review/review_setup/levels/list' },
+    { label: 'reviewLevelRequirements', path: '/admin/people_review/review_setup/levels/requirements' },
 ] as const;
 
 export function LevelsLayout() {

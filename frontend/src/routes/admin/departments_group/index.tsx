@@ -3,6 +3,6 @@ import { createFileRoute, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/admin/departments_group/')({
     beforeLoad: () => {
-        throw redirect({ to: '/admin/departments_group/structure', replace: true });
+        throw redirect({ to: '/admin/departments_group/department_categories', replace: true });
     },
 });

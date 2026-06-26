@@ -3,13 +3,12 @@ import React from 'react';
 import { Outlet, useRouter, useMatchRoute, Link } from '@tanstack/react-router';
 import { Box, Breadcrumbs, Tab, Tabs, Typography } from '@mui/material';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import AppShell from '../../layout/AppShell';
 import cfl from '../../../utils/capitalizeFirstLetter';
 import useString from '../../../hooks/useString';
 
 const TOP_TABS = [
-    { label: 'reviewers', path: '/admin/reviewers/holders' },
-    { label: 'reviewerAssignments', path: '/admin/reviewers/employees' },
+    { label: 'reviewers', path: '/admin/people_review/reviewers/holders' },
+    { label: 'reviewerAssignments', path: '/admin/people_review/reviewers/employees' },
 ] as const;
 
 export function ReviewersLayout() {
@@ -26,33 +25,36 @@ export function ReviewersLayout() {
     };
 
     return (
-        <AppShell>
-            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1200, mx: 'auto' }}>
-                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                    <Link to="/admin" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {cfl(getString('admin'))}
-                        </Typography>
-                    </Link>
-                    <Typography variant="body2" color="text.primary" fontWeight={600}>
-                        {cfl(getString('reviewersGroup') || 'Reviewers')}
+        <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
+            <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
+                <Link to="/admin" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <Typography variant="body2" color="text.secondary">
+                        {cfl(getString('admin'))}
                     </Typography>
-                </Breadcrumbs>
+                </Link>
+                <Link to="/admin/people_review" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <Typography variant="body2" color="text.secondary">
+                        {cfl(getString('peopleReview') || 'People Review')}
+                    </Typography>
+                </Link>
+                <Typography variant="body2" color="text.primary" fontWeight={600}>
+                    {cfl(getString('reviewersGroup') || 'Reviewers')}
+                </Typography>
+            </Breadcrumbs>
 
-                <Tabs
-                    value={activeTab === -1 ? 0 : activeTab}
-                    onChange={handleTabChange}
-                    sx={{ borderBottom: 1, borderColor: 'divider' }}
-                >
-                    {TOP_TABS.map(({ label }) => (
-                        <Tab key={label} label={cfl(getString(label) || label)} />
-                    ))}
-                </Tabs>
+            <Tabs
+                value={activeTab === -1 ? 0 : activeTab}
+                onChange={handleTabChange}
+                sx={{ borderBottom: 1, borderColor: 'divider' }}
+            >
+                {TOP_TABS.map(({ label }) => (
+                    <Tab key={label} label={cfl(getString(label) || label)} />
+                ))}
+            </Tabs>
 
-                <Box sx={{ pt: 3 }}>
-                    <Outlet />
-                </Box>
+            <Box sx={{ pt: 3 }}>
+                <Outlet />
             </Box>
-        </AppShell>
+        </Box>
     );
 }
