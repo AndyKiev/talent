@@ -56,6 +56,8 @@ import { useClipboard } from '../../hooks/useClipboard';
 import { ScopeSettings } from './ScopeSettings';
 import { ReorderableList } from './ReorderableList';
 import { EmployeeAutocomplete } from '../ui/EmployeeAutocomplete';
+import EmployeeAvatar from '../ui/EmployeeAvatar';
+import BusyBackdrop from '../ui/BusyBackdrop';
 
 const RSE_STATUS_COLORS: Record<string, 'info' | 'warning' | 'success' | 'error'> = {
     open: 'info',
@@ -102,10 +104,33 @@ export function SessionEmployeesPage() {
     // order persists server-side; the toggle resets to OFF on reload.
     const [reorderMode, setReorderMode] = useState(false);
 
+    // True while the session's TEMPO deck is being built server-side (can take a
+    // while), so the button spins and a full-window overlay blocks other actions.
+    const [presLoading, setPresLoading] = useState(false);
+    const onPresentation = () => {
+        // Open the tab NOW, synchronously, while we still hold the click's
+        // user-activation — the build can take many seconds, and a window.open
+        // after that fetch would be silently blocked by the browser. We redirect
+        // this tab to the deck once it's ready (see openHtmlBlob).
+        const win = window.open('', '_blank');
+        if (!win) { onError(new Error(getString('popupBlocked'))); return; }
+        const building = getString('tempoPresentationBuilding');
+        win.document.write(
+            `<!doctype html><meta charset="utf-8"><title>TEMPO</title>` +
+            `<body style="margin:0;display:flex;align-items:center;justify-content:center;` +
+            `height:100vh;font-family:'Segoe UI',Arial,sans-serif;color:#1b2a4a;background:#f7f6f2">` +
+            `<div style="font-size:18px;font-weight:600">${building}</div></body>`,
+        );
+        setPresLoading(true);
+        openTempoPresentation(sid, win)
+            .catch(onError)
+            .finally(() => setPresLoading(false));
+    };
+
     const qk = ['session_employees', sid] as const;
     const sessQk = ['review_sessions'] as const;
 
-    const { data: rows = [], isLoading, error } = useQuery({
+    const { data: rows = [], isLoading, isFetching, error } = useQuery({
         queryKey: qk,
         queryFn: () => fetchSessionEmployees(sid),
         staleTime: 30_000,
@@ -201,6 +226,30 @@ export function SessionEmployeesPage() {
     });
 
     const columns: GridColDef<ReviewSessionEmployeeList>[] = [
+        {
+            field: 'photo',
+            headerName: '',
+            width: 52,
+            sortable: false,
+            filterable: false,
+            renderCell: (params) => (
+                <Box
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        height: '100%',
+                        '&:hover': { transform: 'scale(1.7)' },
+                        transition: 'transform 0.2s ease',
+                    }}
+                >
+                    <EmployeeAvatar
+                        employeeId={params.row.employee_id}
+                        name={params.row.employee_name}
+                        size={36}
+                    />
+                </Box>
+            ),
+        },
         {
             field: 'employee_code',
             headerName: getString('code'),
@@ -340,6 +389,10 @@ export function SessionEmployeesPage() {
 
     return (
         <AppShell>
+            <BusyBackdrop
+                open={presLoading || (isFetching && !isLoading)}
+                label={presLoading ? getString('tempoPresentationBuilding') : 'Loading\u2026'}
+            />
             <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: '100%', px: { xs: 2, sm: 4, md: 6 } }}>
                 <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
                     <Link to="/people_review" style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -398,11 +451,12 @@ export function SessionEmployeesPage() {
                             {rows.length > 0 && (
                                 <Button
                                     variant="outlined" size="small"
-                                    startIcon={<SlideshowIcon />}
-                                    onClick={() => openTempoPresentation(sid).catch(onError)}
+                                    disabled={presLoading}
+                                    startIcon={presLoading ? <CircularProgress size={16} color="inherit" /> : <SlideshowIcon />}
+                                    onClick={onPresentation}
                                     sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
                                 >
-                                    {getString('tempoPresentation')}
+                                    {presLoading ? getString('tempoPresentationBuilding') : getString('tempoPresentation')}
                                 </Button>
                             )}
                             {/* Oversight-only: toggle drag/arrow reordering of the presentation queue. */}

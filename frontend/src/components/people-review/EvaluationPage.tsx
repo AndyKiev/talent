@@ -50,6 +50,7 @@ import {
     fetchLanguageLevels,
     fetchEmployeeLanguageProfile,
     fetchReviewLevels,
+    fetchSessionLevels,
     fetchProposedLevel,
     fetchEmployeeCurrentLevel,
     setEmployeeCurrentLevel,
@@ -98,6 +99,7 @@ import { EmployeeDataTabs } from './evaluation/EmployeeDataTabs';
 import { DimensionPanel } from './evaluation/DimensionPanel';
 import { useEvaluationAutosave } from './evaluation/useEvaluationAutosave';
 import EmployeeAvatar from '../ui/EmployeeAvatar';
+import BusyBackdrop from '../ui/BusyBackdrop';
 import { OversightManagerPicker } from './OversightManagerPicker';
 
 export function EvaluationPage() {
@@ -249,6 +251,8 @@ export function EvaluationPage() {
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [pdfLoading, setPdfLoading] = useState(false);
     const [pdfError, setPdfError] = useState<string | null>(null);
+    // Full-window blocking overlay label for the long PDF/HTML builds (null = idle).
+    const [busyLabel, setBusyLabel] = useState<string | null>(null);
     const openTempoPdf = async () => {
         setPdfOpen(true);
         setPdfLoading(true);
@@ -280,18 +284,38 @@ export function EvaluationPage() {
             rseDetail?.employee_name,
         ].filter(Boolean).map((p) => sanitize(String(p)));
         const fileName = `${parts.join('_') || `tempo_${rid}`}.pdf`;
+        setBusyLabel(getString('tempoPdfBuilding'));
         try {
             await downloadTempoPdf(rid, fileName);
         } catch (err) {
             setSnackbar({ open: true, message: (err as Error).message, severity: 'error' });
+        } finally {
+            setBusyLabel(null);
         }
     };
     // Open the interactive HTML sheet (single page, in-page links) in a new tab.
+    // The tab is opened synchronously on the click so the browser doesn't block it
+    // after the build (see openHtmlBlob in peopleReviewApi).
     const openTempoHtmlView = async () => {
+        const win = window.open('', '_blank');
+        if (!win) {
+            setSnackbar({ open: true, message: getString('popupBlocked'), severity: 'error' });
+            return;
+        }
+        const building = getString('tempoPresentationBuilding');
+        win.document.write(
+            `<!doctype html><meta charset="utf-8"><title>TEMPO</title>` +
+            `<body style="margin:0;display:flex;align-items:center;justify-content:center;` +
+            `height:100vh;font-family:'Segoe UI',Arial,sans-serif;color:#1b2a4a;background:#f7f6f2">` +
+            `<div style="font-size:18px;font-weight:600">${building}</div></body>`,
+        );
+        setBusyLabel(building);
         try {
-            await openTempoHtml(rid);
+            await openTempoHtml(rid, win);
         } catch (err) {
             setSnackbar({ open: true, message: (err as Error).message, severity: 'error' });
+        } finally {
+            setBusyLabel(null);
         }
     };
 
@@ -308,9 +332,21 @@ export function EvaluationPage() {
 
     // --- Competency level (current + proposed) ---
     const [proposedOpen, setProposedOpen] = useState(false);
+    // Active live levels — drive the employee's current/base level (the base is
+    // PERSISTED to employee.current_level_id, so it must stay active-only).
     const { data: allLevels = [] } = useQuery({
         queryKey: ['review_levels', 'active'],
         queryFn: () => fetchReviewLevels(true),
+        staleTime: 5 * 60_000,
+    });
+    // The session's FROZEN levels for this review: counts the proposed level's
+    // requirements for the Mark-reviewed gate (matching the backend, which counts
+    // the frozen set) AND resolves the proposed level's name/sort_order even if it
+    // was later deactivated (it's absent from active allLevels but present here).
+    const { data: sessionLevels = [] } = useQuery({
+        queryKey: ['session_levels', rid],
+        queryFn: () => fetchSessionLevels(rid),
+        enabled: !!rid,
         staleTime: 5 * 60_000,
     });
     // Saved proposed level — shares the drawer's query key, so saving in the
@@ -322,8 +358,16 @@ export function EvaluationPage() {
         staleTime: 30_000,
         refetchInterval: pollMs,
     });
+    // Resolve a level by id from the active live set, falling back to the session's
+    // frozen set (so a proposed/current level later deactivated still resolves).
+    const findLevel = (id: number | null) =>
+        id == null
+            ? null
+            : allLevels.find((l) => l.id === id) ??
+              sessionLevels.find((l) => l.id === id) ??
+              null;
     const proposedLevelKey = proposedLevel
-        ? allLevels.find((l) => l.id === proposedLevel.level_id)?.name_key ?? null
+        ? findLevel(proposedLevel.level_id)?.name_key ?? null
         : null;
     const proposedLevelName = proposedLevelKey ? getString(proposedLevelKey) : null;
     const { data: empLevel } = useQuery({
@@ -344,10 +388,8 @@ export function EvaluationPage() {
     // only displayed or actually persisted to the employee record (and re-read).
     const baseLevelId = [...allLevels].sort((a, b) => a.sort_order - b.sort_order)[0]?.id ?? null;
     const displayLevelId = currentLevelId ?? baseLevelId;
-    const currentLevelObj = allLevels.find((l) => l.id === displayLevelId) ?? null;
-    const proposedLevelObj = proposedLevel
-        ? allLevels.find((l) => l.id === proposedLevel.level_id) ?? null
-        : null;
+    const currentLevelObj = findLevel(displayLevelId);
+    const proposedLevelObj = proposedLevel ? findLevel(proposedLevel.level_id) : null;
     const proposedLevelSense: 'increase' | 'same' | 'decrease' | null =
         currentLevelObj && proposedLevelObj
             ? proposedLevelObj.sort_order > currentLevelObj.sort_order
@@ -364,7 +406,12 @@ export function EvaluationPage() {
         if (!currentLevelId) return true;
         if (!proposedLevel) return false;
         if (proposedLevelSense === 'decrease') return true;
-        const reqs = (proposedLevelObj?.requirements ?? []).filter((r) => r.is_active);
+        // Count the FROZEN requirement set the employee actually saw (matches the
+        // backend gate); fall back to the live level's active requirements.
+        const frozenLevel = sessionLevels.find((l) => l.id === proposedLevel.level_id);
+        const reqs = frozenLevel
+            ? frozenLevel.requirements
+            : (proposedLevelObj?.requirements ?? []).filter((r) => r.is_active);
         const answered = new Set(
             proposedLevel.answers.filter((a) => (a.facts ?? '').trim()).map((a) => a.requirement_id),
         );
@@ -897,6 +944,7 @@ export function EvaluationPage() {
 
     return (
         <AppShell>
+            <BusyBackdrop open={!!busyLabel} label={busyLabel ?? undefined} />
             <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: '100%', px: { xs: 2, sm: 4, md: 6 } }}>
 
                 {/* Breadcrumbs — sticky just under the main menu (56px AppBar) so the

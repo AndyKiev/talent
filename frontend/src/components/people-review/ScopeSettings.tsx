@@ -37,6 +37,7 @@ export function ScopeSettings({ disabled = false }: { disabled?: boolean }) {
     const mut = useMutation({
         mutationFn: setActiveContext,
         onSuccess: async () => {
+            setAnchor(null); // dismiss popover immediately so the global loading takes over
             await qc.invalidateQueries({ queryKey: PEOPLE_REVIEW_MY_SCOPES_QK });
             await qc.invalidateQueries({ queryKey: ['session_employees'] });
         },
@@ -51,7 +52,13 @@ export function ScopeSettings({ disabled = false }: { disabled?: boolean }) {
     if (roles.length === 0) return null; // no people-review role -> naturally sees only self
 
     const onlyMyselfLabel = getString('modeOnlyMyself') || 'Only myself';
-    const roleLabel = (key: string | null, name: string) => (key ? getString(key) || name : name);
+    const roleLabel = (key: string | null, name: string) => {
+        if (!key) return name;
+        const translated = getString(key);
+        // When getString has no translation it returns the key itself — fall back
+        // to the human-readable `name` stored on the role row (e.g. "supervisor").
+        return translated !== key ? translated : name;
+    };
 
     const deptFor = (roleId: number): number | null => {
         const ds = allDepartments.filter((d) => d.process_role_id === roleId);

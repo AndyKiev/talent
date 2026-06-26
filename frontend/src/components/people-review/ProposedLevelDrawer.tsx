@@ -30,7 +30,7 @@ import useString from '../../hooks/useString';
 import { InlineEditField } from './evaluation/InlineEditField';
 import ConfirmDeleteDialog from './ConfirmDeleteDialog';
 import {
-    fetchReviewLevels,
+    fetchSessionLevels,
     fetchProposedLevel,
     saveProposedLevel,
     setProposedLevelStatus,
@@ -135,11 +135,14 @@ export function ProposedLevelDrawer({ open, onClose, rseId, currentLevelId, setS
     // so only one requirement's facts + input occupy the screen at a time.
     const [activeReqIndex, setActiveReqIndex] = useState(0);
 
+    // The session's FROZEN level set for this employee review (falls back to live
+    // active levels for pre-freeze sessions). Frozen rows carry live ids, so the
+    // answer keying / level_id save below is unchanged.
     const { data: levels = [] } = useQuery({
-        queryKey: ['review_levels', 'active'],
-        queryFn: () => fetchReviewLevels(true),
+        queryKey: ['session_levels', rseId],
+        queryFn: () => fetchSessionLevels(rseId),
         staleTime: 5 * 60_000,
-        enabled: open,
+        enabled: open && !!rseId,
     });
 
     const { data: proposed, isFetching: proposedFetching } = useQuery({

@@ -270,6 +270,7 @@ export const fetchRSEDetail = async (rseId: number): Promise<ReviewSessionEmploy
 export const fetchTempoPngUrl = async (rseId: number): Promise<string> => {
     const res = await axiosInstance.get<Blob>(`${RSE_BASE}/${rseId}/tempo_png`, {
         responseType: 'blob',
+        timeout: 0,
     });
     return URL.createObjectURL(res.data);
 };
@@ -281,6 +282,7 @@ export const fetchTempoPngUrl = async (rseId: number): Promise<string> => {
 export const downloadTempoPdf = async (rseId: number, fileName: string): Promise<void> => {
     const res = await axiosInstance.get<Blob>(`${RSE_BASE}/${rseId}/tempo_pdf`, {
         responseType: 'blob',
+        timeout: 0,
     });
     const url = URL.createObjectURL(res.data);
     const a = document.createElement('a');
@@ -293,24 +295,38 @@ export const downloadTempoPdf = async (rseId: number, fileName: string): Promise
 };
 
 /**
- * Open the TEMPO album as an interactive HTML page in a new tab. Fetched as a
- * blob so the JWT is sent (a plain window.open can't), then opened as a blob URL
- * — all in-page links/navigation are self-contained, so no further auth needed.
+ * Open a server-built TEMPO HTML artifact in a new tab. Fetched as a blob so the
+ * JWT is sent (a plain window.open can't), then the already-open tab is navigated
+ * to the blob URL — all in-page links/navigation are self-contained, so no
+ * further auth is needed.
+ *
+ * The tab MUST be opened synchronously by the CALLER on the click and passed in
+ * as `win`. Building a whole session's deck can take many seconds; a window.open
+ * issued AFTER the await has lost the click's user-activation token, so the
+ * browser silently blocks it (returns null, no error) — that's the bug where the
+ * button reactivated but no tab ever appeared. We only redirect the existing tab.
  */
-const openHtmlBlob = async (url: string): Promise<void> => {
-    const res = await axiosInstance.get<Blob>(url, { responseType: 'blob' });
-    const blob = new Blob([res.data], { type: 'text/html' });
-    const objUrl = URL.createObjectURL(blob);
-    window.open(objUrl, '_blank');
-    // Revoke after the new tab has had time to load the document.
-    setTimeout(() => URL.revokeObjectURL(objUrl), 60_000);
+const openHtmlBlob = async (url: string, win: Window): Promise<void> => {
+    try {
+        // No timeout: building the deck server-side can far exceed the global 30s.
+        const res = await axiosInstance.get<Blob>(url, { responseType: 'blob', timeout: 0 });
+        const blob = new Blob([res.data], { type: 'text/html' });
+        const objUrl = URL.createObjectURL(blob);
+        if (!win.closed) win.location.href = objUrl;
+        // Revoke after the new tab has had time to load the document.
+        setTimeout(() => URL.revokeObjectURL(objUrl), 60_000);
+    } catch (err) {
+        // The blank placeholder tab is useless now — close it so it doesn't linger.
+        if (!win.closed) win.close();
+        throw err;
+    }
 };
 
-export const openTempoHtml = (rseId: number): Promise<void> =>
-    openHtmlBlob(`${RSE_BASE}/${rseId}/tempo_html`);
+export const openTempoHtml = (rseId: number, win: Window): Promise<void> =>
+    openHtmlBlob(`${RSE_BASE}/${rseId}/tempo_html`, win);
 
-export const openTempoPresentation = (sessionId: number): Promise<void> =>
-    openHtmlBlob(`${RSE_BASE}/tempo_presentation?session_id=${sessionId}`);
+export const openTempoPresentation = (sessionId: number, win: Window): Promise<void> =>
+    openHtmlBlob(`${RSE_BASE}/tempo_presentation?session_id=${sessionId}`, win);
 
 /**
  * Persist the presentation-queue order for a session (oversight mode only). Sends
@@ -525,6 +541,19 @@ export const fetchReviewLevels = async (activeOnly = true): Promise<ReviewLevelL
     const res = await axiosInstance.get<ReviewLevelLite[]>(LEVEL_BASE, {
         params: activeOnly ? { is_active: true } : undefined,
     });
+    return res.data ?? [];
+};
+
+/**
+ * The session's FROZEN competency levels (+ requirements) selectable for this
+ * employee review, in the same shape as `fetchReviewLevels`. The backend exposes
+ * each frozen row under its live id, so callers keep working in live-id space;
+ * pre-freeze sessions fall back to the live active levels server-side.
+ */
+export const fetchSessionLevels = async (rseId: number): Promise<ReviewLevelLite[]> => {
+    const res = await axiosInstance.get<ReviewLevelLite[]>(
+        `${RSE_BASE}/${rseId}/available_levels`,
+    );
     return res.data ?? [];
 };
 
