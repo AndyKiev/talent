@@ -118,3 +118,26 @@ class EmployeeEventNotLatest(DomainError):
             f"cannot be deleted. Delete the most recent event first."
         )
         super().__init__(self.fallback)
+
+
+class EmployeeEventJobNotAlignedWithTalent(DomainError):
+    """Raised when a job-changing event (any event carrying a JOB_CHANGE) targets
+    a job that is not one of the employee's OPEN talent target jobs, while the
+    `allow_unaligned_events` app setting is OFF (False). The message names the
+    setting so an admin knows the toggle that controls this rule."""
+
+    message_key = "employeeEventJobNotAlignedWithTalent"
+
+    def __init__(self, employee_id: int, job_id: int, setting_key: str) -> None:
+        self.template_vars = {
+            "employeeId": employee_id,
+            "jobId": job_id,
+            "setting": setting_key,
+        }
+        self.fallback = (
+            f"This event changes the employee to a job (#{job_id}) that is not in "
+            f"their talent plan. Creating job-change events that are not aligned "
+            f"with the employee's talent status is currently disabled by the "
+            f"'{setting_key}' setting — an admin can enable that setting to allow it."
+        )
+        super().__init__(self.fallback)

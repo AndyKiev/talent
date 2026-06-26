@@ -2,6 +2,7 @@
 import datetime
 from typing import Optional, List
 
+from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -66,7 +67,9 @@ from backend.api_v1.employee_events.employee_event.employee_event_errors import 
     EmployeeEventActivationRequired,
     EmployeeEventDateTaken,
     EmployeeEventNotLatest,
+    EmployeeEventJobNotAlignedWithTalent,
 )
+from backend.api_v1.app_setting.app_setting_repository import AppSettingRepository
 from backend.api_v1.talent_audit_job.talent_audit_job_service import (
     TalentAuditJobService,
 )
@@ -594,6 +597,77 @@ class EmployeeEventService(BaseService):
                 EmployeeEventDateTaken(employee_id, effective_date)
             )
 
+    # ── Talent-alignment guard (dynamic: any event that carries a JOB_CHANGE) ──
+    # App setting that toggles the rule. True (default / missing) -> unaligned
+    # job-change events are ALLOWED. False -> they are BLOCKED with a message that
+    # names this setting. Talent target jobs in these statuses count as "open".
+    ALLOW_UNALIGNED_SETTING_KEY = "allow_unaligned_events"
+    OPEN_TALENT_STATUS_KEYS = ("created", "closed")
+
+    async def _assert_job_change_aligned_with_talent(
+        self, employee_id: int, event_in: EmployeeEventCreate
+    ) -> None:
+        """
+        Dynamic guard: applies to ANY event whose change set carries a JOB_CHANGE
+        (PROMOTION, TRANSFER, or any future job-changing type) — not a hardcoded
+        type list. The genesis ACTIVATION never reaches here (it is created via
+        create_activation_for_employee), so it is naturally exempt.
+
+        When the `allow_unaligned_events` app setting is OFF (False), the event's
+        new job MUST be one of the employee's OPEN talent target jobs; otherwise
+        the create is rejected with a message naming the setting. When the setting
+        is ON (default), or missing, the rule is not enforced.
+        """
+        # Resolve the JOB_CHANGE direction id and pull the new_job_id (if any).
+        dir_repo = EmployeeEventDirectionTypeRepository(session=self.session)
+        job_dir = await dir_repo.get_by_field("code", "JOB_CHANGE")
+        if not job_dir:
+            return
+        new_job_id = next(
+            (
+                ch.new_job_id
+                for ch in (event_in.changes or [])
+                if ch.direction_type_id == job_dir.id and ch.new_job_id is not None
+            ),
+            None,
+        )
+        if new_job_id is None:
+            return  # not a job-changing event — nothing to align
+
+        # Read the toggle. Missing row or NULL value -> default ALLOW (no block).
+        setting_repo = AppSettingRepository(session=self.session)
+        setting = await setting_repo.get_by_field(
+            "key", self.ALLOW_UNALIGNED_SETTING_KEY
+        )
+        allow_unaligned = (
+            True if (setting is None or setting.value is None) else bool(setting.value)
+        )
+        if allow_unaligned:
+            return
+
+        # Enforce: new_job_id must be an OPEN talent target job for the employee.
+        open_target_job_ids = set(
+            (
+                await self.session.execute(
+                    text(
+                        "SELECT taj.target_job_id FROM talent_audit_job taj "
+                        "JOIN talent_audit ta ON ta.id = taj.talent_audit_id "
+                        "JOIN talent_audit_job_statuses st ON st.id = taj.status_id "
+                        "WHERE ta.employee_id = :eid AND st.key = ANY(:keys)"
+                    ),
+                    {"eid": employee_id, "keys": list(self.OPEN_TALENT_STATUS_KEYS)},
+                )
+            )
+            .scalars()
+            .all()
+        )
+        if new_job_id not in open_target_job_ids:
+            raise await self._resolve_domain_error(
+                EmployeeEventJobNotAlignedWithTalent(
+                    employee_id, new_job_id, self.ALLOW_UNALIGNED_SETTING_KEY
+                )
+            )
+
     @staticmethod
     def _json_value(value):
         """Make a column value JSON-safe for the change_log `changes` field."""
@@ -615,6 +689,8 @@ class EmployeeEventService(BaseService):
         await self._assert_can_create_event(
             employee_id, event_in.event_type_id, event_in.effective_date
         )
+        # Talent-alignment guard for any job-changing event (toggle-gated).
+        await self._assert_job_change_aligned_with_talent(employee_id, event_in)
 
         run = await self._change_session_service.start_session(
             source=ChangeSource.MANUAL,
