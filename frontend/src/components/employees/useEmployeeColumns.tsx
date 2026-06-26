@@ -1,12 +1,14 @@
 // src/components/employees/useEmployeeColumns.tsx
 import { useMemo } from 'react';
 import type { GridColDef } from '@mui/x-data-grid';
-import { Box, Chip, Tooltip, Typography } from '@mui/material';
+import { Box, Chip, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import type { Employee, TopOrgUnit } from './employeeApi';
 import { formatToUkrDate } from '../../utils/dateFormatter';
 import useString from '../../hooks/useString';
 import str from '../../strings/str';
 import cfl from '../../utils/helpers.ts';
+import EmployeeAvatar from '../ui/EmployeeAvatar';
 
 // Theme-aware empty-cell placeholder. Kept as a lowercase render helper (NOT a
 // component) so this file's only component-like export stays the hook, which
@@ -26,19 +28,60 @@ const uniqueTops = (tops: (TopOrgUnit | null | undefined)[]): TopOrgUnit[] => {
     return Array.from(map.values());
 };
 
-export function useEmployeeColumns(): GridColDef<Employee>[] {
+export function useEmployeeColumns(
+    copyToClipboard?: (text: string) => Promise<boolean> | void,
+): GridColDef<Employee>[] {
     const getString = useString({ str });
 
     return useMemo(
         () => [
+            // ── Photo (first column, elevator hover effect — reuses EmployeeAvatar DRY) ──
+            {
+                field: 'photo',
+                headerName: '',
+                width: 52,
+                sortable: false,
+                filterable: false,
+                disableColumnMenu: true,
+                renderCell: ({ row }) => (
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            height: '100%',
+                            '&:hover': { transform: 'scale(1.7)' },
+                            transition: 'transform 0.2s ease',
+                        }}
+                    >
+                        <EmployeeAvatar employeeId={row.id} name={row.name} size={36} />
+                    </Box>
+                ),
+            },
+            // ── Employee code (with copy-to-clipboard icon — DRY pattern from people review) ──
             {
                 field: 'code',
                 headerName: cfl(getString('code') || 'Code'),
-                width: 100,
-                renderCell: ({ value }) => (
-                    <Tooltip title={value}>
-                        <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{value}</span>
-                    </Tooltip>
+                width: 130,
+                renderCell: ({ value, row }) => (
+                    <Stack direction="row" alignItems="center" spacing={0.25} height="100%">
+                        <Typography fontSize={13} sx={{ fontFamily: 'monospace', fontWeight: 600 }}>
+                            {value}
+                        </Typography>
+                        {copyToClipboard && (
+                            <Tooltip title={cfl(getString('copyCode') || 'Copy code')}>
+                                <IconButton
+                                    size="small"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        void copyToClipboard(row.code);
+                                    }}
+                                    sx={{ p: 0.25, color: 'text.secondary' }}
+                                >
+                                    <ContentCopyIcon sx={{ fontSize: 14 }} />
+                                </IconButton>
+                            </Tooltip>
+                        )}
+                    </Stack>
                 ),
             },
             {
@@ -46,23 +89,6 @@ export function useEmployeeColumns(): GridColDef<Employee>[] {
                 headerName: cfl(getString('employeeName') || 'Employee name'),
                 flex: 1,
                 minWidth: 160,
-            },
-            {
-                field: 'email',
-                headerName: cfl(getString('email') || 'Email'),
-                flex: 1,
-                minWidth: 180,
-                renderCell: ({ value }) =>
-                    value ? (
-                        <Typography
-                            component="span"
-                            sx={{ fontSize: '0.85rem', color: 'text.secondary' }}
-                        >
-                            {value}
-                        </Typography>
-                    ) : (
-                        emptyDash()
-                    ),
             },
             // ── NEW: derived top-level org unit (board / directorate / store) ──
             // Walked up the department tree on the backend. Precedes the specific
@@ -127,42 +153,6 @@ export function useEmployeeColumns(): GridColDef<Employee>[] {
                 },
             },
             {
-                field: 'extra_departments',
-                headerName: cfl(getString('responsibilityAreas') || 'Responsibility Areas'),
-                flex: 1,
-                minWidth: 180,
-                sortable: false,
-                valueGetter: (_value, row) =>
-                    row.extra_departments?.map((d) => d.name).join(', ') || '—',
-                renderCell: ({ row }) => {
-                    const depts = row.extra_departments ?? [];
-                    if (depts.length === 0) {
-                        return emptyDash();
-                    }
-                    return (
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                gap: 0.5,
-                                flexWrap: 'wrap',
-                                alignItems: 'center',
-                                py: 0.5,
-                            }}
-                        >
-                            {depts.map((d) => (
-                                <Chip
-                                    key={d.id}
-                                    label={d.name}
-                                    size="small"
-                                    color="default"
-                                    variant="outlined"
-                                />
-                            ))}
-                        </Box>
-                    );
-                },
-            },
-            {
                 field: 'job',
                 headerName: cfl(getString('job') || 'Job'),
                 width: 160,
@@ -204,6 +194,6 @@ export function useEmployeeColumns(): GridColDef<Employee>[] {
                 valueFormatter: (value) => formatToUkrDate(value),
             },
         ],
-        [getString],
+        [getString, copyToClipboard],
     );
 }
