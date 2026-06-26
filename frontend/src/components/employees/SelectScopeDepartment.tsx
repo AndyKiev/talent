@@ -60,9 +60,10 @@ export function SelectScopeDepartment({ value, onChange }: Props) {
 
     return (
         <FormControl size="small" sx={{ minWidth: 260 }}>
-            <InputLabel>{cfl(getString('department') || 'Department')}</InputLabel>
+            <InputLabel>{cfl(getString('mainDepartment') || 'main Department')}</InputLabel>
+
             <Select
-                label={cfl(getString('department') || 'Department')}
+                label={cfl(getString('mainDepartment') || 'main Department')}
                 value={value == null ? ALL_VALUE : String(value)}
                 onChange={(e) => {
                     const v = e.target.value;

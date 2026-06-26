@@ -87,6 +87,11 @@ class EmployeeService(BaseService):
                     else f"ID {link.department_id}"
                 ),
                 top_department=resolve_top_org_unit(link.department_id, org_index),
+                department_category_sort_order=(
+                    link.department.department_category.sort_order
+                    if link.department and link.department.department_category
+                    else 0
+                ),
             )
             for link in orm_employee.departments
             if link.is_main
@@ -101,6 +106,11 @@ class EmployeeService(BaseService):
                     else f"ID {link.department_id}"
                 ),
                 top_department=resolve_top_org_unit(link.department_id, org_index),
+                department_category_sort_order=(
+                    link.department.department_category.sort_order
+                    if link.department and link.department.department_category
+                    else 0
+                ),
             )
             for link in orm_employee.departments
             if not link.is_main
@@ -158,10 +168,11 @@ class EmployeeService(BaseService):
     async def get_scope_select_departments(self) -> list[dict]:
         """
         Ordered department list for the employees-page filter Select.
-          - admin / HRS -> ALL departments
-          - HRM         -> their ACTIVE scope departments (the responsibility
-                           roots themselves, NOT subtrees)
-          - neither     -> [] (frontend then hides the Select)
+        Only MAIN departments (category is_main=True, department is_active=True).
+          - admin / HRS / dev -> ALL active main departments
+          - HRM               -> their ACTIVE scope departments (the responsibility
+                                 roots themselves, NOT subtrees)
+          - neither           -> [] (frontend then hides the Select)
         Ordering (store -> directorate -> other, by region.sort_order) is done
         in DepartmentRepository.get_scope_select_departments.
         """
@@ -376,6 +387,14 @@ class EmployeeService(BaseService):
         _OWNED_BLOCKERS. AUTHORED content (about other employees) is never here.
         """
         return [
+            # talent-audit subtree the employee OWNS (deepest children first).
+            # Empties the audit so the existing empty-audit delete in delete_user
+            # can drop the talent_audit row itself; without this, a non-empty
+            # audit blocks the delete (check_delete_blockers -> talentAudits).
+            "DELETE FROM talent_audit_interview_job WHERE talent_audit_interview_id IN (SELECT i.id FROM talent_audit_interview i JOIN talent_audit ta ON ta.id = i.talent_audit_id WHERE ta.employee_id = :eid)",
+            "DELETE FROM talent_audit_interview WHERE talent_audit_id IN (SELECT id FROM talent_audit WHERE employee_id = :eid)",
+            "DELETE FROM talent_audit_interview_job WHERE talent_audit_job_id IN (SELECT j.id FROM talent_audit_job j JOIN talent_audit ta ON ta.id = j.talent_audit_id WHERE ta.employee_id = :eid)",
+            "DELETE FROM talent_audit_job WHERE talent_audit_id IN (SELECT id FROM talent_audit WHERE employee_id = :eid)",
             # review-session participation subtree (deepest children first)
             "DELETE FROM review_session_employee_criterion_scores WHERE review_session_employee_evaluation_id IN (SELECT id FROM review_session_employee_evaluations WHERE review_session_employee_id IN (SELECT id FROM review_session_employees WHERE employee_id = :eid))",
             "DELETE FROM review_session_employee_level_answers WHERE review_session_employee_level_id IN (SELECT id FROM review_session_employee_levels WHERE review_session_employee_id IN (SELECT id FROM review_session_employees WHERE employee_id = :eid))",

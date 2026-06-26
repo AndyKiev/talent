@@ -114,10 +114,11 @@ export const deleteEmployee = async (
     return res.data;
 };
 
-// ── Scope-filter Select ───────────────────────────────────────────────────────
+// ── Scope-filter Select (main / top departments) ──────────────────────────────
 
-// A department option for the employees-page filter Select. Already ordered by
+// A main department option for the employees-page filter Select. Already ordered by
 // the backend: store (by region sort_order) -> directorate -> other.
+// Only active main departments (category is_main=True) are returned.
 export interface ScopeDepartment {
     id: number;
     name: string;
@@ -148,4 +149,6 @@ export interface MainDepartment {
     name: string;
     // Derived top-level org unit (board / directorate / store) for this dept.
     top_department: TopOrgUnit | null;
+    // Department category sort_order, used to sort closest-department filter options.
+    department_category_sort_order: number;
 }

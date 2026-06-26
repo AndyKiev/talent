@@ -119,14 +119,17 @@ class DepartmentRepository(BaseRepository):
         directorate_key: str = "directorate",
     ) -> list[dict]:
         """
-        Departments for the "Співробітники" filter Select, in the required order:
+        Departments for the employees-page filter Select, in the required order:
           1) 'store' category instances, ascending by region.sort_order
           2) 'directorate' category instances, ascending by region.sort_order
           3) every other category last
         Ties / missing region sort fall back to department name.
 
+        Only MAIN departments (DepartmentCategory.is_main=True) that are active
+        are returned.
+
         ``allowed_ids``:
-          - None  -> ALL departments (admin / HRS)
+          - None  -> ALL active main departments (admin / HRS / dev)
           - set   -> only these department ids (HRM active scopes); empty -> []
 
         A department may link to several regions; we sort by the MIN active
@@ -172,6 +175,10 @@ class DepartmentRepository(BaseRepository):
             .join(
                 DepartmentCategory,
                 Department.department_category_id == DepartmentCategory.id,
+            )
+            .where(
+                Department.is_active.is_(True),
+                DepartmentCategory.is_main.is_(True),
             )
             .order_by(
                 category_rank,

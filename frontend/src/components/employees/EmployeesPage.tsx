@@ -1,11 +1,15 @@
 // src/components/employees/EmployeesPage.tsx
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
     Box,
     Button,
     Alert,
     Snackbar,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
     Typography,
     Breadcrumbs,
     Tooltip,
@@ -15,7 +19,6 @@ import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import PeopleIcon from '@mui/icons-material/People';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ApartmentIcon from '@mui/icons-material/Apartment';
@@ -34,6 +37,7 @@ import { EmployeeDepartmentsDrawer } from './EmployeeDepartmentsDrawer';
 import useString from '../../hooks/useString';
 import str from '../../strings/str';
 import cfl from '../../utils/helpers.ts';
+import { useClipboard } from '../../hooks/useClipboard';
 import { useDataGridStyles } from '../../hooks/useDataGridStyles';
 import { useDataGridLocale } from '../../hooks/useDataGridLocale';
 import { useAuthStore } from '../../store/authStore';
@@ -58,6 +62,11 @@ export function EmployeesPage() {
     // Selected department in the filter Select (null = all visible to the user).
     const [selectedDeptId, setSelectedDeptId] = useState<number | null>(null);
 
+    // ── Client-side column filters (like SelectScopeDepartment, atop each column) ──
+    const [statusFilter, setStatusFilter] = useState<string | null>(null);
+    const [subdepartmentFilter, setSubdepartmentFilter] = useState<string | null>(null);
+    const [jobFilter, setJobFilter] = useState<string | null>(null);
+
     const [snackbar, setSnackbar] = useState({
         open: false,
         message: '',
@@ -74,6 +83,51 @@ export function EmployeesPage() {
         staleTime: 2 * 60 * 1000,
     });
 
+    // ── Derive unique filter options from the full (unfiltered) employee list ──
+    // Status values need translation for display, but raw value for filtering.
+    const statusLabelMap = useMemo(() => {
+        const map = new Map<string, string>();
+        for (const e of employees)
+            if (e.status?.name) map.set(e.status.name, cfl(getString(e.status.name) || e.status.name));
+        return map;
+    }, [employees, getString]);
+    const statusOptions = useMemo(
+        () => [...new Set(employees.map((e) => e.status?.name).filter(Boolean))].sort() as string[],
+        [employees],
+    );
+    const subdepartmentOptions = useMemo(() => {
+        // Build a name → min category sort_order map from employee data so the
+        // closest-department filter dropdown is sorted by department_category.sort_order.
+        const orderMap = new Map<string, number>();
+        for (const e of employees) {
+            for (const d of e.main_departments ?? []) {
+                const prev = orderMap.get(d.name);
+                if (prev === undefined || d.department_category_sort_order < prev) {
+                    orderMap.set(d.name, d.department_category_sort_order);
+                }
+            }
+        }
+        return [...new Set(employees.flatMap((e) => e.main_departments?.map((d) => d.name) ?? []))]
+            .sort((a, b) => (orderMap.get(a) ?? 0) - (orderMap.get(b) ?? 0) || a.localeCompare(b));
+    }, [employees]);
+    const jobOptions = useMemo(
+        () => [...new Set(employees.map((e) => e.job?.name).filter(Boolean))].sort() as string[],
+        [employees],
+    );
+
+    // ── Client-side filtering ───────────────────────────────────────────────────
+    const filteredEmployees = useMemo(() => {
+        let result = employees;
+        if (statusFilter)
+            result = result.filter((e) => e.status?.name === statusFilter);
+        if (subdepartmentFilter)
+            result = result.filter((e) =>
+                e.main_departments?.some((d) => d.name === subdepartmentFilter),
+            );
+        if (jobFilter) result = result.filter((e) => e.job?.name === jobFilter);
+        return result;
+    }, [employees, statusFilter, subdepartmentFilter, jobFilter]);
+
     // ── Mutations ─────────────────────────────────────────────────────────────
     const { createMutation, updateMutation, deleteMutation } = useEmployeeMutations({
         setSnackbar,
@@ -83,13 +137,19 @@ export function EmployeesPage() {
         onDeleteError: () => setEmployeeToDelete(null),
     });
 
+    // ── Clipboard ──────────────────────────────────────────────────────────────
+    const { copyToClipboard } = useClipboard({
+        onSuccess: (message) => setSnackbar({ open: true, message, severity: 'success' }),
+        onError: (message) => setSnackbar({ open: true, message, severity: 'error' }),
+    });
+
     // ── Action handlers ───────────────────────────────────────────────────────
     const handleEdit = useCallback((emp: Employee) => setEmployeeToEdit(emp), []);
     const handleDelete = useCallback((emp: Employee) => setEmployeeToDelete(emp), []);
     const handleManageDepts = useCallback((emp: Employee) => setEmployeeForDepts(emp), []);
 
-    // ── Base columns + actions column ─────────────────────────────────────────
-    const baseColumns = useEmployeeColumns();
+    // ── Base columns (photo first, then code/name/...) + actions column ──────
+    const baseColumns = useEmployeeColumns(copyToClipboard);
 
     const actionsColumn: GridColDef<Employee> = {
         field: '_actions',
@@ -150,7 +210,12 @@ export function EmployeesPage() {
         ),
     };
 
-    const columns = [...baseColumns, actionsColumn];
+    // Column order: photo → actions → code → name → email → ...
+    const photoColumn = baseColumns[0];
+    const restColumns = baseColumns.slice(1);
+    const columns = [photoColumn, actionsColumn, ...restColumns];
+
+    const ALL_VALUE = '__all__';
 
     // ── Render ────────────────────────────────────────────────────────────────
     return (
@@ -168,22 +233,94 @@ export function EmployeesPage() {
                     </Typography>
                 </Breadcrumbs>
 
-                {/* Header */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                    <PeopleIcon color="action" />
-                    <Typography variant="h6" fontWeight={600}>
-                        {cfl(getString('employees') || 'Employees')}
-                    </Typography>
-                    <SelectScopeDepartment value={selectedDeptId} onChange={setSelectedDeptId} />
-                    <Box sx={{ flex: 1 }} />
-                    <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={() => setCreateOpen(true)}
-                    >
-                        {cfl(getString('addEmployee') || 'Add Employee')}
-                    </Button>
-                </Box>
+                {/* Header + column filters + Add button — all on one line, no wrapping */}
+                {employees.length > 0 && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                        <SelectScopeDepartment value={selectedDeptId} onChange={setSelectedDeptId} />
+                        {subdepartmentOptions.length > 0 && (
+                            <FormControl size="small" sx={{ minWidth: 200 }}>
+                                <InputLabel>
+                                    {cfl(getString('department') || 'Department')}
+                                </InputLabel>
+                                <Select
+                                    label={cfl(getString('department') || 'Department')}
+                                    value={subdepartmentFilter ?? ALL_VALUE}
+                                    onChange={(e) =>
+                                        setSubdepartmentFilter(e.target.value === ALL_VALUE ? null : e.target.value)
+                                    }
+                                >
+                                    <MenuItem value={ALL_VALUE}>
+                                        <em>{getString('all') || getString('allDepartments') || 'All'}</em>
+                                    </MenuItem>
+                                    {subdepartmentOptions.map((s) => (
+                                        <MenuItem key={s} value={s}>{s}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        )}
+                        {jobOptions.length > 0 && (
+                            <FormControl size="small" sx={{ minWidth: 180 }}>
+                                <InputLabel>{cfl(getString('job') || 'Job')}</InputLabel>
+                                <Select
+                                    label={cfl(getString('job') || 'Job')}
+                                    value={jobFilter ?? ALL_VALUE}
+                                    onChange={(e) =>
+                                        setJobFilter(e.target.value === ALL_VALUE ? null : e.target.value)
+                                    }
+                                >
+                                    <MenuItem value={ALL_VALUE}>
+                                        <em>{getString('all') || getString('allJobs') || 'All'}</em>
+                                    </MenuItem>
+                                    {jobOptions.map((s) => (
+                                        <MenuItem key={s} value={s}>{s}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        )}
+                        {statusOptions.length > 0 && (
+                            <FormControl size="small" sx={{ minWidth: 160 }}>
+                                <InputLabel>
+                                    {cfl(getString('employeeStatus') || 'Status')}
+                                </InputLabel>
+                                <Select
+                                    label={cfl(getString('employeeStatus') || 'Status')}
+                                    value={statusFilter ?? ALL_VALUE}
+                                    onChange={(e) =>
+                                        setStatusFilter(e.target.value === ALL_VALUE ? null : e.target.value)
+                                    }
+                                >
+                                    <MenuItem value={ALL_VALUE}>
+                                        <em>{getString('all') || getString('allStatuses') || 'All'}</em>
+                                    </MenuItem>
+                                    {statusOptions.map((s) => (
+                                        <MenuItem key={s} value={s}>{statusLabelMap.get(s) ?? s}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        )}
+                        <Box sx={{ flex: 1 }} />
+                        <Button
+                            variant="contained"
+                            startIcon={<AddIcon />}
+                            onClick={() => setCreateOpen(true)}
+                        >
+                            {cfl(getString('addEmployee') || 'Add Employee')}
+                        </Button>
+                    </Box>
+                )}
+                {employees.length === 0 && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                        <SelectScopeDepartment value={selectedDeptId} onChange={setSelectedDeptId} />
+                        <Box sx={{ flex: 1 }} />
+                        <Button
+                            variant="contained"
+                            startIcon={<AddIcon />}
+                            onClick={() => setCreateOpen(true)}
+                        >
+                            {cfl(getString('addEmployee') || 'Add Employee')}
+                        </Button>
+                    </Box>
+                )}
 
                 {error && (
                     <Alert severity="error" sx={{ mb: 2 }}>
@@ -192,7 +329,7 @@ export function EmployeesPage() {
                 )}
 
                 <DataGrid
-                    rows={employees}
+                    rows={filteredEmployees}
                     columns={columns}
                     loading={isLoading}
                     autoHeight

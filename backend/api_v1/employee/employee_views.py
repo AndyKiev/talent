@@ -46,10 +46,13 @@ router = APIRouter(
 async def get_employees(
     service: Annotated[EmployeeService, Depends(get_employee_service)],
     job_id: Optional[int] = Query(None, description="Filter users by job ID"),
+    department_id: Optional[int] = Query(
+        None, description="Filter users whose main department is in this department's subtree"
+    ),
 ):
-    """Get all users, optionally filtered by job ID."""
+    """Get all users, optionally filtered by job ID and/or department subtree."""
     filters = {"job_id": job_id} if job_id is not None else None
-    return await service.get_all(params=filters)
+    return await service.get_all(params=filters, department_id=department_id)
 
 
 @router.get(
@@ -75,7 +78,8 @@ async def get_scope_departments(
     """
     Ordered departments for the employees-page filter Select:
     store (by region sort_order) -> directorate (by region sort_order) -> other.
-    admin/HRS get all; HRM gets their active responsibility departments; others []
+    Only active MAIN departments (category is_main=True) are returned.
+    admin/HRS/dev get all; HRM gets their active responsibility departments; others []
     """
     return await service.get_scope_select_departments()
 

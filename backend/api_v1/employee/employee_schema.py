@@ -106,6 +106,9 @@ class MainDepartmentSchema(BaseModel):
     # Derived top-level org unit (board / directorate / store) for this
     # department. Resolved server-side by walking up the department tree.
     top_department: Optional[TopOrgUnit] = None
+    # Department category sort_order, used by the frontend to sort filter
+    # dropdown options (closest-department filter) in category order.
+    department_category_sort_order: int = 0
 
 
 # ── Late imports to avoid circular references ─────────────────────────────────

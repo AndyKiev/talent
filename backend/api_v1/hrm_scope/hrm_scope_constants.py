@@ -15,7 +15,7 @@ HRM_GROUP_NAME = "HRM"
 
 # Groups whose members bypass the limit entirely and see ALL employees.
 # Add/rename as needed (e.g. "administrator", "hr_supervisor").
-BYPASS_GROUP_NAMES = frozenset({"admin", "HRS"})
+BYPASS_GROUP_NAMES = frozenset({"admin", "HRS", "dev"})
 
 
 def _norm(name: str) -> str:
