@@ -28,6 +28,7 @@ interface Params {
     toggleIsPending: boolean;
     onDeleteClick: (row: DepartmentCategory) => void;
     deleteIsPending: boolean;
+    orderColumn?: GridColDef;
 }
 
 export function useDepartmentCategoryColumns({
@@ -42,6 +43,7 @@ export function useDepartmentCategoryColumns({
     toggleIsPending,
     onDeleteClick,
     deleteIsPending,
+    orderColumn,
 }: Params): GridColDef[] {
 
     function textEditCol(
@@ -102,6 +104,7 @@ export function useDepartmentCategoryColumns({
     }
 
     return [
+        ...(orderColumn ? [orderColumn] : []),
         textEditCol('name', 'name', 200, 1),
         textEditCol('key', 'key', 160, 0.7),
         textEditCol('description', 'description', 240, 1),

@@ -1,8 +1,11 @@
 import { useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query';
-import { IconButton, Stack, Typography } from '@mui/material';
+import { IconButton, Stack, Tooltip, Typography } from '@mui/material';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
+import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
 import type { GridColDef } from '@mui/x-data-grid';
+import type { GetStringFn } from '../../../types/getStringFn';
 
 /** Any row that carries a numeric sort_order can be reordered by this hook. */
 interface Orderable {
@@ -17,6 +20,8 @@ interface Options<T extends Orderable> {
     updateSortOrder: (id: number, sortOrder: number) => Promise<unknown>;
     /** Query keys to invalidate after a successful reorder. */
     invalidateKeys: QueryKey[];
+    /** Resolved strings for the move-button tooltips. */
+    getString: GetStringFn;
     onError?: (message: string) => void;
     /** Column header (kept "#" like the criteria grid by default). */
     headerName?: string;
@@ -32,6 +37,7 @@ export function useArrowReorder<T extends Orderable>({
     rows,
     updateSortOrder,
     invalidateKeys,
+    getString,
     onError,
     headerName = '#',
 }: Options<T>): { orderColumn: GridColDef<T>; isReordering: boolean } {
@@ -51,41 +57,77 @@ export function useArrowReorder<T extends Orderable>({
         onError: (err: Error) => onError?.(err.message),
     });
 
-    const move = (row: T, dir: 'up' | 'down') => {
+    // Move a row to top / up one / down one / bottom and persist the whole order.
+    const move = (row: T, to: 'top' | 'up' | 'down' | 'bottom') => {
         const idx = rows.findIndex((r) => r.id === row.id);
-        const swap = dir === 'up' ? idx - 1 : idx + 1;
-        if (swap < 0 || swap >= rows.length) return;
+        if (idx < 0) return;
+        const target =
+            to === 'top' ? 0 : to === 'bottom' ? rows.length - 1 : to === 'up' ? idx - 1 : idx + 1;
+        if (target === idx || target < 0 || target >= rows.length) return;
         const next = [...rows];
-        [next[idx], next[swap]] = [next[swap], next[idx]];
+        const [item] = next.splice(idx, 1);
+        next.splice(target, 0, item);
         reorder.mutate(next);
     };
 
     const orderColumn: GridColDef<T> = {
         field: 'order',
         headerName,
-        width: 110,
+        width: 178,
         sortable: false,
         renderCell: (params) => {
             const idx = rows.findIndex((r) => r.id === params.row.id);
+            const isFirst = idx === 0;
+            const isLast = idx === rows.length - 1;
             return (
-                <Stack direction="row" alignItems="center" spacing={0.5}>
-                    <Typography fontSize={13} sx={{ width: 20, textAlign: 'right' }}>
+                <Stack direction="row" alignItems="center" spacing={0.25}>
+                    <Typography fontSize={13} sx={{ width: 20, textAlign: 'right', mr: 0.25 }}>
                         {idx + 1}
                     </Typography>
-                    <IconButton
-                        size="small"
-                        onClick={() => move(params.row, 'up')}
-                        disabled={idx === 0 || reorder.isPending}
-                    >
-                        <ArrowUpwardIcon sx={{ fontSize: 16 }} />
-                    </IconButton>
-                    <IconButton
-                        size="small"
-                        onClick={() => move(params.row, 'down')}
-                        disabled={idx === rows.length - 1 || reorder.isPending}
-                    >
-                        <ArrowDownwardIcon sx={{ fontSize: 16 }} />
-                    </IconButton>
+                    <Tooltip title={getString('moveToTop')}>
+                        <span>
+                            <IconButton
+                                size="small"
+                                onClick={() => move(params.row, 'top')}
+                                disabled={isFirst || reorder.isPending}
+                            >
+                                <KeyboardDoubleArrowUpIcon sx={{ fontSize: 16 }} />
+                            </IconButton>
+                        </span>
+                    </Tooltip>
+                    <Tooltip title={getString('moveUp')}>
+                        <span>
+                            <IconButton
+                                size="small"
+                                onClick={() => move(params.row, 'up')}
+                                disabled={isFirst || reorder.isPending}
+                            >
+                                <ArrowUpwardIcon sx={{ fontSize: 16 }} />
+                            </IconButton>
+                        </span>
+                    </Tooltip>
+                    <Tooltip title={getString('moveDown')}>
+                        <span>
+                            <IconButton
+                                size="small"
+                                onClick={() => move(params.row, 'down')}
+                                disabled={isLast || reorder.isPending}
+                            >
+                                <ArrowDownwardIcon sx={{ fontSize: 16 }} />
+                            </IconButton>
+                        </span>
+                    </Tooltip>
+                    <Tooltip title={getString('moveToBottom')}>
+                        <span>
+                            <IconButton
+                                size="small"
+                                onClick={() => move(params.row, 'bottom')}
+                                disabled={isLast || reorder.isPending}
+                            >
+                                <KeyboardDoubleArrowDownIcon sx={{ fontSize: 16 }} />
+                            </IconButton>
+                        </span>
+                    </Tooltip>
                 </Stack>
             );
         },

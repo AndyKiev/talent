@@ -11,6 +11,7 @@ export interface DepartmentCategory {
     description: string | null;
     is_active: boolean;
     is_main: boolean;
+    sort_order: number;
     created_at: string;
 }
 
@@ -28,6 +29,7 @@ export interface DepartmentCategoryUpdate {
     description?: string | null;
     is_active?: boolean;
     is_main?: boolean;
+    sort_order?: number;
 }
 
 export interface MutationResponse<T> {

@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Boolean, Text
+from sqlalchemy import String, Boolean, Text, Integer
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 from typing import TYPE_CHECKING
@@ -15,7 +15,7 @@ class DepartmentCategory(IntIdPkMixin, TimestampMixin, Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     is_main: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     departments: Mapped[list["Department"]] = relationship(
         back_populates="department_category",
         lazy="selectin",

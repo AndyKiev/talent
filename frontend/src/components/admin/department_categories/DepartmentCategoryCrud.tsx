@@ -1,5 +1,5 @@
 // src/components/admin/department_categories/DepartmentCategoryCrud.tsx
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
     Alert,
@@ -12,9 +12,10 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { DataGrid } from '@mui/x-data-grid';
-import { fetchDepartmentCategories, type DepartmentCategory } from './departmentCategoryApi';
+import { fetchDepartmentCategories, updateDepartmentCategory, type DepartmentCategory } from './departmentCategoryApi';
 import { useDepartmentCategoryMutations } from './useDepartmentCategoryMutations';
 import { useDepartmentCategoryColumns, type EditingState } from './useDepartmentCategoryColumns';
+import { useArrowReorder } from '../review_dimensions/useArrowReorder';
 import { DepartmentCategoryForm } from './DepartmentCategoryForm';
 import { DepartmentCategoryEditDialog, type PendingEdit } from './DepartmentCategoryEditDialog';
 import { DepartmentCategoryDeleteDialog } from './DepartmentCategoryDeleteDialog';
@@ -45,6 +46,12 @@ export function DepartmentCategoryCrud() {
         staleTime: 2 * 60 * 1000,
     });
 
+    // Display in the admin-defined order (sort_order, id tiebreak).
+    const sortedRows = useMemo(
+        () => [...rows].sort((a, b) => (a.sort_order - b.sort_order) || (a.id - b.id)),
+        [rows],
+    );
+
     const { createMutation, updateMutation, deleteMutation } = useDepartmentCategoryMutations({
         setSnackbar,
         onCreateSuccess: () => setFormOpen(false),
@@ -57,6 +64,15 @@ export function DepartmentCategoryCrud() {
     });
 
     const localeText = useDataGridLocale();
+
+    // Shared up/down-arrow reordering.
+    const { orderColumn } = useArrowReorder<DepartmentCategory>({
+        rows: sortedRows,
+        updateSortOrder: (id, sort_order) => updateDepartmentCategory({ id, data: { sort_order } }),
+        invalidateKeys: [DEPARTMENT_CATEGORY_QK],
+        getString,
+        onError: (message) => setSnackbar({ open: true, message, severity: 'error' }),
+    });
 
     const handleEditFieldClick = useCallback(
         (row: DepartmentCategory, field: string, e: React.MouseEvent) => {
@@ -148,6 +164,7 @@ export function DepartmentCategoryCrud() {
         toggleIsPending: updateMutation.isPending,
         onDeleteClick: handleDeleteClick,
         deleteIsPending: deleteMutation.isPending,
+        orderColumn,
     });
 
     return (
@@ -181,7 +198,7 @@ export function DepartmentCategoryCrud() {
             {!isLoading && !error && (
                 <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
                     <DataGrid
-                        rows={rows}
+                        rows={sortedRows}
                         columns={columns}
                         paginationModel={paginationModel}
                         onPaginationModelChange={setPaginationModel}
