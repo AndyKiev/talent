@@ -192,9 +192,17 @@ export interface MyOversightManager {
     holder_name: string | null;
 }
 
-/** Existing oversight reviewers the current user may pick (excludes self). */
-export const fetchOversightManagerOptions = async (): Promise<OversightManagerOption[]> => {
-    const res = await axiosInstance.get<OversightManagerOption[]>(`${PR_SCOPE_BASE}/oversight_managers`);
+/** Existing oversight reviewers the current user may pick (excludes self).
+ *  Pass `short: true` to get only managers from the user's department scope
+ *  (same main department + parent department, with job linked to oversight). */
+export const fetchOversightManagerOptions = async (
+    short?: boolean,
+): Promise<OversightManagerOption[]> => {
+    const params = short ? { short: true } : undefined;
+    const res = await axiosInstance.get<OversightManagerOption[]>(
+        `${PR_SCOPE_BASE}/oversight_managers`,
+        { params },
+    );
     return res.data ?? [];
 };
 

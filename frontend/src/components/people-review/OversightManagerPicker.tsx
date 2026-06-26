@@ -4,11 +4,13 @@ import {
     Box,
     Button,
     Chip,
+    FormControlLabel,
     IconButton,
     MenuItem,
     Popover,
     Select,
     Stack,
+    Switch,
     Tooltip,
     Typography,
 } from '@mui/material';
@@ -46,6 +48,7 @@ export function OversightManagerPicker({ editable, getString, onSuccess, onError
     const qc = useQueryClient();
     const { t } = useTheme();
     const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+    const [shortList, setShortList] = useState(false);
 
     const { data: current } = useQuery({
         queryKey: MY_OVERSIGHT_MANAGER_QK,
@@ -54,9 +57,10 @@ export function OversightManagerPicker({ editable, getString, onSuccess, onError
     });
 
     // The candidate list is only needed once the popover is opened in edit mode.
+    // When shortList is true, we fetch only managers from the user's department scope.
     const { data: options = [] } = useQuery({
-        queryKey: OVERSIGHT_MANAGER_OPTIONS_QK,
-        queryFn: fetchOversightManagerOptions,
+        queryKey: [...OVERSIGHT_MANAGER_OPTIONS_QK, { short: shortList }],
+        queryFn: () => fetchOversightManagerOptions(shortList),
         staleTime: 60_000,
         enabled: editable && !!anchor,
     });
@@ -120,6 +124,22 @@ export function OversightManagerPicker({ editable, getString, onSuccess, onError
                     <Typography variant="subtitle2" fontWeight={700} color={t.text}>
                         {getString('oversightManager')}
                     </Typography>
+
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                size="small"
+                                checked={shortList}
+                                onChange={(_, checked) => setShortList(checked)}
+                            />
+                        }
+                        label={
+                            <Typography fontSize={12}>
+                                {getString('oversightShortList') || 'Only my department'}
+                            </Typography>
+                        }
+                        sx={{ m: 0 }}
+                    />
 
                     {editable ? (
                         options.length > 0 ? (

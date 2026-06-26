@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from fastapi.security import HTTPBearer
 from typing import Annotated, List, Optional
 
@@ -27,8 +27,9 @@ router = APIRouter(
 @router.get("/oversight_managers", response_model=List[OversightManagerOption])
 async def get_oversight_managers(
     service: Annotated[OversightManagerService, Depends(get_oversight_manager_service)],
+    short: Annotated[bool, Query(description="Return only managers from the user's department scope")] = False,
 ):
-    return await service.get_candidate_managers()
+    return await service.get_candidate_managers(short=short)
 
 
 @router.get("/my_oversight_manager", response_model=Optional[MyOversightManager])
