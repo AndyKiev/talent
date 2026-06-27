@@ -12,6 +12,7 @@ const ROOT = '/developer/catalog';
 const TOP_TABS = [
     { label: 'operations', segment: 'operations' },
     { label: 'essences',   segment: 'essences' },
+    { label: 'dbTables',   segment: 'db_tables' },
 ];
 
 export function CatalogGroupLayout() {

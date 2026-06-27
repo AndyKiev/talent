@@ -1,0 +1,110 @@
+{
+  "dbTables": {
+    "ukr": "Таблиці БД",
+    "eng": "DB Tables"
+  },
+  "dbTablesDesc": {
+    "ukr": "Перегляд структури та статистики таблиць бази даних",
+    "eng": "Browse database table structure and statistics"
+  },
+  "tableName": {
+    "ukr": "Таблиця",
+    "eng": "Table"
+  },
+  "descriptionRu": {
+    "ukr": "Опис",
+    "eng": "Description"
+  },
+  "fields": {
+    "ukr": "Поля",
+    "eng": "Fields"
+  },
+  "rowsNow": {
+    "ukr": "Рядків (зараз)",
+    "eng": "Rows (now)"
+  },
+  "rowsPrev": {
+    "ukr": "Рядків (до)",
+    "eng": "Rows (prev)"
+  },
+  "size": {
+    "ukr": "Розмір",
+    "eng": "Size"
+  },
+  "columns": {
+    "ukr": "Колонки",
+    "eng": "Columns"
+  },
+  "totalRows": {
+    "ukr": "всього рядків",
+    "eng": "total rows"
+  },
+  "refresh": {
+    "ukr": "Оновити",
+    "eng": "Refresh"
+  },
+  "refreshing": {
+    "ukr": "Оновлення...",
+    "eng": "Refreshing..."
+  },
+  "tables": {
+    "ukr": "таблиць",
+    "eng": "tables"
+  },
+  "dbTableInfoNotFound": {
+    "ukr": "Таблицю '${tableName}' не знайдено у db_table_info",
+    "eng": "Table '${tableName}' not found in db_table_info"
+  },
+  "dbTableInfoFileError": {
+    "ukr": "Помилка читання/запису файлу db_table_info",
+    "eng": "Failed to read/write db_table_info file"
+  },
+  "dbTableInfoRefreshSuccess": {
+    "ukr": "db_table_info оновлено: ${tableCount} таблиць",
+    "eng": "db_table_info refreshed: ${tableCount} tables"
+  },
+  "dbTableInfoUpdateSuccess": {
+    "ukr": "Таблицю '${tableName}' оновлено",
+    "eng": "Table '${tableName}' updated"
+  },
+  "dbTableInfoReorderSuccess": {
+    "ukr": "Порядок таблиць оновлено",
+    "eng": "Table order updated"
+  },
+  "sizePrev": {
+    "ukr": "Попер. розмір",
+    "eng": "Prev size"
+  },
+  "sampleLimit": {
+    "ukr": "Ліміт",
+    "eng": "Limit"
+  },
+  "filterTables": {
+    "ukr": "Фільтр таблиць...",
+    "eng": "Filter tables..."
+  },
+  "serviceFields": {
+    "ukr": "Службові поля",
+    "eng": "Service fields"
+  },
+  "columnSettings": {
+    "ukr": "Налаштування колонок",
+    "eng": "Column settings"
+  },
+  "columnSettingsHint": {
+    "ukr": "Увімкніть/вимкніть видимість, сортування та фільтрацію для кожної колонки. Назва таблиці завжди видима.",
+    "eng": "Toggle visibility, sorting, and filtering per column. Table name is always visible."
+  },
+  "autoDescribe": {
+    "ukr": "Авто-опис",
+    "eng": "Auto-describe"
+  },
+  "crudMode": {
+    "ukr": "CRUD",
+    "eng": "CRUD"
+  },
+  "noPkTooltip": {
+    "ukr": "Немає метаданих PK — натисніть Refresh",
+    "eng": "No PK metadata — run Refresh first"
+  }
+}

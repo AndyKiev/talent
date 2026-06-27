@@ -47,3 +47,6 @@ export const EMPLOYEE_USER_GROUP_QK = ['employee_user_groups'] as const;
 export const HRM_EMPLOYEE_QK = ['hrm_employees'] as const;
 export const HRM_SCOPE_QK = ['hrm_scopes'] as const;
 export const REGION_QK = ['regions'] as const;
+
+// ── Developer tools ──────────────────────────────────────────────────────────
+export const DB_TABLES_QK = ['db_tables'] as const;

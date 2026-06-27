@@ -117,6 +117,15 @@ export const ESSENCES: RawEssenceConfig[] = [
     color: '#6366f1',
     parentGroup: 'catalog',
   },
+  {
+    parent: 'developer',
+    key: 'db_tables',
+    labelKey: 'dbTables',
+    descriptionKey: 'dbTablesDesc',
+    Icon: StorageIcon,
+    color: '#f59e0b',
+    parentGroup: 'catalog',
+  },
 
   // ── App settings (people-review / TL) ─────────────────────────────────────
   {

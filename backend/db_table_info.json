@@ -1,0 +1,6368 @@
+{
+  "tables": [
+    {
+      "table_name": "app_settings",
+      "sort_order": 0,
+      "description_ru": "настройки",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "key",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        },
+        {
+          "name": "value",
+          "data_type": "json",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "value_type_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "setting_value_types",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "label_key",
+          "data_type": "character varying",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        },
+        {
+          "name": "description_key",
+          "data_type": "character varying",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_by",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 6,
+        "size_bytes": 49152,
+        "size_pretty": "48 kB"
+      },
+      "previous": {
+        "row_count": 6,
+        "size_bytes": 49152,
+        "size_pretty": "48 kB"
+      }
+    },
+    {
+      "table_name": "change_session",
+      "sort_order": 10,
+      "description_ru": "",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "source",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 16
+        },
+        {
+          "name": "triggered_by_user_id",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "task_name",
+          "data_type": "character varying",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "employee_id",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "status",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 16
+        },
+        {
+          "name": "started_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "finished_at",
+          "data_type": "timestamp with time zone",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "summary",
+          "data_type": "jsonb",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 124,
+        "size_bytes": 90112,
+        "size_pretty": "88 kB"
+      },
+      "previous": {
+        "row_count": 124,
+        "size_bytes": 90112,
+        "size_pretty": "88 kB"
+      }
+    },
+    {
+      "table_name": "change_log",
+      "sort_order": 20,
+      "description_ru": "",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "change_session_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "change_session",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "parent_id",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "change_log",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "essence_key",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        },
+        {
+          "name": "entity_id",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "action",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 32
+        },
+        {
+          "name": "changes",
+          "data_type": "jsonb",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "employee_id",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 430,
+        "size_bytes": 221184,
+        "size_pretty": "216 kB"
+      },
+      "previous": {
+        "row_count": 430,
+        "size_bytes": 221184,
+        "size_pretty": "216 kB"
+      }
+    },
+    {
+      "table_name": "department_categories",
+      "sort_order": 30,
+      "description_ru": "Категории департаментов",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        },
+        {
+          "name": "description",
+          "data_type": "text",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "key",
+          "data_type": "character varying",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        },
+        {
+          "name": "is_main",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "sort_order",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 8,
+        "size_bytes": 32768,
+        "size_pretty": "32 kB"
+      },
+      "previous": {
+        "row_count": 8,
+        "size_bytes": 32768,
+        "size_pretty": "32 kB"
+      }
+    },
+    {
+      "table_name": "department_region_links",
+      "sort_order": 40,
+      "description_ru": "Связи департамент–регион",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "department_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "departments",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "region_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "regions",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 25,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 25,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "department_type_job_links",
+      "sort_order": 50,
+      "description_ru": "Связи тип департамента–должность",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "department_type_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "department_types",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "job_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "jobs",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 180,
+        "size_bytes": 73728,
+        "size_pretty": "72 kB"
+      },
+      "previous": {
+        "row_count": 180,
+        "size_bytes": 73728,
+        "size_pretty": "72 kB"
+      }
+    },
+    {
+      "table_name": "department_type_parental_links",
+      "sort_order": 60,
+      "description_ru": "Родительские связи типов департаментов",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "child_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "department_types",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "parent_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "department_types",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 94,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 94,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "department_types",
+      "sort_order": 70,
+      "description_ru": "Типы департаментов",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "description",
+          "data_type": "text",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 116,
+        "size_bytes": 73728,
+        "size_pretty": "72 kB"
+      },
+      "previous": {
+        "row_count": 116,
+        "size_bytes": 73728,
+        "size_pretty": "72 kB"
+      }
+    },
+    {
+      "table_name": "departments",
+      "sort_order": 80,
+      "description_ru": "Департаменты / подразделения",
+      "sample_limit": 40,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "parent_id",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "departments",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "department_category_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "department_categories",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "department_type_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "department_types",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 138,
+        "size_bytes": 73728,
+        "size_pretty": "72 kB"
+      },
+      "previous": {
+        "row_count": 138,
+        "size_bytes": 73728,
+        "size_pretty": "72 kB"
+      }
+    },
+    {
+      "table_name": "education_degrees",
+      "sort_order": 90,
+      "description_ru": "Учёные степени / уровни образования",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name_key",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "sort_order",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 3,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 3,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "employee_children",
+      "sort_order": 100,
+      "description_ru": "Дети сотрудников",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "employee_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "birth_date",
+          "data_type": "date",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 101,
+        "size_bytes": 24576,
+        "size_pretty": "24 kB"
+      },
+      "previous": {
+        "row_count": 101,
+        "size_bytes": 24576,
+        "size_pretty": "24 kB"
+      }
+    },
+    {
+      "table_name": "employee_current_levels",
+      "sort_order": 110,
+      "description_ru": "Текущие грейды сотрудников",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "employee_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "level_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "review_levels",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 4,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 4,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "employee_departments",
+      "sort_order": 120,
+      "description_ru": "Привязка сотрудников к департаментам",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "employee_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "department_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "departments",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "is_main",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 73,
+        "size_bytes": 73728,
+        "size_pretty": "72 kB"
+      },
+      "previous": {
+        "row_count": 73,
+        "size_bytes": 73728,
+        "size_pretty": "72 kB"
+      }
+    },
+    {
+      "table_name": "employee_educations",
+      "sort_order": 130,
+      "description_ru": "Образование сотрудников",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "employee_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "institution",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 256
+        },
+        {
+          "name": "degree_id",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "education_degrees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "speciality",
+          "data_type": "character varying",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 256
+        },
+        {
+          "name": "graduation_year",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 110,
+        "size_bytes": 73728,
+        "size_pretty": "72 kB"
+      },
+      "previous": {
+        "row_count": 110,
+        "size_bytes": 73728,
+        "size_pretty": "72 kB"
+      }
+    },
+    {
+      "table_name": "employee_event_change_departments",
+      "sort_order": 140,
+      "description_ru": "Департаменты, изменённые в событиях",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "event_change_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employee_event_changes",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "department_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "departments",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "change_dept_type_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employee_event_change_dept_types",
+            "column": "id"
+          },
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 0,
+        "size_bytes": 24576,
+        "size_pretty": "24 kB"
+      },
+      "previous": {
+        "row_count": 0,
+        "size_bytes": 24576,
+        "size_pretty": "24 kB"
+      }
+    },
+    {
+      "table_name": "employee_event_change_dept_types",
+      "sort_order": 150,
+      "description_ru": "Типы изменения департамента в событиях",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "code",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        }
+      ],
+      "current": {
+        "row_count": 2,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 2,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "employee_event_changes",
+      "sort_order": 160,
+      "description_ru": "Изменения в кадровых событиях",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "event_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employee_events",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "direction_type_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employee_event_direction_types",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "prev_job_id",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "jobs",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "new_job_id",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "jobs",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "prev_status_id",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employee_statuses",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "new_status_id",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employee_statuses",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "prev_department_id",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "departments",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "new_department_id",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "departments",
+            "column": "id"
+          },
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 316,
+        "size_bytes": 81920,
+        "size_pretty": "80 kB"
+      },
+      "previous": {
+        "row_count": 316,
+        "size_bytes": 81920,
+        "size_pretty": "80 kB"
+      }
+    },
+    {
+      "table_name": "employee_event_direction_types",
+      "sort_order": 170,
+      "description_ru": "Типы направлений кадровых событий",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "code",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        }
+      ],
+      "current": {
+        "row_count": 4,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 4,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "employee_event_statuses",
+      "sort_order": 180,
+      "description_ru": "Статусы кадровых событий",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 32
+        },
+        {
+          "name": "description",
+          "data_type": "text",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 3,
+        "size_bytes": 49152,
+        "size_pretty": "48 kB"
+      },
+      "previous": {
+        "row_count": 3,
+        "size_bytes": 49152,
+        "size_pretty": "48 kB"
+      }
+    },
+    {
+      "table_name": "employee_event_type_directions",
+      "sort_order": 190,
+      "description_ru": "Связи тип–направление кадровых событий",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "event_type_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employee_event_types",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "direction_type_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employee_event_direction_types",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "is_required",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "sort_order",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 11,
+        "size_bytes": 57344,
+        "size_pretty": "56 kB"
+      },
+      "previous": {
+        "row_count": 11,
+        "size_bytes": 57344,
+        "size_pretty": "56 kB"
+      }
+    },
+    {
+      "table_name": "employee_event_types",
+      "sort_order": 200,
+      "description_ru": "Типы кадровых событий",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "description",
+          "data_type": "text",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "code",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        }
+      ],
+      "current": {
+        "row_count": 7,
+        "size_bytes": 65536,
+        "size_pretty": "64 kB"
+      },
+      "previous": {
+        "row_count": 7,
+        "size_bytes": 65536,
+        "size_pretty": "64 kB"
+      }
+    },
+    {
+      "table_name": "employee_events",
+      "sort_order": 210,
+      "description_ru": "Кадровые события сотрудников",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "employee_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "event_type_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employee_event_types",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "effective_date",
+          "data_type": "date",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "description",
+          "data_type": "text",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_by",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "status_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employee_event_statuses",
+            "column": "id"
+          },
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 150,
+        "size_bytes": 81920,
+        "size_pretty": "80 kB"
+      },
+      "previous": {
+        "row_count": 150,
+        "size_bytes": 81920,
+        "size_pretty": "80 kB"
+      }
+    },
+    {
+      "table_name": "employee_language_profiles",
+      "sort_order": 220,
+      "description_ru": "Языковые профили сотрудников",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "employee_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 9,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 9,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "employee_languages",
+      "sort_order": 230,
+      "description_ru": "Конкретные языки сотрудников",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "profile_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employee_language_profiles",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "language",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 32
+        },
+        {
+          "name": "level_id",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "language_levels",
+            "column": "id"
+          },
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 2,
+        "size_bytes": 24576,
+        "size_pretty": "24 kB"
+      },
+      "previous": {
+        "row_count": 2,
+        "size_bytes": 24576,
+        "size_pretty": "24 kB"
+      }
+    },
+    {
+      "table_name": "employee_personal_data",
+      "sort_order": 240,
+      "description_ru": "Персональные данные сотрудников",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "employee_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "birth_date",
+          "data_type": "date",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "hire_date",
+          "data_type": "date",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "job_assigned_date",
+          "data_type": "date",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "sex",
+          "data_type": "character varying",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 8
+        },
+        {
+          "name": "marital_status",
+          "data_type": "character varying",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 16
+        }
+      ],
+      "current": {
+        "row_count": 74,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 74,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "employee_photos",
+      "sort_order": 250,
+      "description_ru": "Фотографии сотрудников",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "employee_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "content_type",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 20
+        },
+        {
+          "name": "data",
+          "data_type": "bytea",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "size",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 74,
+        "size_bytes": 434176,
+        "size_pretty": "424 kB"
+      },
+      "previous": {
+        "row_count": 74,
+        "size_bytes": 434176,
+        "size_pretty": "424 kB"
+      }
+    },
+    {
+      "table_name": "employee_statuses",
+      "sort_order": 260,
+      "description_ru": "Статусы сотрудников",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        },
+        {
+          "name": "description",
+          "data_type": "text",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 5,
+        "size_bytes": 49152,
+        "size_pretty": "48 kB"
+      },
+      "previous": {
+        "row_count": 5,
+        "size_bytes": 49152,
+        "size_pretty": "48 kB"
+      }
+    },
+    {
+      "table_name": "employee_user_group_links",
+      "sort_order": 270,
+      "description_ru": "Связи сотрудник–группа пользователей",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "employee_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "user_group_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "user_groups",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 3,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 3,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "employees",
+      "sort_order": 280,
+      "description_ru": "Сотрудники",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "code",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 10
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "email",
+          "data_type": "character varying",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "status_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employee_statuses",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "job_id",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "jobs",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "lang_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "langs",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 74,
+        "size_bytes": 98304,
+        "size_pretty": "96 kB"
+      },
+      "previous": {
+        "row_count": 74,
+        "size_bytes": 98304,
+        "size_pretty": "96 kB"
+      }
+    },
+    {
+      "table_name": "essence_set_members",
+      "sort_order": 290,
+      "description_ru": "Члены наборов сущностей",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "essence_set_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "essence_sets",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "essence_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "essences",
+            "column": "id"
+          },
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 62,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 62,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "essence_sets",
+      "sort_order": 300,
+      "description_ru": "Наборы сущностей",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "fingerprint",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 256
+        }
+      ],
+      "current": {
+        "row_count": 50,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 50,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "essences",
+      "sort_order": 310,
+      "description_ru": "Сутности системы (для ACL)",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "description",
+          "data_type": "text",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 38,
+        "size_bytes": 49152,
+        "size_pretty": "48 kB"
+      },
+      "previous": {
+        "row_count": 38,
+        "size_bytes": 49152,
+        "size_pretty": "48 kB"
+      }
+    },
+    {
+      "table_name": "hrm_scopes",
+      "sort_order": 320,
+      "description_ru": "Области HRM-доступа",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "employee_user_group_link_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employee_user_group_links",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "employee_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "department_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "departments",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "start_date",
+          "data_type": "date",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "end_date",
+          "data_type": "date",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 1,
+        "size_bytes": 90112,
+        "size_pretty": "88 kB"
+      },
+      "previous": {
+        "row_count": 1,
+        "size_bytes": 90112,
+        "size_pretty": "88 kB"
+      }
+    },
+    {
+      "table_name": "job_group_types",
+      "sort_order": 330,
+      "description_ru": "Типы групп должностей",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "description",
+          "data_type": "text",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "allow_multiple",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "key",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 32
+        }
+      ],
+      "current": {
+        "row_count": 1,
+        "size_bytes": 65536,
+        "size_pretty": "64 kB"
+      },
+      "previous": {
+        "row_count": 1,
+        "size_bytes": 65536,
+        "size_pretty": "64 kB"
+      }
+    },
+    {
+      "table_name": "job_groups",
+      "sort_order": 340,
+      "description_ru": "Группы должностей",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "description",
+          "data_type": "text",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "job_group_type_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "job_group_types",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "key",
+          "data_type": "character varying",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        }
+      ],
+      "current": {
+        "row_count": 5,
+        "size_bytes": 65536,
+        "size_pretty": "64 kB"
+      },
+      "previous": {
+        "row_count": 5,
+        "size_bytes": 65536,
+        "size_pretty": "64 kB"
+      }
+    },
+    {
+      "table_name": "job_job_group_links",
+      "sort_order": 350,
+      "description_ru": "Связи должность–группа должностей",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "job_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "jobs",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "job_group_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "job_groups",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 7,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 7,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "job_process_role_links",
+      "sort_order": 360,
+      "description_ru": "Связи должность–роль процесса",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "job_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "jobs",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "process_role_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "process_roles",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 1,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 1,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "job_responsibility_category_links",
+      "sort_order": 370,
+      "description_ru": "Категории ответственности должностей",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "job_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "jobs",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "department_category_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "department_categories",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 3,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 3,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "job_user_group_links",
+      "sort_order": 380,
+      "description_ru": "Связи должность–группа пользователей",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "job_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "jobs",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "user_group_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "user_groups",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 2,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 2,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "jobs",
+      "sort_order": 390,
+      "description_ru": "Должности",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "description",
+          "data_type": "character varying",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 256
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "short_name",
+          "data_type": "character varying",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        },
+        {
+          "name": "key",
+          "data_type": "character varying",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        }
+      ],
+      "current": {
+        "row_count": 180,
+        "size_bytes": 131072,
+        "size_pretty": "128 kB"
+      },
+      "previous": {
+        "row_count": 180,
+        "size_bytes": 131072,
+        "size_pretty": "128 kB"
+      }
+    },
+    {
+      "table_name": "langs",
+      "sort_order": 400,
+      "description_ru": "Языки интерфейса",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "short_name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 32
+        }
+      ],
+      "current": {
+        "row_count": 2,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 2,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "language_levels",
+      "sort_order": 410,
+      "description_ru": "Уровни владения языком",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "code",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 8
+        },
+        {
+          "name": "label",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        },
+        {
+          "name": "hint",
+          "data_type": "text",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "sort_order",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 6,
+        "size_bytes": 49152,
+        "size_pretty": "48 kB"
+      },
+      "previous": {
+        "row_count": 6,
+        "size_bytes": 49152,
+        "size_pretty": "48 kB"
+      }
+    },
+    {
+      "table_name": "msg_keys",
+      "sort_order": 420,
+      "description_ru": "Ключи сообщений",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 256
+        }
+      ],
+      "current": {
+        "row_count": 2269,
+        "size_bytes": 393216,
+        "size_pretty": "384 kB"
+      },
+      "previous": {
+        "row_count": 2269,
+        "size_bytes": 393216,
+        "size_pretty": "384 kB"
+      }
+    },
+    {
+      "table_name": "operation_essence_links",
+      "sort_order": 430,
+      "description_ru": "Связи операция–сущность",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "operation_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "operations",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "essence_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "essences",
+            "column": "id"
+          },
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 0,
+        "size_bytes": 16384,
+        "size_pretty": "16 kB"
+      },
+      "previous": {
+        "row_count": 0,
+        "size_bytes": 16384,
+        "size_pretty": "16 kB"
+      }
+    },
+    {
+      "table_name": "operation_essence_set_links",
+      "sort_order": 440,
+      "description_ru": "Связи операция–набор сущностей",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "operation_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "operations",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "essence_set_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "essence_sets",
+            "column": "id"
+          },
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 167,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 167,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "operation_user_group_links",
+      "sort_order": 450,
+      "description_ru": "Связи операция–группа пользователей",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "operation_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "operations",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "user_group_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "user_groups",
+            "column": "id"
+          },
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 0,
+        "size_bytes": 16384,
+        "size_pretty": "16 kB"
+      },
+      "previous": {
+        "row_count": 0,
+        "size_bytes": 16384,
+        "size_pretty": "16 kB"
+      }
+    },
+    {
+      "table_name": "msgs",
+      "sort_order": 460,
+      "description_ru": "сообщения",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "value",
+          "data_type": "text",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "msg_key_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "msg_keys",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "lang_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "langs",
+            "column": "id"
+          },
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 4537,
+        "size_bytes": 811008,
+        "size_pretty": "792 kB"
+      },
+      "previous": {
+        "row_count": 4537,
+        "size_bytes": 811008,
+        "size_pretty": "792 kB"
+      }
+    },
+    {
+      "table_name": "operations",
+      "sort_order": 470,
+      "description_ru": "Операции (действия в системе)",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "description",
+          "data_type": "text",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 13,
+        "size_bytes": 49152,
+        "size_pretty": "48 kB"
+      },
+      "previous": {
+        "row_count": 13,
+        "size_bytes": 49152,
+        "size_pretty": "48 kB"
+      }
+    },
+    {
+      "table_name": "plan_category_defaults",
+      "sort_order": 480,
+      "description_ru": "Категории планирования по умолчанию",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "department_category_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "department_categories",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 2,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 2,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "plan_scope_defaults",
+      "sort_order": 490,
+      "description_ru": "Области охвата планирования по умолчанию",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "job_group_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "job_groups",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "talent_status_id",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "talent_statuses",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 7,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 7,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "plan_scopes",
+      "sort_order": 500,
+      "description_ru": "Области охвата планирования",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "plan_session_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "plan_sessions",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "department_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "departments",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "job_group_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "job_groups",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "talent_status_id",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "talent_statuses",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "value",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 5,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 5,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "plan_session_categories",
+      "sort_order": 510,
+      "description_ru": "Категории сессии планирования",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "plan_session_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "plan_sessions",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "department_category_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "department_categories",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 2,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 2,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "plan_session_statuses",
+      "sort_order": 520,
+      "description_ru": "Статусы сессий планирования",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "key",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 16
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        },
+        {
+          "name": "description",
+          "data_type": "character varying",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 256
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 3,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 3,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "plan_sessions",
+      "sort_order": 530,
+      "description_ru": "Сессии планирования преемственности",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        },
+        {
+          "name": "description",
+          "data_type": "character varying",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 256
+        },
+        {
+          "name": "start_date",
+          "data_type": "date",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "end_date",
+          "data_type": "date",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "plan_session_status_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "plan_session_statuses",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 1,
+        "size_bytes": 24576,
+        "size_pretty": "24 kB"
+      },
+      "previous": {
+        "row_count": 1,
+        "size_bytes": 24576,
+        "size_pretty": "24 kB"
+      }
+    },
+    {
+      "table_name": "process_role_active_contexts",
+      "sort_order": 540,
+      "description_ru": "Активные контексты ролей процессов",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "employee_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "process_role_id",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "process_roles",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "department_id",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "departments",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 2,
+        "size_bytes": 57344,
+        "size_pretty": "56 kB"
+      },
+      "previous": {
+        "row_count": 2,
+        "size_bytes": 57344,
+        "size_pretty": "56 kB"
+      }
+    },
+    {
+      "table_name": "process_role_holder_department_links",
+      "sort_order": 550,
+      "description_ru": "Связи держатель роли–департамент",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "process_role_holder_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "process_role_holders",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "process_role_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "process_role_holders",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "department_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "departments",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 7,
+        "size_bytes": 57344,
+        "size_pretty": "56 kB"
+      },
+      "previous": {
+        "row_count": 7,
+        "size_bytes": 57344,
+        "size_pretty": "56 kB"
+      }
+    },
+    {
+      "table_name": "process_role_holder_employee_links",
+      "sort_order": 560,
+      "description_ru": "Связи держатель роли–сотрудник",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "process_role_holder_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "process_role_holders",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "process_role_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "process_role_holders",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "employee_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "order_position",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 2,
+        "size_bytes": 73728,
+        "size_pretty": "72 kB"
+      },
+      "previous": {
+        "row_count": 2,
+        "size_bytes": 73728,
+        "size_pretty": "72 kB"
+      }
+    },
+    {
+      "table_name": "process_role_holders",
+      "sort_order": 570,
+      "description_ru": "Держатели ролей процессов",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "process_role_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "process_roles",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "holder_employee_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "assigned_by",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 4,
+        "size_bytes": 90112,
+        "size_pretty": "88 kB"
+      },
+      "previous": {
+        "row_count": 4,
+        "size_bytes": 90112,
+        "size_pretty": "88 kB"
+      }
+    },
+    {
+      "table_name": "process_roles",
+      "sort_order": 580,
+      "description_ru": "Роли в бизнес-процессах",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "process_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "processes",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "key",
+          "data_type": "character varying",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "link_target",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 16
+        }
+      ],
+      "current": {
+        "row_count": 2,
+        "size_bytes": 57344,
+        "size_pretty": "56 kB"
+      },
+      "previous": {
+        "row_count": 2,
+        "size_bytes": 57344,
+        "size_pretty": "56 kB"
+      }
+    },
+    {
+      "table_name": "processes",
+      "sort_order": 590,
+      "description_ru": "Бизнес-процессы",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "key",
+          "data_type": "character varying",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 1,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 1,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "regions",
+      "sort_order": 600,
+      "description_ru": "Регионы",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "key",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "sort_order",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 4,
+        "size_bytes": 73728,
+        "size_pretty": "72 kB"
+      },
+      "previous": {
+        "row_count": 4,
+        "size_bytes": 73728,
+        "size_pretty": "72 kB"
+      }
+    },
+    {
+      "table_name": "review_dimension_criterias",
+      "sort_order": 610,
+      "description_ru": "",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "dimension_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "review_dimensions",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "text",
+          "data_type": "text",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "sort_order",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 33,
+        "size_bytes": 65536,
+        "size_pretty": "64 kB"
+      },
+      "previous": {
+        "row_count": 33,
+        "size_bytes": 65536,
+        "size_pretty": "64 kB"
+      }
+    },
+    {
+      "table_name": "review_dimensions",
+      "sort_order": 620,
+      "description_ru": "Измерения оценки People Review",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "key",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        },
+        {
+          "name": "description",
+          "data_type": "text",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "color",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 7
+        },
+        {
+          "name": "sort_order",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 10,
+        "size_bytes": 98304,
+        "size_pretty": "96 kB"
+      },
+      "previous": {
+        "row_count": 10,
+        "size_bytes": 98304,
+        "size_pretty": "96 kB"
+      }
+    },
+    {
+      "table_name": "review_level_requirements",
+      "sort_order": 630,
+      "description_ru": "Требования к уровням компетенций",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "level_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "review_levels",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "text_key",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "sort_order",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 28,
+        "size_bytes": 24576,
+        "size_pretty": "24 kB"
+      },
+      "previous": {
+        "row_count": 28,
+        "size_bytes": 24576,
+        "size_pretty": "24 kB"
+      }
+    },
+    {
+      "table_name": "review_levels",
+      "sort_order": 640,
+      "description_ru": "Уровни компетенций (грейды)",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name_key",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "description_key",
+          "data_type": "character varying",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "sort_order",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 4,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 4,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "review_session_criterions",
+      "sort_order": 650,
+      "description_ru": "",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "session_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "review_sessions",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "dimension_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "review_dimensions",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "source_criteria_id",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "review_dimension_criterias",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "text",
+          "data_type": "text",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "sort_order",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 30,
+        "size_bytes": 73728,
+        "size_pretty": "72 kB"
+      },
+      "previous": {
+        "row_count": 30,
+        "size_bytes": 73728,
+        "size_pretty": "72 kB"
+      }
+    },
+    {
+      "table_name": "review_session_employee_comments",
+      "sort_order": 660,
+      "description_ru": "Комментарии к оценкам сотрудников",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "review_session_employee_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "review_session_employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "author_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "author_role",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 20
+        },
+        {
+          "name": "visibility",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 20
+        },
+        {
+          "name": "body",
+          "data_type": "text",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "updated_at",
+          "data_type": "timestamp with time zone",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 0,
+        "size_bytes": 32768,
+        "size_pretty": "32 kB"
+      },
+      "previous": {
+        "row_count": 0,
+        "size_bytes": 32768,
+        "size_pretty": "32 kB"
+      }
+    },
+    {
+      "table_name": "review_session_employee_criterion_scores",
+      "sort_order": 670,
+      "description_ru": "Баллы сотрудников по критериям",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "review_session_employee_evaluation_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "review_session_employee_evaluations",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "criterion_index",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "score",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 1110,
+        "size_bytes": 196608,
+        "size_pretty": "192 kB"
+      },
+      "previous": {
+        "row_count": 1110,
+        "size_bytes": 196608,
+        "size_pretty": "192 kB"
+      }
+    },
+    {
+      "table_name": "review_session_employee_evaluations",
+      "sort_order": 680,
+      "description_ru": "Оценки сотрудников в сессии",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "review_session_employee_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "review_session_employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "dimension_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "review_dimensions",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "score",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "facts",
+          "data_type": "text",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "improvement",
+          "data_type": "text",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "mean_score",
+          "data_type": "numeric",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 740,
+        "size_bytes": 442368,
+        "size_pretty": "432 kB"
+      },
+      "previous": {
+        "row_count": 740,
+        "size_bytes": 442368,
+        "size_pretty": "432 kB"
+      }
+    },
+    {
+      "table_name": "review_session_employee_level_answers",
+      "sort_order": 690,
+      "description_ru": "Ответы по уровням компетенций",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "review_session_employee_level_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "review_session_employee_levels",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "requirement_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "review_level_requirements",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "facts",
+          "data_type": "text",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 515,
+        "size_bytes": 221184,
+        "size_pretty": "216 kB"
+      },
+      "previous": {
+        "row_count": 515,
+        "size_bytes": 221184,
+        "size_pretty": "216 kB"
+      }
+    },
+    {
+      "table_name": "review_session_employee_levels",
+      "sort_order": 700,
+      "description_ru": "Привязка сотрудников к уровням в сессии",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "review_session_employee_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "review_session_employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "level_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "review_levels",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "status",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 20
+        }
+      ],
+      "current": {
+        "row_count": 75,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 75,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "review_session_employees",
+      "sort_order": 710,
+      "description_ru": "Сотрудники, участвующие в сессии оценки",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "session_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "review_sessions",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "employee_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "status",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 20
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "employee_feedback",
+          "data_type": "text",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "manager_feedback",
+          "data_type": "text",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "results_achievements",
+          "data_type": "text",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "development_plan",
+          "data_type": "text",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "trainings",
+          "data_type": "text",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "competence_summary",
+          "data_type": "text",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "queue_position",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 148,
+        "size_bytes": 524288,
+        "size_pretty": "512 kB"
+      },
+      "previous": {
+        "row_count": 148,
+        "size_bytes": 524288,
+        "size_pretty": "512 kB"
+      }
+    },
+    {
+      "table_name": "review_session_level_requirements",
+      "sort_order": 720,
+      "description_ru": "Требования к уровням оценки",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "session_level_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "review_session_levels",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "source_requirement_id",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "review_level_requirements",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "text_key",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "sort_order",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 28,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 28,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "review_session_levels",
+      "sort_order": 730,
+      "description_ru": "Уровни оценки в сессии",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "session_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "review_sessions",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "source_level_id",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "review_levels",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "name_key",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "description_key",
+          "data_type": "character varying",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "sort_order",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 4,
+        "size_bytes": 24576,
+        "size_pretty": "24 kB"
+      },
+      "previous": {
+        "row_count": 4,
+        "size_bytes": 24576,
+        "size_pretty": "24 kB"
+      }
+    },
+    {
+      "table_name": "review_sessions",
+      "sort_order": 740,
+      "description_ru": "Сессии оценки People Review",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 256
+        },
+        {
+          "name": "description",
+          "data_type": "text",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "status",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 20
+        },
+        {
+          "name": "period_start",
+          "data_type": "date",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "period_end",
+          "data_type": "date",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 2,
+        "size_bytes": 32768,
+        "size_pretty": "32 kB"
+      },
+      "previous": {
+        "row_count": 2,
+        "size_bytes": 32768,
+        "size_pretty": "32 kB"
+      }
+    },
+    {
+      "table_name": "setting_value_types",
+      "sort_order": 750,
+      "description_ru": "Типы значений настроек",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "key",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 16
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 5,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 5,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "talent_audit",
+      "sort_order": 760,
+      "description_ru": "",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "employee_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "status_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "talent_audit_statuses",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_by",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "talent_plus",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 73,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 73,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "talent_audit_interview",
+      "sort_order": 770,
+      "description_ru": "",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "status_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "talent_audit_interview_statuses",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "interview_date",
+          "data_type": "date",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_by",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "talent_audit_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "talent_audit",
+            "column": "id"
+          },
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 0,
+        "size_bytes": 8192,
+        "size_pretty": "8192 bytes"
+      },
+      "previous": {
+        "row_count": 0,
+        "size_bytes": 8192,
+        "size_pretty": "8192 bytes"
+      }
+    },
+    {
+      "table_name": "talent_audit_interview_job",
+      "sort_order": 780,
+      "description_ru": "",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "talent_audit_interview_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "talent_audit_interview",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "talent_audit_job_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "talent_audit_job",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "talent_status_period_link_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "talent_status_period_link",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_by",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 0,
+        "size_bytes": 16384,
+        "size_pretty": "16 kB"
+      },
+      "previous": {
+        "row_count": 0,
+        "size_bytes": 16384,
+        "size_pretty": "16 kB"
+      }
+    },
+    {
+      "table_name": "talent_audit_interview_statuses",
+      "sort_order": 790,
+      "description_ru": "Статусы интервью аудита талантов",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 32
+        },
+        {
+          "name": "description",
+          "data_type": "character varying",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        }
+      ],
+      "current": {
+        "row_count": 1,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 1,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "talent_audit_job",
+      "sort_order": 800,
+      "description_ru": "",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "talent_audit_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "talent_audit",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "target_job_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "jobs",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "status_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "talent_audit_job_statuses",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "talent_status_period_link_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "talent_status_period_link",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_by",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 76,
+        "size_bytes": 24576,
+        "size_pretty": "24 kB"
+      },
+      "previous": {
+        "row_count": 76,
+        "size_bytes": 24576,
+        "size_pretty": "24 kB"
+      }
+    },
+    {
+      "table_name": "talent_audit_job_statuses",
+      "sort_order": 810,
+      "description_ru": "Статусы целевых должностей аудита",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 32
+        },
+        {
+          "name": "description",
+          "data_type": "character varying",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "key",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 32
+        }
+      ],
+      "current": {
+        "row_count": 4,
+        "size_bytes": 57344,
+        "size_pretty": "56 kB"
+      },
+      "previous": {
+        "row_count": 4,
+        "size_bytes": 57344,
+        "size_pretty": "56 kB"
+      }
+    },
+    {
+      "table_name": "talent_audit_statuses",
+      "sort_order": 820,
+      "description_ru": "Статусы аудита талантов",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 32
+        },
+        {
+          "name": "description",
+          "data_type": "character varying",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        }
+      ],
+      "current": {
+        "row_count": 1,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 1,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "talent_periods",
+      "sort_order": 830,
+      "description_ru": "Периоды оценки талантов",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 32
+        },
+        {
+          "name": "description",
+          "data_type": "character varying",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "qty_months",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 7,
+        "size_bytes": 24576,
+        "size_pretty": "24 kB"
+      },
+      "previous": {
+        "row_count": 7,
+        "size_bytes": 24576,
+        "size_pretty": "24 kB"
+      }
+    },
+    {
+      "table_name": "talent_status_period_link",
+      "sort_order": 840,
+      "description_ru": "",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "talent_period_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "talent_periods",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "talent_status_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "talent_statuses",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_by",
+          "data_type": "integer",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "employees",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 12,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 12,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "talent_statuses",
+      "sort_order": 850,
+      "description_ru": "Статусы талантов",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "key",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 8
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 32
+        },
+        {
+          "name": "description",
+          "data_type": "character varying",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 64
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 2,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 2,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "user_group_operation_essence_links",
+      "sort_order": 860,
+      "description_ru": "Права групп на сущности",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "user_group_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "user_groups",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "operation_essence_link_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "operation_essence_links",
+            "column": "id"
+          },
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 0,
+        "size_bytes": 16384,
+        "size_pretty": "16 kB"
+      },
+      "previous": {
+        "row_count": 0,
+        "size_bytes": 16384,
+        "size_pretty": "16 kB"
+      }
+    },
+    {
+      "table_name": "user_group_operation_essence_set_links",
+      "sort_order": 870,
+      "description_ru": "Права групп на наборы сущностей",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "user_group_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "user_groups",
+            "column": "id"
+          },
+          "max_length": null
+        },
+        {
+          "name": "operation_essence_set_link_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "operation_essence_set_links",
+            "column": "id"
+          },
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 124,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      },
+      "previous": {
+        "row_count": 124,
+        "size_bytes": 40960,
+        "size_pretty": "40 kB"
+      }
+    },
+    {
+      "table_name": "user_group_types",
+      "sort_order": 880,
+      "description_ru": "Типы групп пользователей",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "description",
+          "data_type": "text",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 2,
+        "size_bytes": 49152,
+        "size_pretty": "48 kB"
+      },
+      "previous": {
+        "row_count": 2,
+        "size_bytes": 49152,
+        "size_pretty": "48 kB"
+      }
+    },
+    {
+      "table_name": "user_groups",
+      "sort_order": 890,
+      "description_ru": "Группы пользователей",
+      "sample_limit": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": 128
+        },
+        {
+          "name": "description",
+          "data_type": "text",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "is_protected",
+          "data_type": "boolean",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "fk_ref": null,
+          "max_length": null
+        },
+        {
+          "name": "user_group_type_id",
+          "data_type": "integer",
+          "nullable": false,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "fk_ref": {
+            "table": "user_group_types",
+            "column": "id"
+          },
+          "max_length": null
+        }
+      ],
+      "current": {
+        "row_count": 4,
+        "size_bytes": 32768,
+        "size_pretty": "32 kB"
+      },
+      "previous": {
+        "row_count": 4,
+        "size_bytes": 32768,
+        "size_pretty": "32 kB"
+      }
+    }
+  ],
+  "column_prefs": []
+}

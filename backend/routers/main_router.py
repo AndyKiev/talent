@@ -232,6 +232,11 @@ from backend.api_v1.employee_user_group_link.employee_user_group_link_views impo
 )
 from backend.api_v1.hrm_scope.hrm_scope_views import router as hrm_scope_router
 
+# Developer tools — live DB table browser
+from backend.api_v1.db_table_info.db_table_info_views import (
+    router as db_table_info_router,
+)
+
 
 router = APIRouter(prefix=settings.api_v1_prefix)
 
@@ -332,3 +337,6 @@ router.include_router(change_log_router)
 router.include_router(permission_manifest_router)
 router.include_router(employee_user_group_link_router)
 router.include_router(hrm_scope_router)
+
+# Developer tools — live DB table browser
+router.include_router(db_table_info_router)
