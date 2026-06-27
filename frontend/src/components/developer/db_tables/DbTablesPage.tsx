@@ -590,7 +590,6 @@ export function DbTablesPage() {
                         <Box key={r.table_name}>
                             <Box sx={{ px: 2, py: 0.5, bgcolor: 'action.selected', borderTop: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <Typography variant="subtitle2" fontFamily="monospace" fontSize={12}>{r.table_name}</Typography>
-                                <Chip label={`cols:${r.columns.length} pk:${r.columns.filter(c => c.is_primary_key).length}`} size="small" sx={{ height: 16, fontSize: 9 }} />
                                 <Tooltip title={r.columns.some(c => c.is_primary_key) ? '' : (getString('noPkTooltip') || 'No PK metadata — run Refresh first')}>
                                     <FormControlLabel
                                         control={<Switch size="small" checked={crudTables.has(r.table_name)}

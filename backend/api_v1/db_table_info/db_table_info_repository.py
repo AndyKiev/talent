@@ -87,11 +87,4 @@ class DbTableInfoRepository:
 
     def replace_all(self, records: list[DbTableInfo]) -> None:
         """Replace the entire table list atomically."""
-        import logging
-        _log = logging.getLogger(__name__)
-        sample = records[0] if records else None
-        _log.info(
-            f"repository.replace_all: writing {len(records)} records, "
-            f"first='{sample.table_name}' cols={len(sample.columns)} pk={sum(1 for c in sample.columns if c.is_primary_key)}" if sample else "repository.replace_all: writing 0 records"
-        )
         self._write_raw(TableDataFile(tables=records).model_dump())

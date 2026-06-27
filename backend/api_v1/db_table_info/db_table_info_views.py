@@ -31,18 +31,7 @@ async def get_db_tables(
     service: Annotated[DbTableInfoService, Depends(get_db_table_info_service)],
 ) -> TableDataFile:
     """Return all tracked database tables with their stats and metadata."""
-    import logging
-    _log = logging.getLogger(__name__)
-    result = await service.get_all()
-    if result.tables:
-        t0 = result.tables[0]
-        _log.info(
-            f"GET db_tables: returning {len(result.tables)} tables, "
-            f"first='{t0.table_name}' cols={len(t0.columns)} "
-            f"pk={sum(1 for c in t0.columns if c.is_primary_key)} "
-            f"fk={sum(1 for c in t0.columns if c.is_foreign_key)}"
-        )
-    return result
+    return await service.get_all()
 
 
 @router.post("/refresh", response_model=TableDataFile)
@@ -120,15 +109,6 @@ async def save_column_prefs(
 ) -> list[ColumnPref]:
     """Replace all column display preferences."""
     return service.save_column_prefs(body.prefs)
-
-
-@router.get("/_debug/{table_name}")
-async def debug_table_columns(
-    table_name: str,
-    service: Annotated[DbTableInfoService, Depends(get_db_table_info_service)],
-):
-    """Return raw inspector output + parsed ColumnInfo for one table."""
-    return await service.debug_columns(table_name)
 
 
 @router.post("/_auto_describe")

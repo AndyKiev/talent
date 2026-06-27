@@ -1,6 +1,6 @@
 """Business logic for db_table_info — refresh from live DB, merge, reorder."""
 
-from sqlalchemy import text, inspect
+from sqlalchemy import text
 
 from backend.api_v1.db_table_info.db_table_info_repository import (
     DbTableInfoRepository,
@@ -295,56 +295,6 @@ class DbTableInfoService:
             if result.rowcount == 0:
                 raise DbTableInfoNotFound(table_name)
 
-    # ── debug ────────────────────────────────────────────────────────────
-
-    async def debug_columns(self, table_name: str) -> dict:
-        """Return raw inspector output so we can diagnose PK / FK detection."""
-        async with db_helper.engine.connect() as conn:
-
-            def _debug(sync_conn):
-                inspector = inspect(sync_conn.engine)
-                raw_cols = inspector.get_columns(table_name)
-                raw_pk = inspector.get_pk_constraint(table_name)
-                raw_fks = inspector.get_foreign_keys(table_name)
-
-                # Build fk_map the same way _fetch_live_columns does
-                fk_map: dict[str, dict] = {}
-                for fk in raw_fks:
-                    for i, col_name in enumerate(fk["constrained_columns"]):
-                        ref_col = (
-                            fk["referred_columns"][i]
-                            if i < len(fk["referred_columns"])
-                            else ""
-                        )
-                        fk_map[col_name] = {
-                            "table": fk["referred_table"],
-                            "column": ref_col,
-                        }
-
-                pk_set = set(raw_pk.get("constrained_columns", []))
-
-                parsed: list[dict] = []
-                for c in raw_cols:
-                    fk = fk_map.get(c["name"])
-                    parsed.append({
-                        "name": c["name"],
-                        "type": str(c["type"]),
-                        "nullable": c.get("nullable", True),
-                        "is_pk": c["name"] in pk_set,
-                        "is_fk": fk is not None,
-                        "fk_ref": fk,
-                        "max_length": getattr(c["type"], "length", None) if hasattr(c["type"], "length") else None,
-                    })
-
-                return {
-                    "raw_columns": [{"name": c["name"], "type": str(c["type"]), "nullable": c.get("nullable")} for c in raw_cols],
-                    "raw_pk": raw_pk,
-                    "raw_fks": raw_fks,
-                    "parsed": parsed,
-                }
-
-            return await conn.run_sync(_debug)
-
     # ── live data ────────────────────────────────────────────────────────
 
     async def fetch_rows(self, table_name: str, limit: int = 30) -> "TableRowsResponse":
@@ -432,13 +382,7 @@ class DbTableInfoService:
         # 2. Live DB metadata
         live_tables_raw = await self._fetch_live_tables()
         live_column_map = await self._fetch_live_columns(list(live_tables_raw.keys()))
-        import logging
-        _log = logging.getLogger(__name__)
-        _log.info(
-            f"refresh: live_tables_raw={len(live_tables_raw)}, "
-            f"live_column_map={len(live_column_map)}, "
-            f"sample cols: { {k: len(v) for k, v in list(live_column_map.items())[:3]} }"
-        )
+
 
         # 3. Build new records
         new_records: list[DbTableInfo] = []
@@ -465,20 +409,7 @@ class DbTableInfoService:
 
         # 4. Persist
         new_records.sort(key=lambda t: (t.sort_order, t.table_name))
-        _log.info(
-            f"refresh: saving {len(new_records)} records, "
-            f"first table '{new_records[0].table_name}' has {len(new_records[0].columns)} cols, "
-            f"pk_count={sum(1 for c in new_records[0].columns if c.is_primary_key)}" if new_records else "refresh: NO RECORDS"
-        )
         self.repository.replace_all(new_records)
-
-        # Verify it was saved
-        verify = self.repository.load_all()
-        if verify.tables:
-            _log.info(
-                f"refresh: VERIFY loaded {len(verify.tables)} tables, "
-                f"first table '{verify.tables[0].table_name}' has {len(verify.tables[0].columns)} cols"
-            )
 
         return TableDataFile(tables=new_records)
 
@@ -536,9 +467,6 @@ class DbTableInfoService:
         The SQLAlchemy inspector fails on the sync engine (returns strings
         instead of dicts), so we query information_schema directly.
         """
-        import logging
-        _log = logging.getLogger(__name__)
-        _log.info(f"_fetch_live_columns: START processing {len(table_names)} tables")
 
         result: dict[str, list[ColumnInfo]] = {}
 
@@ -643,8 +571,4 @@ class DbTableInfoService:
                 if tname not in result:
                     result[tname] = []
 
-        _log.info(
-            f"_fetch_live_columns: DONE — {len(result)} tables, "
-            f"sample: { {k: len(v) for k, v in list(result.items())[:3]} }"
-        )
         return result
