@@ -118,18 +118,53 @@ class ReviewSessionService(BaseService):
             status_id = await self._resolve_status_id(status)
             filters["status_id"] = status_id
         records = await self.get_all(params=filters or None, sort_json=sort)
-        return [self._to_schema(r) for r in records]
+        schemas = [self._to_schema(r) for r in records]
+
+        # Batch-load department names for all sessions.
+        if schemas:
+            from backend.api_v1.review_session_department.review_session_department_repository import (
+                ReviewSessionDepartmentRepository,
+            )
+            dep_repo = ReviewSessionDepartmentRepository(session=self.session)
+            dep_names = await dep_repo.get_department_names_by_session_ids(
+                [s.id for s in schemas]
+            )
+            for s in schemas:
+                s.department_name = dep_names.get(s.id)
+
+        return schemas
 
     async def create_review_session(
         self, rs_in: ReviewSessionCreate
     ) -> MutationResponse[ReviewSessionSchema]:
+        from backend.api_v1.review_session_department.review_session_department_repository import (
+            ReviewSessionDepartmentRepository,
+        )
+
         pending_id = await self._resolve_status_id(
             ReviewSessionStatusKey.PENDING.value
         )
         data = rs_in.model_dump()
+        department_id = data.pop("department_id", None)
         data["status_id"] = pending_id
         record = await self.create_from_dict(data)
+
+        # Optionally link a department to the session at creation time.
+        if department_id is not None:
+            dep_repo = ReviewSessionDepartmentRepository(session=self.session)
+            dep_link = dep_repo.model(session_id=record.id, department_id=department_id)
+            self.session.add(dep_link)
+            await self.session.commit()
+            await self.session.refresh(record)
+            # Load the department name explicitly (avoid lazy-load in sync _to_schema).
+            from backend.api_v1.department.department_model import Department as DeptModel
+            dep_name_stmt = select(DeptModel.name).where(DeptModel.id == department_id)
+            dep_name_result = await self.session.execute(dep_name_stmt)
+            dep_name = dep_name_result.scalar_one_or_none()
+
         schema = self._to_schema(record)
+        if department_id is not None:
+            schema.department_name = dep_name
         detail = await self._resolve_domain_success(
             ReviewSessionCreateSuccess(schema.name)
         )
@@ -147,6 +182,14 @@ class ReviewSessionService(BaseService):
         return MutationResponse(detail=detail, data=schema)
 
     async def open_session(self, rs_id: int) -> MutationResponse[ReviewSessionSchema]:
+        from backend.api_v1.app_setting.app_setting_model import AppSetting as AppSettingModel
+        from backend.api_v1.review_session_department.review_session_department_repository import (
+            ReviewSessionDepartmentRepository,
+        )
+        from backend.api_v1.employee_department.employee_department_model import (
+            EmployeeDepartment,
+        )
+
         orm_record = await self.get_by_id(rs_id)
         if "open" not in VALID_TRANSITIONS.get(orm_record.status, []):
             exc = ReviewSessionStatusError(orm_record.status, "open")
@@ -156,8 +199,41 @@ class ReviewSessionService(BaseService):
             ReviewSessionStatusKey.OPEN.value
         )
 
-        # Create RSE records for all active employees
-        stmt = select(Employee).where(Employee.is_active == True)
+        # Check if the department-filter setting is enabled.
+        filter_by_dept = False
+        setting_stmt = select(AppSettingModel).where(
+            AppSettingModel.key == "review_session_filter_by_department"
+        )
+        setting_result = await self.session.execute(setting_stmt)
+        setting = setting_result.scalar_one_or_none()
+        if setting and setting.value is True:
+            dep_repo = ReviewSessionDepartmentRepository(session=self.session)
+            linked_dept_ids = await dep_repo.get_by_session(rs_id)
+            if linked_dept_ids:
+                filter_by_dept = True
+
+        if filter_by_dept:
+            from backend.api_v1.department.department_repository import DepartmentRepository
+
+            linked_ids = {r.department_id for r in linked_dept_ids}
+            # Expand to include all descendants so picking a top-level department
+            # (e.g. a directorate) includes employees in all its sub-departments.
+            dept_repo = DepartmentRepository(session=self.session)
+            subtree_ids = await dept_repo.get_subtree_ids(linked_ids)
+            # Employees whose main department is in the subtree.
+            stmt = (
+                select(Employee)
+                .join(EmployeeDepartment, EmployeeDepartment.employee_id == Employee.id)
+                .where(
+                    Employee.is_active == True,
+                    EmployeeDepartment.is_main == True,
+                    EmployeeDepartment.department_id.in_(subtree_ids),
+                )
+            )
+        else:
+            # Create RSE records for all active employees
+            stmt = select(Employee).where(Employee.is_active == True)
+
         result = await self.session.execute(stmt)
         employees = result.scalars().all()
 
@@ -331,6 +407,9 @@ class ReviewSessionService(BaseService):
         Restricted to developers (the `dev` group).
         """
         from sqlalchemy import select as sa_select, delete as sa_delete
+        from backend.api_v1.review_session_department.review_session_department_model import (
+            ReviewSessionDepartment,
+        )
 
         groups = [g.lower() for g in (self.user.groups if self.user else [])]
         if "dev" not in groups:
@@ -423,7 +502,14 @@ class ReviewSessionService(BaseService):
                     )
                 )
 
-            # 3b) the session's frozen criteria snapshot (no FK from anything else)
+            # 3b) the session's department links (clean up before criteria)
+            await self.session.execute(
+                sa_delete(ReviewSessionDepartment).where(
+                    ReviewSessionDepartment.session_id == rs_id
+                )
+            )
+
+            # 3c) the session's frozen criteria snapshot (no FK from anything else)
             await self.session.execute(
                 sa_delete(ReviewSessionCriterion).where(
                     ReviewSessionCriterion.session_id == rs_id

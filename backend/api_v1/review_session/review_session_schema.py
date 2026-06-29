@@ -11,7 +11,7 @@ class ReviewSessionBase(BaseModel):
 
 
 class ReviewSessionCreate(ReviewSessionBase):
-    pass
+    department_id: Optional[int] = None
 
 
 class ReviewSessionUpdate(BaseModel):
@@ -27,6 +27,7 @@ class ReviewSession(ReviewSessionBase):
     status_id: int
     status: str
     employee_count: int = 0
+    department_name: Optional[str] = None
 
 
 class ReviewSessionDetail(ReviewSession):

@@ -33,6 +33,7 @@ export interface ReviewSession {
     period_start: string | null;
     period_end: string | null;
     employee_count: number;
+    department_name: string | null;
 }
 
 export interface ReviewSessionCreate {
@@ -40,6 +41,7 @@ export interface ReviewSessionCreate {
     description?: string | null;
     period_start?: string | null;
     period_end?: string | null;
+    department_id?: number | null;
 }
 
 export interface MutationResponse<T> {

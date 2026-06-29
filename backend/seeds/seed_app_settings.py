@@ -1,3 +1,10 @@
+from pathlib import Path
+import sys
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 import asyncio
 
 from sqlalchemy import select
@@ -54,6 +61,18 @@ APP_SETTINGS = [
         "value_type_key": "boolean",
         "label_key": "settingEmployeeDefaultLevelPersist",
         "description_key": "settingEmployeeDefaultLevelPersistDesc",
+    },
+    {
+        # When ON the session creation form displays a department picker
+        # (category → instances). The picked department is saved as a
+        # review_session_departments link. When opening the session, only
+        # employees whose main department matches the linked department are
+        # included.
+        "key": "review_session_filter_by_department",
+        "value": False,
+        "value_type_key": "boolean",
+        "label_key": "settingReviewSessionFilterByDepartment",
+        "description_key": "settingReviewSessionFilterByDepartmentDesc",
     },
 ]
 

@@ -104,6 +104,8 @@ __all__ = {
     "ChangeLog",
     # HRM scope (ported from talent-test)
     "HrmScope",
+    # Review session — department filter
+    "ReviewSessionDepartment",
 }
 
 from backend.api_v1.lang.lang_model import Lang
@@ -340,3 +342,8 @@ from backend.api_v1.audit.change_log.change_log_model import ChangeLog
 # HRM scope (ported from talent-test) — FK targets (employees, departments,
 # employee_user_group_links) all already registered above.
 from backend.api_v1.hrm_scope.hrm_scope_model import HrmScope
+
+# Review session department filter — links a session to its filtered departments.
+from backend.api_v1.review_session_department.review_session_department_model import (
+    ReviewSessionDepartment,
+)

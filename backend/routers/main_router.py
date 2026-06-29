@@ -240,6 +240,11 @@ from backend.api_v1.db_table_info.db_table_info_views import (
     router as db_table_info_router,
 )
 
+# Review session department filter
+from backend.api_v1.review_session_department.review_session_department_views import (
+    router as review_session_department_router,
+)
+
 
 router = APIRouter(prefix=settings.api_v1_prefix)
 
@@ -344,3 +349,6 @@ router.include_router(hrm_scope_router)
 
 # Developer tools — live DB table browser
 router.include_router(db_table_info_router)
+
+# Review session department filter
+router.include_router(review_session_department_router)

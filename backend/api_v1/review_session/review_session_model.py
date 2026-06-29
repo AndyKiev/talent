@@ -12,6 +12,9 @@ if TYPE_CHECKING:
     from backend.api_v1.review_session_status.review_session_status_model import (
         ReviewSessionStatus,
     )
+    from backend.api_v1.review_session_department.review_session_department_model import (
+        ReviewSessionDepartment,
+    )
 
 
 class ReviewSession(IntIdPkMixin, TimestampMixin, Base):
@@ -35,4 +38,9 @@ class ReviewSession(IntIdPkMixin, TimestampMixin, Base):
     employees: Mapped[List["ReviewSessionEmployee"]] = relationship(
         back_populates="session",
         lazy="selectin",
+    )
+    departments: Mapped[List["ReviewSessionDepartment"]] = relationship(
+        back_populates="session",
+        lazy="selectin",
+        viewonly=True,
     )

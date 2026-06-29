@@ -55,6 +55,13 @@ import {
 import { axiosInstance } from '../../api/axiosInstance';
 import { BASE_URL, DATE_FORMAT } from '../../utils/eNums';
 import useString from '../../hooks/useString';
+import { useBooleanSetting } from '../../hooks/useAppSetting';
+import {
+    fetchMainDepartmentCategories,
+    fetchDepartmentsByCategory,
+    type DepartmentCategoryOption,
+    type DepartmentOption,
+} from '../employees/employee_events/employeeEventApi';
 
 function formatDate(val: string | null | undefined): string {
     if (!val) return '—';
@@ -122,6 +129,14 @@ export function ReviewSessionsPage() {
     const [deleteTarget, setDeleteTarget] = useState<ReviewSession | null>(null);
     const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
+    // Department filter feature flag
+    const { enabled: deptFilterEnabled, isLoading: deptSettingLoading } =
+        useBooleanSetting('review_session_filter_by_department');
+
+    // Department selector state
+    const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+    const [selectedDeptId, setSelectedDeptId] = useState<number | null>(null);
+
     const { data: rows = [], isLoading, error } = useQuery({
         queryKey: RS_QK,
         queryFn: fetchReviewSessions,
@@ -134,6 +149,28 @@ export function ReviewSessionsPage() {
         staleTime: 5 * 60 * 1000,
     });
 
+    // Department data for the filter selector
+    const { data: categories = [] } = useQuery<DepartmentCategoryOption[]>({
+        queryKey: ['main-department-categories'],
+        queryFn: fetchMainDepartmentCategories,
+        enabled: deptFilterEnabled,
+        staleTime: 10 * 60 * 1000,
+    });
+
+    const { data: topDepartments = [] } = useQuery<DepartmentOption[]>({
+        queryKey: ['departments-by-category', selectedCategoryId],
+        queryFn: () => fetchDepartmentsByCategory(selectedCategoryId!),
+        enabled: deptFilterEnabled && selectedCategoryId != null,
+        staleTime: 5 * 60 * 1000,
+    });
+
+    const closeForm = () => {
+        setFormOpen(false);
+        reset(EMPTY_FORM);
+        setSelectedCategoryId(null);
+        setSelectedDeptId(null);
+    };
+
     const createMut = useMutation({
         mutationFn: createReviewSession,
         onSuccess: async (res) => {
@@ -141,14 +178,11 @@ export function ReviewSessionsPage() {
             setSnackbar({ open: true, message: res.detail, severity: 'success' });
             setFormOpen(false);
             reset(EMPTY_FORM);
+            setSelectedCategoryId(null);
+            setSelectedDeptId(null);
         },
         onError: (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' }),
     });
-
-    const closeForm = () => {
-        setFormOpen(false);
-        reset(EMPTY_FORM);
-    };
 
     const openMut = useMutation({
         mutationFn: openReviewSession,
@@ -256,6 +290,13 @@ export function ReviewSessionsPage() {
                     variant="outlined"
                 />
             ),
+        },
+        {
+            field: 'department_name',
+            headerName: getString('department') || 'Department',
+            flex: 0.6,
+            minWidth: 140,
+            valueFormatter: (value) => (value as string) || '—',
         },
         {
             field: 'period_start',
@@ -436,7 +477,13 @@ export function ReviewSessionsPage() {
 
                 {/* Create Dialog */}
                 <Dialog open={formOpen} onClose={closeForm} maxWidth="sm" fullWidth>
-                    <form onSubmit={handleSubmit((values) => createMut.mutate(values))} noValidate>
+                    <form onSubmit={handleSubmit((values) => {
+                        const payload = { ...values };
+                        if (deptFilterEnabled && selectedDeptId) {
+                            payload.department_id = selectedDeptId;
+                        }
+                        createMut.mutate(payload);
+                    })} noValidate>
                         <DialogTitle>{getString('createReviewSessionTitle')}</DialogTitle>
                         <DialogContent>
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -496,6 +543,61 @@ export function ReviewSessionsPage() {
                                             />
                                         )}
                                     />
+
+                                    {/* Department filter (gated by app setting) */}
+                                    {deptFilterEnabled && (
+                                        <>
+                                            <FormControl fullWidth>
+                                                <InputLabel>
+                                                    {getString('departmentCategory') || 'Department category'}
+                                                </InputLabel>
+                                                <Select
+                                                    variant="outlined"
+                                                    value={selectedCategoryId ?? ''}
+                                                    label={getString('departmentCategory') || 'Department category'}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        setSelectedCategoryId(val === '' ? null : Number(val));
+                                                        setSelectedDeptId(null);
+                                                    }}
+                                                >
+                                                    <MenuItem value="">
+                                                        <em>{getString('none') || '(none)'}</em>
+                                                    </MenuItem>
+                                                    {categories.map((c) => (
+                                                        <MenuItem key={c.id} value={c.id}>
+                                                            {c.name}
+                                                        </MenuItem>
+                                                    ))}
+                                                </Select>
+                                            </FormControl>
+                                            {selectedCategoryId != null && topDepartments.length > 0 && (
+                                                <FormControl fullWidth>
+                                                    <InputLabel>
+                                                        {getString('department') || 'Department'}
+                                                    </InputLabel>
+                                                    <Select
+                                                        variant="outlined"
+                                                        value={selectedDeptId ?? ''}
+                                                        label={getString('department') || 'Department'}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            setSelectedDeptId(val === '' ? null : Number(val));
+                                                        }}
+                                                    >
+                                                        <MenuItem value="">
+                                                            <em>{getString('all') || 'All departments'}</em>
+                                                        </MenuItem>
+                                                        {topDepartments.map((d) => (
+                                                            <MenuItem key={d.id} value={d.id}>
+                                                                {d.name}
+                                                            </MenuItem>
+                                                        ))}
+                                                    </Select>
+                                                </FormControl>
+                                            )}
+                                        </>
+                                    )}
                                 </Stack>
                             </LocalizationProvider>
                         </DialogContent>
