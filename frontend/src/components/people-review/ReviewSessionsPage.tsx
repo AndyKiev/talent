@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
@@ -12,8 +12,12 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
+    FormControl,
     IconButton,
+    InputLabel,
+    MenuItem,
     Paper,
+    Select,
     Snackbar,
     Stack,
     TextField,
@@ -36,6 +40,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import AppShell from '../layout/AppShell.tsx';
 import {
+    fetchReviewSessionStatuses,
     fetchReviewSessions,
     createReviewSession,
     openReviewSession,
@@ -43,6 +48,7 @@ import {
     revertReviewSession,
     deleteReviewSession,
     type ReviewSession,
+    type ReviewSessionStatus,
     type ReviewSessionCreate,
     type MutationResponse,
 } from './peopleReviewApi';
@@ -68,6 +74,7 @@ import { useDataGridLocale } from '../../hooks/useDataGridLocale';
 import { useAuthStore } from '../../store/authStore';
 
 const RS_QK = ['review_sessions'] as const;
+const RSS_QK = ['review_session_statuses'] as const;
 
 const STATUS_COLORS: Record<string, 'default' | 'warning' | 'success' | 'error'> = {
     pending: 'default',
@@ -80,6 +87,8 @@ const STATUS_LABEL_KEYS: Record<string, string> = {
     open: 'statusOpen',
     closed: 'statusClosed',
 };
+
+const ALL_VALUE = '__all__';
 
 export function ReviewSessionsPage() {
     const navigate = useNavigate();
@@ -111,11 +120,18 @@ export function ReviewSessionsPage() {
     const [renameTarget, setRenameTarget] = useState<ReviewSession | null>(null);
     const [renameName, setRenameName] = useState('');
     const [deleteTarget, setDeleteTarget] = useState<ReviewSession | null>(null);
+    const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
     const { data: rows = [], isLoading, error } = useQuery({
         queryKey: RS_QK,
         queryFn: fetchReviewSessions,
         staleTime: 60 * 1000,
+    });
+
+    const { data: statuses = [] } = useQuery({
+        queryKey: RSS_QK,
+        queryFn: fetchReviewSessionStatuses,
+        staleTime: 5 * 60 * 1000,
     });
 
     const createMut = useMutation({
@@ -180,6 +196,25 @@ export function ReviewSessionsPage() {
         },
         onError: (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' }),
     });
+
+    const statusOptions = useMemo(
+        () => statuses.map((s) => s.key),
+        [statuses],
+    );
+
+    const statusLabelMap = useMemo(() => {
+        const map = new Map<string, string>();
+        for (const s of statuses) {
+            const trKey = STATUS_LABEL_KEYS[s.key];
+            map.set(s.key, trKey ? getString(trKey) : s.name);
+        }
+        return map;
+    }, [statuses, getString]);
+
+    const filteredRows = useMemo(
+        () => (statusFilter ? rows.filter((r) => r.status === statusFilter) : rows),
+        [rows, statusFilter],
+    );
 
     const columns: GridColDef<ReviewSession>[] = [
         { field: 'id', headerName: getString('idColumn'), width: 60 },
@@ -342,6 +377,27 @@ export function ReviewSessionsPage() {
                     <Typography variant="h5" fontWeight={600} sx={{ flex: 1 }}>
                         {getString('peopleReviewSessions')}
                     </Typography>
+                    {statusOptions.length > 0 && (
+                        <FormControl size="small" sx={{ minWidth: 160 }}>
+                            <InputLabel>{getString('status')}</InputLabel>
+                            <Select
+                                label={getString('status')}
+                                value={statusFilter ?? ALL_VALUE}
+                                onChange={(e) =>
+                                    setStatusFilter(e.target.value === ALL_VALUE ? null : e.target.value)
+                                }
+                            >
+                                <MenuItem value={ALL_VALUE}>
+                                    <em>{getString('all') || getString('allStatuses') || 'All'}</em>
+                                </MenuItem>
+                                {statusOptions.map((s) => (
+                                    <MenuItem key={s} value={s}>
+                                        {statusLabelMap.get(s) ?? s}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    )}
                     <Button
                         variant="contained"
                         startIcon={<AddIcon />}
@@ -364,7 +420,7 @@ export function ReviewSessionsPage() {
                 {!isLoading && !error && (
                     <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
                         <DataGrid
-                            rows={rows}
+                            rows={filteredRows}
                             columns={columns}
                             paginationModel={paginationModel}
                             onPaginationModelChange={setPaginationModel}

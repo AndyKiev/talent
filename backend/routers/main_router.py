@@ -96,6 +96,9 @@ from backend.api_v1.review_dimension_criteria.review_dimension_criteria_views im
 from backend.api_v1.review_session.review_session_views import (
     router as review_session_router,
 )
+from backend.api_v1.review_session_status.review_session_status_views import (
+    router as review_session_status_router,
+)
 from backend.api_v1.review_session_employee.review_session_employee_views import (
     router as review_session_employee_router,
 )
@@ -278,6 +281,7 @@ router.include_router(notifications_router)
 router.include_router(review_dimension_router)
 router.include_router(review_dimension_criteria_router)
 router.include_router(review_session_router)
+router.include_router(review_session_status_router)
 router.include_router(review_session_employee_router)
 router.include_router(review_evaluation_router)
 router.include_router(review_level_router)

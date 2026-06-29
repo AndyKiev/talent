@@ -165,6 +165,10 @@ class EssenceName(str, Enum):
     PLAN_SCOPE_DEFAULT = "plan_scope_default"
     PLAN_CATEGORY_DEFAULT = "plan_category_default"
 
+    # ── People review ─────────────────────────────────────────────────────────
+    REVIEW_SESSION = "review_session"
+    REVIEW_SESSION_STATUS = "review_session_status"
+
 
 class PlanSessionStatusKey(str, Enum):
     PENDING = "pending"
@@ -172,8 +176,18 @@ class PlanSessionStatusKey(str, Enum):
     CLOSED = "closed"
 
 
+class ReviewSessionStatusKey(str, Enum):
+    PENDING = "pending"
+    OPEN = "open"
+    CLOSED = "closed"
+
+
 PLAN_SESSION_ACTIVE_STATUS_KEYS = frozenset(
     {PlanSessionStatusKey.PENDING.value, PlanSessionStatusKey.OPEN.value}
+)
+
+REVIEW_SESSION_ACTIVE_STATUS_KEYS = frozenset(
+    {ReviewSessionStatusKey.PENDING.value, ReviewSessionStatusKey.OPEN.value}
 )
 
 

@@ -62,6 +62,7 @@ __all__ = {
     "ReviewDimension",
     "ReviewDimensionCriteria",
     "ReviewSession",
+    "ReviewSessionStatus",
     "ReviewSessionCriterion",
     "ReviewSessionLevel",
     "ReviewSessionLevelRequirement",
@@ -251,6 +252,9 @@ from backend.api_v1.review_dimension_criteria.review_dimension_criteria_model im
     ReviewDimensionCriteria,
 )
 from backend.api_v1.review_session.review_session_model import ReviewSession
+from backend.api_v1.review_session_status.review_session_status_model import (
+    ReviewSessionStatus,
+)
 from backend.api_v1.review_session_criterion.review_session_criterion_model import (
     ReviewSessionCriterion,
 )

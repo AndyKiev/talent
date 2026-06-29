@@ -17,7 +17,6 @@ class ReviewSessionCreate(ReviewSessionBase):
 class ReviewSessionUpdate(BaseModel):
     name: Optional[str] = Field(None, max_length=256)
     description: Optional[str] = None
-    status: Optional[str] = None
     period_start: Optional[datetime.date] = None
     period_end: Optional[datetime.date] = None
 
@@ -25,6 +24,7 @@ class ReviewSessionUpdate(BaseModel):
 class ReviewSession(ReviewSessionBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
+    status_id: int
     status: str
     employee_count: int = 0
 

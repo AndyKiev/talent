@@ -13,11 +13,22 @@ const LEVEL_BASE = `${BASE_URL}/review_levels`;
 const LEVEL_REQ_BASE = `${BASE_URL}/review_level_requirements`;
 const EMPLOYEE_BASE = `${BASE_URL}/employees`;
 
+// --- Review Session Status types ---
+export interface ReviewSessionStatus {
+    id: number;
+    key: string;
+    name: string;
+    description: string | null;
+    is_active: boolean;
+    created_at: string;
+}
+
 // --- Review Session types ---
 export interface ReviewSession {
     id: number;
     name: string;
     description: string | null;
+    status_id: number;
     status: string;
     period_start: string | null;
     period_end: string | null;
@@ -110,6 +121,13 @@ export interface RSEFieldsUpdate {
 }
 
 // --- Review Session API ---
+const RSS_BASE = `${BASE_URL}/review_session_statuses`;
+
+export const fetchReviewSessionStatuses = async (): Promise<ReviewSessionStatus[]> => {
+    const res = await axiosInstance.get<ReviewSessionStatus[]>(RSS_BASE);
+    return res.data ?? [];
+};
+
 export const fetchReviewSessions = async (): Promise<ReviewSession[]> => {
     const res = await axiosInstance.get<ReviewSession[]>(RS_BASE);
     return res.data ?? [];

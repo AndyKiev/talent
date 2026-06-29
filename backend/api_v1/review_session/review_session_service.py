@@ -3,6 +3,7 @@ from typing import Optional, List
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
@@ -33,6 +34,13 @@ from backend.api_v1.review_session.review_session_success import (
 from backend.api_v1.review_session_employee.review_session_employee_model import (
     ReviewSessionEmployee,
 )
+from backend.api_v1.review_session_status.review_session_status_repository import (
+    ReviewSessionStatusRepository,
+)
+from backend.api_v1.review_session_status.review_session_status_errors import (
+    ReviewSessionStatusNotFoundByKey,
+)
+from backend.utils.enums import ReviewSessionStatusKey
 from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_model import (
     ReviewSessionEmployeeEvaluation,
 )
@@ -77,6 +85,16 @@ class ReviewSessionService(BaseService):
         session: Optional[AsyncSession] = None,
     ):
         super().__init__(repository, user=user, session=session)
+        self.status_repo = ReviewSessionStatusRepository(session=session)
+
+    async def _resolve_status_id(self, key: str) -> int:
+        """Resolve a status id from its stable key (no magic numbers)."""
+        status_id = await self.status_repo.get_id_by_field("key", key)
+        if status_id is None:
+            raise await self._resolve_domain_error(
+                ReviewSessionStatusNotFoundByKey(key)
+            )
+        return status_id
 
     async def get_by_id(self, id: int):
         result = await self.repository.get_by_id(id)
@@ -97,14 +115,20 @@ class ReviewSessionService(BaseService):
     ) -> List[ReviewSessionSchema]:
         filters = {}
         if status:
-            filters["status"] = status
+            status_id = await self._resolve_status_id(status)
+            filters["status_id"] = status_id
         records = await self.get_all(params=filters or None, sort_json=sort)
         return [self._to_schema(r) for r in records]
 
     async def create_review_session(
         self, rs_in: ReviewSessionCreate
     ) -> MutationResponse[ReviewSessionSchema]:
-        record = await self.create(rs_in)
+        pending_id = await self._resolve_status_id(
+            ReviewSessionStatusKey.PENDING.value
+        )
+        data = rs_in.model_dump()
+        data["status_id"] = pending_id
+        record = await self.create_from_dict(data)
         schema = self._to_schema(record)
         detail = await self._resolve_domain_success(
             ReviewSessionCreateSuccess(schema.name)
@@ -127,6 +151,10 @@ class ReviewSessionService(BaseService):
         if "open" not in VALID_TRANSITIONS.get(orm_record.status, []):
             exc = ReviewSessionStatusError(orm_record.status, "open")
             raise await self._resolve_domain_error(exc)
+
+        open_id = await self._resolve_status_id(
+            ReviewSessionStatusKey.OPEN.value
+        )
 
         # Create RSE records for all active employees
         stmt = select(Employee).where(Employee.is_active == True)
@@ -226,7 +254,7 @@ class ReviewSessionService(BaseService):
                 )
                 self.session.add(evaluation)
 
-        orm_record.status = "open"
+        orm_record.status_id = open_id
         await self.session.commit()
         await self.session.refresh(orm_record)
 
@@ -247,6 +275,10 @@ class ReviewSessionService(BaseService):
             exc = ReviewSessionStatusError(orm_record.status, "closed")
             raise await self._resolve_domain_error(exc)
 
+        closed_id = await self._resolve_status_id(
+            ReviewSessionStatusKey.CLOSED.value
+        )
+
         # A session can only close once every employee review is "closed".
         not_closed_stmt = sa_select(RSEModel).where(
             RSEModel.session_id == rs_id,
@@ -258,7 +290,7 @@ class ReviewSessionService(BaseService):
             exc = ReviewSessionCannotCloseError(len(not_closed_employees))
             raise await self._resolve_domain_error(exc)
 
-        orm_record.status = "closed"
+        orm_record.status_id = closed_id
         await self.session.commit()
         await self.session.refresh(orm_record)
 
@@ -274,7 +306,10 @@ class ReviewSessionService(BaseService):
             exc = ReviewSessionStatusError(orm_record.status, "open")
             raise await self._resolve_domain_error(exc)
 
-        orm_record.status = "open"
+        open_id = await self._resolve_status_id(
+            ReviewSessionStatusKey.OPEN.value
+        )
+        orm_record.status_id = open_id
         await self.session.commit()
         await self.session.refresh(orm_record)
 

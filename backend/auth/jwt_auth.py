@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import IntegrityError
+
 from backend.auth.auth_dependencies import validate_auth_user_ldap
 from backend.auth import auth_utils as auth_utils
 from backend.auth.auth_schemas import LDAPUser, AuthResponse
@@ -15,7 +15,7 @@ from backend.api_v1.employee.employee_repository import EmployeeRepository
 from backend.api_v1.msg_key.msg_key_model import MsgKey
 from backend.api_v1.msg_pg.msg_model import Msg
 from backend.database.db_helper import db_helper
-from backend.api_v1.employee.employee_schema import EmployeeCreate, EmployeeSchema
+from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.utils.enums import OperationTypes, OperationVerb, EssenceName
 
 # No import from user_dependency — that module imports us, so importing it
@@ -105,21 +105,10 @@ async def auth_user_issue_jwt(
     service = _make_service(session)
     orm_user = await service.repository.get_by_code(user_ldap.user_ukr)
     if not orm_user:
-        try:
-            orm_user = await service.create(
-                EmployeeCreate(
-                    code=user_ldap.user_ukr,
-                    name=user_ldap.full_name,
-                    email=None,
-                    is_active=True,
-                )
-            )
-        except IntegrityError as e:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Login failed: employee record could not be created. "
-                "Required reference data (job, status, lang) may be missing.",
-            ) from e
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Employee record not found. Contact an administrator.",
+        )
 
     user_db = await service._to_schema(orm_user)
     jwt_payload = {
