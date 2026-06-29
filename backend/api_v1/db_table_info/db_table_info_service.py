@@ -1,11 +1,16 @@
 """Business logic for db_table_info — refresh from live DB, merge, reorder."""
 
+import json
+from pathlib import Path
+
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import text
 
 from backend.api_v1.db_table_info.db_table_info_repository import (
     DbTableInfoRepository,
 )
 from backend.api_v1.db_table_info.db_table_info_schema import (
+    BackupResult,
     ColumnInfo,
     DbTableInfo,
     DbTableInfoUpdate,
@@ -17,6 +22,14 @@ from backend.api_v1.db_table_info.db_table_info_errors import (
     DbTableInfoNotFound,
 )
 from backend.database.db_helper import db_helper
+
+# Manifest written by the backup dump (backend/utils/table_data/restore_manifest.json).
+_MANIFEST_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "utils"
+    / "table_data"
+    / "restore_manifest.json"
+)
 
 
 def _quote_ident(name: str) -> str:
@@ -51,7 +64,52 @@ class DbTableInfoService:
         """Return all stored table info, sorted by sort_order then table_name."""
         data = self.repository.load_all()
         data.tables.sort(key=lambda t: (t.sort_order, t.table_name))
+        self._stamp_restore_counts(data.tables)
         return data
+
+    # ── backup row counts (from the local dump manifest) ───────────────────
+
+    @staticmethod
+    def _load_restore_counts() -> dict[str, int]:
+        """Read per-table row counts from the latest backup manifest.
+
+        Returns an empty dict if no backup has been made yet (fresh clone).
+        """
+        if not _MANIFEST_PATH.exists():
+            return {}
+        try:
+            raw = json.loads(_MANIFEST_PATH.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            return {}
+        counts = raw.get("row_counts", {})
+        return {k: int(v) for k, v in counts.items()} if isinstance(counts, dict) else {}
+
+    def _stamp_restore_counts(self, tables: list[DbTableInfo]) -> None:
+        """Set ``restore_row_count`` on each record from the backup manifest.
+
+        Display-only: always overwrites, never persisted (the manifest is the
+        source of truth and is read fresh on every request).
+        """
+        counts = self._load_restore_counts()
+        for t in tables:
+            t.restore_row_count = counts.get(t.table_name, 0)
+
+    async def backup(self) -> BackupResult:
+        """Dump every table to the local backup files + manifest.
+
+        The dump is synchronous (reflection + sync engine), so it runs off the
+        event loop. The file always wins on a later restore.
+        """
+        # Imported lazily to avoid any import-time cost / circularity at startup.
+        from backend.utils.table_data.dump_table_data import dump_to_files
+
+        manifest = await run_in_threadpool(dump_to_files)
+        return BackupResult(
+            generated_at=manifest["generated_at"],
+            total_rows=manifest["total_rows"],
+            table_count=manifest["table_count"],
+            files=manifest["files"],
+        )
 
     # ── single-record update (description / sort_order) ────────────────────
 
@@ -407,9 +465,11 @@ class DbTableInfoService:
             )
             new_records.append(record)
 
-        # 4. Persist
+        # 4. Persist (restore counts are stamped AFTER the write so the derived
+        #    value is never saved into db_table_info.json).
         new_records.sort(key=lambda t: (t.sort_order, t.table_name))
         self.repository.replace_all(new_records)
+        self._stamp_restore_counts(new_records)
 
         return TableDataFile(tables=new_records)
 

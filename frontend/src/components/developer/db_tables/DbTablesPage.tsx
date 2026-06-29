@@ -25,6 +25,7 @@ import {
     Typography,
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import BackupIcon from '@mui/icons-material/Backup';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
@@ -40,6 +41,7 @@ import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import {
     autoDescribe,
+    backupDbTables,
     deleteTableRow,
     fetchColumnPrefs,
     fetchDbTables,
@@ -93,6 +95,8 @@ function defaultColumnPrefs(): ColumnPref[] {
         { field: 'current_row_count', hidden: false, sortable: true, filterable: true, width: null },
         { field: 'prev_row_count',  hidden: false, sortable: true,  filterable: true, width: null },
         { field: 'delta_rows',      hidden: false, sortable: true,  filterable: true, width: null },
+        { field: 'restore_row_count', hidden: false, sortable: true, filterable: true, width: null },
+        { field: 'delta_restore',   hidden: false, sortable: true,  filterable: true, width: null },
         { field: 'current_size',    hidden: false, sortable: true,  filterable: true, width: null },
         { field: 'previous_size',   hidden: false, sortable: true,  filterable: true, width: null },
         { field: 'delta_size',      hidden: false, sortable: true,  filterable: true, width: null },
@@ -116,6 +120,7 @@ export function DbTablesPage() {
     editingDescRef.current = editingDesc;
     const descBufferRef = useRef<Record<string, string>>({});
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [backupConfirmOpen, setBackupConfirmOpen] = useState(false);
     const widthSaveRef = useRef<ReturnType<typeof setTimeout>>();
 
     // CRUD mode per expanded table
@@ -205,6 +210,20 @@ export function DbTablesPage() {
             setSnackbar({ open: true, message: `Refreshed: ${result.tables.length} tables`, severity: 'success' });
         },
         onError: (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' }),
+    });
+    const backupMut = useMutation({
+        mutationFn: backupDbTables,
+        onSuccess: (res) => {
+            setBackupConfirmOpen(false);
+            // Re-fetch so the qtyRecordsToRestore / Δ columns reflect the new backup.
+            qc.invalidateQueries({ queryKey: DB_TABLES_QK });
+            setSnackbar({
+                open: true,
+                message: `${getString('backupDone') || 'Backup saved'}: ${res.total_rows.toLocaleString()} ${getString('totalRows') || 'rows'} · ${res.table_count} ${getString('tables') || 'tables'}`,
+                severity: 'success',
+            });
+        },
+        onError: (err: Error) => { setBackupConfirmOpen(false); setSnackbar({ open: true, message: err.message, severity: 'error' }); },
     });
     const descMut = useMutation({
         mutationFn: ({ tableName, desc }: { tableName: string; desc: string }) => updateDbTable(tableName, { description_ru: desc }),
@@ -353,6 +372,28 @@ export function DbTablesPage() {
             renderCell: (p: GridRenderCellParams<DbTableInfo>) => {
                 const d = p.row.current.row_count - p.row.previous.row_count;
                 if (!p.row.previous.row_count || d === 0) return <Typography variant="body2" fontSize={12} color="text.disabled">—</Typography>;
+                return <Chip label={`${d > 0 ? '+' : ''}${d.toLocaleString()}`} size="small" color={d > 0 ? 'success' : 'error'} sx={{ height: 18, fontSize: 10 }} />;
+            },
+        },
+        {
+            field: 'restore_row_count', headerName: getString('qtyRecordsToRestore') || 'Backup', type: 'number',
+            width: prefsByField.restore_row_count?.width ?? 90,
+            sortable: prefsByField.restore_row_count?.sortable !== false,
+            filterable: prefsByField.restore_row_count?.filterable !== false,
+            valueGetter: (_v, row) => row.restore_row_count,
+            renderCell: (p: GridRenderCellParams<DbTableInfo>) => (
+                <Typography variant="body2" fontFamily="monospace" fontSize={12} color="text.secondary">{p.row.restore_row_count > 0 ? p.row.restore_row_count.toLocaleString() : '—'}</Typography>
+            ),
+        },
+        {
+            field: 'delta_restore', headerName: 'Δ ' + (getString('qtyRecordsToRestore') || 'Backup'), type: 'number',
+            width: prefsByField.delta_restore?.width ?? 80,
+            sortable: prefsByField.delta_restore?.sortable !== false,
+            filterable: prefsByField.delta_restore?.filterable !== false,
+            valueGetter: (_v, row) => row.restore_row_count - row.current.row_count,
+            renderCell: (p: GridRenderCellParams<DbTableInfo>) => {
+                const d = p.row.restore_row_count - p.row.current.row_count;
+                if (!p.row.restore_row_count || d === 0) return <Typography variant="body2" fontSize={12} color="text.disabled">—</Typography>;
                 return <Chip label={`${d > 0 ? '+' : ''}${d.toLocaleString()}`} size="small" color={d > 0 ? 'success' : 'error'} sx={{ height: 18, fontSize: 10 }} />;
             },
         },
@@ -562,6 +603,9 @@ export function DbTablesPage() {
                     value={filterText} onChange={(e) => handleFilterChange(e.target.value)}
                     InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 18 }} /></InputAdornment> }}
                     sx={{ width: 240 }} />
+                <Button variant="outlined" startIcon={<BackupIcon />} onClick={() => setBackupConfirmOpen(true)} disabled={backupMut.isPending} sx={{ mr: 1 }}>
+                    {backupMut.isPending ? (getString('saving') || '...') : (getString('backupData') || 'Backup data')}
+                </Button>
                 <Button variant="contained" startIcon={<RefreshIcon />} onClick={() => refreshMut.mutate()} disabled={refreshMut.isPending}>
                     {refreshMut.isPending ? (getString('refreshing') || '...') : (getString('refresh') || 'Refresh')}
                 </Button>
@@ -616,6 +660,24 @@ export function DbTablesPage() {
             )}
 
             <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>{drawerContent}</Drawer>
+
+            {/* ── Backup Confirmation Dialog ────────────────────────── */}
+            <Dialog open={backupConfirmOpen} onClose={() => setBackupConfirmOpen(false)}>
+                <DialogTitle sx={{ fontSize: 14, fontWeight: 600 }}>
+                    {getString('backupConfirmTitle') || 'Backup all table data?'}
+                </DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" fontSize={12}>
+                        {getString('backupConfirmBody') || 'This overwrites the local backup files (translations + main) with the current DB data. employee_photos and alembic_version are excluded.'}
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button size="small" onClick={() => setBackupConfirmOpen(false)}>{getString('cancel') || 'Cancel'}</Button>
+                    <Button size="small" variant="contained" startIcon={<BackupIcon />} onClick={() => backupMut.mutate()} disabled={backupMut.isPending}>
+                        {backupMut.isPending ? (getString('saving') || '...') : (getString('backupData') || 'Backup data')}
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             {/* ── Edit Row Dialog ─────────────────────────────────── */}
             <Dialog open={!!editDialog} onClose={() => setEditDialog(null)} maxWidth="sm" fullWidth>

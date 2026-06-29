@@ -44,6 +44,10 @@ class DbTableInfo(BaseModel):
     columns: list[ColumnInfo] = Field(default_factory=list)
     current: TableStats = Field(default_factory=TableStats)
     previous: TableStats = Field(default_factory=TableStats)
+    # Row count for this table in the latest local backup (restore_manifest.json).
+    # Display-only: re-stamped from the manifest on every read, never trusted
+    # from db_table_info.json.
+    restore_row_count: int = 0
 
 
 class DbTableInfoUpdate(BaseModel):
@@ -103,3 +107,12 @@ class TableDataFile(BaseModel):
 
     tables: list[DbTableInfo] = Field(default_factory=list)
     column_prefs: list[ColumnPref] = Field(default_factory=list)
+
+
+class BackupResult(BaseModel):
+    """Summary returned after writing the local backup files."""
+
+    generated_at: str
+    total_rows: int
+    table_count: int
+    files: dict[str, list[str]]  # {filename: [table_name, ...]}

@@ -1,14 +1,27 @@
-"""Dump every table in the talent database into a single JSON file.
+"""Dump the talent database into JSON files for local backup / restore.
 
 The script connects to the configured PostgreSQL database, reflects the full
-schema straight from the live database (so *every* table is captured, including
-association/link tables and alembic's ``alembic_version``), then serialises the
-rows of each table into ``table_data.json`` next to this file.
+schema straight from the live database (so association/link tables are captured
+too), then serialises the rows of each table into **two** JSON files next to
+this one, plus a manifest with per-table row counts:
 
-Table structure and relationships are defined by the SQLAlchemy ``*_model.py``
-files (registered on ``Base.metadata``); importing ``backend.api_v1`` makes the
-ORM-declared tables available, but we additionally reflect the database so the
-dump never depends on the import list staying in sync.
+* ``translations_data.json`` — ``langs``, ``msg_keys``, ``msgs`` (the
+  translation bundle).
+* ``main_data.json``         — every other data table.
+* ``restore_manifest.json``  — ``row_counts`` per table, the file each table
+  belongs to, and totals. The db_tables dev page reads this to show
+  ``qtyRecordsToRestore`` and its delta against the live row counts.
+
+Tables are written FK-parents-first (``metadata.sorted_tables``) and rows keep
+their original ``id`` values so the dump restores cleanly.
+
+Excluded on purpose
+-------------------
+* ``alembic_version`` — schema/migration state, not data. Re-inserting a dumped
+  ``version_num`` could silently move the migration head. Restore assumes the
+  schema already exists (``alembic upgrade head``).
+* ``employee_photos`` — binary ``bytea`` blobs; repopulated after a restore via
+  ``backend/scripts/grab_employee_photos.py``.
 
 Run from the project root::
 
@@ -46,7 +59,16 @@ try:
 except Exception as exc:  # pragma: no cover - best effort, reflection still works
     print(f"[warn] could not import backend.api_v1 models: {exc}")
 
-OUTPUT_FILE = Path(__file__).resolve().parent / "table_data.json"
+OUTPUT_DIR = Path(__file__).resolve().parent
+
+# Tables that go into the translation bundle file (the rest go to main).
+TRANSLATION_TABLES = {"langs", "msg_keys", "msgs"}
+TRANSLATIONS_FILE = "translations_data.json"
+MAIN_FILE = "main_data.json"
+MANIFEST_FILE = "restore_manifest.json"
+
+# Never dumped — schema state / binary blobs handled elsewhere.
+EXCLUDED_TABLES = {"alembic_version", "employee_photos"}
 
 
 def _sync_url() -> str:
@@ -79,7 +101,42 @@ def _json_default(value: Any) -> Any:
     return str(value)
 
 
-def dump() -> None:
+def _table_payload(conn, table) -> dict[str, Any]:
+    """Serialise one table's structure + rows into the dump shape."""
+    columns = [col.name for col in table.columns]
+    foreign_keys = [
+        {
+            "column": fk.parent.name,
+            "references": f"{fk.column.table.name}.{fk.column.name}",
+        }
+        for fk in table.foreign_keys
+    ]
+    primary_key = [col.name for col in table.primary_key.columns]
+    rows = [dict(row._mapping) for row in conn.execute(select(table))]
+    return {
+        "columns": columns,
+        "primary_key": primary_key,
+        "foreign_keys": foreign_keys,
+        "row_count": len(rows),
+        "rows": rows,
+    }
+
+
+def _write_json(path: Path, payload: dict[str, Any]) -> None:
+    path.write_text(
+        json.dumps(payload, default=_json_default, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
+def dump_to_files(output_dir: Path | None = None) -> dict[str, Any]:
+    """Dump the live DB into the translation + main files and a manifest.
+
+    Returns the manifest dict (also written to ``restore_manifest.json``).
+    """
+    out_dir = Path(output_dir) if output_dir else OUTPUT_DIR
+    out_dir.mkdir(parents=True, exist_ok=True)
+
     engine = create_engine(_sync_url(), poolclass=None)
     metadata = MetaData()
 
@@ -89,48 +146,60 @@ def dump() -> None:
     metadata.reflect(bind=engine)
 
     # ``sorted_tables`` orders by FK dependency (parents before children).
-    tables = metadata.sorted_tables
-    print(f"Found {len(tables)} tables.")
+    all_tables = [t for t in metadata.sorted_tables if t.name not in EXCLUDED_TABLES]
 
-    export: dict[str, Any] = {
-        "generated_at": datetime.now().isoformat(),
-        "database": engine.url.database,
-        "table_count": len(tables),
-        "tables": {},
-    }
+    translation_tables = [t for t in all_tables if t.name in TRANSLATION_TABLES]
+    main_tables = [t for t in all_tables if t.name not in TRANSLATION_TABLES]
+
+    translations_payload: dict[str, Any] = {"tables": {}}
+    main_payload: dict[str, Any] = {"tables": {}}
+    row_counts: dict[str, int] = {}
 
     with engine.connect() as conn:
-        for table in tables:
-            columns = [col.name for col in table.columns]
-            foreign_keys = [
-                {
-                    "column": fk.parent.name,
-                    "references": f"{fk.column.table.name}.{fk.column.name}",
-                }
-                for fk in table.foreign_keys
-            ]
-            primary_key = [col.name for col in table.primary_key.columns]
-
-            rows = [dict(row._mapping) for row in conn.execute(select(table))]
-
-            export["tables"][table.name] = {
-                "columns": columns,
-                "primary_key": primary_key,
-                "foreign_keys": foreign_keys,
-                "row_count": len(rows),
-                "rows": rows,
-            }
-            print(f"  {table.name:<45} {len(rows):>6} rows")
+        for table in translation_tables:
+            data = _table_payload(conn, table)
+            translations_payload["tables"][table.name] = data
+            row_counts[table.name] = data["row_count"]
+            print(f"  [translations] {table.name:<35} {data['row_count']:>6} rows")
+        for table in main_tables:
+            data = _table_payload(conn, table)
+            main_payload["tables"][table.name] = data
+            row_counts[table.name] = data["row_count"]
+            print(f"  [main]         {table.name:<35} {data['row_count']:>6} rows")
 
     engine.dispose()
 
-    OUTPUT_FILE.write_text(
-        json.dumps(export, default=_json_default, ensure_ascii=False, indent=2),
-        encoding="utf-8",
+    generated_at = datetime.now().isoformat()
+    database = create_engine(_sync_url()).url.database
+
+    for payload in (translations_payload, main_payload):
+        payload["generated_at"] = generated_at
+        payload["database"] = database
+
+    _write_json(out_dir / TRANSLATIONS_FILE, translations_payload)
+    _write_json(out_dir / MAIN_FILE, main_payload)
+
+    total_rows = sum(row_counts.values())
+    manifest: dict[str, Any] = {
+        "generated_at": generated_at,
+        "database": database,
+        "table_count": len(row_counts),
+        "total_rows": total_rows,
+        "excluded_tables": sorted(EXCLUDED_TABLES),
+        "files": {
+            TRANSLATIONS_FILE: [t.name for t in translation_tables],
+            MAIN_FILE: [t.name for t in main_tables],
+        },
+        "row_counts": row_counts,
+    }
+    _write_json(out_dir / MANIFEST_FILE, manifest)
+
+    print(
+        f"\nWrote {total_rows} rows from {len(row_counts)} tables to "
+        f"{TRANSLATIONS_FILE} + {MAIN_FILE} (manifest: {MANIFEST_FILE}) in {out_dir}"
     )
-    total_rows = sum(t["row_count"] for t in export["tables"].values())
-    print(f"\nWrote {total_rows} rows from {len(tables)} tables to {OUTPUT_FILE}")
+    return manifest
 
 
 if __name__ == "__main__":
-    dump()
+    dump_to_files()

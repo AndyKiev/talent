@@ -35,10 +35,18 @@ export interface DbTableInfo {
     columns: ColumnInfo[];
     current: TableStats;
     previous: TableStats;
+    restore_row_count: number; // rows for this table in the latest local backup
 }
 
 export interface TableDataFile {
     tables: DbTableInfo[];
+}
+
+export interface BackupResult {
+    generated_at: string;
+    total_rows: number;
+    table_count: number;
+    files: Record<string, string[]>; // { filename: [table_name, ...] }
 }
 
 export interface DbTableInfoUpdate {
@@ -68,6 +76,11 @@ export const fetchDbTables = async (): Promise<TableDataFile> => {
 
 export const refreshDbTables = async (): Promise<TableDataFile> => {
     const res = await axiosInstance.post<TableDataFile>(`${BASE}/refresh`);
+    return res.data;
+};
+
+export const backupDbTables = async (): Promise<BackupResult> => {
+    const res = await axiosInstance.post<BackupResult>(`${BASE}/backup`);
     return res.data;
 };
 

@@ -100,3 +100,7 @@ translations.json
 
 # Phase-2 data dump from talent-test (867KB, do not commit)
 backend/scripts/scripts_talent_test_data.sql
+
+# DB data backup dumps (local emergency restore snapshots — refreshed manually
+# via the "Backup data" button on /developer/catalog/db_tables). See /restore-data.
+backend/utils/table_data/*.json

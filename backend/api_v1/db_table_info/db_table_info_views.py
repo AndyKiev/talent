@@ -6,6 +6,7 @@ from backend.api_v1.db_table_info.db_table_info_dependencies import (
     get_db_table_info_service,
 )
 from backend.api_v1.db_table_info.db_table_info_schema import (
+    BackupResult,
     ColumnPref,
     ColumnPrefsUpdate,
     DbTableInfo,
@@ -45,6 +46,18 @@ async def refresh_db_tables(
     - Removes tables that no longer exist in the database.
     """
     return await service.refresh()
+
+
+@router.post("/backup", response_model=BackupResult)
+async def backup_db_tables(
+    service: Annotated[DbTableInfoService, Depends(get_db_table_info_service)],
+) -> BackupResult:
+    """Dump every table to local backup files (translations + main) + manifest.
+
+    Overwrites the existing local snapshot. The file always wins on a later
+    manual restore. ``alembic_version`` and ``employee_photos`` are excluded.
+    """
+    return await service.backup()
 
 
 @router.patch(
