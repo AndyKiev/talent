@@ -1,18 +1,21 @@
-"""TEMPO Managers evaluation album (single landscape-A4 page).
+"""TEMPO Managers evaluation album (landscape-A4, paginated).
 
 Reproduces the layout of the "ТЕМРО Менеджери" sheet in the project's reference
-workbook: identity header + photo, a competence bar chart, strengths /
-development-directions, results, IDP missions, training and feedback.
+workbook: identity header + photo, a competence bar chart, then the evaluation
+sections (results, not-achieved, development plan, strengths, to-develop,
+trainings, feedbacks) and the proposed level's requirements with full facts.
 
 Pure rendering: takes a plain dict (no DB, no ORM) and returns PDF **or** PNG
-bytes from the SAME figure, so the frontend can show the PNG inline (browsers
+bytes from the SAME figures, so the frontend can show the PNG inline (browsers
 always render images, unlike an application/pdf iframe which many download) and
-offer the PDF as a download. Reused as-is by the future presentation mode.
+offer the PDF as a download. Reused as-is by the presentation mode.
 
-Each region is drawn into its own clipped Axes (`clip_on=True`), so long fields
-stay inside their card instead of overflowing into neighbours. Uses the
-matplotlib OO API + Agg backend (no global pyplot state, safe under concurrency)
-and DejaVu Sans (ships with matplotlib, covers Cyrillic).
+Layout is a small FLOW engine (see the "flow layout engine" section): every
+section is measured (line heights are analytic) and packed into three columns;
+a block that doesn't fit is SPLIT at a line boundary and continued on the next
+page, so text is NEVER truncated — the album grows to as many pages as needed.
+Uses the matplotlib OO API + Agg backend (no global pyplot state, safe under
+concurrency) and DejaVu Sans (ships with matplotlib, covers Cyrillic).
 """
 
 from __future__ import annotations
@@ -86,114 +89,29 @@ def _text(fig, x, y, s, size, color=INK, weight="normal", va="top"):
     )
 
 
-def _field(fig, x, y, label, value, val_w_chars=34):
-    """Label above a single-line value (identity grid). Value clamped so a long
-    field can't bleed into the neighbouring column."""
+def _field(fig, x, y, label, value, wrap_chars=26, max_lines=None):
+    """Label above a value (identity grid). The value WRAPS to the column width so
+    long fields (job, education) are shown IN FULL — never truncated with "…".
+    `max_lines` clamps only if given (used for the single-line talent row).
+    Returns the number of value lines drawn so the caller can space the next row
+    below a wrapped value."""
     _text(fig, x, y, label, 7.5, MUTED, va="top")
-    _text(
-        fig,
-        x,
-        y - 0.022,
-        _shorten(value, val_w_chars) if value else "—",
-        10.0,
-        INK,
-        va="top",
-    )
-
-
-def _titled(
-    fig, x, y, w, title, body, title_color=ACCENT, body_size=8.0, body_lines=10
-):
-    """Title bar + word-wrapped body, wrapped to ~the column width and clamped to
-    a max number of lines so it stays inside its card."""
-    _text(fig, x, y, title, 9, title_color, weight="bold", va="top")
-    text = "—" if not body else str(body)
-    wrapped = _wrap(text, width_chars=int(w * 165))
-    wrapped = _clamp_lines(wrapped, body_lines)
+    text = _wrap(value, wrap_chars) if value else "—"
+    if max_lines is not None:
+        text = _clamp_lines(text, max_lines)
     fig.text(
         x,
-        y - 0.026,
-        wrapped,
-        fontsize=body_size,
+        y - 0.020,
+        text,
+        fontsize=8.5,
         color=INK,
         va="top",
         ha="left",
         fontfamily=FONT,
-        linespacing=1.4,
+        linespacing=1.2,
         zorder=4,
     )
-
-
-def _idp_block(fig, x, y, w, missions, title, body_lines=8, body_size=8.0):
-    """IDP missions: numbered text plus a colored competence-to-develop tag per
-    mission (same coloring the page/HTML uses). Manual line layout so each
-    mission's linked competence name can be drawn in its own color."""
-    _text(fig, x, y, title, 9, ACCENT, weight="bold", va="top")
-    if not missions:
-        fig.text(
-            x,
-            y - 0.026,
-            "—",
-            fontsize=body_size,
-            color=INK,
-            va="top",
-            ha="left",
-            fontfamily=FONT,
-            zorder=4,
-        )
-        return
-    line_step = 0.0165
-    yc = y - 0.026
-    lines_left = body_lines
-    width_chars = int(w * 165)
-    for i, m in enumerate(missions, start=1):
-        if lines_left <= 0:
-            fig.text(
-                x,
-                yc,
-                "…",
-                fontsize=body_size,
-                color=INK,
-                va="top",
-                ha="left",
-                fontfamily=FONT,
-                zorder=4,
-            )
-            break
-        text = m.get("text") if isinstance(m, dict) else str(m)
-        for ln in _wrap(f"{i}. {text}", width_chars=width_chars).split("\n"):
-            if lines_left <= 0:
-                break
-            fig.text(
-                x,
-                yc,
-                ln,
-                fontsize=body_size,
-                color=INK,
-                va="top",
-                ha="left",
-                fontfamily=FONT,
-                zorder=4,
-            )
-            yc -= line_step
-            lines_left -= 1
-        name = m.get("name") if isinstance(m, dict) else None
-        color = m.get("color") if isinstance(m, dict) else None
-        if name and lines_left > 0:
-            fig.text(
-                x + 0.006,
-                yc,
-                f"→ {name}",
-                fontsize=body_size - 0.5,
-                color=color or ACCENT,
-                va="top",
-                ha="left",
-                fontfamily=FONT,
-                fontweight="bold",
-                zorder=4,
-            )
-            yc -= line_step
-            lines_left -= 1
+    return text.count("\n") + 1
 
 
 def _wrap(text, width_chars):
@@ -208,16 +126,215 @@ def _wrap(text, width_chars):
     return "\n".join(out)
 
 
-def _shorten(s, n):
-    s = str(s)
-    return s if len(s) <= n else s[: n - 1] + "…"
-
-
 def _clamp_lines(text, max_lines):
     lines = str(text).split("\n")
     if len(lines) <= max_lines:
         return text
     return "\n".join(lines[:max_lines] + ["…"])
+
+
+# --- flow layout engine -----------------------------------------------------
+# Sections are flowed (measured, then packed into columns / extra pages) so the
+# album NEVER truncates text. Height is analytic: a line of `size`-pt text at
+# `linespacing` occupies `size * linespacing / (page_height_in * 72)` of the
+# figure. The page is A4 landscape (8.27in tall), so one body line ≈ 0.0188.
+
+PAGE_H_IN = A4_LANDSCAPE[1]
+
+
+def _line_frac(size, linespacing=1.4):
+    """Figure-fraction height of a single line of text at the given point size."""
+    return size * linespacing / (PAGE_H_IN * 72)
+
+
+def _wrap_lines(text, width_chars):
+    """Wrapped text as a list of lines (empty list -> a single '—' placeholder)."""
+    return _wrap(text or "—", width_chars).split("\n")
+
+
+class _Line:
+    """One drawable line of text with its own metrics, so a block is just a list
+    of these. `keep_with_next` marks a title line that must not be left dangling
+    at the foot of a column (it stays with the body line that follows it)."""
+
+    __slots__ = ("text", "size", "color", "weight", "indent", "ls", "keep_with_next")
+
+    def __init__(
+        self,
+        text,
+        size,
+        color=INK,
+        weight="normal",
+        indent=0.0,
+        ls=1.4,
+        keep_with_next=False,
+    ):
+        self.text = text
+        self.size = size
+        self.color = color
+        self.weight = weight
+        self.indent = indent
+        self.ls = ls
+        self.keep_with_next = keep_with_next
+
+    @property
+    def h(self):
+        return _line_frac(self.size, self.ls)
+
+
+class _Block:
+    """A pre-measured section = an ordered list of `_Line`s. Because it is just
+    lines, an over-long block can be SPLIT at a line boundary: the lines that fit
+    are drawn now and the remainder becomes a continuation block on the next page,
+    so text is never clamped or pushed off the page.
+
+    `header_lines` (the block's group title, e.g. "План розвитку") are REPEATED at
+    the top of every continuation block, so a split group keeps its context on the
+    next page. They are stored separately from `lines` so they aren't re-split."""
+
+    GAP = 0.02  # vertical gap below a block before the next one
+
+    def __init__(self, lines, header_lines=None):
+        self.lines = lines
+        self.header_lines = header_lines or []
+
+    @property
+    def height(self):
+        return sum(ln.h for ln in self.header_lines) + sum(ln.h for ln in self.lines)
+
+    def _make(self, body_lines):
+        return _Block(body_lines, header_lines=self.header_lines)
+
+    def split(self, avail):
+        """Return (head, tail): `head` holds the repeated header + as many leading
+        body lines as fit in `avail` (keeping a title-run glued to its first body
+        line); `tail` repeats the header then continues the rest. If not even the
+        header + first unit fits, head is None so the caller moves it to a fresh
+        page. Never drops a line."""
+        header_h = sum(ln.h for ln in self.header_lines)
+        used = header_h
+        cut = 0  # number of body lines committed to the head
+        n = len(self.lines)
+        while cut < n:
+            # The next indivisible unit = a run of keep_with_next lines plus the
+            # one line after it (so a title never sits alone at a column foot).
+            j = cut
+            run = 0.0
+            while j < n and self.lines[j].keep_with_next:
+                run += self.lines[j].h
+                j += 1
+            if j < n:
+                run += self.lines[j].h
+                j += 1
+            if used + run <= avail:
+                used += run
+                cut = j
+            else:
+                break
+        if cut >= n:
+            return self, None
+        if cut == 0:
+            return None, self
+        return self._make(self.lines[:cut]), self._make(self.lines[cut:])
+
+    def draw(self, fig, x, top, w):
+        y = top
+        for ln in list(self.header_lines) + list(self.lines):
+            fig.text(
+                x + ln.indent,
+                y,
+                ln.text,
+                fontsize=ln.size,
+                color=ln.color,
+                fontweight=ln.weight,
+                va="top",
+                ha="left",
+                fontfamily=FONT,
+                zorder=4,
+            )
+            y -= ln.h
+
+
+def _heading_lines(title, color, size=9):
+    """A group-title heading + a thin gap, used as a block's repeatable header."""
+    return [_Line(title, size, color, "bold", ls=1.2), _Line("", 4)]
+
+
+def _titled_block(title, body, width_chars, color=INK):
+    """Bold title + full word-wrapped body (results, feedback, etc.). The title is
+    a repeatable header so it reappears if the body flows to the next page."""
+    lines = [_Line(ln, 8) for ln in _wrap_lines(body, width_chars)]
+    return _Block(lines, header_lines=_heading_lines(title, color))
+
+
+def _idp_block(title, missions, width_chars):
+    """IDP missions: numbered text + a colored competence tag per mission."""
+    body = []
+    for i, m in enumerate(missions or [], start=1):
+        text = m.get("text") if isinstance(m, dict) else str(m)
+        for ln in _wrap_lines(f"{i}. {text}", width_chars):
+            body.append(_Line(ln, 8))
+        name = m.get("name") if isinstance(m, dict) else None
+        color = m.get("color") if isinstance(m, dict) else None
+        if name:
+            body.append(_Line(f"→ {name}", 7.5, color or ACCENT, "bold", indent=0.006))
+    if not body:
+        body.append(_Line("—", 8))
+    return _Block(body, header_lines=_heading_lines(title, ACCENT))
+
+
+def _req_block(n, text, facts, width_chars):
+    """A requirement: bold numbered title (repeated on continuation) + the
+    employee's FULL facts beneath."""
+    header = [
+        _Line(ln, 8.5, INK, "bold", ls=1.25)
+        for ln in _wrap_lines(f"{n}. {text or '—'}", width_chars)
+    ]
+    header.append(_Line("", 3))
+    body = [_Line(ln, 7.5, ls=1.3) for ln in _wrap_lines(facts, width_chars)]
+    return _Block(body, header_lines=header)
+
+
+def _pack_one_page(columns, col_xs, top, bottom, pad=0.013):
+    """Place each column's blocks down from `top`. A block that doesn't fit is
+    SPLIT at a line boundary: the part that fits is drawn and the remainder is put
+    back at the head of the column to continue on the next page — so nothing ever
+    overruns the bottom margin or gets clamped. Mutates `columns`.
+
+    Returns (placements, col_bottoms): placements = (block, ci, x, block_top);
+    col_bottoms[ci] = lowest y the column reached (for sizing its card)."""
+    placements = []
+    col_bottoms = []
+    for ci, blocks in enumerate(columns):
+        y = top
+        while blocks:
+            blk = blocks[0]
+            avail = (y - pad) - bottom
+            if blk.height <= avail:
+                placements.append((blk, ci, col_xs[ci] + pad, y - pad))
+                y -= pad + blk.height + blk.GAP
+                blocks.pop(0)
+                continue
+            head, tail = blk.split(avail)
+            if head is None:
+                # Nothing fits in the space left; if the column is fresh this
+                # block is taller than a whole page — force the head that fits a
+                # FULL page so we still make progress, else move to next page.
+                if abs(y - top) < 1e-9:
+                    head, tail = blk.split(top - bottom - pad)
+                    if head is None:  # single line taller than a page (never)
+                        head, tail = blk, None
+                else:
+                    break
+            placements.append((head, ci, col_xs[ci] + pad, y - pad))
+            y -= pad + head.height
+            if tail is None:
+                blocks.pop(0)
+            else:
+                blocks[0] = tail  # remainder continues on the next page
+            break  # column is full once a block had to be split
+        col_bottoms.append(min(y, top))
+    return placements, col_bottoms
 
 
 # --- page chrome ------------------------------------------------------------
@@ -346,8 +463,9 @@ def _competence_chart(fig, x, y, w, h, competences, max_grade, title):
     ypos = range(len(scores))
     ax.barh(list(ypos), scores, color=bar_colors, height=0.6, zorder=3)
     for i, s in enumerate(scores):
-        # Fractional competence level (mean of behaviours) — show as-is, 2 dp.
-        label = f"{s:.2f}" if isinstance(s, float) and s % 1 else f"{s:g}"
+        # Competence level is a MEAN of behaviours — always show 2 decimals so it
+        # never reads as a rounded whole grade (3.00, not 3).
+        label = f"{float(s):.2f}"
         ax.text(
             s + 0.06,
             i,
@@ -362,8 +480,13 @@ def _competence_chart(fig, x, y, w, h, competences, max_grade, title):
     ax.set_yticks(list(ypos))
     ax.set_yticklabels(names, fontsize=7.5, fontfamily=FONT, color=INK)
     ax.invert_yaxis()
-    ax.set_xticks(range(0, max_grade + 1))
-    ax.tick_params(length=0, labelsize=7, colors=MUTED)
+    # Half-grade ticks (0, 0.5, 1, …) so the scale reads as fractional — the
+    # scores are means of behaviours, not whole grades.
+    n_half = max_grade * 2
+    ticks = [t / 2 for t in range(n_half + 1)]
+    ax.set_xticks(ticks)
+    ax.set_xticklabels([f"{t:g}" for t in ticks])
+    ax.tick_params(length=0, labelsize=6, colors=MUTED)
     for sp in ("top", "right", "left"):
         ax.spines[sp].set_visible(False)
     ax.spines["bottom"].set_color(BORDER)
@@ -390,50 +513,65 @@ def _new_page() -> Figure:
     return fig
 
 
-def _build_page1(data: dict) -> Figure:
-    fig = _new_page()
+# Column geometry shared by every flowed page (3 columns across the sheet).
+_COLS_X = [0.025, 0.343, 0.661]
+_COL_W = 0.31
+_COL_INNER_CHARS = int((_COL_W - 0.026) * 165)  # wrap width inside a column
+_PAGE_BOTTOM = 0.045
+
+
+def _identity_band(fig, data) -> float:
+    """Header + photo + identity field grid + talent row + competence chart — the
+    top band of page 1. Returns the y of the band's BOTTOM so the flowed section
+    columns can start just below it (the band grows when job/education wrap, so
+    its height — and the column top — are computed, never assumed)."""
     L = data.get("labels", {})
     g = data.get
-
-    # Header shows the employee's name (no separate ПІБ field on the sheet).
     _header(fig, g("full_name") or "—")
-
-    # Identity: photo + a 2-column field grid (on bare paper, no card behind).
-    # Compacted to the top band so the text cards below get the bulk of the page.
     _photo(fig, 0.025, 0.70, 0.11, 0.205, g("photo"))
 
     col1_x, col2_x = 0.15, 0.37
     proposed = g("proposed_level")
     if proposed and g("proposed_level_status"):
         proposed = f"{proposed} ({g('proposed_level_status')})"
+    # Marital status and children are separate fields (the joined "married · 4 р."
+    # read like a marriage duration); children gets its own labelled cell.
     rows = [
         (
             L.get("birth_age"),
             _join(g("birth_date"), g("age"), " · "),
             L.get("marital_children"),
-            _join(g("marital_status"), g("children"), " · "),
+            g("marital_status"),
         ),
+        (L.get("children"), g("children"), L.get("tenure"), g("tenure")),
         (L.get("position"), g("position"), L.get("languages"), g("lang_level")),
-        (L.get("education"), g("education"), L.get("tenure"), g("tenure")),
-        (L.get("current_level"), g("current_level"), L.get("proposed_level"), proposed),
+        (
+            L.get("education"),
+            g("education"),
+            L.get("current_level"),
+            g("current_level"),
+        ),
+        (L.get("proposed_level"), proposed, None, None),
     ]
-    ry = 0.88
+    # Variable row height: a row whose value wraps to N lines takes more vertical
+    # space, so advance ry by the TALLER of its two fields (label + value lines).
+    ry = 0.90
     for l1, v1, l2, v2 in rows:
-        _field(fig, col1_x, ry, l1, v1, val_w_chars=30)
-        _field(fig, col2_x, ry, l2, v2, val_w_chars=30)
-        ry -= 0.052
+        n1 = _field(fig, col1_x, ry, l1, v1, wrap_chars=26) if l1 else 1
+        n2 = _field(fig, col2_x, ry, l2, v2, wrap_chars=26) if l2 else 1
+        ry -= 0.020 + max(n1, n2) * 0.018
 
     # Talent status/period progression — a wider single row beneath the grid.
-    _field(
+    n = _field(
         fig,
         col1_x,
         ry,
         L.get("talent_status_period"),
         g("talent_levels"),
-        val_w_chars=46,
+        wrap_chars=110,
     )
+    ry -= 0.020 + n * 0.018
 
-    # Competence bar chart (top-right).
     _competence_chart(
         fig,
         0.61,
@@ -444,194 +582,156 @@ def _build_page1(data: dict) -> Figure:
         g("max_grade") or 4,
         L.get("competence_level", "—"),
     )
-
-    # --- lower grid: 3 tall columns (most of the page, max room for text) ------
-    cols = [0.025, 0.343, 0.661]
-    cw = 0.31
-    # Cards start lower (top 0.60, not 0.64) so the talent status/period row
-    # added above them has clear space and no longer overlaps the cards.
-    for cx in cols:
-        _card(fig, cx, 0.04, cw, 0.56)
-    iw = cw - 0.026  # inner text width
-
-    # Column 1: results + what wasn't achieved.
-    _titled(
-        fig,
-        cols[0] + 0.013,
-        0.58,
-        iw,
-        L.get("results"),
-        g("results_achievements"),
-        INK,
-        8,
-        body_lines=14,
-    )
-    _titled(
-        fig,
-        cols[0] + 0.013,
-        0.32,
-        iw,
-        L.get("not_achieved"),
-        g("not_achieved"),
-        INK,
-        8,
-        body_lines=12,
-    )
-
-    # Column 2: strengths + development directions + IDP missions.
-    _titled(
-        fig,
-        cols[1] + 0.013,
-        0.58,
-        iw,
-        L.get("strengths"),
-        g("strengths"),
-        ACCENT,
-        8,
-        body_lines=8,
-    )
-    _titled(
-        fig,
-        cols[1] + 0.013,
-        0.42,
-        iw,
-        L.get("development"),
-        g("development_directions"),
-        ACCENT,
-        8,
-        body_lines=8,
-    )
-    idp = g("idp_missions") or []
-    _idp_block(fig, cols[1] + 0.013, 0.22, iw, idp, L.get("idp"), body_lines=8)
-
-    # Column 3: training + employee feedback + manager feedback.
-    _titled(
-        fig,
-        cols[2] + 0.013,
-        0.58,
-        iw,
-        L.get("training"),
-        g("training_done"),
-        INK,
-        8,
-        body_lines=8,
-    )
-    _titled(
-        fig,
-        cols[2] + 0.013,
-        0.42,
-        iw,
-        L.get("employee_feedback"),
-        g("employee_feedback"),
-        INK,
-        8,
-        body_lines=8,
-    )
-    _titled(
-        fig,
-        cols[2] + 0.013,
-        0.22,
-        iw,
-        L.get("manager_feedback"),
-        g("manager_feedback"),
-        INK,
-        8,
-        body_lines=8,
-    )
-
-    return fig
+    # The band's bottom is the lower of the field grid and the photo/chart band.
+    return min(ry, 0.66) - 0.01
 
 
-def _build_page2(data: dict) -> Optional[Figure]:
-    """Second sheet: the proposed level's requirements, each with the employee's
-    facts beneath. Built whenever a level registration exists — no status filter
-    (once the record is there, the page is there)."""
-    reqs = data.get("level_requirements") or []
-    if not data.get("has_level_registration") and not reqs:
-        return None
+# Top of the flowed section columns: lower on page 1 (under the identity band),
+# higher on continuation pages (just the header). Bottom margin is shared.
+_BAND_BOTTOM = 0.60
+_CONT_TOP = 0.90
 
-    fig = _new_page()
+# Full-width single column for the requirements list — each requirement's facts
+# span the whole page (one comment per full-width block, like the HTML).
+_FULL_X = [0.025]
+_FULL_W = 0.95
+_FULL_INNER_CHARS = int((_FULL_W - 0.026) * 165)
+
+
+def _page1_columns(data: dict) -> list[list[_Block]]:
+    """The eight evaluation sections grouped into the three columns the layout
+    uses: col 1 = results / not achieved / development plan (IDP); col 2 =
+    strengths / competences-to-develop; col 3 = trainings / feedbacks. Anything
+    that overruns a column flows to continuation pages — nothing is truncated."""
     L = data.get("labels", {})
-    proposed = data.get("proposed_level")
-    title = L.get("level_requirements", "Level requirements")
-    if proposed:
-        title = f"{title}: {proposed}"
-    _header(fig, title)
+    g = data.get
+    c = _COL_INNER_CHARS
+    return [
+        [
+            _titled_block(L.get("results"), g("results_achievements"), c, INK),
+            _titled_block(L.get("not_achieved"), g("not_achieved"), c, INK),
+            _idp_block(L.get("idp"), g("idp_missions") or [], c),
+        ],
+        [
+            _titled_block(L.get("strengths"), g("strengths"), c, ACCENT),
+            _titled_block(L.get("development"), g("development_directions"), c, ACCENT),
+        ],
+        [
+            _titled_block(L.get("training"), g("training_done"), c, INK),
+            _titled_block(L.get("employee_feedback"), g("employee_feedback"), c, INK),
+            _titled_block(L.get("manager_feedback"), g("manager_feedback"), c, INK),
+        ],
+    ]
 
-    # Level sense (confirm / increase / decrease) just under the header band.
-    sense = data.get("proposed_level_sense")
-    if sense:
-        _text(fig, 0.025, 0.935, sense, 9.5, ACCENT, weight="bold", va="top")
 
-    # Two columns of requirement cards so a long list fits one page.
-    cols_x = [0.025, 0.515]
-    col_w = 0.46
-    wrap_chars = int(col_w * 150)  # wrap width that stays inside one column
-    top, bottom = 0.90, 0.05
-    per_col = max((len(reqs) + 1) // 2, 1) if reqs else 1
-    for i, req in enumerate(reqs):
-        col = 0 if i < per_col else 1
-        idx_in_col = i if col == 0 else i - per_col
-        cell_h = (top - bottom) / per_col
-        y = top - (idx_in_col + 1) * cell_h
-        x = cols_x[col]
-        _card(fig, x, y + 0.006, col_w, cell_h - 0.012)
-        # Wrap the requirement title so a long one can't bleed into the other
-        # column (the previous single-line _text caused the overlap).
-        title_txt = f"{i + 1}. {req.get('text') or '—'}"
-        title_wrapped = _clamp_lines(_wrap(title_txt, wrap_chars), 3)
-        n_title_lines = title_wrapped.count("\n") + 1
-        title_y = y + cell_h - 0.02
-        fig.text(
-            x + 0.012,
-            title_y,
-            title_wrapped,
-            fontsize=8.5,
-            color=INK,
-            fontweight="bold",
-            va="top",
-            ha="left",
-            fontfamily=FONT,
-            linespacing=1.25,
-            zorder=4,
-        )
-        facts = req.get("facts") or "—"
-        facts_y = title_y - n_title_lines * 0.020 - 0.006
-        avail = facts_y - (y + 0.012)
-        max_lines = max(2, int(avail / 0.019))
-        wrapped = _clamp_lines(_wrap(facts, wrap_chars), max_lines)
-        fig.text(
-            x + 0.012,
-            facts_y,
-            wrapped,
-            fontsize=7.5,
-            color=INK,
-            va="top",
-            ha="left",
-            fontfamily=FONT,
-            linespacing=1.3,
-            zorder=4,
-        )
+def _req_blocks(data: dict) -> list[_Block]:
+    """Each proposed-level requirement as a full-width block: numbered title +
+    FULL facts spanning the whole page (one comment per block, like the HTML)."""
+    reqs = data.get("level_requirements") or []
+    return [
+        _req_block(i, r.get("text"), r.get("facts"), _FULL_INNER_CHARS)
+        for i, r in enumerate(reqs, start=1)
+    ]
 
-    if not reqs:
-        fig.text(
-            0.5,
-            0.5,
-            "—",
-            color=MUTED,
-            fontsize=12,
-            ha="center",
-            va="center",
-            fontfamily=FONT,
-        )
-    return fig
+
+def _spread(blocks: list[_Block], n: int) -> list[list[_Block]]:
+    """Distribute a flat block list across `n` columns, balancing by measured
+    height so continuation pages fill evenly (greedy shortest-column-first)."""
+    cols: list[list[_Block]] = [[] for _ in range(n)]
+    heights = [0.0] * n
+    for blk in blocks:
+        i = heights.index(min(heights))
+        cols[i].append(blk)
+        heights[i] += blk.height + blk.GAP
+    return cols
+
+
+def _draw_flow_page(columns, top, draw_chrome, col_xs, col_w) -> tuple[Figure, bool]:
+    """Render ONE page from column-assigned blocks: chrome at the top, a uniform
+    full-height card behind each column that holds content, then the blocks.
+    `draw_chrome(fig)` may return a float to OVERRIDE the column top (the identity
+    band returns its computed bottom so a tall band pushes the columns down).
+    Returns (fig, more) — `more` is True if any block did not fit and remains in
+    `columns` for the next page. Mutates `columns` (placed blocks are consumed)."""
+    fig = _new_page()
+    override = draw_chrome(fig)
+    if isinstance(override, (int, float)):
+        top = override
+    placements, _ = _pack_one_page(columns, col_xs, top, _PAGE_BOTTOM)
+    used = {ci for _, ci, _, _ in placements}
+    # One uniform card per used column (top → page bottom) so columns keep the
+    # tidy equal-height grid instead of ragged content-hugging boxes.
+    for ci, cx in enumerate(col_xs):
+        if ci in used:
+            _card(fig, cx, _PAGE_BOTTOM - 0.012, col_w, top - _PAGE_BOTTOM + 0.018)
+    for blk, ci, x, btop in placements:
+        blk.draw(fig, x, btop, col_w - 0.026)
+    more = any(col for col in columns)
+    return fig, more
+
+
+def _render_flow(
+    columns, first_top, first_chrome, cont_chrome, col_xs=_COLS_X, col_w=_COL_W
+) -> list[Figure]:
+    """Flow column-assigned blocks across as many pages as needed. The first page
+    draws `first_chrome` (identity band / requirements header) and starts its
+    columns at `first_top`; continuation pages draw `cont_chrome` and use the full
+    height, re-spreading leftover blocks evenly across the columns. `col_xs`/`col_w`
+    pick the geometry — three columns for the sheet, one full-width column for the
+    requirement list (each requirement's facts span the whole page)."""
+    figs = []
+    fig, more = _draw_flow_page(columns, first_top, first_chrome, col_xs, col_w)
+    figs.append(fig)
+    while more:
+        leftover = [blk for col in columns for blk in col]
+        columns = _spread(leftover, len(col_xs))
+        fig, more = _draw_flow_page(columns, _CONT_TOP, cont_chrome, col_xs, col_w)
+        figs.append(fig)
+    return figs
 
 
 def _pages(data: dict) -> list[Figure]:
-    pages = [_build_page1(data)]
-    p2 = _build_page2(data)
-    if p2 is not None:
-        pages.append(p2)
+    name = data.get("full_name") or "—"
+    pages = _render_flow(
+        _page1_columns(data),
+        first_top=_BAND_BOTTOM,
+        first_chrome=lambda fig: _identity_band(fig, data),
+        cont_chrome=lambda fig: _header(fig, name),
+    )
+
+    reqs = _req_blocks(data)
+    if data.get("has_level_registration") or reqs:
+        L = data.get("labels", {})
+        proposed = data.get("proposed_level")
+        title = L.get("level_requirements", "Level requirements")
+        if proposed:
+            title = f"{title}: {proposed}"
+        chrome = lambda fig: _header(fig, title)  # noqa: E731
+        if not reqs:
+            fig = _new_page()
+            chrome(fig)
+            fig.text(
+                0.5,
+                0.5,
+                "—",
+                color=MUTED,
+                fontsize=12,
+                ha="center",
+                va="center",
+                fontfamily=FONT,
+            )
+            pages.append(fig)
+        else:
+            # Requirements flow in ONE full-width column (each fact spans the
+            # page) rather than the 3 narrow columns used for the sheet.
+            pages += _render_flow(
+                [list(reqs)],
+                first_top=_CONT_TOP,
+                first_chrome=chrome,
+                cont_chrome=chrome,
+                col_xs=_FULL_X,
+                col_w=_FULL_W,
+            )
     return pages
 
 

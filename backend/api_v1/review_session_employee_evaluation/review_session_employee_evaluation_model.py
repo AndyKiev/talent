@@ -26,9 +26,19 @@ class ReviewSessionEmployeeEvaluation(IntIdPkMixin, TimestampMixin, Base):
         ForeignKey("review_dimensions.id"), nullable=False
     )
     score: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    # Fractional competence level = arithmetic mean of the per-descriptor
-    # (hint bullet) star ratings. `score` keeps the rounded int for legacy
-    # progress/analytics; `mean_score` holds the exact value used for the graph.
+    # Fractional competence level = arithmetic mean of the per-descriptor (hint
+    # bullet) star ratings in `criterion_scores`. `score` is the rounded int for
+    # legacy progress/analytics; `mean_score` is a CACHE of the mean.
+    #
+    # SOURCE OF TRUTH for the graph value is `criterion_scores`, NOT this column.
+    # `mean_score` (and `score`) can be STALE or rounded — e.g. the seed writes
+    # mean_score = float(score), so a true 1.33 is stored as 1.00. The frontend
+    # graph recomputes live from criterion_scores (evalMean in
+    # frontend/.../evaluation/evaluationHelpers.ts), and the PDF/HTML album does
+    # the same in ReviewSessionEmployeeService._tempo_data. If a graph value ever
+    # shows as a whole number where the UI shows a fraction, this stale cache is
+    # the cause — average criterion_scores, don't trust mean_score. See memory
+    # `tempo-competence-value-source`.
     mean_score: Mapped[float | None] = mapped_column(Numeric(3, 2), nullable=True)
     facts: Mapped[str | None] = mapped_column(Text, nullable=True)
     improvement: Mapped[str | None] = mapped_column(Text, nullable=True)

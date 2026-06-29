@@ -547,7 +547,22 @@ class ReviewSessionEmployeeService(BaseService):
             color = dim.color if dim else "#1565C0"
             if dim and dim.key:
                 dim_meta[dim.key] = (name, color)
-            value = ev.mean_score if ev.mean_score is not None else ev.score
+            # Competence level = the LIVE mean of the per-descriptor (criterion)
+            # star ratings, exactly like the frontend graph (evalMean). The stored
+            # mean_score/score can be stale or rounded (e.g. seeded as the whole
+            # score), so the criterion scores — the same source the UI averages —
+            # win when present; mean_score then score are only fallbacks.
+            crit = [
+                cs.score
+                for cs in (getattr(ev, "criterion_scores", None) or [])
+                if cs.score is not None
+            ]
+            if crit:
+                value = sum(crit) / len(crit)
+            elif ev.mean_score is not None:
+                value = ev.mean_score
+            else:
+                value = ev.score
             competences.append(
                 (name, float(value) if value is not None else 0.0, color)
             )
@@ -719,6 +734,12 @@ class ReviewSessionEmployeeService(BaseService):
                 )
 
             for j in sorted(audit_jobs, key=_job_months):
+                # Skip "nomination" (applied) and "skipped" rows. A nomination
+                # targets the employee's CURRENT job, so it only restates the
+                # position already shown above; a skipped row is no longer a
+                # live target — neither belongs in the album.
+                if j.status and j.status.key in ("applied", "skipped"):
+                    continue
                 link = j.talent_status_period_link
                 status_period = (
                     f"{link.talent_status.key} - {link.talent_period.name}"
@@ -779,6 +800,7 @@ class ReviewSessionEmployeeService(BaseService):
             "manager_feedback": "managerFeedback",
             "birth_age": "birthDate",
             "marital_children": "maritalStatus",
+            "children": "childrenAges",
             "position": "job",
             "languages": "foreignLanguages",
             "education": "education",

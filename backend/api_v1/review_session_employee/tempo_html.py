@@ -26,12 +26,13 @@ _ENV = jinja2.Environment(autoescape=True)  # escape all user-provided text
 
 
 def _fmt_value(v) -> str:
-    """Competence level: fractional shown with 2 decimals, whole as integer."""
+    """Competence level is a MEAN of behaviours — always 2 decimals so it never
+    reads as a rounded whole grade (3.00, not 3)."""
     try:
         f = float(v)
     except (TypeError, ValueError):
         return "—"
-    return f"{f:.2f}" if f % 1 else f"{f:g}"
+    return f"{f:.2f}"
 
 
 def _prep(data: dict) -> dict:
@@ -65,7 +66,8 @@ def _prep(data: dict) -> dict:
     # Two-column identity grid (label, value) pairs.
     fields = [
         (L.get("birth_age"), _join(g("birth_date"), g("age"), " · ")),
-        (L.get("marital_children"), _join(g("marital_status"), g("children"), " · ")),
+        (L.get("marital_children"), g("marital_status")),
+        (L.get("children"), g("children")),
         (L.get("position"), g("position")),
         (L.get("languages"), g("lang_level")),
         (L.get("education"), g("education")),
@@ -121,6 +123,15 @@ def _prep(data: dict) -> dict:
         "competences": competences,
         "fields": [(lbl, val) for lbl, val in fields if lbl],
         "sections": [s for s in sections if s["title"]],
+        # Resolved titles so the column split can address sections by role
+        # (not by list position, which empty sections would shift).
+        "section_titles": {
+            "results": L.get("results"),
+            "not_achieved": L.get("not_achieved"),
+            "strengths": L.get("strengths"),
+            "development": L.get("development"),
+            "idp": L.get("idp"),
+        },
         "requirements": reqs,
         "req_title": req_title,
         "req_sense": g("proposed_level_sense"),
@@ -139,7 +150,7 @@ _CSS = """
 *{box-sizing:border-box;}
 body{margin:0;background:var(--paper);color:var(--ink);
 font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:13px;}
-.slide{display:none;max-width:1180px;margin:0 auto;padding:0 14px 40px;}
+.slide{display:none;max-width:1680px;margin:0 auto;padding:0 28px 40px;}
 .slide.active{display:block;}
 .head{position:sticky;top:0;z-index:5;background:var(--ink);color:#fff;
 display:flex;align-items:center;justify-content:space-between;
@@ -165,8 +176,9 @@ overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 position:relative;overflow:hidden;}
 .chart .fill{position:absolute;left:0;top:0;bottom:0;border-radius:6px;}
 .chart .sc{width:42px;text-align:right;font-size:12px;font-weight:700;}
-/* Narrower results / feedback columns, wider competences-summary column. */
-.cols{display:grid;grid-template-columns:0.8fr 1.5fr 0.7fr;gap:14px;margin-top:14px;}
+/* Col 1 (results / not achieved / development) is the fullest, so it gets the
+   most room; the other two split the rest evenly. */
+.cols{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:14px;margin-top:14px;}
 .sec{margin-bottom:14px;}
 .sec h3{margin:0 0 4px;font-size:13px;font-weight:700;text-transform:uppercase;
 letter-spacing:.3px;}
@@ -267,8 +279,6 @@ _SHEET = """
     <a class="jump" href="#req-{{ idx }}">▼ {{ s.req_title }}</a>
   </div>
   <div class="req" id="req-{{ idx }}">
-    <h3 style="margin:14px 0 6px">{{ s.req_title }}</h3>
-    {% if s.req_sense %}<div style="font-size:12px;font-weight:700;color:var(--accent);margin:-2px 0 8px">↕ {{ s.req_sense }}</div>{% endif %}
     {% for r in s.requirements %}
     <div class="item"><div class="t">{{ r.n }}. {{ r.text }}</div>
       <div class="f {% if not r.facts %}empty{% endif %}">{{ r.facts if r.facts else "—" }}</div></div>
@@ -324,9 +334,18 @@ _DOC = """<!DOCTYPE html>
 
 
 def _render_sheet(s: dict, idx: int) -> str:
-    # Split the 8 sections into 3 columns (3 / 3 / 2) like the PDF layout.
+    # Split the 8 sections into 3 columns. The Development PLAN (IDP missions)
+    # sits in column 1 under "not achieved"; column 1 = results / not achieved /
+    # IDP, column 2 = strengths / to-develop competences, col 3 = training /
+    # feedbacks. Keyed by title so hidden (empty-title) sections can't shift it.
     secs = s["sections"]
-    s = {**s, "section_cols": [secs[0:2], secs[2:5], secs[5:8]]}
+    titles = s["section_titles"]
+    col1_keys = {titles["results"], titles["not_achieved"], titles["idp"]}
+    col2_keys = {titles["strengths"], titles["development"]}
+    col1 = [sec for sec in secs if sec["title"] in col1_keys]
+    col2 = [sec for sec in secs if sec["title"] in col2_keys]
+    col3 = [sec for sec in secs if sec["title"] not in col1_keys | col2_keys]
+    s = {**s, "section_cols": [col1, col2, col3]}
     return _ENV.from_string(_SHEET).render(s=s, idx=idx)
 
 
