@@ -37,6 +37,7 @@ import { Route as DeveloperSettingsIndexRouteImport } from './routes/developer/s
 import { Route as DeveloperSecurityIndexRouteImport } from './routes/developer/security/index'
 import { Route as DeveloperProcess_rolesIndexRouteImport } from './routes/developer/process_roles/index'
 import { Route as DeveloperEvent_applyIndexRouteImport } from './routes/developer/event_apply/index'
+import { Route as DeveloperDb_tablesIndexRouteImport } from './routes/developer/db_tables/index'
 import { Route as DeveloperCatalogIndexRouteImport } from './routes/developer/catalog/index'
 import { Route as DeveloperAudit_logIndexRouteImport } from './routes/developer/audit_log/index'
 import { Route as AdminUser_groups_groupIndexRouteImport } from './routes/admin/user_groups_group/index'
@@ -76,6 +77,7 @@ import { Route as DeveloperProcess_rolesProcess_roleIndexRouteImport } from './r
 import { Route as DeveloperProcess_rolesProcessIndexRouteImport } from './routes/developer/process_roles/process/index'
 import { Route as DeveloperCatalogOperationsIndexRouteImport } from './routes/developer/catalog/operations/index'
 import { Route as DeveloperCatalogEssencesIndexRouteImport } from './routes/developer/catalog/essences/index'
+import { Route as DeveloperCatalogDb_tablesIndexRouteImport } from './routes/developer/catalog/db_tables/index'
 import { Route as AdminUser_groups_groupUsersIndexRouteImport } from './routes/admin/user_groups_group/users/index'
 import { Route as AdminUser_groups_groupUser_groupsIndexRouteImport } from './routes/admin/user_groups_group/user_groups/index'
 import { Route as AdminUser_groups_groupUser_group_typesIndexRouteImport } from './routes/admin/user_groups_group/user_group_types/index'
@@ -272,6 +274,11 @@ const DeveloperEvent_applyIndexRoute =
     path: '/developer/event_apply/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const DeveloperDb_tablesIndexRoute = DeveloperDb_tablesIndexRouteImport.update({
+  id: '/developer/db_tables/',
+  path: '/developer/db_tables/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DeveloperCatalogIndexRoute = DeveloperCatalogIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -493,6 +500,12 @@ const DeveloperCatalogEssencesIndexRoute =
   DeveloperCatalogEssencesIndexRouteImport.update({
     id: '/essences/',
     path: '/essences/',
+    getParentRoute: () => DeveloperCatalogRouteRoute,
+  } as any)
+const DeveloperCatalogDb_tablesIndexRoute =
+  DeveloperCatalogDb_tablesIndexRouteImport.update({
+    id: '/db_tables/',
+    path: '/db_tables/',
     getParentRoute: () => DeveloperCatalogRouteRoute,
   } as any)
 const AdminUser_groups_groupUsersIndexRoute =
@@ -811,6 +824,7 @@ export interface FileRoutesByFullPath {
   '/admin/user_groups_group/': typeof AdminUser_groups_groupIndexRoute
   '/developer/audit_log': typeof DeveloperAudit_logIndexRoute
   '/developer/catalog/': typeof DeveloperCatalogIndexRoute
+  '/developer/db_tables': typeof DeveloperDb_tablesIndexRoute
   '/developer/event_apply': typeof DeveloperEvent_applyIndexRoute
   '/developer/process_roles/': typeof DeveloperProcess_rolesIndexRoute
   '/developer/security/': typeof DeveloperSecurityIndexRoute
@@ -848,6 +862,7 @@ export interface FileRoutesByFullPath {
   '/admin/user_groups_group/user_group_types': typeof AdminUser_groups_groupUser_group_typesIndexRoute
   '/admin/user_groups_group/user_groups': typeof AdminUser_groups_groupUser_groupsIndexRoute
   '/admin/user_groups_group/users': typeof AdminUser_groups_groupUsersIndexRoute
+  '/developer/catalog/db_tables': typeof DeveloperCatalogDb_tablesIndexRoute
   '/developer/catalog/essences': typeof DeveloperCatalogEssencesIndexRoute
   '/developer/catalog/operations': typeof DeveloperCatalogOperationsIndexRoute
   '/developer/process_roles/process': typeof DeveloperProcess_rolesProcessIndexRoute
@@ -908,6 +923,7 @@ export interface FileRoutesByTo {
   '/admin/user_groups_group': typeof AdminUser_groups_groupIndexRoute
   '/developer/audit_log': typeof DeveloperAudit_logIndexRoute
   '/developer/catalog': typeof DeveloperCatalogIndexRoute
+  '/developer/db_tables': typeof DeveloperDb_tablesIndexRoute
   '/developer/event_apply': typeof DeveloperEvent_applyIndexRoute
   '/developer/process_roles': typeof DeveloperProcess_rolesIndexRoute
   '/developer/security': typeof DeveloperSecurityIndexRoute
@@ -943,6 +959,7 @@ export interface FileRoutesByTo {
   '/admin/user_groups_group/user_group_types': typeof AdminUser_groups_groupUser_group_typesIndexRoute
   '/admin/user_groups_group/user_groups': typeof AdminUser_groups_groupUser_groupsIndexRoute
   '/admin/user_groups_group/users': typeof AdminUser_groups_groupUsersIndexRoute
+  '/developer/catalog/db_tables': typeof DeveloperCatalogDb_tablesIndexRoute
   '/developer/catalog/essences': typeof DeveloperCatalogEssencesIndexRoute
   '/developer/catalog/operations': typeof DeveloperCatalogOperationsIndexRoute
   '/developer/process_roles/process': typeof DeveloperProcess_rolesProcessIndexRoute
@@ -1021,6 +1038,7 @@ export interface FileRoutesById {
   '/admin/user_groups_group/': typeof AdminUser_groups_groupIndexRoute
   '/developer/audit_log/': typeof DeveloperAudit_logIndexRoute
   '/developer/catalog/': typeof DeveloperCatalogIndexRoute
+  '/developer/db_tables/': typeof DeveloperDb_tablesIndexRoute
   '/developer/event_apply/': typeof DeveloperEvent_applyIndexRoute
   '/developer/process_roles/': typeof DeveloperProcess_rolesIndexRoute
   '/developer/security/': typeof DeveloperSecurityIndexRoute
@@ -1058,6 +1076,7 @@ export interface FileRoutesById {
   '/admin/user_groups_group/user_group_types/': typeof AdminUser_groups_groupUser_group_typesIndexRoute
   '/admin/user_groups_group/user_groups/': typeof AdminUser_groups_groupUser_groupsIndexRoute
   '/admin/user_groups_group/users/': typeof AdminUser_groups_groupUsersIndexRoute
+  '/developer/catalog/db_tables/': typeof DeveloperCatalogDb_tablesIndexRoute
   '/developer/catalog/essences/': typeof DeveloperCatalogEssencesIndexRoute
   '/developer/catalog/operations/': typeof DeveloperCatalogOperationsIndexRoute
   '/developer/process_roles/process/': typeof DeveloperProcess_rolesProcessIndexRoute
@@ -1137,6 +1156,7 @@ export interface FileRouteTypes {
     | '/admin/user_groups_group/'
     | '/developer/audit_log'
     | '/developer/catalog/'
+    | '/developer/db_tables'
     | '/developer/event_apply'
     | '/developer/process_roles/'
     | '/developer/security/'
@@ -1174,6 +1194,7 @@ export interface FileRouteTypes {
     | '/admin/user_groups_group/user_group_types'
     | '/admin/user_groups_group/user_groups'
     | '/admin/user_groups_group/users'
+    | '/developer/catalog/db_tables'
     | '/developer/catalog/essences'
     | '/developer/catalog/operations'
     | '/developer/process_roles/process'
@@ -1234,6 +1255,7 @@ export interface FileRouteTypes {
     | '/admin/user_groups_group'
     | '/developer/audit_log'
     | '/developer/catalog'
+    | '/developer/db_tables'
     | '/developer/event_apply'
     | '/developer/process_roles'
     | '/developer/security'
@@ -1269,6 +1291,7 @@ export interface FileRouteTypes {
     | '/admin/user_groups_group/user_group_types'
     | '/admin/user_groups_group/user_groups'
     | '/admin/user_groups_group/users'
+    | '/developer/catalog/db_tables'
     | '/developer/catalog/essences'
     | '/developer/catalog/operations'
     | '/developer/process_roles/process'
@@ -1346,6 +1369,7 @@ export interface FileRouteTypes {
     | '/admin/user_groups_group/'
     | '/developer/audit_log/'
     | '/developer/catalog/'
+    | '/developer/db_tables/'
     | '/developer/event_apply/'
     | '/developer/process_roles/'
     | '/developer/security/'
@@ -1383,6 +1407,7 @@ export interface FileRouteTypes {
     | '/admin/user_groups_group/user_group_types/'
     | '/admin/user_groups_group/user_groups/'
     | '/admin/user_groups_group/users/'
+    | '/developer/catalog/db_tables/'
     | '/developer/catalog/essences/'
     | '/developer/catalog/operations/'
     | '/developer/process_roles/process/'
@@ -1446,6 +1471,7 @@ export interface RootRouteChildren {
   AdminJobsIndexRoute: typeof AdminJobsIndexRoute
   AdminStructureIndexRoute: typeof AdminStructureIndexRoute
   DeveloperAudit_logIndexRoute: typeof DeveloperAudit_logIndexRoute
+  DeveloperDb_tablesIndexRoute: typeof DeveloperDb_tablesIndexRoute
   DeveloperEvent_applyIndexRoute: typeof DeveloperEvent_applyIndexRoute
   DeveloperSettingsIndexRoute: typeof DeveloperSettingsIndexRoute
   DeveloperTranslationsIndexRoute: typeof DeveloperTranslationsIndexRoute
@@ -1653,6 +1679,13 @@ declare module '@tanstack/react-router' {
       path: '/developer/event_apply'
       fullPath: '/developer/event_apply'
       preLoaderRoute: typeof DeveloperEvent_applyIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/developer/db_tables/': {
+      id: '/developer/db_tables/'
+      path: '/developer/db_tables'
+      fullPath: '/developer/db_tables'
+      preLoaderRoute: typeof DeveloperDb_tablesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/developer/catalog/': {
@@ -1926,6 +1959,13 @@ declare module '@tanstack/react-router' {
       path: '/essences'
       fullPath: '/developer/catalog/essences'
       preLoaderRoute: typeof DeveloperCatalogEssencesIndexRouteImport
+      parentRoute: typeof DeveloperCatalogRouteRoute
+    }
+    '/developer/catalog/db_tables/': {
+      id: '/developer/catalog/db_tables/'
+      path: '/db_tables'
+      fullPath: '/developer/catalog/db_tables'
+      preLoaderRoute: typeof DeveloperCatalogDb_tablesIndexRouteImport
       parentRoute: typeof DeveloperCatalogRouteRoute
     }
     '/admin/user_groups_group/users/': {
@@ -2563,12 +2603,14 @@ const AdminUser_groups_groupRouteRouteWithChildren =
 
 interface DeveloperCatalogRouteRouteChildren {
   DeveloperCatalogIndexRoute: typeof DeveloperCatalogIndexRoute
+  DeveloperCatalogDb_tablesIndexRoute: typeof DeveloperCatalogDb_tablesIndexRoute
   DeveloperCatalogEssencesIndexRoute: typeof DeveloperCatalogEssencesIndexRoute
   DeveloperCatalogOperationsIndexRoute: typeof DeveloperCatalogOperationsIndexRoute
 }
 
 const DeveloperCatalogRouteRouteChildren: DeveloperCatalogRouteRouteChildren = {
   DeveloperCatalogIndexRoute: DeveloperCatalogIndexRoute,
+  DeveloperCatalogDb_tablesIndexRoute: DeveloperCatalogDb_tablesIndexRoute,
   DeveloperCatalogEssencesIndexRoute: DeveloperCatalogEssencesIndexRoute,
   DeveloperCatalogOperationsIndexRoute: DeveloperCatalogOperationsIndexRoute,
 }
@@ -2692,6 +2734,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminJobsIndexRoute: AdminJobsIndexRoute,
   AdminStructureIndexRoute: AdminStructureIndexRoute,
   DeveloperAudit_logIndexRoute: DeveloperAudit_logIndexRoute,
+  DeveloperDb_tablesIndexRoute: DeveloperDb_tablesIndexRoute,
   DeveloperEvent_applyIndexRoute: DeveloperEvent_applyIndexRoute,
   DeveloperSettingsIndexRoute: DeveloperSettingsIndexRoute,
   DeveloperTranslationsIndexRoute: DeveloperTranslationsIndexRoute,

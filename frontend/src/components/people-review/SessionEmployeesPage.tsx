@@ -130,11 +130,29 @@ export function SessionEmployeesPage() {
     const qk = ['session_employees', sid] as const;
     const sessQk = ['review_sessions'] as const;
 
+    // Active people-review scope. Drives both the supervision "context complete"
+    // gate (below) and the oversight-only reorder toggle (further down).
+    const { data: scopes } = useQuery({
+        queryKey: PEOPLE_REVIEW_MY_SCOPES_QK,
+        queryFn: fetchMyScopes,
+        staleTime: 60_000,
+    });
+    const activeRole = scopes?.roles.find(r => r.process_role_id === scopes.active.process_role_id);
+
+    // Supervision mode shows a roster only once BOTH the mode and a department are
+    // chosen. While supervision is active but no department is picked, the context
+    // is "incomplete": don't fetch the roster (would search/return just self), show
+    // a placeholder instead.
+    const contextIncomplete = activeRole?.link_target === 'department' && scopes?.active.department_id == null;
+
     const { data: rows = [], isLoading, isFetching, error } = useQuery({
         queryKey: qk,
         queryFn: () => fetchSessionEmployees(sid),
         staleTime: 30_000,
-        enabled: !!sid,
+        // Wait for scopes to load before fetching: until then contextIncomplete is
+        // false (no role yet), and on a supervision+no-dept reload that would flash
+        // the self-only roster for one render before the gate engages.
+        enabled: !!sid && !!scopes && !contextIncomplete,
     });
 
     // Need session info for status + name
@@ -146,12 +164,6 @@ export function SessionEmployeesPage() {
 
     // Reordering the presentation queue is an oversight-only action: the active
     // people-review role must target employees (link_target === 'employee').
-    const { data: scopes } = useQuery({
-        queryKey: PEOPLE_REVIEW_MY_SCOPES_QK,
-        queryFn: fetchMyScopes,
-        staleTime: 60_000,
-    });
-    const activeRole = scopes?.roles.find(r => r.process_role_id === scopes.active.process_role_id);
     const isOversightActive = activeRole?.link_target === 'employee';
     const canReorder = isOversightActive && !isSessionClosed;
 
@@ -391,7 +403,7 @@ export function SessionEmployeesPage() {
         <AppShell>
             <BusyBackdrop
                 open={presLoading || (isFetching && !isLoading)}
-                label={presLoading ? getString('tempoPresentationBuilding') : 'Loading\u2026'}
+                label={presLoading ? getString('tempoPresentationBuilding') : (getString('loading') || 'Loading\u2026')}
             />
             <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: '100%', px: { xs: 2, sm: 4, md: 6 } }}>
                 <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
@@ -430,10 +442,17 @@ export function SessionEmployeesPage() {
                     </Alert>
                 )}
 
-                {isLoading && <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>}
-                {!isLoading && error && <Alert severity="error">{(error as Error).message}</Alert>}
+                {/* Supervision mode on, but no department chosen yet: no roster, prompt to pick one. */}
+                {contextIncomplete && (
+                    <Alert severity="info" icon={<VisibilityIcon />} sx={{ mb: 2, borderRadius: '10px' }}>
+                        {getString('selectDepartmentToSeeRoster')}
+                    </Alert>
+                )}
 
-                {!isLoading && !error && (
+                {!contextIncomplete && isLoading && <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>}
+                {!contextIncomplete && !isLoading && error && <Alert severity="error">{(error as Error).message}</Alert>}
+
+                {!contextIncomplete && !isLoading && !error && (
                     <>
                         <Box sx={{ mb: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
                             {!isSessionClosed ? (

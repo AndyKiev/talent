@@ -84,7 +84,7 @@ export function EmployeeEditDialog({ employee, onClose, updateMutation }: Props)
 
     return (
         <Dialog open={!!employee} onClose={handleClose} maxWidth="sm" fullWidth>
-            <DialogTitle>{cfl(getString('editEmployee') || 'Edit Employee')}</DialogTitle>
+            <DialogTitle>{cfl(getString('editEmployee') || 'Edit Employee card')}</DialogTitle>
             <DialogContent>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, mt: 1 }}>
                     {updateMutation.isError && (
@@ -118,7 +118,7 @@ export function EmployeeEditDialog({ employee, onClose, updateMutation }: Props)
                     <Divider />
 
                     <TextField
-                        label={cfl(getString('name') || 'Name')}
+                        label={cfl(getString('employeeName') || 'employee Name')}
                         required
                         fullWidth
                         slotProps={{ htmlInput: { maxLength: 100 } }}

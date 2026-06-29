@@ -52,7 +52,28 @@ class ReviewLevelService(BaseService):
     async def create_level(
         self, level_in: ReviewLevelCreate
     ) -> MutationResponse[ReviewLevelSchema]:
-        record = await self.create(level_in)
+        from backend.api_v1.msg_full.msg_full_helper import upsert_translations
+
+        # Persist the inline EN/UK text (if supplied) for the name/description keys
+        # before creating the row, so the keys resolve to real text.
+        entries = {
+            level_in.name_key: {"eng": level_in.name_eng, "ukr": level_in.name_ukr}
+        }
+        if level_in.description_key:
+            entries[level_in.description_key] = {
+                "eng": level_in.description_eng,
+                "ukr": level_in.description_ukr,
+            }
+        await upsert_translations(self.session, entries)
+
+        record = await self.create_from_dict(
+            {
+                "name_key": level_in.name_key,
+                "description_key": level_in.description_key,
+                "sort_order": level_in.sort_order,
+                "is_active": level_in.is_active,
+            }
+        )
         schema = ReviewLevelSchema.model_validate(record)
         detail = await self._resolve_domain_success(
             ReviewLevelCreateSuccess(schema.name_key)

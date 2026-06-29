@@ -25,6 +25,12 @@ export interface ReviewLevelCreate {
     description_key?: string | null;
     sort_order: number;
     is_active: boolean;
+    // Optional inline EN/UK text — when set, the backend upserts the translation
+    // for name_key / description_key before creating the row.
+    name_eng?: string;
+    name_ukr?: string;
+    description_eng?: string;
+    description_ukr?: string;
 }
 
 export interface ReviewLevelUpdate {

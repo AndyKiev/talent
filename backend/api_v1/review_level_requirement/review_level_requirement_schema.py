@@ -10,7 +10,10 @@ class ReviewLevelRequirementBase(BaseModel):
 
 
 class ReviewLevelRequirementCreate(ReviewLevelRequirementBase):
-    pass
+    # Optional inline translation text — see ReviewLevelCreate. When provided the
+    # create endpoint upserts {text_key: {eng, ukr}} server-side before the row.
+    text_eng: Optional[str] = None
+    text_ukr: Optional[str] = None
 
 
 class ReviewLevelRequirementUpdate(BaseModel):

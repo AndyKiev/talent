@@ -1,161 +1,141 @@
 [
   {
-    "name_key": "reviewLevelName0",
-    "description_key": "reviewLevelDesc0",
+    "name_key": "reviewLevelName_base",
+    "description_key": "reviewLevelDesc_learningAndIntegrating",
     "sort_order": 0,
     "is_active": true,
     "requirements": [
       {
-        "text_key": "reviewLevelReq_0_1",
-        "sort_order": 10
+        "text_key": "reviewLevelReq_learnsCompanyStandards",
+        "sort_order": 0
       },
       {
-        "text_key": "reviewLevelReq_0_2",
-        "sort_order": 20
+        "text_key": "reviewLevelReq_learningProfession",
+        "sort_order": 1
       },
       {
-        "text_key": "reviewLevelReq_0_3",
-        "sort_order": 30
+        "text_key": "reviewLevelReq_worksInNewPerimeter",
+        "sort_order": 2
       },
       {
-        "text_key": "reviewLevelReq_0_4",
-        "sort_order": 40
+        "text_key": "reviewLevelReq_needsKeyCompetences",
+        "sort_order": 3
       },
       {
-        "text_key": "reviewLevelReq_0_5",
-        "sort_order": 50
+        "text_key": "reviewLevelReq_roleNotFullyMatching",
+        "sort_order": 4
+      },
+      {
+        "text_key": "reviewLevelReq_knowsCompanyValues",
+        "sort_order": 5
       }
     ]
   },
   {
-    "name_key": "reviewLevelName1",
-    "description_key": "reviewLevelDesc1",
-    "sort_order": 10,
+    "name_key": "reviewLevelName_l1",
+    "description_key": "reviewLevelDesc_autonomousInProfession",
+    "sort_order": 1,
     "is_active": true,
     "requirements": [
       {
-        "text_key": "reviewLevelReq_1_1",
-        "sort_order": 10
+        "text_key": "reviewLevelReq_performsTasksIndependently",
+        "sort_order": 0
       },
       {
-        "text_key": "reviewLevelReq_1_2",
-        "sort_order": 20
+        "text_key": "reviewLevelReq_knowsStrengthsAdapts",
+        "sort_order": 1
       },
       {
-        "text_key": "reviewLevelReq_1_3",
-        "sort_order": 30
+        "text_key": "reviewLevelReq_explainsCompetencesWithFacts",
+        "sort_order": 2
       },
       {
-        "text_key": "reviewLevelReq_1_4",
-        "sort_order": 40
+        "text_key": "reviewLevelReq_identifiesDevelopmentAreas",
+        "sort_order": 4
       },
       {
-        "text_key": "reviewLevelReq_1_5",
-        "sort_order": 50
+        "text_key": "reviewLevelReq_achievesGoalsAndKpis",
+        "sort_order": 5
       },
       {
-        "text_key": "reviewLevelReq_1_6",
-        "sort_order": 60
-      },
-      {
-        "text_key": "reviewLevelReq_1_7",
-        "sort_order": 70
+        "text_key": "reviewLevelReq_hasTwoCompetences",
+        "sort_order": 6
       }
     ]
   },
   {
-    "name_key": "reviewLevelName2",
-    "description_key": "reviewLevelDesc2",
-    "sort_order": 20,
+    "name_key": "reviewLevelName_l2",
+    "description_key": "reviewLevelDesc_improveExistingState",
+    "sort_order": 2,
     "is_active": true,
     "requirements": [
       {
-        "text_key": "reviewLevelReq_2_1",
-        "sort_order": 10
+        "text_key": "reviewLevelReq_mastersComplexTasks",
+        "sort_order": 1
       },
       {
-        "text_key": "reviewLevelReq_2_2",
-        "sort_order": 20
+        "text_key": "reviewLevelReq_missionsBeyondProfession",
+        "sort_order": 2
       },
       {
-        "text_key": "reviewLevelReq_2_3",
-        "sort_order": 30
+        "text_key": "reviewLevelReq_mentorsJuniorColleagues",
+        "sort_order": 3
       },
       {
-        "text_key": "reviewLevelReq_2_4",
-        "sort_order": 40
+        "text_key": "reviewLevelReq_mastersAdjacentProfessions",
+        "sort_order": 4
       },
       {
-        "text_key": "reviewLevelReq_2_5",
-        "sort_order": 50
+        "text_key": "reviewLevelReq_improvesDepartmentStandards",
+        "sort_order": 5
       },
       {
-        "text_key": "reviewLevelReq_2_6",
-        "sort_order": 60
-      },
-      {
-        "text_key": "reviewLevelReq_2_7",
-        "sort_order": 70
-      },
-      {
-        "text_key": "reviewLevelReq_2_8",
-        "sort_order": 80
-      },
-      {
-        "text_key": "reviewLevelReq_2_9",
-        "sort_order": 90
+        "text_key": "reviewLevelReq_hasThreeCompetences",
+        "sort_order": 6
       }
     ]
   },
   {
-    "name_key": "reviewLevelName3",
-    "description_key": "reviewLevelDesc3",
-    "sort_order": 30,
+    "name_key": "reviewLevelName_l3",
+    "description_key": "reviewLevelDesc_inspireBeyondDirectorate",
+    "sort_order": 3,
     "is_active": true,
     "requirements": [
       {
-        "text_key": "reviewLevelReq_3_1",
-        "sort_order": 10
+        "text_key": "reviewLevelReq_appliesVisionForesight",
+        "sort_order": 1
       },
       {
-        "text_key": "reviewLevelReq_3_2",
-        "sort_order": 20
+        "text_key": "reviewLevelReq_initiatesCrossProfessionMissions",
+        "sort_order": 2
       },
       {
-        "text_key": "reviewLevelReq_3_3",
-        "sort_order": 30
+        "text_key": "reviewLevelReq_involvesColleaguesInDecisions",
+        "sort_order": 3
       },
       {
-        "text_key": "reviewLevelReq_3_4",
-        "sort_order": 40
+        "text_key": "reviewLevelReq_proposesHolisticIdeas",
+        "sort_order": 4
       },
       {
-        "text_key": "reviewLevelReq_3_5",
-        "sort_order": 50
+        "text_key": "reviewLevelReq_appliesCompanyStrategy",
+        "sort_order": 5
       },
       {
-        "text_key": "reviewLevelReq_3_6",
-        "sort_order": 60
+        "text_key": "reviewLevelReq_hasFourCompetencesRoleModel",
+        "sort_order": 6
       },
       {
-        "text_key": "reviewLevelReq_3_7",
-        "sort_order": 70
+        "text_key": "reviewLevelReq_activeInCompanyLife",
+        "sort_order": 7
       },
       {
-        "text_key": "reviewLevelReq_3_8",
-        "sort_order": 80
+        "text_key": "reviewLevelReq_deliversTrainings",
+        "sort_order": 8
       },
       {
-        "text_key": "reviewLevelReq_3_9",
-        "sort_order": 90
-      },
-      {
-        "text_key": "reviewLevelReq_3_10",
-        "sort_order": 100
-      },
-      {
-        "text_key": "reviewLevelReq_3_11",
-        "sort_order": 110
+        "text_key": "reviewLevelReq_positiveCrossDeptFeedback",
+        "sort_order": 9
       }
     ]
   }

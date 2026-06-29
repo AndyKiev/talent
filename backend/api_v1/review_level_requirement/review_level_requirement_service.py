@@ -57,7 +57,21 @@ class ReviewLevelRequirementService(BaseService):
     async def create_requirement(
         self, req_in: ReviewLevelRequirementCreate
     ) -> MutationResponse[ReviewLevelRequirementSchema]:
-        record = await self.create(req_in)
+        from backend.api_v1.msg_full.msg_full_helper import upsert_translations
+
+        # Persist the inline EN/UK text (if supplied) for the requirement key first.
+        await upsert_translations(
+            self.session,
+            {req_in.text_key: {"eng": req_in.text_eng, "ukr": req_in.text_ukr}},
+        )
+        record = await self.create_from_dict(
+            {
+                "level_id": req_in.level_id,
+                "text_key": req_in.text_key,
+                "sort_order": req_in.sort_order,
+                "is_active": req_in.is_active,
+            }
+        )
         schema = ReviewLevelRequirementSchema.model_validate(record)
         detail = await self._resolve_domain_success(
             ReviewLevelRequirementCreateSuccess(str(schema.id))

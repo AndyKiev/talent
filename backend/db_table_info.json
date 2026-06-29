@@ -2147,7 +2147,7 @@
         }
       ],
       "current": {
-        "row_count": 74,
+        "row_count": 75,
         "size_bytes": 98304,
         "size_pretty": "96 kB"
       },
@@ -2990,7 +2990,7 @@
         }
       ],
       "current": {
-        "row_count": 2269,
+        "row_count": 2278,
         "size_bytes": 393216,
         "size_pretty": "384 kB"
       },
@@ -3203,7 +3203,7 @@
         }
       ],
       "current": {
-        "row_count": 4537,
+        "row_count": 4555,
         "size_bytes": 811008,
         "size_pretty": "792 kB"
       },
@@ -4993,7 +4993,7 @@
       "table_name": "review_session_employees",
       "sort_order": 710,
       "description_ru": "Сотрудники, участвующие в сессии оценки",
-      "sample_limit": 30,
+      "sample_limit": 150,
       "columns": [
         {
           "name": "id",
@@ -6364,5 +6364,76 @@
       }
     }
   ],
-  "column_prefs": []
+  "column_prefs": [
+    {
+      "field": "table_name",
+      "hidden": false,
+      "sortable": true,
+      "filterable": true,
+      "width": 466
+    },
+    {
+      "field": "description_ru",
+      "hidden": false,
+      "sortable": true,
+      "filterable": true,
+      "width": null
+    },
+    {
+      "field": "current_row_count",
+      "hidden": false,
+      "sortable": true,
+      "filterable": true,
+      "width": null
+    },
+    {
+      "field": "prev_row_count",
+      "hidden": false,
+      "sortable": true,
+      "filterable": true,
+      "width": null
+    },
+    {
+      "field": "delta_rows",
+      "hidden": false,
+      "sortable": true,
+      "filterable": true,
+      "width": null
+    },
+    {
+      "field": "current_size",
+      "hidden": false,
+      "sortable": true,
+      "filterable": true,
+      "width": null
+    },
+    {
+      "field": "previous_size",
+      "hidden": false,
+      "sortable": true,
+      "filterable": true,
+      "width": null
+    },
+    {
+      "field": "delta_size",
+      "hidden": false,
+      "sortable": true,
+      "filterable": true,
+      "width": null
+    },
+    {
+      "field": "columns_count",
+      "hidden": false,
+      "sortable": true,
+      "filterable": true,
+      "width": null
+    },
+    {
+      "field": "sample_limit",
+      "hidden": false,
+      "sortable": true,
+      "filterable": true,
+      "width": null
+    }
+  ]
 }

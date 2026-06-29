@@ -27,6 +27,7 @@ import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import LockIcon from '@mui/icons-material/Lock';
 import ReplayIcon from '@mui/icons-material/Replay';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -156,16 +157,16 @@ export function EvaluationPage() {
     const activeRole = scopes?.roles.find((r) => r.process_role_id === activeRoleId) ?? null;
     const isSupervision = activeRole?.link_target === 'department';
     const viewOnly = isSupervision || !scopes;
-    // Supervisors watch live: poll the mutable per-person data every 30s. React Query
-    // pauses the interval while the tab is unfocused, so idle load stays negligible.
-    // Editors never poll — they own the in-memory draft and must not be clobbered.
-    const pollMs: number | false = viewOnly ? 30_000 : false;
+    // No auto-polling. The per-person data is refetched on navigation, on mutation
+    // (each save invalidates the relevant key), and on tab refocus. Supervisors
+    // (read-only) get an explicit refresh button in the header to pull fresh data
+    // on demand — see `refreshPersonData` below. Editors never refetch in the
+    // background so their in-memory draft is never clobbered.
 
     const { data: rseDetail, isLoading: rseLoading, isFetching: rseFetching } = useQuery({
         queryKey: ['rse_detail', sid, eid],
         queryFn: () => fetchRSEBySessionEmployee(sid, eid),
         staleTime: 30_000,
-        refetchInterval: pollMs,
         enabled: !!sid && !!eid,
     });
     // Flat rse id, resolved from (session, employee). Everything below keys off it
@@ -185,7 +186,6 @@ export function EvaluationPage() {
         queryKey: ['evaluations', rid],
         queryFn: () => fetchEvaluations(rid),
         staleTime: 30_000,
-        refetchInterval: pollMs,
         enabled: !!rid,
     });
 
@@ -200,7 +200,6 @@ export function EvaluationPage() {
         queryKey: ['employee_language_profile', employeeId],
         queryFn: () => fetchEmployeeLanguageProfile(employeeId!),
         staleTime: 30_000,
-        refetchInterval: pollMs,
         enabled: !!employeeId,
     });
 
@@ -327,8 +326,29 @@ export function EvaluationPage() {
         queryFn: () => fetchReviewComments(rid),
         enabled: !!rid,
         staleTime: 15_000,
-        refetchInterval: pollMs,
     });
+
+    // On-demand refresh for the read-only/supervisor view (replaces the old 30s
+    // auto-poll). Invalidates only THIS person's mutable queries so a supervisor can
+    // pull fresh data when they want it, without the page hammering the backend while
+    // idle. Editors never see this — a background refetch would clobber their draft.
+    const [refreshing, setRefreshing] = useState(false);
+    const refreshPersonData = async () => {
+        setRefreshing(true);
+        try {
+            await Promise.all([
+                qc.invalidateQueries({ queryKey: ['rse_detail', sid, eid] }),
+                qc.invalidateQueries({ queryKey: ['evaluations', rid] }),
+                qc.invalidateQueries({ queryKey: ['employee_language_profile', employeeId] }),
+                qc.invalidateQueries({ queryKey: ['review_comments', rid] }),
+                qc.invalidateQueries({ queryKey: ['proposed_level', rid] }),
+                qc.invalidateQueries({ queryKey: ['employee_current_level', employeeId] }),
+                qc.invalidateQueries({ queryKey: ['employee_personal_data', employeeId] }),
+            ]);
+        } finally {
+            setRefreshing(false);
+        }
+    };
 
     // --- Competency level (current + proposed) ---
     const [proposedOpen, setProposedOpen] = useState(false);
@@ -356,7 +376,6 @@ export function EvaluationPage() {
         queryFn: () => fetchProposedLevel(rid),
         enabled: !!rid,
         staleTime: 30_000,
-        refetchInterval: pollMs,
     });
     // Resolve a level by id from the active live set, falling back to the session's
     // frozen set (so a proposed/current level later deactivated still resolves).
@@ -375,7 +394,6 @@ export function EvaluationPage() {
         queryFn: () => fetchEmployeeCurrentLevel(employeeId!),
         enabled: !!employeeId,
         staleTime: 30_000,
-        refetchInterval: pollMs,
     });
 
     // Level "sense": compare the proposed level to the employee's current one by
@@ -447,7 +465,6 @@ export function EvaluationPage() {
         queryFn: () => fetchEmployeePersonalData(employeeId!),
         enabled: !!employeeId,
         staleTime: 30_000,
-        refetchInterval: pollMs,
     });
     const employeeAge = personalData?.birth_date
         ? dayjs().diff(dayjs(personalData.birth_date), 'year')
@@ -1079,6 +1096,21 @@ export function EvaluationPage() {
                                             <ArticleOutlinedIcon sx={{ fontSize: 18 }} />
                                         </IconButton>
                                     </Tooltip>
+
+                                    {/* Manual refresh — supervisors (read-only) have no auto-poll,
+                                        so this is their way to pull fresh per-person data. */}
+                                    {viewOnly && (
+                                        <Tooltip title={getString('refresh') || 'Refresh'}>
+                                            <IconButton
+                                                size="small"
+                                                onClick={refreshPersonData}
+                                                disabled={refreshing}
+                                                sx={{ color: t.textMuted }}
+                                            >
+                                                <RefreshIcon sx={{ fontSize: 18, animation: refreshing ? 'spin 0.8s linear infinite' : 'none', '@keyframes spin': { to: { transform: 'rotate(360deg)' } } }} />
+                                            </IconButton>
+                                        </Tooltip>
+                                    )}
 
                                     {showCommentsButton && (
                                         <Tooltip title={getString('reviewCommentsTooltip')}>

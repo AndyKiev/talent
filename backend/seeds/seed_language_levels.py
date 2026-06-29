@@ -1,52 +1,83 @@
 import asyncio
+import sys
+from pathlib import Path
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 from sqlalchemy import select
 
 from backend.database.db_helper import db_helper
 from backend.api_v1.language_level.language_level_model import LanguageLevel
 
-# CEFR A1..C2 with the "can-do" hint shown when a level is selected.
+# CEFR A1..C2 with Ukrainian labels and "can-do" hints.
 LEVELS = [
     {
         "code": "A1",
-        "label": "Beginner",
+        "label": "Елементарний",
         "sort_order": 10,
-        "hint": "Can understand and use familiar everyday expressions and very basic "
-        "phrases aimed at the satisfaction of needs of a concrete type.",
+        "hint": (
+            "Розумію і вживаю елементарні речення. Вмію відрекомендуватись, "
+            "запитувати і відповідати на запитання про деякі деталі особистого "
+            "життя, про людей, про речі тощо. Взаємодію на простому рівні, "
+            "якщо співрозмовник говорить повільно і чітко та готовий прийти на допомогу."
+        ),
     },
     {
         "code": "A2",
-        "label": "Elementary",
+        "label": "Елементарний",
         "sort_order": 20,
-        "hint": "Can communicate in simple and routine tasks on familiar topics and "
-        "describe in simple terms aspects of their background and immediate environment.",
+        "hint": (
+            "Розумію ізольовані фрази та широко вживані вирази. Спілкуюсь на "
+            "знайомі, звичні теми. Описую простими мовними засобами вигляд "
+            "свого оточення, найближче середовище і все, що пов'язане зі "
+            "сферою безпосередніх потреб."
+        ),
     },
     {
         "code": "B1",
-        "label": "Intermediate",
+        "label": "(Вище) середнього",
         "sort_order": 30,
-        "hint": "Can deal with most situations while travelling, and produce simple "
-        "connected text on familiar topics; can describe experiences and events.",
+        "hint": (
+            "Розумію основний зміст (на слух) на теми, близькі і часто вживані "
+            "на роботі тощо. Можу просто і зв'язано висловитись на знайомі "
+            "теми та описати досвід, події, сподівання, мрії тощо."
+        ),
     },
     {
         "code": "B2",
-        "label": "Upper-Intermediate",
+        "label": "(Вище) середнього",
         "sort_order": 40,
-        "hint": "Can interact with a degree of fluency and spontaneity, and produce "
-        "clear, detailed text on a wide range of subjects.",
+        "hint": (
+            "Розумію основні ідеї тексту як на конкретну, так і на абстрактну "
+            "тему, у тому числі й дискусії за фахом. Вільно спілкуюсь з носіями "
+            "мови, чітко висловлююсь на широке коло тем, виражаю свою думку "
+            "з певної проблеми, наводячи різноманітні аргументи за і проти."
+        ),
     },
     {
         "code": "C1",
-        "label": "Advanced",
+        "label": "Просунутий",
         "sort_order": 50,
-        "hint": "Can use language flexibly and effectively for social, academic and "
-        "professional purposes; expresses ideas fluently without much searching.",
+        "hint": (
+            "Розумію широкий спектр достатньо складних та об'ємних текстів, "
+            "без труднощів висловлюватись швидко і спонтанно. Чітко, логічно, "
+            "детально висловлююсь на складні теми, демонструючи свідоме "
+            "володіння граматичними структурами."
+        ),
     },
     {
         "code": "C2",
-        "label": "Proficiency",
+        "label": "Досконалий",
         "sort_order": 60,
-        "hint": "Can understand with ease virtually everything heard or read, and "
-        "express themselves spontaneously, very fluently and precisely.",
+        "hint": (
+            "Розумію практично все, що чую і читаю. Можу вилучити інформацію "
+            "з усних / письмових джерел, узагальнити її і зробити аргументований "
+            "виклад у зв'язній формі. Висловлююсь спонтанно, дуже швидко і "
+            "точно, виділяючи найтонші відтінки смислу у доволі складних "
+            "ситуаціях та демонструючи відмінне володіння граматикою."
+        ),
     },
 ]
 

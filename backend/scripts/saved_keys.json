@@ -1,0 +1,134 @@
+{
+  "2": {
+    "name": "МС",
+    "key": "segment_manager"
+  },
+  "3": {
+    "name": "Заст-к МС",
+    "key": "deputy_segment_manager"
+  },
+  "4": {
+    "name": "Бригадир кас",
+    "key": "cash_point_leader"
+  },
+  "5": {
+    "name": "МКС",
+    "key": "cash_points_manager"
+  },
+  "6": {
+    "name": "Інспектор СБ",
+    "key": "security_service_inspector"
+  },
+  "7": {
+    "name": "Охоронник",
+    "key": "security_service_operator"
+  },
+  "12": {
+    "name": "Комплектувальник / Продавець",
+    "key": "picker_seller"
+  },
+  "18": {
+    "name": "Фаршомісильник",
+    "key": "meat_cutter"
+  },
+  "19": {
+    "name": "Лікар",
+    "key": "doctor"
+  },
+  "20": {
+    "name": "Оператор ПК",
+    "key": "pc_operator"
+  },
+  "21": {
+    "name": "Приймальник",
+    "key": "receiving_inspector"
+  },
+  "23": {
+    "name": "Мен-р СБ",
+    "key": "security_service_manager"
+  },
+  "24": {
+    "name": "РСП",
+    "key": "senior_personnel_officer"
+  },
+  "25": {
+    "name": "РЕТМ",
+    "key": "technical_department_manager"
+  },
+  "26": {
+    "name": "Клієнт-менеджер",
+    "key": "client_manager"
+  },
+  "27": {
+    "name": "Мен-р zakaz / е-комерція",
+    "key": "e-commerce_manager"
+  },
+  "29": {
+    "name": "МП",
+    "key": "sales_manager"
+  },
+  "31": {
+    "name": "РРШ",
+    "key": "human_resource_manager"
+  },
+  "32": {
+    "name": "ДМ",
+    "key": "store_director"
+  },
+  "33": {
+    "name": "начальник відділу рекрутингу",
+    "key": "recruiting_manager"
+  },
+  "39": {
+    "name": "Касир з обслуговування клієнтів",
+    "key": "customer_service_cashier"
+  },
+  "53": {
+    "name": "Оператор комп'ютерного набору",
+    "key": "data_entry_operator"
+  },
+  "60": {
+    "name": "Експерт",
+    "key": "expert"
+  },
+  "61": {
+    "name": "Завідувач кас",
+    "key": "cash_department_manager"
+  },
+  "62": {
+    "name": "Заступник керуючого магазином",
+    "key": "deputy_store_manager"
+  },
+  "65": {
+    "name": "Начальник сектору",
+    "key": "sector_head"
+  },
+  "83": {
+    "name": "Молодший бухгалтер",
+    "key": "junior_accountant"
+  },
+  "101": {
+    "name": "Начальник відділу контролю управління дирекції по товару",
+    "key": null
+  },
+  "147": {
+    "name": "Практикант (внз)",
+    "key": null
+  },
+  "175": {
+    "name": "Молодший фахівець з касових операцій",
+    "key": null
+  },
+  "176": {
+    "name": "Молодший фахівець підрозділу контролю управління відділу розвитку нових концептів",
+    "key": null
+  },
+  "177": {
+    "name": "Начальник підрозділу контролю управління відділу розвитку нових концептів",
+    "key": null
+  },
+  "178": {
+    "name": "Старший оператор комп'ютерного набору підрозділу контролю управління відділу розвитку нових концептів",
+    "key": null
+  }
+}

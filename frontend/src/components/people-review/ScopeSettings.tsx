@@ -14,7 +14,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-    Box, Chip, FormControl, IconButton, InputLabel, MenuItem,
+    Box, Chip, CircularProgress, FormControl, IconButton, InputLabel, MenuItem,
     Popover, Select, Stack, Tooltip, Typography,
 } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -36,10 +36,19 @@ export function ScopeSettings({ disabled = false }: { disabled?: boolean }) {
 
     const mut = useMutation({
         mutationFn: setActiveContext,
-        onSuccess: async () => {
-            setAnchor(null); // dismiss popover immediately so the global loading takes over
+        onSuccess: async (_data, variables) => {
+            // Keep the popover open only when a supervision role was just selected but
+            // its department still needs picking (multi-dept, nothing auto-picked).
+            // Otherwise (only-myself, oversight, supervision with a dept now chosen)
+            // dismiss immediately so the global loading takes over.
+            const r = roles.find((x) => x.process_role_id === variables.process_role_id);
+            const awaitingDept = r?.link_target === 'department' && variables.department_id == null;
+            if (!awaitingDept) setAnchor(null);
             await qc.invalidateQueries({ queryKey: PEOPLE_REVIEW_MY_SCOPES_QK });
-            await qc.invalidateQueries({ queryKey: ['session_employees'] });
+            // Don't kick the roster while supervision is on but no department is picked
+            // yet — the roster query is gated off in that state; invalidating would fire
+            // one unwanted fetch before the page re-renders disabled.
+            if (!awaitingDept) await qc.invalidateQueries({ queryKey: ['session_employees'] });
         },
     });
 
@@ -80,15 +89,41 @@ export function ScopeSettings({ disabled = false }: { disabled?: boolean }) {
 
     const isSupervisionActive = activeRole?.link_target === 'department';
     const chipLabel = activeRole ? roleLabel(activeRole.key, activeRole.name) : onlyMyselfLabel;
+    const activeDept = allDepartments.find((d) => d.id === active.department_id) ?? null;
+
+    // While the mode/department change is in flight the server `active` (and thus the
+    // chip) still shows the OLD mode. Show an immediate "Loading…" chip in its place
+    // so the user gets instant feedback instead of staring at the stale mode.
+    const isSwitching = mut.isPending;
 
     return (
         <Stack direction="row" alignItems="center" spacing={1}>
-            <Chip
-                size="small"
-                label={chipLabel}
-                color={activeRole ? 'primary' : 'default'}
-                variant="outlined"
-            />
+            {isSwitching ? (
+                <Chip
+                    size="small"
+                    icon={<CircularProgress size={12} thickness={5} sx={{ ml: 0.5 }} />}
+                    label={getString('loading') || 'Loading…'}
+                    variant="outlined"
+                />
+            ) : (
+                <>
+                    <Chip
+                        size="small"
+                        label={chipLabel}
+                        color={activeRole ? 'primary' : 'default'}
+                        variant="outlined"
+                    />
+
+                    {isSupervisionActive && activeDept && (
+                        <Chip
+                            size="small"
+                            label={activeDept.name}
+                            color="primary"
+                            variant="outlined"
+                        />
+                    )}
+                </>
+            )}
 
             <Tooltip title={getString('scopeSettings') || 'View settings'}>
                 <span>

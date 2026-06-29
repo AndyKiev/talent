@@ -18,7 +18,14 @@ class ReviewLevelBase(BaseModel):
 
 
 class ReviewLevelCreate(ReviewLevelBase):
-    pass
+    # Optional inline translation text. When provided, the create endpoint upserts
+    # the {name_key / description_key: {eng, ukr}} translation into the messages DB
+    # server-side BEFORE creating the row, so the admin enters real text (not a bare
+    # key) and needs no separate msg-create permission. Omitted -> behaves as before.
+    name_eng: Optional[str] = None
+    name_ukr: Optional[str] = None
+    description_eng: Optional[str] = None
+    description_ukr: Optional[str] = None
 
 
 class ReviewLevelUpdate(BaseModel):

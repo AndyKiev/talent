@@ -16,6 +16,10 @@ export interface ReviewLevelRequirementCreate {
     text_key: string;
     sort_order: number;
     is_active: boolean;
+    // Optional inline EN/UK text — when set, the backend upserts the translation
+    // for text_key before creating the row.
+    text_eng?: string;
+    text_ukr?: string;
 }
 
 export interface ReviewLevelRequirementUpdate {
