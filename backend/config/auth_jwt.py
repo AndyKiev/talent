@@ -16,6 +16,6 @@ class AuthJWT(BaseModel):
     # access_token_expire_minutes: int = 15
     algorithm: str
     access_token_expire_minutes: int
+    refresh_token_expire_days: int
     expire_minutes: int
     max_cookies_age: int
-    # refresh_token_expires_in: int = 3600

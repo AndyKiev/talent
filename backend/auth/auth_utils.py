@@ -9,6 +9,14 @@ import jwt
 from backend.config.config import settings
 
 
+# Token type discriminator embedded in every JWT we issue. The access path and
+# the refresh path each accept ONLY their own type, so a refresh token can never
+# be replayed as an access token (and vice-versa).
+TOKEN_TYPE_FIELD = "type"
+ACCESS_TOKEN_TYPE = "access"
+REFRESH_TOKEN_TYPE = "refresh"
+
+
 # we issue token with encode_jwt and make signature with private key
 def encode_jwt(
     payload: dict,
@@ -49,6 +57,34 @@ def decode_jwt(
             detail=f"invalid token error",
         )
     return decoded
+
+
+def create_access_token(payload: dict) -> str:
+    """Short-lived token used as the Bearer credential on every request."""
+    to_encode = {TOKEN_TYPE_FIELD: ACCESS_TOKEN_TYPE, **payload}
+    return encode_jwt(
+        to_encode,
+        expire_minutes=settings.auth_jwt.access_token_expire_minutes,
+    )
+
+
+def create_refresh_token(sub: str) -> str:
+    """Long-lived token whose only job is to mint new access tokens."""
+    to_encode = {TOKEN_TYPE_FIELD: REFRESH_TOKEN_TYPE, "sub": sub}
+    return encode_jwt(
+        to_encode,
+        expire_timedelta=timedelta(days=settings.auth_jwt.refresh_token_expire_days),
+    )
+
+
+def validate_token_type(payload: dict, expected_type: str) -> None:
+    """Reject a token presented on the wrong path (e.g. a refresh token used
+    as a Bearer access token). Raises 401 on mismatch."""
+    if payload.get(TOKEN_TYPE_FIELD) != expected_type:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token type",
+        )
 
 
 def hash_password(password: str) -> bytes:

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.auth.auth_dependencies import validate_auth_user_ldap
 from backend.auth import auth_utils as auth_utils
-from backend.auth.auth_schemas import LDAPUser, AuthResponse
+from backend.auth.auth_schemas import LDAPUser, AuthResponse, RefreshRequest
 from backend.auth.permission_errors import PermissionDeniedSet
 from backend.auth.permission_resolvers import resolve_user_is_bypass
 from backend.api_v1.employee.employee_service import EmployeeService
@@ -42,6 +42,8 @@ def get_current_token_payload(
 ) -> dict:
     token = credentials.credentials
     payload = auth_utils.decode_jwt(token=token)
+    # A refresh token must never be accepted as a Bearer access credential.
+    auth_utils.validate_token_type(payload, auth_utils.ACCESS_TOKEN_TYPE)
     return payload
 
 
@@ -111,14 +113,61 @@ async def auth_user_issue_jwt(
         )
 
     user_db = await service._to_schema(orm_user)
-    jwt_payload = {
-        "sub": user_db.code,
-        "username": user_db.name,
-        "user_ukr": user_ldap.user_ukr,
-        "groups": user_ldap.group,
-    }
-    access_token = auth_utils.encode_jwt(jwt_payload)
-    return AuthResponse(access_token=access_token, token_type="Bearer")
+    access_token = auth_utils.create_access_token(
+        {
+            "sub": user_db.code,
+            "username": user_db.name,
+            "user_ukr": user_ldap.user_ukr,
+            "groups": user_ldap.group,
+        }
+    )
+    refresh_token = auth_utils.create_refresh_token(sub=user_db.code)
+    return AuthResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="Bearer",
+    )
+
+
+@router.post("/refresh", response_model=TokenInfo)
+async def auth_refresh_access_token(
+    body: RefreshRequest,
+    session: AsyncSession = Depends(db_helper.session_getter),
+):
+    """Exchange a valid refresh token for a fresh access token.
+
+    Stateless: the refresh token itself is not rotated — it stays valid until
+    its own expiry. Access-token claims are rebuilt from the DB so a
+    renamed/regrouped (or removed) user is reflected on the next refresh.
+    """
+    payload = auth_utils.decode_jwt(token=body.refresh_token)
+    auth_utils.validate_token_type(payload, auth_utils.REFRESH_TOKEN_TYPE)
+
+    user_code: str | None = payload.get("sub")
+    if not user_code:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
+
+    service = _make_service(session)
+    orm_user = await service.repository.get_by_code(user_code)
+    if not orm_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+        )
+
+    user_db = await service._to_schema(orm_user)
+    access_token = auth_utils.create_access_token(
+        {
+            "sub": user_db.code,
+            "username": user_db.name,
+            "user_ukr": user_db.code,
+            "groups": user_db.groups,
+        }
+    )
+    return TokenInfo(access_token=access_token, token_type="Bearer")
 
 
 # @router.post("/login", response_model=AuthResponse)

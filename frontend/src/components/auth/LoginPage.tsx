@@ -25,7 +25,7 @@ import cfl from "../../utils/helpers.ts";
 const LoginPage: FC = () => {
     const { t } = useTheme();
     const navigate = useNavigate();
-    const { access_token, setToken } = useAuthStore();
+    const { access_token, setTokens } = useAuthStore();
     const getString = useString({ str });
 
     const [username, setUsername] = useState("");
@@ -47,8 +47,8 @@ const LoginPage: FC = () => {
             // 1. Get token. RootLayout's effect fetches the user profile on
             //    access_token change, so we don't await /me here — navigating
             //    immediately keeps the redirect tight.
-            const { access_token } = await authApi.login(username.trim(), password);
-            setToken(access_token);
+            const { access_token, refresh_token } = await authApi.login(username.trim(), password);
+            setTokens(access_token, refresh_token);
 
             // 2. Navigate to main page (replace so Back doesn't return to login)
             await navigate({ to: "/employees", replace: true });

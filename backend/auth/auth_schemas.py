@@ -23,9 +23,14 @@ class TokenUser(BaseModel):
 
 
 class AuthResponse(BaseModel):
-    """Schema for authentication response"""
+    """Schema for authentication response (login) — both tokens."""
 
     access_token: str
+    refresh_token: str
     token_type: str = "Bearer"
-    # user_code: str
-    # user_name: str
+
+
+class RefreshRequest(BaseModel):
+    """Body of POST /jwt/refresh — the long-lived refresh token."""
+
+    refresh_token: str
