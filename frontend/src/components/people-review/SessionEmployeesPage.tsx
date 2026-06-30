@@ -39,6 +39,7 @@ import {
     fetchSessionEmployees,
     fetchReviewSessions,
     fetchMyScopes,
+    fetchSessionDepartments,
     reorderSessionEmployees,
     markReviewed,
     closeRSE,
@@ -48,7 +49,7 @@ import {
     openTempoPresentation,
     type ReviewSessionEmployeeList,
 } from './peopleReviewApi';
-import { PEOPLE_REVIEW_MY_SCOPES_QK } from '../../utils/queryKeys';
+import { PEOPLE_REVIEW_MY_SCOPES_QK, SESSION_DEPARTMENTS_QK } from '../../utils/queryKeys';
 import { useDataGridLocale } from '../../hooks/useDataGridLocale';
 import { useTheme } from '../theme/ThemeContext';
 import useString from '../../hooks/useString';
@@ -138,6 +139,14 @@ export function SessionEmployeesPage() {
         staleTime: 60_000,
     });
     const activeRole = scopes?.roles.find(r => r.process_role_id === scopes.active.process_role_id);
+
+    // Session-linked department ids — cross-check for supervision scope.
+    const { data: sessionDeptIds } = useQuery({
+        queryKey: SESSION_DEPARTMENTS_QK(sid),
+        queryFn: () => fetchSessionDepartments(sid),
+        staleTime: 120_000,
+        enabled: !!sid,
+    });
 
     // Supervision mode shows a roster only once BOTH the mode and a department are
     // chosen. While supervision is active but no department is picked, the context
@@ -257,6 +266,7 @@ export function SessionEmployeesPage() {
                     <EmployeeAvatar
                         employeeId={params.row.employee_id}
                         name={params.row.employee_name}
+                        scope="peopleReview"
                         size={36}
                     />
                 </Box>
@@ -425,13 +435,21 @@ export function SessionEmployeesPage() {
                             color={sessionStatus === 'open' ? 'success' : sessionStatus === 'closed' ? 'error' : 'default'}
                             variant="outlined"
                         />
+                        {session?.department_name && (
+                            <Chip
+                                label={session.department_name}
+                                size="small"
+                                color="secondary"
+                                variant="outlined"
+                            />
+                        )}
                         {isSessionClosed && (
                             <Chip icon={<VisibilityIcon sx={{ fontSize: 13 }} />} label={getString('viewOnly')} size="small" variant="outlined" />
                         )}
                     </Stack>
 
                     {/* People-review scope switcher (mode + department) */}
-                    <ScopeSettings />
+                    <ScopeSettings sessionDepartmentIds={sessionDeptIds} sessionDepartmentName={session?.department_name} />
 
                     {/* Session is closed from the sessions grid's action column, not here. */}
                 </Stack>

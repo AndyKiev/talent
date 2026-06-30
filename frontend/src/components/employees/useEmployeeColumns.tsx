@@ -6,6 +6,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import type { Employee, TopOrgUnit } from './employeeApi';
 import { formatToUkrDate } from '../../utils/dateFormatter';
 import useString from '../../hooks/useString';
+import { useEffectiveBooleanSetting } from '../../hooks/useAppSetting';
 import str from '../../strings/str';
 import cfl from '../../utils/helpers.ts';
 import EmployeeAvatar from '../ui/EmployeeAvatar';
@@ -32,31 +33,38 @@ export function useEmployeeColumns(
     copyToClipboard?: (text: string) => Promise<boolean> | void,
 ): GridColDef<Employee>[] {
     const getString = useString({ str });
+    // Per-surface photo flag (effective = this child AND the master). When OFF the
+    // whole photo column is dropped (no empty placeholder), matching EmployeeAvatar.
+    const { enabled: photosEnabled } = useEffectiveBooleanSetting('employee_photos_employees_menu');
 
     return useMemo(
         () => [
             // ── Photo (first column, elevator hover effect — reuses EmployeeAvatar DRY) ──
-            {
-                field: 'photo',
-                headerName: '',
-                width: 52,
-                sortable: false,
-                filterable: false,
-                disableColumnMenu: true,
-                renderCell: ({ row }) => (
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            height: '100%',
-                            '&:hover': { transform: 'scale(1.7)' },
-                            transition: 'transform 0.2s ease',
-                        }}
-                    >
-                        <EmployeeAvatar employeeId={row.id} name={row.name} size={36} />
-                    </Box>
-                ),
-            },
+            ...(photosEnabled
+                ? [
+                      {
+                          field: 'photo',
+                          headerName: '',
+                          width: 52,
+                          sortable: false,
+                          filterable: false,
+                          disableColumnMenu: true,
+                          renderCell: ({ row }: { row: Employee }) => (
+                              <Box
+                                  sx={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      height: '100%',
+                                      '&:hover': { transform: 'scale(1.7)' },
+                                      transition: 'transform 0.2s ease',
+                                  }}
+                              >
+                                  <EmployeeAvatar employeeId={row.id} name={row.name} scope="employeesMenu" size={36} />
+                              </Box>
+                          ),
+                      } satisfies GridColDef<Employee>,
+                  ]
+                : []),
             // ── Employee code (with copy-to-clipboard icon — DRY pattern from people review) ──
             {
                 field: 'code',
@@ -194,6 +202,6 @@ export function useEmployeeColumns(
                 valueFormatter: (value) => formatToUkrDate(value),
             },
         ],
-        [getString, copyToClipboard],
+        [getString, copyToClipboard, photosEnabled],
     );
 }

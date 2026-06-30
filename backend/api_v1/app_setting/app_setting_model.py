@@ -25,6 +25,15 @@ class AppSetting(IntIdPkMixin, TimestampMixin, Base):
     value_type_id: Mapped[int] = mapped_column(
         ForeignKey("setting_value_types.id", ondelete="RESTRICT"), nullable=False
     )
+    # Self-referential parent for "multi-story" settings: a child setting (e.g. a
+    # per-surface photo toggle) hangs under a parent boolean. The developer UI
+    # nests children under their parent in an accordion and disables them while
+    # the parent is off; a child is "effectively on" only when it AND every
+    # ancestor are on. SET NULL on parent delete so children are never silently
+    # destroyed (they just float up to top level).
+    parent_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("app_settings.id", ondelete="SET NULL"), nullable=True
+    )
     # Translation keys for the developer-tab UI (resolved via getString).
     label_key: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     description_key: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)

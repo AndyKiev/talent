@@ -1008,6 +1008,7 @@ export function EvaluationPage() {
                                         <EmployeeAvatar
                                             employeeId={employeeId}
                                             name={rseDetail.employee_name}
+                                            scope="peopleReview"
                                             size={48}
                                             editable={showEditing}
                                             onSuccess={(message) => setSnackbar({ open: true, message, severity: 'success' })}

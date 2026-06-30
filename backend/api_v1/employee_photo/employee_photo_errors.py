@@ -30,3 +30,14 @@ class EmployeePhotoTooLarge(DomainError):
         self.template_vars = {"max": f"{max_mb}MB"}
         self.fallback = f"Image is too large (max {max_mb}MB)"
         super().__init__(self.fallback)
+
+
+class EmployeePhotosDisabled(DomainError):
+    """Upload rejected — the photos feature is OFF in developer settings."""
+
+    message_key = "employeePhotosDisabled"
+
+    def __init__(self) -> None:
+        self.template_vars = {}
+        self.fallback = "Employee photos are disabled"
+        super().__init__(self.fallback)

@@ -201,7 +201,7 @@ export function ReviewCommentsDrawer({ open, onClose, rseId, canComment, myAutho
                                         sx={{ mb: 1.5, p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}
                                     >
                                         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.75 }}>
-                                            <EmployeeAvatar employeeId={c.author_id} name={c.author_name} size={28} />
+                                            <EmployeeAvatar employeeId={c.author_id} name={c.author_name} scope="peopleReview" size={28} />
                                             <Box sx={{ minWidth: 0, flex: 1 }}>
                                                 <Typography fontSize={13} fontWeight={700} noWrap>
                                                     {c.author_name}

@@ -211,9 +211,11 @@ export function EmployeesPage() {
     };
 
     // Column order: photo → actions → code → name → email → ...
-    const photoColumn = baseColumns[0];
-    const restColumns = baseColumns.slice(1);
-    const columns = [photoColumn, actionsColumn, ...restColumns];
+    // The photo column is absent when the photos feature is off, so detect it by
+    // field rather than assuming index 0 (keeps the order correct either way).
+    const photoColumn = baseColumns.find((c) => c.field === 'photo');
+    const restColumns = baseColumns.filter((c) => c.field !== 'photo');
+    const columns = [...(photoColumn ? [photoColumn] : []), actionsColumn, ...restColumns];
 
     const ALL_VALUE = '__all__';
 

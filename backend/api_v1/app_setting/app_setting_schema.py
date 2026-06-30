@@ -6,6 +6,8 @@ class AppSettingBase(BaseModel):
     key: str = Field(..., max_length=64)
     value: Optional[Any] = None
     value_type_id: int
+    # Self-FK: a child setting hangs under a parent boolean (nested accordion).
+    parent_id: Optional[int] = None
     label_key: Optional[str] = Field(None, max_length=64)
     description_key: Optional[str] = Field(None, max_length=64)
     is_active: bool = True
@@ -20,6 +22,7 @@ class AppSettingUpdate(BaseModel):
     # sentinel-free partial update: only fields explicitly sent are applied.
     value: Optional[Any] = None
     value_type_id: Optional[int] = None
+    parent_id: Optional[int] = None
     label_key: Optional[str] = Field(None, max_length=64)
     description_key: Optional[str] = Field(None, max_length=64)
     is_active: Optional[bool] = None

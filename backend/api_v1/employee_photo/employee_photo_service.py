@@ -6,6 +6,7 @@ from PIL import Image, UnidentifiedImageError
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.app_setting.app_setting_service import get_bool_setting
 from backend.api_v1.employee_photo.employee_photo_repository import (
     EmployeePhotoRepository,
 )
@@ -15,6 +16,7 @@ from backend.api_v1.employee_photo.employee_photo_errors import (
     EmployeePhotoNotFound,
     EmployeePhotoInvalidType,
     EmployeePhotoTooLarge,
+    EmployeePhotosDisabled,
 )
 from backend.api_v1.employee_photo.employee_photo_success import (
     EmployeePhotoSaveSuccess,
@@ -30,6 +32,19 @@ MAX_RAW_BYTES = 8 * 1024 * 1024
 # while keeping blobs small. (To re-shrink existing rows: scripts/shrink_employee_photos.py)
 MAX_DIMENSION = 320
 JPEG_QUALITY = 80
+
+# Developer-settings flags for the photos feature (multi-story). The MASTER gates
+# the whole feature; the four CHILD keys gate photo DISPLAY per surface and are
+# "effectively on" only when they AND the master are on (see
+# get_effective_bool_setting). When the master is OFF the feature is dormant: the
+# frontend hides avatars and never reads, uploads are rejected here, and the TEMPO
+# artifacts skip the photo. Stored blobs are preserved either way, so flipping the
+# master back ON restores every existing photo. Default ON (preserve behaviour).
+PHOTOS_ENABLED_SETTING_KEY = "employee_photos_enabled"  # master
+PHOTOS_EMPLOYEES_MENU_KEY = "employee_photos_employees_menu"
+PHOTOS_PEOPLE_REVIEW_KEY = "employee_photos_people_review"
+PHOTOS_PRESENTATION_SESSION_KEY = "employee_photos_presentation_session"
+PHOTOS_PRESENTATION_INDIVIDUAL_KEY = "employee_photos_presentation_individual"
 
 
 class EmployeePhotoService(BaseService):
@@ -80,6 +95,10 @@ class EmployeePhotoService(BaseService):
     async def upsert_photo(
         self, employee_id: int, raw: bytes
     ) -> MutationResponse[EmployeePhotoMeta]:
+        if not await get_bool_setting(
+            self.session, PHOTOS_ENABLED_SETTING_KEY, default=True
+        ):
+            raise await self._resolve_domain_error(EmployeePhotosDisabled())
         try:
             data, content_type = self._process_image(raw)
         except (EmployeePhotoInvalidType, EmployeePhotoTooLarge) as exc:

@@ -1,6 +1,7 @@
 from datetime import date
 from typing import Optional, List, Any
 
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -50,6 +51,61 @@ def cast_value(value: Any, type_key: Optional[str]) -> Any:
         return value
     # "json" (or any other) — the parsed object as stored.
     return value
+
+
+async def get_bool_setting(
+    session: AsyncSession, key: str, default: bool = False
+) -> bool:
+    """Read a boolean app setting by key from inside business logic (server-side).
+
+    Returns ``default`` when the row is missing (so a not-yet-seeded flag behaves
+    predictably) or when its value can't be read as a bool. Reuses ``cast_value``
+    so loosely-stored values ("true"/1) still normalise. This is the single place
+    services should call to gate behaviour on a feature flag.
+    """
+    from backend.api_v1.app_setting.app_setting_model import AppSetting as AppSettingModel
+
+    row = await session.scalar(
+        select(AppSettingModel).where(AppSettingModel.key == key)
+    )
+    if row is None:
+        return default
+    type_key = await session.scalar(
+        select(SettingValueType.key).where(SettingValueType.id == row.value_type_id)
+    )
+    value = cast_value(row.value, type_key)
+    return value if isinstance(value, bool) else default
+
+
+async def get_effective_bool_setting(
+    session: AsyncSession, key: str, default: bool = False
+) -> bool:
+    """Effective boolean for a (possibly nested) setting: on only when the setting
+    AND every ancestor are on. Walks the parent_id chain up the tree. Returns
+    ``default`` when the setting row is missing. Use this (not get_bool_setting)
+    to gate a CHILD of a multi-story setting, so the parent/master switch is
+    honoured automatically.
+    """
+    from backend.api_v1.app_setting.app_setting_model import AppSetting as AppSettingModel
+
+    row = await session.scalar(
+        select(AppSettingModel).where(AppSettingModel.key == key)
+    )
+    if row is None:
+        return default
+    seen: set[int] = set()
+    cur: Optional[AppSettingModel] = row
+    while cur is not None and cur.id not in seen:
+        seen.add(cur.id)
+        type_key = await session.scalar(
+            select(SettingValueType.key).where(SettingValueType.id == cur.value_type_id)
+        )
+        if cast_value(cur.value, type_key) is not True:
+            return False
+        if cur.parent_id is None:
+            return True
+        cur = await session.get(AppSettingModel, cur.parent_id)
+    return True
 
 
 class AppSettingService(BaseService):

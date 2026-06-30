@@ -414,23 +414,46 @@ class ReviewSessionEmployeeService(BaseService):
         )
         return MutationResponse(detail=detail, data=None)
 
+    async def _tempo_photo_enabled(self, *, individual: bool) -> bool:
+        """Effective photo flag for a TEMPO artifact: the individual-album child
+        for single sheets (pdf/png/html), the session-deck child for the
+        presentation. Each is AND-ed with the master by get_effective_bool_setting,
+        so the master switch (and a per-surface off) both hide the photo."""
+        from backend.api_v1.app_setting.app_setting_service import (
+            get_effective_bool_setting,
+        )
+        from backend.api_v1.employee_photo.employee_photo_service import (
+            PHOTOS_PRESENTATION_INDIVIDUAL_KEY,
+            PHOTOS_PRESENTATION_SESSION_KEY,
+        )
+
+        key = (
+            PHOTOS_PRESENTATION_INDIVIDUAL_KEY
+            if individual
+            else PHOTOS_PRESENTATION_SESSION_KEY
+        )
+        return await get_effective_bool_setting(self.session, key, default=True)
+
     async def build_tempo_pdf(self, rse_id: int) -> bytes:
         """TEMPO album as PDF bytes (download artifact)."""
         from backend.api_v1.review_session_employee.tempo_pdf import build_tempo_pdf
 
-        return build_tempo_pdf(await self._tempo_data(rse_id))
+        photo_enabled = await self._tempo_photo_enabled(individual=True)
+        return build_tempo_pdf(await self._tempo_data(rse_id, photo_enabled))
 
     async def build_tempo_png(self, rse_id: int) -> bytes:
         """TEMPO album as PNG bytes (inline viewer — renders in any browser)."""
         from backend.api_v1.review_session_employee.tempo_pdf import render_tempo_png
 
-        return render_tempo_png(await self._tempo_data(rse_id))
+        photo_enabled = await self._tempo_photo_enabled(individual=True)
+        return render_tempo_png(await self._tempo_data(rse_id, photo_enabled))
 
     async def build_tempo_html(self, rse_id: int) -> str:
         """TEMPO album as a self-contained HTML page (one employee)."""
         from backend.api_v1.review_session_employee.tempo_html import render_tempo_html
 
-        return render_tempo_html(await self._tempo_data(rse_id))
+        photo_enabled = await self._tempo_photo_enabled(individual=True)
+        return render_tempo_html(await self._tempo_data(rse_id, photo_enabled))
 
     async def build_tempo_presentation(self, session_id: int) -> str:
         """Presentation HTML: every employee the current user can see in the
@@ -440,15 +463,19 @@ class ReviewSessionEmployeeService(BaseService):
             render_tempo_presentation,
         )
 
+        # Resolve the session-deck photo flag ONCE for the whole deck (not per row).
+        photo_enabled = await self._tempo_photo_enabled(individual=False)
         ordered = await self.get_session_employees(session_id=session_id)
-        sheets = [await self._tempo_data(rse.id) for rse in ordered]
+        sheets = [await self._tempo_data(rse.id, photo_enabled) for rse in ordered]
         return render_tempo_presentation(sheets)
 
-    async def _tempo_data(self, rse_id: int) -> dict:
+    async def _tempo_data(self, rse_id: int, photo_enabled: bool = True) -> dict:
         """Gather this review's data into the flat dict the TEMPO album builder
         expects. Visibility-gated like the detail page (out-of-scope -> NotFound).
         Missing data is left as a placeholder in the album by design — the user
-        fills gaps after seeing the first draft."""
+        fills gaps after seeing the first draft. ``photo_enabled`` (resolved once
+        by the caller from the matching per-surface child flag) decides whether the
+        photo blob is read at all."""
         from datetime import date as _date
         from backend.api_v1.employee_education.employee_education_model import (
             EmployeeEducation,
@@ -567,12 +594,17 @@ class ReviewSessionEmployeeService(BaseService):
                 (name, float(value) if value is not None else 0.0, color)
             )
 
-        # Photo bytes (1:1 blob table, no ORM relationship -> direct query).
+        # Photo bytes (1:1 blob table, no ORM relationship -> direct query). Read
+        # only when photos are enabled for THIS artifact (the caller resolved the
+        # matching per-surface child flag once); otherwise the TEMPO PDF/HTML
+        # renders its empty-photo placeholder and we never touch the blob.
         from backend.api_v1.employee_photo.employee_photo_model import EmployeePhoto
 
-        photo = await self.session.scalar(
-            select(EmployeePhoto).where(EmployeePhoto.employee_id == emp_id)
-        )
+        photo = None
+        if photo_enabled:
+            photo = await self.session.scalar(
+                select(EmployeePhoto).where(EmployeePhoto.employee_id == emp_id)
+            )
 
         # Levels: current (employee.current_level_id) + proposed (the registration
         # on this review). Level/requirement names are translation keys -> resolve.

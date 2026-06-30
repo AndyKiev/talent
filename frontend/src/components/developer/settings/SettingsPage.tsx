@@ -1,6 +1,9 @@
 // src/components/developer/settings/SettingsPage.tsx
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
     Alert,
     Box,
     Breadcrumbs,
@@ -20,6 +23,7 @@ import {
     Tooltip,
     Typography,
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -30,7 +34,7 @@ import AppShell from '../../layout/AppShell';
 import { useTheme } from '../../theme/ThemeContext';
 import useString from '../../../hooks/useString';
 import cfl from '../../../utils/capitalizeFirstLetter';
-import { APP_SETTINGS_QK, SETTING_VALUE_TYPES_QK } from '../../../utils/queryKeys';
+import { APP_SETTINGS_QK, SETTING_VALUE_TYPES_QK, APP_SETTING_BY_KEY_QK } from '../../../utils/queryKeys';
 import {
     fetchAppSettings,
     fetchSettingValueTypes,
@@ -269,7 +273,32 @@ export function SettingsPage() {
         staleTime: 5 * 60_000,
     });
 
-    const invalidate = () => qc.invalidateQueries({ queryKey: APP_SETTINGS_QK });
+    // Multi-story grouping: top-level settings (parent_id null) plus the children
+    // hanging under each. A boolean parent renders its children in an accordion
+    // that is DISABLED while the parent is off — child values stay in the DB,
+    // their options are just deactivated.
+    const topLevelSettings = useMemo(
+        () => settings.filter((s) => s.parent_id == null),
+        [settings],
+    );
+    const childrenByParent = useMemo(() => {
+        const map = new Map<number, AppSetting[]>();
+        for (const s of settings) {
+            if (s.parent_id != null) {
+                const arr = map.get(s.parent_id) ?? [];
+                arr.push(s);
+                map.set(s.parent_id, arr);
+            }
+        }
+        return map;
+    }, [settings]);
+
+    // Refresh both the settings list AND every per-key consumer (useBooleanSetting
+    // etc.), so toggling a flag here updates gated UI (e.g. avatars) immediately.
+    const invalidate = () => {
+        qc.invalidateQueries({ queryKey: APP_SETTINGS_QK });
+        qc.invalidateQueries({ queryKey: APP_SETTING_BY_KEY_QK });
+    };
 
     const updateMut = useMutation({
         mutationFn: updateAppSetting,
@@ -314,16 +343,50 @@ export function SettingsPage() {
                     </Typography>
                 ) : (
                     <Stack spacing={1.5}>
-                        {settings.map((s) => (
-                            <SettingRow
-                                key={s.id}
-                                setting={s}
-                                getString={getString}
-                                saving={updateMut.isPending}
-                                onSave={(id, value) => updateMut.mutate({ id, data: { value } })}
-                                onDelete={(setting) => setDeleteTarget(setting)}
-                            />
-                        ))}
+                        {topLevelSettings.map((s) => {
+                            const renderRow = (setting: AppSetting) => (
+                                <SettingRow
+                                    key={setting.id}
+                                    setting={setting}
+                                    getString={getString}
+                                    saving={updateMut.isPending}
+                                    onSave={(id, value) => updateMut.mutate({ id, data: { value } })}
+                                    onDelete={(target) => setDeleteTarget(target)}
+                                />
+                            );
+                            const kids = childrenByParent.get(s.id) ?? [];
+                            if (kids.length === 0) return renderRow(s);
+                            // Parent boolean off → accordion disabled (options deactivated,
+                            // values preserved in the DB).
+                            const parentOn = s.value === true;
+                            return (
+                                <Box key={s.id}>
+                                    {renderRow(s)}
+                                    <Accordion
+                                        disableGutters
+                                        defaultExpanded
+                                        disabled={!parentOn}
+                                        sx={{
+                                            mt: 1,
+                                            ml: 3,
+                                            bgcolor: 'transparent',
+                                            boxShadow: 'none',
+                                            '&:before': { display: 'none' },
+                                        }}
+                                    >
+                                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                            <Typography variant="body2" color="text.secondary">
+                                                {getString('subSettings')} ({kids.length})
+                                                {!parentOn ? ` — ${getString('subSettingsDisabledHint')}` : ''}
+                                            </Typography>
+                                        </AccordionSummary>
+                                        <AccordionDetails>
+                                            <Stack spacing={1.5}>{kids.map(renderRow)}</Stack>
+                                        </AccordionDetails>
+                                    </Accordion>
+                                </Box>
+                            );
+                        })}
                     </Stack>
                 )}
 

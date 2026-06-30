@@ -74,6 +74,55 @@ APP_SETTINGS = [
         "label_key": "settingReviewSessionFilterByDepartment",
         "description_key": "settingReviewSessionFilterByDepartmentDesc",
     },
+    {
+        # MASTER of the employee-photos feature. When OFF the whole feature is
+        # dormant: the frontend hides all avatars and never reads photos, uploads
+        # are rejected, and the TEMPO artifacts skip the photo (sheds the heavy
+        # read load). Default ON to preserve current behaviour. Stored blobs are
+        # kept, so flipping back ON restores every photo; deleting an employee
+        # still removes their photo (FK CASCADE). The four children below let the
+        # photo DISPLAY be switched per surface — each is "effectively on" only
+        # when it AND this master are on.
+        "key": "employee_photos_enabled",
+        "value": True,
+        "value_type_key": "boolean",
+        "label_key": "settingEmployeePhotosEnabled",
+        "description_key": "settingEmployeePhotosEnabledDesc",
+    },
+    # ── Children (multi-story): per-surface photo DISPLAY toggles. parent_key
+    #    links them under the master; default ON so master-ON restores everything.
+    {
+        "key": "employee_photos_employees_menu",
+        "value": True,
+        "value_type_key": "boolean",
+        "parent_key": "employee_photos_enabled",
+        "label_key": "settingEmployeePhotosEmployeesMenu",
+        "description_key": "settingEmployeePhotosEmployeesMenuDesc",
+    },
+    {
+        "key": "employee_photos_people_review",
+        "value": True,
+        "value_type_key": "boolean",
+        "parent_key": "employee_photos_enabled",
+        "label_key": "settingEmployeePhotosPeopleReview",
+        "description_key": "settingEmployeePhotosPeopleReviewDesc",
+    },
+    {
+        "key": "employee_photos_presentation_session",
+        "value": True,
+        "value_type_key": "boolean",
+        "parent_key": "employee_photos_enabled",
+        "label_key": "settingEmployeePhotosPresentationSession",
+        "description_key": "settingEmployeePhotosPresentationSessionDesc",
+    },
+    {
+        "key": "employee_photos_presentation_individual",
+        "value": True,
+        "value_type_key": "boolean",
+        "parent_key": "employee_photos_enabled",
+        "label_key": "settingEmployeePhotosPresentationIndividual",
+        "description_key": "settingEmployeePhotosPresentationIndividualDesc",
+    },
 ]
 
 
@@ -93,7 +142,7 @@ async def seed_app_settings():
                 print(f"Seeded value type: {vt['key']}")
             type_by_key[vt["key"]] = existing
 
-        # 2) Settings
+        # 2) Settings (insert missing; parent_id wired in a second pass below).
         for s in APP_SETTINGS:
             result = await session.execute(
                 select(AppSetting).where(AppSetting.key == s["key"])
@@ -111,6 +160,22 @@ async def seed_app_settings():
                 )
             )
             print(f"Seeded app setting: {s['key']}")
+        await session.flush()
+
+        # 3) Wire parent_id from parent_key (idempotent — only sets when unset).
+        result = await session.execute(select(AppSetting.key, AppSetting.id))
+        id_by_key = {row[0]: row[1] for row in result.all()}
+        for s in APP_SETTINGS:
+            parent_key = s.get("parent_key")
+            if not parent_key:
+                continue
+            child = await session.scalar(
+                select(AppSetting).where(AppSetting.key == s["key"])
+            )
+            parent_id = id_by_key.get(parent_key)
+            if child is not None and parent_id and child.parent_id != parent_id:
+                child.parent_id = parent_id
+                print(f"Linked '{s['key']}' -> parent '{parent_key}'")
 
         await session.commit()
 

@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import useString from '../../hooks/useString';
+import { useEffectiveBooleanSetting } from '../../hooks/useAppSetting';
 import {
     fetchEmployeePhotoBlob,
     uploadEmployeePhoto,
@@ -25,6 +26,15 @@ import {
     PHOTO_MAX_BYTES,
     PHOTO_MAX_LABEL,
 } from '../../api/employeePhotoApi';
+
+// Which surface this avatar lives on — selects the per-surface child setting that
+// gates its photo display. Each child is effective only when it AND the master
+// `employee_photos_enabled` are on, so OFF here means: no circle, no read, no add.
+export type EmployeePhotoScope = 'employeesMenu' | 'peopleReview';
+const PHOTO_SCOPE_KEY: Record<EmployeePhotoScope, string> = {
+    employeesMenu: 'employee_photos_employees_menu',
+    peopleReview: 'employee_photos_people_review',
+};
 
 /** Two-letter initials from a name ("Andrey Bakulin" -> "AB", single word -> first letter). */
 function initialsOf(name: string): string {
@@ -46,6 +56,8 @@ interface Props {
     /** When set, the photo is fetched and (if editable) can be changed/removed. */
     employeeId?: number;
     name: string;
+    /** Which surface this renders on — picks the per-surface photo-display flag. */
+    scope: EmployeePhotoScope;
     /** Diameter in px (default 48). */
     size?: number;
     /** Show the change/remove affordances (gated by the caller, e.g. showEditing). */
@@ -57,6 +69,7 @@ interface Props {
 export default function EmployeeAvatar({
     employeeId,
     name,
+    scope,
     size = 48,
     editable = false,
     onError,
@@ -64,6 +77,7 @@ export default function EmployeeAvatar({
 }: Props) {
     const getString = useString();
     const qc = useQueryClient();
+    const { enabled: photosEnabled } = useEffectiveBooleanSetting(PHOTO_SCOPE_KEY[scope]);
     const fileRef = useRef<HTMLInputElement>(null);
     const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
     const [confirmRemove, setConfirmRemove] = useState(false);
@@ -72,7 +86,7 @@ export default function EmployeeAvatar({
     const { data: blob } = useQuery({
         queryKey: ['employee_photo', employeeId],
         queryFn: () => fetchEmployeePhotoBlob(employeeId!),
-        enabled: !!employeeId,
+        enabled: !!employeeId && photosEnabled,
         staleTime: 60_000,
         retry: false,
     });
@@ -128,6 +142,10 @@ export default function EmployeeAvatar({
     };
 
     const busy = uploadMut.isPending || deleteMut.isPending;
+
+    // Feature OFF → render nothing anywhere (no circle placeholder, no read, no
+    // add affordance). Placed after every hook so hook order stays stable.
+    if (!photosEnabled) return null;
 
     const avatar = (
         <Avatar

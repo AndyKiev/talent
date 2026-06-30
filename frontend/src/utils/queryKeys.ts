@@ -33,12 +33,17 @@ export const PROCESS_ROLE_HOLDER_EMPLOYEE_QK = ['process_role_holder_employees']
 export const PROCESS_ROLE_HOLDER_DEPARTMENT_QK = ['process_role_holder_departments'] as const;
 export const PEOPLE_REVIEW_MY_SCOPES_QK = ['people_review_my_scopes'] as const;
 export const PEOPLE_REVIEW_MY_LATEST_QK = ['people_review_my_latest'] as const;
+export const SESSION_DEPARTMENTS_QK = (sessionId: number) => ['session_departments', sessionId] as const;
 export const OVERSIGHT_MANAGER_OPTIONS_QK = ['oversight_manager_options'] as const;
 export const MY_OVERSIGHT_MANAGER_QK = ['my_oversight_manager'] as const;
 // App settings (typed key/value)
 export const APP_SETTINGS_QK = ['app_settings'] as const;
 export const SETTING_VALUE_TYPES_QK = ['setting_value_types'] as const;
-export const appSettingByKeyQK = (key: string) => ['app_setting_by_key', key] as const;
+// Prefix for every per-key setting query — invalidate it to refresh all
+// useAppSetting/useBooleanSetting consumers after a setting changes.
+export const APP_SETTING_BY_KEY_QK = ['app_setting_by_key'] as const;
+export const appSettingByKeyQK = (key: string) =>
+    [...APP_SETTING_BY_KEY_QK, key] as const;
 
 // ── Ported from talent-test (regions, hrm scopes, links) ──────────────────────
 export const DEPARTMENT_REGION_LINK_QK = ['department_region_links'] as const;

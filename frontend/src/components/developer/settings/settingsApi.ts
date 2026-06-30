@@ -22,6 +22,8 @@ export interface AppSetting {
     value: SettingValue;
     value_type_id: number;
     value_type_key: string | null;
+    // Self-FK: a child setting nests under a parent boolean (multi-story). null = top level.
+    parent_id: number | null;
     label_key: string | null;
     description_key: string | null;
     is_active: boolean;

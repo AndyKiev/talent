@@ -196,6 +196,20 @@ export const setActiveContext = async (body: ActiveContext): Promise<ActiveConte
     return res.data;
 };
 
+// --- Session departments (for supervision scope cross-check) ---
+export interface SessionDepartment {
+    id: number;
+    session_id: number;
+    department_id: number;
+    department_name: string | null;
+}
+
+/** Fetch the department-ids linked to a review session. Returns just the id list. */
+export const fetchSessionDepartments = async (sessionId: number): Promise<number[]> => {
+    const res = await axiosInstance.get<SessionDepartment[]>(`${RS_BASE}/${sessionId}/departments`);
+    return (res.data ?? []).map((d) => d.department_id);
+};
+
 // --- Oversight manager (self-service: pick your own oversight reviewer) ---
 export interface OversightManagerOption {
     process_role_holder_id: number;
