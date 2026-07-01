@@ -212,6 +212,22 @@ class ReviewSessionService(BaseService):
             if linked_dept_ids:
                 filter_by_dept = True
 
+        # Build the employee selection from all active filters (ANDed). Each
+        # filter is read fresh here, so it only affects THIS (newly opened)
+        # session — never previously opened ones.
+        from sqlalchemy import or_
+        from backend.api_v1.app_setting.app_setting_service import get_list_setting
+        from backend.api_v1.employee_status.employee_status_model import EmployeeStatus
+        from backend.api_v1.job_category.job_category_model import JobCategory
+        from backend.api_v1.job_job_category_link.job_job_category_link_model import (
+            JobJobCategoryLink,
+        )
+
+        stmt = select(Employee)
+        conditions = [Employee.is_active == True]
+
+        # Filter 1 (existing): employees whose MAIN department is in the picked
+        # department's subtree.
         if filter_by_dept:
             from backend.api_v1.department.department_repository import DepartmentRepository
 
@@ -220,22 +236,43 @@ class ReviewSessionService(BaseService):
             # (e.g. a directorate) includes employees in all its sub-departments.
             dept_repo = DepartmentRepository(session=self.session)
             subtree_ids = await dept_repo.get_subtree_ids(linked_ids)
-            # Employees whose main department is in the subtree.
-            stmt = (
-                select(Employee)
-                .join(EmployeeDepartment, EmployeeDepartment.employee_id == Employee.id)
-                .where(
-                    Employee.is_active == True,
-                    EmployeeDepartment.is_main == True,
-                    EmployeeDepartment.department_id.in_(subtree_ids),
+            stmt = stmt.join(
+                EmployeeDepartment, EmployeeDepartment.employee_id == Employee.id
+            )
+            conditions += [
+                EmployeeDepartment.is_main == True,
+                EmployeeDepartment.department_id.in_(subtree_ids),
+            ]
+
+        # Filter 2: employee status (default ['working']). Empty list = no filter.
+        status_names = await get_list_setting(
+            self.session, "review_session_filter_employee_statuses", ["working"]
+        )
+        if status_names:
+            stmt = stmt.join(EmployeeStatus, EmployeeStatus.id == Employee.status_id)
+            conditions.append(EmployeeStatus.name.in_(status_names))
+
+        # Filter 3: job category (default ['manager']). An employee whose job has
+        # NO category link (or no job at all) is ALWAYS included. Empty = no filter.
+        category_keys = await get_list_setting(
+            self.session, "review_session_filter_job_categories", ["manager"]
+        )
+        if category_keys:
+            stmt = stmt.outerjoin(
+                JobJobCategoryLink, JobJobCategoryLink.job_id == Employee.job_id
+            ).outerjoin(
+                JobCategory, JobCategory.id == JobJobCategoryLink.job_category_id
+            )
+            conditions.append(
+                or_(
+                    JobJobCategoryLink.id.is_(None),
+                    JobCategory.key.in_(category_keys),
                 )
             )
-        else:
-            # Create RSE records for all active employees
-            stmt = select(Employee).where(Employee.is_active == True)
 
+        stmt = stmt.where(*conditions)
         result = await self.session.execute(stmt)
-        employees = result.scalars().all()
+        employees = result.scalars().unique().all()
 
         # Get all active dimensions
         dim_stmt = select(ReviewDimension).where(ReviewDimension.is_active == True)

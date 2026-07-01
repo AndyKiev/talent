@@ -901,8 +901,8 @@ class ReviewSessionEmployeeService(BaseService):
         dim_meta: dict[str, tuple[str, str]],
     ) -> list[dict]:
         """development_plan is a JSON array of missions. Accepts BOTH the legacy
-        shape (plain strings) and the new shape ({text, dimension_key}). Returns
-        enriched dicts {text, dimension_key, name, color} so the album can show
+        shape (plain strings) and the new shape ({text, kpi, dimension_key}). Returns
+        enriched dicts {text, kpi, dimension_key, name, color} so the album can show
         each mission's linked competence in its own color (same as the page)."""
         if not development_plan:
             return []
@@ -919,9 +919,11 @@ class ReviewSessionEmployeeService(BaseService):
         for item in arr:
             if isinstance(item, dict):
                 text = str(item.get("text") or "").strip()
+                kpi = str(item.get("kpi") or "").strip()
                 key = item.get("dimension_key")
             else:
                 text = str(item or "").strip()
+                kpi = ""
                 key = None
             if not text:
                 continue
@@ -931,6 +933,7 @@ class ReviewSessionEmployeeService(BaseService):
             out.append(
                 {
                     "text": text,
+                    "kpi": kpi,
                     "dimension_key": str(key) if key else None,
                     "name": name,
                     "color": color,

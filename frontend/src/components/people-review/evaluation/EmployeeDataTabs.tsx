@@ -24,6 +24,7 @@ import DoneIcon from '@mui/icons-material/Done';
 import type { GetStringFn } from '../../../types/getStringFn';
 import type { Mission } from './evaluationHelpers';
 import { useTheme } from '../../theme/ThemeContext';
+import { EmployeeTrainingsPanel } from '../../employees/trainings/EmployeeTrainingsPanel';
 
 /** A competence option offered for linking a mission, with its display color. */
 export interface CompetenceOption {
@@ -147,19 +148,26 @@ interface Props {
     // linked to a competence-to-develop (count bounded by min/max).
     missions: Mission[];
     onUpdateMission: (index: number, value: string) => void;
+    onUpdateMissionKpi: (index: number, value: string) => void;
     onAddMission: (text: string, dimensionKey: string | null) => void;
     onRemoveMission: (index: number) => void;
     onSetMissionCompetence: (index: number, dimensionKey: string | null) => void;
     newMissionText: string;
     onNewMissionTextChange: (value: string) => void;
+    newMissionKpi: string;
+    onNewMissionKpiChange: (value: string) => void;
     newMissionCompetence: string | null;
     onNewMissionCompetenceChange: (dimensionKey: string | null) => void;
     minMissions: number;
     maxMissions: number;
+    /** Max characters for the KPI field (defaults to 126). */
+    kpiMaxLength?: number;
     developCompetenceOptions: CompetenceOption[];
     allCompetenceOptions: CompetenceOption[];
     allowFullCompetenceList: boolean;
-    // Trainings
+    // Trainings — real assign+status list (shared with the Employees tab) plus
+    // the pre-existing free-text notes field, stacked below it.
+    employeeId: number | undefined;
     trainings: string;
     onTrainingsChange: (value: string) => void;
 }
@@ -171,11 +179,12 @@ export function EmployeeDataTabs({
     employeeFeedback, onEmployeeFeedbackChange, employeeFeedbackEditable,
     managerFeedback, onManagerFeedbackChange, managerFeedbackEditable,
     results, newResultText, onNewResultTextChange, onAddResult, onRemoveResult,
-    missions, onUpdateMission, onAddMission, onRemoveMission, onSetMissionCompetence,
-    newMissionText, onNewMissionTextChange, newMissionCompetence, onNewMissionCompetenceChange,
-    minMissions, maxMissions,
+    missions, onUpdateMission, onUpdateMissionKpi, onAddMission, onRemoveMission, onSetMissionCompetence,
+    newMissionText, onNewMissionTextChange, newMissionKpi, onNewMissionKpiChange,
+    newMissionCompetence, onNewMissionCompetenceChange,
+    minMissions, maxMissions, kpiMaxLength = 126,
     developCompetenceOptions, allCompetenceOptions, allowFullCompetenceList,
-    trainings, onTrainingsChange,
+    employeeId, trainings, onTrainingsChange,
 }: Props) {
     const { t } = useTheme();
     // Which sections are currently in edit mode (inputs revealed). Read-only by
@@ -203,7 +212,7 @@ export function EmployeeDataTabs({
                 <Tab label={getString('managerFeedback')} sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12 }} />
                 <Tab label={getString('resultsAchievements')} sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12 }} />
                 <Tab label={getString('developmentPlan')} sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12 }} />
-                <Tab label={getString('requiredTrainings')} sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12 }} />
+                <Tab label={getString('trainings')} sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12 }} />
             </Tabs>
 
             <Box sx={{ p: 3 }}>
@@ -311,17 +320,25 @@ export function EmployeeDataTabs({
                     // or the full list when the developer setting allows it and the
                     // user opted in. Lookup uses the full list so an already-linked
                     // competence still resolves its name+color when off the shortlist.
+                    const planEditing = isEditable && !!editSections.developmentPlan;
                     const showFull = allowFullCompetenceList && useFullCompetenceList;
                     const pickerOptions = showFull ? allCompetenceOptions : developCompetenceOptions;
                     const competenceFor = (key: string | null) =>
                         key ? allCompetenceOptions.find(o => o.key === key) : undefined;
                     const canAdd = missions.length < maxMissions;
-                    const canRemove = missions.length > minMissions;
-                    // The development-plan tab label already titles this section, so no
-                    // SectionHeader here. Each mission is edited via its own row pencil.
+                    const canRemove = planEditing && missions.length > minMissions;
+                    const kpiMax = kpiMaxLength;
                     return (
                     <Box>
-                        {isEditable && (
+                        <SectionHeader
+                            title={getString('developmentPlan')}
+                            editable={isEditable}
+                            editing={planEditing}
+                            onToggle={() => toggle('developmentPlan')}
+                            getString={getString}
+                        />
+
+                        {planEditing && (
                             <Stack
                                 direction="row"
                                 alignItems="center"
@@ -330,7 +347,7 @@ export function EmployeeDataTabs({
                                 sx={{ mb: 1, flexWrap: 'wrap' }}
                             >
                                 <Typography fontSize={12} color={t.textMuted} sx={{ whiteSpace: 'nowrap' }}>
-                                    {getString('missionCountHint', { min: minMissions, max: maxMissions })}
+                                    {getString('missionCountHint', { min: String(minMissions), max: String(maxMissions) })}
                                 </Typography>
                                 {allowFullCompetenceList && (
                                     <FormControlLabel
@@ -349,64 +366,91 @@ export function EmployeeDataTabs({
                                 )}
                             </Stack>
                         )}
-                        {missions.length > 0 ? (
+
+                        {(missions.length > 0 || !isEditable) && (
                             <Box sx={{ mb: 1.5 }}>
                                 {missions.map((mission, idx) => {
                                     const comp = competenceFor(mission.dimension_key);
-                                    const rowEditing = isEditable && editMissionIdx === idx;
+                                    const rowEditing = planEditing && editMissionIdx === idx;
                                     return (
                                     <Stack
                                         key={`mission-${idx}`}
                                         direction="row"
                                         alignItems="flex-start"
-                                        spacing={0.75}
+                                        spacing={1}
                                         sx={{ mb: 1, py: 0.5, px: 0.75, borderRadius: '6px', '&:hover': { bgcolor: t.accent + '10' } }}
                                     >
                                         <Typography fontSize={12} fontWeight={700} color={t.accent} sx={{ minWidth: 22, pt: '8px' }}>
                                             {idx + 1}.
                                         </Typography>
                                         {rowEditing ? (
-                                            // Text input on the LEFT, competence selector on the RIGHT; both short and top-aligned.
-                                            <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ flex: 1 }}>
+                                            // Text input (task) on top, then KPI + competence on the same row.
+                                            <Stack direction="column" spacing={0.75} sx={{ flex: 1 }}>
                                                 <TextField
                                                     size="small"
+                                                    label={getString('missionTask')}
                                                     value={mission.text}
                                                     onChange={e => onUpdateMission(idx, e.target.value)}
                                                     placeholder={getString('typeMissionPlaceholder')}
-                                                    multiline minRows={1} maxRows={4}
+                                                    multiline minRows={2} maxRows={4}
                                                     fullWidth
                                                 />
-                                                <MissionCompetenceSelect
-                                                    value={mission.dimension_key}
-                                                    onChange={k => onSetMissionCompetence(idx, k)}
-                                                    options={pickerOptions}
-                                                    competenceFor={competenceFor}
-                                                    getString={getString}
-                                                    mutedColor={t.textMuted}
-                                                />
+                                                <Stack direction="row" spacing={1} alignItems="flex-start">
+                                                    <TextField
+                                                        size="small"
+                                                        label={getString('missionKpi')}
+                                                        value={mission.kpi ?? ''}
+                                                        onChange={e => onUpdateMissionKpi(idx, e.target.value.slice(0, kpiMax))}
+                                                        placeholder={getString('missionKpiPlaceholder')}
+                                                        inputProps={{ maxLength: kpiMax }}
+                                                        sx={{ flex: 1 }}
+                                                    />
+                                                    <MissionCompetenceSelect
+                                                        value={mission.dimension_key}
+                                                        onChange={k => onSetMissionCompetence(idx, k)}
+                                                        options={pickerOptions}
+                                                        competenceFor={competenceFor}
+                                                        getString={getString}
+                                                        mutedColor={t.textMuted}
+                                                    />
+                                                </Stack>
                                             </Stack>
                                         ) : (
-                                            <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ flex: 1, pt: '4px' }}>
-                                                <Typography fontSize={13} sx={{ flex: 1, whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: mission.text ? t.text : t.textMuted }}>
-                                                    {mission.text || '—'}
-                                                </Typography>
-                                                {comp && (
-                                                    <Chip
-                                                        size="small"
-                                                        label={comp.name}
-                                                        sx={{
-                                                            color: comp.color,
-                                                            borderColor: comp.color,
-                                                            fontWeight: 600,
-                                                            bgcolor: comp.color + '14',
-                                                            flex: 'none',
-                                                        }}
-                                                        variant="outlined"
-                                                    />
+                                            <Stack direction="column" spacing={0.25} sx={{ flex: 1, pt: '4px' }}>
+                                                <Stack direction="row" spacing={1} alignItems="flex-start">
+                                                    <Typography fontSize={13} sx={{ flex: 1, whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: mission.text ? t.text : t.textMuted }}>
+                                                        {mission.text || '—'}
+                                                    </Typography>
+                                                    {comp && (
+                                                        <Chip
+                                                            size="small"
+                                                            label={comp.name}
+                                                            sx={{
+                                                                color: comp.color,
+                                                                borderColor: comp.color,
+                                                                fontWeight: 600,
+                                                                bgcolor: comp.color + '14',
+                                                                flex: 'none',
+                                                            }}
+                                                            variant="outlined"
+                                                        />
+                                                    )}
+                                                </Stack>
+                                                {mission.kpi ? (
+                                                    <Typography fontSize={11} color={t.textMuted} sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                                                        <Box component="span" sx={{ fontWeight: 600, color: t.textSecondary }}>
+                                                            {getString('missionKpi')}:
+                                                        </Box>{' '}
+                                                        {mission.kpi}
+                                                    </Typography>
+                                                ) : (
+                                                    <Typography fontSize={11} color={t.textMuted}>
+                                                        {getString('missionKpi')}: —
+                                                    </Typography>
                                                 )}
                                             </Stack>
                                         )}
-                                        {isEditable && (
+                                        {planEditing && (
                                             <Tooltip title={getString(rowEditing ? 'doneEditing' : 'edit')}>
                                                 <IconButton
                                                     size="small"
@@ -434,63 +478,104 @@ export function EmployeeDataTabs({
                                     </Stack>
                                     );
                                 })}
+                                {missions.length === 0 && !isEditable && (
+                                    <Typography fontSize={13} color={t.textMuted}>—</Typography>
+                                )}
                             </Box>
-                        ) : (!isEditable && (
-                            <Typography fontSize={13} color={t.textMuted}>—</Typography>
-                        ))}
-                        {/* Hide the add row entirely once the max is reached — nothing
-                            would be added anyway. Text on the left, competence on the right. */}
-                        {isEditable && canAdd && (
-                            <Stack direction="row" spacing={1} alignItems="flex-start">
+                        )}
+
+                        {/* Add row: only visible in edit mode, within the max bound.
+                            Task on top row, then KPI + competence + Add button on the bottom row. */}
+                        {planEditing && canAdd && (
+                            <Stack direction="column" spacing={0.75}>
                                 <TextField
                                     size="small"
+                                    label={getString('missionTask')}
                                     placeholder={getString('typeMissionPlaceholder')}
                                     value={newMissionText}
                                     onChange={e => onNewMissionTextChange(e.target.value)}
                                     onKeyDown={e => {
                                         if (e.key === 'Enter' && !e.shiftKey) {
                                             e.preventDefault();
-                                            onAddMission(newMissionText, newMissionCompetence);
+                                            if (newMissionKpi.trim()) {
+                                                onAddMission(newMissionText, newMissionCompetence);
+                                            }
                                         }
                                     }}
-                                    multiline minRows={1} maxRows={4}
+                                    multiline minRows={2} maxRows={4}
                                     fullWidth
                                 />
-                                <MissionCompetenceSelect
-                                    value={newMissionCompetence}
-                                    onChange={onNewMissionCompetenceChange}
-                                    options={pickerOptions}
-                                    competenceFor={competenceFor}
-                                    getString={getString}
-                                    mutedColor={t.textMuted}
-                                />
-                                <Button
-                                    variant="outlined"
-                                    size="small"
-                                    startIcon={<AddIcon />}
-                                    onClick={() => onAddMission(newMissionText, newMissionCompetence)}
-                                    disabled={!newMissionText.trim()}
-                                    sx={{ textTransform: 'none', whiteSpace: 'nowrap', mt: '2px' }}
-                                >
-                                    {getString('addMission')}
-                                </Button>
+                                <Stack direction="row" spacing={1} alignItems="flex-start">
+                                    <TextField
+                                        size="small"
+                                        label={getString('missionKpi')}
+                                        placeholder={getString('missionKpiPlaceholder')}
+                                        value={newMissionKpi}
+                                        onChange={e => onNewMissionKpiChange(e.target.value.slice(0, kpiMax))}
+                                        inputProps={{ maxLength: kpiMax }}
+                                        sx={{ flex: 1 }}
+                                    />
+                                    <MissionCompetenceSelect
+                                        value={newMissionCompetence}
+                                        onChange={onNewMissionCompetenceChange}
+                                        options={pickerOptions}
+                                        competenceFor={competenceFor}
+                                        getString={getString}
+                                        mutedColor={t.textMuted}
+                                    />
+                                    <Button
+                                        variant="outlined"
+                                        size="small"
+                                        startIcon={<AddIcon />}
+                                        onClick={() => onAddMission(newMissionText, newMissionCompetence)}
+                                        disabled={!newMissionText.trim() || !newMissionKpi.trim()}
+                                        sx={{ textTransform: 'none', whiteSpace: 'nowrap', mt: '2px' }}
+                                    >
+                                        {getString('addMission')}
+                                    </Button>
+                                </Stack>
                             </Stack>
                         )}
                     </Box>
                     );
                 })()}
 
-                {dataTab === 6 && (
-                    <TextSection
-                        title={getString('requiredTrainings')}
-                        value={trainings}
-                        onChange={onTrainingsChange}
-                        editable={isEditable}
-                        editing={!!editSections.trainings}
-                        onToggle={() => toggle('trainings')}
-                        getString={getString}
-                    />
-                )}
+                {dataTab === 6 && (() => {
+                    const trainingsEditing = isEditable && !!editSections.trainings;
+                    return (
+                    <Box>
+                        <SectionHeader
+                            title={getString('trainings')}
+                            editable={isEditable}
+                            editing={trainingsEditing}
+                            onToggle={() => toggle('trainings')}
+                            getString={getString}
+                        />
+
+                        {employeeId && (
+                            <Box sx={{ mb: 3 }}>
+                                <EmployeeTrainingsPanel
+                                    employeeId={employeeId}
+                                    isEditable={trainingsEditing}
+                                    getString={getString}
+                                    compact
+                                />
+                            </Box>
+                        )}
+
+                        <Typography fontSize={12} fontWeight={600} color={t.textSecondary} sx={{ mb: 0.5 }}>
+                            {getString('trainingNotes')}
+                        </Typography>
+                        {trainingsEditing ? (
+                            <TextField value={trainings} onChange={e => onTrainingsChange(e.target.value)} fullWidth multiline minRows={5} />
+                        ) : (
+                            <Typography fontSize={13} sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: trainings ? t.text : t.textMuted }}>
+                                {trainings || '—'}
+                            </Typography>
+                        )}
+                    </Box>
+                    );
+                })()}
             </Box>
         </Box>
     );

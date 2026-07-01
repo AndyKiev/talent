@@ -222,7 +222,10 @@ export const FOREIGN_LANGUAGES: { key: string; labelKey: 'english' | 'french' }[
 // stored as a JSON array. Each mission can optionally be linked to the competence
 // (by dimension_key) it is focused on developing, so the album can color it.
 export interface Mission {
+    /** Task description (the "what" of the mission). */
     text: string;
+    /** KPI — measurable target, max 126 characters, required when adding. */
+    kpi: string;
     // dimension_key of the linked competence-to-develop, or null when unlinked.
     dimension_key: string | null;
 }
@@ -243,18 +246,22 @@ export function parseMissions(raw: string | null): Mission[] {
     if (!Array.isArray(parsed)) return [];
     return parsed.map((item): Mission => {
         if (item && typeof item === 'object' && 'text' in item) {
-            const obj = item as { text?: unknown; dimension_key?: unknown };
+            const obj = item as { text?: unknown; kpi?: unknown; dimension_key?: unknown };
             const key = obj.dimension_key == null ? null : String(obj.dimension_key) || null;
-            return { text: obj.text == null ? '' : String(obj.text), dimension_key: key };
+            return {
+                text: obj.text == null ? '' : String(obj.text),
+                kpi: obj.kpi == null ? '' : String(obj.kpi),
+                dimension_key: key,
+            };
         }
-        return { text: item == null ? '' : String(item), dimension_key: null };
+        return { text: item == null ? '' : String(item), kpi: '', dimension_key: null };
     });
 }
 
 /** Serialize the mission list for storage, dropping entries with no text. */
 export function serializeMissions(missions: Mission[]): string {
     const kept = missions
-        .map(m => ({ text: m.text.trim(), dimension_key: m.dimension_key }))
+        .map(m => ({ text: m.text.trim(), kpi: m.kpi.trim(), dimension_key: m.dimension_key }))
         .filter(m => m.text.length > 0);
     return JSON.stringify(kept);
 }

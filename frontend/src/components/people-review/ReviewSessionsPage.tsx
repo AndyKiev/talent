@@ -413,7 +413,19 @@ export function ReviewSessionsPage() {
 
     return (
         <AppShell>
-            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: '100%', px: { xs: 2, sm: 4, md: 6 } }}>
+            <Box
+                sx={{
+                    p: { xs: 2, sm: 3 },
+                    px: { xs: 2, sm: 4, md: 6 },
+                    maxWidth: '100%',
+                    // Fixed-height page so the grid scrolls internally (pinned headers)
+                    // instead of the whole page scrolling under the 56px AppBar.
+                    height: 'calc(100vh - 56px)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden',
+                }}
+            >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                     <Typography variant="h5" fontWeight={600} sx={{ flex: 1 }}>
                         {getString('peopleReviewSessions')}
@@ -459,7 +471,7 @@ export function ReviewSessionsPage() {
                 )}
 
                 {!isLoading && !error && (
-                    <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+                    <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', flex: 1, minHeight: 0 }}>
                         <DataGrid
                             rows={filteredRows}
                             columns={columns}
@@ -470,7 +482,7 @@ export function ReviewSessionsPage() {
                             getRowId={(row) => row.id}
                             localeText={localeText}
                             hideFooterSelectedRowCount
-                            sx={{ '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center', py: 1 } }}
+                            sx={{ height: '100%', '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center', py: 1 } }}
                         />
                     </Paper>
                 )}

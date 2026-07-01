@@ -687,13 +687,17 @@ export function EvaluationPage() {
     // A numbered, add/remove list (like results) bounded by the developer min/max.
     // The add row lets the user set the linked competence in parallel with the text.
     const [newMissionText, setNewMissionText] = useState('');
+    const [newMissionKpi, setNewMissionKpi] = useState('');
     const [newMissionCompetence, setNewMissionCompetence] = useState<string | null>(null);
     const addMission = (text: string, dimensionKey: string | null) => {
         const trimmed = text.trim();
+        const trimmedKpi = newMissionKpi.trim();
         if (!trimmed) return;
+        if (!trimmedKpi) return; // KPI is required
         if (missions.length >= maxMissions) return;
-        setMissions(prev => [...prev, { text: trimmed, dimension_key: dimensionKey }]);
+        setMissions(prev => [...prev, { text: trimmed, kpi: trimmedKpi, dimension_key: dimensionKey }]);
         setNewMissionText('');
+        setNewMissionKpi('');
         setNewMissionCompetence(null);
     };
     const removeMission = (index: number) => {
@@ -704,6 +708,9 @@ export function EvaluationPage() {
     };
     const setMissionCompetence = (index: number, dimension_key: string | null) => {
         setMissions(prev => prev.map((m, i) => (i === index ? { ...m, dimension_key } : m)));
+    };
+    const updateMissionKpi = (index: number, value: string) => {
+        setMissions(prev => prev.map((m, i) => (i === index ? { ...m, kpi: value } : m)));
     };
 
     // Competences a mission may target: the "to develop" shortlist by default,
@@ -1330,11 +1337,14 @@ export function EvaluationPage() {
                             onRemoveResult={removeResult}
                             missions={missions}
                             onUpdateMission={updateMission}
+                            onUpdateMissionKpi={updateMissionKpi}
                             onAddMission={addMission}
                             onRemoveMission={removeMission}
                             onSetMissionCompetence={setMissionCompetence}
                             newMissionText={newMissionText}
                             onNewMissionTextChange={setNewMissionText}
+                            newMissionKpi={newMissionKpi}
+                            onNewMissionKpiChange={setNewMissionKpi}
                             newMissionCompetence={newMissionCompetence}
                             onNewMissionCompetenceChange={setNewMissionCompetence}
                             minMissions={minMissions}
@@ -1342,6 +1352,7 @@ export function EvaluationPage() {
                             developCompetenceOptions={developCompetenceOptions}
                             allCompetenceOptions={allCompetenceOptions}
                             allowFullCompetenceList={allowFullCompetenceList}
+                            employeeId={employeeId}
                             trainings={trainings}
                             onTrainingsChange={setTrainings}
                         />

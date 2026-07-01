@@ -415,7 +415,20 @@ export function SessionEmployeesPage() {
                 open={presLoading || (isFetching && !isLoading)}
                 label={presLoading ? getString('tempoPresentationBuilding') : (getString('loading') || 'Loading\u2026')}
             />
-            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: '100%', px: { xs: 2, sm: 4, md: 6 } }}>
+            <Box
+                sx={{
+                    p: { xs: 2, sm: 3 },
+                    px: { xs: 2, sm: 4, md: 6 },
+                    maxWidth: '100%',
+                    // Fixed-height page: the roster grid (or reorder list) scrolls
+                    // internally with pinned headers instead of the page scrolling
+                    // under the 56px AppBar.
+                    height: 'calc(100vh - 56px)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden',
+                }}
+            >
                 <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
                     <Link to="/people_review" style={{ textDecoration: 'none', color: 'inherit' }}>
                         <Typography variant="body2" color="text.secondary">{getString('peopleReview')}</Typography>
@@ -548,30 +561,33 @@ export function SessionEmployeesPage() {
                                 )}
                             />
                         </Box>
+                        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
                         {reorderMode && canReorder ? (
                             // Full unpaginated roster in queue order; drag/arrows reassign 10,20,30…
-                            <ReorderableList<ReviewSessionEmployeeList>
-                                rows={rows}
-                                getRowId={r => r.id}
-                                getString={getString}
-                                onReorder={ids => reorderMut.mutate(ids)}
-                                renderRow={r => (
-                                    <Stack direction="row" alignItems="center" spacing={1.5}>
-                                        <Typography fontSize={13} fontWeight={600} color="text.secondary" sx={{ minWidth: 64 }}>
-                                            {r.employee_code}
-                                        </Typography>
-                                        <Typography fontSize={13} sx={{ flex: 1 }}>{r.employee_name}</Typography>
-                                        <Chip
-                                            label={getString(STATUS_LABEL_KEYS[r.status] ?? r.status)}
-                                            color={RSE_STATUS_COLORS[r.status] ?? 'default'}
-                                            size="small"
-                                            variant="outlined"
-                                        />
-                                    </Stack>
-                                )}
-                            />
+                            <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+                                <ReorderableList<ReviewSessionEmployeeList>
+                                    rows={rows}
+                                    getRowId={r => r.id}
+                                    getString={getString}
+                                    onReorder={ids => reorderMut.mutate(ids)}
+                                    renderRow={r => (
+                                        <Stack direction="row" alignItems="center" spacing={1.5}>
+                                            <Typography fontSize={13} fontWeight={600} color="text.secondary" sx={{ minWidth: 64 }}>
+                                                {r.employee_code}
+                                            </Typography>
+                                            <Typography fontSize={13} sx={{ flex: 1 }}>{r.employee_name}</Typography>
+                                            <Chip
+                                                label={getString(STATUS_LABEL_KEYS[r.status] ?? r.status)}
+                                                color={RSE_STATUS_COLORS[r.status] ?? 'default'}
+                                                size="small"
+                                                variant="outlined"
+                                            />
+                                        </Stack>
+                                    )}
+                                />
+                            </Box>
                         ) : (
-                            <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+                            <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', flex: 1, minHeight: 0 }}>
                                 <DataGrid
                                 rows={filteredRows} columns={columns}
                                 paginationModel={paginationModel}
@@ -582,10 +598,11 @@ export function SessionEmployeesPage() {
                                 getRowId={row => row.id}
                                 localeText={localeText}
                                 hideFooterSelectedRowCount
-                                sx={{ '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center', py: 1 } }}
+                                sx={{ height: '100%', '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center', py: 1 } }}
                                 />
                             </Paper>
                         )}
+                        </Box>
                     </>
                 )}
 
