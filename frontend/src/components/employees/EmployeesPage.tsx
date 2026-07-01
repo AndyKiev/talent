@@ -222,7 +222,20 @@ export function EmployeesPage() {
     // ── Render ────────────────────────────────────────────────────────────────
     return (
         <AppShell>
-            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1800, mx: 'auto' }}>
+            <Box
+                sx={{
+                    p: { xs: 2, sm: 3 },
+                    maxWidth: 1800,
+                    mx: 'auto',
+                    // Fill the viewport below the 56px sticky AppBar and let the grid
+                    // scroll internally (its column headers stay pinned) instead of the
+                    // whole page scrolling under the header.
+                    height: 'calc(100vh - 56px)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden',
+                }}
+            >
                 {/* Breadcrumbs */}
                 <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
                     <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -330,17 +343,18 @@ export function EmployeesPage() {
                     </Alert>
                 )}
 
-                <DataGrid
-                    rows={filteredEmployees}
-                    columns={columns}
-                    loading={isLoading}
-                    autoHeight
-                    pageSizeOptions={[25, 50, 100]}
-                    initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
-                    disableRowSelectionOnClick
-                    sx={dataGridSx}
-                    localeText={localeText}
-                />
+                <Box sx={{ flex: 1, minHeight: 0 }}>
+                    <DataGrid
+                        rows={filteredEmployees}
+                        columns={columns}
+                        loading={isLoading}
+                        pageSizeOptions={[25, 50, 100]}
+                        initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
+                        disableRowSelectionOnClick
+                        sx={[...(Array.isArray(dataGridSx) ? dataGridSx : [dataGridSx]), { height: '100%' }]}
+                        localeText={localeText}
+                    />
+                </Box>
             </Box>
 
             {/* Dialogs */}

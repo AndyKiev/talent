@@ -6,39 +6,18 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  MenuItem,
   Stack,
   CircularProgress,
   Alert,
-  TextField,
-  Typography,
 } from '@mui/material';
-import { useForm, Controller } from 'react-hook-form';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  fetchJobsByDepartmentType,
-  type JobWithLinkId,
-} from '../../admin/department_types/departmentTypeJobLinkApi';
-import { axiosInstance } from '../../../api/axiosInstance';
-import { BASE_URL } from '../../../utils/eNums';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createTalentAuditJob, type TalentAuditJobCreate } from './talentAuditApi';
-import { DepartmentTypeSelectTree } from './DepartmentTypeSelectTree';
-import { DEPT_TYPE_JOB_LINK_QK, TSPL_QK } from '../../../utils/queryKeys';
+import { TalentTargetJobPicker } from './TalentTargetJobPicker';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 
 
 const DEFAULT_STATUS_ID = 1;
-
-interface StatusPeriodOption {
-  id: number;
-  label: string;
-}
-
-interface FormValues {
-  target_job_id: number | '';
-  talent_status_period_link_id: number | '';
-}
 
 interface Props {
   open: boolean;
@@ -59,56 +38,30 @@ export function TalentAuditJobDialog({
   const qc = useQueryClient();
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Department type chosen in the tree → drives the job select below.
+  // Department type chosen in the tree → drives the job select.
   const [selectedTypeId, setSelectedTypeId] = useState<number | null>(null);
   const [selectedTypeName, setSelectedTypeName] = useState('');
-
-  const {
-    control,
-    handleSubmit,
-    reset,
-    setValue,
-    formState: { errors },
-  } = useForm<FormValues>({
-    defaultValues: { target_job_id: '', talent_status_period_link_id: '' },
-  });
+  const [targetJobId, setTargetJobId] = useState<number | ''>('');
+  const [talentLinkId, setTalentLinkId] = useState<number | ''>('');
+  const [submitted, setSubmitted] = useState(false);
 
   // Reset everything when the dialog closes.
   useEffect(() => {
     if (!open) {
-      reset({ target_job_id: '', talent_status_period_link_id: '' });
       setSelectedTypeId(null);
       setSelectedTypeName('');
+      setTargetJobId('');
+      setTalentLinkId('');
+      setSubmitted(false);
       setErrorMessage('');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
-
-  // Jobs linked to the chosen department type (active links only).
-  const { data: jobs = [], isLoading: jobsLoading } = useQuery<JobWithLinkId[]>({
-    queryKey: [...DEPT_TYPE_JOB_LINK_QK, 'by_type', selectedTypeId, true],
-    queryFn: () => fetchJobsByDepartmentType(selectedTypeId as number, true),
-    enabled: selectedTypeId != null,
-    staleTime: 2 * 60 * 1000,
-  });
-
-  // Talent status + period pairs (the "talent level" select) — unchanged.
-  const { data: pairs = [], isLoading: pairsLoading } = useQuery<StatusPeriodOption[]>({
-    queryKey: [...TSPL_QK, 'active-pairs', true],
-    queryFn: async () => {
-      const res = await axiosInstance.get(
-          `${BASE_URL}/talent_status_period_links/active_pairs?is_active=true`,
-      );
-      return res.data ?? [];
-    },
-    staleTime: 5 * 60 * 1000,
-  });
 
   const handleSelectType = (typeId: number, typeName: string) => {
     setSelectedTypeId(typeId);
     setSelectedTypeName(typeName);
     // Clear any previously picked job — it may not belong to the new type.
-    setValue('target_job_id', '');
+    setTargetJobId('');
   };
 
   const mutation = useMutation({
@@ -124,13 +77,15 @@ export function TalentAuditJobDialog({
     },
   });
 
-  const onSubmit = (values: FormValues) => {
+  const onSubmit = () => {
+    setSubmitted(true);
+    if (targetJobId === '' || talentLinkId === '') return;
     setErrorMessage('');
     mutation.mutate({
       talent_audit_id: talentAuditId,
-      target_job_id: values.target_job_id as number,
+      target_job_id: targetJobId,
       status_id: DEFAULT_STATUS_ID,
-      talent_status_period_link_id: values.talent_status_period_link_id as number,
+      talent_status_period_link_id: talentLinkId,
     });
   };
 
@@ -141,77 +96,16 @@ export function TalentAuditJobDialog({
           <Stack spacing={2} sx={{ mt: 1 }}>
             {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
 
-            {/* ── 1. Department type tree ───────────────────────────────── */}
-            <Stack spacing={0.5}>
-              <Typography variant="subtitle2">
-                {getString('selectDepartmentType') || 'Select department type'}
-              </Typography>
-              <DepartmentTypeSelectTree
-                  selectedTypeId={selectedTypeId}
-                  onSelect={handleSelectType}
-              />
-            </Stack>
-
-            {/* ── 2. Target job (filtered by the chosen type) ───────────── */}
-            <Controller
-                name="target_job_id"
-                control={control}
-                rules={{ required: true }}
-                render={({ field }) => (
-                    <TextField
-                        {...field}
-                        select
-                        fullWidth
-                        label={getString('targetJob') || 'Target Job'}
-                        disabled={selectedTypeId == null || jobsLoading}
-                        error={!!errors.target_job_id}
-                        helperText={
-                          selectedTypeId == null
-                              ? getString('selectTypeFirst') || 'Select a department type first'
-                              : !jobsLoading && jobs.length === 0
-                                  ? getString('noJobsForType') || 'No jobs linked to this department type'
-                                  : errors.target_job_id
-                                      ? getString('fieldRequired') || 'Required'
-                                      : selectedTypeName
-                                          ? `${getString('jobsFor') || 'Jobs for'}: ${selectedTypeName}`
-                                          : ''
-                        }
-                    >
-                      {jobs.map((j) => (
-                          <MenuItem key={j.id} value={j.id}>
-                            {j.name}
-                          </MenuItem>
-                      ))}
-                    </TextField>
-                )}
-            />
-
-            {/* ── 3. Talent status & period (talent level) ──────────────── */}
-            <Controller
-                name="talent_status_period_link_id"
-                control={control}
-                rules={{ required: true }}
-                render={({ field }) => (
-                    <TextField
-                        {...field}
-                        select
-                        fullWidth
-                        label={getString('talentStatusPeriod') || 'Talent Status & Period'}
-                        disabled={pairsLoading}
-                        error={!!errors.talent_status_period_link_id}
-                        helperText={
-                          errors.talent_status_period_link_id
-                              ? getString('fieldRequired') || 'Required'
-                              : ''
-                        }
-                    >
-                      {pairs.map((p) => (
-                          <MenuItem key={p.id} value={p.id}>
-                            {p.label}
-                          </MenuItem>
-                      ))}
-                    </TextField>
-                )}
+            <TalentTargetJobPicker
+                selectedTypeId={selectedTypeId}
+                selectedTypeName={selectedTypeName}
+                onSelectType={handleSelectType}
+                targetJobId={targetJobId}
+                onTargetJob={(id) => setTargetJobId(id)}
+                talentLinkId={talentLinkId}
+                onTalentLink={(id) => setTalentLinkId(id)}
+                targetJobError={submitted && targetJobId === ''}
+                talentLinkError={submitted && talentLinkId === ''}
             />
           </Stack>
         </DialogContent>
@@ -221,8 +115,8 @@ export function TalentAuditJobDialog({
           </Button>
           <Button
               variant="contained"
-              onClick={handleSubmit(onSubmit)}
-              disabled={mutation.isPending || pairsLoading}
+              onClick={onSubmit}
+              disabled={mutation.isPending}
           >
             {mutation.isPending ? <CircularProgress size={18} /> : getString('add') || 'Add'}
           </Button>

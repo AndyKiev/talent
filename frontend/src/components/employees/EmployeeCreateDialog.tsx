@@ -25,7 +25,12 @@ import {
     FormControlLabel,
     Switch,
     Chip,
+    Paper,
+    Stack,
+    IconButton,
 } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -40,11 +45,29 @@ import {
     type JobByDeptType,
 } from './employee_events/employeeEventApi';
 import { DepartmentTreePicker } from './DepartmentTreePicker';
+import { TalentTargetJobPicker } from './talent_audit/TalentTargetJobPicker';
 import type { DepartmentNode } from '../admin/departments/departmentApi';
 import { DATE_FORMAT } from '../../utils/eNums';
+import { useBooleanSetting } from '../../hooks/useAppSetting';
 import useString from '../../hooks/useString';
 import str from '../../strings/str';
 import cfl from '../../utils/helpers.ts';
+
+// Global feature flag: allow adding talent target jobs on the fly during
+// employee registration (see seed_app_settings.py).
+const ALLOW_TALENT_SETTING_KEY = 'employee_create_allow_talent_period';
+
+// One talent target job queued for creation with the new employee. The label
+// fields are display-only (shown in the selected list before submit); only the
+// two ids are sent to the backend.
+export interface TalentJobInput {
+    target_job_id: number;
+    talent_status_period_link_id: number;
+}
+interface TalentJobDraft extends TalentJobInput {
+    target_job_name: string;
+    pair_label: string;
+}
 
 // ── Form schema ────────────────────────────────────────────────────────────────
 
@@ -74,12 +97,23 @@ export interface EmployeeWithActivationPayload {
     department_id: number;
     job_id: number;
     description?: string | null;
+    // Optional talent target jobs to create (audit + audit_jobs) right after the
+    // employee. Orchestrated client-side in useEmployeeMutations; NOT sent to the
+    // /with_activation endpoint. Empty/undefined = no talent created.
+    talent_jobs?: TalentJobInput[];
+}
+
+// Result of the create orchestration: the employee always created; talentError
+// is set (and surfaced as a warning) only when the optional talent step failed.
+export interface EmployeeCreateResult {
+    employee: Employee;
+    talentError: string | null;
 }
 
 interface Props {
     open: boolean;
     onClose: () => void;
-    createMutation: UseMutationResult<Employee, Error, EmployeeWithActivationPayload>;
+    createMutation: UseMutationResult<EmployeeCreateResult, Error, EmployeeWithActivationPayload>;
 }
 
 export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
@@ -117,6 +151,42 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
     const [pickedTypeId, setPickedTypeId] = useState<number | null>(null);
     const [pickedName, setPickedName] = useState<string>('');
 
+    // ── Talent target jobs (optional, gated by a global setting) ──────────────
+    const { enabled: allowTalent } = useBooleanSetting(ALLOW_TALENT_SETTING_KEY);
+    // Committed list (shown before submit) + the in-progress picker.
+    const [talentJobs, setTalentJobs] = useState<TalentJobDraft[]>([]);
+    const [tTypeId, setTTypeId] = useState<number | null>(null);
+    const [tTypeName, setTTypeName] = useState('');
+    const [tJobId, setTJobId] = useState<number | ''>('');
+    const [tJobName, setTJobName] = useState('');
+    const [tLinkId, setTLinkId] = useState<number | ''>('');
+    const [tLinkLabel, setTLinkLabel] = useState('');
+
+    const resetTalentPicker = () => {
+        setTTypeId(null);
+        setTTypeName('');
+        setTJobId('');
+        setTJobName('');
+        setTLinkId('');
+        setTLinkLabel('');
+    };
+    const talentPickerComplete = tJobId !== '' && tLinkId !== '';
+    const addTalentJob = () => {
+        if (!talentPickerComplete) return;
+        setTalentJobs((prev) => [
+            ...prev,
+            {
+                target_job_id: tJobId as number,
+                talent_status_period_link_id: tLinkId as number,
+                target_job_name: tJobName,
+                pair_label: tLinkLabel,
+            },
+        ]);
+        resetTalentPicker();
+    };
+    const removeTalentJob = (index: number) =>
+        setTalentJobs((prev) => prev.filter((_, i) => i !== index));
+
     // ── Fetch main categories ─────────────────────────────────────────────────
     const { data: categories = [] } = useQuery<DepartmentCategoryOption[]>({
         queryKey: ['main-department-categories'],
@@ -148,6 +218,8 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
             setTopDeptId(null);
             setPickedTypeId(null);
             setPickedName('');
+            setTalentJobs([]);
+            resetTalentPicker();
         }
     }, [open, reset]);
 
@@ -186,10 +258,29 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
         setTopDeptId(null);
         setPickedTypeId(null);
         setPickedName('');
+        setTalentJobs([]);
+        resetTalentPicker();
         onClose();
     };
 
     const onSubmit = (data: FormData) => {
+        // Committed talent jobs + the in-progress pick if it's complete (so a
+        // filled-but-not-"+"-added pick is not silently lost on Create).
+        let talent_jobs: TalentJobInput[] | undefined;
+        if (allowTalent) {
+            const merged: TalentJobInput[] = talentJobs.map((t) => ({
+                target_job_id: t.target_job_id,
+                talent_status_period_link_id: t.talent_status_period_link_id,
+            }));
+            if (talentPickerComplete) {
+                merged.push({
+                    target_job_id: tJobId as number,
+                    talent_status_period_link_id: tLinkId as number,
+                });
+            }
+            talent_jobs = merged.length > 0 ? merged : undefined;
+        }
+
         createMutation.mutate({
             code: data.code.trim().toUpperCase(),
             name: data.name.trim(),
@@ -200,13 +291,14 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
             department_id: data.department_id, // exact picked node → is_main on backend
             job_id: data.job_id,
             description: data.description?.trim() || null,
+            talent_jobs,
         });
     };
 
     const noJobsForType = pickedTypeId != null && jobsByType.length === 0;
 
     return (
-        <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+        <Dialog open={open} onClose={handleClose} maxWidth={allowTalent ? 'lg' : 'md'} fullWidth>
             <DialogTitle>{cfl(getString('addEmployee') || 'Add Employee')}</DialogTitle>
             <DialogContent>
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -216,11 +308,15 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
                         </Alert>
                     )}
 
-                    {/* Two columns: personal data + description (left), department (right) */}
+                    {/* Columns: personal data (left), department + job (middle), and
+                        — when the talent feature is on — talent target jobs (right). */}
                     <Box
                         sx={{
                             display: 'grid',
-                            gridTemplateColumns: { xs: '1fr', md: '0.8fr 1.4fr' },
+                            gridTemplateColumns: {
+                                xs: '1fr',
+                                md: allowTalent ? '0.7fr 1.2fr 1fr' : '0.8fr 1.4fr',
+                            },
                             gap: 3,
                             mt: 1,
                             alignItems: 'start',
@@ -421,6 +517,57 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
                                 )}
                             />
                         </Box>
+
+                        {/* ── THIRD COLUMN: talent target jobs (optional; gated) ── */}
+                        {allowTalent && (
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                <Typography variant="subtitle2" color="text.secondary">
+                                    {getString('talentTargetJobs')}
+                                </Typography>
+
+                                {/* Selected list — shown before the employee is created */}
+                                {talentJobs.length > 0 && (
+                                    <Stack spacing={1}>
+                                        {talentJobs.map((tj, i) => (
+                                            <Paper
+                                                key={`${tj.target_job_id}-${tj.talent_status_period_link_id}-${i}`}
+                                                variant="outlined"
+                                                sx={{ p: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}
+                                            >
+                                                <Box>
+                                                    <Typography fontSize={13} fontWeight={600}>{tj.target_job_name}</Typography>
+                                                    <Typography fontSize={12} color="text.secondary">{tj.pair_label}</Typography>
+                                                </Box>
+                                                <IconButton size="small" color="error" onClick={() => removeTalentJob(i)}>
+                                                    <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                            </Paper>
+                                        ))}
+                                    </Stack>
+                                )}
+
+                                {/* In-progress picker for the next talent target job */}
+                                <TalentTargetJobPicker
+                                    selectedTypeId={tTypeId}
+                                    selectedTypeName={tTypeName}
+                                    onSelectType={(id, name) => { setTTypeId(id); setTTypeName(name); setTJobId(''); setTJobName(''); }}
+                                    targetJobId={tJobId}
+                                    onTargetJob={(id, name) => { setTJobId(id); setTJobName(name); }}
+                                    talentLinkId={tLinkId}
+                                    onTalentLink={(id, label) => { setTLinkId(id); setTLinkLabel(label); }}
+                                />
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    startIcon={<AddIcon />}
+                                    onClick={addTalentJob}
+                                    disabled={!talentPickerComplete}
+                                    sx={{ alignSelf: 'flex-start' }}
+                                >
+                                    {getString('addTalentTargetJob')}
+                                </Button>
+                            </Box>
+                        )}
                     </Box>
                 </LocalizationProvider>
             </DialogContent>

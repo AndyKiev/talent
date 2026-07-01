@@ -8,7 +8,16 @@ import {
     type Employee,
     type EmployeeUpdate,
 } from './employeeApi';
-import type { EmployeeWithActivationPayload } from './EmployeeCreateDialog';
+import { createTalentAudit, createTalentAuditJob } from './talent_audit/talentAuditApi';
+import useString from '../../hooks/useString';
+import type {
+    EmployeeWithActivationPayload,
+    EmployeeCreateResult,
+} from './EmployeeCreateDialog';
+
+// Talent target jobs and talent_audit both use the "created" status (id 1) — the
+// same defaults the standalone talent-audit page uses on creation.
+const TALENT_DEFAULT_STATUS_ID = 1;
 
 type Snackbar = { open: boolean; message: string; severity: 'success' | 'error' };
 
@@ -27,12 +36,42 @@ interface Props {
 
 const createEmployeeWithActivation = async (
     payload: EmployeeWithActivationPayload,
-): Promise<Employee> => {
+): Promise<EmployeeCreateResult> => {
+    // talent_jobs is a client-side orchestration extra — strip it before posting
+    // to the /with_activation endpoint, which knows nothing about talent.
+    const { talent_jobs, ...employeeFields } = payload;
+
     const res = await axiosInstance.post<Employee>(
         `${BASE_URL}/employees/with_activation`,
-        payload,
+        employeeFields,
     );
-    return res.data;
+    const employee = res.data;
+
+    // The employee is the primary entity; talent is a supplementary add-on. If a
+    // talent call fails we keep the (valid) employee and report the talent error
+    // separately, rather than failing the whole creation.
+    let talentError: string | null = null;
+    if (talent_jobs && talent_jobs.length > 0) {
+        try {
+            const auditRes = await createTalentAudit({
+                employee_id: employee.id,
+                status_id: TALENT_DEFAULT_STATUS_ID,
+            });
+            const auditId = auditRes.data.id;
+            for (const tj of talent_jobs) {
+                await createTalentAuditJob({
+                    talent_audit_id: auditId,
+                    target_job_id: tj.target_job_id,
+                    status_id: TALENT_DEFAULT_STATUS_ID,
+                    talent_status_period_link_id: tj.talent_status_period_link_id,
+                });
+            }
+        } catch (err) {
+            talentError = (err as Error).message;
+        }
+    }
+
+    return { employee, talentError };
 };
 
 export function useEmployeeMutations({
@@ -43,18 +82,29 @@ export function useEmployeeMutations({
     onDeleteError,
 }: Props) {
     const qc = useQueryClient();
+    const getString = useString();
 
     const invalidate = async () => {
         await qc.invalidateQueries({ queryKey: EMPLOYEES_QK });
     };
 
-    // ── Create employee + activation (single backend call, atomic) ────────────
+    // ── Create employee + activation, then optional talent audit/jobs ─────────
 
     const createMutation = useMutation({
         mutationFn: createEmployeeWithActivation,
-        onSuccess: async () => {
+        onSuccess: async ({ talentError }) => {
             await invalidate();
-            setSnackbar({ open: true, message: 'Employee created successfully', severity: 'success' });
+            // Employee always created; if the optional talent step failed, surface
+            // that as a warning instead of a plain success.
+            if (talentError) {
+                setSnackbar({
+                    open: true,
+                    message: getString('employeeCreatedTalentFailed', { error: talentError }),
+                    severity: 'error',
+                });
+            } else {
+                setSnackbar({ open: true, message: 'Employee created successfully', severity: 'success' });
+            }
             onCreateSuccess?.();
         },
         onError: (err: Error) => {
