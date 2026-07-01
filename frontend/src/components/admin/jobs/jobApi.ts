@@ -23,6 +23,9 @@ export interface Job {
   job_group_names: string[];  // job group names (new)
   process_role_link_names: string[];  // "process_name / role_name" per link
   department_type_links: DepartmentTypeLinkInfo[];  // dept types + link is_active
+  job_category_id: number | null;     // 1:1 category (via job_job_category_links)
+  job_category_key: string | null;    // snake_case key; label = getString(snakeToCamel(key))
+  recommended_training_names: string[];  // training types that recommend this job (by_job link)
 }
 
 export interface JobCreate {
@@ -131,6 +134,25 @@ export const setJobJobGroups = async ({
   return res.data;
 };
 
+// ── Job category assignment (1:1 link, upsert) ───────────────────────────────
+
+const JOB_JOB_CATEGORY_LINKS_BASE = `${BASE_URL}/job_job_category_links`;
+
+export const setJobCategoryForJob = async ({
+  jobId,
+  jobCategoryId,
+}: {
+  jobId: number;
+  jobCategoryId: number;
+}): Promise<MutationResponse<unknown>> => {
+  // PUT /job_job_category_links/job/{jobId} — replaces the single category link.
+  const res = await axiosInstance.put<MutationResponse<unknown>>(
+    `${JOB_JOB_CATEGORY_LINKS_BASE}/job/${jobId}`,
+    { job_category_id: jobCategoryId },
+  );
+  return res.data;
+};
+
 export const bulkUploadJobs = async (file: File): Promise<JobBulkUploadResult> => {
   const form = new FormData();
   form.append('file', file);
@@ -138,6 +160,44 @@ export const bulkUploadJobs = async (file: File): Promise<JobBulkUploadResult> =
       `${BASE}/bulk_upload`,
       form,
       { headers: { 'Content-Type': 'multipart/form-data' } },
+  );
+  return res.data;
+};
+
+// ── Recommended trainings (many-to-many, by-job link, viewed from the job side)
+
+const TRAINING_TYPE_JOB_LINKS_BASE = `${BASE_URL}/training_type_job_links`;
+
+export interface TrainingTypeJobLink {
+  id: number;
+  training_type_id: number;
+  job_id: number;
+  created_at: string;
+  job_name: string | null;
+  training_type_name: string | null;
+}
+
+export const fetchTrainingTypesRecommendingJob = async (
+  jobId: number,
+): Promise<TrainingTypeJobLink[]> => {
+  const res = await axiosInstance.get<TrainingTypeJobLink[]>(
+    `${TRAINING_TYPE_JOB_LINKS_BASE}/job/${jobId}`,
+  );
+  return res.data ?? [];
+};
+
+export const setTrainingTypesForJob = async ({
+  jobId,
+  trainingTypeIds,
+}: {
+  jobId: number;
+  trainingTypeIds: number[];
+}): Promise<MutationResponse<unknown>> => {
+  // PUT /training_type_job_links/job/{jobId} — replaces all training types
+  // recommending this job atomically (reverse side of the training-type PUT).
+  const res = await axiosInstance.put<MutationResponse<unknown>>(
+    `${TRAINING_TYPE_JOB_LINKS_BASE}/job/${jobId}`,
+    { training_type_ids: trainingTypeIds },
   );
   return res.data;
 };

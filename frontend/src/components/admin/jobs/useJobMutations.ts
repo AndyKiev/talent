@@ -9,6 +9,8 @@ import {
   deleteJobProcessRoleLink,
   setJobGroups,
   setJobJobGroups,
+  setJobCategoryForJob,
+  setTrainingTypesForJob,
   updateJob,
 } from './jobApi';
 import {JOB_QK} from "../../../utils/queryKeys.ts";
@@ -25,6 +27,8 @@ interface Props {
   onAddProcessRoleSuccess?: () => void;
   onRemoveProcessRoleSuccess?: () => void;
   onBulkUploadSuccess?: (result: JobBulkUploadResult) => void;
+  onSetCategorySuccess?: () => void;
+  onSetTrainingTypesSuccess?: () => void;
 }
 
 export function useJobMutations({
@@ -37,7 +41,9 @@ export function useJobMutations({
   onSetJobGroupsSuccess,
   onAddProcessRoleSuccess,
   onRemoveProcessRoleSuccess,
-  onBulkUploadSuccess
+  onBulkUploadSuccess,
+  onSetCategorySuccess,
+  onSetTrainingTypesSuccess,
 }: Props) {
   const qc = useQueryClient();
 
@@ -125,6 +131,32 @@ export function useJobMutations({
     },
   });
 
+  // Set (upsert) the job's single category (PUT /job_job_category_links/job/{id})
+  const setCategoryMutation = useMutation({
+    mutationFn: setJobCategoryForJob,
+    onSuccess: async (res) => {
+      await qc.invalidateQueries({ queryKey: JOB_QK });
+      setSnackbar({ open: true, message: res.detail, severity: 'success' });
+      onSetCategorySuccess?.();
+    },
+    onError: (err: Error) => {
+      setSnackbar({ open: true, message: err.message, severity: 'error' });
+    },
+  });
+
+  // Set (replace) recommended training types for a job (PUT /training_type_job_links/job/{id})
+  const setTrainingTypesMutation = useMutation({
+    mutationFn: setTrainingTypesForJob,
+    onSuccess: async (res) => {
+      await qc.invalidateQueries({ queryKey: JOB_QK });
+      setSnackbar({ open: true, message: res.detail, severity: 'success' });
+      onSetTrainingTypesSuccess?.();
+    },
+    onError: (err: Error) => {
+      setSnackbar({ open: true, message: err.message, severity: 'error' });
+    },
+  });
+
   // Process-role link: remove
   const removeProcessRoleLinkMutation = useMutation({
     mutationFn: ({ jobId, processRoleId }: { jobId: number; processRoleId: number }) =>
@@ -147,5 +179,7 @@ export function useJobMutations({
     addProcessRoleLinkMutation,
     removeProcessRoleLinkMutation,
     bulkUploadMutation,
+    setCategoryMutation,
+    setTrainingTypesMutation,
   };
 }

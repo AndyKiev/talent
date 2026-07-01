@@ -26,6 +26,7 @@ import { JobDeleteDialog } from './JobDeleteDialog';
 import { JobGroupsDialog } from './JobGroupsDialog';
 import { JobJobGroupsDialog } from './JobJobGroupsDialog';
 import { JobProcessRoleDialog } from './JobProcessRoleDialog';
+import { JobRecommendedTrainingsDialog } from './JobRecommendedTrainingsDialog';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
@@ -33,8 +34,9 @@ import cfl from '../../../utils/helpers.ts';
 import { JobBulkUploadDialog } from './JobBulkUploadDialog';
 import type { JobBulkUploadResult } from './jobApi';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
-import {JOB_QK, DEPARTMENT_TYPE_QK} from "../../../utils/queryKeys.ts";
+import {JOB_QK, DEPARTMENT_TYPE_QK, JOB_CATEGORY_QK} from "../../../utils/queryKeys.ts";
 import { fetchDepartmentTypes } from '../department_types/departmentTypeApi';
+import { fetchJobCategories } from '../job_categories/jobCategoryApi';
 
 const REQUIRE_EDIT_CONFIRMATION = false;
 
@@ -73,6 +75,9 @@ export function JobCrud() {
   // ── Process-role dialog ──────────────────────────────────────────────────
   const [processRoleJob, setProcessRoleJob] = useState<Job | null>(null);
 
+  // ── Recommended-trainings dialog ─────────────────────────────────────────
+  const [trainingTypesJob, setTrainingTypesJob] = useState<Job | null>(null);
+
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -94,6 +99,13 @@ export function JobCrud() {
       () => Array.from(new Set(deptTypes.map((t) => t.name))).sort((a, b) => a.localeCompare(b)),
       [deptTypes],
   );
+
+  // ── Job categories (options for the per-row category select) ──────────────
+  const { data: jobCategories = [] } = useQuery({
+    queryKey: JOB_CATEGORY_QK,
+    queryFn: () => fetchJobCategories(),
+    staleTime: 2 * 60 * 1000,
+  });
 
   // ── Job group options — derived from loaded rows, no extra query needed ───
   const jobGroupOptions = useMemo(
@@ -127,6 +139,8 @@ export function JobCrud() {
     addProcessRoleLinkMutation,
     removeProcessRoleLinkMutation,
     bulkUploadMutation,
+    setCategoryMutation,
+    setTrainingTypesMutation,
   } = useJobMutations({
     setSnackbar,
     onCreateSuccess: () => setFormOpen(false),
@@ -141,6 +155,7 @@ export function JobCrud() {
     onAddProcessRoleSuccess: () => setProcessRoleJob(null),
     onRemoveProcessRoleSuccess: () => setProcessRoleJob(null),
     onBulkUploadSuccess: (result) => setBulkUploadResult(result),
+    onSetTrainingTypesSuccess: () => setTrainingTypesJob(null),
   });
 
   const localeText = useDataGridLocale();
@@ -217,9 +232,18 @@ export function JobCrud() {
       [getString, updateMutation],
   );
 
+  const handleSetCategory = useCallback(
+      (row: Job, jobCategoryId: number) => {
+        if (row.job_category_id === jobCategoryId) return;
+        setCategoryMutation.mutate({ jobId: row.id, jobCategoryId });
+      },
+      [setCategoryMutation],
+  );
+
   const handleGroupsClick = useCallback((row: Job) => setGroupsJob(row), []);
   const handleJobGroupsClick = useCallback((row: Job) => setJobGroupsJob(row), []);
   const handleProcessRoleClick = useCallback((row: Job) => setProcessRoleJob(row), []);
+  const handleTrainingTypesClick = useCallback((row: Job) => setTrainingTypesJob(row), []);
   const handleDeleteClick = useCallback((row: Job) => setRowToDelete(row), []);
 
   const handleConfirmDelete = useCallback(() => {
@@ -240,8 +264,12 @@ export function JobCrud() {
     onGroupsClick: handleGroupsClick,
     onJobGroupsClick: handleJobGroupsClick,
     onProcessRoleClick: handleProcessRoleClick,
+    onTrainingTypesClick: handleTrainingTypesClick,
     onDeleteClick: handleDeleteClick,
     deleteIsPending: deleteMutation.isPending,
+    categories: jobCategories,
+    onSetCategory: handleSetCategory,
+    setCategoryIsPending: setCategoryMutation.isPending,
   });
 
   return (
@@ -402,6 +430,14 @@ export function JobCrud() {
             addLinkMutation={addProcessRoleLinkMutation}
             removeLinkMutation={removeProcessRoleLinkMutation}
             onClose={() => setProcessRoleJob(null)}
+        />
+
+        {/* Recommended-trainings dialog */}
+        <JobRecommendedTrainingsDialog
+            job={trainingTypesJob}
+            isPending={setTrainingTypesMutation.isPending}
+            setTrainingTypesMutation={setTrainingTypesMutation}
+            onClose={() => setTrainingTypesJob(null)}
         />
 
         <JobBulkUploadDialog

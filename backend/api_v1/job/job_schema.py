@@ -41,6 +41,12 @@ class Job(JobBase):
     department_type_links: List[DepartmentTypeLinkInfo] = (
         []
     )  # dept types + link is_active
+    # 1:1 job category (via job_job_category_links). job_category_key is the
+    # snake_case key; the frontend label = getString(snakeToCamel(key)).
+    job_category_id: Optional[int] = None
+    job_category_key: Optional[str] = None
+    # Training types that recommend this job (via training_type_job_links)
+    recommended_training_names: List[str] = []
 
 
 class JobBulkRow(BaseModel):

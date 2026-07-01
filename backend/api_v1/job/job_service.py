@@ -74,11 +74,55 @@ class JobService(BaseService):
         await self.exists_by_name(job_in.name, already_exists_exc=JobNameTaken)
         try:
             job = await self.create(job_in)
+            # Optional-essence-property: auto-link the default category when the
+            # app-level flag is on. Reload so the response reflects the link.
+            if await self._apply_category_on_create_enabled():
+                await self._link_default_category(job.id)
+                job = await self.repository.get_by_id(job.id)
             schema = JobSchema.model_validate(job)
             detail = await self._resolve_domain_success(JobCreateSuccess(schema.name))
             return MutationResponse(detail=detail, data=schema)
         except IntegrityError:
             raise await self._resolve_domain_error(JobNameTaken(job_in.name))
+
+    # ------------------------------------------------------------------
+    # Optional category-on-create (see /optional-essence-property)
+    # ------------------------------------------------------------------
+
+    async def _apply_category_on_create_enabled(self) -> bool:
+        from backend.api_v1.app_setting.app_setting_service import get_bool_setting
+
+        return await get_bool_setting(
+            self.session, "job_apply_category_on_create", default=True
+        )
+
+    async def _default_category_id(self) -> Optional[int]:
+        """Resolve the default ('manager') category by KEY — survives reseed/id reorder."""
+        from sqlalchemy import select
+        from backend.api_v1.job_category.job_category_model import JobCategory
+
+        return await self.session.scalar(
+            select(JobCategory.id).where(JobCategory.key == "manager")
+        )
+
+    async def _link_default_category(self, job_id: int) -> None:
+        from sqlalchemy import select
+        from backend.api_v1.job_job_category_link.job_job_category_link_model import (
+            JobJobCategoryLink,
+        )
+
+        category_id = await self._default_category_id()
+        if category_id is None:
+            return
+        existing = await self.session.scalar(
+            select(JobJobCategoryLink.id).where(JobJobCategoryLink.job_id == job_id)
+        )
+        if existing is not None:
+            return
+        self.session.add(
+            JobJobCategoryLink(job_id=job_id, job_category_id=category_id)
+        )
+        await self.session.commit()
 
     async def update_job(
         self, job_id: int, job_update: JobUpdate
@@ -240,6 +284,16 @@ class JobService(BaseService):
             )
 
         # ── 4. Insert the new jobs ────────────────────────────────────────────
+        # Optional-essence-property: bulk-created jobs follow the same gate.
+        # Read the flag + default category ONCE before the loop.
+        from backend.api_v1.job_job_category_link.job_job_category_link_model import (
+            JobJobCategoryLink,
+        )
+
+        default_category_id: int | None = None
+        if await self._apply_category_on_create_enabled():
+            default_category_id = await self._default_category_id()
+
         inserted_schemas: list[JobSchema] = []
         for row in to_insert:
             job_create = JobCreate(
@@ -248,6 +302,13 @@ class JobService(BaseService):
                 is_active=True,
             )
             orm_job = await self.create(job_create)
+            if default_category_id is not None:
+                self.session.add(
+                    JobJobCategoryLink(
+                        job_id=orm_job.id, job_category_id=default_category_id
+                    )
+                )
+                await self.session.commit()
             inserted_schemas.append(JobSchema.model_validate(orm_job))
 
         # ── 5. Build response ─────────────────────────────────────────────────

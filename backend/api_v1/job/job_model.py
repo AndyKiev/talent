@@ -2,7 +2,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Boolean
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin, TimestampMixin
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from backend.api_v1.employee.employee_model import Employee
@@ -17,6 +17,12 @@ if TYPE_CHECKING:
     )
     from backend.api_v1.job_process_role_link.job_process_role_link_model import (
         JobProcessRoleLink,
+    )
+    from backend.api_v1.job_job_category_link.job_job_category_link_model import (
+        JobJobCategoryLink,
+    )
+    from backend.api_v1.training_type_job_link.training_type_job_link_model import (
+        TrainingTypeJobLink,
     )
 
 
@@ -45,10 +51,24 @@ class Job(IntIdPkMixin, TimestampMixin, Base):
         lazy="selectin",
     )
 
+    # 1:1 optional category, stored as a link row (never a column on jobs).
+    # ondelete=CASCADE on the link's job_id FK cleans this up when the job goes.
+    category_link: Mapped[Optional["JobJobCategoryLink"]] = relationship(
+        back_populates="job",
+        lazy="selectin",
+        uselist=False,
+    )
+
     # Many-to-many with DepartmentType via DepartmentTypeJobLink
     _department_types: Mapped[list["DepartmentTypeJobLink"]] = relationship(
         back_populates="job",
         lazy="noload",
+    )
+
+    # Training types that recommend this job (many-to-many, "by_job" link type)
+    training_type_links: Mapped[list["TrainingTypeJobLink"]] = relationship(
+        back_populates="job",
+        lazy="selectin",
     )
 
     @property
@@ -87,6 +107,24 @@ class Job(IntIdPkMixin, TimestampMixin, Base):
             link.job_group.name
             for link in self.job_groups
             if link.job_group and link.job_group.name
+        ]
+
+    @property
+    def job_category_id(self) -> int | None:
+        link = self.category_link
+        return link.job_category_id if link else None
+
+    @property
+    def job_category_key(self) -> str | None:
+        link = self.category_link
+        return link.job_category.key if link and link.job_category else None
+
+    @property
+    def recommended_training_names(self) -> list[str]:
+        return [
+            link.training_type.name
+            for link in self.training_type_links
+            if link.training_type and link.training_type.name
         ]
 
     @property

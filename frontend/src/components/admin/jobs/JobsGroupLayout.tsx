@@ -11,6 +11,7 @@ const SUB_TABS = [
     { label: 'jobs', path: '/admin/jobs_group/jobs' },
     { label: 'jobGroups', path: '/admin/jobs_group/job_groups' },
     { label: 'jobGroupTypes', path: '/admin/jobs_group/job_group_types' },
+    { label: 'jobCategories', path: '/admin/jobs_group/job_categories' },
 ] as const;
 
 export function JobsGroupLayout() {
