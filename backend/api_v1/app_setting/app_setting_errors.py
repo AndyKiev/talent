@@ -42,6 +42,17 @@ class AppSettingValueTypeMismatch(DomainError):
         DomainError.__init__(self, self.fallback)
 
 
+class AppSettingValueBelowMin(DomainError):
+    message_key = "appSettingValueBelowMin"
+
+    def __init__(self, minimum: int = 1) -> None:
+        self.template_vars = {"min": minimum}
+        self.fallback = (
+            f"A user-overridable numeric setting must be at least {minimum}"
+        )
+        DomainError.__init__(self, self.fallback)
+
+
 class AppSettingDeleteError(DeleteError):
     message_key = "appSettingDeleteError"
 

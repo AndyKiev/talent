@@ -13,9 +13,11 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
+    FormControlLabel,
     IconButton,
     MenuItem,
     Paper,
+    Select,
     Snackbar,
     Stack,
     Switch,
@@ -34,7 +36,7 @@ import AppShell from '../../layout/AppShell';
 import { useTheme } from '../../theme/ThemeContext';
 import useString from '../../../hooks/useString';
 import cfl from '../../../utils/capitalizeFirstLetter';
-import { APP_SETTINGS_QK, SETTING_VALUE_TYPES_QK, APP_SETTING_BY_KEY_QK } from '../../../utils/queryKeys';
+import { APP_SETTINGS_QK, SETTING_VALUE_TYPES_QK, APP_SETTING_BY_KEY_QK, EFFECTIVE_SETTINGS_QK, JOB_CATEGORY_QK } from '../../../utils/queryKeys';
 import {
     fetchAppSettings,
     fetchSettingValueTypes,
@@ -45,9 +47,15 @@ import {
     type SettingValue,
     type SettingValueType,
 } from './settingsApi';
+import { fetchJobCategories } from '../../admin/job_categories/jobCategoryApi';
+import { fetchEmployeeStatuses } from '../../employees/employee_events/employeeEventApi';
+import { snakeToCamel } from '../../../utils/helpers';
 import type { GetStringFn } from '../../../types/getStringFn';
 
 type Severity = 'success' | 'error';
+
+// One option in a multi-select setting (value stored, label shown).
+interface SettingOption { value: string; label: string; }
 
 // ── Type-aware value editor ─────────────────────────────────────────────────
 interface ValueEditorProps {
@@ -55,9 +63,37 @@ interface ValueEditorProps {
     value: SettingValue;
     onChange: (value: SettingValue) => void;
     getString: GetStringFn;
+    optionsSource?: string | null;
+    options?: SettingOption[];
 }
 
-function SettingValueEditor({ typeKey, value, onChange, getString }: ValueEditorProps) {
+function SettingValueEditor({ typeKey, value, onChange, getString, optionsSource, options }: ValueEditorProps) {
+    // Multi-select (a JSON list bound to a known option set) takes precedence.
+    if (optionsSource) {
+        const list = Array.isArray(value) ? (value as string[]) : [];
+        return (
+            <Select
+                multiple
+                size="small"
+                variant="outlined"
+                value={list}
+                onChange={(e) => {
+                    const v = e.target.value;
+                    onChange(typeof v === 'string' ? v.split(',') : (v as string[]));
+                }}
+                renderValue={(selected) =>
+                    (selected as string[])
+                        .map((val) => options?.find((o) => o.value === val)?.label ?? val)
+                        .join(', ')
+                }
+                sx={{ minWidth: 280 }}
+            >
+                {(options ?? []).map((o) => (
+                    <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
+                ))}
+            </Select>
+        );
+    }
     if (typeKey === 'boolean') {
         return <Switch checked={value === true} onChange={(e) => onChange(e.target.checked)} />;
     }
@@ -105,15 +141,20 @@ interface RowProps {
     setting: AppSetting;
     getString: GetStringFn;
     onSave: (id: number, value: SettingValue) => void;
+    onToggleOverridable: (id: number, value: boolean) => void;
     onDelete: (setting: AppSetting) => void;
     saving: boolean;
+    options?: SettingOption[];
 }
 
-function SettingRow({ setting, getString, onSave, onDelete, saving }: RowProps) {
+function SettingRow({ setting, getString, onSave, onToggleOverridable, onDelete, saving, options }: RowProps) {
     const { t } = useTheme();
     const [draft, setDraft] = useState<SettingValue>(setting.value);
     const isBoolean = setting.value_type_key === 'boolean';
-    const isJson = setting.value_type_key === 'json' || setting.value_type_key === null;
+    const isMultiSelect = !!setting.options_source;
+    const isJson = !isMultiSelect && (setting.value_type_key === 'json' || setting.value_type_key === null);
+    // A locked setting can never be user-overridable — hide the toggle entirely.
+    const canOverride = setting.user_override_allowed !== false;
 
     const label = setting.label_key ? getString(setting.label_key) : setting.key;
     const description = setting.description_key ? getString(setting.description_key) : null;
@@ -125,6 +166,10 @@ function SettingRow({ setting, getString, onSave, onDelete, saving }: RowProps) 
     };
 
     const handleSaveClick = () => {
+        if (isMultiSelect) {
+            onSave(setting.id, draft); // draft is already the selected array
+            return;
+        }
         if (isJson) {
             try {
                 onSave(setting.id, JSON.parse(String(draft)));
@@ -147,6 +192,24 @@ function SettingRow({ setting, getString, onSave, onDelete, saving }: RowProps) 
                     {description && (
                         <Typography variant="body2" color={t.textSecondary} mt={0.5}>{description}</Typography>
                     )}
+                    {canOverride && (
+                        <FormControlLabel
+                            sx={{ mt: 0.5, ml: 0 }}
+                            control={
+                                <Switch
+                                    size="small"
+                                    checked={setting.user_overridable === true}
+                                    onChange={(e) => onToggleOverridable(setting.id, e.target.checked)}
+                                    disabled={saving}
+                                />
+                            }
+                            label={
+                                <Typography variant="caption" color={t.textMuted}>
+                                    {getString('settingUserOverridable')}
+                                </Typography>
+                            }
+                        />
+                    )}
                 </Box>
                 <Stack direction="row" alignItems="center" gap={1}>
                     <SettingValueEditor
@@ -154,6 +217,8 @@ function SettingRow({ setting, getString, onSave, onDelete, saving }: RowProps) 
                         value={draft}
                         onChange={handleChange}
                         getString={getString}
+                        optionsSource={setting.options_source}
+                        options={options}
                     />
                     {dirty && (
                         <Tooltip title={getString('save')}>
@@ -273,6 +338,29 @@ export function SettingsPage() {
         staleTime: 5 * 60_000,
     });
 
+    // Option sets for multi-select settings, keyed by AppSetting.options_source.
+    const { data: jobCategories = [] } = useQuery({
+        queryKey: JOB_CATEGORY_QK,
+        queryFn: fetchJobCategories,
+        staleTime: 5 * 60_000,
+    });
+    const { data: employeeStatuses = [] } = useQuery({
+        queryKey: ['employee_statuses'],
+        queryFn: fetchEmployeeStatuses,
+        staleTime: 5 * 60_000,
+    });
+    const optionsBySource = useMemo<Record<string, SettingOption[]>>(() => ({
+        job_categories: jobCategories.map((c) => ({
+            value: c.key,
+            label: cfl(getString(snakeToCamel(c.key))) || c.key,
+        })),
+        employee_statuses: employeeStatuses.map((s) => ({
+            value: s.name,
+            // Status names double as translation keys (see EmployeeCardLayout.tsx).
+            label: cfl(getString(s.name)) || s.name,
+        })),
+    }), [jobCategories, employeeStatuses, getString]);
+
     // Multi-story grouping: top-level settings (parent_id null) plus the children
     // hanging under each. A boolean parent renders its children in an accordion
     // that is DISABLED while the parent is off — child values stay in the DB,
@@ -298,6 +386,7 @@ export function SettingsPage() {
     const invalidate = () => {
         qc.invalidateQueries({ queryKey: APP_SETTINGS_QK });
         qc.invalidateQueries({ queryKey: APP_SETTING_BY_KEY_QK });
+        qc.invalidateQueries({ queryKey: EFFECTIVE_SETTINGS_QK });
     };
 
     const updateMut = useMutation({
@@ -351,7 +440,9 @@ export function SettingsPage() {
                                     getString={getString}
                                     saving={updateMut.isPending}
                                     onSave={(id, value) => updateMut.mutate({ id, data: { value } })}
+                                    onToggleOverridable={(id, user_overridable) => updateMut.mutate({ id, data: { user_overridable } })}
                                     onDelete={(target) => setDeleteTarget(target)}
+                                    options={setting.options_source ? optionsBySource[setting.options_source] : undefined}
                                 />
                             );
                             const kids = childrenByParent.get(s.id) ?? [];

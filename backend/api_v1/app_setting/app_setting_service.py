@@ -19,6 +19,7 @@ from backend.api_v1.app_setting.app_setting_errors import (
     AppSettingNotFoundByKey,
     AppSettingKeyTaken,
     AppSettingValueTypeMismatch,
+    AppSettingValueBelowMin,
     AppSettingDeleteError,
 )
 from backend.api_v1.app_setting.app_setting_success import (
@@ -75,6 +76,26 @@ async def get_bool_setting(
     )
     value = cast_value(row.value, type_key)
     return value if isinstance(value, bool) else default
+
+
+async def get_list_setting(
+    session: AsyncSession, key: str, default: Optional[List] = None
+) -> List:
+    """Read a JSON-list app setting by key from server-side business logic.
+
+    Returns ``default`` (or ``[]``) when the row is missing or its value is not a
+    list. Used for multi-valued settings (e.g. the review-session job-category /
+    status filters). This is the list counterpart of ``get_bool_setting``.
+    """
+    from backend.api_v1.app_setting.app_setting_model import AppSetting as AppSettingModel
+
+    fallback = default if default is not None else []
+    row = await session.scalar(
+        select(AppSettingModel).where(AppSettingModel.key == key)
+    )
+    if row is None or not isinstance(row.value, list):
+        return fallback
+    return row.value
 
 
 async def get_effective_bool_setting(
@@ -202,16 +223,102 @@ class AppSettingService(BaseService):
     ) -> MutationResponse[AppSettingSchema]:
         orm_record = await self.get_by_id(setting_id)
         update_data = setting_update.model_dump(exclude_unset=True)
+        # A setting locked to app-level (user_override_allowed=False) can never be
+        # made user-overridable — force it off regardless of what the client sends.
+        allowed = update_data.get(
+            "user_override_allowed", orm_record.user_override_allowed
+        )
+        if not allowed:
+            update_data["user_overridable"] = False
         # Validate value against the (possibly new) type.
         if "value" in update_data:
             type_id = update_data.get("value_type_id", orm_record.value_type_id)
             await self._validate_value(update_data["value"], type_id)
+            # An overridable integer is a cap: it must stay >= 1 so the user
+            # range [1, cap] is never empty (admin can't set 0/negative).
+            type_key = await self._value_type_key(type_id)
+            will_be_overridable = update_data.get(
+                "user_overridable", orm_record.user_overridable
+            )
+            new_value = update_data["value"]
+            if (
+                type_key == "integer"
+                and will_be_overridable
+                and isinstance(new_value, int)
+                and new_value < 1
+            ):
+                raise await self._resolve_domain_error(AppSettingValueBelowMin(1))
         updated = await self.repository.update(
             instance=orm_record, instance_update=update_data
         )
+        # Lowering an integer cap clamps every user override above it down to the
+        # new cap (e.g. cap 5 -> 4 turns a user's stored 5 into 4).
+        if "value" in update_data:
+            await self._clamp_user_overrides(updated)
         schema = AppSettingSchema.model_validate(updated)
         detail = await self._resolve_domain_success(AppSettingUpdateSuccess(schema.key))
         return MutationResponse(detail=detail, data=schema)
+
+    async def _clamp_user_overrides(self, setting) -> None:
+        """Clamp per-user overrides of an integer cap setting down to the global
+        value. No-op for non-integer / non-overridable settings. Touches only the
+        user_settings preference rows — never any saved domain data (missions etc.)."""
+        type_key = await self._value_type_key(setting.value_type_id)
+        if type_key != "integer" or not setting.user_overridable:
+            return
+        try:
+            cap = int(setting.value)
+        except (TypeError, ValueError):
+            return
+        from backend.api_v1.user_setting.user_setting_model import UserSetting
+
+        rows = (
+            await self.session.scalars(
+                select(UserSetting).where(UserSetting.app_setting_id == setting.id)
+            )
+        ).all()
+        changed = False
+        for row in rows:
+            try:
+                if int(row.value) > cap:
+                    row.value = cap
+                    changed = True
+            except (TypeError, ValueError):
+                continue
+        if changed:
+            await self.session.commit()
+
+    async def get_effective_for_user(self) -> List[AppSettingSchema]:
+        """All settings with `value` resolved for the current user: a per-user
+        override (clamped to [1, global] for integers) when the setting is
+        overridable and the user has one, else the global value. Same shape as
+        get_app_settings so existing consumer hooks need no change."""
+        records = await self.get_all()
+        overrides: dict[int, Any] = {}
+        if self.user is not None:
+            from backend.api_v1.user_setting.user_setting_model import UserSetting
+
+            rows = (
+                await self.session.scalars(
+                    select(UserSetting).where(
+                        UserSetting.employee_id == self.user.id
+                    )
+                )
+            ).all()
+            overrides = {r.app_setting_id: r.value for r in rows}
+        result: List[AppSettingSchema] = []
+        for r in records:
+            schema = AppSettingSchema.model_validate(r)
+            if r.user_overridable and overrides.get(r.id) is not None:
+                val = overrides[r.id]
+                if r.value_type_key == "integer":
+                    try:
+                        val = max(1, min(int(val), int(r.value)))
+                    except (TypeError, ValueError):
+                        val = r.value
+                schema.value = val
+            result.append(schema)
+        return result
 
     async def delete_app_setting(self, setting_id: int) -> None:
         record = await self.get_by_id(setting_id)

@@ -11,6 +11,12 @@ class AppSettingBase(BaseModel):
     label_key: Optional[str] = Field(None, max_length=64)
     description_key: Optional[str] = Field(None, max_length=64)
     is_active: bool = True
+    # When True, employees may override this setting for themselves.
+    user_overridable: bool = False
+    # Multi-select option set (renders a multi-select in the settings UI).
+    options_source: Optional[str] = Field(None, max_length=64)
+    # When False, the setting can never be made user-overridable.
+    user_override_allowed: bool = True
 
 
 class AppSettingCreate(AppSettingBase):
@@ -26,11 +32,14 @@ class AppSettingUpdate(BaseModel):
     label_key: Optional[str] = Field(None, max_length=64)
     description_key: Optional[str] = Field(None, max_length=64)
     is_active: Optional[bool] = None
+    user_overridable: Optional[bool] = None
+    options_source: Optional[str] = Field(None, max_length=64)
+    user_override_allowed: Optional[bool] = None
 
 
 class AppSetting(AppSettingBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
     # Resolved from the linked value_type (see model property) so the UI knows
-    # which editor (switch / number / date / json) to render.
+    # which editor (switch / number / date / json / multi-select) to render.
     value_type_key: Optional[str] = None

@@ -45,6 +45,9 @@ APP_SETTINGS = [
         "value_type_key": "integer",
         "label_key": "settingIdpMaxMissions",
         "description_key": "settingIdpMaxMissionsDesc",
+        # v1 demo of per-user override: the global value (5) is both the default
+        # and the cap — a user may pick 1..5 for their own plan.
+        "user_overridable": True,
     },
     {
         "key": "idp_allow_full_competence_list",
@@ -73,6 +76,55 @@ APP_SETTINGS = [
         "value_type_key": "boolean",
         "label_key": "settingReviewSessionFilterByDepartment",
         "description_key": "settingReviewSessionFilterByDepartmentDesc",
+    },
+    {
+        # When ON the employee registration form shows an optional talent
+        # section under the job select: pick one or more talent target jobs
+        # (department type → target job → talent status/period) and they are
+        # created on the fly as a talent_audit + talent_audit_job(s) for the
+        # new employee. Interviews are out of scope here — only the audit.
+        "key": "employee_create_allow_talent_period",
+        "value": False,
+        "value_type_key": "boolean",
+        "label_key": "settingEmployeeCreateAllowTalentPeriod",
+        "description_key": "settingEmployeeCreateAllowTalentPeriodDesc",
+    },
+    {
+        # Review-session fill filter: only employees whose job's category is in
+        # this list are added to a NEWLY OPENED session. Employees whose job has
+        # no category link (or no job) are ALWAYS included. Stored as a JSON list
+        # of job_category keys. App-only (never user-overridable); edited via a
+        # multi-select in developer Settings (options_source = job_categories).
+        "key": "review_session_filter_job_categories",
+        "value": ["manager"],
+        "value_type_key": "json",
+        "label_key": "settingReviewSessionFilterJobCategories",
+        "description_key": "settingReviewSessionFilterJobCategoriesDesc",
+        "options_source": "job_categories",
+        "user_override_allowed": False,
+    },
+    {
+        # Review-session fill filter: only employees whose status is in this list
+        # are added to a newly opened session. Stored as a JSON list of status
+        # names. App-only; multi-select (options_source = employee_statuses).
+        "key": "review_session_filter_employee_statuses",
+        "value": ["working"],
+        "value_type_key": "json",
+        "label_key": "settingReviewSessionFilterEmployeeStatuses",
+        "description_key": "settingReviewSessionFilterEmployeeStatusesDesc",
+        "options_source": "employee_statuses",
+        "user_override_allowed": False,
+    },
+    {
+        # Optional-essence-property: when ON, creating a job (single create OR
+        # Excel bulk upload) auto-links the default 'manager' job category via a
+        # job_job_category_links row. When OFF new jobs get no category link;
+        # existing links are untouched. App-level only (not user-overridable).
+        "key": "job_apply_category_on_create",
+        "value": True,
+        "value_type_key": "boolean",
+        "label_key": "settingJobApplyCategoryOnCreate",
+        "description_key": "settingJobApplyCategoryOnCreateDesc",
     },
     {
         # MASTER of the employee-photos feature. When OFF the whole feature is
@@ -157,6 +209,9 @@ async def seed_app_settings():
                     value_type_id=type_by_key[s["value_type_key"]].id,
                     label_key=s["label_key"],
                     description_key=s["description_key"],
+                    user_overridable=s.get("user_overridable", False),
+                    options_source=s.get("options_source"),
+                    user_override_allowed=s.get("user_override_allowed", True),
                 )
             )
             print(f"Seeded app setting: {s['key']}")

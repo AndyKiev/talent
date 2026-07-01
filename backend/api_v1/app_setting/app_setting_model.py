@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any, Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Boolean, ForeignKey, JSON
+from sqlalchemy import String, Boolean, ForeignKey, JSON, text
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin, TimestampMixin
 
@@ -38,6 +38,23 @@ class AppSetting(IntIdPkMixin, TimestampMixin, Base):
     label_key: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     description_key: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    # Names an option set (e.g. "job_categories", "employee_statuses"). When set,
+    # the developer Settings page renders a MULTI-SELECT bound to that option set
+    # instead of the raw JSON editor; the value is stored as a JSON list of the
+    # chosen option keys/names (value_type must be "json").
+    options_source: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    # When False the setting can NEVER be made user-overridable: the per-user
+    # toggle is hidden in the UI and the backend refuses to enable it. App-only.
+    user_override_allowed: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default=text("true")
+    )
+    # When ON, an individual employee may override this setting for themselves
+    # (a user_settings row). The global value here is BOTH the default AND, for
+    # integers, the cap (user value is clamped to [1, this value]). When OFF the
+    # global value always applies and any existing user override lies dormant.
+    user_overridable: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false")
+    )
     created_by: Mapped[Optional[int]] = mapped_column(
         ForeignKey("employees.id", ondelete="SET NULL"), nullable=True
     )

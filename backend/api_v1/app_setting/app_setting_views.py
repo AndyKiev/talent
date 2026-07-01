@@ -41,6 +41,16 @@ async def get_app_setting_by_key(
     return await service.get_by_key(key)
 
 
+# Per-user resolved settings: same shape as GET "", but each value is the
+# effective value for the current user (override if overridable & present &
+# clamped, else the global value). Consumer hooks read from here.
+@router.get("/effective_for_me", response_model=List[AppSettingSchema])
+async def get_app_settings_effective_for_me(
+    service: Annotated[AppSettingService, Depends(get_app_setting_service)],
+):
+    return await service.get_effective_for_user()
+
+
 @router.get("/{app_setting_id}", response_model=AppSettingSchema)
 async def get_app_setting(
     record: AppSettingSchema = Depends(app_setting_by_id),
