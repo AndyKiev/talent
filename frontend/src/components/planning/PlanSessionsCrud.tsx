@@ -114,7 +114,7 @@ export function PlanSessionsCrud({ onEditPlan, onShowReport }: Props) {
     });
 
     return (
-        <Box>
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                 <Typography variant="h6" fontWeight={600} sx={{ flex: 1 }}>
                     {cfl(getString('planSessions')) || 'Plan Sessions'}
@@ -142,7 +142,7 @@ export function PlanSessionsCrud({ onEditPlan, onShowReport }: Props) {
             )}
 
             {!isLoading && !error && (
-                <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+                <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', flex: 1, minHeight: 0 }}>
                     <DataGrid
                         rows={rows}
                         columns={columns}
@@ -154,7 +154,7 @@ export function PlanSessionsCrud({ onEditPlan, onShowReport }: Props) {
                         getRowHeight={() => 'auto'}
                         localeText={localeText}
                         hideFooterSelectedRowCount
-                        sx={{ '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
+                        sx={{ height: '100%', '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
                     />
                 </Paper>
             )}

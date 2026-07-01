@@ -189,7 +189,7 @@ export function PlanReportGrid({ session }: Props) {
     }
 
     return (
-        <Box>
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, flexWrap: 'wrap' }}>
                 <AssessmentIcon color="action" />
                 <Typography variant="h6" fontWeight={600} sx={{ flex: 1 }}>
@@ -292,7 +292,7 @@ export function PlanReportGrid({ session }: Props) {
             )}
 
             {!isLoading && !error && (
-                <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+                <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', flex: 1, minHeight: 0 }}>
                     {rows.length === 0 ? (
                         <Box sx={{ p: 4, textAlign: 'center' }}>
                             <Typography variant="body2" color="text.secondary">
@@ -312,7 +312,7 @@ export function PlanReportGrid({ session }: Props) {
                             getRowHeight={() => 'auto'}
                             localeText={localeText}
                             hideFooterSelectedRowCount
-                            sx={{ '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
+                            sx={{ height: '100%', '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
                         />
                     )}
                 </Paper>
