@@ -1,0 +1,72 @@
+from fastapi import APIRouter, Depends
+from fastapi.security import HTTPBearer
+from typing import Annotated, List
+
+from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.training_type_job_category_link.training_type_job_category_link_schema import (
+    TrainingTypeJobCategoryLink as TrainingTypeJobCategoryLinkSchema,
+    TrainingTypeJobCategoryLinkBulkSet,
+)
+from backend.api_v1.training_type_job_category_link.training_type_job_category_link_dependencies import (
+    get_training_type_job_category_link_service,
+)
+from backend.api_v1.training_type_job_category_link.training_type_job_category_link_service import (
+    TrainingTypeJobCategoryLinkService,
+)
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
+
+router = APIRouter(
+    prefix="/training_type_job_category_links",
+    tags=["Training Type ↔ Job Category Links"],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
+)
+
+
+@router.get(
+    "/training_type/{training_type_id}",
+    response_model=List[TrainingTypeJobCategoryLinkSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.TRAINING_TYPE)],
+)
+async def get_links_for_training_type(
+    training_type_id: int,
+    service: Annotated[
+        TrainingTypeJobCategoryLinkService,
+        Depends(get_training_type_job_category_link_service),
+    ],
+):
+    """Return all job_category links for a given training type."""
+    return await service.get_links_for_training_type(training_type_id)
+
+
+@router.get(
+    "/job_category/{job_category_id}",
+    response_model=List[TrainingTypeJobCategoryLinkSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.TRAINING_TYPE)],
+)
+async def get_links_for_job_category(
+    job_category_id: int,
+    service: Annotated[
+        TrainingTypeJobCategoryLinkService,
+        Depends(get_training_type_job_category_link_service),
+    ],
+):
+    """Return all training types that require a given job category."""
+    return await service.get_links_for_job_category(job_category_id)
+
+
+@router.put(
+    "/training_type/{training_type_id}",
+    response_model=MutationResponse[List[TrainingTypeJobCategoryLinkSchema]],
+    dependencies=[Guard(OperationVerb.LINK, EssenceName.TRAINING_TYPE)],
+)
+async def set_links(
+    training_type_id: int,
+    payload: TrainingTypeJobCategoryLinkBulkSet,
+    service: Annotated[
+        TrainingTypeJobCategoryLinkService,
+        Depends(get_training_type_job_category_link_service),
+    ],
+):
+    """Replace all job_category links for a training type atomically."""
+    return await service.set_links(training_type_id, payload)
