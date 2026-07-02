@@ -116,7 +116,7 @@ const LoginPage: FC = () => {
                 }}
             >
                 {/* Welcome Back - at the very top */}
-                <Typography
+                {/* <Typography
                     variant="h5"
                     fontWeight={600}
                     fontStyle="italic"
@@ -125,7 +125,7 @@ const LoginPage: FC = () => {
                     mb={3}
                 >
                     {cfl(getString("welcomeBack"))}
-                </Typography>
+                </Typography> */}
 
                 {/* Logo / heading with subtitle */}
                 <Box mb={4}>

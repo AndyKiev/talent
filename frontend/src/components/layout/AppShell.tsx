@@ -14,7 +14,8 @@ import {
 } from "@mui/material";
 import CodeIcon from '@mui/icons-material/Code';
 import InsightsRounded from '@mui/icons-material/InsightsRounded';
-import { LogoutRounded, PeopleAltRounded, AdminPanelSettingsRounded, RateReviewRounded } from "@mui/icons-material";
+import SettingsRounded from '@mui/icons-material/SettingsRounded';
+import { LogoutRounded, PeopleAltRounded, AdminPanelSettingsRounded, RateReviewRounded, SchoolRounded } from "@mui/icons-material";
 import { useTheme } from "../theme/ThemeContext";
 import { useAuthStore } from "../../store/authStore";
 import ThemeSwitch from "../theme/ThemeSwitch";
@@ -129,11 +130,28 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
                         {canSeeMenu("planning", groups) &&
                             navBtn("planning", "/planning", <InsightsRounded sx={{ fontSize: 16 }} />)}
                         {canSeeMenu("peopleReview", groups) &&
-                            navBtn("peopleReview", "/people_review", <RateReviewRounded sx={{ fontSize: 16 }} />)}
+                            navBtn("review", "/people_review", <RateReviewRounded sx={{ fontSize: 16 }} />)}
+                        {canSeeMenu("training", groups) &&
+                            navBtn("training", "/training", <SchoolRounded sx={{ fontSize: 16 }} />)}
                         {canSeeMenu("admin", groups) &&
                             navBtn("admin", "/admin", <AdminPanelSettingsRounded sx={{ fontSize: 16 }} />)}
                         {canSeeMenu("developer", groups) &&
                             navBtn("developer", "/developer", <CodeIcon sx={{ fontSize: 16 }} />)}
+                        {/* Personal settings — available to ALL users (ungated). */}
+                        <Tooltip title={cfl(getString("mySettings"))}>
+                            <IconButton
+                                size="small"
+                                onClick={() => navigate({ to: "/settings" as "/" })}
+                                sx={{
+                                    color: currentPath.startsWith("/settings") ? t.accent : t.textMuted,
+                                    background: currentPath.startsWith("/settings") ? `${t.accent}14` : "transparent",
+                                    "&:hover": { color: t.accent, background: `${t.accent}10` },
+                                    borderRadius: "9px",
+                                }}
+                            >
+                                <SettingsRounded sx={{ fontSize: 18 }} />
+                            </IconButton>
+                        </Tooltip>
                     </Stack>
 
                     {/* Right side */}

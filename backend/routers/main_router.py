@@ -139,6 +139,12 @@ from backend.api_v1.job_job_group_link.job_job_group_link_views import (
 from backend.api_v1.job_process_role_link.job_process_role_link_views import (
     router as job_process_role_link_router,
 )
+from backend.api_v1.job_category.job_category_views import (
+    router as job_category_router,
+)
+from backend.api_v1.job_job_category_link.job_job_category_link_views import (
+    router as job_job_category_link_router,
+)
 from backend.api_v1.essence.essence_views import router as essence_router
 from backend.api_v1.job_responsibility_category_link.job_responsibility_category_link_views import (
     router as job_responsibility_category_link_router,
@@ -211,6 +217,9 @@ from backend.api_v1.setting_value_type.setting_value_type_views import (
 from backend.api_v1.app_setting.app_setting_views import (
     router as app_setting_router,
 )
+from backend.api_v1.user_setting.user_setting_views import (
+    router as user_setting_router,
+)
 
 # Regions (ported from talent-test)
 from backend.api_v1.region.region_views import router as region_router
@@ -243,6 +252,29 @@ from backend.api_v1.db_table_info.db_table_info_views import (
 # Review session department filter
 from backend.api_v1.review_session_department.review_session_department_views import (
     router as review_session_department_router,
+)
+
+# Training
+from backend.api_v1.training_link_type.training_link_type_views import (
+    router as training_link_type_router,
+)
+from backend.api_v1.training_category.training_category_views import (
+    router as training_category_router,
+)
+from backend.api_v1.employee_training_status.employee_training_status_views import (
+    router as employee_training_status_router,
+)
+from backend.api_v1.training_type.training_type_views import (
+    router as training_type_router,
+)
+from backend.api_v1.training_type_job_link.training_type_job_link_views import (
+    router as training_type_job_link_router,
+)
+from backend.api_v1.training_type_job_category_link.training_type_job_category_link_views import (
+    router as training_type_job_category_link_router,
+)
+from backend.api_v1.employee_training.employee_training_views import (
+    router as employee_training_router,
 )
 
 
@@ -303,6 +335,8 @@ router.include_router(job_group_type_router)
 router.include_router(job_group_router)
 router.include_router(job_job_group_link_router)
 router.include_router(job_process_role_link_router)
+router.include_router(job_category_router)
+router.include_router(job_job_category_link_router)
 router.include_router(essence_router)
 router.include_router(operation_essence_set_link_router)
 router.include_router(job_responsibility_category_link_router)
@@ -333,6 +367,7 @@ router.include_router(oversight_manager_router)
 # App settings (typed key/value)
 router.include_router(setting_value_type_router)
 router.include_router(app_setting_router)
+router.include_router(user_setting_router)
 
 # Regions (ported from talent-test)
 router.include_router(region_router)
@@ -352,3 +387,12 @@ router.include_router(db_table_info_router)
 
 # Review session department filter
 router.include_router(review_session_department_router)
+
+# Training
+router.include_router(training_link_type_router)
+router.include_router(training_category_router)
+router.include_router(employee_training_status_router)
+router.include_router(training_type_router)
+router.include_router(training_type_job_link_router)
+router.include_router(training_type_job_category_link_router)
+router.include_router(employee_training_router)

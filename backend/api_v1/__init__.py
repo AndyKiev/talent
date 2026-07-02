@@ -51,6 +51,8 @@ __all__ = {
     "JobJobGroupLink",
     "JobProcessRoleLink",
     "JobResponsibilityCategoryLink",
+    "JobCategory",
+    "JobJobCategoryLink",
     # Planning
     "PlanSessionStatus",
     "PlanSession",
@@ -96,6 +98,7 @@ __all__ = {
     # App settings (typed key/value)
     "SettingValueType",
     "AppSetting",
+    "UserSetting",
     # Regions (ported from talent-test)
     "Region",
     "DepartmentRegionLink",
@@ -106,6 +109,14 @@ __all__ = {
     "HrmScope",
     # Review session — department filter
     "ReviewSessionDepartment",
+    # Training
+    "TrainingLinkType",
+    "TrainingCategory",
+    "EmployeeTrainingStatus",
+    "TrainingType",
+    "TrainingTypeJobLink",
+    "TrainingTypeJobCategoryLink",
+    "EmployeeTraining",
 }
 
 from backend.api_v1.lang.lang_model import Lang
@@ -209,6 +220,13 @@ from backend.api_v1.job_group.job_group_model import JobGroup
 from backend.api_v1.job_job_group_link.job_job_group_link_model import JobJobGroupLink
 from backend.api_v1.job_process_role_link.job_process_role_link_model import (
     JobProcessRoleLink,
+)
+
+# Job category (1:1 optional property via job_job_category_links) — category
+# table first, then the link that FKs into it.
+from backend.api_v1.job_category.job_category_model import JobCategory
+from backend.api_v1.job_job_category_link.job_job_category_link_model import (
+    JobJobCategoryLink,
 )
 
 from backend.api_v1.operation_essence_link.operation_essence_link_model import (
@@ -325,9 +343,11 @@ from backend.api_v1.process_roles.process_role_active_context.process_role_activ
     ProcessRoleActiveContext,
 )
 
-# App settings — value-type catalog first (FK target), then the settings table.
+# App settings — value-type catalog first (FK target), then the settings table,
+# then the per-user override table (FK -> app_settings).
 from backend.api_v1.setting_value_type.setting_value_type_model import SettingValueType
 from backend.api_v1.app_setting.app_setting_model import AppSetting
+from backend.api_v1.user_setting.user_setting_model import UserSetting
 
 # Regions (ported from talent-test) — region first, then the department link.
 from backend.api_v1.region.region_model import Region
@@ -347,3 +367,21 @@ from backend.api_v1.hrm_scope.hrm_scope_model import HrmScope
 from backend.api_v1.review_session_department.review_session_department_model import (
     ReviewSessionDepartment,
 )
+
+# Training — lookups first (link_type, category, status), then training_type
+# (FKs into training_category, training_link_type), then its job/job_category
+# many-to-many link tables, then employee_training (FKs into employee,
+# training_type, employee_training_status).
+from backend.api_v1.training_link_type.training_link_type_model import TrainingLinkType
+from backend.api_v1.training_category.training_category_model import TrainingCategory
+from backend.api_v1.employee_training_status.employee_training_status_model import (
+    EmployeeTrainingStatus,
+)
+from backend.api_v1.training_type.training_type_model import TrainingType
+from backend.api_v1.training_type_job_link.training_type_job_link_model import (
+    TrainingTypeJobLink,
+)
+from backend.api_v1.training_type_job_category_link.training_type_job_category_link_model import (
+    TrainingTypeJobCategoryLink,
+)
+from backend.api_v1.employee_training.employee_training_model import EmployeeTraining

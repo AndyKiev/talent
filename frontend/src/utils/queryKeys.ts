@@ -12,6 +12,7 @@ export const USER_GROUPS_QK = ['user_groups'] as const;
 export const JOB_QK = ['jobs'] as const;
 export const JOB_GROUP_QK = ['job_groups'] as const;
 export const JOB_GROUP_TYPE_QK = ['job_group_types'] as const;
+export const JOB_CATEGORY_QK = ['job_categories'] as const;
 export const JOB_PROCESS_ROLE_LINK_QK = (jobId: number) => ['job_process_role_links', jobId] as const;
 export const ESSENCE_QK = ['essences'];
 export const EMPLOYEE_EVENT_CHANGE_DEPT_TYPE_QK = ['employee_event_change_dept_types'] as const;
@@ -44,6 +45,11 @@ export const SETTING_VALUE_TYPES_QK = ['setting_value_types'] as const;
 export const APP_SETTING_BY_KEY_QK = ['app_setting_by_key'] as const;
 export const appSettingByKeyQK = (key: string) =>
     [...APP_SETTING_BY_KEY_QK, key] as const;
+// Per-user resolved settings (one shared query the consumer hooks read).
+// Invalidate after editing a global setting OR a personal override.
+export const EFFECTIVE_SETTINGS_QK = ['app_settings_effective_for_me'] as const;
+// User-facing /settings page payload (overridable settings + this user's value).
+export const USER_SETTINGS_EFFECTIVE_QK = ['user_settings_effective'] as const;
 
 // ── Ported from talent-test (regions, hrm scopes, links) ──────────────────────
 export const DEPARTMENT_REGION_LINK_QK = ['department_region_links'] as const;
@@ -55,3 +61,12 @@ export const REGION_QK = ['regions'] as const;
 
 // ── Developer tools ──────────────────────────────────────────────────────────
 export const DB_TABLES_QK = ['db_tables'] as const;
+
+// ── Training ─────────────────────────────────────────────────────────────────
+export const TRAINING_LINK_TYPE_QK = ['training_link_types'] as const;
+export const TRAINING_CATEGORY_QK = ['training_categories'] as const;
+export const EMPLOYEE_TRAINING_STATUS_QK = ['employee_training_statuses'] as const;
+export const TRAINING_TYPE_QK = ['training_types'] as const;
+export const TRAINING_TYPES_ELIGIBLE_QK = (employeeId: number) => ['training_types', 'eligible', employeeId] as const;
+export const EMPLOYEE_TRAININGS_QK = (employeeId: number) => ['employee_trainings', employeeId] as const;
+export const TRAINING_STATE_QK = (trainingTypeId: number | null) => ['training_state', trainingTypeId] as const;

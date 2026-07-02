@@ -11,6 +11,9 @@ import {
     ThemeProvider as MuiThemeProvider,
     CssBaseline,
 } from "@mui/material";
+// Register the MuiDataGrid slots on the MUI theme `components` type so the
+// global header styleOverrides below typecheck.
+import type {} from "@mui/x-data-grid/themeAugmentation";
 import { themes, type Theme as AppTheme } from "./themes"; // ← Alias your custom Theme
 
 interface ThemeContextValue {
@@ -85,6 +88,32 @@ export const ThemeProvider: FC<{ children: ReactNode }> = ({ children }) => {
                     MuiSelect: {
                         styleOverrides: {
                             select: { paddingTop: "9px", paddingBottom: "9px" },
+                        },
+                    },
+                    // Global DataGrid HEADER style so every grid in every menu shares
+                    // the same column-header look as the employees grid (the one that
+                    // used useDataGridStyles). Header slots ONLY — cell/row layout is
+                    // intentionally left to each grid.
+                    MuiDataGrid: {
+                        styleOverrides: {
+                            columnHeader: ({ theme }) => ({
+                                backgroundColor: theme.palette.primary.light,
+                                color: mode === "dark" ? "#000" : "#fff",
+                            }),
+                            columnHeaderTitle: {
+                                fontWeight: "bold",
+                                color: mode === "dark" ? "#000" : "#fff",
+                            },
+                            iconButtonContainer: {
+                                "& button": { color: mode === "dark" ? "#000" : "#fff" },
+                            },
+                            menuIcon: {
+                                "& button": { color: mode === "dark" ? "#000" : "#fff" },
+                            },
+                            sortIcon: {
+                                color: mode === "dark" ? "#fff" : "#000",
+                                opacity: 0.9,
+                            },
                         },
                     },
                 },

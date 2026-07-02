@@ -169,6 +169,13 @@ class EssenceName(str, Enum):
     REVIEW_SESSION = "review_session"
     REVIEW_SESSION_STATUS = "review_session_status"
 
+    # ── Training ─────────────────────────────────────────────────────────────
+    TRAINING_LINK_TYPE = "training_link_type"
+    TRAINING_CATEGORY = "training_category"
+    EMPLOYEE_TRAINING_STATUS = "employee_training_status"
+    TRAINING_TYPE = "training_type"
+    EMPLOYEE_TRAINING = "employee_training"
+
 
 class PlanSessionStatusKey(str, Enum):
     PENDING = "pending"

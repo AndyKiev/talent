@@ -19,6 +19,7 @@ import PlaylistAddCheckIcon from '@mui/icons-material/PlaylistAddCheck';
 import RuleFolderIcon from '@mui/icons-material/RuleFolder';
 import RateReviewIcon from '@mui/icons-material/RateReview';
 import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
+import SchoolIcon from '@mui/icons-material/School';
 
 import type { RawEssenceConfig } from '../../types/essence';
 
@@ -286,5 +287,35 @@ export const ESSENCES: RawEssenceConfig[] = [
     Icon: RuleFolderIcon,
     color: '#10b981',
     parentGroup: 'planning_setup',
+  },
+
+  // ── Training (group) ─────────────────────────────────────────────────────
+  {
+    parent: 'admin',
+    key: 'training',
+    labelKey: 'training',
+    descriptionKey: 'trainingGroupDesc',
+    Icon: SchoolIcon,
+    color: '#8b5cf6',
+    isGroup: true,
+    groupKey: 'training',
+  },
+  {
+    parent: 'admin',
+    key: 'categories',
+    labelKey: 'trainingCategories',
+    descriptionKey: 'trainingCategoriesDesc',
+    Icon: CategoryIcon,
+    color: '#f59e0b',
+    parentGroup: 'training',
+  },
+  {
+    parent: 'admin',
+    key: 'statuses',
+    labelKey: 'employeeTrainingStatuses',
+    descriptionKey: 'employeeTrainingStatusesDesc',
+    Icon: FlagIcon,
+    color: '#6366f1',
+    parentGroup: 'training',
   },
 ];
