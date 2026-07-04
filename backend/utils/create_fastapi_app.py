@@ -99,13 +99,14 @@ def create_app(create_custom_static_urls: bool = False) -> FastAPI:
         app.mount("/utils", StaticFiles(directory=str(assets_path)), name="assets")
         register_static_docs_routes(app)
 
-    # Dev: allow all origins; credentials must be False when using wildcard
+    # CORS origins from settings (.env APP_CONFIG__CORS__ORIGINS) — never
+    # hardcoded wildcard to prevent any website from calling the API.
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=False,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_origins=settings.cors.origins,
+        allow_credentials=settings.cors.credentials,
+        allow_methods=settings.cors.methods,
+        allow_headers=settings.cors.headers,
     )
 
     register_exception_handlers(app)
