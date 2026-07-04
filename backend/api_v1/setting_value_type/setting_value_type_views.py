@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, status, Query
-from fastapi.security import HTTPBearer
 from typing import Annotated, Optional, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
@@ -15,11 +14,12 @@ from backend.api_v1.setting_value_type.setting_value_type_dependencies import (
 from backend.api_v1.setting_value_type.setting_value_type_service import (
     SettingValueTypeService,
 )
+from backend.auth.jwt_auth import get_current_active_auth_user
 
 router = APIRouter(
     prefix="/setting_value_types",
     tags=["Setting Value Types"],
-    dependencies=[Depends(HTTPBearer(auto_error=False))],
+    dependencies=[Depends(get_current_active_auth_user)],
 )
 
 

@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, Query
-from fastapi.security import HTTPBearer
 from typing import Annotated, Optional, List
 
 from backend.api_v1.employee_events.employee_event_change_department.employee_event_change_department_schema import (
@@ -12,11 +11,12 @@ from backend.api_v1.employee_events.employee_event_change_department.employee_ev
 from backend.api_v1.employee_events.employee_event_change_department.employee_event_change_department_service import (
     EmployeeEventChangeDepartmentService,
 )
+from backend.auth.jwt_auth import get_current_active_auth_user
 
 router = APIRouter(
     prefix="/employee_event_change_departments",
     tags=["Employee Event Change Departments"],
-    dependencies=[Depends(HTTPBearer(auto_error=False))],
+    dependencies=[Depends(get_current_active_auth_user)],
 )
 
 

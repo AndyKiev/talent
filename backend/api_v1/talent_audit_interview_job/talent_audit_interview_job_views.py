@@ -1,7 +1,6 @@
 from typing import Annotated, List
 
 from fastapi import APIRouter, Depends, status
-from fastapi.security import HTTPBearer
 
 from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_dependencies import (
     get_talent_audit_interview_job_service,
@@ -13,11 +12,12 @@ from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_schema
 from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_service import (
     TalentAuditInterviewJobService,
 )
+from backend.auth.jwt_auth import get_current_active_auth_user
 
 router = APIRouter(
     prefix="/talent_audit_interview_jobs",
     tags=["Talent Audit Interview Jobs"],
-    dependencies=[Depends(HTTPBearer(auto_error=False))],
+    dependencies=[Depends(get_current_active_auth_user)],
 )
 
 

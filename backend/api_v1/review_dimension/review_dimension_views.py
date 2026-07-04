@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, status, Query
-from fastapi.security import HTTPBearer
 from typing import Annotated, Optional, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
@@ -15,11 +14,12 @@ from backend.api_v1.review_dimension.review_dimension_dependencies import (
 from backend.api_v1.review_dimension.review_dimension_service import (
     ReviewDimensionService,
 )
+from backend.auth.jwt_auth import get_current_active_auth_user
 
 router = APIRouter(
     prefix="/review_dimensions",
     tags=["Review Dimensions"],
-    dependencies=[Depends(HTTPBearer(auto_error=False))],
+    dependencies=[Depends(get_current_active_auth_user)],
 )
 
 

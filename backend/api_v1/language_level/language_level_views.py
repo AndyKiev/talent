@@ -15,8 +15,13 @@ from backend.api_v1.language_level.language_level_schema import (
     LanguageLevelUpdate,
 )
 from backend.api_v1.language_level.language_level_service import LanguageLevelService
+from backend.auth.jwt_auth import get_current_active_auth_user
 
-router = APIRouter(prefix="/language_levels", tags=["Language Levels"])
+router = APIRouter(
+    prefix="/language_levels",
+    tags=["Language Levels"],
+    dependencies=[Depends(get_current_active_auth_user)],
+)
 
 
 @router.get("", response_model=List[LanguageLevelSchema])

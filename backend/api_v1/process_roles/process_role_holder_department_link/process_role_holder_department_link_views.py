@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, status, Query
-from fastapi.security import HTTPBearer
 from typing import Annotated, Optional, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
@@ -13,11 +12,12 @@ from backend.api_v1.process_roles.process_role_holder_department_link.process_ro
 from backend.api_v1.process_roles.process_role_holder_department_link.process_role_holder_department_link_service import (
     ProcessRoleHolderDepartmentLinkService,
 )
+from backend.auth.jwt_auth import get_current_active_auth_user
 
 router = APIRouter(
     prefix="/admin/process_role_holder_departments",
     tags=["Process Role Holder Departments"],
-    dependencies=[Depends(HTTPBearer(auto_error=False))],
+    dependencies=[Depends(get_current_active_auth_user)],
 )
 
 

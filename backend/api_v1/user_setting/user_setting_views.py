@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, status
-from fastapi.security import HTTPBearer
 from typing import Annotated, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
@@ -12,11 +11,12 @@ from backend.api_v1.user_setting.user_setting_dependencies import (
     get_user_setting_service,
 )
 from backend.api_v1.user_setting.user_setting_service import UserSettingService
+from backend.auth.jwt_auth import get_current_active_auth_user
 
 router = APIRouter(
     prefix="/user_settings",
     tags=["User Settings"],
-    dependencies=[Depends(HTTPBearer(auto_error=False))],
+    dependencies=[Depends(get_current_active_auth_user)],
 )
 
 

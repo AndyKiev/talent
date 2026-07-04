@@ -20,10 +20,12 @@ from backend.api_v1.db_table_info.db_table_info_schema import (
 from backend.api_v1.db_table_info.db_table_info_service import (
     DbTableInfoService,
 )
+from backend.auth.jwt_auth import get_current_active_auth_user
 
 router = APIRouter(
     prefix="/developer/db_tables",
     tags=["DB Tables"],
+    dependencies=[Depends(get_current_active_auth_user)],
 )
 
 

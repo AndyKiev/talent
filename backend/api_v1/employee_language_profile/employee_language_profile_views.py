@@ -13,9 +13,12 @@ from backend.api_v1.employee_language_profile.employee_language_profile_schema i
 from backend.api_v1.employee_language_profile.employee_language_profile_service import (
     EmployeeLanguageProfileService,
 )
+from backend.auth.jwt_auth import get_current_active_auth_user
 
 router = APIRouter(
-    prefix="/employee_language_profiles", tags=["Employee Language Profiles"]
+    prefix="/employee_language_profiles",
+    tags=["Employee Language Profiles"],
+    dependencies=[Depends(get_current_active_auth_user)],
 )
 
 

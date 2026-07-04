@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, File, Response, UploadFile
-from fastapi.security import HTTPBearer
 from typing import Annotated
 
 from backend.api_v1.base.mutation_response import MutationResponse
@@ -9,12 +8,13 @@ from backend.api_v1.employee_photo.employee_photo_dependencies import (
     get_employee_photo_service,
 )
 from backend.api_v1.employee_photo.employee_photo_service import EmployeePhotoService
+from backend.auth.jwt_auth import get_current_active_auth_user
 
 # Photo is a 1:1 sub-resource of an employee.
 router = APIRouter(
     prefix="/employees",
     tags=["Employee Photo"],
-    dependencies=[Depends(HTTPBearer(auto_error=False))],
+    dependencies=[Depends(get_current_active_auth_user)],
 )
 
 

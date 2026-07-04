@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-from fastapi.security import HTTPBearer
 from typing import Annotated, Optional, List
 
 from backend.api_v1.education_degree.education_degree_schema import (
@@ -11,11 +10,12 @@ from backend.api_v1.education_degree.education_degree_dependencies import (
 from backend.api_v1.education_degree.education_degree_service import (
     EducationDegreeService,
 )
+from backend.auth.jwt_auth import get_current_active_auth_user
 
 router = APIRouter(
     prefix="/education_degrees",
     tags=["Education Degrees"],
-    dependencies=[Depends(HTTPBearer(auto_error=False))],
+    dependencies=[Depends(get_current_active_auth_user)],
 )
 
 

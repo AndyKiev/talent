@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-from fastapi.security import HTTPBearer
 from typing import Annotated
 
 from backend.api_v1.process_roles.process_role_active_context.process_role_active_context_schema import (
@@ -13,11 +12,12 @@ from backend.api_v1.process_roles.process_role_active_context.process_role_activ
 from backend.api_v1.process_roles.process_role_active_context.process_role_active_context_service import (
     ProcessRoleActiveContextService,
 )
+from backend.auth.jwt_auth import get_current_active_auth_user
 
 router = APIRouter(
     prefix="/people_review",
     tags=["People Review Scope"],
-    dependencies=[Depends(HTTPBearer(auto_error=False))],
+    dependencies=[Depends(get_current_active_auth_user)],
 )
 
 

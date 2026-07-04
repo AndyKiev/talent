@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, Query
-from fastapi.security import HTTPBearer
 from typing import Annotated, List, Optional
 
 from backend.api_v1.base.mutation_response import MutationResponse
@@ -14,13 +13,14 @@ from backend.api_v1.process_roles.oversight_manager.oversight_manager_dependenci
 from backend.api_v1.process_roles.oversight_manager.oversight_manager_service import (
     OversightManagerService,
 )
+from backend.auth.jwt_auth import get_current_active_auth_user
 
 # Self-service, mounted under the people_review namespace (alongside /my_scopes):
 # a user picks their own oversight reviewer from the existing oversight holders.
 router = APIRouter(
     prefix="/people_review",
     tags=["People Review Oversight Manager"],
-    dependencies=[Depends(HTTPBearer(auto_error=False))],
+    dependencies=[Depends(get_current_active_auth_user)],
 )
 
 
