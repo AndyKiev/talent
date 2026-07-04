@@ -1,5 +1,4 @@
 from typing import Callable
-from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import select
@@ -25,11 +24,6 @@ from backend.utils.enums import OperationTypes, OperationVerb, EssenceName
 router = APIRouter(prefix="/jwt", tags=["JWT"])
 
 http_bearer = HTTPBearer()
-
-
-class TokenInfo(BaseModel):
-    access_token: str
-    token_type: str
 
 
 def _make_service(session: AsyncSession) -> EmployeeService:
@@ -129,16 +123,18 @@ async def auth_user_issue_jwt(
     )
 
 
-@router.post("/refresh", response_model=TokenInfo)
+@router.post("/refresh", response_model=AuthResponse)
 async def auth_refresh_access_token(
     body: RefreshRequest,
     session: AsyncSession = Depends(db_helper.session_getter),
 ):
-    """Exchange a valid refresh token for a fresh access token.
+    """Exchange a valid refresh token for a fresh access + refresh token pair.
 
-    Stateless: the refresh token itself is not rotated — it stays valid until
-    its own expiry. Access-token claims are rebuilt from the DB so a
-    renamed/regrouped (or removed) user is reflected on the next refresh.
+    Access-token claims are rebuilt from the DB so a renamed/regrouped
+    (or removed/deactivated) user is reflected on the next refresh. The
+    refresh token is rotated: each successful refresh returns a new one with
+    a fresh expiry (sliding session). Tokens stay stateless — a previously
+    issued refresh token remains valid until its own expiry.
     """
     payload = auth_utils.decode_jwt(token=body.refresh_token)
     auth_utils.validate_token_type(payload, auth_utils.REFRESH_TOKEN_TYPE)
@@ -157,6 +153,13 @@ async def auth_refresh_access_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
         )
+    # A deactivated employee must not be able to keep minting access tokens
+    # from an old refresh token (mirrors get_current_active_auth_user).
+    if not orm_user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Inactive employee",
+        )
 
     user_db = await service._to_schema(orm_user)
     access_token = auth_utils.create_access_token(
@@ -167,7 +170,12 @@ async def auth_refresh_access_token(
             "groups": user_db.groups,
         }
     )
-    return TokenInfo(access_token=access_token, token_type="Bearer")
+    refresh_token = auth_utils.create_refresh_token(sub=user_db.code)
+    return AuthResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="Bearer",
+    )
 
 
 # @router.post("/login", response_model=AuthResponse)

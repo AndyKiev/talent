@@ -54,11 +54,17 @@ const flushQueue = (error: unknown, token: string | null): void => {
 const refreshAccessToken = async (): Promise<string> => {
     const refreshToken = getRefreshToken();
     if (!refreshToken) throw new Error("No refresh token");
-    const { data } = await refreshClient.post<{ access_token: string }>(
-        `${BASE_URL}/jwt/refresh`,
-        { refresh_token: refreshToken }
-    );
-    useAuthStore.getState().setAccessToken(data.access_token);
+    const { data } = await refreshClient.post<{
+        access_token: string;
+        refresh_token?: string;
+    }>(`${BASE_URL}/jwt/refresh`, { refresh_token: refreshToken });
+    // The backend rotates the refresh token on every refresh (sliding
+    // session) — persist the new one so the next refresh uses it.
+    if (data.refresh_token) {
+        useAuthStore.getState().setTokens(data.access_token, data.refresh_token);
+    } else {
+        useAuthStore.getState().setAccessToken(data.access_token);
+    }
     return data.access_token;
 };
 

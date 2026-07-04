@@ -22,9 +22,14 @@ type UseStringReturn = (stringKey: string, variables?: Record<string, unknown>) 
 
 export const useString = ({ exrStr, str }: UseStringParams = {}):
     UseStringReturn => {
-    const user = useAuthStore((state) => state.user);
-    const userLang = user?.lang?.short_name || defaultLangShortName;
-    const { strings } = useTranslationsStore();
+    // Primitive selectors only: subscribing to the whole store (or the whole
+    // user object) re-renders every getString consumer on ANY store change
+    // (isLoading flips, setUser on mount, etc.). Selecting just the lang code
+    // and the strings map keeps getString stable in steady state.
+    const userLang = useAuthStore(
+        (state) => state.user?.lang?.short_name || defaultLangShortName,
+    );
+    const strings = useTranslationsStore((state) => state.strings);
 
     const getString = useMemo(() => {
         return (stringKey: string, variables: Record<string, unknown> = {}): string => {
