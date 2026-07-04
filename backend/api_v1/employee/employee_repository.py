@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from sqlalchemy import select, delete, distinct, and_
+from sqlalchemy.orm import noload, selectinload
 
 from backend.api_v1.base.base_repository import BaseRepository, SortSpec
 from backend.api_v1.employee.employee_model import Employee
@@ -121,6 +122,77 @@ class EmployeeRepository(BaseRepository):
     async def get_by_code(self, code: str) -> Employee | None:
         """Case-normalised lookup by employee code."""
         return await self.get_by_field("code", code.strip().upper())
+
+    async def get_by_code_for_auth(self, code: str) -> Employee | None:
+        """Slim lookup for the per-request AUTH dependency.
+
+        A plain Employee load fires the model-level selectin web (status →
+        ALL employees, job → its link webs, events → their webs, group →
+        ALL members → their webs, ...): ~250 queries / ~0.8 s per request.
+        Auth only needs identity + access-control fields, so this loads
+        EXACTLY the permission chain (user_groups → user_group → type +
+        both grant grains) and noload()s every other relationship.
+        Do NOT use for profile/detail responses — job/lang/status/departments
+        come back empty; /jwt/users/me refetches the full record instead.
+        """
+        from backend.api_v1.table_relationship_links.user_group_operation_essence_link_model import (
+            UserGroupOperationEssenceLink,
+        )
+        from backend.api_v1.table_relationship_links.user_group_operation_essence_set_link_model import (
+            UserGroupOperationEssenceSetLink,
+        )
+        from backend.api_v1.operation_essence_link.operation_essence_link_model import (
+            OperationEssenceLink,
+        )
+        from backend.api_v1.operation_essence_set_link.operation_essence_set_link_model import (
+            OperationEssenceSetLink,
+        )
+        from backend.api_v1.essence_set.essence_set_model import EssenceSet
+        from backend.api_v1.essence_set.essence_set_member_model import (
+            EssenceSetMember,
+        )
+
+        group_chain = selectinload(self.model.user_groups).options(
+            noload("*"),
+            selectinload(EmployeeUserGroupLink.user_group).options(
+                noload("*"),  # kills UserGroup.employees / .jobs back-refs
+                selectinload(UserGroup.user_group_type).noload("*"),
+                # Legacy (verb, essence) grain — UserGroup.permissions property.
+                selectinload(UserGroup.operation_essence_links).options(
+                    noload("*"),
+                    selectinload(
+                        UserGroupOperationEssenceLink.operation_essence_link
+                    ).options(
+                        noload("*"),
+                        selectinload(OperationEssenceLink.operation).noload("*"),
+                        selectinload(OperationEssenceLink.essence).noload("*"),
+                    ),
+                ),
+                # Set grain — UserGroup.permission_sets property.
+                selectinload(UserGroup.operation_essence_set_links).options(
+                    noload("*"),
+                    selectinload(
+                        UserGroupOperationEssenceSetLink.operation_essence_set_link
+                    ).options(
+                        noload("*"),
+                        selectinload(OperationEssenceSetLink.operation).noload("*"),
+                        selectinload(OperationEssenceSetLink.essence_set).options(
+                            noload("*"),
+                            selectinload(EssenceSet.members).options(
+                                noload("*"),
+                                selectinload(EssenceSetMember.essence).noload("*"),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+        stmt = (
+            select(self.model)
+            .where(self.model.code == code.strip().upper())
+            .options(noload("*"), group_chain)
+        )
+        return (await self.session.scalars(stmt)).one_or_none()
 
     # -----------------------------------------------------------------------
     # Group management — typed domain errors instead of ValueError

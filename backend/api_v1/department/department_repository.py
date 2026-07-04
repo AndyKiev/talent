@@ -1,7 +1,7 @@
 from typing import Sequence
 
 from sqlalchemy import select, func, case
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import noload, selectinload
 
 from backend.api_v1.base.base_repository import BaseRepository
 from backend.api_v1.department.department_model import Department
@@ -11,11 +11,42 @@ class DepartmentRepository(BaseRepository):
 
     model = Department
 
+    @classmethod
+    def _flat_load_options(cls):
+        """Loader options that fetch ONLY category + type and SUPPRESS every
+        model-level selectin cascade that otherwise fires on any Department
+        query: children/parent walk the tree level by level in both directions,
+        and the loaded category/type rows each selectin their own `departments`
+        collection (re-loading the whole table) plus the type parent/child
+        graph. The tree/service code builds hierarchy from parent_id in Python,
+        so none of that is needed — with these options a full-table load is
+        3 queries total instead of a cascade."""
+        from backend.api_v1.department_category.department_category_model import (
+            DepartmentCategory,
+        )
+        from backend.api_v1.department_type.department_type_model import (
+            DepartmentType,
+        )
+
+        return (
+            noload(cls.model.parent),
+            noload(cls.model.children),
+            selectinload(cls.model.department_category).options(
+                noload(DepartmentCategory.departments),
+            ),
+            selectinload(cls.model.department_type).options(
+                noload(DepartmentType.departments),
+                noload(DepartmentType.parents),
+                noload(DepartmentType.children),
+            ),
+        )
+
     async def get_roots(self) -> Sequence[Department]:
         """Return all top-level departments (parent_id IS NULL)."""
         stmt = (
             select(self.model)
             .where(self.model.parent_id.is_(None))
+            .options(*self._flat_load_options())
             .order_by(self.model.id)
         )
         result = await self.session.scalars(stmt)
@@ -26,10 +57,7 @@ class DepartmentRepository(BaseRepository):
         stmt = (
             select(self.model)
             .where(self.model.parent_id.is_(None))
-            .options(
-                selectinload(self.model.department_category),
-                selectinload(self.model.department_type),
-            )
+            .options(*self._flat_load_options())
             .order_by(self.model.id)
         )
         result = await self.session.scalars(stmt)
@@ -81,13 +109,11 @@ class DepartmentRepository(BaseRepository):
         return set(result.all())
 
     async def get_all_with_rels(self) -> Sequence[Department]:
-        """Fetch all departments with category and type preloaded."""
+        """Fetch all departments with category and type preloaded (3 queries,
+        no relationship cascade — see _flat_load_options)."""
         stmt = (
             select(self.model)
-            .options(
-                selectinload(self.model.department_category),
-                selectinload(self.model.department_type),
-            )
+            .options(*self._flat_load_options())
             .order_by(self.model.id)
         )
         result = await self.session.scalars(stmt)
@@ -103,10 +129,7 @@ class DepartmentRepository(BaseRepository):
         stmt = (
             select(self.model)
             .where(self.model.id.in_(ids))
-            .options(
-                selectinload(self.model.department_category),
-                selectinload(self.model.department_type),
-            )
+            .options(*self._flat_load_options())
             .order_by(self.model.id)
         )
         result = await self.session.scalars(stmt)

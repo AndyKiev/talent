@@ -61,6 +61,22 @@ class EmployeeService(BaseService):
         dept_repo = DepartmentRepository(session=self.repository.session)
         return await dept_repo.get_org_unit_index()
 
+    async def _to_auth_schema(self, orm_employee) -> EmployeeSchema:
+        """Slim EmployeeSchema for the per-request AUTH dependency.
+
+        Pairs with EmployeeRepository.get_by_code_for_auth: only identity +
+        access-control fields are populated (code, is_active, lang_id, groups,
+        operations, permissions, permission_sets). job/lang/status/departments
+        stay empty — guards never read them; /jwt/users/me refetches the full
+        profile via _to_schema.
+        """
+        operations = await self.repository.get_user_operations(orm_employee.id)
+        schema = EmployeeSchema.model_validate(orm_employee)
+        schema.operations = operations
+        schema.permissions = resolve_user_permissions(orm_employee)
+        schema.permission_sets = resolve_user_permission_sets(orm_employee)
+        return schema
+
     async def _to_schema(
         self, orm_employee, org_index: Optional[DepartmentIndex] = None
     ) -> EmployeeSchema:
