@@ -18,6 +18,19 @@ export const str = {
     signIn:                      { ukr: "вхід", eng: "sign in" },
     inputLoginAndPasswordPlease: { ukr: "будь ласка введіть логін і пароль", eng: "Please enter both username and password." },
 
+    // LoginPage — self-registration (shown only when the app setting is on)
+    noAccountRegister:    { ukr: "немає облікового запису? зареєструйтесь", eng: "no account? register" },
+    registerTitle:        { ukr: "реєстрація в HRM \"Таланти\"", eng: "register to talent HRM" },
+    employeeCode:         { ukr: "код працівника", eng: "employee code" },
+    fullName:             { ukr: "повне ім'я", eng: "full name" },
+    emailLocalPart:       { ukr: "пошта (до @)", eng: "email (before @)" },
+    emailDomain:          { ukr: "домен", eng: "domain" },
+    createAccount:        { ukr: "створити обліковий запис", eng: "create account" },
+    backToSignIn:         { ukr: "назад до входу", eng: "back to sign in" },
+    registrationSuccess:  { ukr: "реєстрація успішна. тепер ви можете увійти.", eng: "registration successful. you can now log in." },
+    fillAllRegisterFields:{ ukr: "будь ласка, заповніть всі поля", eng: "please fill in all fields" },
+    invalidEmployeeCode:  { ukr: "код має починатися з UKR і містити 1-7 літер/цифр (напр. UKR7101004)", eng: "code must start with UKR followed by 1-7 letters/digits (e.g. UKR7101004)" },
+
     // ThemeSwitch (rendered on the login page)
     dark:  { ukr: "темна", eng: "dark" },
     light: { ukr: "світла", eng: "light" },

@@ -1,4 +1,6 @@
+import re
 from typing import Callable
+from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import select
@@ -52,13 +54,16 @@ async def get_current_auth_user(
             detail="Invalid token payload",
         )
     service = _make_service(session)
-    orm_user = await service.repository.get_by_code(user_code)
+    # Slim load: identity + permission chain only. A full profile load fires
+    # the whole selectin relationship web (~250 queries) on EVERY request —
+    # guards never read job/departments, and /users/me refetches full.
+    orm_user = await service.repository.get_by_code_for_auth(user_code)
     if not orm_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
         )
-    schema = await service._to_schema(orm_user)
+    schema = await service._to_auth_schema(orm_user)
     # Superadmin bypass flag — computed from the same selectin-loaded user-group
     # relationships the permission resolvers use. (Ported from talent-test.)
     schema.is_bypass = resolve_user_is_bypass(orm_user)
@@ -99,14 +104,14 @@ async def auth_user_issue_jwt(
     session: AsyncSession = Depends(db_helper.session_getter),
 ):
     service = _make_service(session)
-    orm_user = await service.repository.get_by_code(user_ldap.user_ukr)
+    orm_user = await service.repository.get_by_code_for_auth(user_ldap.user_ukr)
     if not orm_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Employee record not found. Contact an administrator.",
         )
 
-    user_db = await service._to_schema(orm_user)
+    user_db = await service._to_auth_schema(orm_user)
     access_token = auth_utils.create_access_token(
         {
             "sub": user_db.code,
@@ -121,6 +126,101 @@ async def auth_user_issue_jwt(
         refresh_token=refresh_token,
         token_type="Bearer",
     )
+
+
+# ── Self-registration (pre-auth) ──────────────────────────────────────────────
+# Gated by the `self_registration_enabled` app setting (developer Settings).
+# Creates the employee RECORD only — it is not an auth bypass: logging in still
+# goes through LDAP (or the dev BYPASS). The new employee lands with
+# is_active=true, status "pending" and no job; an admin assigns the rest.
+
+ALLOWED_REGISTRATION_DOMAINS = ("auchan.ua", "auchan.fr")
+SELF_REGISTRATION_SETTING = "self_registration_enabled"
+# "UKR" + 1-7 uppercase letters/digits (e.g. UKR7101004). Mirrors the zod
+# regex in LoginPage.tsx — keep both in sync if the convention ever changes.
+EMPLOYEE_CODE_REGEX = re.compile(r"^UKR[A-Z0-9]{1,7}$")
+
+
+class RegisterConfig(BaseModel):
+    enabled: bool
+    domains: list[str]
+
+
+class RegisterRequest(BaseModel):
+    code: str
+    name: str
+    email: str
+
+
+@router.get("/register_config", response_model=RegisterConfig)
+async def registration_config(
+    session: AsyncSession = Depends(db_helper.session_getter),
+):
+    """Public: tells the login page whether to show the Register option."""
+    from backend.api_v1.app_setting.app_setting_service import get_bool_setting
+
+    enabled = await get_bool_setting(session, SELF_REGISTRATION_SETTING, default=False)
+    return RegisterConfig(enabled=enabled, domains=list(ALLOWED_REGISTRATION_DOMAINS))
+
+
+@router.post("/register", status_code=status.HTTP_201_CREATED)
+async def register_employee(
+    body: RegisterRequest,
+    session: AsyncSession = Depends(db_helper.session_getter),
+):
+    from backend.api_v1.app_setting.app_setting_service import get_bool_setting
+    from backend.api_v1.employee.employee_schema import EmployeeCreate
+    from backend.api_v1.employee_status.employee_status_model import EmployeeStatus
+    from sqlalchemy import func
+
+    enabled = await get_bool_setting(session, SELF_REGISTRATION_SETTING, default=False)
+    if not enabled:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Self-registration is disabled.",
+        )
+
+    code = body.code.strip().upper()
+    name = body.name.strip()
+    email = body.email.strip().lower()
+    if not EMPLOYEE_CODE_REGEX.match(code):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Employee code must start with UKR followed by 1-7 letters/digits (e.g. UKR7101004).",
+        )
+    if not name:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Name is required.",
+        )
+    local_part, _, domain = email.partition("@")
+    if not local_part or domain not in ALLOWED_REGISTRATION_DOMAINS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email must belong to an allowed domain: "
+            + ", ".join(ALLOWED_REGISTRATION_DOMAINS),
+        )
+
+    service = _make_service(session)
+    if await service.repository.get_by_code_for_auth(code):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An employee with this code already exists.",
+        )
+
+    orm_user = await service.create(
+        EmployeeCreate(code=code, name=name, email=email, is_active=True, job_id=None)
+    )
+    # Status: resolve "pending" by name (model default is id=1 which is the same
+    # row in the seeded DB — this keeps it correct even if ids drift).
+    pending_id = await session.scalar(
+        select(EmployeeStatus.id).where(func.lower(EmployeeStatus.name) == "pending")
+    )
+    if pending_id and orm_user.status_id != pending_id:
+        orm_user.status_id = pending_id
+        await session.commit()
+
+    return {"detail": "Registration successful. You can now log in."}
 
 
 @router.post("/refresh", response_model=AuthResponse)
@@ -147,7 +247,7 @@ async def auth_refresh_access_token(
         )
 
     service = _make_service(session)
-    orm_user = await service.repository.get_by_code(user_code)
+    orm_user = await service.repository.get_by_code_for_auth(user_code)
     if not orm_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -161,7 +261,7 @@ async def auth_refresh_access_token(
             detail="Inactive employee",
         )
 
-    user_db = await service._to_schema(orm_user)
+    user_db = await service._to_auth_schema(orm_user)
     access_token = auth_utils.create_access_token(
         {
             "sub": user_db.code,
@@ -212,19 +312,26 @@ async def auth_refresh_access_token(
 async def auth_user_check_self_info(
     payload: dict = Depends(get_current_token_payload),
     user: EmployeeSchema = Depends(get_current_active_auth_user),
+    session: AsyncSession = Depends(db_helper.session_getter),
 ):
+    # The auth dependency is a slim load (no job/lang relationships) — refetch
+    # the full profile here. /users/me runs once per app mount, so the heavy
+    # relationship load is paid exactly once instead of on every request.
+    service = _make_service(session)
+    orm_user = await service.repository.get_by_code(user.code)
+    full = await service._to_schema(orm_user)
     return {
-        "id": user.id,
-        "code": user.code,
-        "name": user.name,
-        "email": user.email,
-        "is_active": user.is_active,
-        "job_id": user.job_id,
-        "lang_id": user.lang_id,
-        "job": user.job.model_dump() if user.job else None,
-        "lang": user.lang.model_dump() if user.lang else None,
-        "groups": user.groups,
-        "operations": user.operations,
+        "id": full.id,
+        "code": full.code,
+        "name": full.name,
+        "email": full.email,
+        "is_active": full.is_active,
+        "job_id": full.job_id,
+        "lang_id": full.lang_id,
+        "job": full.job.model_dump() if full.job else None,
+        "lang": full.lang.model_dump() if full.lang else None,
+        "groups": full.groups,
+        "operations": full.operations,
         "iat": payload.get("iat"),
         "exp": payload.get("exp"),
     }

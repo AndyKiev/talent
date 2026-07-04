@@ -127,6 +127,19 @@ APP_SETTINGS = [
         "description_key": "settingJobApplyCategoryOnCreateDesc",
     },
     {
+        # When ON the login page shows a "Register" option: a person with no
+        # employee record can self-register (code + name + email on an allowed
+        # domain) and lands as is_active=true / status "pending" / no job.
+        # When OFF (default) the public /jwt/register endpoint refuses and the
+        # login page shows only the regular login form. App-only.
+        "key": "self_registration_enabled",
+        "value": False,
+        "value_type_key": "boolean",
+        "label_key": "settingSelfRegistrationEnabled",
+        "description_key": "settingSelfRegistrationEnabledDesc",
+        "user_override_allowed": False,
+    },
+    {
         # MASTER of the employee-photos feature. When OFF the whole feature is
         # dormant: the frontend hides all avatars and never reads photos, uploads
         # are rejected, and the TEMPO artifacts skip the photo (sheds the heavy

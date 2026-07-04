@@ -1,6 +1,7 @@
 // src/components/auth/LoginPage.tsx
-import React, { useState, type FC } from "react";
+import React, { useEffect, useState, type FC } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { z } from "zod/v4";
 import {
     Box,
     Paper,
@@ -11,16 +12,22 @@ import {
     CircularProgress,
     InputAdornment,
     IconButton,
+    MenuItem,
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useAuthStore } from "../../store/authStore.ts";
-import { authApi } from "../../api/authApi.ts";
+import { authApi, type RegisterConfig } from "../../api/authApi.ts";
 import { useTheme } from "../theme/ThemeContext.tsx";
 import ThemeSwitch from "../theme/ThemeSwitch.tsx";
 import useString from "../../hooks/useString.ts";
 import str from "../../strings/str.ts";
 import cfl from "../../utils/helpers.ts";
 
+// Employee code convention: "UKR" + 1-7 uppercase letters/digits (e.g.
+// UKR7101004). Mirrors the backend regex in jwt_auth.py's /jwt/register —
+// keep both in sync if the convention ever changes.
+const EMPLOYEE_CODE_REGEX = /^UKR[A-Z0-9]{1,7}$/;
+const registerCodeSchema = z.string().regex(EMPLOYEE_CODE_REGEX, "invalidEmployeeCode");
 
 const LoginPage: FC = () => {
     const { t } = useTheme();
@@ -32,7 +39,64 @@ const LoginPage: FC = () => {
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+
+    // Self-registration (offered only when the app setting is on).
+    const [registerConfig, setRegisterConfig] = useState<RegisterConfig | null>(null);
+    const [mode, setMode] = useState<"login" | "register">("login");
+    const [regCode, setRegCode] = useState("");
+    const [regCodeError, setRegCodeError] = useState<string | null>(null);
+    const [regName, setRegName] = useState("");
+    const [regEmailLocal, setRegEmailLocal] = useState("");
+    const [regDomain, setRegDomain] = useState("");
+
+    useEffect(() => {
+        let cancelled = false;
+        authApi
+            .registerConfig()
+            .then((cfg) => {
+                if (cancelled) return;
+                setRegisterConfig(cfg);
+                setRegDomain(cfg.domains[0] ?? "");
+            })
+            .catch(() => {
+                // Backend unreachable or endpoint missing — just hide the option.
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    const handleRegister = async () => {
+        if (!regCode.trim() || !regName.trim() || !regEmailLocal.trim() || !regDomain) {
+            setError(cfl(getString("fillAllRegisterFields")) || "Please fill in all fields.");
+            return;
+        }
+        // Validate the normalised code (trim + uppercase) so "ukr7101004" still
+        // passes — the backend applies the same normalisation before re-checking.
+        const normalizedCode = regCode.trim().toUpperCase();
+        const codeCheck = registerCodeSchema.safeParse(normalizedCode);
+        if (!codeCheck.success) {
+            setRegCodeError(codeCheck.error.issues[0]?.message ?? "invalidEmployeeCode");
+            return;
+        }
+        setRegCodeError(null);
+        setError(null);
+        setLoading(true);
+        try {
+            const email = `${regEmailLocal.trim()}@${regDomain}`;
+            await authApi.register(normalizedCode, regName.trim(), email);
+            // Back to login, prefill the username with the new code.
+            setUsername(normalizedCode);
+            setMode("login");
+            setSuccess(cfl(getString("registrationSuccess")) || "Registration successful.");
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Registration failed.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleSubmit = async () => {
         if (!username.trim() || !password.trim()) {
@@ -151,7 +215,9 @@ const LoginPage: FC = () => {
                             letterSpacing="-0.02em"
                             color={t.text}
                         >
-                            {getString("signUpToTalentHRM")}
+                            {mode === "register"
+                                ? getString("registerTitle")
+                                : getString("signUpToTalentHRM")}
                         </Typography>
                     </Box>
                 </Box>
@@ -172,7 +238,107 @@ const LoginPage: FC = () => {
                     </Alert>
                 )}
 
-                {/* Fields */}
+                {/* Success alert (after registration) */}
+                {success && (
+                    <Alert
+                        severity="success"
+                        sx={{
+                            mb: 2.5,
+                            borderRadius: "10px",
+                            fontSize: 13,
+                            py: 0.75,
+                        }}
+                        onClose={() => setSuccess(null)}
+                    >
+                        {success}
+                    </Alert>
+                )}
+
+                {mode === "register" ? (
+                    /* ── Register form ─────────────────────────────────────── */
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                        <TextField
+                            label={cfl(getString("employeeCode"))}
+                            value={regCode}
+                            onChange={(e) => { setRegCode(e.target.value); setRegCodeError(null); }}
+                            autoFocus
+                            size="small"
+                            fullWidth
+                            error={!!regCodeError}
+                            helperText={regCodeError ? (getString(regCodeError) || regCodeError) : " "}
+                            sx={fieldSx(t)}
+                            slotProps={{ htmlInput: { maxLength: 10 } }}
+                        />
+                        <TextField
+                            label={cfl(getString("fullName"))}
+                            value={regName}
+                            onChange={(e) => setRegName(e.target.value)}
+                            size="small"
+                            fullWidth
+                            sx={fieldSx(t)}
+                        />
+                        <Box sx={{ display: "flex", gap: 1 }}>
+                            <TextField
+                                label={cfl(getString("emailLocalPart"))}
+                                value={regEmailLocal}
+                                onChange={(e) => setRegEmailLocal(e.target.value)}
+                                size="small"
+                                sx={{ ...fieldSx(t), flex: 1.4 }}
+                            />
+                            <TextField
+                                select
+                                variant="outlined"
+                                label={cfl(getString("emailDomain"))}
+                                value={regDomain}
+                                onChange={(e) => setRegDomain(e.target.value)}
+                                size="small"
+                                sx={{ ...fieldSx(t), flex: 1 }}
+                            >
+                                {(registerConfig?.domains ?? []).map((d) => (
+                                    <MenuItem key={d} value={d} sx={{ fontSize: 13 }}>
+                                        @{d}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+                        </Box>
+
+                        <Button
+                            variant="contained"
+                            disableElevation
+                            fullWidth
+                            onClick={handleRegister}
+                            disabled={loading}
+                            sx={{
+                                mt: 0.5,
+                                py: 1.25,
+                                borderRadius: "10px",
+                                background: `linear-gradient(135deg, ${t.accent}, #2d5eed)`,
+                                fontSize: 14,
+                                fontWeight: 600,
+                                letterSpacing: "0.01em",
+                                boxShadow: `0 4px 14px ${t.accent}40`,
+                                "&:hover": { opacity: 0.9 },
+                                "&.Mui-disabled": { opacity: 0.6 },
+                            }}
+                        >
+                            {loading ? (
+                                <CircularProgress size={20} sx={{ color: "#fff" }} />
+                            ) : (
+                                cfl(getString("createAccount"))
+                            )}
+                        </Button>
+
+                        <Button
+                            variant="text"
+                            size="small"
+                            onClick={() => { setMode("login"); setError(null); }}
+                            sx={{ textTransform: "none", fontSize: 13, color: t.textMuted }}
+                        >
+                            {cfl(getString("backToSignIn"))}
+                        </Button>
+                    </Box>
+                ) : (
+                /* ── Login form ────────────────────────────────────────────── */
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                     <TextField
                         label={cfl(getString("username"))}
@@ -255,7 +421,20 @@ const LoginPage: FC = () => {
                             cfl(getString("signIn"))
                         )}
                     </Button>
+
+                    {/* Register link — only when the app setting enables it */}
+                    {registerConfig?.enabled && (
+                        <Button
+                            variant="text"
+                            size="small"
+                            onClick={() => { setMode("register"); setError(null); setSuccess(null); }}
+                            sx={{ textTransform: "none", fontSize: 13, color: t.textMuted }}
+                        >
+                            {cfl(getString("noAccountRegister"))}
+                        </Button>
+                    )}
                 </Box>
+                )}
             </Paper>
         </Box>
     );
