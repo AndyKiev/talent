@@ -41,6 +41,12 @@ class DepartmentTypeParentalLinkService(BaseService):
             )
         return result
 
+    async def get_child_map(self) -> dict[int, List[int]]:
+        """{parent_type_id: [child_type_id, ...]} from ACTIVE links — lets the
+        frontend department tree resolve allowed types for every node with ONE
+        request instead of one per parent type."""
+        return await self.repository.get_active_child_map()
+
     async def get_links(
         self,
         child_id: Optional[int] = None,

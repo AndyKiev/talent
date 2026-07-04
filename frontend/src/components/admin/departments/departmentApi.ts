@@ -145,3 +145,17 @@ export const fetchChildrenByParentType = async (
     );
     return res.data ?? [];
 };
+
+/**
+ * Whole {parent_type_id: [child_type_id, ...]} map from active parental links,
+ * in ONE request. The department tree uses it to resolve allowed types for
+ * every node without a per-parent-type API call.
+ */
+export const fetchDepartmentTypeChildMap = async (): Promise<
+    Record<number, number[]>
+> => {
+    const res = await axiosInstance.get<Record<number, number[]>>(
+        `${BASE_URL}/admin/department_type_parental_links/child_map`,
+    );
+    return res.data ?? {};
+};

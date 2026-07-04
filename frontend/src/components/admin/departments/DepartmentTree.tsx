@@ -1,24 +1,29 @@
 // src/components/admin/departments/DepartmentTree.tsx
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Alert,
   Box,
   Button,
   CircularProgress,
+  InputAdornment,
+  MenuItem,
   Paper,
   Snackbar,
+  TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import SearchIcon from '@mui/icons-material/Search';
 
 import {
   fetchDepartmentTree,
   fetchRootDepartments,
   fetchDepartmentTypes,
+  fetchDepartmentTypeChildMap,
   type DepartmentNode,
 } from './departmentApi';
 import {  useDepartmentMutations } from './useDepartmentMutations';
@@ -40,6 +45,7 @@ import {
   DEPARTMENT_ROOTS_QK,
   DEPARTMENT_TREE_QK,
   DEPARTMENT_REGION_LINK_QK,
+  DEPARTMENT_TYPE_CHILD_MAP_QK,
 } from "../../../utils/queryKeys.ts";
 
 interface Props {
@@ -56,6 +62,11 @@ export function DepartmentTree({ selectedId = null }: Props) {
     message: '',
     severity: 'success' as 'success' | 'error',
   });
+
+  // ── Search / filter (name text + type select + category select, AND-ed) ──
+  const [searchName, setSearchName] = useState('');
+  const [filterTypeId, setFilterTypeId] = useState<number | ''>('');
+  const [filterCategoryId, setFilterCategoryId] = useState<number | ''>('');
 
   const [formOpen, setFormOpen] = useState(false);
   const [parentNode, setParentNode] = useState<DepartmentNode | null>(null);
@@ -85,6 +96,14 @@ export function DepartmentTree({ selectedId = null }: Props) {
     staleTime: 5 * 60 * 1000,
   });
 
+  // One request for the whole parent-type → child-types map: every tree node
+  // resolves its allowed types from this instead of its own API call.
+  const { data: typeChildMap = {} } = useQuery({
+    queryKey: DEPARTMENT_TYPE_CHILD_MAP_QK,
+    queryFn: fetchDepartmentTypeChildMap,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: categories = [] } = useQuery({
     queryKey: ['department_categories'],
     queryFn: () => fetchDepartmentCategories(),
@@ -98,9 +117,41 @@ export function DepartmentTree({ selectedId = null }: Props) {
     staleTime: 2 * 60 * 1000,
   });
 
-  const regionByDept = new Map<number, DepartmentRegionLink>(
-    regionLinks.map((l) => [l.department_id, l]),
+  // Memoized so DepartmentTreeNode (React.memo) doesn't re-render on every
+  // parent render from a fresh Map identity.
+  const regionByDept = useMemo(
+    () =>
+      new Map<number, DepartmentRegionLink>(
+        regionLinks.map((l) => [l.department_id, l]),
+      ),
+    [regionLinks],
   );
+
+  // ── Tree filtering ────────────────────────────────────────────────────────
+  // A node is kept when it matches ALL active filters (its whole subtree stays
+  // visible), or when a descendant matches (the node stays as context).
+  const filterActive =
+    searchName.trim() !== '' || filterTypeId !== '' || filterCategoryId !== '';
+
+  const visibleTree = useMemo(() => {
+    if (!filterActive) return tree;
+    const q = searchName.trim().toLowerCase();
+    const prune = (node: DepartmentNode): DepartmentNode | null => {
+      const selfMatch =
+        (!q || node.name.toLowerCase().includes(q)) &&
+        (filterTypeId === '' || node.department_type_id === filterTypeId) &&
+        (filterCategoryId === '' || node.department_category_id === filterCategoryId);
+      if (selfMatch) return node; // keep the whole subtree
+      const kids = node.children
+        .map(prune)
+        .filter((c): c is DepartmentNode => c !== null);
+      if (kids.length > 0) return { ...node, children: kids };
+      return null;
+    };
+    return tree
+      .map(prune)
+      .filter((c): c is DepartmentNode => c !== null);
+  }, [tree, filterActive, searchName, filterTypeId, filterCategoryId]);
 
   // ── Mutations ─────────────────────────────────────────────────────────────
 
@@ -192,6 +243,55 @@ export function DepartmentTree({ selectedId = null }: Props) {
           )}
         </Box>
 
+        {/* ── Search / filter bar ─────────────────────────────────────────── */}
+        <Box sx={{ display: 'flex', gap: 1.5, mb: 2 }}>
+          <TextField
+              size="small"
+              variant="outlined"
+              label={getString('searchDepartmentName') || 'Department name'}
+              value={searchName}
+              onChange={(e) => setSearchName(e.target.value)}
+              sx={{ flex: 1.4 }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" />
+                      </InputAdornment>
+                  ),
+                },
+              }}
+          />
+          <TextField
+              select
+              size="small"
+              variant="outlined"
+              label={getString('departmentType') || 'Department Type'}
+              value={filterTypeId}
+              onChange={(e) => setFilterTypeId(e.target.value === '' ? '' : Number(e.target.value))}
+              sx={{ flex: 1 }}
+          >
+            <MenuItem value="">{getString('allDepartmentTypes') || 'All types'}</MenuItem>
+            {allTypes.map((t) => (
+                <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>
+            ))}
+          </TextField>
+          <TextField
+              select
+              size="small"
+              variant="outlined"
+              label={getString('departmentCategory') || 'Department Category'}
+              value={filterCategoryId}
+              onChange={(e) => setFilterCategoryId(e.target.value === '' ? '' : Number(e.target.value))}
+              sx={{ flex: 1 }}
+          >
+            <MenuItem value="">{getString('allDepartmentCategories') || 'All categories'}</MenuItem>
+            {categories.map((c) => (
+                <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+            ))}
+          </TextField>
+        </Box>
+
         {isLoading && (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
               <CircularProgress />
@@ -206,7 +306,7 @@ export function DepartmentTree({ selectedId = null }: Props) {
 
         {!isLoading && !error && (
             <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-              {tree.length === 0 ? (
+              {visibleTree.length === 0 ? (
                   <Box sx={{ p: 4, textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary">
                       {getString('noDepartmentsYet') ||
@@ -215,15 +315,17 @@ export function DepartmentTree({ selectedId = null }: Props) {
                   </Box>
               ) : (
                   <Box sx={{ py: 1 }}>
-                    {tree.map((rootNode) => (
+                    {visibleTree.map((rootNode) => (
                         <DepartmentTreeNode
                             key={rootNode.id}
                             node={rootNode}
                             depth={0}
                             selectedId={selectedId}
                             allTypes={allTypes}
+                            typeChildMap={typeChildMap}
                             categories={categories}
                             parentTypeId={null}
+                            forceExpand={filterActive}
                             regionByDept={regionByDept}
                             updateIsPending={updateMutation.isPending}
                             deleteIsPending={deleteMutation.isPending}

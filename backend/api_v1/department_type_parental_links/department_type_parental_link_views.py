@@ -44,6 +44,21 @@ async def get_links(
     )
 
 
+# NOTE: declared before "/{link_id}" so the literal segment isn't parsed as an id.
+@router.get(
+    "/child_map",
+    response_model=dict[int, List[int]],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT_TYPE)],
+)
+async def get_child_map(
+    service: Annotated[
+        DepartmentTypeParentalLinkService,
+        Depends(get_department_type_parental_link_service),
+    ],
+):
+    return await service.get_child_map()
+
+
 @router.get(
     "/{link_id}",
     response_model=DepartmentTypeParentalLinkSchema,

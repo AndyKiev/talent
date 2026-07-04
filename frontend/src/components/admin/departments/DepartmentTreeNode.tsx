@@ -4,7 +4,6 @@ import { useNavigate } from '@tanstack/react-router';
 import {
   Box,
   Chip,
-  CircularProgress,
   Collapse,
   FormControl,
   IconButton,
@@ -27,7 +26,6 @@ import type { DepartmentRegionLink } from './departmentRegionLinkApi';
 import { TextEditCell } from '../TextEditCell';
 import { ReadonlyCell } from '../ReadonlyCell';
 import type { PendingDepartmentEdit } from './DepartmentEditDialog';
-import { useAllowedDepartmentTypes } from './useAllowedDepartmentTypes';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 
@@ -57,12 +55,16 @@ interface Props {
   depth: number;
   selectedId: number | null;
   allTypes: DepartmentType[];
+  /** {parent_type_id: [child_type_id, ...]} — fetched ONCE by DepartmentTree. */
+  typeChildMap: Record<number, number[]>;
   categories: DepartmentCategory[];
   /**
    * department_type_id of this node's parent.
    * null = root node → all types allowed.
    */
   parentTypeId: number | null;
+  /** True while a search/filter is active — every visible branch opens. */
+  forceExpand?: boolean;
   regionByDept: Map<number, DepartmentRegionLink>;
   updateIsPending: boolean;
   deleteIsPending: boolean;
@@ -74,13 +76,15 @@ interface Props {
   onRegionClick: (node: DepartmentNode) => void;
 }
 
-export function DepartmentTreeNode({
+export const DepartmentTreeNode = React.memo(function DepartmentTreeNode({
                                      node,
                                      depth,
                                      selectedId,
                                      allTypes,
+                                     typeChildMap,
                                      categories,
                                      parentTypeId,
+                                     forceExpand = false,
                                      regionByDept,
                                      updateIsPending,
                                      deleteIsPending,
@@ -94,7 +98,11 @@ export function DepartmentTreeNode({
   const getString = useString({ str });
   const navigate = useNavigate();
 
-  const [expanded, setExpanded] = useState(true);
+  // Collapsed by default — only the visible level mounts (children render
+  // inside <Collapse unmountOnExit>, so a collapsed tree is cheap even when
+  // large). A search/filter forces every pruned branch open.
+  const [expanded, setExpanded] = useState(false);
+  const isExpanded = forceExpand || expanded;
   const [editingField, setEditingField] = useState<string | null>(null);
 
   const isSelected = selectedId === node.id;
@@ -108,11 +116,14 @@ export function DepartmentTreeNode({
     (nodeCategory?.key ?? '').trim().toLowerCase(),
   );
 
-  // Types allowed for THIS node = children of its parent's type.
-  const { allowedTypes, isLoading: typesLoading } = useAllowedDepartmentTypes(
-      parentTypeId,
-      allTypes,
-  );
+  // Types allowed for THIS node = children of its parent's type, resolved from
+  // the map the tree fetched once (root → all types). No per-node API call.
+  const allowedTypes =
+      parentTypeId == null
+          ? allTypes
+          : (typeChildMap[parentTypeId] ?? [])
+              .map((id) => allTypes.find((t) => t.id === id))
+              .filter((t): t is DepartmentType => t !== undefined);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -210,7 +221,7 @@ export function DepartmentTreeNode({
                 onClick={(e) => { e.stopPropagation(); setExpanded((p) => !p); }}
                 sx={{ p: 0.25, visibility: hasChildren ? 'visible' : 'hidden' }}
             >
-              {expanded
+              {isExpanded
                   ? <ExpandMoreIcon sx={{ fontSize: 18 }} />
                   : <ChevronRightIcon sx={{ fontSize: 18 }} />}
             </IconButton>
@@ -250,45 +261,39 @@ export function DepartmentTreeNode({
               sx={{ width: COL.type, flexShrink: 0 }}
           >
             <FormControl size="small" fullWidth>
-              {typesLoading ? (
-                  <Box sx={{ display: 'flex', alignItems: 'center', height: 32 }}>
-                    <CircularProgress size={16} />
-                  </Box>
-              ) : (
-                  <Select
-                      value={node.department_type_id}
-                      onChange={(e) => handleTypeChange(Number(e.target.value))}
-                      disabled={updateIsPending}
-                      variant="standard"
-                      disableUnderline
-                      sx={{ fontSize: '0.8125rem' }}
-                      renderValue={(val) => {
-                        // Always resolve from allTypes so current value renders even if
-                        // it's outside allowedTypes (stale data edge-case)
-                        const t = allTypes.find((x) => x.id === val);
-                        return (
-                            <Chip
-                                label={t?.name ?? String(val)}
-                                size="small"
-                                sx={{
-                                  height: 30,
-                                  fontSize: '0.75rem',
-                                  bgcolor: 'info.light',
-                                  color: 'info.contrastText',
-                                  // Allow chip label to wrap on narrow columns
-                                  '& .MuiChip-label': { whiteSpace: 'normal', lineHeight: 1.3 },
-                                }}
-                            />
-                        );
-                      }}
-                  >
-                    {allowedTypes.map((t) => (
-                        <MenuItem key={t.id} value={t.id} sx={{ fontSize: '0.875rem' }}>
-                          {t.name}
-                        </MenuItem>
-                    ))}
-                  </Select>
-              )}
+              <Select
+                  value={node.department_type_id}
+                  onChange={(e) => handleTypeChange(Number(e.target.value))}
+                  disabled={updateIsPending}
+                  variant="standard"
+                  disableUnderline
+                  sx={{ fontSize: '0.8125rem' }}
+                  renderValue={(val) => {
+                    // Always resolve from allTypes so current value renders even if
+                    // it's outside allowedTypes (stale data edge-case)
+                    const t = allTypes.find((x) => x.id === val);
+                    return (
+                        <Chip
+                            label={t?.name ?? String(val)}
+                            size="small"
+                            sx={{
+                              height: 30,
+                              fontSize: '0.75rem',
+                              bgcolor: 'info.light',
+                              color: 'info.contrastText',
+                              // Allow chip label to wrap on narrow columns
+                              '& .MuiChip-label': { whiteSpace: 'normal', lineHeight: 1.3 },
+                            }}
+                        />
+                    );
+                  }}
+              >
+                {allowedTypes.map((t) => (
+                    <MenuItem key={t.id} value={t.id} sx={{ fontSize: '0.875rem' }}>
+                      {t.name}
+                    </MenuItem>
+                ))}
+              </Select>
             </FormControl>
           </Box>
 
@@ -453,7 +458,7 @@ export function DepartmentTreeNode({
 
         {/* ── Children ──────────────────────────────────────────────────────── */}
         {hasChildren && (
-            <Collapse in={expanded} timeout="auto" unmountOnExit>
+            <Collapse in={isExpanded} timeout="auto" unmountOnExit>
               {node.children.map((child) => (
                   <DepartmentTreeNode
                       key={child.id}
@@ -461,9 +466,11 @@ export function DepartmentTreeNode({
                       depth={depth + 1}
                       selectedId={selectedId}
                       allTypes={allTypes}
+                      typeChildMap={typeChildMap}
                       categories={categories}
                       // Each child's allowed types = types linked under THIS node's type
                       parentTypeId={node.department_type_id}
+                      forceExpand={forceExpand}
                       regionByDept={regionByDept}
                       updateIsPending={updateIsPending}
                       deleteIsPending={deleteIsPending}
@@ -479,4 +486,4 @@ export function DepartmentTreeNode({
         )}
       </Box>
   );
-}
+});

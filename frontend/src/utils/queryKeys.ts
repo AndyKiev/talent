@@ -1,5 +1,6 @@
 export const DEPARTMENT_ROOTS_QK = ['department_roots'] as const;
 export const DEPARTMENT_TREE_QK = ['department_tree'] as const;
+export const DEPARTMENT_TYPE_CHILD_MAP_QK = ['department_type_child_map'] as const;
 export const DEPARTMENT_FLAT_QK = ['departments_flat'] as const;
 export const USER_GROUP_QK = ['user_groups'] as const;
 export const USER_GROUP_TYPE_QK = ['user_group_types'] as const;
