@@ -13,7 +13,7 @@ class ReviewSessionDepartment(IntIdPkMixin, TimestampMixin, Base):
     """Links a review session to one or more departments.
 
     When `review_session_filter_by_department` is enabled, only employees whose
-    main department (EmployeeDepartment with is_main=True) matches one of the
+    main department (EmployeeDepartment row) matches one of the
     linked departments are included when the session is opened.
     """
 

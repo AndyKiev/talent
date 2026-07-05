@@ -108,11 +108,15 @@ export function useEmployeeColumns(
                 minWidth: 170,
                 sortable: false,
                 valueGetter: (_value, row) =>
-                    uniqueTops((row.main_departments ?? []).map((d) => d.top_department))
+                    uniqueTops(
+                        row.main_department ? [row.main_department.top_department] : [],
+                    )
                         .map((t) => t.name)
                         .join(', ') || '—',
                 renderCell: ({ row }) => {
-                    const tops = uniqueTops((row.main_departments ?? []).map((d) => d.top_department));
+                    const tops = uniqueTops(
+                        row.main_department ? [row.main_department.top_department] : [],
+                    );
                     if (tops.length === 0) return emptyDash();
                     return (
                         <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', alignItems: 'center', py: 0.5 }}>
@@ -123,17 +127,16 @@ export function useEmployeeColumns(
                     );
                 },
             },
-            // ── The specific assigned (is_main) department(s) ──
+            // ── The specific assigned MAIN department ──
             {
-                field: 'main_departments',
+                field: 'main_department',
                 headerName: cfl(getString('department') || 'Department'),
                 flex: 1,
                 minWidth: 180,
                 sortable: false,
-                valueGetter: (_value, row) =>
-                    row.main_departments?.map((d) => d.name).join(', ') || '—',
+                valueGetter: (_value, row) => row.main_department?.name || '—',
                 renderCell: ({ row }) => {
-                    const depts = row.main_departments ?? [];
+                    const depts = row.main_department ? [row.main_department] : [];
                     if (depts.length === 0) {
                         return emptyDash();
                     }

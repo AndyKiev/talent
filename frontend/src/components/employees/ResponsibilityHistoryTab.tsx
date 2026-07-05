@@ -1,4 +1,4 @@
-// src/components/employees/DrHistoryTab.tsx
+// src/components/employees/ResponsibilityHistoryTab.tsx
 import { useParams } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { Paper, Typography, Stack, Chip, Box, Divider, CircularProgress } from '@mui/material';
@@ -11,8 +11,8 @@ import str from '../../strings/str';
 import cfl from '../../utils/helpers.ts';
 import { formatToUkrDate } from '../../utils/dateFormatter';
 
-export function DrHistoryTab() {
-    const { employeeId } = useParams({ from: '/employees/$employeeId/dr_history/' });
+export function ResponsibilityHistoryTab() {
+    const { employeeId } = useParams({ from: '/employees/$employeeId/responsibility_history/' });
     const id = Number(employeeId);
     const getString = useString({ str });
 

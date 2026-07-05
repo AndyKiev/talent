@@ -34,8 +34,7 @@ class EmployeeEventChange(IntIdPkMixin, Base):
 
     The multi-valued responsibility-departments case is stored in the
     child `EmployeeEventChangeDepartment` rows via the `dept_changes`
-    relationship — that table uses its own `change_dept_type_id` to
-    distinguish MAIN_DEPT rows from RESPONSIBILITY_DEPT rows.
+    relationship (only RESPONSIBILITY_DEPTS_CHANGE rows carry them).
 
     Only the columns relevant to the active `direction_type` will be
     populated; the rest remain NULL. Application code switches on

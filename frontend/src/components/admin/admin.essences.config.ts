@@ -13,7 +13,6 @@ import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import FlagIcon from '@mui/icons-material/Flag';
 import WorkspacesIcon from '@mui/icons-material/Workspaces';
 import LabelIcon from '@mui/icons-material/Label';
-import DomainIcon from '@mui/icons-material/Domain';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
 import PlaylistAddCheckIcon from '@mui/icons-material/PlaylistAddCheck';
 import RuleFolderIcon from '@mui/icons-material/RuleFolder';
@@ -240,16 +239,6 @@ export const ESSENCES: RawEssenceConfig[] = [
     color: '#f59e0b',
     parentGroup: 'employee_events',
   },
-  {
-    parent: 'admin',
-    key: 'employee_event_change_dept_types',
-    labelKey: 'employeeEventChangeDeptTypes',
-    descriptionKey: 'employeeEventChangeDeptTypesDesc',
-    Icon: DomainIcon,
-    color: '#06b6d4',
-    parentGroup: 'employee_events',
-  },
-
   // ── Planning Setup (group) ────────────────────────────────────────────────
   {
     parent: 'admin',

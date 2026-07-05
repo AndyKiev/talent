@@ -121,7 +121,6 @@ class OversightManagerService(BaseService):
         main_dept = await self.session.scalar(
             select(EmployeeDepartment).where(
                 EmployeeDepartment.employee_id == self.user.id,
-                EmployeeDepartment.is_main == True,
             )
         )
         if not main_dept:
@@ -147,7 +146,6 @@ class OversightManagerService(BaseService):
         # 3. Find employees whose main department is in department_ids
         employee_ids_in_scope_result = await self.session.scalars(
             select(EmployeeDepartment.employee_id).where(
-                EmployeeDepartment.is_main == True,
                 EmployeeDepartment.department_id.in_(department_ids),
             )
         )

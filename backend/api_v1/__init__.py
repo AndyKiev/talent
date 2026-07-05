@@ -20,6 +20,7 @@ __all__ = {
     "TalentStatus",
     "TalentPeriod",
     "EmployeeDepartment",
+    "EmployeeResponsibilityDepartment",
     "TalentAuditStatus",
     "TalentAudit",
     "TalentAuditJobStatus",
@@ -33,7 +34,6 @@ __all__ = {
     "EmployeeEventStatus",
     "EmployeeEvent",
     "EmployeeEventChange",
-    "EmployeeEventChangeDeptType",
     "EmployeeEventChangeDepartment",
     "DepartmentTypeParentalLink",
     # Essence-set access control
@@ -150,6 +150,9 @@ from backend.api_v1.talent_period.talent_period_model import TalentPeriod
 from backend.api_v1.employee_department.employee_department_model import (
     EmployeeDepartment,
 )
+from backend.api_v1.employee_responsibility_department.employee_responsibility_department_model import (
+    EmployeeResponsibilityDepartment,
+)
 from backend.api_v1.talent_audit_status.talent_audit_status_model import (
     TalentAuditStatus,
 )
@@ -204,9 +207,6 @@ from backend.api_v1.employee_events.employee_event_change.employee_event_change_
     EmployeeEventChange,
 )
 
-from backend.api_v1.employee_events.employee_event_change_dept_type.employee_event_change_dept_type_model import (
-    EmployeeEventChangeDeptType,
-)
 from backend.api_v1.employee_events.employee_event_change_department.employee_event_change_department_model import (
     EmployeeEventChangeDepartment,
 )

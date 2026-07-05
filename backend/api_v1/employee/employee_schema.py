@@ -87,9 +87,9 @@ class EmployeeSchema(EmployeeBase):
     status: Optional[EmployeeStatusNested] = None
     job: Optional["Job"] = None
     lang: Optional["Lang"] = None
-    # Populated by EmployeeService._to_schema from the selectin-loaded relationship.
-    main_departments: List["MainDepartmentSchema"] = []  # is_main=True links
-    extra_departments: List["MainDepartmentSchema"] = []  # is_main=False links
+    # Populated by EmployeeService._to_schema from the selectin-loaded relationships.
+    main_department: Optional["MainDepartmentSchema"] = None  # single MAIN link
+    responsibility_departments: List["MainDepartmentSchema"] = []
 
 
 # ── Slim read schema used inside EmployeeSchema ───────────────────────────────
@@ -97,10 +97,11 @@ class EmployeeSchema(EmployeeBase):
 
 
 class MainDepartmentSchema(BaseModel):
-    """Slim department info embedded in EmployeeSchema departments lists."""
+    """Slim department info embedded in EmployeeSchema (main_department and
+    responsibility_departments)."""
 
     model_config = ConfigDict(from_attributes=True)
-    id: int  # EmployeeDepartment.id  (link id, useful for delete)
+    id: int  # link-row id (useful for delete)
     department_id: int
     name: str  # department name — populated manually in _to_schema
     # Derived top-level org unit (board / directorate / store) for this

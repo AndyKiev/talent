@@ -94,7 +94,6 @@ class PlanReportService(BaseService):
         (plan_department_id, job_group_id, talent_status_id).
 
         Per employee: pick the winning target period (lowest qty_months),
-        collapse multiple is_main departments to ONE (lowest department id),
         keep the DISTINCT (job_group, talent_status) pairs of the winning job
         (job↔group is M2M, so a job in N groups counts toward N rows). A fact
         maps to every plan department that is ancestor-or-self of the
@@ -140,7 +139,7 @@ class PlanReportService(BaseService):
         plan_dept_ids: Set[int],
         org_index: Dict[int, tuple],
     ) -> Set[int]:
-        """Walk UP from the employee's is_main department; collect every plan
+        """Walk UP from the employee's main department; collect every plan
         department that is ancestor-or-self along the chain.
 
         `org_index` maps dept id -> (parent_id, name, category_key).

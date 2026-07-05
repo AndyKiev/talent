@@ -18,6 +18,9 @@ if TYPE_CHECKING:
     from backend.api_v1.employee_department.employee_department_model import (
         EmployeeDepartment,
     )
+    from backend.api_v1.employee_responsibility_department.employee_responsibility_department_model import (
+        EmployeeResponsibilityDepartment,
+    )
     from backend.api_v1.employee_events.employee_event.employee_event_model import (
         EmployeeEvent,
     )
@@ -56,9 +59,17 @@ class Employee(IntIdPkMixin, TimestampMixin, Base):
     job: Mapped["Job"] = relationship(back_populates="employees", lazy="selectin")
     lang: Mapped["Lang"] = relationship(back_populates="employees", lazy="selectin")
 
+    # MAIN department link (0..1 rows — uq on employee_id).
     departments: Mapped[List["EmployeeDepartment"]] = relationship(
         back_populates="employee",
         lazy="selectin",
+    )
+
+    # Departments of responsibility (0..N rows, separate table).
+    responsibility_departments: Mapped[List["EmployeeResponsibilityDepartment"]] = (
+        relationship(
+            lazy="selectin",
+        )
     )
 
     # Current career level (people-review). 1:1 link table keeps it off the

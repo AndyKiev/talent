@@ -35,7 +35,6 @@ import {
     fetchMainDepartmentCategories,
     fetchJobsByDepartmentType,
     fetchResponsibilityCategoriesForJob,
-    fetchChangeDeptTypes,
     createEventChange,
     deleteEventChange,
     applyEmployeeEvent,
@@ -47,7 +46,6 @@ import {
     type EmployeeStatusOption,
     type DepartmentOption,
     type ResponsibilityCategoryOption,
-    type ChangeDeptTypeOption,
 } from './employeeEventApi';
 import { fetchEmployeeById } from '../employeeApi';
 import { employeeEventsQK } from './useEmployeeEventMutations';
@@ -134,17 +132,6 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
         enabled: open,
         staleTime: 5 * 60 * 1000,
     });
-
-    // Change-dept-type lookup (MAIN_DEPT / RESPONSIBILITY_DEPT)
-    const { data: changeDeptTypes = [] } = useQuery<ChangeDeptTypeOption[]>({
-        queryKey: ['change-dept-types'],
-        queryFn: fetchChangeDeptTypes,
-        staleTime: 30 * 60 * 1000,
-        enabled: open,
-    });
-    const responsibilityDeptTypeId = changeDeptTypes.find(
-        (t) => t.code === 'RESPONSIBILITY_DEPT',
-    )?.id ?? null;
 
     // Job source for responsibility categories: the job assigned IN this event
     // (JOB_CHANGE.new_job_id) if present, otherwise the employee's current job.
@@ -280,9 +267,9 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
 
     // ── Current employee state (for exclusions in TRANSFER / PROMOTION) ───────
     const currentJobId = employee?.job_id ?? null;
-    const currentMainDeptIds = (employee?.main_departments ?? []).map(
-        (d) => d.department_id,
-    );
+    const currentMainDeptIds = employee?.main_department
+        ? [employee.main_department.department_id]
+        : [];
     // For PROMOTION (no MAIN_DEPT_CHANGE), jobs are scoped to the current main
     // department's type. We need that type id.
     const currentMainDept = departments.find((d) =>
@@ -377,12 +364,11 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
 
         // RESPONSIBILITY_DEPTS_CHANGE: build dept_changes from the multi-select.
         if (addingCode === 'RESPONSIBILITY_DEPTS_CHANGE') {
-            if (respDeptIds.length === 0 || responsibilityDeptTypeId == null) return;
+            if (respDeptIds.length === 0) return;
             const payload: EmployeeEventChangeCreate = {
                 direction_type_id: addingDirectionId,
                 dept_changes: respDeptIds.map((deptId) => ({
                     department_id: deptId,
-                    change_dept_type_id: responsibilityDeptTypeId,
                 })),
             };
             addChangeMutation.mutate(payload, {

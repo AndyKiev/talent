@@ -240,7 +240,6 @@ class ReviewSessionService(BaseService):
                 EmployeeDepartment, EmployeeDepartment.employee_id == Employee.id
             )
             conditions += [
-                EmployeeDepartment.is_main == True,
                 EmployeeDepartment.department_id.in_(subtree_ids),
             ]
 

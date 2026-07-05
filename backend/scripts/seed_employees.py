@@ -13,7 +13,7 @@ that job as their MAIN department in that exact department — creates one:
   * name   an invented Ukrainian full name,
   * email  ``<first-initial><surname>@auchan.ua`` (transliterated, e.g.
            Наталія Вітренко -> ``nvitrenko@auchan.ua``), de-duplicated,
-  * a MAIN department link (``is_main=True``) to that department,
+  * a MAIN department link (employee_departments row) to that department,
   * an ACTIVATION event (random past ``effective_date``) with MAIN_DEPT_CHANGE +
     JOB_CHANGE + auto STATUS_CHANGE -> working.
 
@@ -211,7 +211,6 @@ async def fetch_pairs(session, root_ids: list[int], recurse: bool) -> list[dict]
             SELECT 1 FROM employee_departments ed
             JOIN employees e ON e.id = ed.employee_id
             WHERE ed.department_id = st.id
-              AND ed.is_main = TRUE
               AND e.job_id = l.job_id
         )
         ORDER BY dc.key, st.id, l.job_id

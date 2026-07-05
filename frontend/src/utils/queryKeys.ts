@@ -16,7 +16,6 @@ export const JOB_GROUP_TYPE_QK = ['job_group_types'] as const;
 export const JOB_CATEGORY_QK = ['job_categories'] as const;
 export const JOB_PROCESS_ROLE_LINK_QK = (jobId: number) => ['job_process_role_links', jobId] as const;
 export const ESSENCE_QK = ['essences'];
-export const EMPLOYEE_EVENT_CHANGE_DEPT_TYPE_QK = ['employee_event_change_dept_types'] as const;
 export const EMPLOYEE_EVENT_DIRECTION_TYPE_QK = ['employee_event_direction_types'] as const;
 export const EMPLOYEE_EVENT_STATUS_QK = ['employee_event_statuses'] as const;
 export const EMPLOYEE_EVENT_TYPE_QK = ['employee_event_types'] as const;

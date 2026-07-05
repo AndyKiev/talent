@@ -8,25 +8,27 @@ from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 
 if TYPE_CHECKING:
-    from backend.api_v1.employee.employee_model import Employee
     from backend.api_v1.department.department_model import Department
 
 
-class EmployeeDepartment(IntIdPkMixin, TimestampMixin, Base):
+class EmployeeResponsibilityDepartment(IntIdPkMixin, TimestampMixin, Base):
     """
-    The employee's single MAIN (working) department.
+    Junction record: a department in the employee's RESPONSIBILITY area.
 
-    Uniqueness: at most ONE row per employee — enforced at both the DB level
-    (UniqueConstraint on employee_id) and the service layer.
+    Distinct from EmployeeDepartment, which holds the employee's single MAIN
+    (working) department. An employee can have many responsibility departments,
+    but the same department only once — enforced at both the DB level
+    (UniqueConstraint) and the service layer.
 
-    Departments of responsibility live in the separate
-    EmployeeResponsibilityDepartment table.
+    Projection of applied RESPONSIBILITY_DEPTS_CHANGE event rows (REPLACE
+    semantics): the set always equals the latest applied event's selection.
     """
 
     __table_args__ = (
         UniqueConstraint(
             "employee_id",
-            name="uq_employee_department",
+            "department_id",
+            name="uq_employee_responsibility_department",
         ),
     )
 
@@ -41,17 +43,13 @@ class EmployeeDepartment(IntIdPkMixin, TimestampMixin, Base):
     )
 
     # ── Relationships ──────────────────────────────────────────────────────
-    employee: Mapped["Employee"] = relationship(
-        back_populates="departments",
-        lazy="selectin",
-    )
     department: Mapped["Department"] = relationship(
         lazy="selectin",
     )
 
     def __repr__(self) -> str:
         return (
-            f"<EmployeeDepartment("
+            f"<EmployeeResponsibilityDepartment("
             f"id={self.id}, "
             f"employee_id={self.employee_id}, "
             f"department_id={self.department_id}"

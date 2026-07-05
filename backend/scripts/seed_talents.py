@@ -192,7 +192,7 @@ async def main() -> None:
                     text(
                         "SELECT d.id dept_id, d.department_type_id dt, d.parent_id parent "
                         "FROM employee_departments ed JOIN departments d ON d.id=ed.department_id "
-                        "WHERE ed.employee_id=:e AND ed.is_main LIMIT 1"
+                        "WHERE ed.employee_id=:e LIMIT 1"
                     ),
                     {"e": eid},
                 )

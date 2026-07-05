@@ -32,7 +32,7 @@ class TrainingStateRow(BaseModel):
     in_process / passed) or the synthetic ``not_planned`` when no assignment
     row exists yet. `main_department_*` is the resolved top org unit
     (board / directorate / store) used to GROUP the stats; `direct_department_name`
-    is the employee's actual is_main department (the leaf where they work) and
+    is the employee's actual main department (the leaf where they work) and
     `job_name` their current job — both shown in the grid. `department_category_*`
     / `department_type_name` are kept only to SORT the flat list.
     """

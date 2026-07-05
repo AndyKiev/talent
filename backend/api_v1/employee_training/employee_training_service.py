@@ -146,7 +146,7 @@ class EmployeeTrainingService(BaseService):
             if not (is_supposed(emp) or emp.id in status_by_employee):
                 continue
 
-            main_link = next((l for l in emp.departments if l.is_main), None)
+            main_link = emp.departments[0] if emp.departments else None
             dept = main_link.department if main_link else None
             category = dept.department_category if dept else None
             dtype = dept.department_type if dept else None

@@ -7,7 +7,6 @@ from backend.api_v1.employee_department.employee_department_schema import (
     EmployeeDepartmentSchema,
     EmployeeDepartmentCreate,
     EmployeeDepartmentUpdate,
-    EmployeeDepartmentCount,
 )
 from backend.api_v1.employee_department.employee_department_dependencies import (
     get_employee_department_service,
@@ -49,29 +48,6 @@ async def get_employee_links(
 
 
 @router.get(
-    "/count",
-    response_model=EmployeeDepartmentCount,
-    summary="Count assignments for an employee",
-    description=(
-        "Returns the current number of (department) assignments "
-        "for the employee. Use this before creating a new link to decide "
-        "whether to prompt the user for confirmation."
-    ),
-    dependencies=[
-        Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE, EssenceName.DEPARTMENT)
-    ],
-)
-async def count_employee_links(
-    employee_id: int,
-    service: Annotated[
-        EmployeeDepartmentService,
-        Depends(get_employee_department_service),
-    ],
-):
-    return await service.count_by_employee(employee_id)
-
-
-@router.get(
     "/{link_id}",
     response_model=EmployeeDepartmentSchema,
     summary="Get a single assignment by ID",
@@ -92,11 +68,10 @@ async def get_employee_link(
     "",
     response_model=MutationResponse[EmployeeDepartmentSchema],
     status_code=status.HTTP_201_CREATED,
-    summary="Create a new assignment",
+    summary="Create the employee's main-department assignment",
     description=(
-        "Links the employee to a (department) combination. "
-        "Returns 409 if the exact triple already exists. "
-        "Call GET /count first and confirm with the user if count > 0."
+        "Links the employee to their MAIN department. "
+        "Returns 400 if the employee already has a main department."
     ),
     dependencies=[
         Guard(OperationVerb.LINK, EssenceName.EMPLOYEE, EssenceName.DEPARTMENT)
@@ -117,10 +92,7 @@ async def create_employee_link(
     "/{link_id}",
     response_model=MutationResponse[EmployeeDepartmentSchema],
     summary="Partially update an assignment",
-    description=(
-        "Change the department of an existing link. "
-        "Returns 409 if the resulting triple already exists for this employee."
-    ),
+    description="Change the department of the existing main link.",
     dependencies=[
         Guard(OperationVerb.LINK, EssenceName.EMPLOYEE, EssenceName.DEPARTMENT)
     ],

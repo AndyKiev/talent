@@ -15,7 +15,7 @@ const STATUS_COLOR: Record<string, 'warning' | 'success' | 'error' | 'default'> 
 };
 
 // Departments tab removed — its content now lives inside the Summary tab.
-const TAB_VALUES = ['summary', 'events', 'talent_audit', 'job_history', 'dr_history', 'trainings'];
+const TAB_VALUES = ['summary', 'events', 'talent_audit', 'career_history', 'responsibility_history', 'trainings'];
 
 export function EmployeeCardLayout() {
     const { employeeId } = useParams({ from: '/employees/$employeeId' });
@@ -97,8 +97,8 @@ export function EmployeeCardLayout() {
                         <Tab label={cfl(getString('summary') || 'Summary')} value="summary" />
                         <Tab label={cfl(getString('events') || 'Events')} value="events" />
                         <Tab label={cfl(getString('talentAudit') || 'Talent Audit')} value="talent_audit" />
-                        <Tab label={cfl(getString('jobHistory') || 'Job History')} value="job_history" />
-                        <Tab label={cfl(getString('drHistory') || 'DR History')} value="dr_history" />
+                        <Tab label={cfl(getString('careerHistory') || 'Career History')} value="career_history" />
+                        <Tab label={cfl(getString('responsibilityHistory') || 'Responsibility History')} value="responsibility_history" />
                         <Tab label={cfl(getString('trainings') || 'Trainings')} value="trainings" />
                     </Tabs>
                     <Divider />

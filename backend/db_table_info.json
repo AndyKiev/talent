@@ -6467,7 +6467,7 @@
       "hidden": false,
       "sortable": true,
       "filterable": true,
-      "width": null
+      "width": 334
     },
     {
       "field": "current_row_count",

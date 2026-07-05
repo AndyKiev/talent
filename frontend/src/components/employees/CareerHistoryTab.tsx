@@ -1,4 +1,4 @@
-// src/components/employees/JobHistoryTab.tsx
+// src/components/employees/CareerHistoryTab.tsx
 //
 // Explicit job history derived from APPLIED employee events — no need to open
 // each event. We replay applied events in chronological order, tracking the
@@ -46,8 +46,8 @@ interface JobHistoryRow {
     deptName: string | null;
 }
 
-export function JobHistoryTab() {
-    const { employeeId } = useParams({ from: '/employees/$employeeId/job_history/' });
+export function CareerHistoryTab() {
+    const { employeeId } = useParams({ from: '/employees/$employeeId/career_history/' });
     const id = Number(employeeId);
     const getString = useString({ str });
 

@@ -35,7 +35,6 @@ export interface EmployeeEventType {
 export interface EmployeeEventChangeDepartment {
     id: number;
     department_id: number;
-    change_dept_type_id: number;
     department?: { id: number; name: string } | null;
 }
 
@@ -98,7 +97,7 @@ export interface EmployeeEventChangeCreate {
     new_status_id?: number | null;
     prev_department_id?: number | null;
     new_department_id?: number | null;
-    dept_changes?: { department_id: number; change_dept_type_id: number }[];
+    dept_changes?: { department_id: number }[];
 }
 
 // ── Event API calls ───────────────────────────────────────────────────────────
@@ -328,20 +327,6 @@ export const fetchResponsibilityCategoriesForJob = async (
 ): Promise<ResponsibilityCategoryOption[]> => {
     const res = await axiosInstance.get<ResponsibilityCategoryOption[]>(
         `${BASE_URL}/job_responsibility_category_links/by_job/${jobId}/categories`,
-    );
-    return res.data ?? [];
-};
-
-// Change-dept-type lookup (MAIN_DEPT / RESPONSIBILITY_DEPT) for dept_changes rows.
-export interface ChangeDeptTypeOption {
-    id: number;
-    code: string;
-    name: string;
-}
-
-export const fetchChangeDeptTypes = async (): Promise<ChangeDeptTypeOption[]> => {
-    const res = await axiosInstance.get<ChangeDeptTypeOption[]>(
-        `${BASE_URL}/admin/employee_events/employee_event_change_dept_types`,
     );
     return res.data ?? [];
 };

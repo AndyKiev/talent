@@ -51,8 +51,8 @@ class EmployeeRepository(BaseRepository):
     ):
         """
         Override of BaseRepository.get_all that additionally supports restricting
-        the result to employees whose MAIN department (EmployeeDepartment with
-        is_main=True) is one of ``main_department_ids``.
+        the result to employees whose MAIN department (EmployeeDepartment row)
+        is one of ``main_department_ids``.
 
         Restriction semantics (set by the service from the current user's role):
           - ``main_department_ids is None``  -> NO restriction (see all).
@@ -86,7 +86,6 @@ class EmployeeRepository(BaseRepository):
         # HRM-scope restriction: main department must be in the allowed set.
         if main_department_ids is not None:
             main_dept_subq = select(EmployeeDepartment.employee_id).where(
-                EmployeeDepartment.is_main.is_(True),
                 EmployeeDepartment.department_id.in_(main_department_ids),
             )
             stmt = stmt.where(self.model.id.in_(main_dept_subq))

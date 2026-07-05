@@ -13,18 +13,18 @@ from backend.api_v1.department.department_org_units import TopOrgUnit
 # ── Input schemas ──────────────────────────────────────────────────────────────
 
 
-class EmployeeDepartmentCreate(BaseModel):
+class EmployeeResponsibilityDepartmentCreate(BaseModel):
     department_id: int
 
 
-class EmployeeDepartmentUpdate(BaseModel):
+class EmployeeResponsibilityDepartmentUpdate(BaseModel):
     department_id: Optional[int] = None
 
 
 # ── Read schema ────────────────────────────────────────────────────────────────
 
 
-class EmployeeDepartmentSchema(BaseModel):
+class EmployeeResponsibilityDepartmentSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     employee_id: int

@@ -62,8 +62,8 @@ export function SummaryTab() {
         staleTime: 5 * 60 * 1000,
     });
 
-    const mainDepts = employee?.main_departments ?? [];
-    const extraDepts = employee?.extra_departments ?? [];
+    const mainDepts = employee?.main_department ? [employee.main_department] : [];
+    const extraDepts = employee?.responsibility_departments ?? [];
 
     return (
         <Paper variant="outlined" sx={{ p: 2 }}>

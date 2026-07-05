@@ -1,12 +1,13 @@
 // src/components/employees/EmployeeDepartmentsDrawer.tsx
 //
-// Fixes applied vs previous version:
-//  1. ListItemText secondary prop: added secondaryTypographyProps={{ component: 'div' }}
-//     to prevent <p><div> invalid HTML nesting.
-//  2. All Dialog modals rendered OUTSIDE the Drawer DOM tree (as siblings at the
-//     root of the fragment) to prevent aria-hidden-on-focused-element errors.
-//  3. EmployeeAddDeptJobDialog now receives isPending + onSubmit props instead of
-//     a mutated mutation object — the spread hack has been removed entirely.
+// Two separate link tables drive this drawer:
+//   - MAIN department (0..1)            → /employees/{id}/departments
+//   - responsibility departments (0..N) → /employees/{id}/responsibility_departments
+// The list renders as two sections; add/delete route to the matching endpoint
+// via AddDeptJobPayload.isMain. The backend enforces the single-main rule.
+//
+// All Dialog modals render OUTSIDE the Drawer DOM tree (siblings in the
+// fragment) to prevent aria-hidden-on-focused-element errors.
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -43,6 +44,9 @@ import {
     fetchEmployeeDepartments,
     deleteEmployeeDepartment,
     createEmployeeDepartment,
+    fetchEmployeeResponsibilityDepartments,
+    deleteEmployeeResponsibilityDepartment,
+    createEmployeeResponsibilityDepartment,
     type EmployeeDepartment,
 } from './employeeDepartmentApi';
 import {
@@ -59,6 +63,8 @@ import { formatToUkrDate } from '../../utils/dateFormatter';
 
 export const DEPT_QK = (employeeId: number) =>
     ['employee_departments', employeeId] as const;
+export const RESP_DEPT_QK = (employeeId: number) =>
+    ['employee_responsibility_departments', employeeId] as const;
 
 interface Props {
     employee: Employee | null;
@@ -70,17 +76,12 @@ interface DeleteConfirm {
     isMain: boolean;
 }
 
-interface AddMainConfirm {
-    payload: AddDeptJobPayload;
-}
-
 export function EmployeeDepartmentsDrawer({ employee, onClose }: Props) {
     const getString = useString({ str });
     const qc = useQueryClient();
 
     const [addMode, setAddMode] = useState<AddDeptJobMode | null>(null);
     const [deleteConfirm, setDeleteConfirm] = useState<DeleteConfirm | null>(null);
-    const [addMainConfirm, setAddMainConfirm] = useState<AddMainConfirm | null>(null);
 
     const [snackbar, setSnackbar] = useState({
         open: false,
@@ -90,25 +91,37 @@ export function EmployeeDepartmentsDrawer({ employee, onClose }: Props) {
 
     const invalidateAll = async () => {
         await qc.invalidateQueries({ queryKey: DEPT_QK(employee!.id) });
+        await qc.invalidateQueries({ queryKey: RESP_DEPT_QK(employee!.id) });
         await qc.invalidateQueries({ queryKey: EMPLOYEES_QK });
     };
 
     // ── Queries ───────────────────────────────────────────────────────────────
 
-    const { data: departments = [], isLoading, error } = useQuery({
+    const { data: mainDepartments = [], isLoading: mainLoading, error: mainError } = useQuery({
         queryKey: DEPT_QK(employee?.id ?? 0),
         queryFn: () => fetchEmployeeDepartments(employee!.id),
         enabled: employee != null,
         staleTime: 30 * 1000,
     });
 
-    const existingMainCount = departments.filter((d) => d.is_main).length;
+    const { data: respDepartments = [], isLoading: respLoading, error: respError } = useQuery({
+        queryKey: RESP_DEPT_QK(employee?.id ?? 0),
+        queryFn: () => fetchEmployeeResponsibilityDepartments(employee!.id),
+        enabled: employee != null,
+        staleTime: 30 * 1000,
+    });
+
+    const isLoading = mainLoading || respLoading;
+    const error = mainError ?? respError;
+    const isEmpty = mainDepartments.length === 0 && respDepartments.length === 0;
 
     // ── Mutations ─────────────────────────────────────────────────────────────
 
     const deleteMutation = useMutation({
-        mutationFn: ({ linkId }: { linkId: number }) =>
-            deleteEmployeeDepartment(employee!.id, linkId),
+        mutationFn: ({ linkId, isMain }: { linkId: number; isMain: boolean }) =>
+            isMain
+                ? deleteEmployeeDepartment(employee!.id, linkId)
+                : deleteEmployeeResponsibilityDepartment(employee!.id, linkId),
         onSuccess: async (res) => {
             await invalidateAll();
             setSnackbar({ open: true, message: res.detail, severity: 'success' });
@@ -122,10 +135,15 @@ export function EmployeeDepartmentsDrawer({ employee, onClose }: Props) {
 
     const addMutation = useMutation({
         mutationFn: async (payload: AddDeptJobPayload) => {
-            await createEmployeeDepartment(employee!.id, {
-                department_id: payload.departmentId,
-                is_main: payload.isMain,
-            });
+            if (payload.isMain) {
+                await createEmployeeDepartment(employee!.id, {
+                    department_id: payload.departmentId,
+                });
+            } else {
+                await createEmployeeResponsibilityDepartment(employee!.id, {
+                    department_id: payload.departmentId,
+                });
+            }
             if (payload.newJobId != null) {
                 await updateEmployeeJob({ id: employee!.id, job_id: payload.newJobId });
             }
@@ -138,32 +156,108 @@ export function EmployeeDepartmentsDrawer({ employee, onClose }: Props) {
                 severity: 'success',
             });
             setAddMode(null);
-            setAddMainConfirm(null);
         },
         onError: (err: Error) => {
             setSnackbar({ open: true, message: err.message, severity: 'error' });
-            setAddMainConfirm(null);
         },
     });
 
     // ── Handlers ──────────────────────────────────────────────────────────────
 
-    // Called by EmployeeAddDeptJobDialog via onSubmit prop (not mutation spread)
+    // Called by EmployeeAddDeptJobDialog via onSubmit prop. The backend rejects
+    // a second MAIN department, so no client-side confirmation flow is needed.
     const handleAddSubmit = (payload: AddDeptJobPayload) => {
-        if (payload.isMain && existingMainCount > 0) {
-            // Close the form dialog first, then show confirmation
-            setAddMode(null);
-            setAddMainConfirm({ payload });
-        } else {
-            addMutation.mutate(payload);
-            setAddMode(null);
-        }
+        addMutation.mutate(payload);
+        setAddMode(null);
     };
 
-    const handleDeleteClick = (dept: EmployeeDepartment) =>
-        setDeleteConfirm({ dept, isMain: dept.is_main });
+    const handleDeleteClick = (dept: EmployeeDepartment, isMain: boolean) =>
+        setDeleteConfirm({ dept, isMain });
 
     // ── Render ────────────────────────────────────────────────────────────────
+
+    const renderDeptItem = (dept: EmployeeDepartment, isMain: boolean, idx: number) => (
+        <Box key={`${isMain ? 'm' : 'r'}-${dept.id}`}>
+            {idx > 0 && <Divider component="li" />}
+            <ListItem alignItems="flex-start" sx={{ pr: 7, py: 1.5 }}>
+                <ListItemText
+                    // secondary renders a <Box> (div), so override the wrapper
+                    // to <div> instead of <p> to avoid invalid nesting.
+                    secondaryTypographyProps={{ component: 'div' }}
+                    primary={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+                            <Tooltip
+                                title={
+                                    isMain
+                                        ? getString('mainDepartment') || 'Main department'
+                                        : getString('responsibilityDept') || 'Responsibility department'
+                                }
+                            >
+                                {isMain
+                                    ? <StarIcon sx={{ fontSize: 16, color: 'warning.main' }} />
+                                    : <StarBorderIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
+                                }
+                            </Tooltip>
+                            <Typography variant="body2" fontWeight={600}>
+                                {dept.department?.name ?? `ID ${dept.department_id}`}
+                            </Typography>
+                            {isMain && (
+                                <Chip
+                                    label={getString('main') || 'main'}
+                                    size="small"
+                                    color="warning"
+                                    variant="outlined"
+                                    sx={{ height: 18, fontSize: '0.65rem' }}
+                                />
+                            )}
+                        </Box>
+                    }
+                    secondary={
+                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
+                            {dept.department?.department_category?.name && (
+                                <Chip
+                                    label={dept.department.department_category.name}
+                                    size="small"
+                                    color="success"
+                                    variant="outlined"
+                                    sx={{ height: 20, fontSize: '0.7rem' }}
+                                />
+                            )}
+                            {dept.department?.department_type?.name && (
+                                <Chip
+                                    label={dept.department.department_type.name}
+                                    size="small"
+                                    color="info"
+                                    variant="outlined"
+                                    sx={{ height: 20, fontSize: '0.7rem' }}
+                                />
+                            )}
+                            <Typography
+                                variant="caption"
+                                color="text.disabled"
+                                sx={{ alignSelf: 'center' }}
+                            >
+                                {formatToUkrDate(dept.created_at)}
+                            </Typography>
+                        </Box>
+                    }
+                />
+                <ListItemSecondaryAction>
+                    <Tooltip title={getString('delete') || 'Delete'}>
+                        <IconButton
+                            edge="end"
+                            size="small"
+                            color="error"
+                            disabled={deleteMutation.isPending}
+                            onClick={() => handleDeleteClick(dept, isMain)}
+                        >
+                            <DeleteIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                </ListItemSecondaryAction>
+            </ListItem>
+        </Box>
+    );
 
     return (
         // Fragment — all modals are siblings of the Drawer, NOT children,
@@ -225,7 +319,7 @@ export function EmployeeDepartmentsDrawer({ employee, onClose }: Props) {
 
                     <Divider />
 
-                    {/* Department list */}
+                    {/* Department sections */}
                     <Box sx={{ flex: 1, overflowY: 'auto', px: 1, py: 1 }}>
                         {isLoading && (
                             <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
@@ -235,100 +329,40 @@ export function EmployeeDepartmentsDrawer({ employee, onClose }: Props) {
                         {!isLoading && error && (
                             <Alert severity="error" sx={{ m: 1 }}>{(error as Error).message}</Alert>
                         )}
-                        {!isLoading && !error && departments.length === 0 && (
+                        {!isLoading && !error && isEmpty && (
                             <Box sx={{ p: 3, textAlign: 'center' }}>
                                 <Typography variant="body2" color="text.secondary">
                                     {getString('noDepartmentsAssigned') || 'No departments assigned yet.'}
                                 </Typography>
                             </Box>
                         )}
-                        {!isLoading && !error && departments.length > 0 && (
-                            <List disablePadding>
-                                {departments.map((dept, idx) => (
-                                    <Box key={dept.id}>
-                                        {idx > 0 && <Divider component="li" />}
-                                        <ListItem alignItems="flex-start" sx={{ pr: 7, py: 1.5 }}>
-                                            <ListItemText
-                                                // FIX 1: secondary renders a <Box> (div), so we must
-                                                // override the wrapper to <div> instead of <p>
-                                                secondaryTypographyProps={{ component: 'div' }}
-                                                primary={
-                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
-                                                        <Tooltip
-                                                            title={
-                                                                dept.is_main
-                                                                    ? getString('mainDepartment') || 'Main department'
-                                                                    : getString('responsibilityDept') || 'Responsibility department'
-                                                            }
-                                                        >
-                                                            {dept.is_main
-                                                                ? <StarIcon sx={{ fontSize: 16, color: 'warning.main' }} />
-                                                                : <StarBorderIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
-                                                            }
-                                                        </Tooltip>
-                                                        <Typography variant="body2" fontWeight={600}>
-                                                            {dept.department?.name ?? `ID ${dept.department_id}`}
-                                                        </Typography>
-                                                        {dept.is_main && (
-                                                            <Chip
-                                                                label={getString('main') || 'main'}
-                                                                size="small"
-                                                                color="warning"
-                                                                variant="outlined"
-                                                                sx={{ height: 18, fontSize: '0.65rem' }}
-                                                            />
-                                                        )}
-                                                    </Box>
-                                                }
-                                                secondary={
-                                                    // FIX 1 continued: this Box renders as <div> thanks to
-                                                    // secondaryTypographyProps={{ component: 'div' }} above
-                                                    <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
-                                                        {dept.department?.department_category?.name && (
-                                                            <Chip
-                                                                label={dept.department.department_category.name}
-                                                                size="small"
-                                                                color="success"
-                                                                variant="outlined"
-                                                                sx={{ height: 20, fontSize: '0.7rem' }}
-                                                            />
-                                                        )}
-                                                        {dept.department?.department_type?.name && (
-                                                            <Chip
-                                                                label={dept.department.department_type.name}
-                                                                size="small"
-                                                                color="info"
-                                                                variant="outlined"
-                                                                sx={{ height: 20, fontSize: '0.7rem' }}
-                                                            />
-                                                        )}
-                                                        <Typography
-                                                            variant="caption"
-                                                            color="text.disabled"
-                                                            sx={{ alignSelf: 'center' }}
-                                                        >
-                                                            {formatToUkrDate(dept.created_at)}
-                                                        </Typography>
-                                                    </Box>
-                                                }
-                                            />
-                                            <ListItemSecondaryAction>
-                                                <Tooltip title={getString('delete') || 'Delete'}>
-                                                    <IconButton
-                                                        edge="end"
-                                                        size="small"
-                                                        color="error"
-                                                        disabled={deleteMutation.isPending}
-                                                        onClick={() => handleDeleteClick(dept)}
-                                                    >
-                                                        <DeleteIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </ListItemSecondaryAction>
-                                        </ListItem>
-                                    </Box>
-                                ))}
-                            </List>
+                        {!isLoading && !error && mainDepartments.length > 0 && (
+                            <>
+                                <Typography
+                                    variant="overline"
+                                    color="text.secondary"
+                                    sx={{ px: 1, display: 'block' }}
+                                >
+                                    {cfl(getString('mainDepartment') || 'Main department')}
+                                </Typography>
+                                <List disablePadding>
+                                    {mainDepartments.map((dept, idx) => renderDeptItem(dept, true, idx))}
+                                </List>
+                            </>
+                        )}
+                        {!isLoading && !error && respDepartments.length > 0 && (
+                            <>
+                                <Typography
+                                    variant="overline"
+                                    color="text.secondary"
+                                    sx={{ px: 1, display: 'block', mt: mainDepartments.length > 0 ? 1.5 : 0 }}
+                                >
+                                    {cfl(getString('responsibilityDepts') || 'Responsibility departments')}
+                                </Typography>
+                                <List disablePadding>
+                                    {respDepartments.map((dept, idx) => renderDeptItem(dept, false, idx))}
+                                </List>
+                            </>
                         )}
                     </Box>
 
@@ -357,7 +391,7 @@ export function EmployeeDepartmentsDrawer({ employee, onClose }: Props) {
                 </Box>
             </Drawer>
 
-            {/* ── FIX 2: All dialogs outside the Drawer DOM tree ─────────────── */}
+            {/* ── All dialogs outside the Drawer DOM tree ────────────────────── */}
 
             {/* Add dept / change job form dialog */}
             <EmployeeAddDeptJobDialog
@@ -369,53 +403,7 @@ export function EmployeeDepartmentsDrawer({ employee, onClose }: Props) {
                 onSubmit={handleAddSubmit}
             />
 
-            {/* Confirmation: add another main department */}
-            <Dialog
-                open={addMainConfirm != null}
-                onClose={() => setAddMainConfirm(null)}
-                maxWidth="xs"
-                fullWidth
-                disableRestoreFocus
-            >
-                <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <WarningAmberIcon color="warning" />
-                    {getString('multipleMainDeptsTitle') || 'Multiple Main Departments'}
-                </DialogTitle>
-                <DialogContent>
-                    <Typography variant="body2" sx={{ mb: 1.5 }}>
-                        {getString('multipleMainDeptsWarning') ||
-                            'This employee already has one or more main departments. Are you sure you want to add another?'}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                        {getString('multipleMainDeptsHint') ||
-                            'Allowed for employees serving multiple units (e.g. store + directorate).'}
-                    </Typography>
-                </DialogContent>
-                <DialogActions>
-                    <Button
-                        variant="outlined"
-                        onClick={() => setAddMainConfirm(null)}
-                        disabled={addMutation.isPending}
-                    >
-                        {getString('cancel') || 'Cancel'}
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color="warning"
-                        disabled={addMutation.isPending}
-                        startIcon={
-                            addMutation.isPending
-                                ? <CircularProgress size={16} color="inherit" />
-                                : undefined
-                        }
-                        onClick={() => addMainConfirm && addMutation.mutate(addMainConfirm.payload)}
-                    >
-                        {getString('addAnyway') || 'Add Anyway'}
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
-            {/* Confirmation: delete department (extra warning for is_main) */}
+            {/* Confirmation: delete department (extra warning for the main one) */}
             <Dialog
                 open={deleteConfirm != null}
                 onClose={() => setDeleteConfirm(null)}
@@ -466,7 +454,11 @@ export function EmployeeDepartmentsDrawer({ employee, onClose }: Props) {
                                 : undefined
                         }
                         onClick={() =>
-                            deleteConfirm && deleteMutation.mutate({ linkId: deleteConfirm.dept.id })
+                            deleteConfirm &&
+                            deleteMutation.mutate({
+                                linkId: deleteConfirm.dept.id,
+                                isMain: deleteConfirm.isMain,
+                            })
                         }
                     >
                         {getString('delete') || 'Delete'}

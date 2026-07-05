@@ -100,14 +100,14 @@ export function EmployeesPage() {
         // closest-department filter dropdown is sorted by department_category.sort_order.
         const orderMap = new Map<string, number>();
         for (const e of employees) {
-            for (const d of e.main_departments ?? []) {
-                const prev = orderMap.get(d.name);
-                if (prev === undefined || d.department_category_sort_order < prev) {
-                    orderMap.set(d.name, d.department_category_sort_order);
-                }
+            const d = e.main_department;
+            if (!d) continue;
+            const prev = orderMap.get(d.name);
+            if (prev === undefined || d.department_category_sort_order < prev) {
+                orderMap.set(d.name, d.department_category_sort_order);
             }
         }
-        return [...new Set(employees.flatMap((e) => e.main_departments?.map((d) => d.name) ?? []))]
+        return [...new Set(employees.map((e) => e.main_department?.name).filter(Boolean) as string[])]
             .sort((a, b) => (orderMap.get(a) ?? 0) - (orderMap.get(b) ?? 0) || a.localeCompare(b));
     }, [employees]);
     const jobOptions = useMemo(
@@ -121,8 +121,8 @@ export function EmployeesPage() {
         if (statusFilter)
             result = result.filter((e) => e.status?.name === statusFilter);
         if (subdepartmentFilter)
-            result = result.filter((e) =>
-                e.main_departments?.some((d) => d.name === subdepartmentFilter),
+            result = result.filter(
+                (e) => e.main_department?.name === subdepartmentFilter,
             );
         if (jobFilter) result = result.filter((e) => e.job?.name === jobFilter);
         return result;

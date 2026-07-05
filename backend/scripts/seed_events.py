@@ -187,7 +187,7 @@ async def main() -> None:
                 "SELECT MIN(effective_date) FROM employee_events WHERE employee_id=:e"
             ), {"e": e["id"]})).scalar()
             e["main_dept"] = (await session.execute(text(
-                "SELECT department_id FROM employee_departments WHERE employee_id=:e AND is_main LIMIT 1"
+                "SELECT department_id FROM employee_departments WHERE employee_id=:e LIMIT 1"
             ), {"e": e["id"]})).scalar()
             e["targets"] = await scalars(
                 "SELECT j.target_job_id FROM talent_audit ta "

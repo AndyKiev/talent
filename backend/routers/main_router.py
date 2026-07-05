@@ -45,6 +45,9 @@ from backend.api_v1.talent_period.talent_period_views import (
 from backend.api_v1.employee_department.employee_department_views import (
     router as employee_department_router,
 )
+from backend.api_v1.employee_responsibility_department.employee_responsibility_department_views import (
+    router as employee_responsibility_department_router,
+)
 from backend.api_v1.talent_audit_status.talent_audit_status_views import (
     router as talent_audit_status_router,
 )
@@ -70,9 +73,6 @@ from backend.api_v1.employee_events.employee_event_type.employee_event_type_view
 )
 from backend.api_v1.employee_events.employee_event_direction_type.employee_event_direction_type_views import (
     router as employee_event_direction_type_router,
-)
-from backend.api_v1.employee_events.employee_event_change_dept_type.employee_event_change_dept_type_views import (
-    router as employee_event_change_dept_type_router,
 )
 from backend.api_v1.employee_events.employee_event.employee_event_views import (
     router as employee_event_router,
@@ -299,6 +299,7 @@ router.include_router(department_category_router)
 router.include_router(job_router)
 router.include_router(employee_router)
 router.include_router(employee_department_router)
+router.include_router(employee_responsibility_department_router)
 router.include_router(employee_status_router)
 router.include_router(operation_router)
 router.include_router(user_group_router)
@@ -310,7 +311,6 @@ router.include_router(msg_bulk_router)
 router.include_router(employee_event_status_router)
 router.include_router(employee_event_type_router)
 router.include_router(employee_event_direction_type_router)
-router.include_router(employee_event_change_dept_type_router)
 router.include_router(employee_event_router, prefix="/employees")
 router.include_router(employee_event_change_router, prefix="/employees")
 router.include_router(employee_event_type_direction_router, prefix="/employee_event_types")

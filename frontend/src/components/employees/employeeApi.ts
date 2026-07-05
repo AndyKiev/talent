@@ -40,8 +40,8 @@ export interface Employee {
     operations: string[];
     job: Job | null;
     lang: Lang | null;
-    main_departments: MainDepartment[];
-    extra_departments: MainDepartment[];
+    main_department: MainDepartment | null;
+    responsibility_departments: MainDepartment[];
 }
 
 export interface EmployeeCreate {

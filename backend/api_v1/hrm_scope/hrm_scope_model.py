@@ -36,7 +36,7 @@ class HrmScope(IntIdPkMixin, TimestampMixin, Base):
     ``employee_id`` is denormalised (kept in sync with the link's employee) purely
     to keep grid/scope queries simple; the link FK is the authority for lifecycle.
 
-    Distinct from EmployeeDepartment (is_main=False) "departments of
+    Distinct from EmployeeResponsibilityDepartment "departments of
     responsibility": that models where an employee *works*; this models which
     departments an HRM may *supervise*. Overlapping date windows for the same
     (link, department) pair are intentionally allowed -- no uniqueness constraint.

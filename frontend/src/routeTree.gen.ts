@@ -73,10 +73,10 @@ import { Route as AdminDepartments_groupDepartment_typesRouteRouteImport } from 
 import { Route as EmployeesEmployeeIdTrainingsIndexRouteImport } from './routes/employees/$employeeId/trainings/index'
 import { Route as EmployeesEmployeeIdTalent_auditIndexRouteImport } from './routes/employees/$employeeId/talent_audit/index'
 import { Route as EmployeesEmployeeIdSummaryIndexRouteImport } from './routes/employees/$employeeId/summary/index'
-import { Route as EmployeesEmployeeIdJob_historyIndexRouteImport } from './routes/employees/$employeeId/job_history/index'
+import { Route as EmployeesEmployeeIdResponsibility_historyIndexRouteImport } from './routes/employees/$employeeId/responsibility_history/index'
 import { Route as EmployeesEmployeeIdEventsIndexRouteImport } from './routes/employees/$employeeId/events/index'
-import { Route as EmployeesEmployeeIdDr_historyIndexRouteImport } from './routes/employees/$employeeId/dr_history/index'
 import { Route as EmployeesEmployeeIdDepartmentsIndexRouteImport } from './routes/employees/$employeeId/departments/index'
+import { Route as EmployeesEmployeeIdCareer_historyIndexRouteImport } from './routes/employees/$employeeId/career_history/index'
 import { Route as DeveloperSecurityUser_groupsIndexRouteImport } from './routes/developer/security/user_groups/index'
 import { Route as DeveloperSecurityUser_group_typesIndexRouteImport } from './routes/developer/security/user_group_types/index'
 import { Route as DeveloperSecurityPermissions_overviewIndexRouteImport } from './routes/developer/security/permissions_overview/index'
@@ -112,7 +112,6 @@ import { Route as AdminJobs_groupJob_categoriesIndexRouteImport } from './routes
 import { Route as AdminEmployee_eventsEmployee_event_typesIndexRouteImport } from './routes/admin/employee_events/employee_event_types/index'
 import { Route as AdminEmployee_eventsEmployee_event_statusesIndexRouteImport } from './routes/admin/employee_events/employee_event_statuses/index'
 import { Route as AdminEmployee_eventsEmployee_event_direction_typesIndexRouteImport } from './routes/admin/employee_events/employee_event_direction_types/index'
-import { Route as AdminEmployee_eventsEmployee_event_change_dept_typesIndexRouteImport } from './routes/admin/employee_events/employee_event_change_dept_types/index'
 import { Route as AdminDepartments_groupStructureIndexRouteImport } from './routes/admin/departments_group/structure/index'
 import { Route as AdminDepartments_groupRegionsIndexRouteImport } from './routes/admin/departments_group/regions/index'
 import { Route as AdminDepartments_groupDepartment_typesIndexRouteImport } from './routes/admin/departments_group/department_types/index'
@@ -482,10 +481,10 @@ const EmployeesEmployeeIdSummaryIndexRoute =
     path: '/summary/',
     getParentRoute: () => EmployeesEmployeeIdRouteRoute,
   } as any)
-const EmployeesEmployeeIdJob_historyIndexRoute =
-  EmployeesEmployeeIdJob_historyIndexRouteImport.update({
-    id: '/job_history/',
-    path: '/job_history/',
+const EmployeesEmployeeIdResponsibility_historyIndexRoute =
+  EmployeesEmployeeIdResponsibility_historyIndexRouteImport.update({
+    id: '/responsibility_history/',
+    path: '/responsibility_history/',
     getParentRoute: () => EmployeesEmployeeIdRouteRoute,
   } as any)
 const EmployeesEmployeeIdEventsIndexRoute =
@@ -494,16 +493,16 @@ const EmployeesEmployeeIdEventsIndexRoute =
     path: '/events/',
     getParentRoute: () => EmployeesEmployeeIdRouteRoute,
   } as any)
-const EmployeesEmployeeIdDr_historyIndexRoute =
-  EmployeesEmployeeIdDr_historyIndexRouteImport.update({
-    id: '/dr_history/',
-    path: '/dr_history/',
-    getParentRoute: () => EmployeesEmployeeIdRouteRoute,
-  } as any)
 const EmployeesEmployeeIdDepartmentsIndexRoute =
   EmployeesEmployeeIdDepartmentsIndexRouteImport.update({
     id: '/departments/',
     path: '/departments/',
+    getParentRoute: () => EmployeesEmployeeIdRouteRoute,
+  } as any)
+const EmployeesEmployeeIdCareer_historyIndexRoute =
+  EmployeesEmployeeIdCareer_historyIndexRouteImport.update({
+    id: '/career_history/',
+    path: '/career_history/',
     getParentRoute: () => EmployeesEmployeeIdRouteRoute,
   } as any)
 const DeveloperSecurityUser_groupsIndexRoute =
@@ -715,12 +714,6 @@ const AdminEmployee_eventsEmployee_event_direction_typesIndexRoute =
     path: '/admin/employee_events/employee_event_direction_types/',
     getParentRoute: () => rootRouteImport,
   } as any)
-const AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute =
-  AdminEmployee_eventsEmployee_event_change_dept_typesIndexRouteImport.update({
-    id: '/admin/employee_events/employee_event_change_dept_types/',
-    path: '/admin/employee_events/employee_event_change_dept_types/',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const AdminDepartments_groupStructureIndexRoute =
   AdminDepartments_groupStructureIndexRouteImport.update({
     id: '/structure/',
@@ -923,7 +916,6 @@ export interface FileRoutesByFullPath {
   '/admin/departments_group/department_types/': typeof AdminDepartments_groupDepartment_typesIndexRoute
   '/admin/departments_group/regions': typeof AdminDepartments_groupRegionsIndexRoute
   '/admin/departments_group/structure': typeof AdminDepartments_groupStructureIndexRoute
-  '/admin/employee_events/employee_event_change_dept_types': typeof AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute
   '/admin/employee_events/employee_event_direction_types': typeof AdminEmployee_eventsEmployee_event_direction_typesIndexRoute
   '/admin/employee_events/employee_event_statuses': typeof AdminEmployee_eventsEmployee_event_statusesIndexRoute
   '/admin/employee_events/employee_event_types': typeof AdminEmployee_eventsEmployee_event_typesIndexRoute
@@ -959,10 +951,10 @@ export interface FileRoutesByFullPath {
   '/developer/security/permissions_overview': typeof DeveloperSecurityPermissions_overviewIndexRoute
   '/developer/security/user_group_types': typeof DeveloperSecurityUser_group_typesIndexRoute
   '/developer/security/user_groups': typeof DeveloperSecurityUser_groupsIndexRoute
+  '/employees/$employeeId/career_history': typeof EmployeesEmployeeIdCareer_historyIndexRoute
   '/employees/$employeeId/departments': typeof EmployeesEmployeeIdDepartmentsIndexRoute
-  '/employees/$employeeId/dr_history': typeof EmployeesEmployeeIdDr_historyIndexRoute
   '/employees/$employeeId/events': typeof EmployeesEmployeeIdEventsIndexRoute
-  '/employees/$employeeId/job_history': typeof EmployeesEmployeeIdJob_historyIndexRoute
+  '/employees/$employeeId/responsibility_history': typeof EmployeesEmployeeIdResponsibility_historyIndexRoute
   '/employees/$employeeId/summary': typeof EmployeesEmployeeIdSummaryIndexRoute
   '/employees/$employeeId/talent_audit': typeof EmployeesEmployeeIdTalent_auditIndexRoute
   '/employees/$employeeId/trainings': typeof EmployeesEmployeeIdTrainingsIndexRoute
@@ -1030,7 +1022,6 @@ export interface FileRoutesByTo {
   '/admin/departments_group/department_types': typeof AdminDepartments_groupDepartment_typesIndexRoute
   '/admin/departments_group/regions': typeof AdminDepartments_groupRegionsIndexRoute
   '/admin/departments_group/structure': typeof AdminDepartments_groupStructureIndexRoute
-  '/admin/employee_events/employee_event_change_dept_types': typeof AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute
   '/admin/employee_events/employee_event_direction_types': typeof AdminEmployee_eventsEmployee_event_direction_typesIndexRoute
   '/admin/employee_events/employee_event_statuses': typeof AdminEmployee_eventsEmployee_event_statusesIndexRoute
   '/admin/employee_events/employee_event_types': typeof AdminEmployee_eventsEmployee_event_typesIndexRoute
@@ -1066,10 +1057,10 @@ export interface FileRoutesByTo {
   '/developer/security/permissions_overview': typeof DeveloperSecurityPermissions_overviewIndexRoute
   '/developer/security/user_group_types': typeof DeveloperSecurityUser_group_typesIndexRoute
   '/developer/security/user_groups': typeof DeveloperSecurityUser_groupsIndexRoute
+  '/employees/$employeeId/career_history': typeof EmployeesEmployeeIdCareer_historyIndexRoute
   '/employees/$employeeId/departments': typeof EmployeesEmployeeIdDepartmentsIndexRoute
-  '/employees/$employeeId/dr_history': typeof EmployeesEmployeeIdDr_historyIndexRoute
   '/employees/$employeeId/events': typeof EmployeesEmployeeIdEventsIndexRoute
-  '/employees/$employeeId/job_history': typeof EmployeesEmployeeIdJob_historyIndexRoute
+  '/employees/$employeeId/responsibility_history': typeof EmployeesEmployeeIdResponsibility_historyIndexRoute
   '/employees/$employeeId/summary': typeof EmployeesEmployeeIdSummaryIndexRoute
   '/employees/$employeeId/talent_audit': typeof EmployeesEmployeeIdTalent_auditIndexRoute
   '/employees/$employeeId/trainings': typeof EmployeesEmployeeIdTrainingsIndexRoute
@@ -1159,7 +1150,6 @@ export interface FileRoutesById {
   '/admin/departments_group/department_types/': typeof AdminDepartments_groupDepartment_typesIndexRoute
   '/admin/departments_group/regions/': typeof AdminDepartments_groupRegionsIndexRoute
   '/admin/departments_group/structure/': typeof AdminDepartments_groupStructureIndexRoute
-  '/admin/employee_events/employee_event_change_dept_types/': typeof AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute
   '/admin/employee_events/employee_event_direction_types/': typeof AdminEmployee_eventsEmployee_event_direction_typesIndexRoute
   '/admin/employee_events/employee_event_statuses/': typeof AdminEmployee_eventsEmployee_event_statusesIndexRoute
   '/admin/employee_events/employee_event_types/': typeof AdminEmployee_eventsEmployee_event_typesIndexRoute
@@ -1195,10 +1185,10 @@ export interface FileRoutesById {
   '/developer/security/permissions_overview/': typeof DeveloperSecurityPermissions_overviewIndexRoute
   '/developer/security/user_group_types/': typeof DeveloperSecurityUser_group_typesIndexRoute
   '/developer/security/user_groups/': typeof DeveloperSecurityUser_groupsIndexRoute
+  '/employees/$employeeId/career_history/': typeof EmployeesEmployeeIdCareer_historyIndexRoute
   '/employees/$employeeId/departments/': typeof EmployeesEmployeeIdDepartmentsIndexRoute
-  '/employees/$employeeId/dr_history/': typeof EmployeesEmployeeIdDr_historyIndexRoute
   '/employees/$employeeId/events/': typeof EmployeesEmployeeIdEventsIndexRoute
-  '/employees/$employeeId/job_history/': typeof EmployeesEmployeeIdJob_historyIndexRoute
+  '/employees/$employeeId/responsibility_history/': typeof EmployeesEmployeeIdResponsibility_historyIndexRoute
   '/employees/$employeeId/summary/': typeof EmployeesEmployeeIdSummaryIndexRoute
   '/employees/$employeeId/talent_audit/': typeof EmployeesEmployeeIdTalent_auditIndexRoute
   '/employees/$employeeId/trainings/': typeof EmployeesEmployeeIdTrainingsIndexRoute
@@ -1289,7 +1279,6 @@ export interface FileRouteTypes {
     | '/admin/departments_group/department_types/'
     | '/admin/departments_group/regions'
     | '/admin/departments_group/structure'
-    | '/admin/employee_events/employee_event_change_dept_types'
     | '/admin/employee_events/employee_event_direction_types'
     | '/admin/employee_events/employee_event_statuses'
     | '/admin/employee_events/employee_event_types'
@@ -1325,10 +1314,10 @@ export interface FileRouteTypes {
     | '/developer/security/permissions_overview'
     | '/developer/security/user_group_types'
     | '/developer/security/user_groups'
+    | '/employees/$employeeId/career_history'
     | '/employees/$employeeId/departments'
-    | '/employees/$employeeId/dr_history'
     | '/employees/$employeeId/events'
-    | '/employees/$employeeId/job_history'
+    | '/employees/$employeeId/responsibility_history'
     | '/employees/$employeeId/summary'
     | '/employees/$employeeId/talent_audit'
     | '/employees/$employeeId/trainings'
@@ -1396,7 +1385,6 @@ export interface FileRouteTypes {
     | '/admin/departments_group/department_types'
     | '/admin/departments_group/regions'
     | '/admin/departments_group/structure'
-    | '/admin/employee_events/employee_event_change_dept_types'
     | '/admin/employee_events/employee_event_direction_types'
     | '/admin/employee_events/employee_event_statuses'
     | '/admin/employee_events/employee_event_types'
@@ -1432,10 +1420,10 @@ export interface FileRouteTypes {
     | '/developer/security/permissions_overview'
     | '/developer/security/user_group_types'
     | '/developer/security/user_groups'
+    | '/employees/$employeeId/career_history'
     | '/employees/$employeeId/departments'
-    | '/employees/$employeeId/dr_history'
     | '/employees/$employeeId/events'
-    | '/employees/$employeeId/job_history'
+    | '/employees/$employeeId/responsibility_history'
     | '/employees/$employeeId/summary'
     | '/employees/$employeeId/talent_audit'
     | '/employees/$employeeId/trainings'
@@ -1524,7 +1512,6 @@ export interface FileRouteTypes {
     | '/admin/departments_group/department_types/'
     | '/admin/departments_group/regions/'
     | '/admin/departments_group/structure/'
-    | '/admin/employee_events/employee_event_change_dept_types/'
     | '/admin/employee_events/employee_event_direction_types/'
     | '/admin/employee_events/employee_event_statuses/'
     | '/admin/employee_events/employee_event_types/'
@@ -1560,10 +1547,10 @@ export interface FileRouteTypes {
     | '/developer/security/permissions_overview/'
     | '/developer/security/user_group_types/'
     | '/developer/security/user_groups/'
+    | '/employees/$employeeId/career_history/'
     | '/employees/$employeeId/departments/'
-    | '/employees/$employeeId/dr_history/'
     | '/employees/$employeeId/events/'
-    | '/employees/$employeeId/job_history/'
+    | '/employees/$employeeId/responsibility_history/'
     | '/employees/$employeeId/summary/'
     | '/employees/$employeeId/talent_audit/'
     | '/employees/$employeeId/trainings/'
@@ -1625,7 +1612,6 @@ export interface RootRouteChildren {
   People_reviewSessionIdIndexRoute: typeof People_reviewSessionIdIndexRoute
   PlanningSessionIdIndexRoute: typeof PlanningSessionIdIndexRoute
   People_reviewSessionIdEmployeeEmployeeIdRoute: typeof People_reviewSessionIdEmployeeEmployeeIdRoute
-  AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute: typeof AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute
   AdminEmployee_eventsEmployee_event_direction_typesIndexRoute: typeof AdminEmployee_eventsEmployee_event_direction_typesIndexRoute
   AdminEmployee_eventsEmployee_event_statusesIndexRoute: typeof AdminEmployee_eventsEmployee_event_statusesIndexRoute
   AdminEmployee_eventsEmployee_event_typesIndexRoute: typeof AdminEmployee_eventsEmployee_event_typesIndexRoute
@@ -2081,11 +2067,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmployeesEmployeeIdSummaryIndexRouteImport
       parentRoute: typeof EmployeesEmployeeIdRouteRoute
     }
-    '/employees/$employeeId/job_history/': {
-      id: '/employees/$employeeId/job_history/'
-      path: '/job_history'
-      fullPath: '/employees/$employeeId/job_history'
-      preLoaderRoute: typeof EmployeesEmployeeIdJob_historyIndexRouteImport
+    '/employees/$employeeId/responsibility_history/': {
+      id: '/employees/$employeeId/responsibility_history/'
+      path: '/responsibility_history'
+      fullPath: '/employees/$employeeId/responsibility_history'
+      preLoaderRoute: typeof EmployeesEmployeeIdResponsibility_historyIndexRouteImport
       parentRoute: typeof EmployeesEmployeeIdRouteRoute
     }
     '/employees/$employeeId/events/': {
@@ -2095,18 +2081,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmployeesEmployeeIdEventsIndexRouteImport
       parentRoute: typeof EmployeesEmployeeIdRouteRoute
     }
-    '/employees/$employeeId/dr_history/': {
-      id: '/employees/$employeeId/dr_history/'
-      path: '/dr_history'
-      fullPath: '/employees/$employeeId/dr_history'
-      preLoaderRoute: typeof EmployeesEmployeeIdDr_historyIndexRouteImport
-      parentRoute: typeof EmployeesEmployeeIdRouteRoute
-    }
     '/employees/$employeeId/departments/': {
       id: '/employees/$employeeId/departments/'
       path: '/departments'
       fullPath: '/employees/$employeeId/departments'
       preLoaderRoute: typeof EmployeesEmployeeIdDepartmentsIndexRouteImport
+      parentRoute: typeof EmployeesEmployeeIdRouteRoute
+    }
+    '/employees/$employeeId/career_history/': {
+      id: '/employees/$employeeId/career_history/'
+      path: '/career_history'
+      fullPath: '/employees/$employeeId/career_history'
+      preLoaderRoute: typeof EmployeesEmployeeIdCareer_historyIndexRouteImport
       parentRoute: typeof EmployeesEmployeeIdRouteRoute
     }
     '/developer/security/user_groups/': {
@@ -2352,13 +2338,6 @@ declare module '@tanstack/react-router' {
       path: '/admin/employee_events/employee_event_direction_types'
       fullPath: '/admin/employee_events/employee_event_direction_types'
       preLoaderRoute: typeof AdminEmployee_eventsEmployee_event_direction_typesIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/employee_events/employee_event_change_dept_types/': {
-      id: '/admin/employee_events/employee_event_change_dept_types/'
-      path: '/admin/employee_events/employee_event_change_dept_types'
-      fullPath: '/admin/employee_events/employee_event_change_dept_types'
-      preLoaderRoute: typeof AdminEmployee_eventsEmployee_event_change_dept_typesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/departments_group/structure/': {
@@ -2937,10 +2916,10 @@ const DeveloperSecurityRouteRouteWithChildren =
 interface EmployeesEmployeeIdRouteRouteChildren {
   EmployeesEmployeeIdEditRoute: typeof EmployeesEmployeeIdEditRoute
   EmployeesEmployeeIdIndexRoute: typeof EmployeesEmployeeIdIndexRoute
+  EmployeesEmployeeIdCareer_historyIndexRoute: typeof EmployeesEmployeeIdCareer_historyIndexRoute
   EmployeesEmployeeIdDepartmentsIndexRoute: typeof EmployeesEmployeeIdDepartmentsIndexRoute
-  EmployeesEmployeeIdDr_historyIndexRoute: typeof EmployeesEmployeeIdDr_historyIndexRoute
   EmployeesEmployeeIdEventsIndexRoute: typeof EmployeesEmployeeIdEventsIndexRoute
-  EmployeesEmployeeIdJob_historyIndexRoute: typeof EmployeesEmployeeIdJob_historyIndexRoute
+  EmployeesEmployeeIdResponsibility_historyIndexRoute: typeof EmployeesEmployeeIdResponsibility_historyIndexRoute
   EmployeesEmployeeIdSummaryIndexRoute: typeof EmployeesEmployeeIdSummaryIndexRoute
   EmployeesEmployeeIdTalent_auditIndexRoute: typeof EmployeesEmployeeIdTalent_auditIndexRoute
   EmployeesEmployeeIdTrainingsIndexRoute: typeof EmployeesEmployeeIdTrainingsIndexRoute
@@ -2950,13 +2929,13 @@ const EmployeesEmployeeIdRouteRouteChildren: EmployeesEmployeeIdRouteRouteChildr
   {
     EmployeesEmployeeIdEditRoute: EmployeesEmployeeIdEditRoute,
     EmployeesEmployeeIdIndexRoute: EmployeesEmployeeIdIndexRoute,
+    EmployeesEmployeeIdCareer_historyIndexRoute:
+      EmployeesEmployeeIdCareer_historyIndexRoute,
     EmployeesEmployeeIdDepartmentsIndexRoute:
       EmployeesEmployeeIdDepartmentsIndexRoute,
-    EmployeesEmployeeIdDr_historyIndexRoute:
-      EmployeesEmployeeIdDr_historyIndexRoute,
     EmployeesEmployeeIdEventsIndexRoute: EmployeesEmployeeIdEventsIndexRoute,
-    EmployeesEmployeeIdJob_historyIndexRoute:
-      EmployeesEmployeeIdJob_historyIndexRoute,
+    EmployeesEmployeeIdResponsibility_historyIndexRoute:
+      EmployeesEmployeeIdResponsibility_historyIndexRoute,
     EmployeesEmployeeIdSummaryIndexRoute: EmployeesEmployeeIdSummaryIndexRoute,
     EmployeesEmployeeIdTalent_auditIndexRoute:
       EmployeesEmployeeIdTalent_auditIndexRoute,
@@ -3014,8 +2993,6 @@ const rootRouteChildren: RootRouteChildren = {
   PlanningSessionIdIndexRoute: PlanningSessionIdIndexRoute,
   People_reviewSessionIdEmployeeEmployeeIdRoute:
     People_reviewSessionIdEmployeeEmployeeIdRoute,
-  AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute:
-    AdminEmployee_eventsEmployee_event_change_dept_typesIndexRoute,
   AdminEmployee_eventsEmployee_event_direction_typesIndexRoute:
     AdminEmployee_eventsEmployee_event_direction_typesIndexRoute,
   AdminEmployee_eventsEmployee_event_statusesIndexRoute:

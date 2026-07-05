@@ -39,8 +39,8 @@ class FactRow:
     """One audit target-job candidate, flattened for in-memory bucketing.
 
     `qty_months` is used to pick the SINGLE target job per employee (lowest
-    qty_months wins). `main_department_id` is the employee's is_main department
-    instance, from which we walk up the tree to match a plan-row department.
+    qty_months wins). `main_department_id` is the employee's main department,
+    from which we walk up the tree to match a plan-row department.
     """
 
     employee_id: int
@@ -104,7 +104,7 @@ class PlanReportRepository(BaseRepository):
     async def get_fact_rows(self) -> list[FactRow]:
         """Flat dataset of every audit target-job for WORKING employees.
 
-        One row per TalentAuditJob, carrying the employee's is_main department,
+        One row per TalentAuditJob, carrying the employee's main department,
         the target job's job_group, the talent status (resolved via TSPL) and
         the period's qty_months. Bucketing / single-job selection happens in
         the service (pure Python, no extra round-trips).
@@ -122,8 +122,7 @@ class PlanReportRepository(BaseRepository):
             .join(EmployeeStatus, EmployeeStatus.id == Employee.status_id)
             .join(
                 EmployeeDepartment,
-                (EmployeeDepartment.employee_id == Employee.id)
-                & (EmployeeDepartment.is_main.is_(True)),
+                EmployeeDepartment.employee_id == Employee.id,
             )
             .join(Job, Job.id == TalentAuditJob.target_job_id)
             .join(JobJobGroupLink, JobJobGroupLink.job_id == Job.id)

@@ -773,7 +773,7 @@ interface EmployeeHeaderRaw {
     sex: Sex | null;
     marital_status: MaritalStatus | null;
     job: { name: string } | null;
-    main_departments: { name: string }[];
+    main_department: { name: string } | null;
 }
 
 export const fetchEmployeePersonalData = async (
@@ -789,7 +789,7 @@ export const fetchEmployeePersonalData = async (
         sex: d.sex ?? null,
         marital_status: d.marital_status ?? null,
         job_name: d.job?.name ?? null,
-        main_department_name: d.main_departments?.[0]?.name ?? null,
+        main_department_name: d.main_department?.name ?? null,
     };
 };
 

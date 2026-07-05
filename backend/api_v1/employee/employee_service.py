@@ -91,10 +91,10 @@ class EmployeeService(BaseService):
         schema.permissions = resolve_user_permissions(orm_employee)
         schema.permission_sets = resolve_user_permission_sets(orm_employee)
 
-        # Populate main_departments / extra_departments from the already
-        # selectin-loaded relationship; derive each one's top-level org unit.
-        schema.main_departments = [
-            MainDepartmentSchema(
+        # Populate main_department / responsibility_departments from the
+        # selectin-loaded relationships; derive each one's top-level org unit.
+        def _link_schema(link) -> MainDepartmentSchema:
+            return MainDepartmentSchema(
                 id=link.id,
                 department_id=link.department_id,
                 name=(
@@ -109,27 +109,12 @@ class EmployeeService(BaseService):
                     else 0
                 ),
             )
-            for link in orm_employee.departments
-            if link.is_main
-        ]
-        schema.extra_departments = [
-            MainDepartmentSchema(
-                id=link.id,
-                department_id=link.department_id,
-                name=(
-                    link.department.name
-                    if link.department
-                    else f"ID {link.department_id}"
-                ),
-                top_department=resolve_top_org_unit(link.department_id, org_index),
-                department_category_sort_order=(
-                    link.department.department_category.sort_order
-                    if link.department and link.department.department_category
-                    else 0
-                ),
-            )
-            for link in orm_employee.departments
-            if not link.is_main
+
+        main_links = orm_employee.departments or []
+        schema.main_department = _link_schema(main_links[0]) if main_links else None
+        schema.responsibility_departments = [
+            _link_schema(link)
+            for link in (orm_employee.responsibility_departments or [])
         ]
 
         return schema
@@ -344,6 +329,7 @@ class EmployeeService(BaseService):
     # (blocker_key, count_sql) — count_sql counts rows referencing :eid
     _OWNED_BLOCKERS: list[tuple[str, str]] = [
         ("departmentLinks", "SELECT COUNT(*) FROM employee_departments WHERE employee_id = :eid"),
+        ("responsibilityDepartmentLinks", "SELECT COUNT(*) FROM employee_responsibility_departments WHERE employee_id = :eid"),
         ("events", "SELECT COUNT(*) FROM employee_events WHERE employee_id = :eid"),
         ("userGroupLinks", "SELECT COUNT(*) FROM employee_user_group_links WHERE employee_id = :eid"),
         ("personalData", "SELECT COUNT(*) FROM employee_personal_data WHERE employee_id = :eid"),
@@ -372,6 +358,7 @@ class EmployeeService(BaseService):
     DELETE_BLOCKER_LABELS = {
         # OWNED
         "departmentLinks": ("blockerDepartmentLinks", "department links"),
+        "responsibilityDepartmentLinks": ("blockerResponsibilityDepartmentLinks", "responsibility department links"),
         "events": ("blockerEvents", "events"),
         "userGroupLinks": ("blockerUserGroupLinks", "user group memberships"),
         "personalData": ("blockerPersonalData", "personal data"),
@@ -438,6 +425,7 @@ class EmployeeService(BaseService):
             # events + departments (event change rows cascade at the DB)
             "DELETE FROM employee_events WHERE employee_id = :eid",
             "DELETE FROM employee_departments WHERE employee_id = :eid",
+            "DELETE FROM employee_responsibility_departments WHERE employee_id = :eid",
         ]
 
     async def check_delete_blockers(self, employee_id: int) -> dict[str, int]:

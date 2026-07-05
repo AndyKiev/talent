@@ -28,7 +28,7 @@ export function useTrainingStateColumns({ getString }: { getString: GetStringFn 
             valueGetter: (_v, row) => row.main_department_name || '—',
         },
         {
-            // The actual is_main department (leaf where the employee works).
+            // The actual main department (leaf where the employee works).
             field: 'direct_department_name',
             headerName: cfl(getString('department')) || 'Department',
             flex: 1,

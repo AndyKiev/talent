@@ -140,7 +140,6 @@ class EssenceName(str, Enum):
     EMPLOYEE_EVENT_STATUS = "employee_event_status"
     EMPLOYEE_EVENT_DIRECTION_TYPE = "employee_event_direction_type"
     EMPLOYEE_EVENT_TYPE_DIRECTION = "employee_event_type_direction"
-    EMPLOYEE_EVENT_CHANGE_DEPT_TYPE = "employee_event_change_dept_type"
 
     # ── Talent audit ─────────────────────────────────────────────────────────
     TALENT_AUDIT = "talent_audit"

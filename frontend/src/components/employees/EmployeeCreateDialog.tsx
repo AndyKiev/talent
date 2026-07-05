@@ -288,7 +288,7 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
             is_active: data.is_active,
             lang_id: 3, // default; user can change later
             effective_date: data.effective_date,
-            department_id: data.department_id, // exact picked node → is_main on backend
+            department_id: data.department_id, // exact picked node → main department on backend
             job_id: data.job_id,
             description: data.description?.trim() || null,
             talent_jobs,

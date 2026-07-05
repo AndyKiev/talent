@@ -43,6 +43,9 @@ from backend.api_v1.employee.employee_repository import EmployeeRepository
 from backend.api_v1.employee_department.employee_department_repository import (
     EmployeeDepartmentRepository,
 )
+from backend.api_v1.employee_responsibility_department.employee_responsibility_department_repository import (
+    EmployeeResponsibilityDepartmentRepository,
+)
 from backend.api_v1.employee_status.employee_status_repository import (
     EmployeeStatusRepository,
 )
@@ -182,7 +185,7 @@ class EmployeeEventService(BaseService):
             if job_change is not None and job_change.new_job_id is not None:
                 employee.job_id = job_change.new_job_id
 
-            # Main department from MAIN_DEPT_CHANGE -> create is_main link
+            # Main department from MAIN_DEPT_CHANGE -> create the main link
             dept_change = changes_by_code.get("MAIN_DEPT_CHANGE")
             if dept_change is not None and dept_change.new_department_id is not None:
                 dept_repo = EmployeeDepartmentRepository(session=self.session)
@@ -192,7 +195,6 @@ class EmployeeEventService(BaseService):
                         {
                             "employee_id": employee.id,
                             "department_id": dept_change.new_department_id,
-                            "is_main": True,
                         }
                     )
 
@@ -212,16 +214,16 @@ class EmployeeEventService(BaseService):
         if job_change is not None and job_change.new_job_id is not None:
             employee.job_id = job_change.new_job_id
 
-        # MAIN_DEPT_CHANGE -> UPDATE the existing is_main link in place
+        # MAIN_DEPT_CHANGE -> UPDATE the existing main link in place
         # (TRANSFER). Also clear responsibility links, since the responsibility
         # scope belonged to the old position (new HRM reassigns later).
         dept_change = changes_by_code.get("MAIN_DEPT_CHANGE")
         if dept_change is not None and dept_change.new_department_id is not None:
-            # Delete all responsibility (is_main=False) links on transfer.
-            existing = await dept_repo.get_by_employee(employee.id)
-            for link in existing:
-                if not link.is_main:
-                    await dept_repo.delete_by_id(link.id)
+            # Delete all responsibility links on transfer.
+            resp_repo = EmployeeResponsibilityDepartmentRepository(
+                session=self.session
+            )
+            await resp_repo.delete_all_by_employee(employee.id)
 
             existing_main = await dept_repo.get_main_by_employee(employee.id)
             if existing_main is not None:
@@ -232,7 +234,6 @@ class EmployeeEventService(BaseService):
                     {
                         "employee_id": employee.id,
                         "department_id": dept_change.new_department_id,
-                        "is_main": True,
                     }
                 )
 
@@ -274,9 +275,8 @@ class EmployeeEventService(BaseService):
 
     async def _apply_responsibility_depts(self, employee_id: int, resp_change) -> None:
         """
-        Create is_main=False employee_departments rows for each dept_change
-        on a RESPONSIBILITY_DEPTS_CHANGE row. Skips departments the employee
-        is already linked to (idempotent). Does NOT commit — the caller commits.
+        Project the dept_changes of a RESPONSIBILITY_DEPTS_CHANGE row into
+        employee_responsibility_departments (REPLACE semantics).
         """
         if resp_change is None:
             return
@@ -294,23 +294,18 @@ class EmployeeEventService(BaseService):
         if not dept_changes:
             return
 
-        dept_repo = EmployeeDepartmentRepository(session=self.session)
-        existing = await dept_repo.get_by_employee(employee_id)
-
-        # REPLACE semantics: delete all current responsibility (is_main=False)
-        # links, then insert only the ones in this event. Keeps the employee's
+        # REPLACE semantics: delete all current responsibility links, then
+        # insert only the ones in this event. Keeps the employee's
         # responsibility set equal to the latest event's selection.
-        for link in existing:
-            if not link.is_main:
-                await dept_repo.delete_by_id(link.id)
+        resp_repo = EmployeeResponsibilityDepartmentRepository(session=self.session)
+        await resp_repo.delete_all_by_employee(employee_id)
 
         target_dept_ids = {dc.department_id for dc in dept_changes}
         for dept_id in target_dept_ids:
-            await dept_repo.create_from_dict(
+            await resp_repo.create_from_dict(
                 {
                     "employee_id": employee_id,
                     "department_id": dept_id,
-                    "is_main": False,
                 }
             )
 
@@ -1341,17 +1336,19 @@ class EmployeeEventService(BaseService):
         self, employee_id: int, exclude_event_id: Optional[int] = None
     ) -> None:
         """
-        Recompute and write back the employee's live projection — job_id and the
-        is_main department link — by replaying all APPLIED events in
-        effective_date order, ignoring `exclude_event_id` (the one being deleted).
+        Recompute and write back the employee's live projection — job_id, the
+        main department link, and the responsibility-department set — by
+        replaying all APPLIED events in effective_date order, ignoring
+        `exclude_event_id` (the one being deleted).
 
-        Mirrors the job/department writes in _apply_status_transition:
+        Mirrors the writes in _apply_status_transition:
           - job_id := new_job_id of the LAST applied JOB_CHANGE (else None)
           - main department := new_department_id of the LAST applied
-            MAIN_DEPT_CHANGE (else the is_main link is removed entirely)
+            MAIN_DEPT_CHANGE (else the main link is removed entirely)
+          - responsibility set: MAIN_DEPT_CHANGE clears it (transfer),
+            RESPONSIBILITY_DEPTS_CHANGE replaces it with its dept_changes
 
-        Responsibility (is_main=False) links are out of scope (none set yet) and
-        the employee status is intentionally left untouched.
+        The employee status is intentionally left untouched.
         """
         # Drop cached ORM state so re-reads see current rows + fresh selectin loads.
         self.session.expire_all()
@@ -1363,20 +1360,32 @@ class EmployeeEventService(BaseService):
 
         final_job_id: Optional[int] = None
         final_main_dept_id: Optional[int] = None
+        final_resp_dept_ids: set[int] = set()
 
         for ev in events:
             if exclude_event_id is not None and ev.id == exclude_event_id:
                 continue
             if not ev.status or ev.status.name != "applied":
                 continue
-            for change in ev.changes or []:
-                code = change.direction_type.code if change.direction_type else None
-                if code == "JOB_CHANGE" and change.new_job_id is not None:
-                    final_job_id = change.new_job_id
-                elif (
-                    code == "MAIN_DEPT_CHANGE" and change.new_department_id is not None
-                ):
-                    final_main_dept_id = change.new_department_id
+            changes_by_code = {
+                change.direction_type.code: change
+                for change in (ev.changes or [])
+                if change.direction_type
+            }
+            job_change = changes_by_code.get("JOB_CHANGE")
+            if job_change is not None and job_change.new_job_id is not None:
+                final_job_id = job_change.new_job_id
+            # Order mirrors apply: main-dept change first (wipes the
+            # responsibility set), then the responsibility replace.
+            dept_change = changes_by_code.get("MAIN_DEPT_CHANGE")
+            if dept_change is not None and dept_change.new_department_id is not None:
+                final_main_dept_id = dept_change.new_department_id
+                final_resp_dept_ids = set()
+            resp_change = changes_by_code.get("RESPONSIBILITY_DEPTS_CHANGE")
+            if resp_change is not None and resp_change.dept_changes:
+                final_resp_dept_ids = {
+                    dc.department_id for dc in resp_change.dept_changes
+                }
 
         employee = await self._employee_repo.get_by_id(employee_id)
         if not employee:
@@ -1396,11 +1405,21 @@ class EmployeeEventService(BaseService):
                     {
                         "employee_id": employee_id,
                         "department_id": final_main_dept_id,
-                        "is_main": True,
                     }
                 )
         elif existing_main is not None:
             # Nothing left to anchor a main department (e.g. activation removed).
             await dept_repo.delete_by_id(existing_main.id)
+
+        # Responsibility links — rewrite the whole set to match the replay.
+        resp_repo = EmployeeResponsibilityDepartmentRepository(session=self.session)
+        await resp_repo.delete_all_by_employee(employee_id)
+        for dept_id in final_resp_dept_ids:
+            await resp_repo.create_from_dict(
+                {
+                    "employee_id": employee_id,
+                    "department_id": dept_id,
+                }
+            )
 
         await self.session.commit()
