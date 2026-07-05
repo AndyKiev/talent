@@ -14,6 +14,7 @@ from backend.api_v1.training_type.training_type_dependencies import (
 )
 from backend.api_v1.training_type.training_type_service import TrainingTypeService
 from backend.auth.guards import Guard
+from backend.auth.jwt_auth import get_current_active_auth_user
 from backend.api_v1.review_session_employee.people_review_access import (
     PeopleReviewScopedGuard,
 )
@@ -29,7 +30,10 @@ router = APIRouter(
 @router.get(
     "",
     response_model=List[TrainingTypeSchema],
-    dependencies=[Guard(OperationVerb.VIEW, EssenceName.TRAINING_TYPE)],
+    # Auth-only: the training-type catalog (reference data, no employee scope)
+    # is needed to render the people-review Trainings tab, like the other
+    # catalog lookups (statuses / review levels / dimensions / language levels).
+    dependencies=[Depends(get_current_active_auth_user)],
 )
 async def get_training_types(
     service: Annotated[TrainingTypeService, Depends(get_training_type_service)],
