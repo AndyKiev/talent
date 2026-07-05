@@ -14,6 +14,7 @@ import {
     DialogContent,
     DialogContentText,
     DialogTitle,
+    FormControlLabel,
     IconButton,
     Snackbar,
     Stack,
@@ -70,6 +71,7 @@ import { PEOPLE_REVIEW_MY_SCOPES_QK } from '../../utils/queryKeys';
 import { useTheme } from '../theme/ThemeContext';
 import {
     type SummaryOption,
+    type SummarySide,
     type DraggedItem,
     type PendingMove,
     type PendingFlip,
@@ -95,6 +97,7 @@ import { JobInfoPanel } from './evaluation/JobInfoPanel';
 import { TalentStatusPeriodPanel } from './evaluation/TalentStatusPeriodPanel';
 import { useBooleanSetting, useIntegerSetting } from '../../hooks/useAppSetting';
 import { EmployeeDataTabs } from './evaluation/EmployeeDataTabs';
+import { DevelopmentPlanSection } from './evaluation/DevelopmentPlanSection';
 import { DimensionPanel } from './evaluation/DimensionPanel';
 import { useEvaluationAutosave } from './evaluation/useEvaluationAutosave';
 import EmployeeAvatar from '../ui/EmployeeAvatar';
@@ -122,6 +125,9 @@ export function EvaluationPage() {
     const { value: minMissions } = useIntegerSetting('idp_min_missions', 1);
     const { value: maxMissions } = useIntegerSetting('idp_max_missions', 5);
     const { enabled: allowFullCompetenceList } = useBooleanSetting('idp_allow_full_competence_list');
+    // When ON, each review may switch its two competence-summary selects to the
+    // full competence list (gates the per-review switch's visibility below).
+    const { enabled: allowSummaryFullList } = useBooleanSetting('people_review_summary_full_competence_list');
     // When ON, an employee with no current level gets the base level persisted to
     // their record; when OFF the base level is only shown (no DB write).
     const { enabled: persistDefaultLevel } = useBooleanSetting('employee_default_level_persist');
@@ -142,6 +148,11 @@ export function EvaluationPage() {
     // A direct removal of a to-develop competence that is linked to a mission —
     // held back for confirmation because it unlinks that mission (allow-full off).
     const [pendingDevelopRemoval, setPendingDevelopRemoval] = useState<{ key: string; name: string } | null>(null);
+    // Turning the full-list switch OFF re-arms ranked selection, so any picked
+    // competence that no longer fits its side is re-evaluated. The ones that must
+    // leave are held here for a single confirmation (may span both sides).
+    const [pendingSummaryReconcile, setPendingSummaryReconcile] =
+        useState<{ key: string; name: string; side: SummarySide }[] | null>(null);
     const [newFactTexts, setNewFactTexts] = useState<Record<number, string>>({});
     const [newImprovementTexts, setNewImprovementTexts] = useState<Record<number, string>>({});
 
@@ -216,6 +227,7 @@ export function EvaluationPage() {
         localEvals, langSel, employeeFeedback, managerFeedback,
         results, missions, trainings,
         strongOptions, developOptions, strongDrafts, developDrafts,
+        summaryFullCompetenceList,
     } = draft;
 
     // Field setters with the React `useState` dispatch signature so the existing
@@ -241,6 +253,7 @@ export function EvaluationPage() {
     const setDevelopOptions = makeSetter('developOptions');
     const setStrongDrafts = makeSetter('strongDrafts');
     const setDevelopDrafts = makeSetter('developDrafts');
+    const setSummaryFullCompetenceList = makeSetter('summaryFullCompetenceList');
 
     // --- TEMPO album (viewer dialog) ---
     // Lazily fetch the album as a PNG blob URL (axios sends the JWT; a plain src
@@ -663,13 +676,83 @@ export function EvaluationPage() {
     const copyFactToStrong = (key: string, text: string) => appendDraft(setStrongDrafts, key, text);
     const copyImprovementToDevelop = (key: string, text: string) => appendDraft(setDevelopDrafts, key, text);
 
-    // Summary select candidates: top/bottom scored, excluding already-picked ones.
-    const strongCandidates = rankedCompetences(visibleEvals, 'desc')
+    // Effective full-list mode for the summary: the per-review switch, honoured
+    // only while the admin has enabled the global setting. When on, both selects
+    // offer every competence and star re-ratings no longer prune picked ones.
+    const summaryFullListActive = allowSummaryFullList && summaryFullCompetenceList;
+
+    // Summary select candidates, excluding already-picked ones. Default: the
+    // top/bottom scored shortlist; full-list mode: every competence (page order).
+    const strongCandidates = (summaryFullListActive ? visibleEvals : rankedCompetences(visibleEvals, 'desc'))
         .filter(e => !strongOptions.some(o => o.dimension_key === e.dimension_key))
         .map(e => ({ key: e.dimension_key, name: competenceLabel(e.dimension_key) }));
-    const developCandidates = rankedCompetences(visibleEvals, 'asc')
+    const developCandidates = (summaryFullListActive ? visibleEvals : rankedCompetences(visibleEvals, 'asc'))
         .filter(e => !developOptions.some(o => o.dimension_key === e.dimension_key))
         .map(e => ({ key: e.dimension_key, name: competenceLabel(e.dimension_key) }));
+
+    // Picked competences that no longer belong in their summary side by the
+    // current scores (used when leaving full-list mode). A competence sits wrong
+    // when it ranks on the OTHER side and not on its own — mirrors detectCompetenceFlip
+    // but evaluated for every pick at once (and per side, so a both-sides pick is fine).
+    const computeMisplacedSummary = (): { key: string; name: string; side: SummarySide }[] => {
+        const strongKeys = new Set(rankedCompetences(visibleEvals, 'desc').map(e => e.dimension_key));
+        const developKeys = new Set(rankedCompetences(visibleEvals, 'asc').map(e => e.dimension_key));
+        const out: { key: string; name: string; side: SummarySide }[] = [];
+        for (const o of strongOptions) {
+            if (developKeys.has(o.dimension_key) && !strongKeys.has(o.dimension_key)) {
+                out.push({ key: o.dimension_key, name: competenceLabel(o.dimension_key), side: 'strong' });
+            }
+        }
+        for (const o of developOptions) {
+            if (strongKeys.has(o.dimension_key) && !developKeys.has(o.dimension_key)) {
+                out.push({ key: o.dimension_key, name: competenceLabel(o.dimension_key), side: 'develop' });
+            }
+        }
+        return out;
+    };
+
+    // The full-list switch. Turning ON is always safe. Turning OFF re-arms ranked
+    // selection: if any pick is now misplaced, hold the toggle and confirm their
+    // removal first (cancel keeps the switch on so the summary stays consistent).
+    const handleSummaryFullListToggle = (next: boolean) => {
+        if (next) { setSummaryFullCompetenceList(true); return; }
+        const misplaced = computeMisplacedSummary();
+        if (misplaced.length === 0) { setSummaryFullCompetenceList(false); return; }
+        setPendingSummaryReconcile(misplaced);
+    };
+
+    // Confirm leaving full-list mode: drop every misplaced competence from its
+    // side, clearing the matching facts (strong) / improvements (develop) and any
+    // mission link (when missions are restricted to the to-develop shortlist), then
+    // turn the switch off — all in one draft update so the summary is never partial.
+    const confirmSummaryReconcile = () => {
+        if (!pendingSummaryReconcile) return;
+        const strongDrop = new Set(pendingSummaryReconcile.filter(m => m.side === 'strong').map(m => m.key));
+        const developDrop = new Set(pendingSummaryReconcile.filter(m => m.side === 'develop').map(m => m.key));
+        const dropKeys = (rec: Record<string, string>, keys: Set<string>) => {
+            const next = { ...rec };
+            for (const k of keys) delete next[k];
+            return next;
+        };
+        updateEvalDraft(rid, (d) => ({
+            ...d,
+            localEvals: d.localEvals.map(e => {
+                const clearFacts = strongDrop.has(e.dimension_key);
+                const clearImp = developDrop.has(e.dimension_key);
+                if (!clearFacts && !clearImp) return e;
+                return { ...e, facts: clearFacts ? [] : e.facts, improvements: clearImp ? [] : e.improvements };
+            }),
+            strongOptions: d.strongOptions.filter(o => !strongDrop.has(o.dimension_key)),
+            developOptions: d.developOptions.filter(o => !developDrop.has(o.dimension_key)),
+            strongDrafts: dropKeys(d.strongDrafts, strongDrop),
+            developDrafts: dropKeys(d.developDrafts, developDrop),
+            missions: !allowFullCompetenceList
+                ? d.missions.map(m => (m.dimension_key && developDrop.has(m.dimension_key) ? { ...m, dimension_key: null } : m))
+                : d.missions,
+            summaryFullCompetenceList: false,
+        }));
+        setPendingSummaryReconcile(null);
+    };
 
     // Jump the facts section below to the tab of the given competence
     // (used when a competence is selected in the summary above).
@@ -788,6 +871,9 @@ export function EvaluationPage() {
     // facts/comments). Everything else applies immediately.
     const handleCriterionChange = (evalId: number, index: number, value: number | null) => {
         if (value == null) { setCriterion(evalId, index, value); return; }
+        // Full-list mode intentionally keeps every picked competence regardless of
+        // its new ranking, so a re-rating never flips/removes one — apply directly.
+        if (summaryFullListActive) { setCriterion(evalId, index, value); return; }
         const ev = localEvals.find(e => e.id === evalId);
         if (!ev) { setCriterion(evalId, index, value); return; }
         // Evaluate the flip on the hypothetical post-change scores.
@@ -1339,23 +1425,6 @@ export function EvaluationPage() {
                             onNewResultTextChange={setNewResultText}
                             onAddResult={addResult}
                             onRemoveResult={removeResult}
-                            missions={missions}
-                            onUpdateMission={updateMission}
-                            onUpdateMissionKpi={updateMissionKpi}
-                            onAddMission={addMission}
-                            onRemoveMission={removeMission}
-                            onSetMissionCompetence={setMissionCompetence}
-                            newMissionText={newMissionText}
-                            onNewMissionTextChange={setNewMissionText}
-                            newMissionKpi={newMissionKpi}
-                            onNewMissionKpiChange={setNewMissionKpi}
-                            newMissionCompetence={newMissionCompetence}
-                            onNewMissionCompetenceChange={setNewMissionCompetence}
-                            minMissions={minMissions}
-                            maxMissions={maxMissions}
-                            developCompetenceOptions={developCompetenceOptions}
-                            allCompetenceOptions={allCompetenceOptions}
-                            allowFullCompetenceList={allowFullCompetenceList}
                             employeeId={employeeId}
                             trainings={trainings}
                             onTrainingsChange={setTrainings}
@@ -1373,6 +1442,7 @@ export function EvaluationPage() {
                                 >
                                     <Tab label={getString('scoresOverview')} sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12 }} />
                                     <Tab label={getString('competencesSummary')} sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12 }} />
+                                    <Tab label={getString('developmentPlan')} sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12 }} />
                                 </Tabs>
 
                                 <Box sx={{ p: 2.5 }}>
@@ -1382,6 +1452,31 @@ export function EvaluationPage() {
 
                                     {analysisTab === 1 && (
                                         allFilled ? (
+                                          <>
+                                            {/* Per-review full-list switch — shown to the editor (employee /
+                                                oversight manager) only when the admin has allowed it. On: both
+                                                selects offer every competence and re-ratings stop removing picks. */}
+                                            {allowSummaryFullList && showEditing && (
+                                                <Box sx={{ mb: 2 }}>
+                                                    <Tooltip title={getString('summaryUseFullCompetenceListHint')} placement="top">
+                                                        <FormControlLabel
+                                                            sx={{ m: 0 }}
+                                                            control={
+                                                                <Switch
+                                                                    size="small"
+                                                                    checked={summaryFullCompetenceList}
+                                                                    onChange={e => handleSummaryFullListToggle(e.target.checked)}
+                                                                />
+                                                            }
+                                                            label={
+                                                                <Typography fontSize={12} fontWeight={600} color={t.textMuted}>
+                                                                    {getString('summaryUseFullCompetenceList')}
+                                                                </Typography>
+                                                            }
+                                                        />
+                                                    </Tooltip>
+                                                </Box>
+                                            )}
                                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
                                                 <CompetenceSummarySection
                                                     title={getString('strongCompetences')}
@@ -1422,11 +1517,38 @@ export function EvaluationPage() {
                                                     onSelectCompetence={activateCompetenceTab}
                                                 />
                                             </Box>
+                                          </>
                                         ) : (
                                             <Alert severity="info" sx={{ borderRadius: '10px' }}>
                                                 {getString('fillAllCompetencesFirst')}
                                             </Alert>
                                         )
+                                    )}
+
+                                    {/* Development plan — the third analysis tab, right
+                                        after the competence summary it builds on. */}
+                                    {analysisTab === 2 && (
+                                        <DevelopmentPlanSection
+                                            isEditable={showEditing}
+                                            getString={getString}
+                                            missions={missions}
+                                            onUpdateMission={updateMission}
+                                            onUpdateMissionKpi={updateMissionKpi}
+                                            onAddMission={addMission}
+                                            onRemoveMission={removeMission}
+                                            onSetMissionCompetence={setMissionCompetence}
+                                            newMissionText={newMissionText}
+                                            onNewMissionTextChange={setNewMissionText}
+                                            newMissionKpi={newMissionKpi}
+                                            onNewMissionKpiChange={setNewMissionKpi}
+                                            newMissionCompetence={newMissionCompetence}
+                                            onNewMissionCompetenceChange={setNewMissionCompetence}
+                                            minMissions={minMissions}
+                                            maxMissions={maxMissions}
+                                            developCompetenceOptions={developCompetenceOptions}
+                                            allCompetenceOptions={allCompetenceOptions}
+                                            allowFullCompetenceList={allowFullCompetenceList}
+                                        />
                                     )}
                                 </Box>
                             </Box>
@@ -1673,6 +1795,36 @@ export function EvaluationPage() {
                         sx={{ textTransform: 'none' }}
                     >
                         {getString('delete')}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Confirm leaving full-list mode when some picked competences no longer
+                fit their side by the current scores — they are removed (facts/
+                improvements cleared) and only then is the switch turned off. */}
+            <Dialog open={pendingSummaryReconcile != null} onClose={() => setPendingSummaryReconcile(null)} maxWidth="xs" fullWidth>
+                <DialogTitle>{getString('reconcileSummaryTitle')}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText sx={{ mb: 1 }}>{getString('reconcileSummaryBody')}</DialogContentText>
+                    <Stack spacing={0.5} sx={{ mt: 1 }}>
+                        {pendingSummaryReconcile?.map((m) => (
+                            <Typography key={`${m.side}-${m.key}`} fontSize={13} fontWeight={600} sx={{ wordBreak: 'break-word' }}>
+                                • {m.name} — {getString(m.side === 'strong' ? 'strongCompetences' : 'competencesToDevelop')}
+                            </Typography>
+                        ))}
+                    </Stack>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setPendingSummaryReconcile(null)} sx={{ textTransform: 'none' }}>
+                        {getString('cancel')}
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color="error"
+                        onClick={confirmSummaryReconcile}
+                        sx={{ textTransform: 'none' }}
+                    >
+                        {getString('reconcileSummaryConfirm')}
                     </Button>
                 </DialogActions>
             </Dialog>

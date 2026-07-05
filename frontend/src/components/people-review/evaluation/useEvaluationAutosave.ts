@@ -73,6 +73,7 @@ function buildRseFields(d: EvaluationDraft): RSEFieldsUpdate {
         competence_summary: hasSummary
             ? JSON.stringify({ strong: d.strongOptions, develop: d.developOptions })
             : null,
+        summary_full_competence_list: d.summaryFullCompetenceList,
     };
 }
 

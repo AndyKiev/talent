@@ -551,6 +551,7 @@ export function SessionEmployeesPage() {
                                 }}
                                 getOptionLabel={(r) => `${r.employee_code} — ${r.employee_name}`}
                                 isOptionEqualToValue={(o, v) => o.employee_id === v.employee_id}
+                                noOptionsText={getString('noOptions')}
                                 renderInput={(params) => (
                                     <TextField
                                         {...params}

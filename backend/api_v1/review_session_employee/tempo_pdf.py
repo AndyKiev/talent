@@ -267,17 +267,45 @@ def _titled_block(title, body, width_chars, color=INK):
     return _Block(lines, header_lines=_heading_lines(title, color))
 
 
-def _idp_block(title, missions, width_chars):
-    """IDP missions: numbered text + a colored competence tag per mission."""
+def _idp_block(title, missions, width_chars, kpi_label=None):
+    """IDP missions: numbered text + its KPI + a colored competence tag per mission."""
     body = []
     for i, m in enumerate(missions or [], start=1):
         text = m.get("text") if isinstance(m, dict) else str(m)
         for ln in _wrap_lines(f"{i}. {text}", width_chars):
             body.append(_Line(ln, 8))
+        kpi = m.get("kpi") if isinstance(m, dict) else None
+        if kpi:
+            label = f"{kpi_label}: " if kpi_label else "KPI: "
+            for j, ln in enumerate(_wrap_lines(f"{label}{kpi}", width_chars)):
+                body.append(_Line(ln, 7.5, MUTED, indent=0.006))
         name = m.get("name") if isinstance(m, dict) else None
         color = m.get("color") if isinstance(m, dict) else None
         if name:
             body.append(_Line(f"→ {name}", 7.5, color or ACCENT, "bold", indent=0.006))
+    if not body:
+        body.append(_Line("—", 8))
+    return _Block(body, header_lines=_heading_lines(title, ACCENT))
+
+
+def _competence_summary_block(title, items, width_chars):
+    """Strong / to-develop summary: each picked competence as a bold, DB-colored
+    name followed by its comments as bullets (mirrors the HTML album). Named even
+    when it has no comments, so a picked competence is never invisible."""
+    body = []
+    for it in items or []:
+        name = (it.get("name") if isinstance(it, dict) else None) or "—"
+        color = (it.get("color") if isinstance(it, dict) else None) or ACCENT
+        name_lines = _wrap_lines(name, width_chars)
+        for k, ln in enumerate(name_lines):
+            # Keep the competence name glued to its first comment line.
+            body.append(_Line(ln, 8, color, "bold", keep_with_next=True))
+        comments = it.get("comments") if isinstance(it, dict) else None
+        for c in comments or []:
+            if str(c).strip():
+                for ln in _wrap_lines(f"• {c}", width_chars):
+                    body.append(_Line(ln, 7.5, indent=0.006))
+        body.append(_Line("", 4))
     if not body:
         body.append(_Line("—", 8))
     return _Block(body, header_lines=_heading_lines(title, ACCENT))
@@ -610,11 +638,11 @@ def _page1_columns(data: dict) -> list[list[_Block]]:
         [
             _titled_block(L.get("results"), g("results_achievements"), c, INK),
             _titled_block(L.get("not_achieved"), g("not_achieved"), c, INK),
-            _idp_block(L.get("idp"), g("idp_missions") or [], c),
+            _idp_block(L.get("idp"), g("idp_missions") or [], c, L.get("kpi")),
         ],
         [
-            _titled_block(L.get("strengths"), g("strengths"), c, ACCENT),
-            _titled_block(L.get("development"), g("development_directions"), c, ACCENT),
+            _competence_summary_block(L.get("strengths"), g("strengths_items") or [], c),
+            _competence_summary_block(L.get("development"), g("development_items") or [], c),
         ],
         [
             _titled_block(L.get("training"), g("training_done"), c, INK),

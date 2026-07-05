@@ -34,6 +34,7 @@ class ReviewSessionEmployeeFieldsUpdate(BaseModel):
     development_plan: Optional[str] = None
     trainings: Optional[str] = None
     competence_summary: Optional[str] = None
+    summary_full_competence_list: Optional[bool] = None
 
 
 class ReviewSessionEmployee(ReviewSessionEmployeeBase):
@@ -61,6 +62,7 @@ class ReviewSessionEmployee(ReviewSessionEmployeeBase):
     development_plan: Optional[str] = None
     trainings: Optional[str] = None
     competence_summary: Optional[str] = None
+    summary_full_competence_list: bool = False
     evaluations: List[EvaluationInRSE] = []
 
 

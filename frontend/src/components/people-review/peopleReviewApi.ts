@@ -121,6 +121,9 @@ export interface ReviewSessionEmployee {
     development_plan: string | null;
     trainings: string | null;
     competence_summary: string | null;
+    // Per-review opt-in for the full competence list in the summary selects (see
+    // the backend column). Only honoured when the global setting allows it.
+    summary_full_competence_list: boolean;
     evaluations: Evaluation[];
 }
 
@@ -131,6 +134,7 @@ export interface RSEFieldsUpdate {
     development_plan?: string | null;
     trainings?: string | null;
     competence_summary?: string | null;
+    summary_full_competence_list?: boolean;
 }
 
 // --- Review Session API ---

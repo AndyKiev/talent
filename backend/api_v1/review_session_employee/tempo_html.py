@@ -119,6 +119,7 @@ def _prep(data: dict) -> dict:
     return {
         "name": g("full_name") or "—",
         "photo_uri": photo_uri,
+        "kpi_label": L.get("kpi") or "KPI",
         "competence_title": L.get("competence_level", "—"),
         "competences": competences,
         "fields": [(lbl, val) for lbl, val in fields if lbl],
@@ -190,8 +191,11 @@ word-break:break-word;}
 .cmp{margin-bottom:8px;}
 .cmp-name{font-size:12.5px;font-weight:700;margin-bottom:2px;}
 .cmp .body{margin-left:2px;}
-/* An IDP mission: its text plus a colored competence-to-develop tag. */
+/* An IDP mission: its text, its KPI, plus a colored competence-to-develop tag. */
 .mission{margin-bottom:8px;}
+.mkpi{font-size:11.5px;line-height:1.4;margin-top:2px;color:var(--muted);
+white-space:pre-wrap;word-break:break-word;}
+.mkpi b{color:var(--ink);}
 .mtag{display:inline-block;margin-top:3px;font-size:11px;font-weight:700;
 border:1px solid;border-radius:10px;padding:1px 8px;}
 .req{margin-top:8px;}
@@ -261,6 +265,7 @@ _SHEET = """
             {% for m in sec.missions %}
             <div class="mission">
               <div class="body">{{ loop.index }}. {{ m.text }}</div>
+              {% if m.kpi %}<div class="mkpi"><b>{{ s.kpi_label }}:</b> {{ m.kpi }}</div>{% endif %}
               {% if m.name %}<span class="mtag" style="color:{{ m.color }};border-color:{{ m.color }}">{{ m.name }}</span>{% endif %}
             </div>
             {% endfor %}

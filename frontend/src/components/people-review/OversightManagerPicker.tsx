@@ -4,6 +4,7 @@ import {
     Box,
     Button,
     Chip,
+    CircularProgress,
     FormControlLabel,
     IconButton,
     MenuItem,
@@ -171,6 +172,13 @@ export function OversightManagerPicker({ editable, getString, onSuccess, onError
                                         </MenuItem>
                                     ))}
                                 </Select>
+
+                                {busy && (
+                                    <Stack direction="row" alignItems="center" spacing={0.75} sx={{ color: t.textMuted }}>
+                                        <CircularProgress size={14} thickness={5} />
+                                        <Typography fontSize={12}>{getString('saving')}</Typography>
+                                    </Stack>
+                                )}
 
                                 {current && (
                                     <Button

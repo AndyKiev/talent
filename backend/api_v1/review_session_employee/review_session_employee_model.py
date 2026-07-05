@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, List, Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Text, Integer, ForeignKey, UniqueConstraint
+from sqlalchemy import Boolean, String, Text, Integer, ForeignKey, UniqueConstraint
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 
@@ -41,6 +41,14 @@ class ReviewSessionEmployee(IntIdPkMixin, TimestampMixin, Base):
     # Competence summary — JSON {"strong": [...], "develop": [...]}, each item
     # {"dimension_key": str, "comments": [str, ...]}.
     competence_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # Per-review opt-in: when True the two summary selects offer the FULL competence
+    # list (not just the top/bottom ranked) and a star re-rating no longer removes a
+    # picked competence + its facts. Only usable when the global app setting
+    # `people_review_summary_full_competence_list` is on (that gates the switch's
+    # visibility). Default False → the review behaves as before.
+    summary_full_competence_list: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default="false", default=False
+    )
 
     session: Mapped["ReviewSession"] = relationship(
         back_populates="employees",

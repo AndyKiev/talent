@@ -34,6 +34,10 @@ export interface EvaluationDraft {
     developOptions: SummaryOption[];
     strongDrafts: Record<string, string>;
     developDrafts: Record<string, string>;
+    // Persisted per-review switch: when true (and the global setting allows it)
+    // the summary selects offer the full competence list and star re-ratings stop
+    // removing picked competences.
+    summaryFullCompetenceList: boolean;
 }
 
 export interface ProposedDraft {
@@ -59,6 +63,7 @@ export const EMPTY_EVAL_DRAFT: EvaluationDraft = Object.freeze({
     developOptions: [],
     strongDrafts: Object.freeze({}) as Record<string, string>,
     developDrafts: Object.freeze({}) as Record<string, string>,
+    summaryFullCompetenceList: false,
 });
 
 export const EMPTY_PROPOSED_DRAFT: ProposedDraft = Object.freeze({
@@ -145,6 +150,7 @@ export function buildEvaluationDraft(
         developOptions: parseSummarySide(summary.develop),
         strongDrafts: {},
         developDrafts: {},
+        summaryFullCompetenceList: rseDetail.summary_full_competence_list ?? false,
     };
 }
 

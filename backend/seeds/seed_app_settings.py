@@ -57,6 +57,21 @@ APP_SETTINGS = [
         "description_key": "settingIdpAllowFullCompetenceListDesc",
     },
     {
+        # When ON, each review exposes a per-review switch (to the employee and
+        # their oversight manager) that makes the two competence-summary selects
+        # offer the FULL competence list instead of only the top/bottom ranked
+        # ones — and while that switch is on, a star re-rating no longer removes a
+        # picked competence + its facts. When OFF (default) the switch is hidden
+        # and the summary behaves as before (ranked shortlist + flip removal).
+        "key": "people_review_summary_full_competence_list",
+        "value": False,
+        "value_type_key": "boolean",
+        "label_key": "settingPeopleReviewSummaryFullCompetenceList",
+        "description_key": "settingPeopleReviewSummaryFullCompetenceListDesc",
+        # App-only: this gates a per-review switch, not a per-user preference.
+        "user_override_allowed": False,
+    },
+    {
         # When OFF the base level is only DISPLAYED for an employee with no current
         # level; when ON it is persisted to the employee record (and re-read).
         "key": "employee_default_level_persist",

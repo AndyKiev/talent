@@ -850,6 +850,7 @@ class ReviewSessionEmployeeService(BaseService):
             "strengths": "strongCompetences",
             "development": "competencesToDevelop",
             "idp": "developmentPlan",
+            "kpi": "missionKpi",
             "training": "requiredTrainings",
             "employee_feedback": "employeeFeedback",
             "manager_feedback": "managerFeedback",
