@@ -1,6 +1,7 @@
 // src/store/authStore.ts
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { queryClient } from "../api/queryClient";
 
 export interface AuthUser {
     id: number;
@@ -37,13 +38,18 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: false,
 
             // Login: store both the short-lived access token and the long-lived
-            // refresh token.
-            setTokens: (accessToken, refreshToken) =>
+            // refresh token. The query cache holds USER-SCOPED data, so a fresh
+            // login (possibly a different person) must start from an empty cache
+            // — otherwise the previous user's data keeps rendering under the new
+            // user's URLs.
+            setTokens: (accessToken, refreshToken) => {
+                queryClient.clear();
                 set({
                     access_token: accessToken,
                     refresh_token: refreshToken,
                     isAuthenticated: true,
-                }),
+                });
+            },
 
             // Silent refresh: replace only the access token (refresh token stays).
             setAccessToken: (accessToken) =>
@@ -52,13 +58,18 @@ export const useAuthStore = create<AuthState>()(
             setUser: (user) =>
                 set({ user, isAuthenticated: true }),
 
-            logout: () =>
+            // Logout: drop the identity AND every cached query — covers the
+            // AppShell sign-out, the /me failure path, and the axios 401
+            // interceptor alike.
+            logout: () => {
+                queryClient.clear();
                 set({
                     access_token: null,
                     refresh_token: null,
                     user: null,
                     isAuthenticated: false,
-                }),
+                });
+            },
         }),
         {
             name: "auth-storage",
