@@ -14,6 +14,9 @@ from backend.api_v1.training_type.training_type_dependencies import (
 )
 from backend.api_v1.training_type.training_type_service import TrainingTypeService
 from backend.auth.guards import Guard
+from backend.api_v1.review_session_employee.people_review_access import (
+    PeopleReviewScopedGuard,
+)
 from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
@@ -37,7 +40,11 @@ async def get_training_types(
 @router.get(
     "/eligible/{employee_id}",
     response_model=List[TrainingTypeSchema],
-    dependencies=[Guard(OperationVerb.VIEW, EssenceName.TRAINING_TYPE)],
+    # Admin VIEW grant OR the employee is within the caller's people-review
+    # scope — the self-reviewer's evaluation page lists their eligible trainings.
+    dependencies=[
+        PeopleReviewScopedGuard(OperationVerb.VIEW, EssenceName.TRAINING_TYPE)
+    ],
 )
 async def get_eligible_training_types(
     employee_id: int,

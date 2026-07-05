@@ -148,6 +148,13 @@ class ReviewSessionEmployeeService(BaseService):
         # roster order (the shared order_position store), not from the RSE row.
         return schema
 
+    async def is_employee_visible(self, employee_id: int) -> bool:
+        """Public predicate: may the current user see this employee's data in
+        people-review (self + active-mode scope)? Used by the people-review
+        access guard so embedded sub-resource reads (trainings, ...) match the
+        review-record visibility the user already has."""
+        return employee_id in await self._visible_employee_ids()
+
     async def _visible_employee_ids(self) -> set[int]:
         """Employee ids the current user may see in people-review (§9).
 

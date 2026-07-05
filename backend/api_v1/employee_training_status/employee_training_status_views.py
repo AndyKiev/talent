@@ -16,6 +16,7 @@ from backend.api_v1.employee_training_status.employee_training_status_service im
     EmployeeTrainingStatusService,
 )
 from backend.auth.guards import Guard
+from backend.auth.jwt_auth import get_current_active_auth_user
 from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
@@ -28,7 +29,10 @@ router = APIRouter(
 @router.get(
     "",
     response_model=List[EmployeeTrainingStatusSchema],
-    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE_TRAINING_STATUS)],
+    # Auth-only, like the other people-review catalog lookups (review levels /
+    # dimensions / language levels): a harmless status enum that the evaluation
+    # page needs to render training-status labels for any authenticated user.
+    dependencies=[Depends(get_current_active_auth_user)],
 )
 async def get_employee_training_statuses(
     service: Annotated[EmployeeTrainingStatusService, Depends(get_employee_training_status_service)],
