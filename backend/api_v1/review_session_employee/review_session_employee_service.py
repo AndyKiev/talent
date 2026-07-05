@@ -985,12 +985,23 @@ class ReviewSessionEmployeeService(BaseService):
         reviewed/closed row in an open session is the user's data to land on."""
         if not self.user:
             return None
+        # NOTE: ReviewSession.status is a plain Python @property (not a hybrid),
+        # so it can NOT be used in a SQL where() — filter on the status key via
+        # the joined lookup table instead.
+        from backend.api_v1.review_session_status.review_session_status_model import (
+            ReviewSessionStatus,
+        )
+
         stmt = (
             select(RSEModel)
             .join(ReviewSession, ReviewSession.id == RSEModel.session_id)
+            .join(
+                ReviewSessionStatus,
+                ReviewSessionStatus.id == ReviewSession.status_id,
+            )
             .where(
                 RSEModel.employee_id == self.user.id,
-                ReviewSession.status == "open",
+                ReviewSessionStatus.key == "open",
             )
             .order_by(ReviewSession.created_at.desc())
             .limit(1)

@@ -24,7 +24,9 @@ def upgrade() -> None:
 
     Employees WITHOUT any authorisation group implicitly inherit this group's
     grants (they are never members) — it appears in the permission matrix as
-    the "regular user" column. Protected so it can't be deleted from the UI.
+    the "regular user" column. NOT protected: protected groups are hidden from
+    every user who isn't in a protected group themselves, which would hide the
+    matrix column.
     """
     op.execute(
         """
@@ -33,7 +35,7 @@ def upgrade() -> None:
                'Baseline permissions for users without any authorisation group '
                '(the permission-matrix "regular user" column). Users are never '
                'members — the grants apply implicitly.',
-               TRUE,
+               FALSE,
                t.id
         FROM user_group_types t
         WHERE t.name = 'authorisation'
