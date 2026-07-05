@@ -13,6 +13,8 @@ export interface EffectiveUserSetting {
     label_key: string | null;
     description_key: string | null;
     value_type_key: string | null;
+    // Option-set name for select-driven settings (e.g. 'menus' for default_menu).
+    options_source: string | null;
     global_value: SettingValue;
     user_value: SettingValue;
     effective_value: SettingValue;

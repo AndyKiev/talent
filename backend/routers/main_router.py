@@ -48,6 +48,7 @@ from backend.api_v1.employee_department.employee_department_views import (
 from backend.api_v1.employee_responsibility_department.employee_responsibility_department_views import (
     router as employee_responsibility_department_router,
 )
+from backend.api_v1.menu.menu_views import router as menu_router
 from backend.api_v1.talent_audit_status.talent_audit_status_views import (
     router as talent_audit_status_router,
 )
@@ -300,6 +301,7 @@ router.include_router(job_router)
 router.include_router(employee_router)
 router.include_router(employee_department_router)
 router.include_router(employee_responsibility_department_router)
+router.include_router(menu_router)
 router.include_router(employee_status_router)
 router.include_router(operation_router)
 router.include_router(user_group_router)

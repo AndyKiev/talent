@@ -21,6 +21,7 @@ __all__ = {
     "TalentPeriod",
     "EmployeeDepartment",
     "EmployeeResponsibilityDepartment",
+    "Menu",
     "TalentAuditStatus",
     "TalentAudit",
     "TalentAuditJobStatus",
@@ -153,6 +154,7 @@ from backend.api_v1.employee_department.employee_department_model import (
 from backend.api_v1.employee_responsibility_department.employee_responsibility_department_model import (
     EmployeeResponsibilityDepartment,
 )
+from backend.api_v1.menu.menu_model import Menu
 from backend.api_v1.talent_audit_status.talent_audit_status_model import (
     TalentAuditStatus,
 )

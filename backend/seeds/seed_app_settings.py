@@ -188,6 +188,19 @@ APP_SETTINGS = [
         "label_key": "settingEmployeePhotosPresentationIndividual",
         "description_key": "settingEmployeePhotosPresentationIndividualDesc",
     },
+    {
+        # The menu (menus table id) users land on after login. App default here;
+        # each user may override it in /settings with any menu THEY can see —
+        # if the chosen menu later disappears from their access, the override
+        # auto-resets. Single-select in the UI (options_source = menus).
+        "key": "default_menu",
+        "value": 1,  # menus.id of 'employees'
+        "value_type_key": "integer",
+        "label_key": "settingDefaultMenu",
+        "description_key": "settingDefaultMenuDesc",
+        "user_overridable": True,
+        "options_source": "menus",
+    },
 ]
 
 

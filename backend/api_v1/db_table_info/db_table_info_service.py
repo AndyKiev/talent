@@ -177,6 +177,7 @@ class DbTableInfoService:
         "talent_statuses": "Статусы талантов",
         "talent_periods": "Периоды оценки талантов",
         "employee_departments": "Основной департамент сотрудника",
+        "menus": "Пункты главного меню",
         "employee_responsibility_departments": "Департаменты ответственности сотрудника",
         "talent_audit_statuses": "Статусы аудита талантов",
         "talent_audits": "Аудиты талантов",

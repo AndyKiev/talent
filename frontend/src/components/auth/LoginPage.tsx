@@ -114,8 +114,9 @@ const LoginPage: FC = () => {
             const { access_token, refresh_token } = await authApi.login(username.trim(), password);
             setTokens(access_token, refresh_token);
 
-            // 2. Navigate to main page (replace so Back doesn't return to login)
-            await navigate({ to: "/employees", replace: true });
+            // 2. Navigate to the root dispatcher, which forwards to the user's
+            //    default menu (replace so Back doesn't return to login).
+            await navigate({ to: "/", replace: true });
         } catch (err: unknown) {
             const message =
                 err instanceof Error

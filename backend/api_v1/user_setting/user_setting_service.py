@@ -57,10 +57,13 @@ class UserSettingService(BaseService):
     @staticmethod
     def _effective_value(setting: AppSetting, override_value: Any) -> Any:
         """The value the user actually gets: their override clamped to [1, global]
-        for integers, else the global default."""
+        for integers, else the global default.
+
+        Options-driven settings (options_source set, e.g. default_menu) store an
+        id picked from a list — the [1, global] quantity clamp does NOT apply."""
         if override_value is None:
             return cast_value(setting.value, setting.value_type_key)
-        if setting.value_type_key == "integer":
+        if setting.value_type_key == "integer" and not setting.options_source:
             try:
                 return max(1, min(int(override_value), int(setting.value)))
             except (TypeError, ValueError):
@@ -98,13 +101,15 @@ class UserSettingService(BaseService):
         for s in settings:
             override = overrides.get(s.id)
             user_value = override.value if override else None
-            is_int = s.value_type_key == "integer"
+            # Options-driven integers hold an id, not a quantity — no range.
+            is_int = s.value_type_key == "integer" and not s.options_source
             result.append(
                 EffectiveUserSetting(
                     key=s.key,
                     label_key=s.label_key,
                     description_key=s.description_key,
                     value_type_key=s.value_type_key,
+                    options_source=s.options_source,
                     global_value=cast_value(s.value, s.value_type_key),
                     user_value=user_value,
                     effective_value=self._effective_value(s, user_value),
@@ -140,8 +145,14 @@ class UserSettingService(BaseService):
         await app_service._validate_value(value, setting.value_type_id)
 
         # Integer floor: a user value must be >= 1 (0/negative rejected). Above
-        # the global cap it is silently clamped down to the cap.
-        if setting.value_type_key == "integer" and value is not None:
+        # the global cap it is silently clamped down to the cap. Options-driven
+        # settings (options_source set, e.g. default_menu) store a picked id —
+        # the quantity clamp does NOT apply.
+        if (
+            setting.value_type_key == "integer"
+            and value is not None
+            and not setting.options_source
+        ):
             if int(value) < 1:
                 raise await self._resolve_domain_error(UserSettingValueBelowMin(1))
             value = min(int(value), int(setting.value))

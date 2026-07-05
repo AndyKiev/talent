@@ -37,6 +37,8 @@ class EffectiveUserSetting(BaseModel):
     label_key: Optional[str] = None
     description_key: Optional[str] = None
     value_type_key: Optional[str] = None
+    # Option-set name for select-driven settings (e.g. 'menus' for default_menu).
+    options_source: Optional[str] = None
     global_value: Optional[Any] = None
     user_value: Optional[Any] = None
     effective_value: Optional[Any] = None

@@ -36,7 +36,7 @@ import AppShell from '../../layout/AppShell';
 import { useTheme } from '../../theme/ThemeContext';
 import useString from '../../../hooks/useString';
 import cfl from '../../../utils/capitalizeFirstLetter';
-import { APP_SETTINGS_QK, SETTING_VALUE_TYPES_QK, APP_SETTING_BY_KEY_QK, EFFECTIVE_SETTINGS_QK, JOB_CATEGORY_QK } from '../../../utils/queryKeys';
+import { APP_SETTINGS_QK, SETTING_VALUE_TYPES_QK, APP_SETTING_BY_KEY_QK, EFFECTIVE_SETTINGS_QK, JOB_CATEGORY_QK, MENUS_ALL_QK } from '../../../utils/queryKeys';
 import {
     fetchAppSettings,
     fetchSettingValueTypes,
@@ -49,6 +49,7 @@ import {
 } from './settingsApi';
 import { fetchJobCategories } from '../../admin/job_categories/jobCategoryApi';
 import { fetchEmployeeStatuses } from '../../employees/employee_events/employeeEventApi';
+import { fetchAllMenus } from '../../layout/menuApi';
 import { snakeToCamel } from '../../../utils/helpers';
 import type { GetStringFn } from '../../../types/getStringFn';
 
@@ -68,6 +69,27 @@ interface ValueEditorProps {
 }
 
 function SettingValueEditor({ typeKey, value, onChange, getString, optionsSource, options }: ValueEditorProps) {
+    // Single-select: an INTEGER value bound to a known option set (e.g. the
+    // default menu — value is the picked row's id).
+    if (optionsSource && typeKey === 'integer') {
+        const current = value === null || value === undefined ? '' : String(value);
+        return (
+            <Select
+                size="small"
+                variant="outlined"
+                value={current}
+                onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
+                renderValue={(selected) =>
+                    options?.find((o) => o.value === String(selected))?.label ?? String(selected)
+                }
+                sx={{ minWidth: 240 }}
+            >
+                {(options ?? []).map((o) => (
+                    <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
+                ))}
+            </Select>
+        );
+    }
     // Multi-select (a JSON list bound to a known option set) takes precedence.
     if (optionsSource) {
         const list = Array.isArray(value) ? (value as string[]) : [];
@@ -349,6 +371,11 @@ export function SettingsPage() {
         queryFn: fetchEmployeeStatuses,
         staleTime: 5 * 60_000,
     });
+    const { data: allMenus = [] } = useQuery({
+        queryKey: MENUS_ALL_QK,
+        queryFn: fetchAllMenus,
+        staleTime: 5 * 60_000,
+    });
     const optionsBySource = useMemo<Record<string, SettingOption[]>>(() => ({
         job_categories: jobCategories.map((c) => ({
             value: c.key,
@@ -359,7 +386,12 @@ export function SettingsPage() {
             // Status names double as translation keys (see EmployeeCardLayout.tsx).
             label: cfl(getString(s.name)) || s.name,
         })),
-    }), [jobCategories, employeeStatuses, getString]);
+        // Single-select (integer): the app-wide default landing menu.
+        menus: allMenus.map((m) => ({
+            value: String(m.id),
+            label: cfl(getString(m.label_key)) || m.key,
+        })),
+    }), [jobCategories, employeeStatuses, allMenus, getString]);
 
     // Multi-story grouping: top-level settings (parent_id null) plus the children
     // hanging under each. A boolean parent renders its children in an accordion

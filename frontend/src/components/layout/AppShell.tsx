@@ -1,6 +1,7 @@
 // src/components/layout/AppShell.tsx
-import { type FC, type ReactNode } from "react";
+import { type FC, type ReactNode, useState } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
     AppBar,
     Box,
@@ -11,10 +12,16 @@ import {
     Chip,
     Tooltip,
     IconButton,
+    Menu,
+    MenuItem as MuiMenuItem,
+    ListItemIcon,
+    ListItemText,
 } from "@mui/material";
 import CodeIcon from '@mui/icons-material/Code';
 import InsightsRounded from '@mui/icons-material/InsightsRounded';
 import SettingsRounded from '@mui/icons-material/SettingsRounded';
+import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
+import MenuRounded from '@mui/icons-material/MenuRounded';
 import { LogoutRounded, PeopleAltRounded, AdminPanelSettingsRounded, RateReviewRounded, SchoolRounded } from "@mui/icons-material";
 import { useTheme } from "../theme/ThemeContext";
 import { useAuthStore } from "../../store/authStore";
@@ -22,9 +29,22 @@ import ThemeSwitch from "../theme/ThemeSwitch";
 import cfl from "../../utils/helpers.ts";
 import useString from "../../hooks/useString.ts";
 import str from "../../strings/str.ts";
-import { canSeeMenu } from "../../config/menuVisibility";
+import { fetchMyMenus, type MenuItem } from "./menuApi";
+import { MENUS_MY_QK } from "../../utils/queryKeys";
 
-// const ADMIN_GROUP = "admin"; // adjust to match your LDAP group name
+// menus.icon (string in the DB) → MUI icon component. Unknown/missing icons
+// fall back to a generic menu glyph.
+const MENU_ICONS: Record<string, ReactNode> = {
+    people: <PeopleAltRounded sx={{ fontSize: 16 }} />,
+    insights: <InsightsRounded sx={{ fontSize: 16 }} />,
+    review: <RateReviewRounded sx={{ fontSize: 16 }} />,
+    school: <SchoolRounded sx={{ fontSize: 16 }} />,
+    adminPanel: <AdminPanelSettingsRounded sx={{ fontSize: 16 }} />,
+    code: <CodeIcon sx={{ fontSize: 16 }} />,
+};
+
+const menuIcon = (icon: string | null): ReactNode =>
+    (icon && MENU_ICONS[icon]) || <MenuRounded sx={{ fontSize: 16 }} />;
 
 interface AppShellProps {
     children: ReactNode;
@@ -37,27 +57,44 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
     const { user, logout } = useAuthStore();
     const routerState = useRouterState();
     const currentPath = routerState.location.pathname;
-    const groups = user?.groups ?? [];
-    // const isAdmin = user?.groups?.some(
-    //     (g) => g.toLowerCase() === ADMIN_GROUP
-    // ) ?? false;
+
+    // Dynamic navigation from the menus table (filtered per-user server-side).
+    const { data: menus = [] } = useQuery({
+        queryKey: MENUS_MY_QK,
+        queryFn: fetchMyMenus,
+        enabled: !!user,
+        staleTime: 5 * 60_000,
+    });
+    const topMenus = menus.filter((m) => m.parent_id === null);
+    const childrenOf = (parentId: number) =>
+        menus.filter((m) => m.parent_id === parentId);
+
+    // Open dropdown state for items that have children.
+    const [submenuAnchor, setSubmenuAnchor] = useState<{
+        parentId: number;
+        anchor: HTMLElement;
+    } | null>(null);
 
     const handleLogout = async () => {
         logout();
         await navigate({ to: "/auth/login" });
     };
 
-    const navBtn = (
-        label: string,
-        path: string,
-        icon: ReactNode
-    ) => {
-        const active = currentPath.startsWith(path);
+    const navBtn = (item: MenuItem) => {
+        const kids = childrenOf(item.id);
+        const active =
+            currentPath.startsWith(item.path) ||
+            kids.some((k) => currentPath.startsWith(k.path));
         return (
             <Button
-                key={path}
-                startIcon={icon}
-                onClick={() => navigate({ to: path as "/" })}
+                key={item.id}
+                startIcon={menuIcon(item.icon)}
+                endIcon={kids.length > 0 ? <ExpandMoreRounded sx={{ fontSize: 16 }} /> : undefined}
+                onClick={(e) =>
+                    kids.length > 0
+                        ? setSubmenuAnchor({ parentId: item.id, anchor: e.currentTarget })
+                        : navigate({ to: item.path as "/" })
+                }
                 sx={{
                     borderRadius: "9px",
                     px: 1.75,
@@ -75,7 +112,7 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
                     transition: "all 0.15s",
                 }}
             >
-                {cfl(getString(label))}
+                {cfl(getString(item.label_key))}
             </Button>
         );
     };
@@ -123,20 +160,29 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
                         </Typography>
                     </Stack>
 
-                    {/* Nav items */}
+                    {/* Nav items — dynamic, from the menus table */}
                     <Stack direction="row" spacing={0.5} flexGrow={1}>
-                        {canSeeMenu("employees", groups) &&
-                            navBtn("employees", "/employees", <PeopleAltRounded sx={{ fontSize: 16 }} />)}
-                        {canSeeMenu("planning", groups) &&
-                            navBtn("planning", "/planning", <InsightsRounded sx={{ fontSize: 16 }} />)}
-                        {canSeeMenu("peopleReview", groups) &&
-                            navBtn("review", "/people_review", <RateReviewRounded sx={{ fontSize: 16 }} />)}
-                        {canSeeMenu("training", groups) &&
-                            navBtn("training", "/training", <SchoolRounded sx={{ fontSize: 16 }} />)}
-                        {canSeeMenu("admin", groups) &&
-                            navBtn("admin", "/admin", <AdminPanelSettingsRounded sx={{ fontSize: 16 }} />)}
-                        {canSeeMenu("developer", groups) &&
-                            navBtn("developer", "/developer", <CodeIcon sx={{ fontSize: 16 }} />)}
+                        {topMenus.map((item) => navBtn(item))}
+                        {/* Sub-menu dropdown for the item that opened it */}
+                        <Menu
+                            open={submenuAnchor != null}
+                            anchorEl={submenuAnchor?.anchor ?? null}
+                            onClose={() => setSubmenuAnchor(null)}
+                        >
+                            {(submenuAnchor ? childrenOf(submenuAnchor.parentId) : []).map((child) => (
+                                <MuiMenuItem
+                                    key={child.id}
+                                    selected={currentPath.startsWith(child.path)}
+                                    onClick={() => {
+                                        setSubmenuAnchor(null);
+                                        navigate({ to: child.path as "/" });
+                                    }}
+                                >
+                                    <ListItemIcon>{menuIcon(child.icon)}</ListItemIcon>
+                                    <ListItemText>{cfl(getString(child.label_key))}</ListItemText>
+                                </MuiMenuItem>
+                            ))}
+                        </Menu>
                         {/* Personal settings — available to ALL users (ungated). */}
                         <Tooltip title={cfl(getString("mySettings"))}>
                             <IconButton
