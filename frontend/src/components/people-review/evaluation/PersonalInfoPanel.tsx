@@ -45,6 +45,8 @@ interface Props {
     // Snackbar callbacks (education / children)
     onSuccess: (message: string) => void;
     onError: (message: string) => void;
+    // Refresh the header source (the RSE detail) after a sex/marital-status save.
+    onSaved: () => Promise<void> | void;
 }
 
 /** Personal-info tab: birth date / age, education, and foreign-language levels. */
@@ -53,7 +55,7 @@ export function PersonalInfoPanel({
     birthDate, employeeAge, showEdit, onEditBirth,
     sex, maritalStatus,
     langLevels, langSel, setLangSel,
-    onSuccess, onError,
+    onSuccess, onError, onSaved,
 }: Props) {
     const { t } = useTheme();
     // Which language is being edited inline; null when none. Mirrors the
@@ -98,6 +100,7 @@ export function PersonalInfoPanel({
                             isEditable={isEditable}
                             getString={getString}
                             onError={onError}
+                            onSaved={onSaved}
                         />
                     )}
                 </Stack>

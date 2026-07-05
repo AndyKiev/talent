@@ -53,9 +53,7 @@ import {
     fetchReviewLevels,
     fetchSessionLevels,
     fetchProposedLevel,
-    fetchEmployeeCurrentLevel,
     setEmployeeCurrentLevel,
-    fetchEmployeePersonalData,
     fetchReviewComments,
     fetchTempoPngUrl,
     downloadTempoPdf,
@@ -340,13 +338,13 @@ export function EvaluationPage() {
         setRefreshing(true);
         try {
             await Promise.all([
+                // rse_detail now also carries the employee header (level +
+                // personal data), so this single refresh covers them.
                 qc.invalidateQueries({ queryKey: ['rse_detail', sid, eid] }),
                 qc.invalidateQueries({ queryKey: ['evaluations', rid] }),
                 qc.invalidateQueries({ queryKey: ['employee_language_profile', employeeId] }),
                 qc.invalidateQueries({ queryKey: ['review_comments', rid] }),
                 qc.invalidateQueries({ queryKey: ['proposed_level', rid] }),
-                qc.invalidateQueries({ queryKey: ['employee_current_level', employeeId] }),
-                qc.invalidateQueries({ queryKey: ['employee_personal_data', employeeId] }),
             ]);
         } finally {
             setRefreshing(false);
@@ -392,18 +390,14 @@ export function EvaluationPage() {
         ? findLevel(proposedLevel.level_id)?.name_key ?? null
         : null;
     const proposedLevelName = proposedLevelKey ? getString(proposedLevelKey) : null;
-    const { data: empLevel } = useQuery({
-        queryKey: ['employee_current_level', employeeId],
-        queryFn: () => fetchEmployeeCurrentLevel(employeeId!),
-        enabled: !!employeeId,
-        staleTime: 30_000,
-    });
 
     // Level "sense": compare the proposed level to the employee's current one by
     // sort_order — a higher rank reads as a proposed increase, equal as a
     // confirmation, lower as a decrease. Null when either side is missing. Kept
     // in lock-step with the backend (_tempo_data) so chip + album + gate agree.
-    const currentLevelId = empLevel?.current_level_id ?? null;
+    // Current level (and the personal-data facts below) come off the
+    // people-review-scoped RSE detail — no admin GET /employees/{id}.
+    const currentLevelId = rseDetail?.current_level_id ?? null;
     // Every employee must have a level: when none is set, fall back to the base
     // level (lowest sort_order). A developer setting decides whether that base is
     // only displayed or actually persisted to the employee record (and re-read).
@@ -442,7 +436,8 @@ export function EvaluationPage() {
     const currentLevelMut = useMutation({
         mutationFn: (levelId: number) => setEmployeeCurrentLevel(employeeId!, levelId),
         onSuccess: async () => {
-            await qc.invalidateQueries({ queryKey: ['employee_current_level', employeeId] });
+            // The header (current level) rides on the RSE detail now.
+            await qc.invalidateQueries({ queryKey: ['rse_detail', sid, eid] });
         },
         onError: (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' }),
     });
@@ -463,12 +458,9 @@ export function EvaluationPage() {
     const [birthDateOpen, setBirthDateOpen] = useState(false);
     const [hireDateOpen, setHireDateOpen] = useState(false);
     const [jobAssignedOpen, setJobAssignedOpen] = useState(false);
-    const { data: personalData } = useQuery({
-        queryKey: ['employee_personal_data', employeeId],
-        queryFn: () => fetchEmployeePersonalData(employeeId!),
-        enabled: !!employeeId,
-        staleTime: 30_000,
-    });
+    // Personal-data facts (birth/hire/job-assigned dates, sex, marital status,
+    // job & department name) travel on the RSE detail — no GET /employees/{id}.
+    const personalData = rseDetail;
     const employeeAge = personalData?.birth_date
         ? dayjs().diff(dayjs(personalData.birth_date), 'year')
         : null;
@@ -1302,6 +1294,7 @@ export function EvaluationPage() {
                                     setLangSel={setLangSel}
                                     onSuccess={(message) => setSnackbar({ open: true, message, severity: 'success' })}
                                     onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
+                                    onSaved={() => qc.invalidateQueries({ queryKey: ['rse_detail', sid, eid] })}
                                 />
                             }
                             jobInfo={
@@ -1548,6 +1541,7 @@ export function EvaluationPage() {
                         labelKey="birthDate"
                         getString={getString}
                         onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
+                        onSaved={() => qc.invalidateQueries({ queryKey: ['rse_detail', sid, eid] })}
                     />
                     <EmployeeDateDialog
                         open={hireDateOpen}
@@ -1559,6 +1553,7 @@ export function EvaluationPage() {
                         labelKey="hireDate"
                         getString={getString}
                         onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
+                        onSaved={() => qc.invalidateQueries({ queryKey: ['rse_detail', sid, eid] })}
                     />
                     <EmployeeDateDialog
                         open={jobAssignedOpen}
@@ -1570,6 +1565,7 @@ export function EvaluationPage() {
                         labelKey="jobAssignedDate"
                         getString={getString}
                         onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
+                        onSaved={() => qc.invalidateQueries({ queryKey: ['rse_detail', sid, eid] })}
                     />
                 </>
             )}

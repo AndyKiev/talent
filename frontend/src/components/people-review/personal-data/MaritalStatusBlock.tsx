@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import {
     Button,
     Dialog,
@@ -36,6 +36,7 @@ export default function MaritalStatusBlock({
     isEditable,
     getString,
     onError,
+    onSaved,
 }: {
     employeeId: number;
     sex: Sex | null;
@@ -43,9 +44,11 @@ export default function MaritalStatusBlock({
     isEditable: boolean;
     getString: GetStringFn;
     onError?: (message: string) => void;
+    // Called after a successful save so the parent can refresh its source (the
+    // personal-data facts live on the people-review RSE detail).
+    onSaved?: () => Promise<void> | void;
 }) {
     const { t } = useTheme();
-    const qc = useQueryClient();
     const [open, setOpen] = useState(false);
     const [draftSex, setDraftSex] = useState<Sex | ''>('');
     const [draftMarital, setDraftMarital] = useState<MaritalStatus | ''>('');
@@ -65,7 +68,7 @@ export default function MaritalStatusBlock({
                 marital_status: draftMarital || null,
             }),
         onSuccess: async () => {
-            await qc.invalidateQueries({ queryKey: ['employee_personal_data', employeeId] });
+            await onSaved?.();
             setOpen(false);
         },
         onError: (err: Error) => onError?.(err.message),

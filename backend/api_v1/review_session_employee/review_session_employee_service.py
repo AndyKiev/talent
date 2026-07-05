@@ -109,9 +109,25 @@ class ReviewSessionEmployeeService(BaseService):
 
     def _to_schema(self, record) -> RSESchema:
         schema = RSESchema.model_validate(record)
-        if record.employee:
-            schema.employee_name = record.employee.name
-            schema.employee_code = record.employee.code
+        emp = record.employee
+        if emp:
+            schema.employee_name = emp.name
+            schema.employee_code = emp.code
+            # Header facts (mirror the former GET /employees/{id} the FE used):
+            # all are selectin-loaded 1:1 mirrors / relationships on Employee.
+            schema.current_level_id = emp.current_level_id
+            schema.birth_date = emp.birth_date
+            schema.hire_date = emp.hire_date
+            schema.job_assigned_date = emp.job_assigned_date
+            schema.sex = emp.sex
+            schema.marital_status = emp.marital_status
+            schema.job_name = emp.job.name if emp.job else None
+            main_link = emp.departments[0] if emp.departments else None
+            schema.main_department_name = (
+                main_link.department.name
+                if main_link and main_link.department
+                else None
+            )
         if record.session:
             schema.session_name = record.session.name
             schema.session_status = record.session.status

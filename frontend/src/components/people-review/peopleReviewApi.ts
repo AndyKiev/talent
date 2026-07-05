@@ -104,6 +104,17 @@ export interface ReviewSessionEmployee {
     employee_code: string;
     session_name: string;
     session_status: string;
+    // Employee-header facts, served by the people-review-scoped RSE detail so
+    // the page never calls the admin-guarded GET /employees/{id}. ISO
+    // 'YYYY-MM-DD' on the wire for the dates.
+    current_level_id: number | null;
+    birth_date: string | null;
+    hire_date: string | null;
+    job_assigned_date: string | null;
+    sex: Sex | null;
+    marital_status: MaritalStatus | null;
+    job_name: string | null;
+    main_department_name: string | null;
     employee_feedback: string | null;
     manager_feedback: string | null;
     results_achievements: string | null;
@@ -716,17 +727,14 @@ export const deleteReviewComment = async (
 };
 
 // --- Employee current level ---
+// NOTE: the current level (and the personal-data facts below) are READ off the
+// people-review-scoped RSE detail (fetchRSEBySessionEmployee) — there is no
+// GET /employees/{id} call from people-review, so a self-reviewer without the
+// admin "view employee" grant is never 403'd. Only the WRITE paths below remain.
 export interface EmployeeCurrentLevel {
     id: number;
     current_level_id: number | null;
 }
-
-export const fetchEmployeeCurrentLevel = async (
-    employeeId: number,
-): Promise<EmployeeCurrentLevel> => {
-    const res = await axiosInstance.get<EmployeeCurrentLevel>(`${EMPLOYEE_BASE}/${employeeId}`);
-    return { id: res.data.id, current_level_id: res.data.current_level_id ?? null };
-};
 
 export const setEmployeeCurrentLevel = async (
     employeeId: number,
@@ -764,34 +772,6 @@ export type EmployeePersonalDataPatch = Partial<{
     marital_status: MaritalStatus | null;
 }>;
 
-// Shape of the bits we read off the full employee record.
-interface EmployeeHeaderRaw {
-    id: number;
-    birth_date: string | null;
-    hire_date: string | null;
-    job_assigned_date: string | null;
-    sex: Sex | null;
-    marital_status: MaritalStatus | null;
-    job: { name: string } | null;
-    main_department: { name: string } | null;
-}
-
-export const fetchEmployeePersonalData = async (
-    employeeId: number,
-): Promise<EmployeePersonalData> => {
-    const res = await axiosInstance.get<EmployeeHeaderRaw>(`${EMPLOYEE_BASE}/${employeeId}`);
-    const d = res.data;
-    return {
-        id: d.id,
-        birth_date: d.birth_date ?? null,
-        hire_date: d.hire_date ?? null,
-        job_assigned_date: d.job_assigned_date ?? null,
-        sex: d.sex ?? null,
-        marital_status: d.marital_status ?? null,
-        job_name: d.job?.name ?? null,
-        main_department_name: d.main_department?.name ?? null,
-    };
-};
 
 export const patchEmployeePersonalData = async (
     employeeId: number,

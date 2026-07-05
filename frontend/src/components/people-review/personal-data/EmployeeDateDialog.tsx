@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import {
     Box,
     Button,
@@ -33,6 +33,7 @@ export default function EmployeeDateDialog({
     labelKey,
     getString,
     onError,
+    onSaved,
     minYear,
     maxYear,
 }: {
@@ -45,10 +46,13 @@ export default function EmployeeDateDialog({
     labelKey: string;
     getString: GetStringFn;
     onError?: (message: string) => void;
+    // Called after a successful save so the parent can refresh its source (the
+    // personal-data facts live on the people-review RSE detail, not a dedicated
+    // query here).
+    onSaved?: () => Promise<void> | void;
     minYear?: number;
     maxYear?: number;
 }) {
-    const qc = useQueryClient();
     const { control, handleSubmit, reset, watch } = useForm<FormValues>({
         defaultValues: { date: value },
     });
@@ -62,7 +66,7 @@ export default function EmployeeDateDialog({
         mutationFn: (iso: string | null) =>
             patchEmployeePersonalData(employeeId, { [field]: iso }),
         onSuccess: async () => {
-            await qc.invalidateQueries({ queryKey: ['employee_personal_data', employeeId] });
+            await onSaved?.();
             onClose();
         },
         onError: (err: Error) => onError?.(err.message),

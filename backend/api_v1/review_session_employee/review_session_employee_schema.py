@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List
+from datetime import date
 
 
 class EvaluationInRSE(BaseModel):
@@ -43,6 +44,17 @@ class ReviewSessionEmployee(ReviewSessionEmployeeBase):
     employee_code: str = ""
     session_name: str = ""
     session_status: str = "open"
+    # Employee-header facts, folded in here so the people-review page never has
+    # to hit the admin-guarded GET /employees/{id}. Populated in _to_schema from
+    # the (people-review-scoped) reviewee employee record.
+    current_level_id: Optional[int] = None
+    birth_date: Optional[date] = None
+    hire_date: Optional[date] = None
+    job_assigned_date: Optional[date] = None
+    sex: Optional[str] = None
+    marital_status: Optional[str] = None
+    job_name: Optional[str] = None
+    main_department_name: Optional[str] = None
     employee_feedback: Optional[str] = None
     manager_feedback: Optional[str] = None
     results_achievements: Optional[str] = None
