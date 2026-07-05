@@ -102,6 +102,7 @@ import { useEvaluationAutosave } from './evaluation/useEvaluationAutosave';
 import EmployeeAvatar from '../ui/EmployeeAvatar';
 import BusyBackdrop from '../ui/BusyBackdrop';
 import { OversightManagerPicker } from './OversightManagerPicker';
+import { useOnlyMeMode } from './useOnlyMeMode';
 
 export function EvaluationPage() {
     const { sessionId: sessionIdParam, employeeId: employeeIdParam } = useParams({ strict: false }) as { sessionId: string; employeeId: string };
@@ -112,6 +113,8 @@ export function EvaluationPage() {
     const { t } = useTheme();
     const getString = useString({ str });
     const myEmployeeId = useAuthStore((s) => s.user?.id) ?? null;
+    // 'Only me' users must not navigate back to the session via breadcrumbs.
+    const onlyMeMode = useOnlyMeMode();
     // Developer setting: when on, the talent status/period can be edited from
     // inside people-review (otherwise it's read-only here). Display is unaffected.
     const { enabled: canEditTalentStatus } = useBooleanSetting('people_review_edit_talent_status');
@@ -989,15 +992,23 @@ export function EvaluationPage() {
                         <Typography variant="body2" color="text.secondary">{getString('peopleReview')}</Typography>
                     </Link>
                     {rseDetail && (
-                        <Link
-                            to="/people_review/$sessionId"
-                            params={{ sessionId: String(rseDetail.session_id) }}
-                            style={{ textDecoration: 'none', color: 'inherit' }}
-                        >
+                        // 'Only me' users aren't supposed to see the session
+                        // itself — their crumb is plain text, not a link.
+                        onlyMeMode ? (
                             <Typography variant="body2" color="text.secondary">
                                 {rseDetail.session_name || `Session #${rseDetail.session_id}`}
                             </Typography>
-                        </Link>
+                        ) : (
+                            <Link
+                                to="/people_review/$sessionId"
+                                params={{ sessionId: String(rseDetail.session_id) }}
+                                style={{ textDecoration: 'none', color: 'inherit' }}
+                            >
+                                <Typography variant="body2" color="text.secondary">
+                                    {rseDetail.session_name || `Session #${rseDetail.session_id}`}
+                                </Typography>
+                            </Link>
+                        )
                     )}
                     <Typography variant="body2" color="text.primary" fontWeight={600}>
                         {rseDetail?.employee_name ?? `#${rid}`}

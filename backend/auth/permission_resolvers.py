@@ -13,7 +13,22 @@ traversal over selectin-loaded relationships.
 """
 
 
-def resolve_user_permissions(user_orm) -> frozenset[tuple[str, str]]:
+# The seeded baseline group for employees WITHOUT any authorisation group.
+# Such users are never members of it — its grants are inherited implicitly,
+# which gives the permission matrix a manageable "regular user" column.
+REGULAR_GROUP_NAME = "regular"
+
+
+def has_authorisation_group(user_orm) -> bool:
+    """True if the employee belongs to at least one 'authorisation' group."""
+    for eugl in user_orm.user_groups:
+        ug = eugl.user_group
+        if ug and ug.user_group_type and ug.user_group_type.name == "authorisation":
+            return True
+    return False
+
+
+def resolve_user_permissions(user_orm, fallback_group=None) -> frozenset[tuple[str, str]]:
     """
     Build the full (verb, essence) permission set for an Employee ORM instance.
 
@@ -22,7 +37,13 @@ def resolve_user_permissions(user_orm) -> frozenset[tuple[str, str]]:
           .user_group                           → UserGroup
             .user_group_type.name == 'authorisation'   (filter)
             .permissions                        → frozenset[tuple[str, str]]
+
+    ``fallback_group``: the seeded 'regular' UserGroup — used ONLY when the
+    employee has no authorisation group at all (the "regular user" baseline).
     """
+    if fallback_group is not None and not has_authorisation_group(user_orm):
+        return frozenset(fallback_group.permissions)
+
     perms: set[tuple[str, str]] = set()
 
     for eugl in user_orm.user_groups:
@@ -36,7 +57,9 @@ def resolve_user_permissions(user_orm) -> frozenset[tuple[str, str]]:
     return frozenset(perms)
 
 
-def resolve_user_permission_sets(user_orm) -> frozenset[tuple[str, frozenset[str]]]:
+def resolve_user_permission_sets(
+    user_orm, fallback_group=None
+) -> frozenset[tuple[str, frozenset[str]]]:
     """
     Build the full (verb, {essence, ...}) permission-set for an Employee ORM instance.
 
@@ -49,7 +72,13 @@ def resolve_user_permission_sets(user_orm) -> frozenset[tuple[str, frozenset[str
           .user_group                               → UserGroup
             .user_group_type.name == 'authorisation'        (filter)
             .permission_sets                        → frozenset[tuple[str, frozenset[str]]]
+
+    ``fallback_group``: the seeded 'regular' UserGroup — used ONLY when the
+    employee has no authorisation group at all (the "regular user" baseline).
     """
+    if fallback_group is not None and not has_authorisation_group(user_orm):
+        return frozenset(fallback_group.permission_sets)
+
     perms: set[tuple[str, frozenset[str]]] = set()
 
     for eugl in user_orm.user_groups:

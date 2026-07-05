@@ -21,10 +21,9 @@ import {
 } from '../../utils/queryKeys';
 import { useAuthStore } from '../../store/authStore';
 import useString from '../../hooks/useString';
-
-// Membership in any of these groups keeps a user on the management page even
+// Membership in any of MGMT_GROUPS keeps a user on the management page even
 // without a supervision role (case-insensitive match against AuthUser.groups).
-const MGMT_GROUPS = ['admin', 'hrm', 'hrs', 'dev'];
+import { MGMT_GROUPS } from './useOnlyMeMode';
 
 function Centered({ children }: { children: React.ReactNode }) {
     return (

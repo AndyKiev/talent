@@ -25,6 +25,8 @@ from backend.api_v1.base.errors import DomainError
 from backend.auth.permission_resolvers import (
     resolve_user_permissions,
     resolve_user_permission_sets,
+    has_authorisation_group,
+    REGULAR_GROUP_NAME,
 )
 from sqlalchemy import select, func, or_
 from backend.api_v1.employee.employee_errors import EmployeeHasReferencesError
@@ -50,6 +52,26 @@ class EmployeeService(BaseService):
     # Internal helpers
     # ------------------------------------------------------------------
 
+    async def _get_regular_fallback_group(self, orm_employee):
+        """The seeded 'regular' UserGroup — the implicit permission baseline for
+        employees WITHOUT any authorisation group. Returns None for employees
+        that do have one (no extra query in the common case), or when the
+        seeded group is missing."""
+        if has_authorisation_group(orm_employee):
+            return None
+        from backend.api_v1.user_group.user_group_model import UserGroup
+        from backend.api_v1.user_group_type.user_group_type_model import UserGroupType
+
+        stmt = (
+            select(UserGroup)
+            .join(UserGroupType, UserGroupType.id == UserGroup.user_group_type_id)
+            .where(
+                UserGroup.name == REGULAR_GROUP_NAME,
+                UserGroupType.name == "authorisation",
+            )
+        )
+        return await self.repository.session.scalar(stmt)
+
     async def _get_org_index(self) -> DepartmentIndex:
         """Flat department index (id -> (parent_id, name, category_key)) used to
         resolve each department's top-level org unit. Built once per request and
@@ -71,10 +93,13 @@ class EmployeeService(BaseService):
         profile via _to_schema.
         """
         operations = await self.repository.get_user_operations(orm_employee.id)
+        fallback_group = await self._get_regular_fallback_group(orm_employee)
         schema = EmployeeSchema.model_validate(orm_employee)
         schema.operations = operations
-        schema.permissions = resolve_user_permissions(orm_employee)
-        schema.permission_sets = resolve_user_permission_sets(orm_employee)
+        schema.permissions = resolve_user_permissions(orm_employee, fallback_group)
+        schema.permission_sets = resolve_user_permission_sets(
+            orm_employee, fallback_group
+        )
         return schema
 
     async def _to_schema(
@@ -85,11 +110,14 @@ class EmployeeService(BaseService):
             org_index = await self._get_org_index()
 
         operations = await self.repository.get_user_operations(orm_employee.id)
+        fallback_group = await self._get_regular_fallback_group(orm_employee)
         schema = EmployeeSchema.model_validate(orm_employee)
 
         schema.operations = operations
-        schema.permissions = resolve_user_permissions(orm_employee)
-        schema.permission_sets = resolve_user_permission_sets(orm_employee)
+        schema.permissions = resolve_user_permissions(orm_employee, fallback_group)
+        schema.permission_sets = resolve_user_permission_sets(
+            orm_employee, fallback_group
+        )
 
         # Populate main_department / responsibility_departments from the
         # selectin-loaded relationships; derive each one's top-level org unit.
