@@ -22,8 +22,6 @@ from backend.api_v1.employee_events.employee_event.employee_event_dependencies i
 from backend.api_v1.employee_events.employee_event.employee_event_service import (
     EmployeeEventService,
 )
-from backend.auth.jwt_auth import require_operation
-from backend.utils.enums import OperationTypes
 from backend.auth.guards import Guard
 from backend.utils.enums import OperationVerb, EssenceName
 
@@ -111,7 +109,6 @@ async def get_user_by_code(user: EmployeeSchema = Depends(employee_by_code)):
 async def create_user(
     user_in: EmployeeCreate,
     service: Annotated[EmployeeService, Depends(get_employee_service)],
-    # _: EmployeeSchema = Depends(require_operation(OperationTypes.CREATE_USER.value)),
 ):
     return await service.create_user(user_in)
 
