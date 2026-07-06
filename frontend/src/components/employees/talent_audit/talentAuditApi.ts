@@ -27,11 +27,6 @@ export interface TalentAuditCreate {
   status_id: number;
 }
 
-export interface TalentAuditUpdate {
-  status_id?: number;
-  talent_plus?: boolean;
-}
-
 export const fetchTalentAuditByEmployee = async (
   employeeId: number,
 ): Promise<TalentAudit | null> => {
@@ -45,17 +40,6 @@ export const createTalentAudit = async (
 ): Promise<MutationResponse<TalentAudit>> => {
   const res = await axiosInstance.post<MutationResponse<TalentAudit>>(
     `${BASE}/talent_audits`,
-    body,
-  );
-  return res.data;
-};
-
-export const updateTalentAudit = async (
-  id: number,
-  body: TalentAuditUpdate,
-): Promise<MutationResponse<TalentAudit>> => {
-  const res = await axiosInstance.patch<MutationResponse<TalentAudit>>(
-    `${BASE}/talent_audits/${id}`,
     body,
   );
   return res.data;

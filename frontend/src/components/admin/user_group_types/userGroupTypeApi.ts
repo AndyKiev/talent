@@ -32,11 +32,6 @@ export const fetchUserGroupTypes = async (): Promise<UserGroupType[]> => {
     return res.data ?? [];
 };
 
-export const fetchUserGroupType = async (id: number): Promise<UserGroupType> => {
-    const res = await axiosInstance.get<UserGroupType>(`${BASE}/${id}`);
-    return res.data;
-};
-
 export const createUserGroupType = async (
     body: UserGroupTypeCreate,
 ): Promise<MutationResponse<UserGroupType>> => {

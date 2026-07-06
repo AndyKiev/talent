@@ -61,7 +61,6 @@ export interface ChangeSessionFilters {
 // ── API calls ─────────────────────────────────────────────────────────────────
 
 const SESSIONS = `${BASE_URL}/audit/change_sessions`;
-const LOGS = `${BASE_URL}/audit/change_logs`;
 
 export const fetchChangeSessions = async (
     filters: ChangeSessionFilters = {},
@@ -74,11 +73,6 @@ export const fetchChangeSessions = async (
     return res.data ?? [];
 };
 
-export const fetchChangeSession = async (id: number): Promise<ChangeSession> => {
-    const res = await axiosInstance.get<ChangeSession>(`${SESSIONS}/${id}`);
-    return res.data;
-};
-
 // All change_log rows for one run (chronological). The page nests children
 // under their parent via parent_id.
 export const fetchChangeSessionLogs = async (
@@ -88,24 +82,3 @@ export const fetchChangeSessionLogs = async (
     return res.data ?? [];
 };
 
-// Flexible log query (e.g. one entity's history).
-export interface ChangeLogFilters {
-    change_session_id?: number | null;
-    essence_key?: string | null;
-    entity_id?: number | null;
-    parent_id?: number | null;
-    action?: ChangeAction | null;
-}
-
-export const fetchChangeLogs = async (
-    filters: ChangeLogFilters = {},
-): Promise<ChangeLog[]> => {
-    const params: Record<string, string | number> = {};
-    if (filters.change_session_id != null) params.change_session_id = filters.change_session_id;
-    if (filters.essence_key) params.essence_key = filters.essence_key;
-    if (filters.entity_id != null) params.entity_id = filters.entity_id;
-    if (filters.parent_id != null) params.parent_id = filters.parent_id;
-    if (filters.action) params.action = filters.action;
-    const res = await axiosInstance.get<ChangeLog[]>(LOGS, { params });
-    return res.data ?? [];
-};

@@ -8,7 +8,7 @@ import type { GetStringFn } from '../../../types/getStringFn.ts';
 import type { EmployeeTrainingStatus } from '../employee_training_statuses/employeeTrainingStatusApi.ts';
 
 // Synthetic status emitted by the backend for eligible-but-unassigned employees.
-export const NOT_PLANNED_KEY = 'not_planned';
+const NOT_PLANNED_KEY = 'not_planned';
 
 // Colours for the well-known keys; any user-added status gets a stable,
 // deterministic fallback colour so bars/chips never collide with "no colour".

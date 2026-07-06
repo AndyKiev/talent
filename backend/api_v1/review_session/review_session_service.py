@@ -68,6 +68,9 @@ from backend.api_v1.review_session_level.review_session_level_model import (
 from backend.api_v1.review_session_level_requirement.review_session_level_requirement_model import (
     ReviewSessionLevelRequirement,
 )
+from backend.api_v1.review_session_setting.review_session_setting_model import (
+    ReviewSessionSetting,
+)
 
 
 VALID_TRANSITIONS = {
@@ -75,6 +78,11 @@ VALID_TRANSITIONS = {
     "open": ["closed"],
     "closed": ["open"],  # revert is allowed
 }
+
+# App-setting key prefixes frozen into review_session_settings at open time.
+# Any setting whose key starts with one of these is snapshotted, so a NEW
+# people-review setting gets frozen with no further code changes.
+FROZEN_SETTING_PREFIXES = ("review_session_", "people_review_")
 
 
 class ReviewSessionService(BaseService):
@@ -341,6 +349,33 @@ class ReviewSessionService(BaseService):
                     )
                 )
 
+        # Freeze the app settings that shape people review (key + JSON value) so
+        # the parameters this session was opened under stay inspectable even
+        # after the live settings change. Prefix-matched — see
+        # FROZEN_SETTING_PREFIXES. Read-only snapshot; runtime keeps reading the
+        # live settings.
+        setting_snap_stmt = (
+            select(AppSettingModel)
+            .where(
+                or_(
+                    *[
+                        AppSettingModel.key.like(f"{prefix}%")
+                        for prefix in FROZEN_SETTING_PREFIXES
+                    ]
+                )
+            )
+            .order_by(AppSettingModel.key)
+        )
+        snap_result = await self.session.execute(setting_snap_stmt)
+        for app_setting in snap_result.scalars().all():
+            self.session.add(
+                ReviewSessionSetting(
+                    session_id=rs_id,
+                    key=app_setting.key,
+                    value=app_setting.value,
+                )
+            )
+
         for emp in employees:
             rse = ReviewSessionEmployee(
                 session_id=rs_id,
@@ -552,6 +587,13 @@ class ReviewSessionService(BaseService):
                 )
             )
 
+            # 3c) the session's frozen settings snapshot (no FK from anything else)
+            await self.session.execute(
+                sa_delete(ReviewSessionSetting).where(
+                    ReviewSessionSetting.session_id == rs_id
+                )
+            )
+
             # 3c) the session's frozen levels snapshot (requirements child first).
             # Nothing else FKs into these (employee rows stay on live ids).
             session_level_ids = (
@@ -663,3 +705,108 @@ class ReviewSessionService(BaseService):
             }
             for r in rows
         ]
+
+    async def get_frozen_settings(self, rs_id: int) -> dict:
+        """Flat {key: value} of the app settings frozen into this session.
+
+        Runtime companion of get_frozen_params (which is the dev inspection
+        dump): session pages read THESE instead of the live app settings, so a
+        developer-settings change never re-gates an already-opened session.
+        Empty dict for pending sessions (nothing frozen yet).
+        """
+        result = await self.session.execute(
+            select(ReviewSessionSetting).where(
+                ReviewSessionSetting.session_id == rs_id
+            )
+        )
+        return {s.key: s.value for s in result.scalars().all()}
+
+    async def get_frozen_params(self, rs_id: int) -> dict:
+        """Read-only dump of everything frozen into a session at open time.
+
+        Rows are built by introspecting the ORM columns, so a column added to a
+        frozen table later appears here automatically; a brand-new frozen table
+        only needs one more section below. Values that are translation keys are
+        resolved on the frontend.
+        """
+        from sqlalchemy import inspect as sa_inspect
+        from backend.api_v1.review_session_department.review_session_department_model import (
+            ReviewSessionDepartment,
+        )
+
+        orm_record = await self.get_by_id(rs_id)
+
+        def dump(obj, extra: dict | None = None) -> dict:
+            row = {
+                attr.key: getattr(obj, attr.key)
+                for attr in sa_inspect(obj).mapper.column_attrs
+            }
+            if extra:
+                row.update(extra)
+            return row
+
+        setting_result = await self.session.execute(
+            select(ReviewSessionSetting)
+            .where(ReviewSessionSetting.session_id == rs_id)
+            .order_by(ReviewSessionSetting.key)
+        )
+        dept_result = await self.session.execute(
+            select(ReviewSessionDepartment)
+            .where(ReviewSessionDepartment.session_id == rs_id)
+            .order_by(ReviewSessionDepartment.id)
+        )
+        crit_result = await self.session.execute(
+            select(ReviewSessionCriterion)
+            .where(ReviewSessionCriterion.session_id == rs_id)
+            .order_by(
+                ReviewSessionCriterion.dimension_id,
+                ReviewSessionCriterion.sort_order,
+                ReviewSessionCriterion.id,
+            )
+        )
+        level_result = await self.session.execute(
+            select(ReviewSessionLevel)
+            .where(ReviewSessionLevel.session_id == rs_id)
+            .order_by(ReviewSessionLevel.sort_order, ReviewSessionLevel.id)
+        )
+        levels = level_result.scalars().all()
+
+        sections = [
+            {
+                "table": "review_sessions",
+                "rows": [dump(orm_record, {"status": orm_record.status})],
+            },
+            {
+                "table": "review_session_settings",
+                "rows": [dump(s) for s in setting_result.scalars().all()],
+            },
+            {
+                "table": "review_session_departments",
+                "rows": [
+                    dump(link, {"department_name": link.department.name})
+                    for link in dept_result.scalars().all()
+                ],
+            },
+            {
+                "table": "review_session_criterions",
+                "rows": [
+                    dump(crit, {"dimension_name": crit.dimension.name})
+                    for crit in crit_result.scalars().all()
+                ],
+            },
+            {
+                "table": "review_session_levels",
+                "rows": [dump(lvl) for lvl in levels],
+            },
+            {
+                "table": "review_session_level_requirements",
+                "rows": [
+                    dump(req, {"level_name_key": lvl.name_key})
+                    for lvl in levels
+                    for req in sorted(
+                        lvl.requirements, key=lambda r: (r.sort_order, r.id)
+                    )
+                ],
+            },
+        ]
+        return {"sections": sections}

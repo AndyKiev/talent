@@ -196,16 +196,6 @@ export const revertEmployeeEvent = async (
 const changesBase = (employeeId: number, eventId: number) =>
     `${BASE_URL}/employees/${employeeId}/events/${eventId}/changes`;
 
-export const fetchEventChanges = async (
-    employeeId: number,
-    eventId: number,
-): Promise<EmployeeEventChange[]> => {
-    const res = await axiosInstance.get<EmployeeEventChange[]>(
-        changesBase(employeeId, eventId),
-    );
-    return res.data ?? [];
-};
-
 export const createEventChange = async (
     employeeId: number,
     eventId: number,

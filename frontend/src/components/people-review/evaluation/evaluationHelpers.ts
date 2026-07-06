@@ -3,7 +3,7 @@ import type { GetStringFn } from '../../../types/getStringFn';
 
 // Ukrainian (and similar) need 3 plural forms; English collapses few→many.
 // Returns the key suffix used to pick the right noun-form translation key.
-export function pluralCat(n: number, lang: string): 'One' | 'Few' | 'Many' {
+function pluralCat(n: number, lang: string): 'One' | 'Few' | 'Many' {
     if (lang !== 'ukr') return n === 1 ? 'One' : 'Many';
     const mod10 = n % 10;
     const mod100 = n % 100;
@@ -24,7 +24,7 @@ export function formatYearsMonths(iso: string, getString: GetStringFn, lang: str
     return parts.join(' ');
 }
 
-export const DIMENSION_COLORS: Record<string, string> = {
+const DIMENSION_COLORS: Record<string, string> = {
     TRANSFORMATION:   '#1565C0',
     ETHICS:           '#2E7D32',
     MOBILIZATION:     '#E65100',

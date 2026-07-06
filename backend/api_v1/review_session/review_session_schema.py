@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional
+from typing import Any, Dict, List, Optional
 import datetime
 
 
@@ -32,3 +32,14 @@ class ReviewSession(ReviewSessionBase):
 
 class ReviewSessionDetail(ReviewSession):
     pass
+
+
+class FrozenParamsSection(BaseModel):
+    """One frozen table's rows, dumped generically (column name -> value)."""
+
+    table: str
+    rows: List[Dict[str, Any]] = []
+
+
+class FrozenParamsResponse(BaseModel):
+    sections: List[FrozenParamsSection] = []

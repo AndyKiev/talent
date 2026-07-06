@@ -77,7 +77,7 @@ export const EMPTY_PROPOSED_DRAFT: ProposedDraft = Object.freeze({
 // ---------------------------------------------------------------------------
 
 /** Build the editable competence rows from the loaded evaluations. */
-export function buildLocalEvals(evaluations: Evaluation[], getString: GetStringFn): LocalEval[] {
+function buildLocalEvals(evaluations: Evaluation[], getString: GetStringFn): LocalEval[] {
     // Render in the admin-defined order (sort_order, id tiebreak) — same order
     // used everywhere else this dimension appears.
     const ordered = [...evaluations].sort(

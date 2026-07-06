@@ -46,8 +46,6 @@ export const SETTING_VALUE_TYPES_QK = ['setting_value_types'] as const;
 // Prefix for every per-key setting query — invalidate it to refresh all
 // useAppSetting/useBooleanSetting consumers after a setting changes.
 export const APP_SETTING_BY_KEY_QK = ['app_setting_by_key'] as const;
-export const appSettingByKeyQK = (key: string) =>
-    [...APP_SETTING_BY_KEY_QK, key] as const;
 // Per-user resolved settings (one shared query the consumer hooks read).
 // Invalidate after editing a global setting OR a personal override.
 export const EFFECTIVE_SETTINGS_QK = ['app_settings_effective_for_me'] as const;

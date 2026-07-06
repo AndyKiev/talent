@@ -40,11 +40,6 @@ export const deleteOESL = async (id: number): Promise<void> => {
 
 // ── User group grant / revoke (set grain) ──────────────────────────────────────
 
-export const fetchGroupPermissionSets = async (userGroupId: number): Promise<OESL[]> => {
-  const res = await axiosInstance.get<OESL[]>(`${BASE}/user_groups/${userGroupId}`);
-  return res.data ?? [];
-};
-
 export const grantPermissionSetToGroup = async (userGroupId: number, oeslId: number): Promise<void> => {
   await axiosInstance.post(`${BASE}/user_groups/${userGroupId}/${oeslId}`);
 };

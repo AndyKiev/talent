@@ -8,7 +8,7 @@ import dayjs from 'dayjs';
 // DD.MM.YYYY (this widget shows numeric month/day so it stays locale-free).
 
 export const ITEM_H = 36;          // px per row
-export const VISIBLE = 5;          // rows shown (odd, so one is centered)
+const VISIBLE = 5;          // rows shown (odd, so one is centered)
 export const PAD = ((VISIBLE - 1) / 2) * ITEM_H;
 
 export interface WheelItem {

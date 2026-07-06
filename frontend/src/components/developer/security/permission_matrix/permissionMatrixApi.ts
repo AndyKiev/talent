@@ -49,37 +49,6 @@ export interface MatrixExport {
   groups: MatrixGroupGrants[];
 }
 
-// -- apply (dry-run preview / commit) -----------------------------------------
-
-export interface MatrixGroupDiff {
-  user_group_id: number;
-  user_group_name: string | null;
-  added: number[];
-  removed: number[];
-  unchanged: number;
-  unknown_ids: number[];
-  applied: boolean;
-}
-
-export interface MatrixApplyResult {
-  dry_run: boolean;
-  groups: MatrixGroupDiff[];
-  total_added: number;
-  total_removed: number;
-  total_unknown: number;
-}
-
-export const applyPermissionMatrix = async (
-  payload: { groups: MatrixGroupGrants[] },
-  dryRun: boolean,
-): Promise<MatrixApplyResult> => {
-  const res = await axiosInstance.post<MatrixApplyResult>(
-    `${BASE}/apply_matrix?dry_run=${dryRun}`,
-    payload,
-  );
-  return res.data;
-};
-
 // -- sync from code (materialise guard permissions into permissions_set) -------
 
 export interface PermissionSyncSkip {

@@ -95,16 +95,6 @@ export const updateDbTable = async (
     return res.data;
 };
 
-export const reorderDbTables = async (
-    orderedTableNames: string[],
-): Promise<MutationResponse<TableDataFile>> => {
-    const res = await axiosInstance.post<MutationResponse<TableDataFile>>(
-        `${BASE}/reorder`,
-        { ordered_table_names: orderedTableNames },
-    );
-    return res.data;
-};
-
 export const fetchTableRows = async (
     tableName: string,
     limit: number = 30,

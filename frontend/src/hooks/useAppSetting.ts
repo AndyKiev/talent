@@ -28,7 +28,7 @@ function useEffectiveSettings() {
  * an error), so callers can fall back to a default. Used e.g. to gate the
  * people-review talent-status editing on `people_review_edit_talent_status`.
  */
-export function useAppSetting(key: string) {
+function useAppSetting(key: string) {
     const { data, isLoading, isError } = useEffectiveSettings();
     const setting: AppSetting | undefined = useMemo(
         () => data?.find((s) => s.key === key),

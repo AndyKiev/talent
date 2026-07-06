@@ -10,7 +10,6 @@ const EVAL_BASE = `${BASE_URL}/review_evaluations`;
 const LANG_LEVEL_BASE = `${BASE_URL}/language_levels`;
 const ELP_BASE = `${BASE_URL}/employee_language_profiles`;
 const LEVEL_BASE = `${BASE_URL}/review_levels`;
-const LEVEL_REQ_BASE = `${BASE_URL}/review_level_requirements`;
 const EMPLOYEE_BASE = `${BASE_URL}/employees`;
 
 // --- Review Session Status types ---
@@ -177,6 +176,31 @@ export const deleteReviewSession = async (id: number): Promise<MutationResponse<
     return res.data;
 };
 
+// --- Frozen session parameters (dev-only read-only inspection) ---
+// Generic dump: each section = one frozen table, each row = column name -> value.
+// New columns/tables added to the freeze on the backend appear here automatically.
+export interface FrozenParamsSection {
+    table: string;
+    rows: Record<string, unknown>[];
+}
+
+export interface FrozenParamsResponse {
+    sections: FrozenParamsSection[];
+}
+
+export const fetchSessionFrozenParams = async (id: number): Promise<FrozenParamsResponse> => {
+    const res = await axiosInstance.get<FrozenParamsResponse>(`${RS_BASE}/${id}/frozen_params`);
+    return res.data;
+};
+
+// Runtime companion of frozen_params: flat {key: value} of the app settings
+// frozen into a session at open time. Session pages gate on these instead of
+// the live settings (see useFrozenBooleanSetting).
+export const fetchSessionFrozenSettings = async (id: number): Promise<Record<string, unknown>> => {
+    const res = await axiosInstance.get<Record<string, unknown>>(`${RS_BASE}/${id}/frozen_settings`);
+    return res.data ?? {};
+};
+
 // --- People-review scope (active mode / role switching) ---
 const PR_SCOPE_BASE = `${BASE_URL}/people_review`;
 
@@ -309,11 +333,6 @@ export const addSessionEmployee = async (
         RSE_BASE,
         { session_id: sessionId, employee_id: employeeId },
     );
-    return res.data;
-};
-
-export const fetchRSEDetail = async (rseId: number): Promise<ReviewSessionEmployee> => {
-    const res = await axiosInstance.get<ReviewSessionEmployee>(`${RSE_BASE}/${rseId}`);
     return res.data;
 };
 
@@ -611,16 +630,6 @@ export const fetchSessionLevels = async (rseId: number): Promise<ReviewLevelLite
     const res = await axiosInstance.get<ReviewLevelLite[]>(
         `${RSE_BASE}/${rseId}/available_levels`,
     );
-    return res.data ?? [];
-};
-
-export const fetchLevelRequirements = async (
-    levelId: number,
-    activeOnly = true,
-): Promise<ReviewLevelRequirementLite[]> => {
-    const res = await axiosInstance.get<ReviewLevelRequirementLite[]>(LEVEL_REQ_BASE, {
-        params: { level_id: levelId, ...(activeOnly ? { is_active: true } : {}) },
-    });
     return res.data ?? [];
 };
 

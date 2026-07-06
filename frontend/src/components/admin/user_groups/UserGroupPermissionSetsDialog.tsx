@@ -23,7 +23,7 @@ import type { GetStringFn } from '../../../types/getStringFn';
 import cfl from '../../../utils/helpers.ts';
 import {OESL_QK} from "../../../utils/queryKeys.ts";
 
-export const USER_GROUP_QK = ['user_groups'];
+const USER_GROUP_QK = ['user_groups'];
 
 /** Readable label for a set-grain permission, e.g. 'delete · {talent_period, talent_status}' */
 function oeslLabel(oesl: OESL): string {

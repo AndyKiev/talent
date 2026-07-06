@@ -55,7 +55,7 @@ const MOCK_COMPANY_STATUSES = [
 ];
 
 // ─── Query key — shared with CRUD so no extra network request if already cached
-export const ACTIVE_PAIRS_QK = ["talent_status_period_links", "active-pairs", true] as const;
+const ACTIVE_PAIRS_QK = ["talent_status_period_links", "active-pairs", true] as const;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type TabId = 0 | 1 | 2; // 0=org, 1=talent, 2=contact

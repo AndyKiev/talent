@@ -67,6 +67,7 @@ __all__ = {
     "ReviewSession",
     "ReviewSessionStatus",
     "ReviewSessionCriterion",
+    "ReviewSessionSetting",
     "ReviewSessionLevel",
     "ReviewSessionLevelRequirement",
     "ReviewSessionEmployee",
@@ -279,6 +280,9 @@ from backend.api_v1.review_session_status.review_session_status_model import (
 )
 from backend.api_v1.review_session_criterion.review_session_criterion_model import (
     ReviewSessionCriterion,
+)
+from backend.api_v1.review_session_setting.review_session_setting_model import (
+    ReviewSessionSetting,
 )
 from backend.api_v1.review_session_level.review_session_level_model import (
     ReviewSessionLevel,

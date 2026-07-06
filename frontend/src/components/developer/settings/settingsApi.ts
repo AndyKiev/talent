@@ -64,11 +64,6 @@ export const fetchAppSettings = async (): Promise<AppSetting[]> => {
     return res.data ?? [];
 };
 
-export const fetchAppSettingByKey = async (key: string): Promise<AppSetting> => {
-    const res = await axiosInstance.get<AppSetting>(`${SETTINGS_BASE}/by_key/${key}`);
-    return res.data;
-};
-
 // Same shape as fetchAppSettings, but each value is resolved for the current
 // user (their override if overridable & set & clamped, else the global value).
 // This is what the consumer hooks read so per-user settings take effect.

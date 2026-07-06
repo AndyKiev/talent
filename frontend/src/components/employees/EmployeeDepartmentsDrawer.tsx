@@ -61,9 +61,9 @@ import str from '../../strings/str';
 import cfl from '../../utils/helpers.ts';
 import { formatToUkrDate } from '../../utils/dateFormatter';
 
-export const DEPT_QK = (employeeId: number) =>
+const DEPT_QK = (employeeId: number) =>
     ['employee_departments', employeeId] as const;
-export const RESP_DEPT_QK = (employeeId: number) =>
+const RESP_DEPT_QK = (employeeId: number) =>
     ['employee_responsibility_departments', employeeId] as const;
 
 interface Props {

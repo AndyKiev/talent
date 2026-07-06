@@ -44,24 +44,10 @@ export interface Employee {
     responsibility_departments: MainDepartment[];
 }
 
-export interface EmployeeCreate {
-    code: string;
-    name: string;
-    email?: string | null;
-    is_active: boolean;
-    job_id: number;
-    lang_id: number;
-}
-
 export interface EmployeeUpdate {
     name?: string;
     email?: string | null;
     is_active?: boolean;
-}
-
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
 }
 
 // ── Employee CRUD ─────────────────────────────────────────────────────────────
@@ -73,11 +59,6 @@ export const fetchEmployees = async (): Promise<Employee[]> => {
 
 export const fetchEmployeeById = async (id: number): Promise<Employee> => {
     const res = await axiosInstance.get<Employee>(`${BASE}/${id}`);
-    return res.data;
-};
-
-export const createEmployee = async (body: EmployeeCreate): Promise<Employee> => {
-    const res = await axiosInstance.post<Employee>(BASE, body);
     return res.data;
 };
 

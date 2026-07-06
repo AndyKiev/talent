@@ -177,15 +177,6 @@ export interface TrainingTypeJobLink {
   training_type_name: string | null;
 }
 
-export const fetchTrainingTypesRecommendingJob = async (
-  jobId: number,
-): Promise<TrainingTypeJobLink[]> => {
-  const res = await axiosInstance.get<TrainingTypeJobLink[]>(
-    `${TRAINING_TYPE_JOB_LINKS_BASE}/job/${jobId}`,
-  );
-  return res.data ?? [];
-};
-
 export const setTrainingTypesForJob = async ({
   jobId,
   trainingTypeIds,

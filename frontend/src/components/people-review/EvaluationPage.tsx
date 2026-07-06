@@ -96,6 +96,7 @@ import { PersonalInfoPanel } from './evaluation/PersonalInfoPanel';
 import { JobInfoPanel } from './evaluation/JobInfoPanel';
 import { TalentStatusPeriodPanel } from './evaluation/TalentStatusPeriodPanel';
 import { useBooleanSetting, useIntegerSetting } from '../../hooks/useAppSetting';
+import { useFrozenBooleanSetting } from './useFrozenSetting';
 import { EmployeeDataTabs } from './evaluation/EmployeeDataTabs';
 import { DevelopmentPlanSection } from './evaluation/DevelopmentPlanSection';
 import { DimensionPanel } from './evaluation/DimensionPanel';
@@ -118,7 +119,9 @@ export function EvaluationPage() {
     const onlyMeMode = useOnlyMeMode();
     // Developer setting: when on, the talent status/period can be edited from
     // inside people-review (otherwise it's read-only here). Display is unaffected.
-    const { enabled: canEditTalentStatus } = useBooleanSetting('people_review_edit_talent_status');
+    // Read from the SESSION-FROZEN snapshot, not the live setting — a settings
+    // change after open must not re-gate this session.
+    const { enabled: canEditTalentStatus } = useFrozenBooleanSetting(sid, 'people_review_edit_talent_status');
     // Developer settings for the individual development plan: how many missions
     // must / may be saved, and whether the user may link a mission to ANY
     // competence (vs. only the competences picked in the "to develop" summary).
@@ -127,7 +130,8 @@ export function EvaluationPage() {
     const { enabled: allowFullCompetenceList } = useBooleanSetting('idp_allow_full_competence_list');
     // When ON, each review may switch its two competence-summary selects to the
     // full competence list (gates the per-review switch's visibility below).
-    const { enabled: allowSummaryFullList } = useBooleanSetting('people_review_summary_full_competence_list');
+    // Session-frozen, same as canEditTalentStatus above.
+    const { enabled: allowSummaryFullList } = useFrozenBooleanSetting(sid, 'people_review_summary_full_competence_list');
     // When ON, an employee with no current level gets the base level persisted to
     // their record; when OFF the base level is only shown (no DB write).
     const { enabled: persistDefaultLevel } = useBooleanSetting('employee_default_level_persist');

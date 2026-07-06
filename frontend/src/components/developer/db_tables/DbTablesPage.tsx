@@ -50,7 +50,6 @@ import {
     saveColumnPrefs,
     updateDbTable,
     updateTableRow,
-    type ColumnInfo,
     type ColumnPref,
     type DbTableInfo,
     type TableRowsResponse,
@@ -121,7 +120,7 @@ export function DbTablesPage() {
     const descBufferRef = useRef<Record<string, string>>({});
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [backupConfirmOpen, setBackupConfirmOpen] = useState(false);
-    const widthSaveRef = useRef<ReturnType<typeof setTimeout>>();
+    const widthSaveRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
     // CRUD mode per expanded table
     const [crudTables, setCrudTables] = useState<Set<string>>(new Set());
@@ -131,7 +130,7 @@ export function DbTablesPage() {
     // Multi-search
     const [filterText, setFilterText] = useState('');
     const [debouncedFilter, setDebouncedFilter] = useState('');
-    const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const handleFilterChange = useCallback((val: string) => {
         setFilterText(val);
         clearTimeout(debounceRef.current);

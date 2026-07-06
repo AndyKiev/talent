@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, status, Query
-from typing import Annotated, Optional, List, Any
+from typing import Annotated, Optional, List, Any, Dict
 
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.review_session.review_session_schema import (
     ReviewSession as ReviewSessionSchema,
     ReviewSessionCreate,
     ReviewSessionUpdate,
+    FrozenParamsResponse,
 )
 from backend.api_v1.review_session.review_session_dependencies import (
     get_review_session_service,
@@ -104,6 +105,28 @@ async def get_session_analytics(
     service: Annotated[ReviewSessionService, Depends(get_review_session_service)],
 ):
     return await service.get_analytics(review_session_id)
+
+
+@router.get(
+    "/{review_session_id}/frozen_settings",
+    response_model=Dict[str, Any],
+)
+async def get_review_session_frozen_settings(
+    review_session_id: int,
+    service: Annotated[ReviewSessionService, Depends(get_review_session_service)],
+):
+    return await service.get_frozen_settings(review_session_id)
+
+
+@router.get(
+    "/{review_session_id}/frozen_params",
+    response_model=FrozenParamsResponse,
+)
+async def get_review_session_frozen_params(
+    review_session_id: int,
+    service: Annotated[ReviewSessionService, Depends(get_review_session_service)],
+):
+    return await service.get_frozen_params(review_session_id)
 
 
 @router.delete("/{review_session_id}", status_code=status.HTTP_200_OK)

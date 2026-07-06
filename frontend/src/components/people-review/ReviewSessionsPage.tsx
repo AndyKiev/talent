@@ -32,7 +32,9 @@ import PeopleIcon from '@mui/icons-material/People';
 import ReplayIcon from '@mui/icons-material/Replay';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
+import TuneIcon from '@mui/icons-material/Tune';
 import { SessionAnalyticsDialog } from './SessionAnalyticsDialog';
+import { SessionParamsDialog } from './SessionParamsDialog';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -48,7 +50,6 @@ import {
     revertReviewSession,
     deleteReviewSession,
     type ReviewSession,
-    type ReviewSessionStatus,
     type ReviewSessionCreate,
     type MutationResponse,
 } from './peopleReviewApi';
@@ -124,13 +125,14 @@ export function ReviewSessionsPage() {
     });
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
     const [analyticsSession, setAnalyticsSession] = useState<ReviewSession | null>(null);
+    const [paramsSession, setParamsSession] = useState<ReviewSession | null>(null);
     const [renameTarget, setRenameTarget] = useState<ReviewSession | null>(null);
     const [renameName, setRenameName] = useState('');
     const [deleteTarget, setDeleteTarget] = useState<ReviewSession | null>(null);
     const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
     // Department filter feature flag
-    const { enabled: deptFilterEnabled, isLoading: deptSettingLoading } =
+    const { enabled: deptFilterEnabled } =
         useBooleanSetting('review_session_filter_by_department');
 
     // Department selector state
@@ -319,7 +321,8 @@ export function ReviewSessionsPage() {
         {
             field: 'actions',
             headerName: getString('actions'),
-            width: 260,
+            // Devs get two extra icons (frozen params + delete).
+            width: isDeveloper ? 300 : 260,
             sortable: false,
             renderCell: (params) => {
                 const row = params.row;
@@ -394,16 +397,27 @@ export function ReviewSessionsPage() {
                             </>
                         )}
                         {isDeveloper && (
-                            <Tooltip title={getString('deleteSessionTooltip')}>
-                                <IconButton
-                                    size="small"
-                                    color="error"
-                                    onClick={() => setDeleteTarget(row)}
-                                    disabled={deleteMut.isPending}
-                                >
-                                    <DeleteIcon fontSize="small" />
-                                </IconButton>
-                            </Tooltip>
+                            <>
+                                <Tooltip title={getString('sessionParamsTooltip')}>
+                                    <IconButton
+                                        size="small"
+                                        onClick={() => setParamsSession(row)}
+                                        sx={{ color: '#546E7A' }}
+                                    >
+                                        <TuneIcon fontSize="small" />
+                                    </IconButton>
+                                </Tooltip>
+                                <Tooltip title={getString('deleteSessionTooltip')}>
+                                    <IconButton
+                                        size="small"
+                                        color="error"
+                                        onClick={() => setDeleteTarget(row)}
+                                        disabled={deleteMut.isPending}
+                                    >
+                                        <DeleteIcon fontSize="small" />
+                                    </IconButton>
+                                </Tooltip>
+                            </>
                         )}
                     </Stack>
                 );
@@ -563,7 +577,7 @@ export function ReviewSessionsPage() {
                                                 <InputLabel>
                                                     {getString('departmentCategory') || 'Department category'}
                                                 </InputLabel>
-                                                <Select
+                                                <Select<number | ''>
                                                     variant="outlined"
                                                     value={selectedCategoryId ?? ''}
                                                     label={getString('departmentCategory') || 'Department category'}
@@ -588,7 +602,7 @@ export function ReviewSessionsPage() {
                                                     <InputLabel>
                                                         {getString('department') || 'Department'}
                                                     </InputLabel>
-                                                    <Select
+                                                    <Select<number | ''>
                                                         variant="outlined"
                                                         value={selectedDeptId ?? ''}
                                                         label={getString('department') || 'Department'}
@@ -700,6 +714,16 @@ export function ReviewSessionsPage() {
                     sessionName={analyticsSession.name}
                     open={!!analyticsSession}
                     onClose={() => setAnalyticsSession(null)}
+                />
+            )}
+
+            {/* Frozen session parameters dialog (dev-only) */}
+            {paramsSession && (
+                <SessionParamsDialog
+                    sessionId={paramsSession.id}
+                    sessionName={paramsSession.name}
+                    open={!!paramsSession}
+                    onClose={() => setParamsSession(null)}
                 />
             )}
         </AppShell>

@@ -20,7 +20,7 @@ import type {TranslationFormData} from "./types.ts";
 import {BulkActionsToolbar} from "./components/BulkActionsToolbar.tsx";
 import {ImportJsonTextDialogOld} from "./components/dialogs/ImportJsonTextDialogOld.tsx";
 
-export const LocaleAdminReduced: React.FC = () => {
+const LocaleAdminReduced: React.FC = () => {
     const tableName = "localeAdmin";
     const selectedRows = useTableStore(state => state.selectedRows);
     const setSelectedRow = useTableStore(state => state.setSelectedRow);

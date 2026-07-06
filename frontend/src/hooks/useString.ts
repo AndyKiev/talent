@@ -20,7 +20,7 @@ interface UseStringParams {
 // Define the return type - accept any value that can be converted to string
 type UseStringReturn = (stringKey: string, variables?: Record<string, unknown>) => string;
 
-export const useString = ({ exrStr, str }: UseStringParams = {}):
+const useString = ({ exrStr, str }: UseStringParams = {}):
     UseStringReturn => {
     // Primitive selectors only: subscribing to the whole store (or the whole
     // user object) re-renders every getString consumer on ANY store change

@@ -47,11 +47,6 @@ export const fetchEmployeesWithGroups = async (): Promise<EmployeeWithGroups[]> 
     return res.data ?? [];
 };
 
-export const fetchGroupsByEmployee = async (employeeId: number): Promise<GroupOfType[]> => {
-    const res = await axiosInstance.get<GroupOfType[]>(`${BASE}/by_employee/${employeeId}`);
-    return res.data ?? [];
-};
-
 export const createEmployeeUserGroupLink = async (
     body: EmployeeUserGroupLinkCreate,
 ): Promise<MutationResponse<EmployeeUserGroupLink>> => {
