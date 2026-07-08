@@ -46,6 +46,10 @@ import {
 } from './employee_events/employeeEventApi';
 import { DepartmentTreePicker } from './DepartmentTreePicker';
 import { TalentTargetJobPicker } from './talent_audit/TalentTargetJobPicker';
+import { EmployeeDuplicatePersonDialog } from './EmployeeDuplicatePersonDialog';
+import { checkPersonName, type PersonNameMatch } from '../admin/persons/personApi';
+import BirthDateWheelPicker from '../people-review/personal-data/BirthDateWheelPicker';
+import { formatDate } from '../../utils/date';
 import type { DepartmentNode } from '../admin/departments/departmentApi';
 import { DATE_FORMAT } from '../../utils/eNums';
 import { useBooleanSetting } from '../../hooks/useAppSetting';
@@ -73,7 +77,11 @@ interface TalentJobDraft extends TalentJobInput {
 
 const schema = z.object({
     code: z.string().min(1, 'codeRequired').max(10, 'codeTooLong'),
-    name: z.string().min(1, 'nameRequired').max(100, 'nameTooLong'),
+    last_name: z.string().min(1, 'fieldRequired').max(64, 'nameTooLong'),
+    first_name: z.string().min(1, 'fieldRequired').max(64, 'nameTooLong'),
+    patronymic: z.string().max(64, 'nameTooLong').optional().or(z.literal('')),
+    sex: z.union([z.literal('male'), z.literal('female'), z.literal('')]),
+    birth_date: z.string().optional().or(z.literal('')),
     email: z.string().max(100).email('invalidEmail').optional().or(z.literal('')),
     is_active: z.boolean(),
     effective_date: z.string().min(1, 'fieldRequired'),
@@ -89,7 +97,15 @@ type FormData = z.infer<typeof schema>;
 
 export interface EmployeeWithActivationPayload {
     code: string;
-    name: string;
+    // Person fields — the backend creates the person and derives the
+    // employee's 'LAST FIRST' name from them.
+    first_name: string;
+    last_name: string;
+    patronymic?: string | null;
+    sex?: 'male' | 'female' | null;
+    birth_date?: string | null;
+    // true = user confirmed the namesake modal (next dedupe number assigned)
+    allow_duplicate?: boolean;
     email?: string | null;
     is_active: boolean;
     lang_id: number;
@@ -131,7 +147,11 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
         resolver: zodResolver(schema),
         defaultValues: {
             code: '',
-            name: '',
+            last_name: '',
+            first_name: '',
+            patronymic: '',
+            sex: '',
+            birth_date: '',
             email: '',
             is_active: true,
             effective_date: dayjs().format('YYYY-MM-DD'),
@@ -161,6 +181,17 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
     const [tJobName, setTJobName] = useState('');
     const [tLinkId, setTLinkId] = useState<number | ''>('');
     const [tLinkLabel, setTLinkLabel] = useState('');
+
+    // ── Namesake pre-check state: payload parked while the user decides ───────
+    const [dupMatches, setDupMatches] = useState<PersonNameMatch[]>([]);
+    const [pendingPayload, setPendingPayload] =
+        useState<EmployeeWithActivationPayload | null>(null);
+    const [checkingName, setCheckingName] = useState(false);
+
+    // ── Birth-date wheel picker (same component as people-review dates) ───────
+    const [birthOpen, setBirthOpen] = useState(false);
+    const [draftBirth, setDraftBirth] = useState<string | null>(null);
+    const birthDate = watch('birth_date');
 
     const resetTalentPicker = () => {
         setTTypeId(null);
@@ -220,6 +251,10 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
             setPickedName('');
             setTalentJobs([]);
             resetTalentPicker();
+            setDupMatches([]);
+            setPendingPayload(null);
+            setBirthOpen(false);
+            setDraftBirth(null);
         }
     }, [open, reset]);
 
@@ -263,7 +298,7 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
         onClose();
     };
 
-    const onSubmit = (data: FormData) => {
+    const onSubmit = async (data: FormData) => {
         // Committed talent jobs + the in-progress pick if it's complete (so a
         // filled-but-not-"+"-added pick is not silently lost on Create).
         let talent_jobs: TalentJobInput[] | undefined;
@@ -281,9 +316,13 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
             talent_jobs = merged.length > 0 ? merged : undefined;
         }
 
-        createMutation.mutate({
+        const payload: EmployeeWithActivationPayload = {
             code: data.code.trim().toUpperCase(),
-            name: data.name.trim(),
+            first_name: data.first_name.trim(),
+            last_name: data.last_name.trim(),
+            patronymic: data.patronymic?.trim() || null,
+            sex: data.sex || null,
+            birth_date: data.birth_date || null,
             email: data.email?.trim() || null,
             is_active: data.is_active,
             lang_id: 3, // default; user can change later
@@ -292,7 +331,38 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
             job_id: data.job_id,
             description: data.description?.trim() || null,
             talent_jobs,
-        });
+        };
+
+        // Namesake pre-check: an existing person with the same (last, first)
+        // opens the confirmation modal instead of submitting right away.
+        setCheckingName(true);
+        try {
+            const { matches } = await checkPersonName(payload.first_name, payload.last_name);
+            if (matches.length > 0) {
+                setDupMatches(matches);
+                setPendingPayload(payload);
+                return;
+            }
+        } catch {
+            // Pre-check failing must not block creation — the backend enforces
+            // the namesake rule anyway (PersonNameExists).
+        } finally {
+            setCheckingName(false);
+        }
+
+        createMutation.mutate(payload);
+    };
+
+    const handleDuplicateConfirm = () => {
+        if (!pendingPayload) return;
+        createMutation.mutate({ ...pendingPayload, allow_duplicate: true });
+        setDupMatches([]);
+        setPendingPayload(null);
+    };
+
+    const handleDuplicateCancel = () => {
+        setDupMatches([]);
+        setPendingPayload(null);
     };
 
     const noJobsForType = pickedTypeId != null && jobsByType.length === 0;
@@ -308,21 +378,23 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
                         </Alert>
                     )}
 
-                    {/* Columns: personal data (left), department + job (middle), and
-                        — when the talent feature is on — talent target jobs (right). */}
+                    {/* Columns: identity | details+activation | department+job, and
+                        — when the talent feature is on — talent target jobs (4th). */}
                     <Box
                         sx={{
                             display: 'grid',
                             gridTemplateColumns: {
                                 xs: '1fr',
-                                md: allowTalent ? '0.7fr 1.2fr 1fr' : '0.8fr 1.4fr',
+                                md: allowTalent
+                                    ? '0.6fr 0.6fr 1.1fr 0.9fr'
+                                    : '0.7fr 0.7fr 1.3fr',
                             },
                             gap: 3,
                             mt: 1,
                             alignItems: 'start',
                         }}
                     >
-                        {/* ── LEFT: personal data + activation date + description ── */}
+                        {/* ── COLUMN 1: identity (code + person names + sex) ── */}
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                             <Typography variant="subtitle2" color="text.secondary">
                                 {cfl(getString('personalData') || 'Personal data')}
@@ -337,13 +409,87 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
                                 {...register('code')}
                             />
                             <TextField
-                                label={cfl(getString('employeeName') || 'Employee Name')}
+                                label={cfl(getString('lastName') || 'Last name')}
                                 required fullWidth
-                                slotProps={{ htmlInput: { maxLength: 100 } }}
-                                error={!!errors.name}
-                                helperText={errors.name?.message && (getString(errors.name.message) || errors.name.message)}
-                                {...register('name')}
+                                slotProps={{ htmlInput: { maxLength: 64 } }}
+                                error={!!errors.last_name}
+                                helperText={errors.last_name?.message && (getString(errors.last_name.message) || errors.last_name.message)}
+                                {...register('last_name')}
                             />
+                            <TextField
+                                label={cfl(getString('firstName') || 'First name')}
+                                required fullWidth
+                                slotProps={{ htmlInput: { maxLength: 64 } }}
+                                error={!!errors.first_name}
+                                helperText={errors.first_name?.message && (getString(errors.first_name.message) || errors.first_name.message)}
+                                {...register('first_name')}
+                            />
+                            <TextField
+                                label={cfl(getString('patronymic') || 'Patronymic')}
+                                fullWidth
+                                slotProps={{ htmlInput: { maxLength: 64 } }}
+                                error={!!errors.patronymic}
+                                helperText={errors.patronymic?.message && (getString(errors.patronymic.message) || errors.patronymic.message)}
+                                {...register('patronymic')}
+                            />
+                            <Controller
+                                name="sex"
+                                control={control}
+                                render={({ field }) => (
+                                    <FormControl fullWidth>
+                                        <InputLabel id="employee-create-sex-label">
+                                            {cfl(getString('sex') || 'Sex')}
+                                        </InputLabel>
+                                        <Select
+                                            {...field}
+                                            labelId="employee-create-sex-label"
+                                            variant="outlined"
+                                            label={cfl(getString('sex') || 'Sex')}
+                                        >
+                                            <MenuItem value="">—</MenuItem>
+                                            <MenuItem value="male">{getString('sexMale') || 'Male'}</MenuItem>
+                                            <MenuItem value="female">{getString('sexFemale') || 'Female'}</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                )}
+                            />
+                        </Box>
+
+                        {/* ── COLUMN 2: details + activation date + description ── */}
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            <Typography variant="subtitle2" color="text.secondary">
+                                {cfl(getString('details') || 'Details')}
+                            </Typography>
+                            {/* Birth date via the people-review wheel picker */}
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Box sx={{ flex: 1 }}>
+                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                        {cfl(getString('birthDate') || 'Birth date')}
+                                    </Typography>
+                                    <Typography variant="body2" fontWeight={600}>
+                                        {birthDate ? formatDate(birthDate) : '—'}
+                                    </Typography>
+                                </Box>
+                                <Button
+                                    size="small"
+                                    variant="outlined"
+                                    onClick={() => {
+                                        setDraftBirth(birthDate || null);
+                                        setBirthOpen(true);
+                                    }}
+                                >
+                                    {birthDate ? getString('edit') || 'Edit' : getString('set') || 'Set'}
+                                </Button>
+                                {birthDate && (
+                                    <IconButton
+                                        size="small"
+                                        onClick={() => setValue('birth_date', '')}
+                                        aria-label="clear birth date"
+                                    >
+                                        <DeleteIcon fontSize="small" />
+                                    </IconButton>
+                                )}
+                            </Box>
                             <TextField
                                 label={cfl(getString('email') || 'Email')}
                                 fullWidth type="email"
@@ -578,12 +724,51 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
                 <Button
                     variant="contained"
                     onClick={handleSubmit(onSubmit)}
-                    disabled={createMutation.isPending}
-                    startIcon={createMutation.isPending ? <CircularProgress size={16} color="inherit" /> : undefined}
+                    disabled={createMutation.isPending || checkingName}
+                    startIcon={
+                        createMutation.isPending || checkingName ? (
+                            <CircularProgress size={16} color="inherit" />
+                        ) : undefined
+                    }
                 >
                     {getString('create') || 'Create'}
                 </Button>
             </DialogActions>
+
+            <EmployeeDuplicatePersonDialog
+                open={dupMatches.length > 0}
+                matches={dupMatches}
+                isPending={createMutation.isPending}
+                onConfirm={handleDuplicateConfirm}
+                onCancel={handleDuplicateCancel}
+            />
+
+            {/* Birth-date wheel picker (same component as people-review dates) */}
+            <Dialog open={birthOpen} onClose={() => setBirthOpen(false)} maxWidth="xs" fullWidth>
+                <DialogTitle>{cfl(getString('birthDate') || 'Birth date')}</DialogTitle>
+                <DialogContent>
+                    <Box sx={{ mt: 0.5, mb: 1.5 }}>
+                        <Typography variant="h6" fontWeight={700}>
+                            {formatDate(draftBirth)}
+                        </Typography>
+                    </Box>
+                    <BirthDateWheelPicker value={draftBirth} onChange={setDraftBirth} />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setBirthOpen(false)}>
+                        {getString('cancel') || 'Cancel'}
+                    </Button>
+                    <Button
+                        variant="contained"
+                        onClick={() => {
+                            setValue('birth_date', draftBirth ?? '');
+                            setBirthOpen(false);
+                        }}
+                    >
+                        {getString('save') || 'Save'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Dialog>
     );
 }

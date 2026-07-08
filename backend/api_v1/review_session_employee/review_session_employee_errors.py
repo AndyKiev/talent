@@ -28,6 +28,17 @@ class ReviewSessionEmployeeAlreadyInSession(AlreadyExistsError):
         super().__init__("ReviewSessionEmployee", "employee", employee_name)
 
 
+class ReviewSessionEmployeeNotHuman(DomainError):
+    message_key = "reviewOnlyHumanEmployees"
+
+    def __init__(self, employee_name: str) -> None:
+        self.template_vars = {"name": employee_name}
+        self.fallback = (
+            f"'{employee_name}' is not a human employee and cannot join a review"
+        )
+        super().__init__(self.fallback)
+
+
 class ReviewSessionReorderNotAllowed(DomainError):
     message_key = "reviewSessionReorderNotAllowed"
 

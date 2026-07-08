@@ -871,7 +871,9 @@ const CHILD_BASE = `${BASE_URL}/employee_children`;
 
 export interface EmployeeChild {
     id: number;
-    employee_id: number;
+    // Children hang off the PERSON now; requests still send employee_id and
+    // the backend resolves it.
+    person_id: number;
     birth_date: string; // ISO 'YYYY-MM-DD'
 }
 

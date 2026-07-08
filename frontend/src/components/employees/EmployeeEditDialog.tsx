@@ -21,12 +21,15 @@ import {
     Divider,
 } from '@mui/material';
 import type { Employee, EmployeeUpdate } from './employeeApi';
+import type { PersonUpdate } from '../admin/persons/personApi';
 import useString from '../../hooks/useString';
 import str from '../../strings/str';
 import cfl from '../../utils/helpers.ts';
 
 const schema = z.object({
-    name: z.string().min(1, 'nameRequired').max(100, 'nameTooLong'),
+    last_name: z.string().min(1, 'fieldRequired').max(64, 'nameTooLong'),
+    first_name: z.string().min(1, 'fieldRequired').max(64, 'nameTooLong'),
+    patronymic: z.string().max(64, 'nameTooLong').optional().or(z.literal('')),
     email: z.string().max(100).email('invalidEmail').optional().or(z.literal('')),
     is_active: z.boolean(),
 });
@@ -36,7 +39,11 @@ type FormData = z.infer<typeof schema>;
 interface Props {
     employee: Employee | null;
     onClose: () => void;
-    updateMutation: UseMutationResult<Employee, Error, { id: number; data: EmployeeUpdate }>;
+    updateMutation: UseMutationResult<
+        Employee,
+        Error,
+        { id: number; data: EmployeeUpdate; personId?: number | null; personData?: PersonUpdate }
+    >;
 }
 
 export function EmployeeEditDialog({ employee, onClose, updateMutation }: Props) {
@@ -51,14 +58,22 @@ export function EmployeeEditDialog({ employee, onClose, updateMutation }: Props)
         setValue,
     } = useForm<FormData>({
         resolver: zodResolver(schema),
-        defaultValues: { name: '', email: '', is_active: true },
+        defaultValues: {
+            last_name: '',
+            first_name: '',
+            patronymic: '',
+            email: '',
+            is_active: true,
+        },
     });
 
-    // Populate form when employee changes
+    // Populate form when employee changes (name fields come from the person).
     useEffect(() => {
         if (employee) {
             reset({
-                name: employee.name,
+                last_name: employee.person?.last_name ?? '',
+                first_name: employee.person?.first_name ?? '',
+                patronymic: employee.person?.patronymic ?? '',
                 email: employee.email ?? '',
                 is_active: employee.is_active,
             });
@@ -72,13 +87,31 @@ export function EmployeeEditDialog({ employee, onClose, updateMutation }: Props)
 
     const onSubmit = (data: FormData) => {
         if (!employee) return;
+        // Name fields live on the person: patch it only when they actually
+        // changed (the backend then rebuilds employees.name).
+        const person = employee.person;
+        const nameChanged =
+            data.last_name.trim() !== (person?.last_name ?? '') ||
+            data.first_name.trim() !== (person?.first_name ?? '') ||
+            (data.patronymic?.trim() || '') !== (person?.patronymic ?? '');
+        const personData: PersonUpdate | undefined =
+            nameChanged && employee.person_id
+                ? {
+                      last_name: data.last_name.trim(),
+                      first_name: data.first_name.trim(),
+                      patronymic: data.patronymic?.trim() || null,
+                      allow_duplicate: true, // rename of an existing person — no dead-end
+                  }
+                : undefined;
+
         updateMutation.mutate({
             id: employee.id,
             data: {
-                name: data.name.trim(),
                 email: data.email?.trim() || null,
                 is_active: data.is_active,
             },
+            personId: employee.person_id,
+            personData,
         });
     };
 
@@ -118,16 +151,41 @@ export function EmployeeEditDialog({ employee, onClose, updateMutation }: Props)
                     <Divider />
 
                     <TextField
-                        label={cfl(getString('employeeName') || 'employee Name')}
+                        label={cfl(getString('lastName') || 'Last name')}
                         required
                         fullWidth
-                        slotProps={{ htmlInput: { maxLength: 100 } }}
-                        error={!!errors.name}
+                        slotProps={{ htmlInput: { maxLength: 64 } }}
+                        error={!!errors.last_name}
                         helperText={
-                            errors.name?.message &&
-                            (getString(errors.name.message) || errors.name.message)
+                            errors.last_name?.message &&
+                            (getString(errors.last_name.message) || errors.last_name.message)
                         }
-                        {...register('name')}
+                        {...register('last_name')}
+                    />
+
+                    <TextField
+                        label={cfl(getString('firstName') || 'First name')}
+                        required
+                        fullWidth
+                        slotProps={{ htmlInput: { maxLength: 64 } }}
+                        error={!!errors.first_name}
+                        helperText={
+                            errors.first_name?.message &&
+                            (getString(errors.first_name.message) || errors.first_name.message)
+                        }
+                        {...register('first_name')}
+                    />
+
+                    <TextField
+                        label={cfl(getString('patronymic') || 'Patronymic')}
+                        fullWidth
+                        slotProps={{ htmlInput: { maxLength: 64 } }}
+                        error={!!errors.patronymic}
+                        helperText={
+                            errors.patronymic?.message &&
+                            (getString(errors.patronymic.message) || errors.patronymic.message)
+                        }
+                        {...register('patronymic')}
                     />
 
                     <TextField

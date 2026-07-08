@@ -54,6 +54,7 @@ import { Route as AdminStructureIndexRouteImport } from './routes/admin/structur
 import { Route as AdminReviewersIndexRouteImport } from './routes/admin/reviewers/index'
 import { Route as AdminReview_setupIndexRouteImport } from './routes/admin/review_setup/index'
 import { Route as AdminPlanning_setupIndexRouteImport } from './routes/admin/planning_setup/index'
+import { Route as AdminPersonsIndexRouteImport } from './routes/admin/persons/index'
 import { Route as AdminPeople_reviewIndexRouteImport } from './routes/admin/people_review/index'
 import { Route as AdminJobs_groupIndexRouteImport } from './routes/admin/jobs_group/index'
 import { Route as AdminJobsIndexRouteImport } from './routes/admin/jobs/index'
@@ -82,6 +83,7 @@ import { Route as DeveloperSecurityUser_group_typesIndexRouteImport } from './ro
 import { Route as DeveloperSecurityPermissions_overviewIndexRouteImport } from './routes/developer/security/permissions_overview/index'
 import { Route as DeveloperSecurityPermission_matrixIndexRouteImport } from './routes/developer/security/permission_matrix/index'
 import { Route as DeveloperSecurityOeslIndexRouteImport } from './routes/developer/security/oesl/index'
+import { Route as DeveloperSecurityMenusIndexRouteImport } from './routes/developer/security/menus/index'
 import { Route as DeveloperProcess_rolesProcess_roleIndexRouteImport } from './routes/developer/process_roles/process_role/index'
 import { Route as DeveloperProcess_rolesProcessIndexRouteImport } from './routes/developer/process_roles/process/index'
 import { Route as DeveloperCatalogOperationsIndexRouteImport } from './routes/developer/catalog/operations/index'
@@ -372,6 +374,11 @@ const AdminPlanning_setupIndexRoute =
     path: '/',
     getParentRoute: () => AdminPlanning_setupRouteRoute,
   } as any)
+const AdminPersonsIndexRoute = AdminPersonsIndexRouteImport.update({
+  id: '/admin/persons/',
+  path: '/admin/persons/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminPeople_reviewIndexRoute = AdminPeople_reviewIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -533,6 +540,12 @@ const DeveloperSecurityOeslIndexRoute =
   DeveloperSecurityOeslIndexRouteImport.update({
     id: '/oesl/',
     path: '/oesl/',
+    getParentRoute: () => DeveloperSecurityRouteRoute,
+  } as any)
+const DeveloperSecurityMenusIndexRoute =
+  DeveloperSecurityMenusIndexRouteImport.update({
+    id: '/menus/',
+    path: '/menus/',
     getParentRoute: () => DeveloperSecurityRouteRoute,
   } as any)
 const DeveloperProcess_rolesProcess_roleIndexRoute =
@@ -889,6 +902,7 @@ export interface FileRoutesByFullPath {
   '/admin/jobs': typeof AdminJobsIndexRoute
   '/admin/jobs_group/': typeof AdminJobs_groupIndexRoute
   '/admin/people_review/': typeof AdminPeople_reviewIndexRoute
+  '/admin/persons': typeof AdminPersonsIndexRoute
   '/admin/planning_setup/': typeof AdminPlanning_setupIndexRoute
   '/admin/review_setup/': typeof AdminReview_setupIndexRoute
   '/admin/reviewers/': typeof AdminReviewersIndexRoute
@@ -946,6 +960,7 @@ export interface FileRoutesByFullPath {
   '/developer/catalog/operations': typeof DeveloperCatalogOperationsIndexRoute
   '/developer/process_roles/process': typeof DeveloperProcess_rolesProcessIndexRoute
   '/developer/process_roles/process_role': typeof DeveloperProcess_rolesProcess_roleIndexRoute
+  '/developer/security/menus': typeof DeveloperSecurityMenusIndexRoute
   '/developer/security/oesl': typeof DeveloperSecurityOeslIndexRoute
   '/developer/security/permission_matrix': typeof DeveloperSecurityPermission_matrixIndexRoute
   '/developer/security/permissions_overview': typeof DeveloperSecurityPermissions_overviewIndexRoute
@@ -997,6 +1012,7 @@ export interface FileRoutesByTo {
   '/admin/jobs': typeof AdminJobsIndexRoute
   '/admin/jobs_group': typeof AdminJobs_groupIndexRoute
   '/admin/people_review': typeof AdminPeople_reviewIndexRoute
+  '/admin/persons': typeof AdminPersonsIndexRoute
   '/admin/planning_setup': typeof AdminPlanning_setupIndexRoute
   '/admin/review_setup': typeof AdminReview_setupIndexRoute
   '/admin/reviewers': typeof AdminReviewersIndexRoute
@@ -1052,6 +1068,7 @@ export interface FileRoutesByTo {
   '/developer/catalog/operations': typeof DeveloperCatalogOperationsIndexRoute
   '/developer/process_roles/process': typeof DeveloperProcess_rolesProcessIndexRoute
   '/developer/process_roles/process_role': typeof DeveloperProcess_rolesProcess_roleIndexRoute
+  '/developer/security/menus': typeof DeveloperSecurityMenusIndexRoute
   '/developer/security/oesl': typeof DeveloperSecurityOeslIndexRoute
   '/developer/security/permission_matrix': typeof DeveloperSecurityPermission_matrixIndexRoute
   '/developer/security/permissions_overview': typeof DeveloperSecurityPermissions_overviewIndexRoute
@@ -1123,6 +1140,7 @@ export interface FileRoutesById {
   '/admin/jobs/': typeof AdminJobsIndexRoute
   '/admin/jobs_group/': typeof AdminJobs_groupIndexRoute
   '/admin/people_review/': typeof AdminPeople_reviewIndexRoute
+  '/admin/persons/': typeof AdminPersonsIndexRoute
   '/admin/planning_setup/': typeof AdminPlanning_setupIndexRoute
   '/admin/review_setup/': typeof AdminReview_setupIndexRoute
   '/admin/reviewers/': typeof AdminReviewersIndexRoute
@@ -1180,6 +1198,7 @@ export interface FileRoutesById {
   '/developer/catalog/operations/': typeof DeveloperCatalogOperationsIndexRoute
   '/developer/process_roles/process/': typeof DeveloperProcess_rolesProcessIndexRoute
   '/developer/process_roles/process_role/': typeof DeveloperProcess_rolesProcess_roleIndexRoute
+  '/developer/security/menus/': typeof DeveloperSecurityMenusIndexRoute
   '/developer/security/oesl/': typeof DeveloperSecurityOeslIndexRoute
   '/developer/security/permission_matrix/': typeof DeveloperSecurityPermission_matrixIndexRoute
   '/developer/security/permissions_overview/': typeof DeveloperSecurityPermissions_overviewIndexRoute
@@ -1252,6 +1271,7 @@ export interface FileRouteTypes {
     | '/admin/jobs'
     | '/admin/jobs_group/'
     | '/admin/people_review/'
+    | '/admin/persons'
     | '/admin/planning_setup/'
     | '/admin/review_setup/'
     | '/admin/reviewers/'
@@ -1309,6 +1329,7 @@ export interface FileRouteTypes {
     | '/developer/catalog/operations'
     | '/developer/process_roles/process'
     | '/developer/process_roles/process_role'
+    | '/developer/security/menus'
     | '/developer/security/oesl'
     | '/developer/security/permission_matrix'
     | '/developer/security/permissions_overview'
@@ -1360,6 +1381,7 @@ export interface FileRouteTypes {
     | '/admin/jobs'
     | '/admin/jobs_group'
     | '/admin/people_review'
+    | '/admin/persons'
     | '/admin/planning_setup'
     | '/admin/review_setup'
     | '/admin/reviewers'
@@ -1415,6 +1437,7 @@ export interface FileRouteTypes {
     | '/developer/catalog/operations'
     | '/developer/process_roles/process'
     | '/developer/process_roles/process_role'
+    | '/developer/security/menus'
     | '/developer/security/oesl'
     | '/developer/security/permission_matrix'
     | '/developer/security/permissions_overview'
@@ -1485,6 +1508,7 @@ export interface FileRouteTypes {
     | '/admin/jobs/'
     | '/admin/jobs_group/'
     | '/admin/people_review/'
+    | '/admin/persons/'
     | '/admin/planning_setup/'
     | '/admin/review_setup/'
     | '/admin/reviewers/'
@@ -1542,6 +1566,7 @@ export interface FileRouteTypes {
     | '/developer/catalog/operations/'
     | '/developer/process_roles/process/'
     | '/developer/process_roles/process_role/'
+    | '/developer/security/menus/'
     | '/developer/security/oesl/'
     | '/developer/security/permission_matrix/'
     | '/developer/security/permissions_overview/'
@@ -1603,6 +1628,7 @@ export interface RootRouteChildren {
   AdminJob_group_typesIndexRoute: typeof AdminJob_group_typesIndexRoute
   AdminJob_groupsIndexRoute: typeof AdminJob_groupsIndexRoute
   AdminJobsIndexRoute: typeof AdminJobsIndexRoute
+  AdminPersonsIndexRoute: typeof AdminPersonsIndexRoute
   AdminStructureIndexRoute: typeof AdminStructureIndexRoute
   DeveloperAudit_logIndexRoute: typeof DeveloperAudit_logIndexRoute
   DeveloperDb_tablesIndexRoute: typeof DeveloperDb_tablesIndexRoute
@@ -1934,6 +1960,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPlanning_setupIndexRouteImport
       parentRoute: typeof AdminPlanning_setupRouteRoute
     }
+    '/admin/persons/': {
+      id: '/admin/persons/'
+      path: '/admin/persons'
+      fullPath: '/admin/persons'
+      preLoaderRoute: typeof AdminPersonsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/people_review/': {
       id: '/admin/people_review/'
       path: '/'
@@ -2128,6 +2161,13 @@ declare module '@tanstack/react-router' {
       path: '/oesl'
       fullPath: '/developer/security/oesl'
       preLoaderRoute: typeof DeveloperSecurityOeslIndexRouteImport
+      parentRoute: typeof DeveloperSecurityRouteRoute
+    }
+    '/developer/security/menus/': {
+      id: '/developer/security/menus/'
+      path: '/menus'
+      fullPath: '/developer/security/menus'
+      preLoaderRoute: typeof DeveloperSecurityMenusIndexRouteImport
       parentRoute: typeof DeveloperSecurityRouteRoute
     }
     '/developer/process_roles/process_role/': {
@@ -2887,6 +2927,7 @@ const DeveloperProcess_rolesRouteRouteWithChildren =
 
 interface DeveloperSecurityRouteRouteChildren {
   DeveloperSecurityIndexRoute: typeof DeveloperSecurityIndexRoute
+  DeveloperSecurityMenusIndexRoute: typeof DeveloperSecurityMenusIndexRoute
   DeveloperSecurityOeslIndexRoute: typeof DeveloperSecurityOeslIndexRoute
   DeveloperSecurityPermission_matrixIndexRoute: typeof DeveloperSecurityPermission_matrixIndexRoute
   DeveloperSecurityPermissions_overviewIndexRoute: typeof DeveloperSecurityPermissions_overviewIndexRoute
@@ -2897,6 +2938,7 @@ interface DeveloperSecurityRouteRouteChildren {
 const DeveloperSecurityRouteRouteChildren: DeveloperSecurityRouteRouteChildren =
   {
     DeveloperSecurityIndexRoute: DeveloperSecurityIndexRoute,
+    DeveloperSecurityMenusIndexRoute: DeveloperSecurityMenusIndexRoute,
     DeveloperSecurityOeslIndexRoute: DeveloperSecurityOeslIndexRoute,
     DeveloperSecurityPermission_matrixIndexRoute:
       DeveloperSecurityPermission_matrixIndexRoute,
@@ -2983,6 +3025,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminJob_group_typesIndexRoute: AdminJob_group_typesIndexRoute,
   AdminJob_groupsIndexRoute: AdminJob_groupsIndexRoute,
   AdminJobsIndexRoute: AdminJobsIndexRoute,
+  AdminPersonsIndexRoute: AdminPersonsIndexRoute,
   AdminStructureIndexRoute: AdminStructureIndexRoute,
   DeveloperAudit_logIndexRoute: DeveloperAudit_logIndexRoute,
   DeveloperDb_tablesIndexRoute: DeveloperDb_tablesIndexRoute,

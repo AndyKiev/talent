@@ -25,6 +25,16 @@ export interface TopOrgUnit {
 
 // ── Core shapes ───────────────────────────────────────────────────────────────
 
+// Slim person info nested in Employee (mirrors backend EmployeePersonSlim).
+export interface EmployeePerson {
+    id: number;
+    first_name: string | null;
+    last_name: string | null;
+    patronymic: string | null;
+    sex: 'male' | 'female' | null;
+    birth_date: string | null;
+}
+
 export interface Employee {
     id: number;
     code: string;
@@ -36,6 +46,8 @@ export interface Employee {
     job_id: number | null;           // CHANGE: was number
     lang_id: number;
     created_at: string;
+    person_id: number | null;
+    person: EmployeePerson | null;
     groups: string[];
     operations: string[];
     job: Job | null;
@@ -44,8 +56,9 @@ export interface Employee {
     responsibility_departments: MainDepartment[];
 }
 
+// NOTE: no `name` — employees.name is derived from the person (rename via
+// PATCH /persons/{id}; the backend rebuilds 'LAST FIRST').
 export interface EmployeeUpdate {
-    name?: string;
     email?: string | null;
     is_active?: boolean;
 }

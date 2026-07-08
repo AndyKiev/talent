@@ -144,7 +144,7 @@ export const ESSENCES: RawEssenceConfig[] = [
     labelKey: 'processRolesGroup',
     descriptionKey: 'processRolesGroupDesc',
     Icon: AccountTreeIcon,
-    color: '#0ea5e9',
+    color: '#20e90e',
     isGroup: true,
     groupKey: 'process_roles',
   },

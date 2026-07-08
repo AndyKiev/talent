@@ -208,9 +208,50 @@ async def register_employee(
             detail="An employee with this code already exists.",
         )
 
-    orm_user = await service.create(
-        EmployeeCreate(code=code, name=name, email=email, is_active=True, job_id=None)
+    # Create the person behind the employee (LAST FIRST [PATRONYMIC] split,
+    # best-effort for free-form input). Self-registration never dead-ends on a
+    # namesake (dedupe number assigned); single-token names fall back to the
+    # whole string for both parts (NOT NULL) and get fixed by an admin later.
+    from backend.api_v1.person.person_model import Person
+    from backend.api_v1.person.person_repository import PersonRepository
+    from backend.utils.person_names import (
+        split_employee_full_name,
+        normalize_name_part,
+        build_employee_name,
     )
+
+    last_raw, first_raw, patronymic_raw = split_employee_full_name(name)
+    last = normalize_name_part(last_raw)
+    first = normalize_name_part(first_raw)
+    patronymic = normalize_name_part(patronymic_raw)
+    first = first or normalize_name_part(name)
+    last = last or normalize_name_part(name)
+    person_repo = PersonRepository(session=session)
+    dedupe_no = await person_repo.get_next_dedupe_no(first, last)
+    person = await person_repo.create(
+        Person(
+            first_name=first,
+            last_name=last,
+            patronymic=patronymic,
+            name_dedupe_no=dedupe_no,
+        )
+    )
+
+    derived_name = build_employee_name(last, first)
+    try:
+        orm_user = await service.create(
+            EmployeeCreate(
+                code=code,
+                name=derived_name,
+                email=email,
+                is_active=True,
+                job_id=None,
+                person_id=person.id,
+            )
+        )
+    except Exception:
+        await person_repo.delete_by_id(person.id)
+        raise
     # Status: resolve "pending" by name (model default is id=1 which is the same
     # row in the seeded DB — this keeps it correct even if ids drift).
     pending_id = await session.scalar(
@@ -414,6 +455,12 @@ def has_access_set(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=translated,
         )
+
+    # Stamps read by the introspection walkers (permission_manifest_service,
+    # operation_essence_set_link_service) to detect and describe this guard.
+    _dependency._is_access_guard = True
+    _dependency._access_operation = op_name
+    _dependency._access_essences = sorted(required_set)
 
     return _dependency
 

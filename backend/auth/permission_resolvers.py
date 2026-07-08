@@ -13,22 +13,29 @@ traversal over selectin-loaded relationships.
 """
 
 
-# The seeded baseline group for employees WITHOUT any authorisation group.
-# Such users are never members of it — its grants are inherited implicitly,
-# which gives the permission matrix a manageable "regular user" column.
-REGULAR_GROUP_NAME = "regular"
+# Role identity is carried by boolean FLAGS on the rows, never by name or id:
+#   - UserGroupType.is_authorisation  — the type whose groups grant permissions
+#   - UserGroup.is_regular_baseline   — the implicit "regular user" baseline
+#   - UserGroup.is_bypass             — superadmin groups skipping every check
+# Names/ids are unstable (renames, per-environment reseed) so they are not used.
+
+
+def _is_authorisation(ug) -> bool:
+    """True if the group's type is flagged as the access-control type."""
+    return bool(ug and ug.user_group_type and ug.user_group_type.is_authorisation)
 
 
 def has_authorisation_group(user_orm) -> bool:
-    """True if the employee belongs to at least one 'authorisation' group."""
+    """True if the employee belongs to at least one authorisation-type group."""
     for eugl in user_orm.user_groups:
-        ug = eugl.user_group
-        if ug and ug.user_group_type and ug.user_group_type.name == "authorisation":
+        if _is_authorisation(eugl.user_group):
             return True
     return False
 
 
-def resolve_user_permissions(user_orm, fallback_group=None) -> frozenset[tuple[str, str]]:
+def resolve_user_permissions(
+    user_orm, fallback_group=None
+) -> frozenset[tuple[str, str]]:
     """
     Build the full (verb, essence) permission set for an Employee ORM instance.
 
@@ -48,9 +55,7 @@ def resolve_user_permissions(user_orm, fallback_group=None) -> frozenset[tuple[s
 
     for eugl in user_orm.user_groups:
         ug = eugl.user_group
-        if not ug:
-            continue
-        if not ug.user_group_type or ug.user_group_type.name != "authorisation":
+        if not _is_authorisation(ug):
             continue
         perms |= ug.permissions  # UserGroup.permissions property
 
@@ -83,35 +88,25 @@ def resolve_user_permission_sets(
 
     for eugl in user_orm.user_groups:
         ug = eugl.user_group
-        if not ug:
-            continue
-        if not ug.user_group_type or ug.user_group_type.name != "authorisation":
+        if not _is_authorisation(ug):
             continue
         perms |= ug.permission_sets  # UserGroup.permission_sets property
 
     return frozenset(perms)
 
 
-# Centralised single source of truth for superadmin / bypass group names.
-# A user in any of these groups (of type 'authorisation') skips ALL set-grain
-# permission checks. Matched case-insensitively. (Ported from talent-test.)
-BYPASS_GROUP_NAMES: frozenset[str] = frozenset({"dev"})
-
-
 def resolve_user_is_bypass(user_orm) -> bool:
     """
-    True if the user belongs to a bypass group (e.g. 'dev') of type
-    'authorisation'. Bypass users skip every set-grain permission check.
+    True if the user belongs to a bypass group (UserGroup.is_bypass) of the
+    authorisation type. Bypass users skip every set-grain permission check.
 
     Same authorisation-type filter as the permission resolvers above, so a
-    group named 'dev' of any other type does NOT grant a bypass.
+    flagged group of any other type does NOT grant a bypass.
     """
     for eugl in user_orm.user_groups:
         ug = eugl.user_group
-        if not ug:
+        if not _is_authorisation(ug):
             continue
-        if not ug.user_group_type or ug.user_group_type.name != "authorisation":
-            continue
-        if ug.name and ug.name.strip().lower() in BYPASS_GROUP_NAMES:
+        if ug.is_bypass:
             return True
     return False

@@ -8,8 +8,10 @@ import {
     type Employee,
     type EmployeeUpdate,
 } from './employeeApi';
+import { updatePerson, type PersonUpdate } from '../admin/persons/personApi';
 import { createTalentAudit, createTalentAuditJob } from './talent_audit/talentAuditApi';
 import useString from '../../hooks/useString';
+import { PERSON_QK } from '../../utils/queryKeys';
 import type {
     EmployeeWithActivationPayload,
     EmployeeCreateResult,
@@ -84,8 +86,11 @@ export function useEmployeeMutations({
     const qc = useQueryClient();
     const getString = useString();
 
+    // Employee create/update touch the persons table too (person created under
+    // the hood; renames sync employees.name) — refresh both caches.
     const invalidate = async () => {
         await qc.invalidateQueries({ queryKey: EMPLOYEES_QK });
+        await qc.invalidateQueries({ queryKey: PERSON_QK });
     };
 
     // ── Create employee + activation, then optional talent audit/jobs ─────────
@@ -103,7 +108,11 @@ export function useEmployeeMutations({
                     severity: 'error',
                 });
             } else {
-                setSnackbar({ open: true, message: 'Employee created successfully', severity: 'success' });
+                setSnackbar({
+                    open: true,
+                    message: getString('employeeCreated') || 'Employee created successfully',
+                    severity: 'success',
+                });
             }
             onCreateSuccess?.();
         },
@@ -112,14 +121,35 @@ export function useEmployeeMutations({
         },
     });
 
-    // ── Update employee (name / email / is_active only) ───────────────────────
+    // ── Update employee (email / is_active) + optional person name patch ──────
+    // Name fields live on the person now: when the edit dialog changed them, we
+    // PATCH /persons/{id} first (the backend rebuilds employees.name), then the
+    // employee's own fields.
 
     const updateMutation = useMutation({
-        mutationFn: ({ id, data }: { id: number; data: EmployeeUpdate }) =>
-            updateEmployee({ id, data }),
+        mutationFn: async ({
+            id,
+            data,
+            personId,
+            personData,
+        }: {
+            id: number;
+            data: EmployeeUpdate;
+            personId?: number | null;
+            personData?: PersonUpdate;
+        }) => {
+            if (personId && personData) {
+                await updatePerson({ id: personId, data: personData });
+            }
+            return updateEmployee({ id, data });
+        },
         onSuccess: async () => {
             await invalidate();
-            setSnackbar({ open: true, message: 'Employee updated successfully', severity: 'success' });
+            setSnackbar({
+                open: true,
+                message: getString('employeeUpdated') || 'Employee updated successfully',
+                severity: 'success',
+            });
             onUpdateSuccess?.();
         },
         onError: (err: Error) => {

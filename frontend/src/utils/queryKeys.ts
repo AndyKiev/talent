@@ -20,6 +20,7 @@ export const EMPLOYEE_EVENT_DIRECTION_TYPE_QK = ['employee_event_direction_types
 export const EMPLOYEE_EVENT_STATUS_QK = ['employee_event_statuses'] as const;
 export const EMPLOYEE_EVENT_TYPE_QK = ['employee_event_types'] as const;
 export const DEPARTMENT_CATEGORY_QK = ['department_categories'] as const;
+export const PERSON_QK = ['persons'] as const;
 export const DEPARTMENT_TYPE_QK = ['department_types'] as const;
 export const PLAN_SESSION_QK = ['plan_sessions'] as const;
 export const PLAN_SCOPE_QK = ['plan_scopes'] as const;
@@ -40,6 +41,8 @@ export const MY_OVERSIGHT_MANAGER_QK = ['my_oversight_manager'] as const;
 // Dynamic main-navigation menus
 export const MENUS_MY_QK = ['menus_my'] as const;
 export const MENUS_ALL_QK = ['menus_all'] as const;
+// Developer menu editor (full list with visibility config)
+export const MENUS_MANAGE_QK = ['menus_manage'] as const;
 // App settings (typed key/value)
 export const APP_SETTINGS_QK = ['app_settings'] as const;
 export const SETTING_VALUE_TYPES_QK = ['setting_value_types'] as const;

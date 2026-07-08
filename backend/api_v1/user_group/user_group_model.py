@@ -25,6 +25,14 @@ class UserGroup(IntIdPkMixin, Base):
     name: Mapped[str] = mapped_column(String(128))
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_protected: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # Superadmin group whose members skip EVERY permission check (was matched by
+    # name in {"dev"}). Flag, not name/id, so renaming is safe.
+    is_bypass: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # The single implicit baseline group for users WITHOUT any authorisation
+    # group (was matched by name == "regular"). Flag, not name/id.
+    is_regular_baseline: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
     user_group_type_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("user_group_types.id"), nullable=False
     )

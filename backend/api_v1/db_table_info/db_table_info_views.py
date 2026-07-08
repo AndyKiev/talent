@@ -20,7 +20,9 @@ from backend.api_v1.db_table_info.db_table_info_schema import (
 from backend.api_v1.db_table_info.db_table_info_service import (
     DbTableInfoService,
 )
+from backend.auth.guards import Guard
 from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/developer/db_tables",
@@ -29,7 +31,11 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=TableDataFile)
+@router.get(
+    "",
+    response_model=TableDataFile,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.DB_TABLE)],
+)
 async def get_db_tables(
     service: Annotated[DbTableInfoService, Depends(get_db_table_info_service)],
 ) -> TableDataFile:
@@ -37,7 +43,11 @@ async def get_db_tables(
     return await service.get_all()
 
 
-@router.post("/refresh", response_model=TableDataFile)
+@router.post(
+    "/refresh",
+    response_model=TableDataFile,
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.DB_TABLE)],
+)
 async def refresh_db_tables(
     service: Annotated[DbTableInfoService, Depends(get_db_table_info_service)],
 ) -> TableDataFile:
@@ -50,7 +60,11 @@ async def refresh_db_tables(
     return await service.refresh()
 
 
-@router.post("/backup", response_model=BackupResult)
+@router.post(
+    "/backup",
+    response_model=BackupResult,
+    dependencies=[Guard(OperationVerb.EXPORT, EssenceName.DB_TABLE)],
+)
 async def backup_db_tables(
     service: Annotated[DbTableInfoService, Depends(get_db_table_info_service)],
 ) -> BackupResult:
@@ -65,6 +79,7 @@ async def backup_db_tables(
 @router.patch(
     "/{table_name}",
     response_model=MutationResponse[DbTableInfo],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.DB_TABLE)],
 )
 async def update_db_table(
     table_name: str,
@@ -82,6 +97,7 @@ async def update_db_table(
 @router.post(
     "/reorder",
     response_model=MutationResponse[TableDataFile],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.DB_TABLE)],
 )
 async def reorder_db_tables(
     body: ReorderRequest,
@@ -99,6 +115,7 @@ async def reorder_db_tables(
 @router.get(
     "/{table_name}/rows",
     response_model=TableRowsResponse,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.DB_TABLE)],
 )
 async def get_table_rows(
     table_name: str,
@@ -109,7 +126,11 @@ async def get_table_rows(
     return await service.fetch_rows(table_name, limit)
 
 
-@router.get("/_column_prefs", response_model=list[ColumnPref])
+@router.get(
+    "/_column_prefs",
+    response_model=list[ColumnPref],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.DB_TABLE)],
+)
 async def get_column_prefs(
     service: Annotated[DbTableInfoService, Depends(get_db_table_info_service)],
 ) -> list[ColumnPref]:
@@ -117,7 +138,11 @@ async def get_column_prefs(
     return service.get_column_prefs()
 
 
-@router.put("/_column_prefs", response_model=list[ColumnPref])
+@router.put(
+    "/_column_prefs",
+    response_model=list[ColumnPref],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.DB_TABLE)],
+)
 async def save_column_prefs(
     body: ColumnPrefsUpdate,
     service: Annotated[DbTableInfoService, Depends(get_db_table_info_service)],
@@ -126,7 +151,10 @@ async def save_column_prefs(
     return service.save_column_prefs(body.prefs)
 
 
-@router.post("/_auto_describe")
+@router.post(
+    "/_auto_describe",
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.DB_TABLE)],
+)
 async def auto_describe(
     service: Annotated[DbTableInfoService, Depends(get_db_table_info_service)],
 ):
@@ -135,7 +163,10 @@ async def auto_describe(
     return {"described": count}
 
 
-@router.patch("/{table_name}/rows")
+@router.patch(
+    "/{table_name}/rows",
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.DB_TABLE)],
+)
 async def update_table_row(
     table_name: str,
     body: RowUpdateRequest,
@@ -146,7 +177,10 @@ async def update_table_row(
     return {"ok": True}
 
 
-@router.delete("/{table_name}/rows")
+@router.delete(
+    "/{table_name}/rows",
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.DB_TABLE)],
+)
 async def delete_table_row(
     table_name: str,
     body: RowDeleteRequest,

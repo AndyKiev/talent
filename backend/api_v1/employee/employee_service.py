@@ -26,7 +26,6 @@ from backend.auth.permission_resolvers import (
     resolve_user_permissions,
     resolve_user_permission_sets,
     has_authorisation_group,
-    REGULAR_GROUP_NAME,
 )
 from sqlalchemy import select, func, or_
 from backend.api_v1.employee.employee_errors import EmployeeHasReferencesError
@@ -66,8 +65,8 @@ class EmployeeService(BaseService):
             select(UserGroup)
             .join(UserGroupType, UserGroupType.id == UserGroup.user_group_type_id)
             .where(
-                UserGroup.name == REGULAR_GROUP_NAME,
-                UserGroupType.name == "authorisation",
+                UserGroup.is_regular_baseline.is_(True),
+                UserGroupType.is_authorisation.is_(True),
             )
         )
         return await self.repository.session.scalar(stmt)
@@ -282,10 +281,50 @@ class EmployeeService(BaseService):
         if user_in.email and await self.repository.get_by_field("email", user_in.email):
             exc = EmployeeEmailTaken(user_in.email)
             raise await self._resolve_domain_error(exc)
+
+        # employees.person_id is NOT NULL: callers that didn't create a person
+        # themselves (plain POST /employees, legacy seeds) get one derived from
+        # the single name string (LAST FIRST [PATRONYMIC] split, best-effort).
+        created_person_id: int | None = None
+        if user_in.person_id is None:
+            from backend.api_v1.person.person_model import Person
+            from backend.api_v1.person.person_repository import PersonRepository
+            from backend.utils.person_names import (
+                split_employee_full_name,
+                normalize_name_part,
+            )
+
+            last_raw, first_raw, patronymic_raw = split_employee_full_name(user_in.name)
+            last = normalize_name_part(last_raw)
+            first = normalize_name_part(first_raw)
+            person_repo = PersonRepository(session=self.repository.session)
+            dedupe_no = (
+                await person_repo.get_next_dedupe_no(first, last)
+                if first and last
+                else 0
+            )
+            person = await person_repo.create(
+                Person(
+                    first_name=first or user_in.name,
+                    last_name=last or user_in.name,
+                    patronymic=normalize_name_part(patronymic_raw),
+                    name_dedupe_no=dedupe_no,
+                )
+            )
+            created_person_id = person.id
+            user_in.person_id = person.id
+
         try:
             orm_user = await self.create(user_in)
             return await self._to_schema(orm_user)
         except IntegrityError:
+            if created_person_id is not None:
+                from backend.api_v1.person.person_repository import PersonRepository
+
+                await self.repository.session.rollback()
+                await PersonRepository(session=self.repository.session).delete_by_id(
+                    created_person_id
+                )
             exc = EmployeeCodeTaken(user_in.code)
             raise await self._resolve_domain_error(exc)
 
@@ -324,10 +363,53 @@ class EmployeeService(BaseService):
         self, user_id: int, data: "EmployeePersonalDataUpdate"
     ) -> EmployeeSchema:
         """Upsert the employee's personal data via the 1:1 table. Partial: only
-        the fields actually provided are applied (birth_date and/or hire_date)."""
+        the fields actually provided are applied (birth_date and/or hire_date).
+
+        `sex` is person-backed now: when the employee has a linked person it is
+        written to persons.sex (personal_data.sex stays untouched); the
+        personal-data column remains only as a pre-seed legacy fallback."""
         fields = data.model_dump(exclude_unset=True)
         try:
-            orm_user = await self.repository.set_personal_data(user_id, fields)
+            person_backed = {"sex", "marital_status", "birth_date"}
+            if person_backed & fields.keys():
+                orm_user = await self.repository.get_by_id(user_id)
+                if not orm_user:
+                    raise EmployeeNotFound(user_id)
+                person = orm_user.person if orm_user.person_id else None
+                if "sex" in fields:
+                    sex_value = fields.pop("sex")
+                    if person:
+                        from backend.api_v1.sex.sex_model import SEX_ID_BY_NAME
+
+                        person.sex_id = (
+                            SEX_ID_BY_NAME.get(sex_value) if sex_value else None
+                        )
+                    else:
+                        fields["sex"] = sex_value
+                if "marital_status" in fields:
+                    marital_value = fields.pop("marital_status")
+                    if person:
+                        from backend.api_v1.marital_status.marital_status_model import (
+                            MARITAL_STATUS_ID_BY_NAME,
+                        )
+
+                        person.marital_status_id = (
+                            MARITAL_STATUS_ID_BY_NAME.get(marital_value)
+                            if marital_value
+                            else None
+                        )
+                    else:
+                        fields["marital_status"] = marital_value
+                # birth_date lives on BOTH: person (authoritative) and the
+                # legacy personal_data column — keep them in sync.
+                if "birth_date" in fields and person:
+                    person.birth_date = fields["birth_date"]
+                if person:
+                    await self.repository.session.commit()
+            if fields:
+                orm_user = await self.repository.set_personal_data(user_id, fields)
+            else:
+                orm_user = await self.repository.get_by_id(user_id)
             return await self._to_schema(orm_user)
         except DomainError as exc:
             raise await self._resolve_domain_error(exc)
@@ -356,58 +438,136 @@ class EmployeeService(BaseService):
 
     # (blocker_key, count_sql) — count_sql counts rows referencing :eid
     _OWNED_BLOCKERS: list[tuple[str, str]] = [
-        ("departmentLinks", "SELECT COUNT(*) FROM employee_departments WHERE employee_id = :eid"),
-        ("responsibilityDepartmentLinks", "SELECT COUNT(*) FROM employee_responsibility_departments WHERE employee_id = :eid"),
+        (
+            "departmentLinks",
+            "SELECT COUNT(*) FROM employee_departments WHERE employee_id = :eid",
+        ),
+        (
+            "responsibilityDepartmentLinks",
+            "SELECT COUNT(*) FROM employee_responsibility_departments WHERE employee_id = :eid",
+        ),
         ("events", "SELECT COUNT(*) FROM employee_events WHERE employee_id = :eid"),
-        ("userGroupLinks", "SELECT COUNT(*) FROM employee_user_group_links WHERE employee_id = :eid"),
-        ("personalData", "SELECT COUNT(*) FROM employee_personal_data WHERE employee_id = :eid"),
-        ("currentLevel", "SELECT COUNT(*) FROM employee_current_levels WHERE employee_id = :eid"),
-        ("languageProfile", "SELECT COUNT(*) FROM employee_language_profiles WHERE employee_id = :eid"),
-        ("educations", "SELECT COUNT(*) FROM employee_educations WHERE employee_id = :eid"),
-        ("children", "SELECT COUNT(*) FROM employee_children WHERE employee_id = :eid"),
-        ("reviewParticipation", "SELECT COUNT(*) FROM review_session_employees WHERE employee_id = :eid"),
+        (
+            "userGroupLinks",
+            "SELECT COUNT(*) FROM employee_user_group_links WHERE employee_id = :eid",
+        ),
+        (
+            "personalData",
+            "SELECT COUNT(*) FROM employee_personal_data WHERE employee_id = :eid",
+        ),
+        (
+            "currentLevel",
+            "SELECT COUNT(*) FROM employee_current_levels WHERE employee_id = :eid",
+        ),
+        (
+            "languageProfile",
+            "SELECT COUNT(*) FROM employee_language_profiles WHERE employee_id = :eid",
+        ),
+        (
+            "educations",
+            "SELECT COUNT(*) FROM employee_educations WHERE employee_id = :eid",
+        ),
+        # NOTE: children are PERSON-level (employee_children.person_id) — they
+        # cascade with the orphaned person, not with the employee.
+        (
+            "reviewParticipation",
+            "SELECT COUNT(*) FROM review_session_employees WHERE employee_id = :eid",
+        ),
         ("hrmScopes", "SELECT COUNT(*) FROM hrm_scopes WHERE employee_id = :eid"),
-        ("processRoleHolder", "SELECT COUNT(*) FROM process_role_holders WHERE holder_employee_id = :eid"),
-        ("processRoleEmployeeLinks", "SELECT COUNT(*) FROM process_role_holder_employee_links WHERE employee_id = :eid"),
-        ("processRoleActiveContexts", "SELECT COUNT(*) FROM process_role_active_contexts WHERE employee_id = :eid"),
+        (
+            "processRoleHolder",
+            "SELECT COUNT(*) FROM process_role_holders WHERE holder_employee_id = :eid",
+        ),
+        (
+            "processRoleEmployeeLinks",
+            "SELECT COUNT(*) FROM process_role_holder_employee_links WHERE employee_id = :eid",
+        ),
+        (
+            "processRoleActiveContexts",
+            "SELECT COUNT(*) FROM process_role_active_contexts WHERE employee_id = :eid",
+        ),
     ]
 
     # (blocker_key, count_sql) — content authored about OTHERS; never cascaded
     _AUTHORED_BLOCKERS: list[tuple[str, str]] = [
-        ("authoredEvents", "SELECT COUNT(*) FROM employee_events WHERE created_by = :eid"),
-        ("authoredTalentAudits", "SELECT COUNT(*) FROM talent_audit WHERE created_by = :eid"),
-        ("authoredTalentInterviews", "SELECT COUNT(*) FROM talent_audit_interview WHERE created_by = :eid"),
-        ("authoredTalentInterviewJobs", "SELECT COUNT(*) FROM talent_audit_interview_job WHERE created_by = :eid"),
-        ("authoredTalentJobs", "SELECT COUNT(*) FROM talent_audit_job WHERE created_by = :eid"),
-        ("authoredReviewComments", "SELECT COUNT(*) FROM review_session_employee_comments WHERE author_id = :eid"),
-        ("assignedProcessRoles", "SELECT COUNT(*) FROM process_role_holders WHERE assigned_by = :eid"),
+        (
+            "authoredEvents",
+            "SELECT COUNT(*) FROM employee_events WHERE created_by = :eid",
+        ),
+        (
+            "authoredTalentAudits",
+            "SELECT COUNT(*) FROM talent_audit WHERE created_by = :eid",
+        ),
+        (
+            "authoredTalentInterviews",
+            "SELECT COUNT(*) FROM talent_audit_interview WHERE created_by = :eid",
+        ),
+        (
+            "authoredTalentInterviewJobs",
+            "SELECT COUNT(*) FROM talent_audit_interview_job WHERE created_by = :eid",
+        ),
+        (
+            "authoredTalentJobs",
+            "SELECT COUNT(*) FROM talent_audit_job WHERE created_by = :eid",
+        ),
+        (
+            "authoredReviewComments",
+            "SELECT COUNT(*) FROM review_session_employee_comments WHERE author_id = :eid",
+        ),
+        (
+            "assignedProcessRoles",
+            "SELECT COUNT(*) FROM process_role_holders WHERE assigned_by = :eid",
+        ),
     ]
 
     DELETE_BLOCKER_LABELS = {
         # OWNED
         "departmentLinks": ("blockerDepartmentLinks", "department links"),
-        "responsibilityDepartmentLinks": ("blockerResponsibilityDepartmentLinks", "responsibility department links"),
+        "responsibilityDepartmentLinks": (
+            "blockerResponsibilityDepartmentLinks",
+            "responsibility department links",
+        ),
         "events": ("blockerEvents", "events"),
         "userGroupLinks": ("blockerUserGroupLinks", "user group memberships"),
         "personalData": ("blockerPersonalData", "personal data"),
         "currentLevel": ("blockerCurrentLevel", "current level"),
         "languageProfile": ("blockerLanguageProfile", "language profile"),
         "educations": ("blockerEducations", "education records"),
-        "children": ("blockerChildren", "children records"),
         "reviewParticipation": ("blockerReviewParticipation", "review participations"),
         "hrmScopes": ("blockerHrmScopes", "HRM responsibility scopes"),
         "processRoleHolder": ("blockerProcessRoleHolder", "process role assignments"),
-        "processRoleEmployeeLinks": ("blockerProcessRoleEmployeeLinks", "process role links"),
-        "processRoleActiveContexts": ("blockerProcessRoleActiveContexts", "active process role contexts"),
+        "processRoleEmployeeLinks": (
+            "blockerProcessRoleEmployeeLinks",
+            "process role links",
+        ),
+        "processRoleActiveContexts": (
+            "blockerProcessRoleActiveContexts",
+            "active process role contexts",
+        ),
         "talentAudits": ("blockerTalentAudits", "talent audits"),
         # AUTHORED
         "authoredEvents": ("blockerAuthoredEvents", "authored events"),
-        "authoredTalentAudits": ("blockerAuthoredTalentAudits", "authored talent audits"),
-        "authoredTalentInterviews": ("blockerAuthoredTalentInterviews", "authored talent interviews"),
-        "authoredTalentInterviewJobs": ("blockerAuthoredTalentInterviewJobs", "authored talent interview jobs"),
+        "authoredTalentAudits": (
+            "blockerAuthoredTalentAudits",
+            "authored talent audits",
+        ),
+        "authoredTalentInterviews": (
+            "blockerAuthoredTalentInterviews",
+            "authored talent interviews",
+        ),
+        "authoredTalentInterviewJobs": (
+            "blockerAuthoredTalentInterviewJobs",
+            "authored talent interview jobs",
+        ),
         "authoredTalentJobs": ("blockerAuthoredTalentJobs", "authored talent jobs"),
-        "authoredReviewComments": ("blockerAuthoredReviewComments", "authored review comments"),
-        "assignedProcessRoles": ("blockerAssignedProcessRoles", "process roles assigned to others"),
+        "authoredReviewComments": (
+            "blockerAuthoredReviewComments",
+            "authored review comments",
+        ),
+        "assignedProcessRoles": (
+            "blockerAssignedProcessRoles",
+            "process roles assigned to others",
+        ),
     }
 
     def _force_cascade_sql(self) -> list[str]:
@@ -449,7 +609,6 @@ class EmployeeService(BaseService):
             "DELETE FROM employee_personal_data WHERE employee_id = :eid",
             "DELETE FROM employee_current_levels WHERE employee_id = :eid",
             "DELETE FROM employee_educations WHERE employee_id = :eid",
-            "DELETE FROM employee_children WHERE employee_id = :eid",
             # events + departments (event change rows cascade at the DB)
             "DELETE FROM employee_events WHERE employee_id = :eid",
             "DELETE FROM employee_departments WHERE employee_id = :eid",
@@ -538,11 +697,30 @@ class EmployeeService(BaseService):
             {"eid": user_id},
         )
 
-        await self.delete_by_id(
-            user_id,
-            name=record.name,
-            delete_error_exc=EmployeeDeleteError,
-            delete_success_exc=EmployeeDeleteSuccess,
+        # Inlined delete (instead of BaseService.delete_by_id, which raises the
+        # success HTTPException immediately): the orphaned person row must be
+        # removed AFTER the employee delete commits, or the FK blocks it.
+        person_id = record.person_id
+        try:
+            await self.repository.delete_by_id(user_id)
+        except IntegrityError:
+            raise await self._resolve_domain_error(EmployeeDeleteError(record.name))
+
+        if person_id is not None:
+            await self.session.execute(
+                text(
+                    "DELETE FROM persons WHERE id = :pid AND NOT EXISTS "
+                    "(SELECT 1 FROM employees WHERE person_id = :pid)"
+                ),
+                {"pid": person_id},
+            )
+            await self.session.commit()
+
+        success = EmployeeDeleteSuccess(record.name)
+        await self._raise_success(
+            message_key=success.message_key,
+            variables=success.template_vars,
+            fallback=success.fallback,
         )
 
     # ------------------------------------------------------------------

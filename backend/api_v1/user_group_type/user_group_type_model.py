@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Text
+from sqlalchemy import String, Text, Boolean
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 from typing import TYPE_CHECKING
@@ -12,6 +12,11 @@ class UserGroupType(IntIdPkMixin, TimestampMixin, Base):
 
     name: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Marks the type whose groups carry access-control grants (was matched by
+    # name == "authorisation"). Flag, not name/id, so renaming is safe.
+    is_authorisation: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
 
     user_groups: Mapped[list["UserGroup"]] = relationship(
         back_populates="user_group_type",

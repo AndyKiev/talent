@@ -65,6 +65,7 @@ class EssenceName(str, Enum):
     ESSENCE = "essence"
 
     # ── HR core ──────────────────────────────────────────────────────────────
+    PERSON = "person"
     EMPLOYEE = "employee"
     EMPLOYEE_STATUS = "employee_status"
     DEPARTMENT = "department"
@@ -114,6 +115,10 @@ class EssenceName(str, Enum):
     EMPLOYEE_TRAINING_STATUS = "employee_training_status"
     TRAINING_TYPE = "training_type"
     EMPLOYEE_TRAINING = "employee_training"
+
+    # ── Developer tools ──────────────────────────────────────────────────────
+    DB_TABLE = "db_table"
+    MENU = "menu"
 
 
 class PlanSessionStatusKey(str, Enum):

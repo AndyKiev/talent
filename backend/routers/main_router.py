@@ -32,6 +32,7 @@ from backend.api_v1.user_group_type.user_group_type_views import (
     router as user_group_type_router,
 )
 from backend.api_v1.user_group.user_group_views import router as user_group_router
+from backend.api_v1.person.person_views import router as person_router
 from backend.api_v1.employee.employee_views import router as employee_router
 from backend.api_v1.talent_status_period_link.talent_status_period_link_views import (
     router as talent_status_period_link_router,
@@ -298,6 +299,7 @@ router.include_router(dept_type_parental_link_router)
 router.include_router(department_type_job_link_router)
 router.include_router(department_category_router)
 router.include_router(job_router)
+router.include_router(person_router)
 router.include_router(employee_router)
 router.include_router(employee_department_router)
 router.include_router(employee_responsibility_department_router)

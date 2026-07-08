@@ -133,6 +133,7 @@ class ReviewSessionService(BaseService):
             from backend.api_v1.review_session_department.review_session_department_repository import (
                 ReviewSessionDepartmentRepository,
             )
+
             dep_repo = ReviewSessionDepartmentRepository(session=self.session)
             dep_names = await dep_repo.get_department_names_by_session_ids(
                 [s.id for s in schemas]
@@ -149,9 +150,7 @@ class ReviewSessionService(BaseService):
             ReviewSessionDepartmentRepository,
         )
 
-        pending_id = await self._resolve_status_id(
-            ReviewSessionStatusKey.PENDING.value
-        )
+        pending_id = await self._resolve_status_id(ReviewSessionStatusKey.PENDING.value)
         data = rs_in.model_dump()
         department_id = data.pop("department_id", None)
         data["status_id"] = pending_id
@@ -165,7 +164,10 @@ class ReviewSessionService(BaseService):
             await self.session.commit()
             await self.session.refresh(record)
             # Load the department name explicitly (avoid lazy-load in sync _to_schema).
-            from backend.api_v1.department.department_model import Department as DeptModel
+            from backend.api_v1.department.department_model import (
+                Department as DeptModel,
+            )
+
             dep_name_stmt = select(DeptModel.name).where(DeptModel.id == department_id)
             dep_name_result = await self.session.execute(dep_name_stmt)
             dep_name = dep_name_result.scalar_one_or_none()
@@ -190,7 +192,9 @@ class ReviewSessionService(BaseService):
         return MutationResponse(detail=detail, data=schema)
 
     async def open_session(self, rs_id: int) -> MutationResponse[ReviewSessionSchema]:
-        from backend.api_v1.app_setting.app_setting_model import AppSetting as AppSettingModel
+        from backend.api_v1.app_setting.app_setting_model import (
+            AppSetting as AppSettingModel,
+        )
         from backend.api_v1.review_session_department.review_session_department_repository import (
             ReviewSessionDepartmentRepository,
         )
@@ -203,9 +207,7 @@ class ReviewSessionService(BaseService):
             exc = ReviewSessionStatusError(orm_record.status, "open")
             raise await self._resolve_domain_error(exc)
 
-        open_id = await self._resolve_status_id(
-            ReviewSessionStatusKey.OPEN.value
-        )
+        open_id = await self._resolve_status_id(ReviewSessionStatusKey.OPEN.value)
 
         # Check if the department-filter setting is enabled.
         filter_by_dept = False
@@ -231,13 +233,23 @@ class ReviewSessionService(BaseService):
             JobJobCategoryLink,
         )
 
+        from backend.api_v1.employee_origin.employee_origin_model import (
+            HUMAN_ORIGIN_ID,
+        )
+
         stmt = select(Employee)
-        conditions = [Employee.is_active == True]
+        # Only HUMAN employees enter people-review (robots/system accounts out).
+        conditions = [
+            Employee.is_active == True,
+            Employee.origin_id == HUMAN_ORIGIN_ID,
+        ]
 
         # Filter 1 (existing): employees whose MAIN department is in the picked
         # department's subtree.
         if filter_by_dept:
-            from backend.api_v1.department.department_repository import DepartmentRepository
+            from backend.api_v1.department.department_repository import (
+                DepartmentRepository,
+            )
 
             linked_ids = {r.department_id for r in linked_dept_ids}
             # Expand to include all descendants so picking a top-level department
@@ -422,9 +434,7 @@ class ReviewSessionService(BaseService):
             exc = ReviewSessionStatusError(orm_record.status, "closed")
             raise await self._resolve_domain_error(exc)
 
-        closed_id = await self._resolve_status_id(
-            ReviewSessionStatusKey.CLOSED.value
-        )
+        closed_id = await self._resolve_status_id(ReviewSessionStatusKey.CLOSED.value)
 
         # A session can only close once every employee review is "closed".
         not_closed_stmt = sa_select(RSEModel).where(
@@ -453,9 +463,7 @@ class ReviewSessionService(BaseService):
             exc = ReviewSessionStatusError(orm_record.status, "open")
             raise await self._resolve_domain_error(exc)
 
-        open_id = await self._resolve_status_id(
-            ReviewSessionStatusKey.OPEN.value
-        )
+        open_id = await self._resolve_status_id(ReviewSessionStatusKey.OPEN.value)
         orm_record.status_id = open_id
         await self.session.commit()
         await self.session.refresh(orm_record)
@@ -715,9 +723,7 @@ class ReviewSessionService(BaseService):
         Empty dict for pending sessions (nothing frozen yet).
         """
         result = await self.session.execute(
-            select(ReviewSessionSetting).where(
-                ReviewSessionSetting.session_id == rs_id
-            )
+            select(ReviewSessionSetting).where(ReviewSessionSetting.session_id == rs_id)
         )
         return {s.key: s.value for s in result.scalars().all()}
 

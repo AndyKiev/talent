@@ -22,8 +22,12 @@ from backend.api_v1.employee_events.employee_event.employee_event_dependencies i
 from backend.api_v1.employee_events.employee_event.employee_event_service import (
     EmployeeEventService,
 )
+from backend.api_v1.person.person_dependencies import get_person_service
+from backend.api_v1.person.person_service import PersonService
+from backend.api_v1.person.person_schema import PersonCreate
 from backend.auth.guards import Guard
 from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.person_names import build_employee_name, normalize_name_part
 
 router = APIRouter(
     prefix="/employees",
@@ -45,7 +49,8 @@ async def get_employees(
     service: Annotated[EmployeeService, Depends(get_employee_service)],
     job_id: Optional[int] = Query(None, description="Filter users by job ID"),
     department_id: Optional[int] = Query(
-        None, description="Filter users whose main department is in this department's subtree"
+        None,
+        description="Filter users whose main department is in this department's subtree",
     ),
 ):
     """Get all users, optionally filtered by job ID and/or department subtree."""
@@ -123,24 +128,49 @@ async def create_employee_with_activation(
     payload: EmployeeWithActivationCreate,
     employee_service: Annotated[EmployeeService, Depends(get_employee_service)],
     event_service: Annotated[EmployeeEventService, Depends(get_employee_event_service)],
+    person_service: Annotated[PersonService, Depends(get_person_service)],
 ):
     """
-    Atomic creation of a new employee (pending status, no job, no departments)
-    plus an activation event pre-filled with MAIN_DEPT_CHANGE, JOB_CHANGE,
-    and auto STATUS_CHANGE -> working.
+    Atomic creation of a new person + employee (pending status, no job, no
+    departments) plus an activation event pre-filled with MAIN_DEPT_CHANGE,
+    JOB_CHANGE, and auto STATUS_CHANGE -> working. Compensation chain: any
+    later failure deletes what the earlier steps created.
     """
-    # 1) Create the employee
-    employee = await employee_service.create_user(
-        EmployeeCreate(
-            code=payload.code,
-            name=payload.name,
-            email=payload.email,
-            is_active=payload.is_active,
-            lang_id=payload.lang_id,
+    # 1) Create the person (raises PersonNameExists when a namesake exists and
+    #    the frontend didn't confirm allow_duplicate).
+    person = (
+        await person_service.create_person(
+            PersonCreate(
+                first_name=payload.first_name,
+                last_name=payload.last_name,
+                patronymic=payload.patronymic,
+                sex=payload.sex,
+                birth_date=payload.birth_date,
+                allow_duplicate=payload.allow_duplicate,
+            )
         )
-    )
+    ).data
 
-    # 2) Create the activation event with change rows.
+    # 2) Create the employee with the derived 'LAST FIRST' name.
+    try:
+        employee = await employee_service.create_user(
+            EmployeeCreate(
+                code=payload.code,
+                name=build_employee_name(
+                    normalize_name_part(payload.last_name),
+                    normalize_name_part(payload.first_name),
+                ),
+                email=payload.email,
+                is_active=payload.is_active,
+                lang_id=payload.lang_id,
+                person_id=person.id,
+            )
+        )
+    except Exception:
+        await person_service.repository.delete_by_id(person.id)
+        raise
+
+    # 3) Create the activation event with change rows.
     try:
         await event_service.create_activation_for_employee(
             employee_id=employee.id,
@@ -151,9 +181,10 @@ async def create_employee_with_activation(
         )
     except Exception:
         await employee_service.repository.delete_by_id(employee.id)
+        await person_service.repository.delete_by_id(person.id)
         raise
 
-    # 3) Re-fetch the employee to include fresh data in the response
+    # 4) Re-fetch the employee to include fresh data in the response
     return await employee_service.get_by_id(employee.id)
 
 

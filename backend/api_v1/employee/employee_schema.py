@@ -16,15 +16,27 @@ class EmployeeBase(BaseModel):
 
 
 class EmployeeCreate(EmployeeBase):
-    pass
+    # Physical person behind this employee (set by orchestration code that
+    # created the person first; plain POST /employees may pass one directly).
+    person_id: Optional[int] = None
 
 
 class EmployeeWithActivationCreate(EmployeeBase):
     """
     One-shot employee creation with an activation event.
     Reuses EmployeeBase for employee fields; adds activation fields.
+    A person is created under the hood from the split name fields;
+    `name` is derived server-side ('LAST FIRST') and thus optional here.
     """
 
+    name: Optional[str] = Field(None, max_length=100)
+    first_name: str = Field(..., max_length=64)
+    last_name: str = Field(..., max_length=64)
+    patronymic: Optional[str] = Field(None, max_length=64)
+    sex: Optional[Literal["male", "female"]] = None
+    birth_date: Optional[date] = None
+    # True = the user confirmed the namesake modal; assign next dedupe number.
+    allow_duplicate: bool = False
     effective_date: date = Field(..., description="Activation date")
     department_id: int = Field(..., description="Main department for the employee")
     job_id: int = Field(..., description="Job for the employee")
@@ -51,17 +63,34 @@ class EmployeePersonalDataUpdate(BaseModel):
 
 
 class EmployeeUpdate(BaseModel):
-    name: Optional[str] = Field(None, max_length=100)
+    # NOTE: no `name` here — employees.name is derived from the person
+    # (PATCH /persons/{id} renames; the service rebuilds 'LAST FIRST').
     email: Optional[str] = Field(None, max_length=100)
     is_active: Optional[bool] = None
     job_id: Optional[int] = None
     lang_id: Optional[int] = None
 
 
+class EmployeePersonSlim(BaseModel):
+    """Slim person info nested in EmployeeSchema."""
+
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    patronymic: Optional[str] = None
+    sex: Optional[str] = None
+    birth_date: Optional[date] = None
+
+
 class EmployeeSchema(EmployeeBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
     created_at: datetime
+    person_id: Optional[int] = None
+    person: Optional[EmployeePersonSlim] = None
+    # 1=human, 2=robot (system accounts) — see EmployeeOrigin.
+    origin_id: int = 1
     # Read-only — mirrors Employee.current_level_id @property (1:1 link table).
     current_level_id: Optional[int] = None
     # Read-only — mirror Employee.birth_date / hire_date @propertys (personal-data table).
@@ -71,6 +100,9 @@ class EmployeeSchema(EmployeeBase):
     sex: Optional[str] = None
     marital_status: Optional[str] = None
     groups: List[str] = []  # populated via Employee.groups @property
+    group_ids: List[int] = (
+        []
+    )  # populated via Employee.group_ids @property (rename-safe)
     operations: List[str] = []  # DEPRECATED — kept during transition window
 
     # Resolved access-control grants, populated by EmployeeService._to_schema.

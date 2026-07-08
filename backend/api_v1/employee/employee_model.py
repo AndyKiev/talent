@@ -30,6 +30,8 @@ if TYPE_CHECKING:
     from backend.api_v1.table_relationship_links.employee_personal_data_model import (
         EmployeePersonalData,
     )
+    from backend.api_v1.person.person_model import Person
+    from backend.api_v1.employee_origin.employee_origin_model import EmployeeOrigin
 
 
 class Employee(IntIdPkMixin, TimestampMixin, Base):
@@ -46,6 +48,16 @@ class Employee(IntIdPkMixin, TimestampMixin, Base):
     )
     lang_id: Mapped[int] = mapped_column(
         ForeignKey("langs.id"), nullable=False, default=3
+    )
+    # Physical person behind this employee record (names, sex, birth date).
+    person_id: Mapped[int] = mapped_column(ForeignKey("persons.id"), nullable=False)
+    # Origin lookup: 1=human (default, applied silently), 2=robot (system
+    # accounts like ADMIN). Robots never enter people-review.
+    origin_id: Mapped[int] = mapped_column(
+        ForeignKey("employee_origins.id"),
+        nullable=False,
+        default=1,
+        server_default="1",
     )
 
     # Relationships (lazy="selectin" so they're always available after a load)
@@ -88,6 +100,18 @@ class Employee(IntIdPkMixin, TimestampMixin, Base):
         uselist=False,
     )
 
+    # Physical person (names, sex, birth date). employees.name stays as a
+    # derived 'Last First' (title-case) mirror until the column is removed.
+    person: Mapped["Person | None"] = relationship(
+        back_populates="employees",
+        lazy="selectin",
+    )
+
+    origin: Mapped["EmployeeOrigin"] = relationship(
+        back_populates="employees",
+        lazy="selectin",
+    )
+
     events: Mapped[list["EmployeeEvent"]] = relationship(
         foreign_keys="[EmployeeEvent.employee_id]",
         back_populates="employee",
@@ -115,6 +139,15 @@ class Employee(IntIdPkMixin, TimestampMixin, Base):
         ]
 
     @property
+    def group_ids(self) -> list[int]:
+        """User-group ids this employee belongs to (id-based, rename-safe)."""
+        return [
+            link.user_group_id
+            for link in self.user_groups
+            if link.user_group_id is not None
+        ]
+
+    @property
     def current_level_id(self) -> int | None:
         # Read-only mirror of the 1:1 link table, so EmployeeSchema can keep
         # serializing current_level_id. Written only via set_current_level.
@@ -122,8 +155,10 @@ class Employee(IntIdPkMixin, TimestampMixin, Base):
 
     @property
     def birth_date(self):
-        # Read-only mirror of the 1:1 personal-data table. Written only via
-        # set_personal_data.
+        # Person is authoritative; personal_data is the legacy fallback
+        # (set_personal_data keeps both in sync).
+        if self.person and self.person.birth_date:
+            return self.person.birth_date
         return self.personal_data.birth_date if self.personal_data else None
 
     @property
@@ -138,12 +173,18 @@ class Employee(IntIdPkMixin, TimestampMixin, Base):
 
     @property
     def sex(self):
-        # Read-only mirror of the 1:1 personal-data table ('male' / 'female').
+        # 'male' / 'female'. The person table is authoritative; personal_data
+        # is the legacy fallback until its sex column is dropped.
+        if self.person and self.person.sex:
+            return self.person.sex
         return self.personal_data.sex if self.personal_data else None
 
     @property
     def marital_status(self):
-        # Read-only mirror of the 1:1 personal-data table ('married' / 'not_married').
+        # 'married' / 'not_married'. Person is authoritative; personal_data is
+        # the legacy fallback until its column is dropped.
+        if self.person and self.person.marital_status:
+            return self.person.marital_status
         return self.personal_data.marital_status if self.personal_data else None
 
     # NOTE: `operations` cannot be a property because it requires an

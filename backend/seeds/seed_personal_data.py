@@ -49,26 +49,74 @@ from backend.api_v1.employee_child.employee_child_model import EmployeeChild
 # ═══════════════════════════════════════════════════════════════════════════════
 
 _INSTITUTIONS: list[dict] = [
-    {"name": "Національний технічний університет України «Київський політехнічний інститут імені Ігоря Сікорського»", "speciality": "Комп'ютерні науки"},
-    {"name": "Київський національний університет імені Тараса Шевченка", "speciality": "Прикладна математика"},
-    {"name": "Національний університет «Києво-Могилянська академія»", "speciality": "Фінанси"},
-    {"name": "Київський національний економічний університет імені Вадима Гетьмана", "speciality": "Менеджмент"},
+    {
+        "name": "Національний технічний університет України «Київський політехнічний інститут імені Ігоря Сікорського»",
+        "speciality": "Комп'ютерні науки",
+    },
+    {
+        "name": "Київський національний університет імені Тараса Шевченка",
+        "speciality": "Прикладна математика",
+    },
+    {
+        "name": "Національний університет «Києво-Могилянська академія»",
+        "speciality": "Фінанси",
+    },
+    {
+        "name": "Київський національний економічний університет імені Вадима Гетьмана",
+        "speciality": "Менеджмент",
+    },
     {"name": "Національний авіаційний університет", "speciality": "Системна інженерія"},
-    {"name": "Національний університет біоресурсів і природокористування України", "speciality": "Екологія"},
-    {"name": "Харківський національний університет радіоелектроніки", "speciality": "Телекомунікації"},
-    {"name": "Львівський національний університет імені Івана Франка", "speciality": "Право"},
-    {"name": "Одеський національний політехнічний університет", "speciality": "Машинобудування"},
-    {"name": "Дніпровський національний університет імені Олеся Гончара", "speciality": "Фізика"},
+    {
+        "name": "Національний університет біоресурсів і природокористування України",
+        "speciality": "Екологія",
+    },
+    {
+        "name": "Харківський національний університет радіоелектроніки",
+        "speciality": "Телекомунікації",
+    },
+    {
+        "name": "Львівський національний університет імені Івана Франка",
+        "speciality": "Право",
+    },
+    {
+        "name": "Одеський національний політехнічний університет",
+        "speciality": "Машинобудування",
+    },
+    {
+        "name": "Дніпровський національний університет імені Олеся Гончара",
+        "speciality": "Фізика",
+    },
 ]
 
 _COLLEGES: list[dict] = [
-    {"name": "Київський фаховий коледж зв'язку", "speciality": "Телекомунікації та радіотехніка"},
-    {"name": "Київський фаховий коледж електронних приладів", "speciality": "Електроніка"},
-    {"name": "Львівський фаховий коледж харчової промисловості", "speciality": "Харчові технології"},
-    {"name": "Харківський фаховий коледж будівництва та архітектури", "speciality": "Будівництво"},
-    {"name": "Одеський фаховий коледж економіки та права", "speciality": "Бухгалтерський облік"},
-    {"name": "Київський фаховий коледж туризму та готельного господарства", "speciality": "Готельно-ресторанна справа"},
-    {"name": "Дніпровський фаховий коледж транспорту", "speciality": "Транспортні технології"},
+    {
+        "name": "Київський фаховий коледж зв'язку",
+        "speciality": "Телекомунікації та радіотехніка",
+    },
+    {
+        "name": "Київський фаховий коледж електронних приладів",
+        "speciality": "Електроніка",
+    },
+    {
+        "name": "Львівський фаховий коледж харчової промисловості",
+        "speciality": "Харчові технології",
+    },
+    {
+        "name": "Харківський фаховий коледж будівництва та архітектури",
+        "speciality": "Будівництво",
+    },
+    {
+        "name": "Одеський фаховий коледж економіки та права",
+        "speciality": "Бухгалтерський облік",
+    },
+    {
+        "name": "Київський фаховий коледж туризму та готельного господарства",
+        "speciality": "Готельно-ресторанна справа",
+    },
+    {
+        "name": "Дніпровський фаховий коледж транспорту",
+        "speciality": "Транспортні технології",
+    },
 ]
 
 # Language keys must match the frontend FOREIGN_LANGUAGES constant
@@ -77,8 +125,8 @@ _LANGUAGES: list[dict] = [
     {"language": "english", "level_code": "B1"},
     {"language": "english", "level_code": "B2"},
     {"language": "english", "level_code": "A2"},
-    {"language": "french",  "level_code": "A1"},
-    {"language": "french",  "level_code": "A2"},
+    {"language": "french", "level_code": "A1"},
+    {"language": "french", "level_code": "A2"},
 ]
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -98,9 +146,7 @@ def _random_date(start: date, end: date) -> date:
 
 async def _seed_personal_data(session, emp: Employee):
     result = await session.execute(
-        select(EmployeePersonalData).where(
-            EmployeePersonalData.employee_id == emp.id
-        )
+        select(EmployeePersonalData).where(EmployeePersonalData.employee_id == emp.id)
     )
     if result.scalar_one_or_none() is not None:
         print(f"   ⏭️  personal_data — already exists, skipping.")
@@ -161,7 +207,9 @@ async def _seed_education(session, emp: Employee, degree_map: dict[str, int]):
             graduation_year=grad_year2,
         )
         session.add(edu2)
-        print(f"   🎓 education (college): {col['name']} ({col['speciality']}, {grad_year2})")
+        print(
+            f"   🎓 education (college): {col['name']} ({col['speciality']}, {grad_year2})"
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -211,8 +259,9 @@ async def _seed_languages(session, emp: Employee, level_by_code: dict[str, int])
 
 
 async def _seed_children(session, emp: Employee):
+    # Children hang off the PERSON, not the employee.
     result = await session.execute(
-        select(EmployeeChild).where(EmployeeChild.employee_id == emp.id)
+        select(EmployeeChild).where(EmployeeChild.person_id == emp.person_id)
     )
     if list(result.scalars().all()):
         print(f"   ⏭️  children — already exist, skipping.")
@@ -221,7 +270,7 @@ async def _seed_children(session, emp: Employee):
     count = random.choices([0, 1, 2], weights=[30, 40, 30])[0]
     for _ in range(count):
         birth = _random_date(date(2005, 1, 1), date(2025, 12, 31))
-        child = EmployeeChild(employee_id=emp.id, birth_date=birth)
+        child = EmployeeChild(person_id=emp.person_id, birth_date=birth)
         session.add(child)
         print(f"   👶 child born {birth}")
 
@@ -268,9 +317,7 @@ async def seed_personal_data():
             return
 
         # ── 4. Load employees ───────────────────────────────────────────────
-        result = await session.execute(
-            select(Employee).where(Employee.id.in_(emp_ids))
-        )
+        result = await session.execute(select(Employee).where(Employee.id.in_(emp_ids)))
         employees: list[Employee] = list(result.scalars().all())
         employees.sort(key=lambda e: e.name or "")
 

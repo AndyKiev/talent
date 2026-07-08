@@ -7,10 +7,12 @@ class EmployeeChildBase(BaseModel):
 
 
 class EmployeeChildCreate(EmployeeChildBase):
+    # The HTTP API speaks employee_id; the service resolves it to the
+    # employee's person_id (children belong to the person).
     employee_id: int
 
 
 class EmployeeChild(EmployeeChildBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
-    employee_id: int
+    person_id: int

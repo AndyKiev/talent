@@ -20,9 +20,21 @@ import RateReviewIcon from '@mui/icons-material/RateReview';
 import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
 import SchoolIcon from '@mui/icons-material/School';
 
+import PersonIcon from '@mui/icons-material/Person';
+
 import type { RawEssenceConfig } from '../../types/essence';
 
 export const ESSENCES: RawEssenceConfig[] = [
+
+  // ── Persons (standalone) ──────────────────────────────────────────────────
+  {
+    parent: 'admin',
+    key: 'persons',
+    labelKey: 'persons',
+    descriptionKey: 'personsDesc',
+    Icon: PersonIcon,
+    color: '#0ea5e9',
+  },
 
   // ── Talent (group) ────────────────────────────────────────────────────────
   {
@@ -31,7 +43,7 @@ export const ESSENCES: RawEssenceConfig[] = [
     labelKey: 'talent',
     descriptionKey: 'talentDesc',
     Icon: TuneIcon,
-    color: '#f59e0b',
+    color: '#f50ba3',
     isGroup: true,
     groupKey: 'talent',
   },
@@ -139,7 +151,7 @@ export const ESSENCES: RawEssenceConfig[] = [
     labelKey: 'departments',
     descriptionKey: 'departmentsGroupDesc',
     Icon: ApartmentIcon,
-    color: '#f43f5e',
+    color: '#f4d93f',
     isGroup: true,
     groupKey: 'departments_group',
   },
@@ -178,7 +190,7 @@ export const ESSENCES: RawEssenceConfig[] = [
     labelKey: 'peopleReview',
     descriptionKey: 'peopleReviewDesc',
     Icon: RateReviewIcon,
-    color: '#e91e63',
+    color: '#1e87e9',
     isGroup: true,
     groupKey: 'people_review',
   },
@@ -208,7 +220,7 @@ export const ESSENCES: RawEssenceConfig[] = [
     labelKey: 'employeeEvents',
     descriptionKey: 'employeeEventsDesc',
     Icon: EventNoteIcon,
-    color: '#0ea5e9',
+    color: '#ab0ee9',
     isGroup: true,
     groupKey: 'employee_events',
   },
@@ -285,7 +297,7 @@ export const ESSENCES: RawEssenceConfig[] = [
     labelKey: 'training',
     descriptionKey: 'trainingGroupDesc',
     Icon: SchoolIcon,
-    color: '#8b5cf6',
+    color: '#f65c6b',
     isGroup: true,
     groupKey: 'training',
   },

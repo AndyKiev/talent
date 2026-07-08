@@ -32,6 +32,7 @@ from backend.api_v1.review_session_employee.review_session_employee_errors impor
     ReviewSessionEmployeeNotFound,
     ReviewSessionEmployeeStatusError,
     ReviewSessionEmployeeAlreadyInSession,
+    ReviewSessionEmployeeNotHuman,
     ReviewSessionNotOpenForAdd,
     ReviewSessionReorderNotAllowed,
     ProposedLevelRequiredForReview,
@@ -358,6 +359,16 @@ class ReviewSessionEmployeeService(BaseService):
         if employee is None:
             raise await self._resolve_domain_error(EmployeeNotFound(employee_id))
 
+        # Only HUMAN employees can join a review (robots/system accounts out).
+        from backend.api_v1.employee_origin.employee_origin_model import (
+            HUMAN_ORIGIN_ID,
+        )
+
+        if employee.origin_id != HUMAN_ORIGIN_ID:
+            raise await self._resolve_domain_error(
+                ReviewSessionEmployeeNotHuman(employee.name)
+            )
+
         existing = await self.session.scalar(
             select(RSEModel).where(
                 RSEModel.session_id == session_id,
@@ -527,7 +538,7 @@ class ReviewSessionEmployeeService(BaseService):
             )
         children_rows = (
             await self.session.scalars(
-                select(EmployeeChild).where(EmployeeChild.employee_id == emp_id)
+                select(EmployeeChild).where(EmployeeChild.person_id == emp.person_id)
             )
         ).all()
         children = None

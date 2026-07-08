@@ -16,6 +16,7 @@ const TOP_TABS = [
     { label: 'userGroupTypes',      segment: 'user_group_types' },
     { label: 'permissionMatrix',    segment: 'permission_matrix' },
     { label: 'permissionsOverview', segment: 'permissions_overview' },
+    { label: 'menus',               segment: 'menus' },
 ];
 
 export function SecurityGroupLayout() {

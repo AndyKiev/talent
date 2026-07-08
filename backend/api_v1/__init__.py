@@ -3,6 +3,10 @@ __all__ = {
     "Msg",
     "MsgKey",
     "Job",
+    "Sex",
+    "MaritalStatus",
+    "Person",
+    "EmployeeOrigin",
     "Employee",
     "UserGroup",
     "UserGroupType",
@@ -13,6 +17,7 @@ __all__ = {
     "EmployeePersonalData",
     "JobUserGroupLink",
     "OperationUserGroupLink",
+    "MenuUserGroupLink",
     "Department",
     "DepartmentType",
     "DepartmentCategory",
@@ -125,6 +130,12 @@ from backend.api_v1.lang.lang_model import Lang
 from backend.api_v1.msg_pg.msg_model import Msg
 from backend.api_v1.msg_key.msg_key_model import MsgKey
 from backend.api_v1.job.job_model import Job
+
+# FK-target order: sexes/marital_statuses -> persons -> employee_origins -> employees.
+from backend.api_v1.sex.sex_model import Sex
+from backend.api_v1.marital_status.marital_status_model import MaritalStatus
+from backend.api_v1.person.person_model import Person
+from backend.api_v1.employee_origin.employee_origin_model import EmployeeOrigin
 from backend.api_v1.employee.employee_model import Employee
 from backend.api_v1.user_group.user_group_model import UserGroup
 from backend.api_v1.user_group_type.user_group_type_model import UserGroupType
@@ -185,6 +196,9 @@ from backend.api_v1.table_relationship_links.job_user_group_link_model import (
 )
 from backend.api_v1.table_relationship_links.operation_user_group_link_model import (
     OperationUserGroupLink,
+)
+from backend.api_v1.table_relationship_links.menu_user_group_link_model import (
+    MenuUserGroupLink,
 )
 
 # Employee event history — import order matters: lookups first, then

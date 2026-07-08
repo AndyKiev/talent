@@ -8,6 +8,7 @@ Run from anywhere:
 
 Safe to run repeatedly (idempotent).
 """
+
 import sys
 from pathlib import Path
 
@@ -36,12 +37,21 @@ async def seed_dev_bypass():
         result = await session.execute(stmt)
         ugt = result.scalar_one_or_none()
         if not ugt:
-            ugt = UserGroupType(name="authorisation", description="Permission groups")
+            ugt = UserGroupType(
+                name="authorisation",
+                description="Permission groups",
+                is_authorisation=True,
+            )
             session.add(ugt)
             await session.flush()
-            print("Created UserGroupType: authorisation")
+            print("Created UserGroupType: authorisation (is_authorisation=True)")
         else:
-            print("UserGroupType 'authorisation' already exists")
+            if not ugt.is_authorisation:
+                ugt.is_authorisation = True
+                session.add(ugt)
+                print("Set is_authorisation=True on existing type")
+            else:
+                print("UserGroupType 'authorisation' already exists")
 
         # 2) Ensure "dev" user group exists under "authorisation"
         stmt = select(UserGroup).where(UserGroup.name == "dev")
@@ -53,17 +63,22 @@ async def seed_dev_bypass():
                 description="Developer bypass group — skips all permission checks",
                 user_group_type_id=ugt.id,
                 is_protected=True,
+                is_bypass=True,
             )
             session.add(dev_group)
             await session.flush()
-            print("Created UserGroup: dev (authorisation)")
+            print("Created UserGroup: dev (authorisation, is_bypass=True)")
         else:
             if dev_group.user_group_type_id != ugt.id:
                 dev_group.user_group_type_id = ugt.id
                 session.add(dev_group)
                 print("Fixed UserGroup 'dev' → type 'authorisation'")
+            if not dev_group.is_bypass:
+                dev_group.is_bypass = True
+                session.add(dev_group)
+                print("Set is_bypass=True on existing 'dev' group")
             else:
-                print("UserGroup 'dev' already exists (type: authorisation)")
+                print("UserGroup 'dev' already exists (type: authorisation, bypass)")
 
         # 3) Ensure admin employee (UKR7101004) is linked to the dev group
         stmt = select(Employee).where(Employee.code == "UKR7101004")
@@ -80,10 +95,14 @@ async def seed_dev_bypass():
         result = await session.execute(stmt)
         link = result.scalar_one_or_none()
         if not link:
-            link = EmployeeUserGroupLink(employee_id=admin.id, user_group_id=dev_group.id)
+            link = EmployeeUserGroupLink(
+                employee_id=admin.id, user_group_id=dev_group.id
+            )
             session.add(link)
             await session.commit()
-            print(f"Linked admin (UKR7101004, id={admin.id}) → dev group (id={dev_group.id})")
+            print(
+                f"Linked admin (UKR7101004, id={admin.id}) → dev group (id={dev_group.id})"
+            )
         else:
             print("Admin already linked to dev group")
 

@@ -641,8 +641,12 @@ def _page1_columns(data: dict) -> list[list[_Block]]:
             _idp_block(L.get("idp"), g("idp_missions") or [], c, L.get("kpi")),
         ],
         [
-            _competence_summary_block(L.get("strengths"), g("strengths_items") or [], c),
-            _competence_summary_block(L.get("development"), g("development_items") or [], c),
+            _competence_summary_block(
+                L.get("strengths"), g("strengths_items") or [], c
+            ),
+            _competence_summary_block(
+                L.get("development"), g("development_items") or [], c
+            ),
         ],
         [
             _titled_block(L.get("training"), g("training_done"), c, INK),
