@@ -21,7 +21,7 @@ from backend.api_v1.employee.employee_messages import (
     EmployeeDeleteError,
 )
 from backend.api_v1.employee.employee_messages import EmployeeDeleteSuccess
-from backend.api_v1.base.errors import DomainError
+from backend.api_v1.base.errors import DomainError, NotFoundError
 from backend.auth.permission_resolvers import (
     resolve_user_permissions,
     resolve_user_permission_sets,
@@ -163,6 +163,28 @@ class EmployeeService(BaseService):
             exc = EmployeeNotFoundByCode(code)
             raise await self._resolve_domain_error(exc)
         return await self._to_schema(result)
+
+    async def update_my_lang(self, code: str, lang_id: int) -> str:
+        """
+        Self-service: switch the calling user's app language.
+        Returns the success detail translated in the NEW language.
+        """
+        from backend.api_v1.lang.lang_model import Lang
+        from backend.api_v1.employee.employee_messages import MyLangUpdateSuccess
+
+        lang = await self.session.get(Lang, lang_id)
+        if lang is None:
+            raise NotFoundError("Lang", "id", lang_id)
+        orm_user = await self.repository.get_by_code(code)
+        if not orm_user:
+            exc = EmployeeNotFoundByCode(code)
+            raise await self._resolve_domain_error(exc)
+        orm_user.lang_id = lang_id
+        await self.session.commit()
+        # Translate the confirmation in the language just chosen.
+        if self.user:
+            self.user.lang_id = lang_id
+        return await self._resolve_domain_success(MyLangUpdateSuccess(lang.name))
 
     async def get_all(
         self,

@@ -40,6 +40,7 @@ export const OVERSIGHT_MANAGER_OPTIONS_QK = ['oversight_manager_options'] as con
 export const MY_OVERSIGHT_MANAGER_QK = ['my_oversight_manager'] as const;
 // Dynamic main-navigation menus
 export const MENUS_MY_QK = ['menus_my'] as const;
+export const LANGS_QK = ['langs'] as const;
 export const MENUS_ALL_QK = ['menus_all'] as const;
 // Developer menu editor (full list with visibility config)
 export const MENUS_MANAGE_QK = ['menus_manage'] as const;

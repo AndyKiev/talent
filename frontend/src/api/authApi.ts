@@ -14,6 +14,17 @@ export interface RegisterConfig {
     domains: string[];
 }
 
+export interface LangOption {
+    id: number;
+    name: string;
+    short_name: string;
+}
+
+export interface MyLangUpdateResponse {
+    detail: string;
+    user: AuthUser;
+}
+
 export const authApi = {
     // Public: whether the login page should offer self-registration + the
     // allowed email domains. Called pre-auth (no token needed).
@@ -43,6 +54,22 @@ export const authApi = {
     me: async (): Promise<AuthUser> => {
         const { data } = await axiosInstance.get<AuthUser>(`${BASE_URL}/jwt/users/me`);
 
+        return data;
+    },
+
+    // Available app languages (for the user-menu language switch).
+    langs: async (): Promise<LangOption[]> => {
+        const { data } = await axiosInstance.get<LangOption[]>(`${BASE_URL}/langs`);
+        return data ?? [];
+    },
+
+    // Self-service: persist the user's app language (employees.lang_id) and
+    // get back the refreshed /me payload + a success detail in the NEW language.
+    updateMyLang: async (langId: number): Promise<MyLangUpdateResponse> => {
+        const { data } = await axiosInstance.patch<MyLangUpdateResponse>(
+            `${BASE_URL}/jwt/users/me/lang`,
+            { lang_id: langId }
+        );
         return data;
     },
 };

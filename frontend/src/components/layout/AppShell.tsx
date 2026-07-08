@@ -9,7 +9,6 @@ import {
     Typography,
     Button,
     Stack,
-    Chip,
     Tooltip,
     IconButton,
     Menu,
@@ -22,10 +21,10 @@ import InsightsRounded from '@mui/icons-material/InsightsRounded';
 import SettingsRounded from '@mui/icons-material/SettingsRounded';
 import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
 import MenuRounded from '@mui/icons-material/MenuRounded';
-import { LogoutRounded, PeopleAltRounded, AdminPanelSettingsRounded, RateReviewRounded, SchoolRounded } from "@mui/icons-material";
+import { PeopleAltRounded, AdminPanelSettingsRounded, RateReviewRounded, SchoolRounded } from "@mui/icons-material";
 import { useTheme } from "../theme/ThemeContext";
 import { useAuthStore } from "../../store/authStore";
-import ThemeSwitch from "../theme/ThemeSwitch";
+import UserMenu from "./UserMenu";
 import cfl from "../../utils/helpers.ts";
 import useString from "../../hooks/useString.ts";
 import str from "../../strings/str.ts";
@@ -54,7 +53,7 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
     const { t, mode } = useTheme();
     const getString = useString({ str });
     const navigate = useNavigate();
-    const { user, logout } = useAuthStore();
+    const { user } = useAuthStore();
     const routerState = useRouterState();
     const currentPath = routerState.location.pathname;
 
@@ -74,11 +73,6 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
         parentId: number;
         anchor: HTMLElement;
     } | null>(null);
-
-    const handleLogout = async () => {
-        logout();
-        await navigate({ to: "/auth/login" });
-    };
 
     const navBtn = (item: MenuItem) => {
         const kids = childrenOf(item.id);
@@ -200,40 +194,10 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
                         </Tooltip>
                     </Stack>
 
-                    {/* Right side */}
+                    {/* Right side — username chip opens the user menu
+                        (theme / language / sign out). */}
                     <Stack direction="row" alignItems="center" spacing={1.5}>
-                        <ThemeSwitch />
-
-                        {user && (
-                            <Chip
-                                // label={user.name.split(" ")[0]}
-                                label={user.name}
-                                size="small"
-                                sx={{
-                                    fontSize: 12,
-                                    fontWeight: 600,
-                                    height: 28,
-                                    background: `${t.accent}14`,
-                                    color: t.accent,
-                                    border: "none",
-                                    display: { xs: "none", sm: "flex" },
-                                }}
-                            />
-                        )}
-
-                        <Tooltip title="Sign out">
-                            <IconButton
-                                size="small"
-                                onClick={handleLogout}
-                                sx={{
-                                    color: t.textMuted,
-                                    "&:hover": { color: t.text, background: `${t.text}10` },
-                                    borderRadius: "8px",
-                                }}
-                            >
-                                <LogoutRounded fontSize="small" />
-                            </IconButton>
-                        </Tooltip>
+                        <UserMenu />
                     </Stack>
                 </Toolbar>
             </AppBar>

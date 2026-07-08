@@ -349,6 +349,23 @@ async def auth_refresh_access_token(
 #     return AuthResponse(access_token=access_token, token_type="Bearer")
 
 
+def _me_payload(full: EmployeeSchema) -> dict:
+    """Shape shared by GET /users/me and PATCH /users/me/lang."""
+    return {
+        "id": full.id,
+        "code": full.code,
+        "name": full.name,
+        "email": full.email,
+        "is_active": full.is_active,
+        "job_id": full.job_id,
+        "lang_id": full.lang_id,
+        "job": full.job.model_dump() if full.job else None,
+        "lang": full.lang.model_dump() if full.lang else None,
+        "groups": full.groups,
+        "operations": full.operations,
+    }
+
+
 @router.get("/users/me")
 async def auth_user_check_self_info(
     payload: dict = Depends(get_current_token_payload),
@@ -362,20 +379,32 @@ async def auth_user_check_self_info(
     orm_user = await service.repository.get_by_code(user.code)
     full = await service._to_schema(orm_user)
     return {
-        "id": full.id,
-        "code": full.code,
-        "name": full.name,
-        "email": full.email,
-        "is_active": full.is_active,
-        "job_id": full.job_id,
-        "lang_id": full.lang_id,
-        "job": full.job.model_dump() if full.job else None,
-        "lang": full.lang.model_dump() if full.lang else None,
-        "groups": full.groups,
-        "operations": full.operations,
+        **_me_payload(full),
         "iat": payload.get("iat"),
         "exp": payload.get("exp"),
     }
+
+
+class MyLangUpdate(BaseModel):
+    lang_id: int
+
+
+@router.patch("/users/me/lang")
+async def update_my_lang(
+    body: MyLangUpdate,
+    user: EmployeeSchema = Depends(get_current_active_auth_user),
+    session: AsyncSession = Depends(db_helper.session_getter),
+):
+    # Self-service (no guard): every authenticated user may switch their own
+    # app language. Returns the refreshed /me payload so the frontend can
+    # replace the auth-store user in one round-trip.
+    service = EmployeeService(
+        repository=EmployeeRepository(session=session), session=session, user=user
+    )
+    detail = await service.update_my_lang(user.code, body.lang_id)
+    orm_user = await service.repository.get_by_code(user.code)
+    full = await service._to_schema(orm_user)
+    return {"detail": detail, "user": _me_payload(full)}
 
 
 # ── Access control: set-grain ─────────────────────────────────────────────────

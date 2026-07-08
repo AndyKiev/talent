@@ -122,3 +122,14 @@ class EmployeeDeleteSuccess(DeleteSuccess):  # new
         self.template_vars = {"name": name}
         self.fallback = f"Employee '{name}' successfully deleted"
         DomainSuccess.__init__(self, self.fallback)
+
+
+class MyLangUpdateSuccess(DomainSuccess):
+    """Self-service language switch from the user menu."""
+
+    message_key = "langUpdated"
+
+    def __init__(self, lang_name: str) -> None:
+        self.template_vars = {"lang": lang_name}
+        self.fallback = f"Language changed to '{lang_name}'"
+        super().__init__(self.fallback)
