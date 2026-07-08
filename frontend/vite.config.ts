@@ -15,10 +15,9 @@ export default (mode:string) => {
       host: '0.0.0.0',
       proxy: {
         "/api": {
-          target: env.VITE_BACKEND_API_URL,
+          target: env.VITE_PROXY_TARGET || 'http://127.0.0.1:8004',
           changeOrigin: true,
           secure: false,
-          rewrite: path => path.replace(/^\/api/, '')
         }
       }
     },

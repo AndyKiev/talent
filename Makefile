@@ -18,6 +18,7 @@ rabbit-down:
 run-backend:
 	uvicorn backend.main:app --host 127.0.0.1 --port 8004 --reload
 
-# run npm (VITE_BACKEND_API_URL comes from frontend/.env.development)
+# run npm — 0.0.0.0 so phones/tablets on the same wifi can open http://<PC-IP>:4004
+# (API calls stay relative and are proxied by vite to the localhost backend)
 run-frontend:
-	cd frontend && npm run dev -- --host 127.0.0.1
+	cd frontend && npm run dev -- --host 0.0.0.0
