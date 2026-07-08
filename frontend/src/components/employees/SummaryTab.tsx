@@ -21,7 +21,7 @@ function Field({
     copyButton?: React.ReactNode;
 }) {
     return (
-        <Box sx={{ mb: 1.5 }}>
+        <Box sx={{ mb: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <Typography variant="caption" color="text.secondary">{label}</Typography>
                 {copyButton}
@@ -66,8 +66,8 @@ export function SummaryTab() {
     const extraDepts = employee?.responsibility_departments ?? [];
 
     return (
-        <Paper variant="outlined" sx={{ p: 2 }}>
-            <Grid container spacing={3}>
+        <Paper variant="outlined" sx={{ p: 1.5 }}>
+            <Grid container spacing={2}>
                 {/* Code & name intentionally omitted — shown in the card header. */}
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                     <Field
@@ -99,7 +99,7 @@ export function SummaryTab() {
                     <Typography variant="caption" color="text.secondary">
                         {cfl(getString('mainDepartment') || 'Main department')}
                     </Typography>
-                    <Box sx={{ mb: 2, mt: 0.5 }}>
+                    <Box sx={{ mb: 1, mt: 0.25 }}>
                         {mainDepts.length > 0
                             ? mainDepts.map((d) => <DeptRow key={d.id} dept={d} />)
                             : <Typography variant="body1">—</Typography>}
@@ -108,7 +108,7 @@ export function SummaryTab() {
                     <Typography variant="caption" color="text.secondary">
                         {cfl(getString('responsibilityDepts') || 'Responsibility departments')}
                     </Typography>
-                    <Box sx={{ mt: 0.5 }}>
+                    <Box sx={{ mt: 0.25 }}>
                         {extraDepts.length > 0
                             ? extraDepts.map((d) => <DeptRow key={d.id} dept={d} />)
                             : <Typography variant="body1">—</Typography>}

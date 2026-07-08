@@ -15,14 +15,22 @@ import {
     MenuItem as MuiMenuItem,
     ListItemIcon,
     ListItemText,
+    Drawer,
+    List,
+    ListItemButton,
+    Collapse,
+    Divider,
+    useMediaQuery,
+    useTheme as useMuiTheme,
 } from "@mui/material";
 import CodeIcon from '@mui/icons-material/Code';
 import InsightsRounded from '@mui/icons-material/InsightsRounded';
 import SettingsRounded from '@mui/icons-material/SettingsRounded';
 import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
+import ExpandLessRounded from '@mui/icons-material/ExpandLessRounded';
 import MenuRounded from '@mui/icons-material/MenuRounded';
-import { PeopleAltRounded, AdminPanelSettingsRounded, RateReviewRounded, SchoolRounded } from "@mui/icons-material";
-import { useTheme } from "../theme/ThemeContext";
+import { PeopleAltRounded, AdminPanelSettingsRounded, RateReviewRounded, SchoolRounded, LogoutRounded } from "@mui/icons-material";
+import { useTheme as useAppTheme } from "../theme/ThemeContext";
 import { useAuthStore } from "../../store/authStore";
 import UserMenu from "./UserMenu";
 import cfl from "../../utils/helpers.ts";
@@ -50,10 +58,11 @@ interface AppShellProps {
 }
 
 const AppShell: FC<AppShellProps> = ({ children }) => {
-    const { t, mode } = useTheme();
+    const { t, mode } = useAppTheme();
+    const muiTheme = useMuiTheme();
     const getString = useString({ str });
     const navigate = useNavigate();
-    const { user } = useAuthStore();
+    const { user, logout } = useAuthStore();
     const routerState = useRouterState();
     const currentPath = routerState.location.pathname;
 
@@ -68,11 +77,17 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
     const childrenOf = (parentId: number) =>
         menus.filter((m) => m.parent_id === parentId);
 
+    // Responsive: hamburger on mobile, horizontal bar on desktop
+    const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
+
     // Open dropdown state for items that have children.
     const [submenuAnchor, setSubmenuAnchor] = useState<{
         parentId: number;
         anchor: HTMLElement;
     } | null>(null);
+    // Mobile drawer & expand state
+    const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+    const [expandedParents, setExpandedParents] = useState<Set<number>>(new Set());
 
     const navBtn = (item: MenuItem) => {
         const kids = childrenOf(item.id);
@@ -110,6 +125,158 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
             </Button>
         );
     };
+
+    // --- Desktop sub-menu dropdown (shared) ---
+    const desktopSubmenu = (
+        <Menu
+            open={submenuAnchor != null}
+            anchorEl={submenuAnchor?.anchor ?? null}
+            onClose={() => setSubmenuAnchor(null)}
+        >
+            {(submenuAnchor ? childrenOf(submenuAnchor.parentId) : []).map((child) => (
+                <MuiMenuItem
+                    key={child.id}
+                    selected={currentPath.startsWith(child.path)}
+                    onClick={() => {
+                        setSubmenuAnchor(null);
+                        navigate({ to: child.path as "/" });
+                    }}
+                >
+                    <ListItemIcon>{menuIcon(child.icon)}</ListItemIcon>
+                    <ListItemText>{cfl(getString(child.label_key))}</ListItemText>
+                </MuiMenuItem>
+            ))}
+        </Menu>
+    );
+
+    // --- Desktop settings button ---
+    const desktopSettingsBtn = (
+        <Tooltip title={cfl(getString("mySettings"))}>
+            <IconButton
+                size="small"
+                onClick={() => navigate({ to: "/settings" as "/" })}
+                sx={{
+                    color: currentPath.startsWith("/settings") ? t.accent : t.textMuted,
+                    background: currentPath.startsWith("/settings") ? `${t.accent}14` : "transparent",
+                    "&:hover": { color: t.accent, background: `${t.accent}10` },
+                    borderRadius: "9px",
+                }}
+            >
+                <SettingsRounded sx={{ fontSize: 18 }} />
+            </IconButton>
+        </Tooltip>
+    );
+
+    // --- Mobile drawer ---
+    const mobileDrawer = (
+        <Drawer
+            anchor="left"
+            open={mobileDrawerOpen}
+            onClose={() => setMobileDrawerOpen(false)}
+            PaperProps={{ sx: { minWidth: 260, pt: 1 } }}
+        >
+            <Typography
+                fontWeight={700}
+                fontSize={15}
+                letterSpacing="-0.02em"
+                color={t.text}
+                sx={{ px: 2, py: 1.5, userSelect: "none" }}
+            >
+                Talent
+            </Typography>
+            <List dense>
+                {topMenus.map((item) => {
+                    const kids = childrenOf(item.id);
+                    const active =
+                        currentPath.startsWith(item.path) ||
+                        kids.some((k) => currentPath.startsWith(k.path));
+                    const isExpanded = expandedParents.has(item.id);
+                    const toggleExpand = () =>
+                        setExpandedParents((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(item.id)) next.delete(item.id);
+                            else next.add(item.id);
+                            return next;
+                        });
+                    return (
+                        <Box key={item.id}>
+                            <ListItemButton
+                                onClick={() => {
+                                    if (kids.length > 0) {
+                                        toggleExpand();
+                                    } else {
+                                        setMobileDrawerOpen(false);
+                                        navigate({ to: item.path as "/" });
+                                    }
+                                }}
+                                selected={active}
+                                sx={{ borderRadius: 0 }}
+                            >
+                                <ListItemIcon sx={{ minWidth: 36 }}>
+                                    {menuIcon(item.icon)}
+                                </ListItemIcon>
+                                <ListItemText primary={cfl(getString(item.label_key))} />
+                                {kids.length > 0 &&
+                                    (isExpanded ? <ExpandLessRounded fontSize="small" /> : <ExpandMoreRounded fontSize="small" />)}
+                            </ListItemButton>
+                            {kids.length > 0 && (
+                                <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                                    <List dense disablePadding>
+                                        {kids.map((child) => (
+                                            <ListItemButton
+                                                key={child.id}
+                                                sx={{ pl: 5 }}
+                                                selected={currentPath.startsWith(child.path)}
+                                                onClick={() => {
+                                                    setMobileDrawerOpen(false);
+                                                    navigate({ to: child.path as "/" });
+                                                }}
+                                            >
+                                                <ListItemIcon sx={{ minWidth: 36 }}>
+                                                    {menuIcon(child.icon)}
+                                                </ListItemIcon>
+                                                <ListItemText primary={cfl(getString(child.label_key))} />
+                                            </ListItemButton>
+                                        ))}
+                                    </List>
+                                </Collapse>
+                            )}
+                        </Box>
+                    );
+                })}
+                {/* Settings (mobile) */}
+                <ListItemButton
+                    selected={currentPath.startsWith("/settings")}
+                    onClick={() => {
+                        setMobileDrawerOpen(false);
+                        navigate({ to: "/settings" as "/" });
+                    }}
+                >
+                    <ListItemIcon sx={{ minWidth: 36 }}>
+                        <SettingsRounded sx={{ fontSize: 18 }} />
+                    </ListItemIcon>
+                    <ListItemText primary={cfl(getString("mySettings"))} />
+                </ListItemButton>
+                <Divider sx={{ my: 1 }} />
+                {/* Sign out (mobile) — at the bottom, clearly separated */}
+                <ListItemButton
+                    onClick={() => {
+                        setMobileDrawerOpen(false);
+                        logout();
+                        navigate({ to: "/auth/login" });
+                    }}
+                >
+                    <ListItemIcon sx={{ minWidth: 36 }}>
+                        <LogoutRounded sx={{ fontSize: 18, color: t.textMuted }} />
+                    </ListItemIcon>
+                    <ListItemText
+                        primary={cfl(getString("signOut"))}
+                        primaryTypographyProps={{ fontSize: 13, fontWeight: 600 }}
+                    />
+                </ListItemButton>
+            </List>
+        </Drawer>
+    );
 
     return (
         <Box sx={{ minHeight: "100vh", background: t.bg, transition: "background 0.3s" }}>
@@ -154,51 +321,34 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
                         </Typography>
                     </Stack>
 
-                    {/* Nav items — dynamic, from the menus table */}
-                    <Stack direction="row" spacing={0.5} flexGrow={1}>
-                        {topMenus.map((item) => navBtn(item))}
-                        {/* Sub-menu dropdown for the item that opened it */}
-                        <Menu
-                            open={submenuAnchor != null}
-                            anchorEl={submenuAnchor?.anchor ?? null}
-                            onClose={() => setSubmenuAnchor(null)}
-                        >
-                            {(submenuAnchor ? childrenOf(submenuAnchor.parentId) : []).map((child) => (
-                                <MuiMenuItem
-                                    key={child.id}
-                                    selected={currentPath.startsWith(child.path)}
-                                    onClick={() => {
-                                        setSubmenuAnchor(null);
-                                        navigate({ to: child.path as "/" });
-                                    }}
-                                >
-                                    <ListItemIcon>{menuIcon(child.icon)}</ListItemIcon>
-                                    <ListItemText>{cfl(getString(child.label_key))}</ListItemText>
-                                </MuiMenuItem>
-                            ))}
-                        </Menu>
-                        {/* Personal settings — available to ALL users (ungated). */}
-                        <Tooltip title={cfl(getString("mySettings"))}>
-                            <IconButton
-                                size="small"
-                                onClick={() => navigate({ to: "/settings" as "/" })}
-                                sx={{
-                                    color: currentPath.startsWith("/settings") ? t.accent : t.textMuted,
-                                    background: currentPath.startsWith("/settings") ? `${t.accent}14` : "transparent",
-                                    "&:hover": { color: t.accent, background: `${t.accent}10` },
-                                    borderRadius: "9px",
-                                }}
-                            >
-                                <SettingsRounded sx={{ fontSize: 18 }} />
-                            </IconButton>
-                        </Tooltip>
-                    </Stack>
+                    {/* Desktop: horizontal nav bar + UserMenu on the right */}
+                    {!isMobile && (
+                        <>
+                            <Stack direction="row" spacing={0.5} flexGrow={1}>
+                                {topMenus.map((item) => navBtn(item))}
+                                {desktopSubmenu}
+                                {desktopSettingsBtn}
+                            </Stack>
+                            <Stack direction="row" alignItems="center" spacing={1.5}>
+                                <UserMenu />
+                            </Stack>
+                        </>
+                    )}
 
-                    {/* Right side — username chip opens the user menu
-                        (theme / language / sign out). */}
-                    <Stack direction="row" alignItems="center" spacing={1.5}>
-                        <UserMenu />
-                    </Stack>
+                    {/* Mobile: spacer + UserMenu + hamburger */}
+                    {isMobile && (
+                        <>
+                            <Box flexGrow={1} />
+                            <UserMenu />
+                            <IconButton
+                                onClick={() => setMobileDrawerOpen(true)}
+                                sx={{ color: t.text, borderRadius: "9px" }}
+                            >
+                                <MenuRounded />
+                            </IconButton>
+                            {mobileDrawer}
+                        </>
+                    )}
                 </Toolbar>
             </AppBar>
 

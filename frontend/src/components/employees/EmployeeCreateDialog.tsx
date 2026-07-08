@@ -643,9 +643,26 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
                                             value={field.value ?? ''}
                                             label={cfl(getString('job') || 'Job')}
                                             onChange={(e) => field.onChange(e.target.value as number)}
+                                            renderValue={(selected) => {
+                                                const job = jobsByType.find(j => j.id === (selected as number));
+                                                return job?.name ?? '';
+                                            }}
+                                            MenuProps={{
+                                                PaperProps: {
+                                                    sx: { maxHeight: 300 },
+                                                },
+                                            }}
+                                            sx={{
+                                                '& .MuiSelect-select': {
+                                                    whiteSpace: 'normal',
+                                                    wordBreak: 'break-word',
+                                                    lineHeight: 1.3,
+                                                    py: 1,
+                                                },
+                                            }}
                                         >
                                             {jobsByType.map((j) => (
-                                                <MenuItem key={j.id} value={j.id}>{j.name}</MenuItem>
+                                                <MenuItem key={j.id} value={j.id} sx={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>{j.name}</MenuItem>
                                             ))}
                                         </Select>
                                         {noJobsForType && (

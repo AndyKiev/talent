@@ -110,7 +110,7 @@ const UserMenu: FC = () => {
                         color: t.accent,
                         border: "none",
                         cursor: "pointer",
-                        display: { xs: "none", sm: "flex" },
+                        display: "flex",
                         transition: "all 0.15s",
                         "&:hover": {
                             background: `${t.accent}28`,
