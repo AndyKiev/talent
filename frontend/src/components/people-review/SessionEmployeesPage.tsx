@@ -15,6 +15,10 @@ import {
     DialogTitle,
     FormControlLabel,
     IconButton,
+    ListItemIcon,
+    ListItemText,
+    Menu,
+    MenuItem,
     Paper,
     Snackbar,
     Stack,
@@ -22,7 +26,10 @@ import {
     TextField,
     Tooltip,
     Typography,
+    useMediaQuery,
+    useTheme as useMuiTheme,
 } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
@@ -81,6 +88,13 @@ export function SessionEmployeesPage() {
     const localeText = useDataGridLocale();
     const { t } = useTheme();
     const getString = useString();
+    const muiTheme = useMuiTheme();
+    const isXs = useMediaQuery(muiTheme.breakpoints.down('sm'));
+    // Phone in landscape ("album"): wide enough to escape the xs breakpoint but so
+    // short that a fixed-height page leaves zero room for grid rows. Treat any
+    // short viewport the same as xs: page scroll + compact chrome.
+    const isShort = useMediaQuery('(max-height: 500px)');
+    const compact = isXs || isShort;
     const sid = Number(sessionId);
 
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
@@ -100,6 +114,9 @@ export function SessionEmployeesPage() {
     // Add-employee-to-session dialog.
     const [addOpen, setAddOpen] = useState(false);
     const [addEmpId, setAddEmpId] = useState<number | null>(null);
+
+    // Compact-mode toolbar menu (groups Add / TEMPO / reorder behind one icon).
+    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
     // Presentation-queue reorder mode (oversight only). Local UI state — only the
     // order persists server-side; the toggle resets to OFF on reload.
@@ -417,19 +434,29 @@ export function SessionEmployeesPage() {
             />
             <Box
                 sx={{
-                    p: { xs: 2, sm: 3 },
-                    px: { xs: 2, sm: 4, md: 6 },
+                    p: { xs: 1.5, sm: 3 },
+                    px: { xs: 1.5, sm: 4, md: 6 },
                     maxWidth: '100%',
-                    // Fixed-height page: the roster grid (or reorder list) scrolls
-                    // internally with pinned headers instead of the page scrolling
-                    // under the 56px AppBar.
-                    height: 'calc(100vh - 56px)',
+                    // On phones (xs) and short viewports (phone landscape): let the
+                    // page scroll naturally — fixed-height leaves too little room for
+                    // the DataGrid to render rows.
+                    // Otherwise: fixed-height so the DataGrid scrolls internally with
+                    // pinned headers instead of the whole page scrolling.
+                    ...(compact
+                        ? { minHeight: '100vh' }
+                        : {
+                              height: 'calc(100vh - 56px)',
+                              '@supports (height: 100dvh)': { height: 'calc(100dvh - 56px)' },
+                              overflow: 'hidden',
+                          }),
                     display: 'flex',
                     flexDirection: 'column',
-                    overflow: 'hidden',
                 }}
             >
-                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
+                <Breadcrumbs
+                    separator={<NavigateNextIcon sx={{ fontSize: compact ? 13 : 20 }} />}
+                    sx={{ mb: compact ? 0.5 : 3, '& .MuiTypography-root': { fontSize: compact ? 12 : undefined } }}
+                >
                     <Link to="/people_review" style={{ textDecoration: 'none', color: 'inherit' }}>
                         <Typography variant="body2" color="text.secondary">{getString('peopleReview')}</Typography>
                     </Link>
@@ -439,9 +466,9 @@ export function SessionEmployeesPage() {
                 </Breadcrumbs>
 
                 {/* Session header */}
-                <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2} flexWrap="wrap" gap={1.5}>
+                <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between" mb={compact ? 0.75 : 2} flexWrap="wrap" gap={compact ? 0.75 : 1.5}>
                     <Stack direction="row" alignItems="center" spacing={1.5}>
-                        <Typography variant="h6" fontWeight={700} color={t.text}>{sessionName}</Typography>
+                        <Typography variant="h6" fontWeight={700} color={t.text} fontSize={compact ? '0.95rem' : undefined}>{sessionName}</Typography>
                         <Chip
                             label={getString(STATUS_LABEL_KEYS[sessionStatus] ?? sessionStatus)}
                             size="small"
@@ -468,14 +495,14 @@ export function SessionEmployeesPage() {
                 </Stack>
 
                 {isSessionClosed && (
-                    <Alert severity="info" icon={<VisibilityIcon />} sx={{ mb: 2, borderRadius: '10px' }}>
+                    <Alert severity="info" icon={<VisibilityIcon />} sx={{ mb: { xs: 1, sm: 2 }, borderRadius: '10px' }}>
                         {getString('sessionClosedViewOnly')}
                     </Alert>
                 )}
 
                 {/* Supervision mode on, but no department chosen yet: no roster, prompt to pick one. */}
                 {contextIncomplete && (
-                    <Alert severity="info" icon={<VisibilityIcon />} sx={{ mb: 2, borderRadius: '10px' }}>
+                    <Alert severity="info" icon={<VisibilityIcon />} sx={{ mb: { xs: 1, sm: 2 }, borderRadius: '10px' }}>
                         {getString('selectDepartmentToSeeRoster')}
                     </Alert>
                 )}
@@ -485,43 +512,89 @@ export function SessionEmployeesPage() {
 
                 {!contextIncomplete && !isLoading && !error && (
                     <>
-                        <Box sx={{ mb: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-                            {!isSessionClosed ? (
-                                <Button
-                                    variant="contained" size="small"
-                                    startIcon={<PersonAddAlt1Icon />}
-                                    onClick={() => setAddOpen(true)}
-                                    sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
-                                >
-                                    {getString('addEmployee')}
-                                </Button>
-                            ) : <span />}
-                            {/* Presentation: open all employees (in queue order) as one
-                                HTML deck with ◀ ▶ navigation, in a new tab. */}
-                            {rows.length > 0 && (
-                                <Button
-                                    variant="outlined" size="small"
-                                    disabled={presLoading}
-                                    startIcon={presLoading ? <CircularProgress size={16} color="inherit" /> : <SlideshowIcon />}
-                                    onClick={onPresentation}
-                                    sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
-                                >
-                                    {presLoading ? getString('tempoPresentationBuilding') : getString('tempoPresentation')}
-                                </Button>
-                            )}
-                            {/* Oversight-only: toggle drag/arrow reordering of the presentation queue. */}
-                            {canReorder && (
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            size="small"
-                                            checked={reorderMode}
-                                            onChange={(_, v) => setReorderMode(v)}
+                        <Box sx={{ mb: compact ? 0.5 : 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: compact ? 0.75 : 1.5, flexWrap: 'wrap' }}>
+                            {compact ? (
+                                /* Compact (phone portrait OR landscape): group Add /
+                                   TEMPO / reorder behind one hamburger icon so the
+                                   toolbar doesn't eat the grid's vertical space. */
+                                <>
+                                    <IconButton
+                                        size="small"
+                                        onClick={(e) => setMenuAnchor(e.currentTarget)}
+                                        sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '8px' }}
+                                    >
+                                        <MenuIcon fontSize="small" />
+                                    </IconButton>
+                                    <Menu anchorEl={menuAnchor} open={!!menuAnchor} onClose={() => setMenuAnchor(null)}>
+                                        {!isSessionClosed && (
+                                            <MenuItem onClick={() => { setMenuAnchor(null); setAddOpen(true); }}>
+                                                <ListItemIcon><PersonAddAlt1Icon fontSize="small" /></ListItemIcon>
+                                                <ListItemText>{getString('addEmployee')}</ListItemText>
+                                            </MenuItem>
+                                        )}
+                                        {rows.length > 0 && (
+                                            <MenuItem
+                                                disabled={presLoading}
+                                                onClick={() => { setMenuAnchor(null); onPresentation(); }}
+                                            >
+                                                <ListItemIcon>
+                                                    {presLoading ? <CircularProgress size={16} /> : <SlideshowIcon fontSize="small" />}
+                                                </ListItemIcon>
+                                                <ListItemText>
+                                                    {presLoading ? getString('tempoPresentationBuilding') : getString('tempoPresentation')}
+                                                </ListItemText>
+                                            </MenuItem>
+                                        )}
+                                        {canReorder && (
+                                            <MenuItem onClick={() => setReorderMode(v => !v)}>
+                                                <ListItemIcon>
+                                                    <Switch size="small" checked={reorderMode} sx={{ pointerEvents: 'none' }} />
+                                                </ListItemIcon>
+                                                <ListItemText>{getString('reorderQueue')}</ListItemText>
+                                            </MenuItem>
+                                        )}
+                                    </Menu>
+                                </>
+                            ) : (
+                                <>
+                                    {!isSessionClosed ? (
+                                        <Button
+                                            variant="contained" size="small"
+                                            startIcon={<PersonAddAlt1Icon />}
+                                            onClick={() => setAddOpen(true)}
+                                            sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
+                                        >
+                                            {getString('addEmployee')}
+                                        </Button>
+                                    ) : <span />}
+                                    {/* Presentation: open all employees (in queue order) as one
+                                        HTML deck with ◀ ▶ navigation, in a new tab. */}
+                                    {rows.length > 0 && (
+                                        <Button
+                                            variant="outlined" size="small"
+                                            disabled={presLoading}
+                                            startIcon={presLoading ? <CircularProgress size={16} color="inherit" /> : <SlideshowIcon />}
+                                            onClick={onPresentation}
+                                            sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
+                                        >
+                                            {presLoading ? getString('tempoPresentationBuilding') : getString('tempoPresentation')}
+                                        </Button>
+                                    )}
+                                    {/* Oversight-only: toggle drag/arrow reordering of the presentation queue. */}
+                                    {canReorder && (
+                                        <FormControlLabel
+                                            control={
+                                                <Switch
+                                                    size="small"
+                                                    checked={reorderMode}
+                                                    onChange={(_, v) => setReorderMode(v)}
+                                                />
+                                            }
+                                            label={getString('reorderQueue')}
+                                            sx={{ ml: 0, mr: 0, '& .MuiFormControlLabel-label': { fontSize: 13, fontWeight: 600 } }}
                                         />
-                                    }
-                                    label={getString('reorderQueue')}
-                                    sx={{ ml: 0, mr: 0, '& .MuiFormControlLabel-label': { fontSize: 13, fontWeight: 600 } }}
-                                />
+                                    )}
+                                </>
                             )}
                             {/* Compact warning in the toolbar row so it never pushes the table down. */}
                             {openCount > 0 && sessionStatus === 'open' && (
@@ -588,18 +661,36 @@ export function SessionEmployeesPage() {
                                 />
                             </Box>
                         ) : (
-                            <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', flex: 1, minHeight: 0 }}>
+                            <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', ...(compact ? {} : { flex: 1, minHeight: 0 }) }}>
                                 <DataGrid
                                 rows={filteredRows} columns={columns}
                                 paginationModel={paginationModel}
                                 onPaginationModelChange={setPaginationModel}
                                 pageSizeOptions={[10, 25, 50]}
                                 disableRowSelectionOnClick
-                                rowHeight={64}
+                                rowHeight={compact ? 48 : 64}
+                                autoHeight={compact}
+                                columnHeaderHeight={compact ? 40 : undefined}
                                 getRowId={row => row.id}
                                 localeText={localeText}
                                 hideFooterSelectedRowCount
-                                sx={{ height: '100%', '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center', py: 1 } }}
+                                onCellClick={(params) => {
+                                    // Whole row opens the employee review — except the actions cell.
+                                    if (params.field === 'actions') return;
+                                    void navigate({
+                                        to: '/people_review/$sessionId/employee/$employeeId',
+                                        params: { sessionId: String(sid), employeeId: String(params.row.employee_id) },
+                                    });
+                                }}
+                                sx={{
+                                    ...(compact ? {} : { height: '100%' }),
+                                    '& .MuiDataGrid-row': { cursor: 'pointer' },
+                                    '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center', py: compact ? 0.5 : 1 },
+                                    ...(compact && {
+                                        '& .MuiDataGrid-columnHeaderTitle': { fontSize: '0.75rem' },
+                                        '& .MuiTablePagination-root': { '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': { fontSize: '0.75rem' } },
+                                    }),
+                                }}
                                 />
                             </Paper>
                         )}

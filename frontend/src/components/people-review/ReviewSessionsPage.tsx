@@ -496,7 +496,19 @@ export function ReviewSessionsPage() {
                             getRowId={(row) => row.id}
                             localeText={localeText}
                             hideFooterSelectedRowCount
-                            sx={{ height: '100%', '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center', py: 1 } }}
+                            onCellClick={(params) => {
+                                // Whole row enters the session — except the action-icons cell.
+                                if (params.field === 'actions') return;
+                                void navigate({
+                                    to: '/people_review/$sessionId',
+                                    params: { sessionId: String(params.row.id) },
+                                });
+                            }}
+                            sx={{
+                                height: '100%',
+                                '& .MuiDataGrid-row': { cursor: 'pointer' },
+                                '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center', py: 1 },
+                            }}
                         />
                     </Paper>
                 )}

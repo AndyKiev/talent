@@ -90,11 +90,27 @@ export const ThemeProvider: FC<{ children: ReactNode }> = ({ children }) => {
                             select: { paddingTop: "9px", paddingBottom: "9px" },
                         },
                     },
+                    // Select/Menu options: wrap long labels (e.g. job names) instead
+                    // of overflowing the popup — menu papers clip horizontal overflow,
+                    // so on phones unwrapped options are unreadable. Desktop popups
+                    // still size to one line when they fit; wrapping only kicks in
+                    // when the viewport constrains the paper.
+                    MuiMenuItem: {
+                        styleOverrides: {
+                            root: {
+                                whiteSpace: "normal",
+                                wordBreak: "break-word",
+                            },
+                        },
+                    },
                     // Global DataGrid HEADER style so every grid in every menu shares
                     // the same column-header look as the employees grid (the one that
                     // used useDataGridStyles). Header slots ONLY — cell/row layout is
                     // intentionally left to each grid.
                     MuiDataGrid: {
+                        // Global header height (default 56) — slimmer headers across
+                        // every grid in the app; per-grid columnHeaderHeight still wins.
+                        defaultProps: { columnHeaderHeight: 44 },
                         styleOverrides: {
                             columnHeader: ({ theme }) => ({
                                 backgroundColor: theme.palette.primary.light,

@@ -2,22 +2,30 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
+    Autocomplete,
+    Badge,
     Box,
     Button,
     Alert,
+    Drawer,
     Snackbar,
     FormControl,
     InputLabel,
     Select,
     MenuItem,
+    Stack,
+    TextField,
     Typography,
     Breadcrumbs,
     Tooltip,
     IconButton,
+    useMediaQuery,
+    useTheme,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -47,6 +55,10 @@ export function EmployeesPage() {
     const dataGridSx = useDataGridStyles();
     const localeText = useDataGridLocale();
     const navigate = useNavigate();
+    const muiTheme = useTheme();
+    // Below md the filter selects don't fit on one line — they move into a Drawer
+    // opened by the filter-lines icon, and the Add button collapses to an icon.
+    const isCompact = useMediaQuery(muiTheme.breakpoints.down('md'));
 
     // Dev/superadmin (bypass) users may force-cascade related records on delete.
     const isDev = useAuthStore(
@@ -66,6 +78,14 @@ export function EmployeesPage() {
     const [statusFilter, setStatusFilter] = useState<string | null>(null);
     const [subdepartmentFilter, setSubdepartmentFilter] = useState<string | null>(null);
     const [jobFilter, setJobFilter] = useState<string | null>(null);
+
+    // Employee search (first control, like the people-review session filter):
+    // type to narrow by code/name, or pick one employee by id from the dropdown.
+    const [selectedEmpId, setSelectedEmpId] = useState<number | null>(null);
+    const [empInput, setEmpInput] = useState('');
+
+    // Mobile-only filters drawer.
+    const [filtersOpen, setFiltersOpen] = useState(false);
 
     const [snackbar, setSnackbar] = useState({
         open: false,
@@ -125,8 +145,18 @@ export function EmployeesPage() {
                 (e) => e.main_department?.name === subdepartmentFilter,
             );
         if (jobFilter) result = result.filter((e) => e.job?.name === jobFilter);
+        if (selectedEmpId != null) {
+            result = result.filter((e) => e.id === selectedEmpId);
+        } else {
+            const q = empInput.trim().toLowerCase();
+            if (q) result = result.filter((e) => `${e.code} ${e.name}`.toLowerCase().includes(q));
+        }
         return result;
-    }, [employees, statusFilter, subdepartmentFilter, jobFilter]);
+    }, [employees, statusFilter, subdepartmentFilter, jobFilter, selectedEmpId, empInput]);
+
+    const selectedEmp = employees.find((e) => e.id === selectedEmpId) ?? null;
+    const activeFilterCount = [selectedDeptId, subdepartmentFilter, jobFilter, statusFilter]
+        .filter((v) => v != null).length;
 
     // ── Mutations ─────────────────────────────────────────────────────────────
     const { createMutation, updateMutation, deleteMutation } = useEmployeeMutations({
@@ -215,9 +245,103 @@ export function EmployeesPage() {
     // field rather than assuming index 0 (keeps the order correct either way).
     const photoColumn = baseColumns.find((c) => c.field === 'photo');
     const restColumns = baseColumns.filter((c) => c.field !== 'photo');
-    const columns = [...(photoColumn ? [photoColumn] : []), actionsColumn, ...restColumns];
+    const columns = [...(photoColumn ? [photoColumn] : []), ...restColumns, actionsColumn];
 
     const ALL_VALUE = '__all__';
+
+    // ── Toolbar pieces (shared between the desktop row and the mobile drawer) ──
+    const employeeSearch = (
+        <Autocomplete<Employee>
+            size="small"
+            sx={{ width: isCompact ? undefined : 280, flex: isCompact ? 1 : undefined, minWidth: 0 }}
+            options={employees}
+            value={selectedEmp}
+            onChange={(_, opt) => setSelectedEmpId(opt?.id ?? null)}
+            inputValue={empInput}
+            onInputChange={(_, val) => setEmpInput(val)}
+            getOptionLabel={(e) => `${e.code} — ${e.name}`}
+            isOptionEqualToValue={(o, v) => o.id === v.id}
+            noOptionsText={getString('noOptions')}
+            renderInput={(params) => (
+                <TextField
+                    {...params}
+                    variant="outlined"
+                    label={cfl(getString('filterByEmployee') || 'Filter by employee')}
+                    placeholder={getString('search') || 'Search'}
+                />
+            )}
+        />
+    );
+
+    const filterSelects = (inDrawer: boolean) => (
+        <>
+            <SelectScopeDepartment value={selectedDeptId} onChange={setSelectedDeptId} />
+            {subdepartmentOptions.length > 0 && (
+                <FormControl size="small" sx={inDrawer ? { width: '100%' } : { minWidth: 200 }}>
+                    <InputLabel>
+                        {cfl(getString('department') || 'Department')}
+                    </InputLabel>
+                    <Select
+                        variant="outlined"
+                        label={cfl(getString('department') || 'Department')}
+                        value={subdepartmentFilter ?? ALL_VALUE}
+                        onChange={(e) =>
+                            setSubdepartmentFilter(e.target.value === ALL_VALUE ? null : e.target.value)
+                        }
+                    >
+                        <MenuItem value={ALL_VALUE}>
+                            <em>{getString('all') || getString('allDepartments') || 'All'}</em>
+                        </MenuItem>
+                        {subdepartmentOptions.map((s) => (
+                            <MenuItem key={s} value={s}>{s}</MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+            )}
+            {jobOptions.length > 0 && (
+                <FormControl size="small" sx={inDrawer ? { width: '100%' } : { minWidth: 180 }}>
+                    <InputLabel>{cfl(getString('job') || 'Job')}</InputLabel>
+                    <Select
+                        variant="outlined"
+                        label={cfl(getString('job') || 'Job')}
+                        value={jobFilter ?? ALL_VALUE}
+                        onChange={(e) =>
+                            setJobFilter(e.target.value === ALL_VALUE ? null : e.target.value)
+                        }
+                    >
+                        <MenuItem value={ALL_VALUE}>
+                            <em>{getString('all') || getString('allJobs') || 'All'}</em>
+                        </MenuItem>
+                        {jobOptions.map((s) => (
+                            <MenuItem key={s} value={s}>{s}</MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+            )}
+            {statusOptions.length > 0 && (
+                <FormControl size="small" sx={inDrawer ? { width: '100%' } : { minWidth: 160 }}>
+                    <InputLabel>
+                        {cfl(getString('employeeStatus') || 'Status')}
+                    </InputLabel>
+                    <Select
+                        variant="outlined"
+                        label={cfl(getString('employeeStatus') || 'Status')}
+                        value={statusFilter ?? ALL_VALUE}
+                        onChange={(e) =>
+                            setStatusFilter(e.target.value === ALL_VALUE ? null : e.target.value)
+                        }
+                    >
+                        <MenuItem value={ALL_VALUE}>
+                            <em>{getString('all') || getString('allStatuses') || 'All'}</em>
+                        </MenuItem>
+                        {statusOptions.map((s) => (
+                            <MenuItem key={s} value={s}>{statusLabelMap.get(s) ?? s}</MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+            )}
+        </>
+    );
 
     // ── Render ────────────────────────────────────────────────────────────────
     return (
@@ -248,71 +372,36 @@ export function EmployeesPage() {
                     </Typography>
                 </Breadcrumbs>
 
-                {/* Header + column filters + Add button — all on one line, no wrapping */}
-                {employees.length > 0 && (
+                {/* Toolbar. Desktop (md+): search + filter selects + Add on one line.
+                    Mobile/tablet: search + filter-lines icon (opens the drawer) + icon-only Add,
+                    so the Add button is always visible and the selects never overflow. */}
+                {isCompact ? (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                        {employeeSearch}
+                        <Tooltip title={cfl(getString('filters') || 'Filters')}>
+                            <IconButton
+                                onClick={() => setFiltersOpen(true)}
+                                sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '8px' }}
+                            >
+                                <Badge badgeContent={activeFilterCount} color="primary">
+                                    <FilterListIcon />
+                                </Badge>
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title={cfl(getString('addEmployee') || 'Add Employee')}>
+                            <Button
+                                variant="contained"
+                                onClick={() => setCreateOpen(true)}
+                                sx={{ minWidth: 0, px: 1.5 }}
+                            >
+                                <AddIcon />
+                            </Button>
+                        </Tooltip>
+                    </Box>
+                ) : (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                        <SelectScopeDepartment value={selectedDeptId} onChange={setSelectedDeptId} />
-                        {subdepartmentOptions.length > 0 && (
-                            <FormControl size="small" sx={{ minWidth: 200 }}>
-                                <InputLabel>
-                                    {cfl(getString('department') || 'Department')}
-                                </InputLabel>
-                                <Select
-                                    label={cfl(getString('department') || 'Department')}
-                                    value={subdepartmentFilter ?? ALL_VALUE}
-                                    onChange={(e) =>
-                                        setSubdepartmentFilter(e.target.value === ALL_VALUE ? null : e.target.value)
-                                    }
-                                >
-                                    <MenuItem value={ALL_VALUE}>
-                                        <em>{getString('all') || getString('allDepartments') || 'All'}</em>
-                                    </MenuItem>
-                                    {subdepartmentOptions.map((s) => (
-                                        <MenuItem key={s} value={s}>{s}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        )}
-                        {jobOptions.length > 0 && (
-                            <FormControl size="small" sx={{ minWidth: 180 }}>
-                                <InputLabel>{cfl(getString('job') || 'Job')}</InputLabel>
-                                <Select
-                                    label={cfl(getString('job') || 'Job')}
-                                    value={jobFilter ?? ALL_VALUE}
-                                    onChange={(e) =>
-                                        setJobFilter(e.target.value === ALL_VALUE ? null : e.target.value)
-                                    }
-                                >
-                                    <MenuItem value={ALL_VALUE}>
-                                        <em>{getString('all') || getString('allJobs') || 'All'}</em>
-                                    </MenuItem>
-                                    {jobOptions.map((s) => (
-                                        <MenuItem key={s} value={s}>{s}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        )}
-                        {statusOptions.length > 0 && (
-                            <FormControl size="small" sx={{ minWidth: 160 }}>
-                                <InputLabel>
-                                    {cfl(getString('employeeStatus') || 'Status')}
-                                </InputLabel>
-                                <Select
-                                    label={cfl(getString('employeeStatus') || 'Status')}
-                                    value={statusFilter ?? ALL_VALUE}
-                                    onChange={(e) =>
-                                        setStatusFilter(e.target.value === ALL_VALUE ? null : e.target.value)
-                                    }
-                                >
-                                    <MenuItem value={ALL_VALUE}>
-                                        <em>{getString('all') || getString('allStatuses') || 'All'}</em>
-                                    </MenuItem>
-                                    {statusOptions.map((s) => (
-                                        <MenuItem key={s} value={s}>{statusLabelMap.get(s) ?? s}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        )}
+                        {employeeSearch}
+                        {employees.length > 0 && filterSelects(false)}
                         <Box sx={{ flex: 1 }} />
                         <Button
                             variant="contained"
@@ -323,19 +412,16 @@ export function EmployeesPage() {
                         </Button>
                     </Box>
                 )}
-                {employees.length === 0 && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                        <SelectScopeDepartment value={selectedDeptId} onChange={setSelectedDeptId} />
-                        <Box sx={{ flex: 1 }} />
-                        <Button
-                            variant="contained"
-                            startIcon={<AddIcon />}
-                            onClick={() => setCreateOpen(true)}
-                        >
-                            {cfl(getString('addEmployee') || 'Add Employee')}
-                        </Button>
+
+                {/* Mobile filters drawer */}
+                <Drawer anchor="right" open={filtersOpen} onClose={() => setFiltersOpen(false)}>
+                    <Box sx={{ width: 300, p: 2 }}>
+                        <Typography fontWeight={600} sx={{ mb: 2 }}>
+                            {cfl(getString('filters') || 'Filters')}
+                        </Typography>
+                        <Stack spacing={2}>{filterSelects(true)}</Stack>
                     </Box>
-                )}
+                </Drawer>
 
                 {error && (
                     <Alert severity="error" sx={{ mb: 2 }}>
@@ -351,6 +437,14 @@ export function EmployeesPage() {
                         pageSizeOptions={[25, 50, 100]}
                         initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
                         disableRowSelectionOnClick
+                        onCellClick={(params) => {
+                            // Whole row opens the employee card — except the action-icons cell.
+                            if (params.field === '_actions') return;
+                            void navigate({
+                                to: '/employees/$employeeId',
+                                params: { employeeId: String(params.row.id) },
+                            });
+                        }}
                         sx={[...(Array.isArray(dataGridSx) ? dataGridSx : [dataGridSx]), { height: '100%' }]}
                         localeText={localeText}
                     />

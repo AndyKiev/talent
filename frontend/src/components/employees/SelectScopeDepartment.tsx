@@ -63,6 +63,7 @@ export function SelectScopeDepartment({ value, onChange }: Props) {
             <InputLabel>{cfl(getString('mainDepartment') || 'main Department')}</InputLabel>
 
             <Select
+                variant="outlined"
                 label={cfl(getString('mainDepartment') || 'main Department')}
                 value={value == null ? ALL_VALUE : String(value)}
                 onChange={(e) => {
