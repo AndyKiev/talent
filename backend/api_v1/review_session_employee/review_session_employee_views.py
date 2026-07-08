@@ -153,6 +153,29 @@ async def get_tempo_presentation(
     return HTMLResponse(content=await service.build_tempo_presentation(session_id))
 
 
+@router.get("/tempo_pptx")
+async def get_tempo_pptx(
+    service: Annotated[
+        ReviewSessionEmployeeService,
+        Depends(get_review_session_employee_service),
+    ],
+    session_id: int = Query(...),
+):
+    """Session presentation as a downloadable PowerPoint: a session-statistics
+    title slide + 1-2 slides per visible employee (2 when a level is proposed).
+    Built server-side; the client spins until the bytes arrive, then downloads."""
+    pptx_bytes = await service.build_tempo_pptx(session_id)
+    return Response(
+        content=pptx_bytes,
+        media_type=(
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+        ),
+        headers={
+            "Content-Disposition": f'attachment; filename="tempo_session_{session_id}.pptx"'
+        },
+    )
+
+
 @router.get("/{rse_id}/tempo_html", response_class=HTMLResponse)
 async def get_tempo_html(
     rse_id: int,

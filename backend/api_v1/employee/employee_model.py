@@ -155,11 +155,8 @@ class Employee(IntIdPkMixin, TimestampMixin, Base):
 
     @property
     def birth_date(self):
-        # Person is authoritative; personal_data is the legacy fallback
-        # (set_personal_data keeps both in sync).
-        if self.person and self.person.birth_date:
-            return self.person.birth_date
-        return self.personal_data.birth_date if self.personal_data else None
+        # PERSON-level fact — read from the linked person (person_id NOT NULL).
+        return self.person.birth_date if self.person else None
 
     @property
     def hire_date(self):
@@ -173,19 +170,13 @@ class Employee(IntIdPkMixin, TimestampMixin, Base):
 
     @property
     def sex(self):
-        # 'male' / 'female'. The person table is authoritative; personal_data
-        # is the legacy fallback until its sex column is dropped.
-        if self.person and self.person.sex:
-            return self.person.sex
-        return self.personal_data.sex if self.personal_data else None
+        # 'male' / 'female' — PERSON-level fact, read from the linked person.
+        return self.person.sex if self.person else None
 
     @property
     def marital_status(self):
-        # 'married' / 'not_married'. Person is authoritative; personal_data is
-        # the legacy fallback until its column is dropped.
-        if self.person and self.person.marital_status:
-            return self.person.marital_status
-        return self.personal_data.marital_status if self.personal_data else None
+        # 'married' / 'not_married' — PERSON-level fact, from the linked person.
+        return self.person.marital_status if self.person else None
 
     # NOTE: `operations` cannot be a property because it requires an
     # async multi-join query (UserRepository.get_user_operations).

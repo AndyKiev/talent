@@ -23,6 +23,11 @@ export function TrainingLayout() {
         <AppShell>
             <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1800, mx: 'auto' }}>
                 <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
+                    <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+                        <Typography variant="body2" color="text.secondary">
+                            {cfl(getString('home') || 'Home')}
+                        </Typography>
+                    </Link>
                     <Typography variant="body2" color="text.primary" fontWeight={600}>
                         {cfl(getString('training') || 'Training')}
                     </Typography>

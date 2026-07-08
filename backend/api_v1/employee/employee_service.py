@@ -384,12 +384,10 @@ class EmployeeService(BaseService):
     async def set_personal_data(
         self, user_id: int, data: "EmployeePersonalDataUpdate"
     ) -> EmployeeSchema:
-        """Upsert the employee's personal data via the 1:1 table. Partial: only
-        the fields actually provided are applied (birth_date and/or hire_date).
-
-        `sex` is person-backed now: when the employee has a linked person it is
-        written to persons.sex (personal_data.sex stays untouched); the
-        personal-data column remains only as a pre-seed legacy fallback."""
+        """Partial upsert of the employee's personal data. PERSON-level fields
+        (sex, marital_status, birth_date) are written to the linked person
+        (employees.person_id is NOT NULL); the 1:1 personal-data table keeps
+        only employment dates (hire_date, job_assigned_date)."""
         fields = data.model_dump(exclude_unset=True)
         try:
             person_backed = {"sex", "marital_status", "birth_date"}
@@ -397,37 +395,32 @@ class EmployeeService(BaseService):
                 orm_user = await self.repository.get_by_id(user_id)
                 if not orm_user:
                     raise EmployeeNotFound(user_id)
-                person = orm_user.person if orm_user.person_id else None
+                person = orm_user.person
                 if "sex" in fields:
+                    from backend.api_v1.sex.sex_model import SEX_ID_BY_NAME
+
                     sex_value = fields.pop("sex")
-                    if person:
-                        from backend.api_v1.sex.sex_model import SEX_ID_BY_NAME
-
-                        person.sex_id = (
-                            SEX_ID_BY_NAME.get(sex_value) if sex_value else None
-                        )
-                    else:
-                        fields["sex"] = sex_value
+                    person.sex_id = SEX_ID_BY_NAME.get(sex_value) if sex_value else None
                 if "marital_status" in fields:
-                    marital_value = fields.pop("marital_status")
-                    if person:
-                        from backend.api_v1.marital_status.marital_status_model import (
-                            MARITAL_STATUS_ID_BY_NAME,
-                        )
+                    from backend.api_v1.marital_status.marital_status_model import (
+                        MARITAL_STATUS_ID_BY_NAME,
+                    )
 
-                        person.marital_status_id = (
-                            MARITAL_STATUS_ID_BY_NAME.get(marital_value)
-                            if marital_value
-                            else None
-                        )
-                    else:
-                        fields["marital_status"] = marital_value
-                # birth_date lives on BOTH: person (authoritative) and the
-                # legacy personal_data column — keep them in sync.
-                if "birth_date" in fields and person:
-                    person.birth_date = fields["birth_date"]
-                if person:
-                    await self.repository.session.commit()
+                    marital_value = fields.pop("marital_status")
+                    person.marital_status_id = (
+                        MARITAL_STATUS_ID_BY_NAME.get(marital_value)
+                        if marital_value
+                        else None
+                    )
+                if "birth_date" in fields:
+                    person.birth_date = fields.pop("birth_date")
+                await self.repository.session.commit()
+                # expire_on_commit=False keeps sex_ref/marital_status_ref stale
+                # after the *_id change — refresh so the response serializes the
+                # new values.
+                await self.repository.session.refresh(
+                    person, ["sex_ref", "marital_status_ref"]
+                )
             if fields:
                 orm_user = await self.repository.set_personal_data(user_id, fields)
             else:
@@ -482,15 +475,12 @@ class EmployeeService(BaseService):
             "SELECT COUNT(*) FROM employee_current_levels WHERE employee_id = :eid",
         ),
         (
-            "languageProfile",
-            "SELECT COUNT(*) FROM employee_language_profiles WHERE employee_id = :eid",
-        ),
-        (
             "educations",
             "SELECT COUNT(*) FROM employee_educations WHERE employee_id = :eid",
         ),
-        # NOTE: children are PERSON-level (employee_children.person_id) — they
-        # cascade with the orphaned person, not with the employee.
+        # NOTE: children and the language profile are PERSON-level
+        # (employee_children.person_id, employee_language_profiles.person_id) —
+        # they cascade with the orphaned person, not with the employee.
         (
             "reviewParticipation",
             "SELECT COUNT(*) FROM review_session_employees WHERE employee_id = :eid",
@@ -553,7 +543,6 @@ class EmployeeService(BaseService):
         "userGroupLinks": ("blockerUserGroupLinks", "user group memberships"),
         "personalData": ("blockerPersonalData", "personal data"),
         "currentLevel": ("blockerCurrentLevel", "current level"),
-        "languageProfile": ("blockerLanguageProfile", "language profile"),
         "educations": ("blockerEducations", "education records"),
         "reviewParticipation": ("blockerReviewParticipation", "review participations"),
         "hrmScopes": ("blockerHrmScopes", "HRM responsibility scopes"),
@@ -615,9 +604,7 @@ class EmployeeService(BaseService):
             "DELETE FROM review_session_employee_levels WHERE review_session_employee_id IN (SELECT id FROM review_session_employees WHERE employee_id = :eid)",
             "DELETE FROM review_session_employee_comments WHERE review_session_employee_id IN (SELECT id FROM review_session_employees WHERE employee_id = :eid)",
             "DELETE FROM review_session_employees WHERE employee_id = :eid",
-            # language-profile subtree
-            "DELETE FROM employee_languages WHERE profile_id IN (SELECT id FROM employee_language_profiles WHERE employee_id = :eid)",
-            "DELETE FROM employee_language_profiles WHERE employee_id = :eid",
+            # (language profile is PERSON-level now — cascades with the person)
             # process-role subtree (holder rows the employee HOLDS)
             "DELETE FROM process_role_holder_department_links WHERE process_role_holder_id IN (SELECT id FROM process_role_holders WHERE holder_employee_id = :eid)",
             "DELETE FROM process_role_holder_employee_links WHERE process_role_holder_id IN (SELECT id FROM process_role_holders WHERE holder_employee_id = :eid)",

@@ -43,6 +43,8 @@ from backend.api_v1.employee_language_profile.employee_language_profile_model im
 from backend.api_v1.employee_language.employee_language_model import EmployeeLanguage
 from backend.api_v1.language_level.language_level_model import LanguageLevel
 from backend.api_v1.employee_child.employee_child_model import EmployeeChild
+from backend.api_v1.sex.sex_model import SEX_ID_BY_NAME
+from backend.api_v1.marital_status.marital_status_model import MARITAL_STATUS_ID_BY_NAME
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Data banks
@@ -158,12 +160,19 @@ async def _seed_personal_data(session, emp: Employee):
     hire_start = max(birth + timedelta(days=20 * 365), date(2005, 1, 1))
     hire = _random_date(hire_start, date(2024, 12, 31))
 
+    # PERSON-level facts go on the linked person; the 1:1 personal-data
+    # table keeps only employment dates.
+    person = emp.person
+    if person.sex_id is None:
+        person.sex_id = SEX_ID_BY_NAME.get(sex)
+    if person.marital_status_id is None:
+        person.marital_status_id = MARITAL_STATUS_ID_BY_NAME.get(marital)
+    if person.birth_date is None:
+        person.birth_date = birth
+
     pd_row = EmployeePersonalData(
         employee_id=emp.id,
-        birth_date=birth,
         hire_date=hire,
-        marital_status=marital,
-        sex=sex,
     )
     session.add(pd_row)
     print(f"   👤 personal_data: {sex}, {marital}, born {birth}, hired {hire}")
@@ -218,9 +227,10 @@ async def _seed_education(session, emp: Employee, degree_map: dict[str, int]):
 
 
 async def _seed_languages(session, emp: Employee, level_by_code: dict[str, int]):
+    # Languages hang off the PERSON, not the employee.
     result = await session.execute(
         select(EmployeeLanguageProfile).where(
-            EmployeeLanguageProfile.employee_id == emp.id
+            EmployeeLanguageProfile.person_id == emp.person_id
         )
     )
     existing_profile = result.scalar_one_or_none()
@@ -230,7 +240,7 @@ async def _seed_languages(session, emp: Employee, level_by_code: dict[str, int])
         return
 
     if existing_profile is None:
-        profile = EmployeeLanguageProfile(employee_id=emp.id)
+        profile = EmployeeLanguageProfile(person_id=emp.person_id)
         session.add(profile)
         await session.flush()
     else:

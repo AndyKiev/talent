@@ -10,7 +10,7 @@ from backend.api_v1.employee_language.employee_language_schema import (
 class EmployeeLanguageProfileSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
-    employee_id: int
+    person_id: int
     languages: List[EmployeeLanguageItem] = []
 
 

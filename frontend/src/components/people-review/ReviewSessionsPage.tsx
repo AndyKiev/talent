@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import {
     Alert,
     Box,
+    Breadcrumbs,
     Button,
     Chip,
     CircularProgress,
@@ -28,6 +29,7 @@ import AddIcon from '@mui/icons-material/Add';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
 import DeleteIcon from '@mui/icons-material/Delete';
+import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import PeopleIcon from '@mui/icons-material/People';
 import ReplayIcon from '@mui/icons-material/Replay';
 import BarChartIcon from '@mui/icons-material/BarChart';
@@ -80,6 +82,7 @@ async function renameSession(id: number, name: string): Promise<MutationResponse
 }
 import { useDataGridLocale } from '../../hooks/useDataGridLocale';
 import { useAuthStore } from '../../store/authStore';
+import cfl from '../../utils/helpers.ts';
 
 const RS_QK = ['review_sessions'] as const;
 const RSS_QK = ['review_session_statuses'] as const;
@@ -440,10 +443,18 @@ export function ReviewSessionsPage() {
                     overflow: 'hidden',
                 }}
             >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                    <Typography variant="h5" fontWeight={600} sx={{ flex: 1 }}>
+                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 2 }}>
+                    <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+                        <Typography variant="body2" color="text.secondary">
+                            {cfl(getString('home') || 'Home')}
+                        </Typography>
+                    </Link>
+                    <Typography variant="body2" color="text.primary" fontWeight={600}>
                         {getString('peopleReviewSessions')}
                     </Typography>
+                </Breadcrumbs>
+
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                     {statusOptions.length > 0 && (
                         <FormControl size="small" sx={{ minWidth: 160 }}>
                             <InputLabel>{getString('status')}</InputLabel>

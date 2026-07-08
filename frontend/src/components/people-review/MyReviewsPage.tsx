@@ -1,19 +1,22 @@
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import {
     Alert,
     Box,
+    Breadcrumbs,
     Button,
     CircularProgress,
     Paper,
     Typography,
 } from '@mui/material';
+import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import AppShell from '../layout/AppShell.tsx';
 import { fetchMyReviews, type ReviewSessionEmployeeList } from './peopleReviewApi';
 import { useDataGridLocale } from '../../hooks/useDataGridLocale';
 import useString from '../../hooks/useString';
+import cfl from '../../utils/helpers.ts';
 
 export function MyReviewsPage() {
     const navigate = useNavigate();
@@ -58,9 +61,21 @@ export function MyReviewsPage() {
     return (
         <AppShell>
             <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 800, mx: 'auto' }}>
-                <Typography variant="h5" fontWeight={600} sx={{ mb: 3 }}>
-                    {getString('myPeopleReviews')}
-                </Typography>
+                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
+                    <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+                        <Typography variant="body2" color="text.secondary">
+                            {cfl(getString('home') || 'Home')}
+                        </Typography>
+                    </Link>
+                    <Link to="/people_review" style={{ textDecoration: 'none', color: 'inherit' }}>
+                        <Typography variant="body2" color="text.secondary">
+                            {cfl(getString('peopleReview') || 'People Review')}
+                        </Typography>
+                    </Link>
+                    <Typography variant="body2" color="text.primary" fontWeight={600}>
+                        {getString('myPeopleReviews')}
+                    </Typography>
+                </Breadcrumbs>
 
                 {isLoading && (
                     <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>

@@ -448,45 +448,47 @@ class ReviewSessionEmployeeService(BaseService):
         )
         return MutationResponse(detail=detail, data=None)
 
-    async def _tempo_photo_enabled(self, *, individual: bool) -> bool:
+    async def _tempo_photo_enabled(self, surface: str = "individual") -> bool:
         """Effective photo flag for a TEMPO artifact: the individual-album child
-        for single sheets (pdf/png/html), the session-deck child for the
-        presentation. Each is AND-ed with the master by get_effective_bool_setting,
-        so the master switch (and a per-surface off) both hide the photo."""
+        for single sheets (pdf/png/html), the session-deck child for the HTML
+        presentation, the pptx child for the PowerPoint deck. Each is AND-ed with
+        the master by get_effective_bool_setting, so the master switch (and a
+        per-surface off) both hide the photo."""
         from backend.api_v1.app_setting.app_setting_service import (
             get_effective_bool_setting,
         )
         from backend.api_v1.employee_photo.employee_photo_service import (
             PHOTOS_PRESENTATION_INDIVIDUAL_KEY,
+            PHOTOS_PRESENTATION_PPTX_KEY,
             PHOTOS_PRESENTATION_SESSION_KEY,
         )
 
-        key = (
-            PHOTOS_PRESENTATION_INDIVIDUAL_KEY
-            if individual
-            else PHOTOS_PRESENTATION_SESSION_KEY
-        )
+        key = {
+            "individual": PHOTOS_PRESENTATION_INDIVIDUAL_KEY,
+            "session": PHOTOS_PRESENTATION_SESSION_KEY,
+            "pptx": PHOTOS_PRESENTATION_PPTX_KEY,
+        }[surface]
         return await get_effective_bool_setting(self.session, key, default=True)
 
     async def build_tempo_pdf(self, rse_id: int) -> bytes:
         """TEMPO album as PDF bytes (download artifact)."""
         from backend.api_v1.review_session_employee.tempo_pdf import build_tempo_pdf
 
-        photo_enabled = await self._tempo_photo_enabled(individual=True)
+        photo_enabled = await self._tempo_photo_enabled("individual")
         return build_tempo_pdf(await self._tempo_data(rse_id, photo_enabled))
 
     async def build_tempo_png(self, rse_id: int) -> bytes:
         """TEMPO album as PNG bytes (inline viewer — renders in any browser)."""
         from backend.api_v1.review_session_employee.tempo_pdf import render_tempo_png
 
-        photo_enabled = await self._tempo_photo_enabled(individual=True)
+        photo_enabled = await self._tempo_photo_enabled("individual")
         return render_tempo_png(await self._tempo_data(rse_id, photo_enabled))
 
     async def build_tempo_html(self, rse_id: int) -> str:
         """TEMPO album as a self-contained HTML page (one employee)."""
         from backend.api_v1.review_session_employee.tempo_html import render_tempo_html
 
-        photo_enabled = await self._tempo_photo_enabled(individual=True)
+        photo_enabled = await self._tempo_photo_enabled("individual")
         return render_tempo_html(await self._tempo_data(rse_id, photo_enabled))
 
     async def build_tempo_presentation(self, session_id: int) -> str:
@@ -498,10 +500,57 @@ class ReviewSessionEmployeeService(BaseService):
         )
 
         # Resolve the session-deck photo flag ONCE for the whole deck (not per row).
-        photo_enabled = await self._tempo_photo_enabled(individual=False)
+        photo_enabled = await self._tempo_photo_enabled("session")
         ordered = await self.get_session_employees(session_id=session_id)
         sheets = [await self._tempo_data(rse.id, photo_enabled) for rse in ordered]
         return render_tempo_presentation(sheets)
+
+    async def build_tempo_pptx(self, session_id: int) -> bytes:
+        """TEMPO session deck as PowerPoint bytes (download artifact): a
+        session-statistics title slide, then every employee the current user can
+        see (roster order) on one slide — two when a new level is proposed (the
+        requirements+facts get their own slide). Same data as the HTML deck."""
+        from backend.api_v1.review_session.review_session_model import ReviewSession
+        from backend.api_v1.review_session_department.review_session_department_model import (
+            ReviewSessionDepartment,
+        )
+        from backend.api_v1.review_session_employee.tempo_pptx import build_tempo_pptx
+
+        photo_enabled = await self._tempo_photo_enabled("pptx")
+        ordered = await self.get_session_employees(session_id=session_id)
+        sheets = [await self._tempo_data(rse.id, photo_enabled) for rse in ordered]
+
+        session_row = await self.session.get(ReviewSession, session_id)
+        period = None
+        if session_row and (session_row.period_start or session_row.period_end):
+            fmt = lambda d: d.strftime("%d.%m.%Y") if d else "…"  # noqa: E731
+            period = f"{fmt(session_row.period_start)} — {fmt(session_row.period_end)}"
+        dept_links = (
+            await self.session.scalars(
+                select(ReviewSessionDepartment).where(
+                    ReviewSessionDepartment.session_id == session_id
+                )
+            )
+        ).all()
+        departments = (
+            ", ".join(l.department.name for l in dept_links if l.department) or None
+        )
+
+        session_info = {
+            "session_name": session_row.name if session_row else "—",
+            "qty": len(sheets),
+            "period": period,
+            "departments": departments,
+            "labels": {
+                slot: await self._translate(key, fallback=key)
+                for slot, key in (
+                    ("employees", "tempoStatsEmployees"),
+                    ("period", "tempoStatsPeriod"),
+                    ("departments", "tempoStatsDepartments"),
+                )
+            },
+        }
+        return build_tempo_pptx(session_info, sheets)
 
     async def _tempo_data(self, rse_id: int, photo_enabled: bool = True) -> dict:
         """Gather this review's data into the flat dict the TEMPO album builder
@@ -558,14 +607,14 @@ class ReviewSessionEmployeeService(BaseService):
                 parts.append(str(education.graduation_year))
             education_str = ", ".join(parts)
 
-        # Foreign languages: "English B2, French A1" from the employee's profile.
+        # Foreign languages: "English B2, French A1" from the person's profile.
         from backend.api_v1.employee_language_profile.employee_language_profile_model import (
             EmployeeLanguageProfile,
         )
 
         lang_profile = await self.session.scalar(
             select(EmployeeLanguageProfile).where(
-                EmployeeLanguageProfile.employee_id == emp_id
+                EmployeeLanguageProfile.person_id == emp.person_id
             )
         )
         lang_level = None
@@ -752,6 +801,47 @@ class ReviewSessionEmployeeService(BaseService):
                 proposed_level_sense = await self._translate(
                     sense_key, fallback=level_sense
                 )
+
+        # Per-user display gates (dev settings, user-overridable): hide the whole
+        # proposal block — identity field, requirements slide/section — when the
+        # proposed level is the BASIC (lowest active) level, or when it merely
+        # confirms the current one ("same"). One gate each; both default ON.
+        # Applies to every TEMPO artifact fed by this dict (PDF/HTML/PPTX).
+        if registration:
+            from backend.api_v1.app_setting.app_setting_service import (
+                get_user_bool_setting,
+            )
+
+            user_id = self.user.id if self.user else None
+            hide = level_sense == "same" and not await get_user_bool_setting(
+                self.session,
+                "tempo_show_proposed_level_same",
+                user_id,
+                default=True,
+            )
+            if not hide:
+                base_level_id = await self.session.scalar(
+                    select(ReviewLevel.id)
+                    .where(ReviewLevel.is_active.is_(True))
+                    .order_by(ReviewLevel.sort_order)
+                    .limit(1)
+                )
+                hide = (
+                    registration.level_id == base_level_id
+                    and not await get_user_bool_setting(
+                        self.session,
+                        "tempo_show_proposed_level_basic",
+                        user_id,
+                        default=True,
+                    )
+                )
+            if hide:
+                registration = None
+                proposed_level = None
+                proposed_status = None
+                level_requirements = []
+                level_sense = None
+                proposed_level_sense = None
 
         # Gender-aware marital status, resolved to the viewer's language. Keys
         # mirror the frontend (maritalMarriedMale / maritalNotMarriedFemale, …).

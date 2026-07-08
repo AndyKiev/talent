@@ -34,7 +34,7 @@ MAX_DIMENSION = 320
 JPEG_QUALITY = 80
 
 # Developer-settings flags for the photos feature (multi-story). The MASTER gates
-# the whole feature; the four CHILD keys gate photo DISPLAY per surface and are
+# the whole feature; the five CHILD keys gate photo DISPLAY per surface and are
 # "effectively on" only when they AND the master are on (see
 # get_effective_bool_setting). When the master is OFF the feature is dormant: the
 # frontend hides avatars and never reads, uploads are rejected here, and the TEMPO
@@ -45,6 +45,7 @@ PHOTOS_EMPLOYEES_MENU_KEY = "employee_photos_employees_menu"
 PHOTOS_PEOPLE_REVIEW_KEY = "employee_photos_people_review"
 PHOTOS_PRESENTATION_SESSION_KEY = "employee_photos_presentation_session"
 PHOTOS_PRESENTATION_INDIVIDUAL_KEY = "employee_photos_presentation_individual"
+PHOTOS_PRESENTATION_PPTX_KEY = "employee_photos_presentation_pptx"
 
 
 class EmployeePhotoService(BaseService):

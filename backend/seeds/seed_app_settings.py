@@ -160,7 +160,7 @@ APP_SETTINGS = [
         # are rejected, and the TEMPO artifacts skip the photo (sheds the heavy
         # read load). Default ON to preserve current behaviour. Stored blobs are
         # kept, so flipping back ON restores every photo; deleting an employee
-        # still removes their photo (FK CASCADE). The four children below let the
+        # still removes their photo (FK CASCADE). The five children below let the
         # photo DISPLAY be switched per surface — each is "effectively on" only
         # when it AND this master are on.
         "key": "employee_photos_enabled",
@@ -202,6 +202,36 @@ APP_SETTINGS = [
         "parent_key": "employee_photos_enabled",
         "label_key": "settingEmployeePhotosPresentationIndividual",
         "description_key": "settingEmployeePhotosPresentationIndividualDesc",
+    },
+    {
+        "key": "employee_photos_presentation_pptx",
+        "value": True,
+        "value_type_key": "boolean",
+        "parent_key": "employee_photos_enabled",
+        "label_key": "settingEmployeePhotosPresentationPptx",
+        "description_key": "settingEmployeePhotosPresentationPptxDesc",
+    },
+    {
+        # TEMPO artifacts (PDF / individual HTML / presentation HTML / PPTX):
+        # show the proposed-level block when the proposed level is the BASIC
+        # (lowest) level. Off hides the whole proposal (identity field +
+        # requirements slide/section) for such registrations. Per-user override.
+        "key": "tempo_show_proposed_level_basic",
+        "value": True,
+        "value_type_key": "boolean",
+        "label_key": "settingTempoShowProposedLevelBasic",
+        "description_key": "settingTempoShowProposedLevelBasicDesc",
+        "user_overridable": True,
+    },
+    {
+        # Same gate for a proposed level EQUAL to the employee's current level
+        # (a confirmation): off hides the proposal block in every TEMPO artifact.
+        "key": "tempo_show_proposed_level_same",
+        "value": True,
+        "value_type_key": "boolean",
+        "label_key": "settingTempoShowProposedLevelSame",
+        "description_key": "settingTempoShowProposedLevelSameDesc",
+        "user_overridable": True,
     },
     {
         # The menu (menus table id) users land on after login. App default here;

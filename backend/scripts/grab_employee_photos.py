@@ -1,7 +1,7 @@
 """
 Grab placeholder photos for employees who don't have one yet.
 
-- Gender priority: personal_data.sex → genderize.io API → local heuristic.
+- Gender priority: persons.sex_id (via employee.person_id) → genderize.io API → local heuristic.
 - genderize.io is a free name→gender web API (1000 req/day, no key needed).
   We send every non-initial word from the full name and pick the best match.
 - Photos are fetched from randomuser.me (nl pool = white/European faces).
@@ -35,9 +35,8 @@ from sqlalchemy import select
 from backend.database.db_helper import db_helper
 from backend.api_v1.employee.employee_model import Employee
 from backend.api_v1.employee_photo.employee_photo_model import EmployeePhoto
-from backend.api_v1.table_relationship_links.employee_personal_data_model import (
-    EmployeePersonalData,
-)
+from backend.api_v1.person.person_model import Person
+from backend.api_v1.sex.sex_model import Sex
 
 # ── Image processing (mirrors EmployeePhotoService._process_image) ──
 MAX_DIMENSION = 320
@@ -80,7 +79,14 @@ _genderize_cache: dict[str, str] = {}
 # Local-heuristic constants (fallback when genderize.io is unreachable).
 FEMALE_ENDINGS = ("а", "я", "ія")
 MALE_A_NAMES = {
-    "микола", "лука", "ілля", "сава", "кузьма", "хома", "йона", "микита",
+    "микола",
+    "лука",
+    "ілля",
+    "сава",
+    "кузьма",
+    "хома",
+    "йона",
+    "микита",
 }
 
 
@@ -97,8 +103,26 @@ def _looks_like_given_name(word: str) -> bool:
     if w.endswith(("ович", "івна", "ївна", "овна", "ич", "івен")):
         return False
     # Common Ukrainian surname suffixes
-    if w.endswith(("енко", "чук", "юк", "ський", "цький", "ська", "цька",
-                    "овий", "ових", "єв", "ов", "ін", "їн", "ая", "ий", "их")):
+    if w.endswith(
+        (
+            "енко",
+            "чук",
+            "юк",
+            "ський",
+            "цький",
+            "ська",
+            "цька",
+            "овий",
+            "ових",
+            "єв",
+            "ов",
+            "ін",
+            "їн",
+            "ая",
+            "ий",
+            "их",
+        )
+    ):
         return False
     return True
 
@@ -228,11 +252,12 @@ def main(dry_run: bool = False, limit: int | None = None):
         session.close()
         return
 
-    # 4. Fetch personal_data for gender
+    # 4. Fetch person-level sex for gender (employees -> persons -> sexes)
     pd_rows = session.execute(
-        select(EmployeePersonalData.employee_id, EmployeePersonalData.sex).where(
-            EmployeePersonalData.employee_id.in_(missing_ids)
-        )
+        select(Employee.id, Sex.name)
+        .join(Person, Person.id == Employee.person_id)
+        .join(Sex, Sex.id == Person.sex_id)
+        .where(Employee.id.in_(missing_ids))
     ).fetchall()
     sex_map = {row[0]: row[1] for row in pd_rows}
 
@@ -252,7 +277,7 @@ def main(dry_run: bool = False, limit: int | None = None):
         gender = pd_sex if pd_sex in ("male", "female") else None
 
         if gender:
-            source = "personal_data"
+            source = "person"
         else:
             gender, source = detect_gender_from_name(name)
 

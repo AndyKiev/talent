@@ -14,15 +14,17 @@ if TYPE_CHECKING:
 
 
 class EmployeeLanguage(IntIdPkMixin, Base):
-    """A single foreign language an employee declared, with its CEFR level.
+    """A single foreign language a person declared, with its CEFR level.
 
     Belongs to one EmployeeLanguageProfile; references one LanguageLevel.
+    Dies with the profile (ON DELETE CASCADE), which dies with the person.
     """
 
     __tablename__ = "employee_languages"
 
     profile_id: Mapped[int] = mapped_column(
-        ForeignKey("employee_language_profiles.id"), nullable=False
+        ForeignKey("employee_language_profiles.id", ondelete="CASCADE"),
+        nullable=False,
     )
     language: Mapped[str] = mapped_column(String(32), nullable=False)
     level_id: Mapped[Optional[int]] = mapped_column(

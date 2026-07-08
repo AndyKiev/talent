@@ -405,6 +405,27 @@ export const openTempoPresentation = (sessionId: number, win: Window): Promise<v
     openHtmlBlob(`${RSE_BASE}/tempo_presentation?session_id=${sessionId}`, win);
 
 /**
+ * Download the whole session's TEMPO deck as a PowerPoint file. The deck is
+ * built server-side (can take many seconds — the caller shows a spinner), then
+ * the blob triggers a browser download via a temporary anchor, exactly like
+ * downloadTempoPdf.
+ */
+export const downloadTempoPptx = async (sessionId: number, fileName: string): Promise<void> => {
+    const res = await axiosInstance.get<Blob>(`${RSE_BASE}/tempo_pptx?session_id=${sessionId}`, {
+        responseType: 'blob',
+        timeout: 0,
+    });
+    const url = URL.createObjectURL(res.data);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+};
+
+/**
  * Persist the presentation-queue order for a session (oversight mode only). Sends
  * the full top-to-bottom RSE id order; the server assigns positions 10, 20, 30 …
  */
@@ -533,9 +554,11 @@ export interface EmployeeLanguageItem {
     level_hint: string | null;
 }
 
+// PERSON-level: languages belong to the person behind the employee. The API
+// endpoints still speak employee_id; the backend resolves it to the person.
 export interface EmployeeLanguageProfile {
     id: number;
-    employee_id: number;
+    person_id: number;
     languages: EmployeeLanguageItem[];
 }
 

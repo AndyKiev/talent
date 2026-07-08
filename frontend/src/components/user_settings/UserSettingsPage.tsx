@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import {
     Alert,
     Box,
+    Breadcrumbs,
     Chip,
     CircularProgress,
     IconButton,
@@ -16,9 +17,11 @@ import {
     Tooltip,
     Typography,
 } from '@mui/material';
+import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import SaveIcon from '@mui/icons-material/Save';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import AppShell from '../layout/AppShell';
 import { useTheme } from '../theme/ThemeContext';
 import useString from '../../hooks/useString';
@@ -244,7 +247,16 @@ export function UserSettingsPage() {
     return (
         <AppShell>
             <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 900, mx: 'auto' }}>
-                <Typography variant="h6" fontWeight={700} mb={2}>{getString('mySettings')}</Typography>
+                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
+                    <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+                        <Typography variant="body2" color="text.secondary">
+                            {cfl(getString('home') || 'Home')}
+                        </Typography>
+                    </Link>
+                    <Typography variant="body2" color="text.primary" fontWeight={600}>
+                        {getString('mySettings')}
+                    </Typography>
+                </Breadcrumbs>
 
                 {isLoading ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>

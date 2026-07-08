@@ -15,6 +15,7 @@ import {
     DialogTitle,
     FormControlLabel,
     IconButton,
+    LinearProgress,
     ListItemIcon,
     ListItemText,
     Menu,
@@ -38,6 +39,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import ReplayIcon from '@mui/icons-material/Replay';
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import { Link } from '@tanstack/react-router';
@@ -54,6 +56,7 @@ import {
     reopenRSE,
     addSessionEmployee,
     openTempoPresentation,
+    downloadTempoPptx,
     type ReviewSessionEmployeeList,
 } from './peopleReviewApi';
 import { PEOPLE_REVIEW_MY_SCOPES_QK, SESSION_DEPARTMENTS_QK } from '../../utils/queryKeys';
@@ -72,6 +75,13 @@ const RSE_STATUS_COLORS: Record<string, 'info' | 'warning' | 'success' | 'error'
     reviewed: 'warning',
     closed: 'success',
 };
+
+// Estimated PPTX build time: a fixed share (data prep + deck save) plus a
+// roughly-constant cost per employee slide. Drives the determinate progress
+// bar — the real request just resolves whenever it resolves; the bar caps at
+// 95% until then so it never lies about being done.
+const PPTX_FIXED_MS = 2000;
+const PPTX_PER_EMPLOYEE_MS = 8000; // measured: 33-employee session ≈ 4m20s end-to-end
 
 // status value → translation key (session: pending/open/closed; employee: open/reviewed/closed)
 const STATUS_LABEL_KEYS: Record<string, string> = {
@@ -143,6 +153,33 @@ export function SessionEmployeesPage() {
         openTempoPresentation(sid, win)
             .catch(onError)
             .finally(() => setPresLoading(false));
+    };
+
+    // True while the session's PPTX deck is being built server-side; the browser
+    // download starts the moment the bytes arrive. Progress is an ESTIMATE
+    // (fixed + per-employee time — see the constants above): it climbs to 95%
+    // on the predicted schedule and jumps to 100% when the response lands.
+    const [pptxLoading, setPptxLoading] = useState(false);
+    const [pptxProgress, setPptxProgress] = useState(0);
+    const onPptx = () => {
+        setPptxLoading(true);
+        setPptxProgress(0);
+        const estimatedMs = PPTX_FIXED_MS + rows.length * PPTX_PER_EMPLOYEE_MS;
+        const startedAt = Date.now();
+        const timer = window.setInterval(() => {
+            setPptxProgress(Math.min(95, ((Date.now() - startedAt) / estimatedMs) * 100));
+        }, 150);
+        downloadTempoPptx(sid, `tempo_session_${sid}.pptx`)
+            .catch(onError)
+            .finally(() => {
+                window.clearInterval(timer);
+                setPptxProgress(100);
+                // Let the full bar be seen for a beat before the button resets.
+                window.setTimeout(() => {
+                    setPptxLoading(false);
+                    setPptxProgress(0);
+                }, 400);
+            });
     };
 
     const qk = ['session_employees', sid] as const;
@@ -545,6 +582,21 @@ export function SessionEmployeesPage() {
                                                 </ListItemText>
                                             </MenuItem>
                                         )}
+                                        {rows.length > 0 && (
+                                            <MenuItem
+                                                disabled={pptxLoading}
+                                                onClick={() => { setMenuAnchor(null); onPptx(); }}
+                                            >
+                                                <ListItemIcon>
+                                                    {pptxLoading ? <CircularProgress size={16} /> : <FileDownloadIcon fontSize="small" />}
+                                                </ListItemIcon>
+                                                <ListItemText>
+                                                    {pptxLoading
+                                                        ? `${getString('tempoPptxBuilding')} ${Math.round(pptxProgress)}%`
+                                                        : getString('tempoPptx')}
+                                                </ListItemText>
+                                            </MenuItem>
+                                        )}
                                         {canReorder && (
                                             <MenuItem onClick={() => setReorderMode(v => !v)}>
                                                 <ListItemIcon>
@@ -579,6 +631,31 @@ export function SessionEmployeesPage() {
                                         >
                                             {presLoading ? getString('tempoPresentationBuilding') : getString('tempoPresentation')}
                                         </Button>
+                                    )}
+                                    {/* PPTX: download the same deck as a PowerPoint file, built
+                                        server-side — estimated progress bar while building,
+                                        download starts on arrival. */}
+                                    {rows.length > 0 && (
+                                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                            <Button
+                                                variant="outlined" size="small"
+                                                disabled={pptxLoading}
+                                                startIcon={pptxLoading ? <CircularProgress size={16} color="inherit" /> : <FileDownloadIcon />}
+                                                onClick={onPptx}
+                                                sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
+                                            >
+                                                {pptxLoading
+                                                    ? `${getString('tempoPptxBuilding')} ${Math.round(pptxProgress)}%`
+                                                    : getString('tempoPptx')}
+                                            </Button>
+                                            {pptxLoading && (
+                                                <LinearProgress
+                                                    variant="determinate"
+                                                    value={pptxProgress}
+                                                    sx={{ borderRadius: '2px', mt: '2px' }}
+                                                />
+                                            )}
+                                        </Box>
                                     )}
                                     {/* Oversight-only: toggle drag/arrow reordering of the presentation queue. */}
                                     {canReorder && (

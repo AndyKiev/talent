@@ -45,9 +45,9 @@ export function EmployeeCardLayout() {
 
     return (
         <AppShell>
-            <Box sx={{ p: 2 }}>
+            <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
                 {/* ── Breadcrumbs: back to the employees table ─────────────── */}
-                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 2 }}>
+                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 1.5 }}>
                     <Link to="/employees" style={{ textDecoration: 'none', color: 'inherit' }}>
                         <Typography variant="body2" color="text.secondary">
                             {cfl(getString('employees') || 'Employees')}
@@ -59,9 +59,9 @@ export function EmployeeCardLayout() {
                 </Breadcrumbs>
 
                 {/* ── Header card ─────────────────────────────────────────── */}
-                <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-                    <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-                        <Typography variant="h6">
+                <Paper variant="outlined" sx={{ p: 1, px: 1.5, mb: 1.5 }}>
+                    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                        <Typography variant="subtitle1" fontWeight={600}>
                             {employee?.name ?? `#${id}`}
                         </Typography>
                         <Chip label={employee?.code ?? ''} size="small" variant="outlined" />
@@ -87,7 +87,7 @@ export function EmployeeCardLayout() {
                 </Paper>
 
                 {/* ── Tab bar ─────────────────────────────────────────────── */}
-                <Paper variant="outlined" sx={{ mb: 2 }}>
+                <Paper variant="outlined" sx={{ mb: 1.5 }}>
                     <Tabs
                         value={activeTab}
                         onChange={(_, v) => goTo(v)}

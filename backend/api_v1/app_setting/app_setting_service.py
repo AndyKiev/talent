@@ -64,7 +64,9 @@ async def get_bool_setting(
     so loosely-stored values ("true"/1) still normalise. This is the single place
     services should call to gate behaviour on a feature flag.
     """
-    from backend.api_v1.app_setting.app_setting_model import AppSetting as AppSettingModel
+    from backend.api_v1.app_setting.app_setting_model import (
+        AppSetting as AppSettingModel,
+    )
 
     row = await session.scalar(
         select(AppSettingModel).where(AppSettingModel.key == key)
@@ -87,7 +89,9 @@ async def get_list_setting(
     list. Used for multi-valued settings (e.g. the review-session job-category /
     status filters). This is the list counterpart of ``get_bool_setting``.
     """
-    from backend.api_v1.app_setting.app_setting_model import AppSetting as AppSettingModel
+    from backend.api_v1.app_setting.app_setting_model import (
+        AppSetting as AppSettingModel,
+    )
 
     fallback = default if default is not None else []
     row = await session.scalar(
@@ -107,7 +111,9 @@ async def get_effective_bool_setting(
     to gate a CHILD of a multi-story setting, so the parent/master switch is
     honoured automatically.
     """
-    from backend.api_v1.app_setting.app_setting_model import AppSetting as AppSettingModel
+    from backend.api_v1.app_setting.app_setting_model import (
+        AppSetting as AppSettingModel,
+    )
 
     row = await session.scalar(
         select(AppSettingModel).where(AppSettingModel.key == key)
@@ -127,6 +133,45 @@ async def get_effective_bool_setting(
             return True
         cur = await session.get(AppSettingModel, cur.parent_id)
     return True
+
+
+async def get_user_bool_setting(
+    session: AsyncSession,
+    key: str,
+    employee_id: Optional[int] = None,
+    default: bool = False,
+) -> bool:
+    """Boolean setting resolved for ONE user: their user_settings override when
+    the setting is user_overridable and they stored one, else the global value.
+    The server-side counterpart of get_effective_for_user for a single flag —
+    use it when business logic must honour a per-user preference (e.g. the
+    TEMPO proposed-level display gates)."""
+    from backend.api_v1.app_setting.app_setting_model import (
+        AppSetting as AppSettingModel,
+    )
+
+    row = await session.scalar(
+        select(AppSettingModel).where(AppSettingModel.key == key)
+    )
+    if row is None:
+        return default
+    value = row.value
+    if row.user_overridable and employee_id is not None:
+        from backend.api_v1.user_setting.user_setting_model import UserSetting
+
+        override = await session.scalar(
+            select(UserSetting.value).where(
+                UserSetting.app_setting_id == row.id,
+                UserSetting.employee_id == employee_id,
+            )
+        )
+        if override is not None:
+            value = override
+    type_key = await session.scalar(
+        select(SettingValueType.key).where(SettingValueType.id == row.value_type_id)
+    )
+    value = cast_value(value, type_key)
+    return value if isinstance(value, bool) else default
 
 
 class AppSettingService(BaseService):
@@ -300,9 +345,7 @@ class AppSettingService(BaseService):
 
             rows = (
                 await self.session.scalars(
-                    select(UserSetting).where(
-                        UserSetting.employee_id == self.user.id
-                    )
+                    select(UserSetting).where(UserSetting.employee_id == self.user.id)
                 )
             ).all()
             overrides = {r.app_setting_id: r.value for r in rows}
