@@ -12,14 +12,14 @@ from backend.api_v1.planning.plan_scope.plan_scope_schema import (
     PlanScope as PlanScopeSchema,
     PlanScopeUpdate,
 )
-from backend.api_v1.planning.plan_scope.plan_scope_errors import (
+from backend.api_v1.planning.plan_scope.plan_scope_messages import (
     PlanScopeNotFound,
     PlanScopeSessionPending,
     PlanScopeSessionClosed,
     PlanScopeInactive,
     PlanScopeDeleteError,
 )
-from backend.api_v1.planning.plan_scope.plan_scope_success import (
+from backend.api_v1.planning.plan_scope.plan_scope_messages import (
     PlanScopeUpdateSuccess,
     PlanScopeDeleteSuccess,
 )

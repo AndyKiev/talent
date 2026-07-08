@@ -12,12 +12,12 @@ from backend.api_v1.job_category.job_category_schema import (
     JobCategoryCreate,
     JobCategoryUpdate,
 )
-from backend.api_v1.job_category.job_category_errors import (
+from backend.api_v1.job_category.job_category_messages import (
     JobCategoryNotFound,
     JobCategoryKeyTaken,
     JobCategoryDeleteError,
 )
-from backend.api_v1.job_category.job_category_success import (
+from backend.api_v1.job_category.job_category_messages import (
     JobCategoryCreateSuccess,
     JobCategoryUpdateSuccess,
     JobCategoryDeleteSuccess,

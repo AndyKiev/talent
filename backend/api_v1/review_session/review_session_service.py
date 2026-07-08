@@ -16,14 +16,14 @@ from backend.api_v1.review_session.review_session_schema import (
     ReviewSessionUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.review_session.review_session_errors import (
+from backend.api_v1.review_session.review_session_messages import (
     ReviewSessionNotFound,
     ReviewSessionDeleteError,
     ReviewSessionDeletePermission,
     ReviewSessionStatusError,
     ReviewSessionCannotCloseError,
 )
-from backend.api_v1.review_session.review_session_success import (
+from backend.api_v1.review_session.review_session_messages import (
     ReviewSessionDeleteSuccess,
     ReviewSessionCreateSuccess,
     ReviewSessionUpdateSuccess,
@@ -37,7 +37,7 @@ from backend.api_v1.review_session_employee.review_session_employee_model import
 from backend.api_v1.review_session_status.review_session_status_repository import (
     ReviewSessionStatusRepository,
 )
-from backend.api_v1.review_session_status.review_session_status_errors import (
+from backend.api_v1.review_session_status.review_session_status_messages import (
     ReviewSessionStatusNotFoundByKey,
 )
 from backend.utils.enums import ReviewSessionStatusKey

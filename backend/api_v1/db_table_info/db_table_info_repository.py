@@ -11,7 +11,7 @@ from backend.api_v1.db_table_info.db_table_info_schema import (
     DbTableInfo,
     TableDataFile,
 )
-from backend.api_v1.db_table_info.db_table_info_errors import (
+from backend.api_v1.db_table_info.db_table_info_messages import (
     DbTableInfoFileError,
 )
 

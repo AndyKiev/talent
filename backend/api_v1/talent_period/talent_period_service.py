@@ -12,13 +12,13 @@ from backend.api_v1.talent_period.talent_period_schema import (
     TalentPeriodUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.talent_period.talent_period_errors import (
+from backend.api_v1.talent_period.talent_period_messages import (
     TalentPeriodNotFound,
     TalentPeriodNotFoundByName,
     TalentPeriodNameTaken,
     TalentPeriodDeleteError,
 )
-from backend.api_v1.talent_period.talent_period_success import (
+from backend.api_v1.talent_period.talent_period_messages import (
     TalentPeriodDeleteSuccess,
     TalentPeriodCreateSuccess,
     TalentPeriodUpdateSuccess,

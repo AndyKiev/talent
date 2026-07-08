@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_errors import (
+from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_messages import (
     TalentAuditInterviewJobDeleteError,
     TalentAuditInterviewJobNotFound,
 )
@@ -14,7 +14,7 @@ from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_reposi
 from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_schema import (
     TalentAuditInterviewJob as TalentAuditInterviewJobSchema,
 )
-from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_success import (
+from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_messages import (
     TalentAuditInterviewJobDeleteSuccess,
 )
 

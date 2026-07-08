@@ -5,7 +5,7 @@ from backend.api_v1.table_relationship_links.operation_user_group_link_model imp
     OperationUserGroupLink,
 )
 from backend.api_v1.base.base_repository import BaseRepository
-from backend.api_v1.operation.operation_errors import (
+from backend.api_v1.operation.operation_messages import (
     OperationNotFound,
     OperationAlreadyInGroup,
     OperationNotInGroup,

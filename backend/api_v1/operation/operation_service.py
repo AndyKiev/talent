@@ -10,14 +10,14 @@ from backend.api_v1.operation.operation_schema import (
     OperationUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
-from backend.api_v1.operation.operation_errors import (
+from backend.api_v1.operation.operation_messages import (
     OperationNotFound,
     OperationNotFoundByName,
     OperationNameTaken,
     OperationHasGroups,
     OperationDeleteError,
 )
-from backend.api_v1.operation.operation_success import (
+from backend.api_v1.operation.operation_messages import (
     OperationDeleteSuccess,
     OperationCreateSuccess,
     OperationUpdateSuccess,

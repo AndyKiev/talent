@@ -14,12 +14,12 @@ from backend.api_v1.employee_training_status.employee_training_status_schema imp
     EmployeeTrainingStatusCreate,
     EmployeeTrainingStatusUpdate,
 )
-from backend.api_v1.employee_training_status.employee_training_status_errors import (
+from backend.api_v1.employee_training_status.employee_training_status_messages import (
     EmployeeTrainingStatusNotFound,
     EmployeeTrainingStatusKeyTaken,
     EmployeeTrainingStatusDeleteError,
 )
-from backend.api_v1.employee_training_status.employee_training_status_success import (
+from backend.api_v1.employee_training_status.employee_training_status_messages import (
     EmployeeTrainingStatusCreateSuccess,
     EmployeeTrainingStatusUpdateSuccess,
     EmployeeTrainingStatusDeleteSuccess,

@@ -9,7 +9,7 @@ from backend.api_v1.lang.lang_model import Lang as LangModel
 from backend.api_v1.base.errors import NotFoundError
 from backend.api_v1.lang.lang_dependencies import get_lang_service, lang_by_id
 
-# from backend.api_v1.lang.lang_errors import LangNotFoundByName
+# from backend.api_v1.lang.lang_messages import LangNotFoundByName
 from backend.api_v1.lang.lang_schema import Lang as LangSchema, LangCreate, LangUpdate
 from backend.api_v1.lang.lang_service import LangService
 from backend.auth.guards import Guard

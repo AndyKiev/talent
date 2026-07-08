@@ -13,11 +13,11 @@ from backend.api_v1.training_type_job_category_link.training_type_job_category_l
     TrainingTypeJobCategoryLink as TrainingTypeJobCategoryLinkSchema,
     TrainingTypeJobCategoryLinkBulkSet,
 )
-from backend.api_v1.training_type_job_category_link.training_type_job_category_link_errors import (
+from backend.api_v1.training_type_job_category_link.training_type_job_category_link_messages import (
     TrainingTypeNotFoundForJobCategoryLink,
     JobCategoriesNotFoundForTrainingTypeLink,
 )
-from backend.api_v1.training_type_job_category_link.training_type_job_category_link_success import (
+from backend.api_v1.training_type_job_category_link.training_type_job_category_link_messages import (
     TrainingTypeJobCategoryLinkSetSuccess,
 )
 from backend.api_v1.base.mutation_response import MutationResponse

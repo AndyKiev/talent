@@ -36,7 +36,7 @@ async def operation_essence_set_link_by_id(
         Depends(get_operation_essence_set_link_service),
     ],
 ):
-    from backend.api_v1.operation_essence_set_link.operation_essence_set_link_errors import (
+    from backend.api_v1.operation_essence_set_link.operation_essence_set_link_messages import (
         OperationEssenceSetLinkNotFound,
     )
 

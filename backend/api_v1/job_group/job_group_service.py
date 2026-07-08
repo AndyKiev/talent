@@ -11,12 +11,12 @@ from backend.api_v1.job_group.job_group_schema import (
     JobGroupUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.job_group.job_group_errors import (
+from backend.api_v1.job_group.job_group_messages import (
     JobGroupNotFound,
     JobGroupNameTaken,
     JobGroupDeleteError,
 )
-from backend.api_v1.job_group.job_group_success import (
+from backend.api_v1.job_group.job_group_messages import (
     JobGroupCreateSuccess,
     JobGroupUpdateSuccess,
     JobGroupDeleteSuccess,

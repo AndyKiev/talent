@@ -16,13 +16,13 @@ from backend.api_v1.department_type_job_link.department_type_job_link_schema imp
 )
 from backend.api_v1.job.job_schema import Job as JobSchema
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.department_type_job_link.department_type_job_link_errors import (
+from backend.api_v1.department_type_job_link.department_type_job_link_messages import (
     DepartmentTypeJobLinkNotFound,
     DepartmentTypeJobLinkAlreadyExists,
     DepartmentTypeJobLinkDeleteError,
     DepartmentTypeJobLinkNotFoundByCompositeKey,
 )
-from backend.api_v1.department_type_job_link.department_type_job_link_success import (
+from backend.api_v1.department_type_job_link.department_type_job_link_messages import (
     DepartmentTypeJobLinkDeleteSuccess,
     DepartmentTypeJobLinkCreateSuccess,
     DepartmentTypeJobLinkUpdateSuccess,

@@ -18,7 +18,7 @@ from backend.api_v1.employee_language_profile.employee_language_profile_schema i
     EmployeeLanguageProfileSchema,
     EmployeeLanguageProfileUpsert,
 )
-from backend.api_v1.employee_language_profile.employee_language_profile_success import (
+from backend.api_v1.employee_language_profile.employee_language_profile_messages import (
     EmployeeLanguagesSaveSuccess,
 )
 

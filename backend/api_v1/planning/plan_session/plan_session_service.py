@@ -33,7 +33,7 @@ from backend.api_v1.planning.plan_session.plan_session_schema import (
     PlanSessionCreate,
     PlanSessionUpdate,
 )
-from backend.api_v1.planning.plan_session.plan_session_errors import (
+from backend.api_v1.planning.plan_session.plan_session_messages import (
     PlanSessionNotFound,
     PlanSessionNameTaken,
     PlanSessionCategoryOverlap,
@@ -46,7 +46,7 @@ from backend.api_v1.planning.plan_session.plan_session_errors import (
     PlanSessionNoMatchingScopes,
     PlanSessionResyncNotOpen,
 )
-from backend.api_v1.planning.plan_session.plan_session_success import (
+from backend.api_v1.planning.plan_session.plan_session_messages import (
     PlanSessionCreateSuccess,
     PlanSessionUpdateSuccess,
     PlanSessionDeleteSuccess,
@@ -59,7 +59,7 @@ from backend.api_v1.planning.plan_session.plan_session_success import (
 from backend.api_v1.planning.plan_session_status.plan_session_status_repository import (
     PlanSessionStatusRepository,
 )
-from backend.api_v1.planning.plan_session_status.plan_session_status_errors import (
+from backend.api_v1.planning.plan_session_status.plan_session_status_messages import (
     PlanSessionStatusNotFoundByKey,
 )
 from backend.api_v1.planning.plan_category_default.plan_category_default_repository import (

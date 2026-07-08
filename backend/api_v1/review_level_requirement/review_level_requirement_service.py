@@ -13,11 +13,11 @@ from backend.api_v1.review_level_requirement.review_level_requirement_schema imp
     ReviewLevelRequirementUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.review_level_requirement.review_level_requirement_errors import (
+from backend.api_v1.review_level_requirement.review_level_requirement_messages import (
     ReviewLevelRequirementNotFound,
     ReviewLevelRequirementDeleteError,
 )
-from backend.api_v1.review_level_requirement.review_level_requirement_success import (
+from backend.api_v1.review_level_requirement.review_level_requirement_messages import (
     ReviewLevelRequirementDeleteSuccess,
     ReviewLevelRequirementCreateSuccess,
     ReviewLevelRequirementUpdateSuccess,

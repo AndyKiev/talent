@@ -14,12 +14,12 @@ from backend.api_v1.process_roles.process_role.process_role_schema import (
     ProcessRoleUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.process_roles.process_role.process_role_errors import (
+from backend.api_v1.process_roles.process_role.process_role_messages import (
     ProcessRoleNotFound,
     ProcessRoleNameTaken,
     ProcessRoleDeleteError,
 )
-from backend.api_v1.process_roles.process_role.process_role_success import (
+from backend.api_v1.process_roles.process_role.process_role_messages import (
     ProcessRoleCreateSuccess,
     ProcessRoleUpdateSuccess,
     ProcessRoleDeleteSuccess,

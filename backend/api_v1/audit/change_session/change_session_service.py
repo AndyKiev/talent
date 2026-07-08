@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.audit.change_session.change_session_errors import (
+from backend.api_v1.audit.change_session.change_session_messages import (
     ChangeSessionNotFound,
 )
 from backend.api_v1.audit.change_session.change_session_repository import (

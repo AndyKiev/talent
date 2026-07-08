@@ -14,13 +14,13 @@ from backend.api_v1.training_type_job_link.training_type_job_link_schema import 
     TrainingTypeJobLinkBulkSet,
     TrainingTypeJobLinkBulkSetForJob,
 )
-from backend.api_v1.training_type_job_link.training_type_job_link_errors import (
+from backend.api_v1.training_type_job_link.training_type_job_link_messages import (
     TrainingTypeNotFoundForJobLink,
     JobsNotFoundForTrainingTypeLink,
     JobNotFoundForTrainingTypeLink,
     TrainingTypesNotFoundForJobLink,
 )
-from backend.api_v1.training_type_job_link.training_type_job_link_success import (
+from backend.api_v1.training_type_job_link.training_type_job_link_messages import (
     TrainingTypeJobLinkSetSuccess,
     TrainingTypeJobLinkSetForJobSuccess,
 )

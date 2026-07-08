@@ -3,7 +3,7 @@
 Message Key Audit Utility
 Location: talent/backend/utils/msg_key_backend_audit.py
 
-Scans all *_errors.py and *_success.py files under api_v1/ for:
+Scans all *_messages.py files under api_v1/ for:
   - message_key = "..."         (the i18n key)
   - self.template_vars = {...}  (variable names needed for the message)
 
@@ -172,14 +172,10 @@ def _extract_message_keys_from_file(path):
 
 
 def scan_code_keys(api_v1_root):
-    targets = sorted(api_v1_root.rglob("*_errors.py")) + sorted(
-        api_v1_root.rglob("*_success.py")
-    )
+    targets = sorted(api_v1_root.rglob("*_messages.py"))
     if not targets:
         print(
-            "[WARN] No *_errors.py / *_success.py files found under {}".format(
-                api_v1_root
-            ),
+            "[WARN] No *_messages.py files found under {}".format(api_v1_root),
             file=sys.stderr,
         )
     all_keys = []

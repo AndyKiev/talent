@@ -14,13 +14,13 @@ from backend.api_v1.employee_events.employee_event_change.employee_event_change_
     EmployeeEventChangeUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.employee_events.employee_event_change.employee_event_change_errors import (
+from backend.api_v1.employee_events.employee_event_change.employee_event_change_messages import (
     EmployeeEventChangeNotFound,
     EmployeeEventChangeDeleteError,
     EmployeeEventChangeEventNotDraft,
     EmployeeEventChangeDirectionDuplicate,
 )
-from backend.api_v1.employee_events.employee_event_change.employee_event_change_success import (
+from backend.api_v1.employee_events.employee_event_change.employee_event_change_messages import (
     EmployeeEventChangeDeleteSuccess,
     EmployeeEventChangeCreateSuccess,
     EmployeeEventChangeUpdateSuccess,

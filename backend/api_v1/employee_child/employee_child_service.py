@@ -12,12 +12,12 @@ from backend.api_v1.employee_child.employee_child_schema import (
     EmployeeChildCreate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.employee_child.employee_child_errors import (
+from backend.api_v1.employee_child.employee_child_messages import (
     EmployeeChildNotFound,
     EmployeeChildDeleteError,
 )
-from backend.api_v1.employee.employee_errors import EmployeeNotFound
-from backend.api_v1.employee_child.employee_child_success import (
+from backend.api_v1.employee.employee_messages import EmployeeNotFound
+from backend.api_v1.employee_child.employee_child_messages import (
     EmployeeChildDeleteSuccess,
     EmployeeChildCreateSuccess,
 )

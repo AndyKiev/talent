@@ -14,7 +14,7 @@ from backend.api_v1.employee_events.employee_event_type.employee_event_type_sche
     EmployeeEventTypeUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.employee_events.employee_event_type.employee_event_type_errors import (
+from backend.api_v1.employee_events.employee_event_type.employee_event_type_messages import (
     EmployeeEventTypeNotFound,
     EmployeeEventTypeNotFoundByName,
     EmployeeEventTypeNotFoundByCode,
@@ -22,7 +22,7 @@ from backend.api_v1.employee_events.employee_event_type.employee_event_type_erro
     EmployeeEventTypeCodeTaken,
     EmployeeEventTypeDeleteError,
 )
-from backend.api_v1.employee_events.employee_event_type.employee_event_type_success import (
+from backend.api_v1.employee_events.employee_event_type.employee_event_type_messages import (
     EmployeeEventTypeDeleteSuccess,
     EmployeeEventTypeCreateSuccess,
     EmployeeEventTypeUpdateSuccess,

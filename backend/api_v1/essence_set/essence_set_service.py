@@ -8,7 +8,7 @@ from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.essence_set.essence_set_repository import EssenceSetRepository
 from backend.api_v1.essence_set.essence_set_model import EssenceSet
 from backend.api_v1.essence_set.essence_set_member_model import EssenceSetMember
-from backend.api_v1.essence_set.essence_set_errors import (
+from backend.api_v1.essence_set.essence_set_messages import (
     EssenceSetNotFound,
     EssenceSetInvalidMembers,
 )

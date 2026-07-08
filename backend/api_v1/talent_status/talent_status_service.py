@@ -12,14 +12,14 @@ from backend.api_v1.talent_status.talent_status_schema import (
     TalentStatusUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.talent_status.talent_status_errors import (
+from backend.api_v1.talent_status.talent_status_messages import (
     TalentStatusNotFound,
     TalentStatusNotFoundByName,
     TalentStatusKeyTaken,
     TalentStatusNameTaken,
     TalentStatusDeleteError,
 )
-from backend.api_v1.talent_status.talent_status_success import (
+from backend.api_v1.talent_status.talent_status_messages import (
     TalentStatusDeleteSuccess,
     TalentStatusCreateSuccess,
     TalentStatusUpdateSuccess,

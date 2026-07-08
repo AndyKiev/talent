@@ -14,12 +14,12 @@ from backend.api_v1.training_link_type.training_link_type_schema import (
     TrainingLinkTypeCreate,
     TrainingLinkTypeUpdate,
 )
-from backend.api_v1.training_link_type.training_link_type_errors import (
+from backend.api_v1.training_link_type.training_link_type_messages import (
     TrainingLinkTypeNotFound,
     TrainingLinkTypeKeyTaken,
     TrainingLinkTypeDeleteError,
 )
-from backend.api_v1.training_link_type.training_link_type_success import (
+from backend.api_v1.training_link_type.training_link_type_messages import (
     TrainingLinkTypeCreateSuccess,
     TrainingLinkTypeUpdateSuccess,
     TrainingLinkTypeDeleteSuccess,

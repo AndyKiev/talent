@@ -22,13 +22,13 @@ from backend.api_v1.department.department_org_units import resolve_top_org_unit
 from backend.api_v1.training_type.training_type_repository import (
     TrainingTypeRepository,
 )
-from backend.api_v1.training_type.training_type_errors import TrainingTypeNotFound
-from backend.api_v1.employee_training.employee_training_errors import (
+from backend.api_v1.training_type.training_type_messages import TrainingTypeNotFound
+from backend.api_v1.employee_training.employee_training_messages import (
     EmployeeTrainingNotFound,
     EmployeeTrainingAlreadyAssigned,
     EmployeeTrainingDeleteError,
 )
-from backend.api_v1.employee_training.employee_training_success import (
+from backend.api_v1.employee_training.employee_training_messages import (
     EmployeeTrainingCreateSuccess,
     EmployeeTrainingUpdateSuccess,
     EmployeeTrainingDeleteSuccess,

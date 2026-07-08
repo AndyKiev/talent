@@ -13,12 +13,12 @@ from backend.api_v1.planning.plan_category_default.plan_category_default_schema 
     PlanCategoryDefault as PlanCategoryDefaultSchema,
     PlanCategoryDefaultCreate,
 )
-from backend.api_v1.planning.plan_category_default.plan_category_default_errors import (
+from backend.api_v1.planning.plan_category_default.plan_category_default_messages import (
     PlanCategoryDefaultNotFound,
     PlanCategoryDefaultExists,
     PlanCategoryDefaultDeleteError,
 )
-from backend.api_v1.planning.plan_category_default.plan_category_default_success import (
+from backend.api_v1.planning.plan_category_default.plan_category_default_messages import (
     PlanCategoryDefaultCreateSuccess,
     PlanCategoryDefaultDeleteSuccess,
 )

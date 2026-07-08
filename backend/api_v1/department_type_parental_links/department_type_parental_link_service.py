@@ -12,12 +12,12 @@ from backend.api_v1.department_type_parental_links.department_type_parental_link
     DepartmentTypeParentalLinkUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.department_type_parental_links.department_type_parental_link_errors import (
+from backend.api_v1.department_type_parental_links.department_type_parental_link_messages import (
     DepartmentTypeParentalLinkNotFound,
     DepartmentTypeParentalLinkAlreadyExists,
     DepartmentTypeParentalLinkDeleteError,
 )
-from backend.api_v1.department_type_parental_links.department_type_parental_link_success import (
+from backend.api_v1.department_type_parental_links.department_type_parental_link_messages import (
     DepartmentTypeParentalLinkDeleteSuccess,
     DepartmentTypeParentalLinkCreateSuccess,
     DepartmentTypeParentalLinkUpdateSuccess,

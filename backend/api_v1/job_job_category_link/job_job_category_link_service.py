@@ -15,11 +15,11 @@ from backend.api_v1.job_job_category_link.job_job_category_link_schema import (
     JobJobCategoryLink as JobJobCategoryLinkSchema,
     JobJobCategoryClearAllResult,
 )
-from backend.api_v1.job_job_category_link.job_job_category_link_errors import (
+from backend.api_v1.job_job_category_link.job_job_category_link_messages import (
     JobNotFoundForCategoryLink,
     JobCategoryNotFoundForLink,
 )
-from backend.api_v1.job_job_category_link.job_job_category_link_success import (
+from backend.api_v1.job_job_category_link.job_job_category_link_messages import (
     JobCategoryLinkSetSuccess,
     JobCategoryLinkClearAllSuccess,
 )

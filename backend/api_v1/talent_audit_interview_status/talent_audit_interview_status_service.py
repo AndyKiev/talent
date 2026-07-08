@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_errors import (
+from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_messages import (
     TalentAuditInterviewStatusDeleteError,
     TalentAuditInterviewStatusNameTaken,
     TalentAuditInterviewStatusNotFound,
@@ -20,7 +20,7 @@ from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_
     TalentAuditInterviewStatusCreate,
     TalentAuditInterviewStatusUpdate,
 )
-from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_success import (
+from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_messages import (
     TalentAuditInterviewStatusCreateSuccess,
     TalentAuditInterviewStatusDeleteSuccess,
     TalentAuditInterviewStatusUpdateSuccess,

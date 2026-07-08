@@ -29,12 +29,12 @@ from backend.api_v1.process_roles.oversight_manager.oversight_manager_schema imp
     MyOversightManager,
     SetOversightManager,
 )
-from backend.api_v1.process_roles.oversight_manager.oversight_manager_errors import (
+from backend.api_v1.process_roles.oversight_manager.oversight_manager_messages import (
     OversightRoleNotConfigured,
     OversightHolderInvalid,
     OversightManagerSelf,
 )
-from backend.api_v1.process_roles.oversight_manager.oversight_manager_success import (
+from backend.api_v1.process_roles.oversight_manager.oversight_manager_messages import (
     OversightManagerSetSuccess,
     OversightManagerClearSuccess,
 )

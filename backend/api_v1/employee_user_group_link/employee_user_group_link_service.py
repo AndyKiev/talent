@@ -16,14 +16,14 @@ from backend.api_v1.employee_user_group_link.employee_user_group_link_schema imp
     EmployeeWithGroups,
     GroupOfType,
 )
-from backend.api_v1.employee_user_group_link.employee_user_group_link_errors import (
+from backend.api_v1.employee_user_group_link.employee_user_group_link_messages import (
     EmployeeUserGroupLinkNotFound,
     EmployeeUserGroupLinkAlreadyExists,
     EmployeeUserGroupLinkDeleteError,
     EmployeeUserGroupLinkNotFoundByCompositeKey,
     EmployeeEmailRequiredForGroup,
 )
-from backend.api_v1.employee_user_group_link.employee_user_group_link_success import (
+from backend.api_v1.employee_user_group_link.employee_user_group_link_messages import (
     EmployeeUserGroupLinkCreateSuccess,
     EmployeeUserGroupLinkDeleteSuccess,
 )

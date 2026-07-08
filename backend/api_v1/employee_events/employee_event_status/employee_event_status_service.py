@@ -14,13 +14,13 @@ from backend.api_v1.employee_events.employee_event_status.employee_event_status_
     EmployeeEventStatusUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.employee_events.employee_event_status.employee_event_status_errors import (
+from backend.api_v1.employee_events.employee_event_status.employee_event_status_messages import (
     EmployeeEventStatusNotFound,
     EmployeeEventStatusNotFoundByName,
     EmployeeEventStatusNameTaken,
     EmployeeEventStatusDeleteError,
 )
-from backend.api_v1.employee_events.employee_event_status.employee_event_status_success import (
+from backend.api_v1.employee_events.employee_event_status.employee_event_status_messages import (
     EmployeeEventStatusDeleteSuccess,
     EmployeeEventStatusCreateSuccess,
     EmployeeEventStatusUpdateSuccess,

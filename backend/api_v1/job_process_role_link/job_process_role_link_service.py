@@ -14,13 +14,13 @@ from backend.api_v1.job_process_role_link.job_process_role_link_schema import (
     JobProcessRoleLink as JobProcessRoleLinkSchema,
     JobProcessRoleLinkCreate,
 )
-from backend.api_v1.job_process_role_link.job_process_role_link_errors import (
+from backend.api_v1.job_process_role_link.job_process_role_link_messages import (
     JobProcessRoleLinkNotFound,
     JobAlreadyLinkedToProcessRole,
     JobNotFoundForProcessRoleLink,
     ProcessRoleNotFoundForLink,
 )
-from backend.api_v1.job_process_role_link.job_process_role_link_success import (
+from backend.api_v1.job_process_role_link.job_process_role_link_messages import (
     JobProcessRoleLinkCreateSuccess,
     JobProcessRoleLinkDeleteSuccess,
 )

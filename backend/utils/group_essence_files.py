@@ -8,8 +8,7 @@ then writes one combined .txt file per category into grouped_essence_files/.
 
 Supported suffixes:
   _dependencies.py  →  joint_dependencies.txt
-  _errors.py        →  joint_errors.txt
-  _success.py       →  joint_success.txt
+  _messages.py      →  joint_messages.txt
   _model.py         →  joint_model.txt
   _schema.py        →  joint_schema.txt
   _repository.py    →  joint_repository.txt
@@ -29,8 +28,7 @@ from pathlib import Path
 
 SUFFIXES: list[str] = [
     "_dependencies",
-    "_errors",
-    "_success",
+    "_messages",
     "_model",
     "_schema",
     "_repository",

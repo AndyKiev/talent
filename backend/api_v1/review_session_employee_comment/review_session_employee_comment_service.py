@@ -17,14 +17,14 @@ from backend.api_v1.review_session_employee_comment.review_session_employee_comm
     ReviewCommentCreate,
     ReviewCommentUpdate,
 )
-from backend.api_v1.review_session_employee_comment.review_session_employee_comment_errors import (
+from backend.api_v1.review_session_employee_comment.review_session_employee_comment_messages import (
     ReviewCommentNotFound,
     ReviewCommentReviewNotOpen,
     ReviewCommentRoleRequired,
     ReviewCommentNotOwner,
     ReviewCommentInvalid,
 )
-from backend.api_v1.review_session_employee_comment.review_session_employee_comment_success import (
+from backend.api_v1.review_session_employee_comment.review_session_employee_comment_messages import (
     ReviewCommentCreateSuccess,
     ReviewCommentUpdateSuccess,
     ReviewCommentDeleteSuccess,
@@ -38,7 +38,7 @@ from backend.api_v1.review_session_employee.review_session_employee_repository i
 from backend.api_v1.review_session_employee.review_session_employee_service import (
     ReviewSessionEmployeeService,
 )
-from backend.api_v1.review_session_employee.review_session_employee_errors import (
+from backend.api_v1.review_session_employee.review_session_employee_messages import (
     ReviewSessionEmployeeNotFound,
 )
 

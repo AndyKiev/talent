@@ -18,17 +18,17 @@ from backend.api_v1.review_session_employee.review_session_employee_schema impor
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.employee.employee_model import Employee
-from backend.api_v1.employee.employee_errors import EmployeeNotFound
+from backend.api_v1.employee.employee_messages import EmployeeNotFound
 from backend.api_v1.review_session.review_session_repository import (
     ReviewSessionRepository,
 )
 from backend.api_v1.review_session.review_session_model import ReviewSession
-from backend.api_v1.review_session.review_session_errors import ReviewSessionNotFound
+from backend.api_v1.review_session.review_session_messages import ReviewSessionNotFound
 from backend.api_v1.review_dimension.review_dimension_model import ReviewDimension
 from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_model import (
     ReviewSessionEmployeeEvaluation,
 )
-from backend.api_v1.review_session_employee.review_session_employee_errors import (
+from backend.api_v1.review_session_employee.review_session_employee_messages import (
     ReviewSessionEmployeeNotFound,
     ReviewSessionEmployeeStatusError,
     ReviewSessionEmployeeAlreadyInSession,
@@ -38,7 +38,7 @@ from backend.api_v1.review_session_employee.review_session_employee_errors impor
     ProposedLevelRequiredForReview,
     ProposedLevelDetailsIncomplete,
 )
-from backend.api_v1.review_session_employee.review_session_employee_success import (
+from backend.api_v1.review_session_employee.review_session_employee_messages import (
     ReviewSessionEmployeeStatusChangeSuccess,
     ReviewSessionEmployeeAddedSuccess,
     ReviewSessionEmployeeQueueOrderSuccess,

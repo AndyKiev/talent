@@ -3,7 +3,7 @@ from typing import Annotated
 
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee_photo.employee_photo_schema import EmployeePhotoMeta
-from backend.api_v1.employee_photo.employee_photo_errors import EmployeePhotoNotFound
+from backend.api_v1.employee_photo.employee_photo_messages import EmployeePhotoNotFound
 from backend.api_v1.employee_photo.employee_photo_dependencies import (
     get_employee_photo_service,
 )

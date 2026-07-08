@@ -14,7 +14,7 @@ from backend.api_v1.job_job_group_link.job_job_group_link_schema import (
     JobJobGroupLinkCreate,
     JobJobGroupLinkBulkSet,
 )
-from backend.api_v1.job_job_group_link.job_job_group_link_errors import (
+from backend.api_v1.job_job_group_link.job_job_group_link_messages import (
     JobJobGroupLinkNotFound,
     JobAlreadyInJobGroup,
     JobJobGroupLinkDeleteError,
@@ -23,7 +23,7 @@ from backend.api_v1.job_job_group_link.job_job_group_link_errors import (
     JobGroupsNotFoundForLink,
     JobNotFoundForLink,
 )
-from backend.api_v1.job_job_group_link.job_job_group_link_success import (
+from backend.api_v1.job_job_group_link.job_job_group_link_messages import (
     JobJobGroupLinkCreateSuccess,
     JobJobGroupLinkDeleteSuccess,
     JobJobGroupLinkSetSuccess,

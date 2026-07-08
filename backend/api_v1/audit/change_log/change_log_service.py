@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.audit.change_log.change_log_errors import ChangeLogNotFound
+from backend.api_v1.audit.change_log.change_log_messages import ChangeLogNotFound
 from backend.api_v1.audit.change_log.change_log_repository import ChangeLogRepository
 from backend.api_v1.audit.change_log.change_log_schema import (
     ChangeLogSchema,

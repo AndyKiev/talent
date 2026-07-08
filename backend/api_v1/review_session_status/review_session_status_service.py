@@ -14,13 +14,13 @@ from backend.api_v1.review_session_status.review_session_status_schema import (
     ReviewSessionStatusCreate,
     ReviewSessionStatusUpdate,
 )
-from backend.api_v1.review_session_status.review_session_status_errors import (
+from backend.api_v1.review_session_status.review_session_status_messages import (
     ReviewSessionStatusNotFound,
     ReviewSessionStatusNotFoundByKey,
     ReviewSessionStatusKeyTaken,
     ReviewSessionStatusDeleteError,
 )
-from backend.api_v1.review_session_status.review_session_status_success import (
+from backend.api_v1.review_session_status.review_session_status_messages import (
     ReviewSessionStatusDeleteSuccess,
     ReviewSessionStatusCreateSuccess,
     ReviewSessionStatusUpdateSuccess,

@@ -15,14 +15,14 @@ from backend.api_v1.review_dimension.review_dimension_schema import (
     ReviewDimensionUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.review_dimension.review_dimension_errors import (
+from backend.api_v1.review_dimension.review_dimension_messages import (
     ReviewDimensionNotFound,
     ReviewDimensionNameTaken,
     ReviewDimensionDeleteError,
     ReviewDimensionNotFoundByName,
     ReviewDimensionInvalidColor,
 )
-from backend.api_v1.review_dimension.review_dimension_success import (
+from backend.api_v1.review_dimension.review_dimension_messages import (
     ReviewDimensionDeleteSuccess,
     ReviewDimensionCreateSuccess,
     ReviewDimensionUpdateSuccess,

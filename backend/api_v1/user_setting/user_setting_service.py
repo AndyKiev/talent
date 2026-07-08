@@ -12,12 +12,12 @@ from backend.api_v1.user_setting.user_setting_schema import (
     UserSetting as UserSettingSchema,
     EffectiveUserSetting,
 )
-from backend.api_v1.user_setting.user_setting_errors import (
+from backend.api_v1.user_setting.user_setting_messages import (
     UserSettingNotFound,
     UserSettingNotOverridable,
     UserSettingValueBelowMin,
 )
-from backend.api_v1.user_setting.user_setting_success import (
+from backend.api_v1.user_setting.user_setting_messages import (
     UserSettingUpdateSuccess,
     UserSettingDeleteSuccess,
 )

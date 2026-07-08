@@ -107,7 +107,7 @@ class BaseService(Generic[RepositoryType]):
         Translate a domain error's message in-place and return it.
 
         Reads message_key and template_vars from the exception (set by the
-        concrete error class in job_errors.py) and stores the result on
+        concrete error class in job_messages.py) and stores the result on
         exc.resolved_message so the global exception handler can use it
         without needing a DB session.
 

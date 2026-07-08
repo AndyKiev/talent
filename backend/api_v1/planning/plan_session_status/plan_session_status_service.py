@@ -14,13 +14,13 @@ from backend.api_v1.planning.plan_session_status.plan_session_status_schema impo
     PlanSessionStatusCreate,
     PlanSessionStatusUpdate,
 )
-from backend.api_v1.planning.plan_session_status.plan_session_status_errors import (
+from backend.api_v1.planning.plan_session_status.plan_session_status_messages import (
     PlanSessionStatusNotFound,
     PlanSessionStatusNotFoundByKey,
     PlanSessionStatusKeyTaken,
     PlanSessionStatusDeleteError,
 )
-from backend.api_v1.planning.plan_session_status.plan_session_status_success import (
+from backend.api_v1.planning.plan_session_status.plan_session_status_messages import (
     PlanSessionStatusDeleteSuccess,
     PlanSessionStatusCreateSuccess,
     PlanSessionStatusUpdateSuccess,

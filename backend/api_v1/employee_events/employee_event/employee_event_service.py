@@ -18,13 +18,13 @@ from backend.api_v1.employee_events.employee_event.employee_event_schema import 
     EmployeeEventUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.employee_events.employee_event.employee_event_errors import (
+from backend.api_v1.employee_events.employee_event.employee_event_messages import (
     EmployeeEventNotFound,
     EmployeeEventDeleteError,
     EmployeeEventAlreadyApplied,
     EmployeeEventNotDraft,
 )
-from backend.api_v1.employee_events.employee_event.employee_event_success import (
+from backend.api_v1.employee_events.employee_event.employee_event_messages import (
     EmployeeEventDeleteSuccess,
     EmployeeEventCreateSuccess,
     EmployeeEventUpdateSuccess,
@@ -63,7 +63,7 @@ from backend.api_v1.employee_events.employee_status_transitions import (
     ACTIVATION_TARGET,
     InvalidStatusTransition,
 )
-from backend.api_v1.employee_events.employee_event.employee_event_errors import (
+from backend.api_v1.employee_events.employee_event.employee_event_messages import (
     EmployeeEventInvalidStatusTransition,
     EmployeeEventOpenEventExists,
     EmployeeEventActivationExists,

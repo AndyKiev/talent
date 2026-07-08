@@ -14,7 +14,7 @@ from backend.api_v1.process_roles.process_role_active_context.process_role_activ
     MyDepartment,
     MyScopes,
 )
-from backend.api_v1.process_roles.process_role_active_context.process_role_active_context_errors import (
+from backend.api_v1.process_roles.process_role_active_context.process_role_active_context_messages import (
     ActiveContextRoleNotHeld,
     ActiveContextDepartmentNotAssigned,
 )

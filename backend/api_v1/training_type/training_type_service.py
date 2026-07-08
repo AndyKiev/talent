@@ -7,7 +7,7 @@ from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.employee.employee_repository import EmployeeRepository
-from backend.api_v1.employee.employee_errors import EmployeeNotFound
+from backend.api_v1.employee.employee_messages import EmployeeNotFound
 from backend.api_v1.talent_audit.talent_audit_repository import TalentAuditRepository
 from backend.api_v1.training_type.training_type_repository import TrainingTypeRepository
 from backend.api_v1.training_type.training_type_schema import (
@@ -15,13 +15,13 @@ from backend.api_v1.training_type.training_type_schema import (
     TrainingTypeCreate,
     TrainingTypeUpdate,
 )
-from backend.api_v1.training_type.training_type_errors import (
+from backend.api_v1.training_type.training_type_messages import (
     TrainingTypeNotFound,
     TrainingTypeNameTaken,
     TrainingTypeKeyTaken,
     TrainingTypeDeleteError,
 )
-from backend.api_v1.training_type.training_type_success import (
+from backend.api_v1.training_type.training_type_messages import (
     TrainingTypeCreateSuccess,
     TrainingTypeUpdateSuccess,
     TrainingTypeDeleteSuccess,

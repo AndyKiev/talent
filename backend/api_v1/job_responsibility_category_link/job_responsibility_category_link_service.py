@@ -15,12 +15,12 @@ from backend.api_v1.job_responsibility_category_link.job_responsibility_category
     ResponsibilityCategoryOption,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.job_responsibility_category_link.job_responsibility_category_link_errors import (
+from backend.api_v1.job_responsibility_category_link.job_responsibility_category_link_messages import (
     JobResponsibilityCategoryLinkNotFound,
     JobResponsibilityCategoryLinkDuplicate,
     JobResponsibilityCategoryLinkDeleteError,
 )
-from backend.api_v1.job_responsibility_category_link.job_responsibility_category_link_success import (
+from backend.api_v1.job_responsibility_category_link.job_responsibility_category_link_messages import (
     JobResponsibilityCategoryLinkCreateSuccess,
     JobResponsibilityCategoryLinkUpdateSuccess,
     JobResponsibilityCategoryLinkDeleteSuccess,

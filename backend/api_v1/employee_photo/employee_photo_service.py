@@ -12,13 +12,13 @@ from backend.api_v1.employee_photo.employee_photo_repository import (
 )
 from backend.api_v1.employee_photo.employee_photo_model import EmployeePhoto
 from backend.api_v1.employee_photo.employee_photo_schema import EmployeePhotoMeta
-from backend.api_v1.employee_photo.employee_photo_errors import (
+from backend.api_v1.employee_photo.employee_photo_messages import (
     EmployeePhotoNotFound,
     EmployeePhotoInvalidType,
     EmployeePhotoTooLarge,
     EmployeePhotosDisabled,
 )
-from backend.api_v1.employee_photo.employee_photo_success import (
+from backend.api_v1.employee_photo.employee_photo_messages import (
     EmployeePhotoSaveSuccess,
     EmployeePhotoDeleteSuccess,
 )

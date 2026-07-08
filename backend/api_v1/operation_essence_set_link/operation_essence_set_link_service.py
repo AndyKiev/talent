@@ -20,11 +20,11 @@ from backend.api_v1.operation_essence_set_link.operation_essence_set_link_schema
     PermissionSyncResult,
     PermissionSyncSkip,
 )
-from backend.api_v1.operation_essence_set_link.operation_essence_set_link_errors import (
+from backend.api_v1.operation_essence_set_link.operation_essence_set_link_messages import (
     OperationEssenceSetLinkNotFound,
     OperationEssenceSetLinkDuplicate,
 )
-from backend.api_v1.operation_essence_set_link.operation_essence_set_link_success import (
+from backend.api_v1.operation_essence_set_link.operation_essence_set_link_messages import (
     OperationEssenceSetLinkCreateSuccess,
     OperationEssenceSetLinkDeleteSuccess,
 )

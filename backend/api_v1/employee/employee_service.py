@@ -13,14 +13,14 @@ from backend.api_v1.employee.employee_schema import (
     EmployeePersonalDataUpdate,
     MainDepartmentSchema,
 )
-from backend.api_v1.employee.employee_errors import (
+from backend.api_v1.employee.employee_messages import (
     EmployeeNotFound,
     EmployeeNotFoundByCode,
     EmployeeCodeTaken,
     EmployeeEmailTaken,
     EmployeeDeleteError,
 )
-from backend.api_v1.employee.employee_success import EmployeeDeleteSuccess
+from backend.api_v1.employee.employee_messages import EmployeeDeleteSuccess
 from backend.api_v1.base.errors import DomainError
 from backend.auth.permission_resolvers import (
     resolve_user_permissions,
@@ -28,7 +28,7 @@ from backend.auth.permission_resolvers import (
     has_authorisation_group,
 )
 from sqlalchemy import select, func, or_
-from backend.api_v1.employee.employee_errors import EmployeeHasReferencesError
+from backend.api_v1.employee.employee_messages import EmployeeHasReferencesError
 
 # Top-level org-unit derivation (board / directorate / store).
 from backend.api_v1.department.department_repository import DepartmentRepository

@@ -14,13 +14,13 @@ from backend.api_v1.department_category.department_category_schema import (
     DepartmentCategoryUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.department_category.department_category_errors import (
+from backend.api_v1.department_category.department_category_messages import (
     DepartmentCategoryNotFound,
     DepartmentCategoryNameTaken,
     DepartmentCategoryDeleteError,
     DepartmentCategoryNotFoundByName,
 )
-from backend.api_v1.department_category.department_category_success import (
+from backend.api_v1.department_category.department_category_messages import (
     DepartmentCategoryDeleteSuccess,
     DepartmentCategoryCreateSuccess,
     DepartmentCategoryUpdateSuccess,

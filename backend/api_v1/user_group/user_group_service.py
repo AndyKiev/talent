@@ -10,12 +10,12 @@ from backend.api_v1.user_group.user_group_schema import (
     UserGroupUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.user_group.user_group_errors import (
+from backend.api_v1.user_group.user_group_messages import (
     UserGroupNameTaken,
     UserGroupNotFound,
     UserGroupDeleteError,
 )
-from backend.api_v1.user_group.user_group_success import (
+from backend.api_v1.user_group.user_group_messages import (
     UserGroupDeleteSuccess,
     UserGroupCreateSuccess,
     UserGroupUpdateSuccess,

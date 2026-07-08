@@ -8,13 +8,13 @@ from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.job.job_repository import JobRepository
 from backend.api_v1.job.job_schema import Job as JobSchema, JobCreate, JobUpdate
 from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
-from backend.api_v1.job.job_errors import (
+from backend.api_v1.job.job_messages import (
     JobNotFound,
     JobNameTaken,
     JobDeleteError,
     JobNotFoundByName,
 )
-from backend.api_v1.job.job_success import (
+from backend.api_v1.job.job_messages import (
     JobDeleteSuccess,
     JobCreateSuccess,
     JobUpdateSuccess,
@@ -28,11 +28,11 @@ from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 from fastapi import UploadFile
 from backend.api_v1.job.job_schema import JobBulkRow, JobBulkUploadResult
-from backend.api_v1.job.job_errors import (
+from backend.api_v1.job.job_messages import (
     JobBulkUploadNothingToInsert,
     JobBulkUploadInvalidFile,
 )
-from backend.api_v1.job.job_success import JobBulkUploadSuccess
+from backend.api_v1.job.job_messages import JobBulkUploadSuccess
 
 
 class JobService(BaseService):

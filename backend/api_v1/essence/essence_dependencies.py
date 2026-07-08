@@ -30,7 +30,7 @@ async def essence_by_id(
     essence_id: int,
     service: Annotated[EssenceService, Depends(get_essence_service)],
 ) -> EssenceSchema:
-    from backend.api_v1.essence.essence_errors import EssenceNotFound
+    from backend.api_v1.essence.essence_messages import EssenceNotFound
 
     try:
         return await service.get_by_id(essence_id)

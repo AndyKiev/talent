@@ -14,13 +14,13 @@ from backend.api_v1.training_category.training_category_schema import (
     TrainingCategoryCreate,
     TrainingCategoryUpdate,
 )
-from backend.api_v1.training_category.training_category_errors import (
+from backend.api_v1.training_category.training_category_messages import (
     TrainingCategoryNotFound,
     TrainingCategoryNameTaken,
     TrainingCategoryKeyTaken,
     TrainingCategoryDeleteError,
 )
-from backend.api_v1.training_category.training_category_success import (
+from backend.api_v1.training_category.training_category_messages import (
     TrainingCategoryCreateSuccess,
     TrainingCategoryUpdateSuccess,
     TrainingCategoryDeleteSuccess,

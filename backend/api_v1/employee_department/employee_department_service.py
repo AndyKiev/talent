@@ -14,12 +14,12 @@ from backend.api_v1.employee_department.employee_department_schema import (
     EmployeeDepartmentCreate,
     EmployeeDepartmentUpdate,
 )
-from backend.api_v1.employee_department.employee_department_errors import (
+from backend.api_v1.employee_department.employee_department_messages import (
     EmployeeOrgUnitDepartmentNotFound,
     EmployeeDepartmentMainAlreadyExistsError,
     EmployeeDepartmentDeleteError,
 )
-from backend.api_v1.employee_department.employee_department_success import (
+from backend.api_v1.employee_department.employee_department_messages import (
     EmployeeOrgUnitDepartmentCreateSuccess,
     EmployeeOrgUnitDepartmentUpdateSuccess,
     EmployeeOrgUnitDepartmentDeleteSuccess,

@@ -14,13 +14,13 @@ from backend.api_v1.employee_status.employee_status_schema import (
     EmployeeStatusUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.employee_status.employee_status_errors import (
+from backend.api_v1.employee_status.employee_status_messages import (
     EmployeeStatusNotFound,
     EmployeeStatusNameTaken,
     EmployeeStatusDeleteError,
     EmployeeStatusNotFoundByName,
 )
-from backend.api_v1.employee_status.employee_status_success import (
+from backend.api_v1.employee_status.employee_status_messages import (
     EmployeeStatusDeleteSuccess,
     EmployeeStatusCreateSuccess,
     EmployeeStatusUpdateSuccess,

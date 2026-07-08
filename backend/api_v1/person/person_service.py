@@ -16,13 +16,13 @@ from backend.api_v1.person.person_schema import (
     PersonNameMatch,
     PersonCheckNameResponse,
 )
-from backend.api_v1.person.person_errors import (
+from backend.api_v1.person.person_messages import (
     PersonNotFound,
     PersonNotFoundForEmployee,
     PersonNameExists,
     PersonHasEmployees,
 )
-from backend.api_v1.person.person_success import (
+from backend.api_v1.person.person_messages import (
     PersonDeleteSuccess,
     PersonCreateSuccess,
     PersonUpdateSuccess,

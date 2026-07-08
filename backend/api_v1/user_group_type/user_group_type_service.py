@@ -14,13 +14,13 @@ from backend.api_v1.user_group_type.user_group_type_schema import (
     UserGroupTypeUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.user_group_type.user_group_type_errors import (
+from backend.api_v1.user_group_type.user_group_type_messages import (
     UserGroupTypeNotFound,
     UserGroupTypeNameTaken,
     UserGroupTypeDeleteError,
     UserGroupTypeNotFoundByName,
 )
-from backend.api_v1.user_group_type.user_group_type_success import (
+from backend.api_v1.user_group_type.user_group_type_messages import (
     UserGroupTypeDeleteSuccess,
     UserGroupTypeCreateSuccess,
     UserGroupTypeUpdateSuccess,

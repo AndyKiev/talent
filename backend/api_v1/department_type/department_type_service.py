@@ -16,13 +16,13 @@ from backend.api_v1.department_type.department_type_schema import (
     DepartmentTypeWithLinkStats,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.department_type.department_type_errors import (
+from backend.api_v1.department_type.department_type_messages import (
     DepartmentTypeNotFound,
     DepartmentTypeNameTaken,
     DepartmentTypeDeleteError,
     DepartmentTypeNotFoundByName,
 )
-from backend.api_v1.department_type.department_type_success import (
+from backend.api_v1.department_type.department_type_messages import (
     DepartmentTypeDeleteSuccess,
     DepartmentTypeCreateSuccess,
     DepartmentTypeUpdateSuccess,

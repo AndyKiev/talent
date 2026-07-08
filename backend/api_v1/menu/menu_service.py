@@ -14,14 +14,14 @@ from backend.api_v1.menu.menu_schema import (
     MenuCreate,
     MenuUpdate,
 )
-from backend.api_v1.menu.menu_errors import (
+from backend.api_v1.menu.menu_messages import (
     MenuNotFound,
     MenuKeyTaken,
     MenuGroupsNotFound,
     MenuParentInvalid,
     MenuDeleteError,
 )
-from backend.api_v1.menu.menu_success import (
+from backend.api_v1.menu.menu_messages import (
     MenuCreateSuccess,
     MenuUpdateSuccess,
     MenuDeleteSuccess,

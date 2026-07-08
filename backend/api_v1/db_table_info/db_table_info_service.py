@@ -18,7 +18,7 @@ from backend.api_v1.db_table_info.db_table_info_schema import (
     TableStats,
     TableDataFile,
 )
-from backend.api_v1.db_table_info.db_table_info_errors import (
+from backend.api_v1.db_table_info.db_table_info_messages import (
     DbTableInfoNotFound,
 )
 from backend.database.db_helper import db_helper

@@ -14,7 +14,7 @@ from backend.api_v1.app_setting.app_setting_schema import (
     AppSettingCreate,
     AppSettingUpdate,
 )
-from backend.api_v1.app_setting.app_setting_errors import (
+from backend.api_v1.app_setting.app_setting_messages import (
     AppSettingNotFound,
     AppSettingNotFoundByKey,
     AppSettingKeyTaken,
@@ -22,7 +22,7 @@ from backend.api_v1.app_setting.app_setting_errors import (
     AppSettingValueBelowMin,
     AppSettingDeleteError,
 )
-from backend.api_v1.app_setting.app_setting_success import (
+from backend.api_v1.app_setting.app_setting_messages import (
     AppSettingDeleteSuccess,
     AppSettingCreateSuccess,
     AppSettingUpdateSuccess,

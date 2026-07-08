@@ -16,13 +16,13 @@ from backend.api_v1.hrm_scope.hrm_scope_schema import (
     HrmScopeUpdate,
     HrmEmployeeRow,
 )
-from backend.api_v1.hrm_scope.hrm_scope_errors import (
+from backend.api_v1.hrm_scope.hrm_scope_messages import (
     HrmScopeNotFound,
     HrmScopeStartAfterEnd,
     HrmScopeEmployeeNotHrm,
     HrmScopeDeleteError,
 )
-from backend.api_v1.hrm_scope.hrm_scope_success import (
+from backend.api_v1.hrm_scope.hrm_scope_messages import (
     HrmScopeCreateSuccess,
     HrmScopeUpdateSuccess,
     HrmScopeDeleteSuccess,

@@ -13,11 +13,11 @@ from backend.api_v1.employee_education.employee_education_schema import (
     EmployeeEducationUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.employee_education.employee_education_errors import (
+from backend.api_v1.employee_education.employee_education_messages import (
     EmployeeEducationNotFound,
     EmployeeEducationDeleteError,
 )
-from backend.api_v1.employee_education.employee_education_success import (
+from backend.api_v1.employee_education.employee_education_messages import (
     EmployeeEducationDeleteSuccess,
     EmployeeEducationCreateSuccess,
     EmployeeEducationUpdateSuccess,

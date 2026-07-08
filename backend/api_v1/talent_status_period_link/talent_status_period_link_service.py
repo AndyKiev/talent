@@ -15,13 +15,13 @@ from backend.api_v1.talent_status_period_link.talent_status_period_link_schema i
     TalentStatusPeriodLinkUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.talent_status_period_link.talent_status_period_link_errors import (
+from backend.api_v1.talent_status_period_link.talent_status_period_link_messages import (
     TalentStatusPeriodLinkNotFound,
     TalentStatusPeriodLinkAlreadyExists,
     TalentStatusPeriodLinkDeleteError,
     TalentStatusPeriodLinkNotFoundByCompositeKey,
 )
-from backend.api_v1.talent_status_period_link.talent_status_period_link_success import (
+from backend.api_v1.talent_status_period_link.talent_status_period_link_messages import (
     TalentStatusPeriodLinkDeleteSuccess,
     TalentStatusPeriodLinkCreateSuccess,
     TalentStatusPeriodLinkUpdateSuccess,

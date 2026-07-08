@@ -12,12 +12,12 @@ from backend.api_v1.process_roles.process.process_schema import (
     ProcessUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.process_roles.process.process_errors import (
+from backend.api_v1.process_roles.process.process_messages import (
     ProcessNotFound,
     ProcessNameTaken,
     ProcessDeleteError,
 )
-from backend.api_v1.process_roles.process.process_success import (
+from backend.api_v1.process_roles.process.process_messages import (
     ProcessCreateSuccess,
     ProcessUpdateSuccess,
     ProcessDeleteSuccess,

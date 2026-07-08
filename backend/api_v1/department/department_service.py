@@ -13,14 +13,14 @@ from backend.api_v1.department.department_schema import (
     DepartmentUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.department.department_errors import (
+from backend.api_v1.department.department_messages import (
     DepartmentNotFound,
     DepartmentDeleteError,
     DepartmentNotFoundByName,
     DepartmentCircularReferenceError,
     DepartmentGenerateCategoryNotFound,
 )
-from backend.api_v1.department.department_success import (
+from backend.api_v1.department.department_messages import (
     DepartmentDeleteSuccess,
     DepartmentCreateSuccess,
     DepartmentUpdateSuccess,

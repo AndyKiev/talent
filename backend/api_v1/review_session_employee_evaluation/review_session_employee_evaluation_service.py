@@ -14,11 +14,11 @@ from backend.api_v1.review_session_employee_evaluation.review_session_employee_e
     EvaluationFlipCompetence,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_errors import (
+from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_messages import (
     EvaluationNotFound,
     EvaluationNotEditable,
 )
-from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_success import (
+from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_messages import (
     EvaluationSaveSuccess,
 )
 from backend.api_v1.review_session_employee_criterion_score.review_session_employee_criterion_score_model import (

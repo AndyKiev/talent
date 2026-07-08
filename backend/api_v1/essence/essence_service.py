@@ -11,12 +11,12 @@ from backend.api_v1.essence.essence_schema import (
     EssenceUpdate,
     EssenceSchema,
 )
-from backend.api_v1.essence.essence_errors import (
+from backend.api_v1.essence.essence_messages import (
     EssenceNotFound,
     EssenceNameTaken,
     EssenceDeleteError,
 )
-from backend.api_v1.essence.essence_success import (
+from backend.api_v1.essence.essence_messages import (
     EssenceCreateSuccess,
     EssenceUpdateSuccess,
     EssenceDeleteSuccess,

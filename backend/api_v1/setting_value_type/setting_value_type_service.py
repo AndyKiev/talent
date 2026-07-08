@@ -14,12 +14,12 @@ from backend.api_v1.setting_value_type.setting_value_type_schema import (
     SettingValueTypeCreate,
     SettingValueTypeUpdate,
 )
-from backend.api_v1.setting_value_type.setting_value_type_errors import (
+from backend.api_v1.setting_value_type.setting_value_type_messages import (
     SettingValueTypeNotFound,
     SettingValueTypeKeyTaken,
     SettingValueTypeDeleteError,
 )
-from backend.api_v1.setting_value_type.setting_value_type_success import (
+from backend.api_v1.setting_value_type.setting_value_type_messages import (
     SettingValueTypeDeleteSuccess,
     SettingValueTypeCreateSuccess,
     SettingValueTypeUpdateSuccess,

@@ -12,7 +12,7 @@ from backend.api_v1.region.region_schema import (
     RegionUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.region.region_errors import (
+from backend.api_v1.region.region_messages import (
     RegionNotFound,
     RegionNameTaken,
     RegionKeyTaken,
@@ -20,7 +20,7 @@ from backend.api_v1.region.region_errors import (
     RegionMoveError,
     RegionNotFoundByName,
 )
-from backend.api_v1.region.region_success import (
+from backend.api_v1.region.region_messages import (
     RegionDeleteSuccess,
     RegionCreateSuccess,
     RegionUpdateSuccess,

@@ -14,13 +14,13 @@ from backend.api_v1.talent_audit_status.talent_audit_status_schema import (
     TalentAuditStatusUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.talent_audit_status.talent_audit_status_errors import (
+from backend.api_v1.talent_audit_status.talent_audit_status_messages import (
     TalentAuditStatusNotFound,
     TalentAuditStatusNotFoundByName,
     TalentAuditStatusNameTaken,
     TalentAuditStatusDeleteError,
 )
-from backend.api_v1.talent_audit_status.talent_audit_status_success import (
+from backend.api_v1.talent_audit_status.talent_audit_status_messages import (
     TalentAuditStatusDeleteSuccess,
     TalentAuditStatusCreateSuccess,
     TalentAuditStatusUpdateSuccess,

@@ -13,12 +13,12 @@ from backend.api_v1.job_group_type.job_group_type_schema import (
     JobGroupTypeUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.job_group_type.job_group_type_errors import (
+from backend.api_v1.job_group_type.job_group_type_messages import (
     JobGroupTypeNotFound,
     JobGroupTypeNameTaken,
     JobGroupTypeDeleteError,
 )
-from backend.api_v1.job_group_type.job_group_type_success import (
+from backend.api_v1.job_group_type.job_group_type_messages import (
     JobGroupTypeCreateSuccess,
     JobGroupTypeUpdateSuccess,
     JobGroupTypeDeleteSuccess,

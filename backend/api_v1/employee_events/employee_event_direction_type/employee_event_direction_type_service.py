@@ -14,13 +14,13 @@ from backend.api_v1.employee_events.employee_event_direction_type.employee_event
     EmployeeEventDirectionTypeUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.employee_events.employee_event_direction_type.employee_event_direction_type_errors import (
+from backend.api_v1.employee_events.employee_event_direction_type.employee_event_direction_type_messages import (
     EmployeeEventDirectionTypeNotFound,
     EmployeeEventDirectionTypeNotFoundByCode,
     EmployeeEventDirectionTypeCodeTaken,
     EmployeeEventDirectionTypeDeleteError,
 )
-from backend.api_v1.employee_events.employee_event_direction_type.employee_event_direction_type_success import (
+from backend.api_v1.employee_events.employee_event_direction_type.employee_event_direction_type_messages import (
     EmployeeEventDirectionTypeDeleteSuccess,
     EmployeeEventDirectionTypeCreateSuccess,
     EmployeeEventDirectionTypeUpdateSuccess,

@@ -14,12 +14,12 @@ from backend.api_v1.employee_responsibility_department.employee_responsibility_d
     EmployeeResponsibilityDepartmentCreate,
     EmployeeResponsibilityDepartmentUpdate,
 )
-from backend.api_v1.employee_responsibility_department.employee_responsibility_department_errors import (
+from backend.api_v1.employee_responsibility_department.employee_responsibility_department_messages import (
     EmployeeResponsibilityDepartmentNotFound,
     EmployeeResponsibilityDepartmentAlreadyExists,
     EmployeeResponsibilityDepartmentDeleteError,
 )
-from backend.api_v1.employee_responsibility_department.employee_responsibility_department_success import (
+from backend.api_v1.employee_responsibility_department.employee_responsibility_department_messages import (
     EmployeeResponsibilityDepartmentCreateSuccess,
     EmployeeResponsibilityDepartmentUpdateSuccess,
     EmployeeResponsibilityDepartmentDeleteSuccess,

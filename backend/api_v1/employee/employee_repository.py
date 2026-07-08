@@ -8,7 +8,7 @@ from backend.api_v1.employee.employee_model import Employee
 from backend.api_v1.employee_department.employee_department_model import (
     EmployeeDepartment,
 )
-from backend.api_v1.user_group.user_group_errors import (
+from backend.api_v1.user_group.user_group_messages import (
     UserGroupNotFound,
     UserGroupsNotFound,
 )
@@ -29,7 +29,7 @@ from backend.api_v1.operation.operation_model import Operation
 from backend.api_v1.table_relationship_links.operation_user_group_link_model import (
     OperationUserGroupLink,
 )
-from backend.api_v1.employee.employee_errors import (
+from backend.api_v1.employee.employee_messages import (
     EmployeeNotFound,
     EmployeeAlreadyInGroup,
     UserNotInGroup,

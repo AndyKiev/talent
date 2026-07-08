@@ -10,11 +10,11 @@ from backend.api_v1.review_session_department.review_session_department_schema i
     ReviewSessionDepartment as ReviewSessionDepartmentSchema,
     ReviewSessionDepartmentCreate,
 )
-from backend.api_v1.review_session_department.review_session_department_errors import (
+from backend.api_v1.review_session_department.review_session_department_messages import (
     ReviewSessionDepartmentNotFound,
     ReviewSessionDepartmentAlreadyExists,
 )
-from backend.api_v1.review_session_department.review_session_department_success import (
+from backend.api_v1.review_session_department.review_session_department_messages import (
     ReviewSessionDepartmentCreateSuccess,
     ReviewSessionDepartmentDeleteSuccess,
 )

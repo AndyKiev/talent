@@ -20,12 +20,12 @@ from backend.api_v1.review_session_employee_level_answer.review_session_employee
     ReviewSessionEmployeeLevelAnswer,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.review_session_employee_level.review_session_employee_level_success import (
+from backend.api_v1.review_session_employee_level.review_session_employee_level_messages import (
     ProposedLevelSaveSuccess,
     ProposedLevelDeleteSuccess,
     ProposedLevelStatusUpdateSuccess,
 )
-from backend.api_v1.review_session_employee_level.review_session_employee_level_errors import (
+from backend.api_v1.review_session_employee_level.review_session_employee_level_messages import (
     ProposedLevelNotFound,
     ProposedLevelStepTooHigh,
 )

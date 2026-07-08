@@ -15,14 +15,14 @@ from backend.api_v1.department_region_link.department_region_link_schema import 
 )
 from backend.api_v1.department.department_repository import DepartmentRepository
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.department_region_link.department_region_link_errors import (
+from backend.api_v1.department_region_link.department_region_link_messages import (
     DepartmentRegionLinkNotFound,
     DepartmentRegionLinkNotFoundByDepartment,
     DepartmentRegionLinkAlreadyExists,
     DepartmentRegionLinkDeleteError,
     DepartmentRegionCategoryNotAllowed,
 )
-from backend.api_v1.department_region_link.department_region_link_success import (
+from backend.api_v1.department_region_link.department_region_link_messages import (
     DepartmentRegionLinkDeleteSuccess,
     DepartmentRegionLinkCreateSuccess,
     DepartmentRegionLinkUpdateSuccess,

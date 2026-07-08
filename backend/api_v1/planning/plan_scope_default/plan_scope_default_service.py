@@ -13,12 +13,12 @@ from backend.api_v1.planning.plan_scope_default.plan_scope_default_schema import
     PlanScopeDefault as PlanScopeDefaultSchema,
     PlanScopeDefaultCreate,
 )
-from backend.api_v1.planning.plan_scope_default.plan_scope_default_errors import (
+from backend.api_v1.planning.plan_scope_default.plan_scope_default_messages import (
     PlanScopeDefaultNotFound,
     PlanScopeDefaultExists,
     PlanScopeDefaultDeleteError,
 )
-from backend.api_v1.planning.plan_scope_default.plan_scope_default_success import (
+from backend.api_v1.planning.plan_scope_default.plan_scope_default_messages import (
     PlanScopeDefaultCreateSuccess,
     PlanScopeDefaultDeleteSuccess,
 )

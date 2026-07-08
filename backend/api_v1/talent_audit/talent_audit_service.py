@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.talent_audit.talent_audit_errors import (
+from backend.api_v1.talent_audit.talent_audit_messages import (
     TalentAuditAlreadyExists,
     TalentAuditDeleteError,
     TalentAuditNotFound,
@@ -17,7 +17,7 @@ from backend.api_v1.talent_audit.talent_audit_schema import (
     TalentAuditCreate,
     TalentAuditUpdate,
 )
-from backend.api_v1.talent_audit.talent_audit_success import (
+from backend.api_v1.talent_audit.talent_audit_messages import (
     TalentAuditCreateSuccess,
     TalentAuditDeleteSuccess,
     TalentAuditTalentPlusDisableSuccess,

@@ -14,11 +14,11 @@ from backend.api_v1.review_dimension_criteria.review_dimension_criteria_schema i
     ReviewDimensionCriteriaUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.review_dimension_criteria.review_dimension_criteria_errors import (
+from backend.api_v1.review_dimension_criteria.review_dimension_criteria_messages import (
     ReviewDimensionCriteriaNotFound,
     ReviewDimensionCriteriaDeleteError,
 )
-from backend.api_v1.review_dimension_criteria.review_dimension_criteria_success import (
+from backend.api_v1.review_dimension_criteria.review_dimension_criteria_messages import (
     ReviewDimensionCriteriaDeleteSuccess,
     ReviewDimensionCriteriaCreateSuccess,
     ReviewDimensionCriteriaUpdateSuccess,
