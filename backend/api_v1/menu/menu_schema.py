@@ -32,7 +32,7 @@ class MenuAdminSchema(MenuSchema):
 
 class MenuCreate(BaseModel):
     key: str = Field(..., max_length=64)
-    label_key: str = Field(..., max_length=128)
+    label_key: str = Field("", max_length=128)
     path: str = Field(..., max_length=128)
     icon: Optional[str] = Field(None, max_length=64)
     parent_id: Optional[int] = None

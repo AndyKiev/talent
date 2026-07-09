@@ -74,9 +74,19 @@ class UserSettingService(BaseService):
     # Read
     # ------------------------------------------------------------------
 
+    def _setting_visible(self, setting: AppSetting) -> bool:
+        """Check whether the current user may see this setting."""
+        user_group_ids = set(self.user.group_ids if self.user else [])
+        if not user_group_ids:
+            return bool(setting.visible_to_regular)
+        if setting.visible_to_all_groups:
+            return True
+        return bool(user_group_ids & set(setting.allowed_group_ids))
+
     async def get_effective_settings(self) -> List[EffectiveUserSetting]:
         """All overridable, active settings with this user's override merged in.
-        Drives the user-facing /settings page."""
+        Drives the user-facing /settings page. Respects per-setting visibility
+        (visible_to_all_groups / visible_to_regular / specific group links)."""
         settings = (
             await self.session.scalars(
                 select(AppSetting).where(
@@ -99,6 +109,8 @@ class UserSettingService(BaseService):
 
         result: List[EffectiveUserSetting] = []
         for s in settings:
+            if not self._setting_visible(s):
+                continue
             override = overrides.get(s.id)
             user_value = override.value if override else None
             # Options-driven integers hold an id, not a quantity — no range.
@@ -131,6 +143,8 @@ class UserSettingService(BaseService):
     ) -> MutationResponse[UserSettingSchema]:
         setting = await self._setting_by_key(key)
         if not setting:
+            raise await self._resolve_domain_error(UserSettingNotFound(key))
+        if not self._setting_visible(setting):
             raise await self._resolve_domain_error(UserSettingNotFound(key))
         if not setting.user_overridable:
             raise await self._resolve_domain_error(UserSettingNotOverridable(key))
@@ -177,6 +191,8 @@ class UserSettingService(BaseService):
     async def delete_override(self, key: str) -> None:
         setting = await self._setting_by_key(key)
         if not setting:
+            raise await self._resolve_domain_error(UserSettingNotFound(key))
+        if not self._setting_visible(setting):
             raise await self._resolve_domain_error(UserSettingNotFound(key))
         override = await self._override_for(setting.id)
         if not override:

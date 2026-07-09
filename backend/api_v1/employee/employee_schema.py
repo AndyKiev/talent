@@ -116,6 +116,12 @@ class EmployeeSchema(EmployeeBase):
     # Superadmin / bypass-group flag, set in jwt_auth.get_current_auth_user.
     # Excluded from serialization — used only by the has_access dependencies.
     is_bypass: bool = Field(default=False, exclude=True)
+    # Access-testing ("test as group") state, set in jwt_auth.get_current_auth_user.
+    # `real_is_bypass` is the pre-override bypass flag (server-side entry gate);
+    # `access_testing` / `can_access_test` are serialized for the frontend.
+    real_is_bypass: bool = Field(default=False, exclude=True)
+    access_testing: bool = False
+    can_access_test: bool = False
     status: Optional[EmployeeStatusNested] = None
     job: Optional["Job"] = None
     lang: Optional["Lang"] = None

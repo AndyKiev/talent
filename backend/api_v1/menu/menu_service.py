@@ -106,8 +106,10 @@ class MenuService(BaseService):
         except IntegrityError:
             raise await self._resolve_domain_error(MenuKeyTaken(menu_in.key))
         await self.repository.set_group_links(record.id, menu_in.group_ids)
-        fresh = await self.repository.get_by_id(record.id)
-        schema = self._to_admin_schema(fresh)
+        # set_group_links commits a new transaction; explicitly reload the
+        # user_group_links collection so the response reflects the new links.
+        await self.session.refresh(record, ["user_group_links"])
+        schema = self._to_admin_schema(record)
         detail = await self._resolve_domain_success(MenuCreateSuccess(schema.key))
         return MutationResponse(detail=detail, data=schema)
 
@@ -131,8 +133,10 @@ class MenuService(BaseService):
                 )
         if menu_update.group_ids is not None:
             await self.repository.set_group_links(menu_id, menu_update.group_ids)
-        fresh = await self.repository.get_by_id(menu_id)
-        schema = self._to_admin_schema(fresh)
+            # set_group_links commits a new transaction; explicitly reload the
+            # user_group_links collection so the response reflects the new links.
+            await self.session.refresh(orm, ["user_group_links"])
+        schema = self._to_admin_schema(orm)
         detail = await self._resolve_domain_success(MenuUpdateSuccess(schema.key))
         return MutationResponse(detail=detail, data=schema)
 

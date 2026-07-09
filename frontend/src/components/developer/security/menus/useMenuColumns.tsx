@@ -40,6 +40,12 @@ export function useMenuColumns({
             renderCell: (params) => getString(params.row.label_key) || params.row.label_key,
         },
         {
+            field: 'icon',
+            headerName: getString('icon') || 'Icon',
+            width: 80,
+            renderCell: (params) => params.row.icon || '—',
+        },
+        {
             field: 'path',
             headerName: getString('path') || 'Path',
             flex: 1,

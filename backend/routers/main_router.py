@@ -212,6 +212,11 @@ from backend.api_v1.process_roles.oversight_manager.oversight_manager_views impo
     router as oversight_manager_router,
 )
 
+# Access testing ("test as group")
+from backend.api_v1.access_test_context.access_test_context_views import (
+    router as access_test_context_router,
+)
+
 # App settings (typed key/value)
 from backend.api_v1.setting_value_type.setting_value_type_views import (
     router as setting_value_type_router,
@@ -367,6 +372,7 @@ router.include_router(process_role_holder_employee_link_router)
 router.include_router(process_role_holder_department_link_router)
 router.include_router(process_role_active_context_router)
 router.include_router(oversight_manager_router)
+router.include_router(access_test_context_router)
 
 # App settings (typed key/value)
 router.include_router(setting_value_type_router)

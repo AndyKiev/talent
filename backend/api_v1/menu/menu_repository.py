@@ -41,4 +41,4 @@ class MenuRepository(BaseRepository):
                     for gid in dict.fromkeys(group_ids)  # dedupe, keep order
                 ]
             )
-        await self.session.flush()
+        await self.session.commit()

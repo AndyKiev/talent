@@ -38,7 +38,7 @@ import cfl from '../../../../utils/helpers';
 
 const schema = z.object({
     key: z.string().min(1, 'required').max(64, 'tooLong'),
-    label_key: z.string().min(1, 'required').max(128, 'tooLong'),
+    label_key: z.string().max(128, 'tooLong').optional().or(z.literal('')),
     path: z.string().min(1, 'required').max(128, 'tooLong'),
     icon: z.string().max(64, 'tooLong').optional().or(z.literal('')),
     parent_id: z.number().nullable(),

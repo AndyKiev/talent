@@ -33,6 +33,7 @@ import { PeopleAltRounded, AdminPanelSettingsRounded, RateReviewRounded, SchoolR
 import { useTheme as useAppTheme } from "../theme/ThemeContext";
 import { useAuthStore } from "../../store/authStore";
 import UserMenu from "./UserMenu";
+import AccessTestButton from "./AccessTestButton";
 import cfl from "../../utils/helpers.ts";
 import useString from "../../hooks/useString.ts";
 import str from "../../strings/str.ts";
@@ -48,6 +49,7 @@ const MENU_ICONS: Record<string, ReactNode> = {
     school: <SchoolRounded sx={{ fontSize: 16 }} />,
     adminPanel: <AdminPanelSettingsRounded sx={{ fontSize: 16 }} />,
     code: <CodeIcon sx={{ fontSize: 16 }} />,
+    settings: <SettingsRounded sx={{ fontSize: 16 }} />,
 };
 
 const menuIcon = (icon: string | null): ReactNode =>
@@ -149,24 +151,6 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
         </Menu>
     );
 
-    // --- Desktop settings button ---
-    const desktopSettingsBtn = (
-        <Tooltip title={cfl(getString("mySettings"))}>
-            <IconButton
-                size="small"
-                onClick={() => navigate({ to: "/settings" as "/" })}
-                sx={{
-                    color: currentPath.startsWith("/settings") ? t.accent : t.textMuted,
-                    background: currentPath.startsWith("/settings") ? `${t.accent}14` : "transparent",
-                    "&:hover": { color: t.accent, background: `${t.accent}10` },
-                    borderRadius: "9px",
-                }}
-            >
-                <SettingsRounded sx={{ fontSize: 18 }} />
-            </IconButton>
-        </Tooltip>
-    );
-
     // --- Mobile drawer ---
     const mobileDrawer = (
         <Drawer
@@ -244,19 +228,6 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
                         </Box>
                     );
                 })}
-                {/* Settings (mobile) */}
-                <ListItemButton
-                    selected={currentPath.startsWith("/settings")}
-                    onClick={() => {
-                        setMobileDrawerOpen(false);
-                        navigate({ to: "/settings" as "/" });
-                    }}
-                >
-                    <ListItemIcon sx={{ minWidth: 36 }}>
-                        <SettingsRounded sx={{ fontSize: 18 }} />
-                    </ListItemIcon>
-                    <ListItemText primary={cfl(getString("mySettings"))} />
-                </ListItemButton>
                 <Divider sx={{ my: 1 }} />
                 {/* Sign out (mobile) — at the bottom, clearly separated */}
                 <ListItemButton
@@ -327,7 +298,7 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
                             <Stack direction="row" spacing={0.5} flexGrow={1}>
                                 {topMenus.map((item) => navBtn(item))}
                                 {desktopSubmenu}
-                                {desktopSettingsBtn}
+                                <AccessTestButton />
                             </Stack>
                             <Stack direction="row" alignItems="center" spacing={1.5}>
                                 <UserMenu />
@@ -339,6 +310,7 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
                     {isMobile && (
                         <>
                             <Box flexGrow={1} />
+                            <AccessTestButton />
                             <UserMenu />
                             <IconButton
                                 onClick={() => setMobileDrawerOpen(true)}

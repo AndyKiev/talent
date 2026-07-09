@@ -11,6 +11,7 @@ from backend.auth import auth_utils as auth_utils
 from backend.auth.auth_schemas import LDAPUser, AuthResponse, RefreshRequest
 from backend.auth.permission_errors import PermissionDeniedSet
 from backend.auth.permission_resolvers import resolve_user_is_bypass
+from backend.auth.access_testing import apply_access_test_context
 from backend.api_v1.employee.employee_service import EmployeeService
 from backend.api_v1.employee.employee_repository import EmployeeRepository
 from backend.api_v1.msg_key.msg_key_model import MsgKey
@@ -67,6 +68,9 @@ async def get_current_auth_user(
     # Superadmin bypass flag — computed from the same selectin-loaded user-group
     # relationships the permission resolvers use. (Ported from talent-test.)
     schema.is_bypass = resolve_user_is_bypass(orm_user)
+    # "Test as group" override: if the developer has an active access-test row,
+    # rewrite the schema to act as only the selected groups (bypass off).
+    schema = await apply_access_test_context(session, schema)
     return schema
 
 
@@ -349,8 +353,13 @@ async def auth_refresh_access_token(
 #     return AuthResponse(access_token=access_token, token_type="Bearer")
 
 
-def _me_payload(full: EmployeeSchema) -> dict:
-    """Shape shared by GET /users/me and PATCH /users/me/lang."""
+def _me_payload(full: EmployeeSchema, auth_user: EmployeeSchema) -> dict:
+    """Shape shared by GET /users/me and PATCH /users/me/lang.
+
+    `full` is the freshly re-resolved profile (job/lang/etc). `auth_user` is the
+    per-request auth schema that has already passed through the access-test
+    override — so groups + the access-test flags reflect any active test-as mode.
+    """
     return {
         "id": full.id,
         "code": full.code,
@@ -361,8 +370,10 @@ def _me_payload(full: EmployeeSchema) -> dict:
         "lang_id": full.lang_id,
         "job": full.job.model_dump() if full.job else None,
         "lang": full.lang.model_dump() if full.lang else None,
-        "groups": full.groups,
+        "groups": auth_user.groups,
         "operations": full.operations,
+        "access_testing": auth_user.access_testing,
+        "can_access_test": auth_user.can_access_test,
     }
 
 
@@ -379,7 +390,7 @@ async def auth_user_check_self_info(
     orm_user = await service.repository.get_by_code(user.code)
     full = await service._to_schema(orm_user)
     return {
-        **_me_payload(full),
+        **_me_payload(full, user),
         "iat": payload.get("iat"),
         "exp": payload.get("exp"),
     }
@@ -404,7 +415,7 @@ async def update_my_lang(
     detail = await service.update_my_lang(user.code, body.lang_id)
     orm_user = await service.repository.get_by_code(user.code)
     full = await service._to_schema(orm_user)
-    return {"detail": detail, "user": _me_payload(full)}
+    return {"detail": detail, "user": _me_payload(full, user)}
 
 
 # ── Access control: set-grain ─────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 // src/components/developer/settings/SettingsPage.tsx
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
     Accordion,
     AccordionDetails,
@@ -13,8 +13,10 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
+    FormControl,
     FormControlLabel,
     IconButton,
+    InputLabel,
     MenuItem,
     Paper,
     Select,
@@ -30,6 +32,9 @@ import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import SaveIcon from '@mui/icons-material/Save';
+import SettingsIcon from '@mui/icons-material/Settings';
+import Autocomplete from '@mui/material/Autocomplete';
+import Chip from '@mui/material/Chip';
 import { Link } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import AppShell from '../../layout/AppShell';
@@ -53,11 +58,29 @@ import { fetchEmployeeStatuses } from '../../employees/employee_events/employeeE
 import { fetchAllMenus } from '../../layout/menuApi';
 import { snakeToCamel } from '../../../utils/helpers';
 import type { GetStringFn } from '../../../types/getStringFn';
+import type { MenuVisibilityMode } from '../../developer/security/menus/menuAdminApi';
+import { deriveMode, modeToFlags, MODE_LABEL_KEY } from '../../developer/security/menus/menuVisibility';
+import { fetchUserGroups, type UserGroup } from '../../admin/user_groups/userGroupApi';
 
 type Severity = 'success' | 'error';
 
 // One option in a multi-select setting (value stored, label shown).
 interface SettingOption { value: string; label: string; }
+
+/** Local visibility summary (same logic as menuVisibility.describeVisibility). */
+function settingVisibilityLabel(
+    setting: AppSetting,
+    groupNamesById: Map<number, string>,
+    getString: GetStringFn,
+): string {
+    const mode = deriveMode(setting);
+    if (mode === 'all_employees') return getString('menuVisAllEmployees') || 'All employees';
+    if (mode === 'all_groups') return getString('menuVisEveryoneInGroup') || 'Everyone in a group';
+    const names = setting.group_ids
+        .map((id) => groupNamesById.get(id) ?? `#${id}`)
+        .join(', ');
+    return names || (getString('noGroups') || 'No groups');
+}
 
 // ── Type-aware value editor ─────────────────────────────────────────────────
 interface ValueEditorProps {
@@ -166,11 +189,13 @@ interface RowProps {
     onSave: (id: number, value: SettingValue) => void;
     onToggleOverridable: (id: number, value: boolean) => void;
     onDelete: (setting: AppSetting) => void;
+    onVisibility: (setting: AppSetting) => void;
     saving: boolean;
     options?: SettingOption[];
+    groupNamesById: Map<number, string>;
 }
 
-function SettingRow({ setting, getString, onSave, onToggleOverridable, onDelete, saving, options }: RowProps) {
+function SettingRow({ setting, getString, onSave, onToggleOverridable, onDelete, onVisibility, saving, options, groupNamesById }: RowProps) {
     const { t } = useTheme();
     const [draft, setDraft] = useState<SettingValue>(setting.value);
     const isBoolean = setting.value_type_key === 'boolean';
@@ -215,6 +240,9 @@ function SettingRow({ setting, getString, onSave, onToggleOverridable, onDelete,
                     {description && (
                         <Typography variant="body2" color={t.textSecondary} mt={0.5}>{description}</Typography>
                     )}
+                    <Typography variant="caption" color={t.textMuted} sx={{ display: 'block', mt: 0.5 }}>
+                        {settingVisibilityLabel(setting, groupNamesById, getString)}
+                    </Typography>
                     {canOverride && (
                         <FormControlLabel
                             sx={{ mt: 0.5, ml: 0 }}
@@ -252,6 +280,11 @@ function SettingRow({ setting, getString, onSave, onToggleOverridable, onDelete,
                             </span>
                         </Tooltip>
                     )}
+                    <Tooltip title={getString('settingVisibility') || 'Visibility'}>
+                        <IconButton size="small" onClick={() => onVisibility(setting)} disabled={saving}>
+                            <SettingsIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
                     <Tooltip title={getString('delete')}>
                         <IconButton color="error" size="small" onClick={() => onDelete(setting)} disabled={saving}>
                             <DeleteIcon fontSize="small" />
@@ -339,6 +372,119 @@ function AddSettingDialog({ open, valueTypes, getString, onClose, onCreate, savi
     );
 }
 
+// ── Setting visibility dialog ──────────────────────────────────────────────
+interface VisDialogProps {
+    open: boolean;
+    setting: AppSetting | null;
+    groups: UserGroup[];
+    onClose: () => void;
+    onSave: (id: number, data: AppSettingUpdate) => void;
+    saving: boolean;
+    getString: GetStringFn;
+}
+
+function SettingVisibilityDialog({ open, setting, groups, onClose, onSave, saving, getString }: VisDialogProps) {
+    const [mode, setMode] = useState<MenuVisibilityMode>('all_groups');
+    const [groupIds, setGroupIds] = useState<number[]>([]);
+    const [userOverridable, setUserOverridable] = useState(false);
+
+    useEffect(() => {
+        if (!setting) return;
+        setMode(deriveMode(setting));
+        setGroupIds(setting.group_ids);
+        setUserOverridable(setting.user_overridable);
+    }, [setting]);
+
+    const handleSave = () => {
+        if (!setting) return;
+        const flags = modeToFlags(mode);
+        onSave(setting.id, {
+            visible_to_all_groups: flags.visible_to_all_groups,
+            visible_to_regular: flags.visible_to_regular,
+            group_ids: mode === 'specific' ? groupIds : [],
+            user_overridable: userOverridable,
+        });
+    };
+
+    return (
+        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+            <DialogTitle>{getString('settingVisibility') || 'Setting Visibility'}</DialogTitle>
+            <DialogContent>
+                <Stack spacing={2} sx={{ mt: 1 }}>
+                    <FormControl fullWidth>
+                        <InputLabel>{getString('menuVisibility') || 'Visible to'}</InputLabel>
+                        <Select
+                            variant="outlined"
+                            value={mode}
+                            onChange={(e) => setMode(e.target.value as MenuVisibilityMode)}
+                            label={getString('menuVisibility') || 'Visible to'}
+                        >
+                            {(['all_employees', 'all_groups', 'specific'] as MenuVisibilityMode[]).map(
+                                (m) => (
+                                    <MenuItem key={m} value={m}>
+                                        {getString(MODE_LABEL_KEY[m]) || m}
+                                    </MenuItem>
+                                ),
+                            )}
+                        </Select>
+                    </FormControl>
+
+                    {mode === 'specific' && (
+                        <Autocomplete
+                            multiple
+                            options={groups}
+                            getOptionLabel={(g) => g.name}
+                            value={groups.filter((g) => groupIds.includes(g.id))}
+                            onChange={(_, selected) => setGroupIds(selected.map((g) => g.id))}
+                            isOptionEqualToValue={(o, v) => o.id === v.id}
+                            renderTags={(value, getTagProps) =>
+                                value.map((g, index) => (
+                                    <Chip
+                                        size="small"
+                                        label={g.name}
+                                        {...getTagProps({ index })}
+                                        key={g.id}
+                                    />
+                                ))
+                            }
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label={getString('groups') || 'Groups'}
+                                    placeholder={getString('selectGroups') || 'Select groups'}
+                                    variant="outlined"
+                                />
+                            )}
+                        />
+                    )}
+
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={userOverridable}
+                                onChange={(_, checked) => setUserOverridable(checked)}
+                            />
+                        }
+                        label={
+                            <Typography variant="caption" color="text.secondary">
+                                {getString('settingUserOverridable')}
+                            </Typography>
+                        }
+                    />
+                </Stack>
+            </DialogContent>
+            <DialogActions>
+                <Button variant="outlined" onClick={onClose} disabled={saving}>
+                    {getString('cancel') || 'Cancel'}
+                </Button>
+                <Button variant="contained" onClick={handleSave} disabled={saving}>
+                    {saving ? <CircularProgress size={18} /> : getString('save') || 'Save'}
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
+}
+
 // ── Page ────────────────────────────────────────────────────────────────────
 export function SettingsPage() {
     const getString = useString();
@@ -346,6 +492,7 @@ export function SettingsPage() {
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as Severity });
     const [addOpen, setAddOpen] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<AppSetting | null>(null);
+    const [visibilityTarget, setVisibilityTarget] = useState<AppSetting | null>(null);
 
     const notify = (message: string, severity: Severity = 'success') =>
         setSnackbar({ open: true, message, severity });
@@ -377,6 +524,11 @@ export function SettingsPage() {
         queryFn: fetchAllMenus,
         staleTime: 5 * 60_000,
     });
+    const { data: userGroups = [] } = useQuery({
+        queryKey: ['user_groups'],
+        queryFn: fetchUserGroups,
+        staleTime: 5 * 60_000,
+    });
     const optionsBySource = useMemo<Record<string, SettingOption[]>>(() => ({
         job_categories: jobCategories.map((c) => ({
             value: c.key,
@@ -393,6 +545,11 @@ export function SettingsPage() {
             label: cfl(getString(m.label_key)) || m.key,
         })),
     }), [jobCategories, employeeStatuses, allMenus, getString]);
+
+    const groupNamesById = useMemo(
+        () => new Map(userGroups.map((g) => [g.id, g.name])),
+        [userGroups],
+    );
 
     // Multi-story grouping: top-level settings (parent_id null) plus the children
     // hanging under each. A boolean parent renders its children in an accordion
@@ -438,6 +595,11 @@ export function SettingsPage() {
         onError: (err: Error) => { notify(err.message, 'error'); setDeleteTarget(null); },
     });
 
+    const handleSaveVisibility = (id: number, data: AppSettingUpdate) => {
+        updateMut.mutate({ id, data });
+        setVisibilityTarget(null);
+    };
+
     return (
         <AppShell>
             <PageContainer>
@@ -475,7 +637,9 @@ export function SettingsPage() {
                                     onSave={(id, value) => updateMut.mutate({ id, data: { value } })}
                                     onToggleOverridable={(id, user_overridable) => updateMut.mutate({ id, data: { user_overridable } })}
                                     onDelete={(target) => setDeleteTarget(target)}
+                                    onVisibility={(target) => setVisibilityTarget(target)}
                                     options={setting.options_source ? optionsBySource[setting.options_source] : undefined}
+                                    groupNamesById={groupNamesById}
                                 />
                             );
                             const kids = childrenByParent.get(s.id) ?? [];
@@ -535,6 +699,16 @@ export function SettingsPage() {
                         </Button>
                     </DialogActions>
                 </Dialog>
+
+                <SettingVisibilityDialog
+                    open={!!visibilityTarget}
+                    setting={visibilityTarget}
+                    groups={userGroups}
+                    getString={getString}
+                    saving={updateMut.isPending}
+                    onClose={() => setVisibilityTarget(null)}
+                    onSave={handleSaveVisibility}
+                />
 
                 <Snackbar
                     open={snackbar.open}

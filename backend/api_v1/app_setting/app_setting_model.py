@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, List
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Boolean, ForeignKey, JSON, text
 from backend.api_v1.base.base_model import Base
@@ -7,6 +7,9 @@ from backend.api_v1.base.models.utils.mixins import IntIdPkMixin, TimestampMixin
 if TYPE_CHECKING:
     from backend.api_v1.setting_value_type.setting_value_type_model import (
         SettingValueType,
+    )
+    from backend.api_v1.table_relationship_links.app_setting_user_group_link_model import (
+        AppSettingUserGroupLink,
     )
 
 
@@ -55,6 +58,25 @@ class AppSetting(IntIdPkMixin, TimestampMixin, Base):
     user_overridable: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default=text("false")
     )
+    # ── Visibility (same 3-mode system as Menu) ────────────────────────────
+    visible_to_all_groups: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default=text("true")
+    )
+    visible_to_regular: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false")
+    )
+
+    user_group_links: Mapped[List["AppSettingUserGroupLink"]] = relationship(
+        back_populates="app_setting",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+    )
+
+    @property
+    def allowed_group_ids(self) -> List[int]:
+        """User-group ids allowed to see this setting (empty when all-groups mode)."""
+        return [link.user_group_id for link in self.user_group_links]
+
     created_by: Mapped[Optional[int]] = mapped_column(
         ForeignKey("employees.id", ondelete="SET NULL"), nullable=True
     )

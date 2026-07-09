@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 
 class AppSettingBase(BaseModel):
@@ -17,6 +17,10 @@ class AppSettingBase(BaseModel):
     options_source: Optional[str] = Field(None, max_length=64)
     # When False, the setting can never be made user-overridable.
     user_override_allowed: bool = True
+    # ── Visibility (same 3-mode system as Menu) ────────────────────────────
+    visible_to_all_groups: bool = True
+    visible_to_regular: bool = False
+    group_ids: List[int] = []
 
 
 class AppSettingCreate(AppSettingBase):
@@ -35,6 +39,10 @@ class AppSettingUpdate(BaseModel):
     user_overridable: Optional[bool] = None
     options_source: Optional[str] = Field(None, max_length=64)
     user_override_allowed: Optional[bool] = None
+    # ── Visibility (same 3-mode system as Menu) ────────────────────────────
+    visible_to_all_groups: Optional[bool] = None
+    visible_to_regular: Optional[bool] = None
+    group_ids: Optional[List[int]] = None
 
 
 class AppSetting(AppSettingBase):
@@ -43,3 +51,11 @@ class AppSetting(AppSettingBase):
     # Resolved from the linked value_type (see model property) so the UI knows
     # which editor (switch / number / date / json / multi-select) to render.
     value_type_key: Optional[str] = None
+
+    @classmethod
+    def from_orm_with_groups(cls, obj) -> "AppSetting":
+        """Build schema from an ORM object, populating group_ids from the
+        relationship (model property differs in name from the schema field)."""
+        schema = cls.model_validate(obj)
+        schema.group_ids = obj.allowed_group_ids
+        return schema

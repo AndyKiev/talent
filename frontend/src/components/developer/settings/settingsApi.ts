@@ -34,6 +34,10 @@ export interface AppSetting {
     options_source: string | null;
     // When false, the setting can never be made user-overridable (toggle hidden).
     user_override_allowed: boolean;
+    // ── Visibility (same 3-mode system as Menu) ────────────────
+    visible_to_all_groups: boolean;
+    visible_to_regular: boolean;
+    group_ids: number[];
 }
 
 export interface AppSettingCreate {
@@ -43,6 +47,10 @@ export interface AppSettingCreate {
     label_key?: string | null;
     description_key?: string | null;
     is_active: boolean;
+    // ── Visibility (same 3-mode system as Menu) ────────────────
+    visible_to_all_groups?: boolean;
+    visible_to_regular?: boolean;
+    group_ids?: number[];
 }
 
 export interface AppSettingUpdate {
@@ -52,6 +60,10 @@ export interface AppSettingUpdate {
     description_key?: string | null;
     is_active?: boolean;
     user_overridable?: boolean;
+    // ── Visibility (same 3-mode system as Menu) ────────────────
+    visible_to_all_groups?: boolean;
+    visible_to_regular?: boolean;
+    group_ids?: number[];
 }
 
 export interface MutationResponse<T> {

@@ -15,6 +15,10 @@ export interface AuthUser {
     lang: { id: number; name: string; short_name: string } | null;
     groups: string[];
     operations: string[];
+    // Access-testing ("test as group"): can_access_test = real developer/bypass
+    // user (may enter the mode); access_testing = currently impersonating groups.
+    can_access_test?: boolean;
+    access_testing?: boolean;
 }
 
 interface AuthState {

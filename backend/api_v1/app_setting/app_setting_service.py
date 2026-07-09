@@ -231,13 +231,13 @@ class AppSettingService(BaseService):
         self, sort: Optional[str] = None
     ) -> List[AppSettingSchema]:
         records = await self.get_all(sort_json=sort)
-        return [AppSettingSchema.model_validate(r) for r in records]
+        return [AppSettingSchema.from_orm_with_groups(r) for r in records]
 
     async def get_by_key(self, key: str) -> AppSettingSchema:
         record = await self.repository.get_by_field("key", key)
         if not record:
             raise await self._resolve_domain_error(AppSettingNotFoundByKey(key))
-        return AppSettingSchema.model_validate(record)
+        return AppSettingSchema.from_orm_with_groups(record)
 
     # ------------------------------------------------------------------
     # Write
@@ -250,18 +250,46 @@ class AppSettingService(BaseService):
         if existing:
             raise await self._resolve_domain_error(AppSettingKeyTaken(setting_in.key))
         await self._validate_value(setting_in.value, setting_in.value_type_id)
+        if setting_in.group_ids:
+            await self._validate_setting_groups(setting_in.group_ids)
         try:
-            data = setting_in.model_dump()
+            data = setting_in.model_dump(exclude={"group_ids"})
             if self.user:
                 data["created_by"] = self.user.id
             record = await self.repository.create_from_dict(data)
-            schema = AppSettingSchema.model_validate(record)
+            if setting_in.group_ids:
+                await self.repository.set_group_links(record.id, setting_in.group_ids)
+                await self.session.refresh(record, ["user_group_links"])
+            schema = AppSettingSchema.from_orm_with_groups(record)
             detail = await self._resolve_domain_success(
                 AppSettingCreateSuccess(schema.key)
             )
             return MutationResponse(detail=detail, data=schema)
         except IntegrityError:
             raise await self._resolve_domain_error(AppSettingKeyTaken(setting_in.key))
+
+    async def _validate_setting_groups(
+        self, group_ids: List[int]
+    ) -> None:
+        """Raise if any group_id doesn't exist."""
+        if not group_ids:
+            return
+        from backend.api_v1.user_group.user_group_model import UserGroup
+
+        found = set(
+            (
+                await self.session.execute(
+                    select(UserGroup.id).where(UserGroup.id.in_(group_ids))
+                )
+            )
+            .scalars()
+            .all()
+        )
+        missing = set(group_ids) - found
+        if missing:
+            raise await self._resolve_domain_error(
+                AppSettingNotFound(f"groups {missing} not found")
+            )
 
     async def update_app_setting(
         self, setting_id: int, setting_update: AppSettingUpdate
@@ -293,6 +321,16 @@ class AppSettingService(BaseService):
                 and new_value < 1
             ):
                 raise await self._resolve_domain_error(AppSettingValueBelowMin(1))
+        # Extract visibility/group fields — handled separately after the main update.
+        group_ids = update_data.pop("group_ids", None)
+        visible_to_all_groups = update_data.pop("visible_to_all_groups", None)
+        visible_to_regular = update_data.pop("visible_to_regular", None)
+        if visible_to_all_groups is not None:
+            update_data["visible_to_all_groups"] = visible_to_all_groups
+        if visible_to_regular is not None:
+            update_data["visible_to_regular"] = visible_to_regular
+        if group_ids is not None:
+            await self._validate_setting_groups(group_ids)
         updated = await self.repository.update(
             instance=orm_record, instance_update=update_data
         )
@@ -300,7 +338,10 @@ class AppSettingService(BaseService):
         # new cap (e.g. cap 5 -> 4 turns a user's stored 5 into 4).
         if "value" in update_data:
             await self._clamp_user_overrides(updated)
-        schema = AppSettingSchema.model_validate(updated)
+        if group_ids is not None:
+            await self.repository.set_group_links(setting_id, group_ids)
+            await self.session.refresh(orm_record, ["user_group_links"])
+        schema = AppSettingSchema.from_orm_with_groups(orm_record)
         detail = await self._resolve_domain_success(AppSettingUpdateSuccess(schema.key))
         return MutationResponse(detail=detail, data=schema)
 
@@ -334,11 +375,25 @@ class AppSettingService(BaseService):
             await self.session.commit()
 
     async def get_effective_for_user(self) -> List[AppSettingSchema]:
-        """All settings with `value` resolved for the current user: a per-user
-        override (clamped to [1, global] for integers) when the setting is
-        overridable and the user has one, else the global value. Same shape as
-        get_app_settings so existing consumer hooks need no change."""
+        """All settings visible to the current user, with `value` resolved
+        per-user (override clamped to [1, global] for integers) when the
+        setting is overridable and the user has one, else the global value.
+        Visibility follows the same 3-mode system as Menu:
+          - user has NO groups ('regular' user) -> only visible_to_regular settings;
+          - visible_to_all_groups is True       -> anyone with >=1 group sees it;
+          - otherwise                            -> intersection of the user's
+                                                   group ids with the setting's
+                                                   linked group ids."""
         records = await self.get_all()
+        user_group_ids = set(self.user.group_ids if self.user else [])
+
+        def setting_visible(s) -> bool:
+            if not user_group_ids:
+                return bool(s.visible_to_regular)
+            if s.visible_to_all_groups:
+                return True
+            return bool(user_group_ids & set(s.allowed_group_ids))
+
         overrides: dict[int, Any] = {}
         if self.user is not None:
             from backend.api_v1.user_setting.user_setting_model import UserSetting
@@ -351,6 +406,8 @@ class AppSettingService(BaseService):
             overrides = {r.app_setting_id: r.value for r in rows}
         result: List[AppSettingSchema] = []
         for r in records:
+            if not setting_visible(r):
+                continue
             schema = AppSettingSchema.model_validate(r)
             if r.user_overridable and overrides.get(r.id) is not None:
                 val = overrides[r.id]

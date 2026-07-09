@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import {
   Alert,
+  Autocomplete,
   Box,
   Button,
   Checkbox,
@@ -399,26 +400,40 @@ export function PermissionMatrixGrid() {
             </MenuItem>
           ))}
         </TextField>
-        <TextField
-          select
+        <Autocomplete
           size="small"
-          label={cfl(getString('essence')) || 'Essence'}
-          value={essenceFilter}
-          onChange={(e) => setEssenceFilter(e.target.value)}
-          sx={{ width: 300 }}
-        >
-          <MenuItem value="">{cfl(getString('all')) || 'All'}</MenuItem>
-          {distinctEssences.map((e) => (
-            <MenuItem key={e} value={e} dense>
+          options={distinctEssences}
+          value={essenceFilter || null}
+          onChange={(_, v) => setEssenceFilter(v ?? '')}
+          getOptionLabel={(e) => `${essenceLabel(e)} (${e})`}
+          filterOptions={(opts, { inputValue }) => {
+            const q = inputValue.trim().toLowerCase();
+            if (!q) return opts;
+            return opts.filter(
+              (e) =>
+                e.toLowerCase().includes(q) ||
+                essenceLabel(e).toLowerCase().includes(q),
+            );
+          }}
+          isOptionEqualToValue={(o, v) => o === v}
+          renderOption={(props, e) => (
+            <Box component="li" {...props} key={e}>
               <Typography variant="body2" noWrap>
                 <Box component="span" sx={{ fontWeight: 500 }}>{essenceLabel(e)}</Box>
                 <Box component="span" sx={{ color: 'text.secondary', ml: 0.75 }}>
                   ({e})
                 </Box>
               </Typography>
-            </MenuItem>
-          ))}
-        </TextField>
+            </Box>
+          )}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label={cfl(getString('essence')) || 'Essence'}
+              sx={{ width: 300 }}
+            />
+          )}
+        />
         <ToggleButtonGroup
           size="small"
           value={essenceSort}

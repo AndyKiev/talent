@@ -27,4 +27,4 @@ async def app_setting_by_id(
     service: AppSettingService = Depends(get_app_setting_service),
 ) -> AppSettingSchema:
     record = await service.get_by_id(app_setting_id)
-    return AppSettingSchema.model_validate(record)
+    return AppSettingSchema.from_orm_with_groups(record)

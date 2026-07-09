@@ -18,6 +18,7 @@ __all__ = {
     "JobUserGroupLink",
     "OperationUserGroupLink",
     "MenuUserGroupLink",
+    "AppSettingUserGroupLink",
     "Department",
     "DepartmentType",
     "DepartmentCategory",
@@ -102,6 +103,7 @@ __all__ = {
     "ProcessRoleHolderEmployeeLink",
     "ProcessRoleHolderDepartmentLink",
     "ProcessRoleActiveContext",
+    "AccessTestContext",
     # App settings (typed key/value)
     "SettingValueType",
     "AppSetting",
@@ -199,6 +201,9 @@ from backend.api_v1.table_relationship_links.operation_user_group_link_model imp
 )
 from backend.api_v1.table_relationship_links.menu_user_group_link_model import (
     MenuUserGroupLink,
+)
+from backend.api_v1.table_relationship_links.app_setting_user_group_link_model import (
+    AppSettingUserGroupLink,
 )
 
 # Employee event history — import order matters: lookups first, then
@@ -361,6 +366,9 @@ from backend.api_v1.process_roles.process_role_holder_department_link.process_ro
 )
 from backend.api_v1.process_roles.process_role_active_context.process_role_active_context_model import (
     ProcessRoleActiveContext,
+)
+from backend.api_v1.access_test_context.access_test_context_model import (
+    AccessTestContext,
 )
 
 # App settings — value-type catalog first (FK target), then the settings table,
