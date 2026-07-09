@@ -27,6 +27,7 @@ import HistoryIcon from '@mui/icons-material/History';
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import { Link } from '@tanstack/react-router';
 import AppShell from '../../layout/AppShell';
+import { PageContainer } from '../../layout/PageContainer';
 import {
     fetchChangeSessions,
     fetchChangeSessionLogs,
@@ -425,7 +426,7 @@ export function AuditLogPage() {
 
     return (
         <AppShell>
-            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1200, mx: 'auto' }}>
+            <PageContainer>
                 {/* Breadcrumbs */}
                 <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
                     <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -521,7 +522,7 @@ export function AuditLogPage() {
                         localeText={localeText}
                     />
                 </Paper>
-            </Box>
+            </PageContainer>
 
             <RunDrawer session={selected} onClose={() => setSelected(null)} getString={getString} />
         </AppShell>

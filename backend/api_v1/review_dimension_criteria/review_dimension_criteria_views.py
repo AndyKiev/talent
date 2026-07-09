@@ -15,6 +15,8 @@ from backend.api_v1.review_dimension_criteria.review_dimension_criteria_service 
     ReviewDimensionCriteriaService,
 )
 from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/review_dimension_criteria",
@@ -46,6 +48,7 @@ async def get_single_criteria(
     "",
     response_model=MutationResponse[ReviewDimensionCriteriaSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.REVIEW_DIMENSION_CRITERION)],
 )
 async def create_criteria(
     crit_in: ReviewDimensionCriteriaCreate,
@@ -60,6 +63,7 @@ async def create_criteria(
 @router.patch(
     "/{criteria_id}",
     response_model=MutationResponse[ReviewDimensionCriteriaSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.REVIEW_DIMENSION_CRITERION)],
 )
 async def update_criteria(
     crit_update: ReviewDimensionCriteriaUpdate,
@@ -72,7 +76,11 @@ async def update_criteria(
     return await service.update_criteria(record.id, crit_update)
 
 
-@router.delete("/{criteria_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{criteria_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.REVIEW_DIMENSION_CRITERION)],
+)
 async def delete_criteria(
     criteria_id: int,
     service: Annotated[

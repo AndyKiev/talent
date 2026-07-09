@@ -3,6 +3,7 @@ import { Box, Breadcrumbs, Typography } from '@mui/material';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { Link, Outlet, useLocation } from '@tanstack/react-router';
 import AppShell from '../../layout/AppShell';
+import { PageContainer } from '../../layout/PageContainer';
 import { EssenceCard } from '../../ui/EssenceCard';
 import { useEssences } from '../../../hooks/useEssences';
 import { ESSENCES as RAW_ESSENCES } from '../admin.essences.config';
@@ -20,7 +21,7 @@ export function PeopleReviewLayout() {
 
     return (
         <AppShell>
-            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1200, mx: 'auto' }}>
+            <PageContainer>
                 {isIndex ? (
                     <>
                         <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
@@ -49,7 +50,7 @@ export function PeopleReviewLayout() {
                 ) : (
                     <Outlet />
                 )}
-            </Box>
+            </PageContainer>
         </AppShell>
     );
 }

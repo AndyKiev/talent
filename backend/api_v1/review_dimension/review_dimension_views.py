@@ -15,6 +15,8 @@ from backend.api_v1.review_dimension.review_dimension_service import (
     ReviewDimensionService,
 )
 from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/review_dimensions",
@@ -46,6 +48,7 @@ async def get_review_dimension(
     "",
     response_model=MutationResponse[ReviewDimensionSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.REVIEW_DIMENSION)],
 )
 async def create_review_dimension(
     dim_in: ReviewDimensionCreate,
@@ -57,6 +60,7 @@ async def create_review_dimension(
 @router.patch(
     "/{review_dimension_id}",
     response_model=MutationResponse[ReviewDimensionSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.REVIEW_DIMENSION)],
 )
 async def update_review_dimension(
     dim_update: ReviewDimensionUpdate,
@@ -68,7 +72,11 @@ async def update_review_dimension(
     return await service.update_review_dimension(record.id, dim_update)
 
 
-@router.delete("/{review_dimension_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{review_dimension_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.REVIEW_DIMENSION)],
+)
 async def delete_review_dimension(
     review_dimension_id: int,
     service: Annotated[ReviewDimensionService, Depends(get_review_dimension_service)],

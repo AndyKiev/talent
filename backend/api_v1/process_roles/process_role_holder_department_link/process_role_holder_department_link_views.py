@@ -13,6 +13,8 @@ from backend.api_v1.process_roles.process_role_holder_department_link.process_ro
     ProcessRoleHolderDepartmentLinkService,
 )
 from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/admin/process_role_holder_departments",
@@ -21,7 +23,11 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[ProcessRoleHolderDepartmentLinkSchema])
+@router.get(
+    "",
+    response_model=List[ProcessRoleHolderDepartmentLinkSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.PROCESS_ROLE_HOLDER)],
+)
 async def get_department_links(
     service: Annotated[
         ProcessRoleHolderDepartmentLinkService,
@@ -46,6 +52,7 @@ async def get_department_links(
     "",
     response_model=MutationResponse[ProcessRoleHolderDepartmentLinkSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.LINK, EssenceName.PROCESS_ROLE_HOLDER)],
 )
 async def create_department_link(
     link_in: ProcessRoleHolderDepartmentLinkCreate,
@@ -57,7 +64,11 @@ async def create_department_link(
     return await service.create_link(link_in)
 
 
-@router.delete("/{link_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{link_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.PROCESS_ROLE_HOLDER)],
+)
 async def delete_department_link(
     link_id: int,
     service: Annotated[

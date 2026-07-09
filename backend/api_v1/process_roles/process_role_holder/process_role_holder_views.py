@@ -14,6 +14,8 @@ from backend.api_v1.process_roles.process_role_holder.process_role_holder_servic
     ProcessRoleHolderService,
 )
 from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/admin/process_role_holders",
@@ -22,7 +24,11 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[ProcessRoleHolderSchema])
+@router.get(
+    "",
+    response_model=List[ProcessRoleHolderSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.PROCESS_ROLE_HOLDER)],
+)
 async def get_holders(
     service: Annotated[
         ProcessRoleHolderService, Depends(get_process_role_holder_service)
@@ -40,7 +46,11 @@ async def get_holders(
     )
 
 
-@router.get("/{process_role_holder_id}", response_model=ProcessRoleHolderSchema)
+@router.get(
+    "/{process_role_holder_id}",
+    response_model=ProcessRoleHolderSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.PROCESS_ROLE_HOLDER)],
+)
 async def get_holder(
     record: ProcessRoleHolderSchema = Depends(process_role_holder_by_id),
 ):
@@ -51,6 +61,7 @@ async def get_holder(
     "",
     response_model=MutationResponse[ProcessRoleHolderSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.PROCESS_ROLE_HOLDER)],
 )
 async def create_holder(
     holder_in: ProcessRoleHolderCreate,
@@ -61,7 +72,11 @@ async def create_holder(
     return await service.create_holder(holder_in)
 
 
-@router.delete("/{process_role_holder_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{process_role_holder_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.PROCESS_ROLE_HOLDER)],
+)
 async def delete_holder(
     process_role_holder_id: int,
     service: Annotated[

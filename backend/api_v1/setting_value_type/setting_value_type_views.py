@@ -15,6 +15,8 @@ from backend.api_v1.setting_value_type.setting_value_type_service import (
     SettingValueTypeService,
 )
 from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/setting_value_types",
@@ -23,7 +25,11 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[SettingValueTypeSchema])
+@router.get(
+    "",
+    response_model=List[SettingValueTypeSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.SETTING_VALUE_TYPE)],
+)
 async def get_setting_value_types(
     service: Annotated[
         SettingValueTypeService, Depends(get_setting_value_type_service)
@@ -36,7 +42,11 @@ async def get_setting_value_types(
     return await service.get_setting_value_types(sort=sort)
 
 
-@router.get("/{setting_value_type_id}", response_model=SettingValueTypeSchema)
+@router.get(
+    "/{setting_value_type_id}",
+    response_model=SettingValueTypeSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.SETTING_VALUE_TYPE)],
+)
 async def get_setting_value_type(
     record: SettingValueTypeSchema = Depends(setting_value_type_by_id),
 ):
@@ -47,6 +57,7 @@ async def get_setting_value_type(
     "",
     response_model=MutationResponse[SettingValueTypeSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.SETTING_VALUE_TYPE)],
 )
 async def create_setting_value_type(
     type_in: SettingValueTypeCreate,
@@ -60,6 +71,7 @@ async def create_setting_value_type(
 @router.patch(
     "/{setting_value_type_id}",
     response_model=MutationResponse[SettingValueTypeSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.SETTING_VALUE_TYPE)],
 )
 async def update_setting_value_type(
     type_update: SettingValueTypeUpdate,
@@ -71,7 +83,11 @@ async def update_setting_value_type(
     return await service.update_setting_value_type(record.id, type_update)
 
 
-@router.delete("/{setting_value_type_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{setting_value_type_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.SETTING_VALUE_TYPE)],
+)
 async def delete_setting_value_type(
     setting_value_type_id: int,
     service: Annotated[

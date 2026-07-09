@@ -13,6 +13,8 @@ from backend.api_v1.app_setting.app_setting_dependencies import (
 )
 from backend.api_v1.app_setting.app_setting_service import AppSettingService
 from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/app_settings",
@@ -62,6 +64,7 @@ async def get_app_setting(
     "",
     response_model=MutationResponse[AppSettingSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.APP_SETTING)],
 )
 async def create_app_setting(
     setting_in: AppSettingCreate,
@@ -73,6 +76,7 @@ async def create_app_setting(
 @router.patch(
     "/{app_setting_id}",
     response_model=MutationResponse[AppSettingSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.APP_SETTING)],
 )
 async def update_app_setting(
     setting_update: AppSettingUpdate,
@@ -82,7 +86,11 @@ async def update_app_setting(
     return await service.update_app_setting(record.id, setting_update)
 
 
-@router.delete("/{app_setting_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{app_setting_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.APP_SETTING)],
+)
 async def delete_app_setting(
     app_setting_id: int,
     service: Annotated[AppSettingService, Depends(get_app_setting_service)],

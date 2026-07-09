@@ -19,6 +19,7 @@ import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { Link } from '@tanstack/react-router';
 import AppShell from '../../layout/AppShell';
+import { PageContainer } from '../../layout/PageContainer';
 import { useMutation } from '@tanstack/react-query';
 import {
   applyDueEmployeeEvents,
@@ -47,7 +48,7 @@ export function EventApplyPage() {
 
   return (
     <AppShell>
-      <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1000, mx: 'auto' }}>
+      <PageContainer>
         <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
           <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
             <Typography variant="body2" color="text.secondary">
@@ -167,7 +168,7 @@ export function EventApplyPage() {
             )}
           </Stack>
         )}
-      </Box>
+      </PageContainer>
     </AppShell>
   );
 }

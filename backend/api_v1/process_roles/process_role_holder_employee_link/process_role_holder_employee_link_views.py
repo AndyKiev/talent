@@ -14,6 +14,8 @@ from backend.api_v1.process_roles.process_role_holder_employee_link.process_role
     ProcessRoleHolderEmployeeLinkService,
 )
 from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/admin/process_role_holder_employees",
@@ -22,7 +24,11 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[ProcessRoleHolderEmployeeLinkSchema])
+@router.get(
+    "",
+    response_model=List[ProcessRoleHolderEmployeeLinkSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.PROCESS_ROLE_HOLDER)],
+)
 async def get_links(
     service: Annotated[
         ProcessRoleHolderEmployeeLinkService,
@@ -47,6 +53,7 @@ async def get_links(
     "",
     response_model=MutationResponse[ProcessRoleHolderEmployeeLinkSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.LINK, EssenceName.PROCESS_ROLE_HOLDER)],
 )
 async def create_link(
     link_in: ProcessRoleHolderEmployeeLinkCreate,
@@ -58,7 +65,11 @@ async def create_link(
     return await service.create_link(link_in)
 
 
-@router.post("/reorder", response_model=MutationResponse[None])
+@router.post(
+    "/reorder",
+    response_model=MutationResponse[None],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.PROCESS_ROLE_HOLDER)],
+)
 async def reorder_links(
     payload: ProcessRoleHolderEmployeeReorder,
     service: Annotated[
@@ -69,7 +80,11 @@ async def reorder_links(
     return await service.set_order(payload.process_role_holder_id, payload.ordered_ids)
 
 
-@router.delete("/{link_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{link_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.PROCESS_ROLE_HOLDER)],
+)
 async def delete_link(
     link_id: int,
     service: Annotated[

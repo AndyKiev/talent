@@ -23,7 +23,7 @@ export function ReviewSetupLayout() {
     };
 
     return (
-        <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
+        <Box sx={{ maxWidth: 1800, mx: 'auto' }}>
             <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
                 <Link to="/admin" style={{ textDecoration: 'none', color: 'inherit' }}>
                     <Typography variant="body2" color="text.secondary">

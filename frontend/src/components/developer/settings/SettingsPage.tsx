@@ -33,6 +33,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import { Link } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import AppShell from '../../layout/AppShell';
+import { PageContainer } from '../../layout/PageContainer';
 import { useTheme } from '../../theme/ThemeContext';
 import useString from '../../../hooks/useString';
 import cfl from '../../../utils/capitalizeFirstLetter';
@@ -439,7 +440,7 @@ export function SettingsPage() {
 
     return (
         <AppShell>
-            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1100, mx: 'auto' }}>
+            <PageContainer>
                 <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
                     <Link to="/developer" style={{ textDecoration: 'none', color: 'inherit' }}>
                         <Typography variant="body2" color="text.secondary">{cfl(getString('devPanel'))}</Typography>
@@ -545,7 +546,7 @@ export function SettingsPage() {
                         {snackbar.message}
                     </Alert>
                 </Snackbar>
-            </Box>
+            </PageContainer>
         </AppShell>
     );
 }

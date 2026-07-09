@@ -1,16 +1,15 @@
-import { useState, type Dispatch, type SetStateAction } from 'react';
+import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import {
     Box,
     Button,
     IconButton,
     Rating,
     Stack,
-    Tab,
-    Tabs,
     TextField,
     Tooltip,
     Typography,
 } from '@mui/material';
+import { ResponsiveTabs, type TabItem } from '../../ui/ResponsiveTabs';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
@@ -102,75 +101,79 @@ export function DimensionPanel({
     const activeMean = activeEval ? evalMean(activeEval) : null;
     const activeLevelPct = ((activeMean ?? 0) / MAX_GRADE) * 100;
 
+    // Build responsive tab items from visibleEvals.
+    const DIM_TABS: TabItem[] = useMemo(() =>
+        visibleEvals.map((e, idx) => {
+            const color = getDimColor(e.dimension_key, idx, e.dimension_color);
+            const filled = evalFilled(e);
+            const isDropTarget = draggedItem != null && draggedItem.evalId !== e.id;
+            return {
+                label: (
+                    <Stack direction="row" spacing={0.75} alignItems="center">
+                        <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: filled ? color : `${color}44`, flexShrink: 0 }} />
+                        <span>{competenceName(getString, e.dimension_key, e.dimension_name)}</span>
+                    </Stack>
+                ),
+                value: String(idx),
+                sx: {
+                    fontSize: 12,
+                    fontWeight: activeTab === idx ? 700 : 500,
+                    color: activeTab === idx ? color : t.textMuted,
+                    textTransform: 'none',
+                    minHeight: 48,
+                    '&.Mui-selected': { color },
+                    ...(dragOverTab === idx && isDropTarget && {
+                        bgcolor: `${color}22`,
+                        outline: `2px dashed ${color}`,
+                        outlineOffset: '-4px',
+                        borderRadius: '6px',
+                    }),
+                } as const,
+                tabProps: {
+                    onDragOver: (ev: React.DragEvent) => {
+                        if (!isDropTarget) return;
+                        ev.preventDefault();
+                        ev.dataTransfer.dropEffect = 'move';
+                        if (dragOverTab !== idx) setDragOverTab(idx);
+                    },
+                    onDragLeave: () => { if (dragOverTab === idx) setDragOverTab(null); },
+                    onDrop: (ev: React.DragEvent) => {
+                        ev.preventDefault();
+                        setDragOverTab(null);
+                        if (!draggedItem || draggedItem.evalId === e.id) { setDraggedItem(null); return; }
+                        const src = localEvals.find(le => le.id === draggedItem.evalId);
+                        const list = draggedItem.kind === 'fact' ? src?.facts : src?.improvements;
+                        const text = list?.[draggedItem.index];
+                        if (text == null) { setDraggedItem(null); return; }
+                        setPendingMove({
+                            kind: draggedItem.kind,
+                            fromEvalId: draggedItem.evalId,
+                            index: draggedItem.index,
+                            text,
+                            toEvalId: e.id,
+                            toTabIndex: idx,
+                            toName: competenceName(getString, e.dimension_key, e.dimension_name),
+                        });
+                        setDraggedItem(null);
+                    },
+                } as const,
+            };
+        }),
+    [visibleEvals, activeTab, draggedItem, dragOverTab, getString, t.textMuted, localEvals, setDraggedItem, setDragOverTab, setPendingMove]);
+
     return (
         <Box sx={{ border: `1px solid ${t.borderLight}`, borderRadius: '12px', overflow: 'hidden', background: t.cardBg }}>
-            <Tabs
-                value={activeTab}
-                onChange={(_, v) => setActiveTab(v)}
-                variant="scrollable"
-                scrollButtons="auto"
-                sx={{
-                    borderBottom: `1px solid ${t.borderLight}`,
-                    '& .MuiTabs-indicator': { height: 3, borderRadius: '3px 3px 0 0', bgcolor: activeColor },
+            <ResponsiveTabs
+                tabs={DIM_TABS}
+                activeTab={String(activeTab)}
+                onChange={(v) => setActiveTab(Number(v))}
+                tabsProps={{
+                    sx: {
+                        borderBottom: `1px solid ${t.borderLight}`,
+                        '& .MuiTabs-indicator': { height: 3, borderRadius: '3px 3px 0 0', bgcolor: activeColor },
+                    },
                 }}
-            >
-                {visibleEvals.map((e, idx) => {
-                    const color = getDimColor(e.dimension_key, idx, e.dimension_color);
-                    const filled = evalFilled(e);
-                    const isDropTarget = draggedItem != null && draggedItem.evalId !== e.id;
-                    return (
-                        <Tab
-                            key={e.id}
-                            onDragOver={(ev) => {
-                                if (!isDropTarget) return;
-                                ev.preventDefault();
-                                ev.dataTransfer.dropEffect = 'move';
-                                if (dragOverTab !== idx) setDragOverTab(idx);
-                            }}
-                            onDragLeave={() => { if (dragOverTab === idx) setDragOverTab(null); }}
-                            onDrop={(ev) => {
-                                ev.preventDefault();
-                                setDragOverTab(null);
-                                if (!draggedItem || draggedItem.evalId === e.id) { setDraggedItem(null); return; }
-                                const src = localEvals.find(le => le.id === draggedItem.evalId);
-                                const list = draggedItem.kind === 'fact' ? src?.facts : src?.improvements;
-                                const text = list?.[draggedItem.index];
-                                if (text == null) { setDraggedItem(null); return; }
-                                setPendingMove({
-                                    kind: draggedItem.kind,
-                                    fromEvalId: draggedItem.evalId,
-                                    index: draggedItem.index,
-                                    text,
-                                    toEvalId: e.id,
-                                    toTabIndex: idx,
-                                    toName: competenceName(getString, e.dimension_key, e.dimension_name),
-                                });
-                                setDraggedItem(null);
-                            }}
-                            label={
-                                <Stack direction="row" spacing={0.75} alignItems="center">
-                                    <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: filled ? color : `${color}44`, flexShrink: 0 }} />
-                                    <span>{competenceName(getString, e.dimension_key, e.dimension_name)}</span>
-                                </Stack>
-                            }
-                            sx={{
-                                fontSize: 12,
-                                fontWeight: activeTab === idx ? 700 : 500,
-                                color: activeTab === idx ? color : t.textMuted,
-                                textTransform: 'none',
-                                minHeight: 48,
-                                '&.Mui-selected': { color },
-                                ...(dragOverTab === idx && isDropTarget && {
-                                    bgcolor: `${color}22`,
-                                    outline: `2px dashed ${color}`,
-                                    outlineOffset: '-4px',
-                                    borderRadius: '6px',
-                                }),
-                            }}
-                        />
-                    );
-                })}
-            </Tabs>
+            />
 
             {activeEval && (
                 <Box sx={{ p: 3 }}>
@@ -305,46 +308,20 @@ export function DimensionPanel({
                                             </>
                                         ) : (
                                             <>
-                                                {factsEditing && (
-                                                    <Tooltip title={getString('dragFactReorderOrMove')}>
-                                                        <Box
-                                                            draggable
-                                                            onDragStart={(e) => {
-                                                                e.dataTransfer.effectAllowed = 'move';
-                                                                e.dataTransfer.setData('text/plain', fact);
-                                                                setDraggedItem({ kind: 'fact', evalId: activeEval.id, index: idx });
-                                                            }}
-                                                            onDragEnd={() => { setDraggedItem(null); setDragOverTab(null); setDragOverFactIndex(null); }}
-                                                            sx={{ display: 'flex', alignItems: 'center', pt: '2px', cursor: 'grab', color: t.textMuted, '&:active': { cursor: 'grabbing' } }}
-                                                        >
-                                                            <DragIndicatorIcon sx={{ fontSize: 16 }} />
-                                                        </Box>
-                                                    </Tooltip>
-                                                )}
-                                                <Typography
-                                                    fontSize={12}
-                                                    fontWeight={700}
-                                                    color={activeColor}
-                                                    sx={{ minWidth: 22, pt: '2px' }}
-                                                >
-                                                    {idx + 1}.
+                                                <Typography fontSize={13} fontWeight={500} color={activeColor} sx={{ minWidth: 18, pt: '2px', cursor: 'grab', userSelect: 'none' }}>
+                                                    <DragIndicatorIcon sx={{ fontSize: 14, verticalAlign: 'text-bottom', opacity: 0.6 }} />
                                                 </Typography>
-                                                <Typography fontSize={13} sx={{ flex: 1, pt: '2px', wordBreak: 'break-word' }}>
+                                                <Typography
+                                                    fontSize={13}
+                                                    sx={{ flex: 1, pt: '2px', wordBreak: 'break-word' }}
+                                                    onDoubleClick={() => {
+                                                        if (isEditable) setEditingFact({ id: activeEval.id, index: idx });
+                                                    }}
+                                                >
                                                     {fact}
                                                 </Typography>
-                                                {factsEditing && (
-                                                    <Tooltip title={getString('edit')}>
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={() => setEditingFact({ id: activeEval.id, index: idx })}
-                                                            sx={{ p: 0.25, mt: '-2px' }}
-                                                        >
-                                                            <EditIcon sx={{ fontSize: 14 }} />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                )}
-                                                {factsEditing && isStrongPicked(activeEval.dimension_key) && (
-                                                    <Tooltip title={getString('copyFactToStrongSummary')}>
+                                                {isStrongPicked(activeEval.dimension_key) && (
+                                                    <Tooltip title={getString(factsEditing ? 'copyFactToStrongSummary' : '')}>
                                                         <IconButton
                                                             size="small"
                                                             onClick={() => copyFactToStrong(activeEval.dimension_key, fact)}
@@ -402,181 +379,143 @@ export function DimensionPanel({
                         supports reorder within the competence AND cross-tab move like facts.
                         Hidden entirely when read-only and empty, so presentation mode shows
                         no stray box (mirrors facts having no input then). */}
-                    {(isEditable || activeEval.improvements.length > 0) && (
-                    <Box
-                        sx={{
-                            mb: 2,
-                            p: 1.75,
-                            borderRadius: '10px',
-                            border: `1px solid ${activeColor}33`,
-                            bgcolor: `${activeColor}0A`,
-                        }}
-                    >
-                        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
-                            <Stack direction="row" spacing={0.75} alignItems="center">
-                                <TrendingUpIcon sx={{ fontSize: 18, color: activeColor }} />
-                                <Typography fontSize={13} fontWeight={700} color={activeColor}>
-                                    {getString('areasForImprovement')}
-                                </Typography>
+                    {(!(!isEditable && (activeEval.improvements.length === 0))) && (
+                        <Box sx={{
+                            mb: 1.5, p: 2, borderRadius: '10px',
+                            border: `1px solid ${activeColor}22`, bgcolor: activeColor + '06',
+                        }}>
+                            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
+                                <Stack direction="row" alignItems="center" spacing={0.75}>
+                                    <TrendingUpIcon sx={{ fontSize: 16, color: activeColor }} />
+                                    <Typography fontSize={13} fontWeight={600} color={t.textSecondary}>
+                                        {getString('directionsForImprovement')}
+                                    </Typography>
+                                </Stack>
+                                {isEditable && (
+                                    <Tooltip title={getString(impEditing ? 'doneEditing' : 'edit')}>
+                                        <IconButton
+                                            size="small"
+                                            onClick={() => {
+                                                if (impEditing) { setImpEditId(null); setEditingImp(null); }
+                                                else setImpEditId(activeEval.id);
+                                            }}
+                                            sx={{ p: 0.25, color: impEditing ? activeColor : undefined }}
+                                        >
+                                            {impEditing ? <DoneIcon sx={{ fontSize: 16 }} /> : <EditIcon sx={{ fontSize: 15 }} />}
+                                        </IconButton>
+                                    </Tooltip>
+                                )}
                             </Stack>
-                            {isEditable && (
-                                <Tooltip title={getString(impEditing ? 'doneEditing' : 'edit')}>
-                                    <IconButton
-                                        size="small"
-                                        onClick={() => {
-                                            if (impEditing) { setImpEditId(null); setEditingImp(null); }
-                                            else setImpEditId(activeEval.id);
-                                        }}
-                                        sx={{ p: 0.25, color: impEditing ? activeColor : undefined }}
-                                    >
-                                        {impEditing ? <DoneIcon sx={{ fontSize: 16 }} /> : <EditIcon sx={{ fontSize: 15 }} />}
-                                    </IconButton>
-                                </Tooltip>
+                            {activeEval.improvements.length > 0 && (
+                                <Box sx={{ mb: 1.5 }}>
+                                    {activeEval.improvements.map((imp, idx) => (
+                                        <Stack
+                                            key={`imp-${idx}`}
+                                            direction="row"
+                                            alignItems="flex-start"
+                                            spacing={0.5}
+                                            onDragOver={(e) => {
+                                                if (draggedItem?.kind !== 'improvement' || draggedItem.evalId !== activeEval.id) return;
+                                                e.preventDefault();
+                                                if (dragOverImpIndex !== idx) setDragOverImpIndex(idx);
+                                            }}
+                                            onDragLeave={() => { if (dragOverImpIndex === idx) setDragOverImpIndex(null); }}
+                                            onDrop={(e) => {
+                                                e.preventDefault();
+                                                setDragOverImpIndex(null);
+                                                if (draggedItem?.kind === 'improvement' && draggedItem.evalId === activeEval.id) {
+                                                    reorderImprovement(activeEval.id, draggedItem.index, idx);
+                                                }
+                                                setDraggedItem(null);
+                                            }}
+                                            sx={{
+                                                mb: 0.5, py: 0.5, px: 0.75, borderRadius: '6px',
+                                                opacity: draggedItem?.kind === 'improvement' && draggedItem.evalId === activeEval.id && draggedItem.index === idx ? 0.4 : 1,
+                                                borderTop: dragOverImpIndex === idx ? `2px solid ${activeColor}` : '2px solid transparent',
+                                                '&:hover': { bgcolor: activeColor + '10' },
+                                            }}
+                                        >
+                                            {impEditing && editingImp?.id === activeEval.id && editingImp.index === idx ? (
+                                                <>
+                                                    <Typography fontSize={12} fontWeight={700} color={activeColor} sx={{ minWidth: 22, pt: '8px' }}>
+                                                        {idx + 1}.
+                                                    </Typography>
+                                                    <InlineEditField
+                                                        initialValue={imp}
+                                                        color={activeColor}
+                                                        getString={getString}
+                                                        onSave={(text) => { editImprovement(activeEval.id, idx, text); setEditingImp(null); }}
+                                                        onCancel={() => setEditingImp(null)}
+                                                    />
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Typography fontSize={13} fontWeight={500} color={activeColor} sx={{ minWidth: 18, pt: '2px', cursor: 'grab', userSelect: 'none' }}>
+                                                        <DragIndicatorIcon sx={{ fontSize: 14, verticalAlign: 'text-bottom', opacity: 0.6 }} />
+                                                    </Typography>
+                                                    <Typography
+                                                        fontSize={13}
+                                                        sx={{ flex: 1, pt: '2px', wordBreak: 'break-word' }}
+                                                        onDoubleClick={() => {
+                                                            if (isEditable) setEditingImp({ id: activeEval.id, index: idx });
+                                                        }}
+                                                    >
+                                                        {imp}
+                                                    </Typography>
+                                                    {isDevelopPicked(activeEval.dimension_key) && (
+                                                        <Tooltip title={getString('copyImprovementToDevelopSummary')}>
+                                                            <IconButton
+                                                                size="small"
+                                                                onClick={() => copyImprovementToDevelop(activeEval.dimension_key, imp)}
+                                                                sx={{ p: 0.25, mt: '-2px' }}
+                                                            >
+                                                                <KeyboardDoubleArrowUpIcon sx={{ fontSize: 15 }} />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    )}
+                                                    {impEditing && (
+                                                        <Tooltip title={getString('deleteImprovement')}>
+                                                            <IconButton
+                                                                size="small"
+                                                                onClick={() => removeImprovement(activeEval.id, idx)}
+                                                                sx={{ p: 0.25, mt: '-2px' }}
+                                                            >
+                                                                <CloseIcon sx={{ fontSize: 14 }} />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    )}
+                                                </>
+                                            )}
+                                        </Stack>
+                                    ))}
+                                </Box>
                             )}
-                        </Stack>
-                        {activeEval.improvements.length > 0 && (
-                            <Box sx={{ mb: 1.5 }}>
-                                {activeEval.improvements.map((imp, idx) => (
-                                    <Stack
-                                        key={`imp-${idx}`}
-                                        direction="row"
-                                        alignItems="flex-start"
-                                        spacing={0.5}
-                                        onDragOver={(e) => {
-                                            if (draggedItem?.kind !== 'improvement' || draggedItem.evalId !== activeEval.id) return;
-                                            e.preventDefault();
-                                            if (dragOverImpIndex !== idx) setDragOverImpIndex(idx);
-                                        }}
-                                        onDragLeave={() => { if (dragOverImpIndex === idx) setDragOverImpIndex(null); }}
-                                        onDrop={(e) => {
-                                            e.preventDefault();
-                                            setDragOverImpIndex(null);
-                                            if (draggedItem?.kind === 'improvement' && draggedItem.evalId === activeEval.id) {
-                                                reorderImprovement(activeEval.id, draggedItem.index, idx);
-                                            }
-                                            setDraggedItem(null);
-                                        }}
-                                        sx={{
-                                            mb: 0.5,
-                                            py: 0.5,
-                                            px: 0.75,
-                                            borderRadius: '6px',
-                                            opacity: draggedItem?.kind === 'improvement' && draggedItem.evalId === activeEval.id && draggedItem.index === idx ? 0.4 : 1,
-                                            borderTop: dragOverImpIndex === idx ? `2px solid ${activeColor}` : '2px solid transparent',
-                                            '&:hover': { bgcolor: activeColor + '14' },
-                                        }}
+                            {impEditing && (
+                                <Stack direction="row" spacing={1} alignItems="flex-start">
+                                    <TextField
+                                        size="small"
+                                        placeholder={getString('typeImprovementPlaceholder')}
+                                        value={newImprovementTexts[activeEval.id] ?? ''}
+                                        onChange={e =>
+                                            setNewImprovementTexts(prev => ({ ...prev, [activeEval.id]: e.target.value }))
+                                        }
+                                        multiline
+                                        minRows={2}
+                                        fullWidth
+                                    />
+                                    <Button
+                                        variant="outlined"
+                                        size="small"
+                                        startIcon={<AddIcon />}
+                                        onClick={() => addImprovement(activeEval.id, newImprovementTexts[activeEval.id] ?? '')}
+                                        disabled={!(newImprovementTexts[activeEval.id] ?? '').trim()}
+                                        sx={{ textTransform: 'none', whiteSpace: 'nowrap', mt: 0.5 }}
                                     >
-                                        {impEditing && editingImp?.id === activeEval.id && editingImp.index === idx ? (
-                                            <>
-                                                <Typography fontSize={12} fontWeight={700} color={activeColor} sx={{ minWidth: 22, pt: '8px' }}>
-                                                    {idx + 1}.
-                                                </Typography>
-                                                <InlineEditField
-                                                    initialValue={imp}
-                                                    color={activeColor}
-                                                    getString={getString}
-                                                    onSave={(text) => { editImprovement(activeEval.id, idx, text); setEditingImp(null); }}
-                                                    onCancel={() => setEditingImp(null)}
-                                                />
-                                            </>
-                                        ) : (
-                                            <>
-                                                {impEditing && (
-                                                    <Tooltip title={getString('dragFactReorderOrMove')}>
-                                                        <Box
-                                                            draggable
-                                                            onDragStart={(e) => {
-                                                                e.dataTransfer.effectAllowed = 'move';
-                                                                e.dataTransfer.setData('text/plain', imp);
-                                                                setDraggedItem({ kind: 'improvement', evalId: activeEval.id, index: idx });
-                                                            }}
-                                                            onDragEnd={() => { setDraggedItem(null); setDragOverTab(null); setDragOverImpIndex(null); }}
-                                                            sx={{ display: 'flex', alignItems: 'center', pt: '2px', cursor: 'grab', color: t.textMuted, '&:active': { cursor: 'grabbing' } }}
-                                                        >
-                                                            <DragIndicatorIcon sx={{ fontSize: 16 }} />
-                                                        </Box>
-                                                    </Tooltip>
-                                                )}
-                                                <Typography
-                                                    fontSize={12}
-                                                    fontWeight={700}
-                                                    color={activeColor}
-                                                    sx={{ minWidth: 22, pt: '2px' }}
-                                                >
-                                                    {idx + 1}.
-                                                </Typography>
-                                                <Typography fontSize={13} sx={{ flex: 1, pt: '2px', wordBreak: 'break-word' }}>
-                                                    {imp}
-                                                </Typography>
-                                                {impEditing && (
-                                                    <Tooltip title={getString('edit')}>
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={() => setEditingImp({ id: activeEval.id, index: idx })}
-                                                            sx={{ p: 0.25, mt: '-2px' }}
-                                                        >
-                                                            <EditIcon sx={{ fontSize: 14 }} />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                )}
-                                                {impEditing && isDevelopPicked(activeEval.dimension_key) && (
-                                                    <Tooltip title={getString('copyImprovementToDevelopSummary')}>
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={() => copyImprovementToDevelop(activeEval.dimension_key, imp)}
-                                                            sx={{ p: 0.25, mt: '-2px' }}
-                                                        >
-                                                            <KeyboardDoubleArrowUpIcon sx={{ fontSize: 15 }} />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                )}
-                                                {impEditing && (
-                                                    <Tooltip title={getString('delete')}>
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={() => removeImprovement(activeEval.id, idx)}
-                                                            sx={{ p: 0.25, mt: '-2px' }}
-                                                        >
-                                                            <CloseIcon sx={{ fontSize: 14 }} />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                )}
-                                            </>
-                                        )}
-                                    </Stack>
-                                ))}
-                            </Box>
-                        )}
-                        {impEditing && (
-                            <Stack direction="row" spacing={1} alignItems="flex-start">
-                                <TextField
-                                    size="small"
-                                    placeholder={getString('typeImprovementPlaceholder')}
-                                    value={newImprovementTexts[activeEval.id] ?? ''}
-                                    onChange={e =>
-                                        setNewImprovementTexts(prev => ({ ...prev, [activeEval.id]: e.target.value }))
-                                    }
-                                    multiline
-                                    minRows={2}
-                                    fullWidth
-                                />
-                                <Button
-                                    variant="outlined"
-                                    size="small"
-                                    startIcon={<AddIcon />}
-                                    onClick={() => addImprovement(activeEval.id, newImprovementTexts[activeEval.id] ?? '')}
-                                    disabled={!(newImprovementTexts[activeEval.id] ?? '').trim()}
-                                    sx={{
-                                        textTransform: 'none', whiteSpace: 'nowrap', mt: 0.5,
-                                        color: activeColor, borderColor: `${activeColor}66`,
-                                        '&:hover': { borderColor: activeColor, bgcolor: `${activeColor}0A` },
-                                    }}
-                                >
-                                    {getString('add')}
-                                </Button>
-                            </Stack>
-                        )}
-                    </Box>
+                                        {getString('addImprovement')}
+                                    </Button>
+                                </Stack>
+                            )}
+                        </Box>
                     )}
 
                     {/* Prev / Next tab */}

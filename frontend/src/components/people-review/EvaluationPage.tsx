@@ -1054,7 +1054,7 @@ export function EvaluationPage() {
     return (
         <AppShell>
             <BusyBackdrop open={!!busyLabel} label={busyLabel ?? undefined} />
-            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: '100%', px: { xs: 2, sm: 4, md: 6 } }}>
+            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1800, mx: 'auto', width: '100%' }}>
 
                 {/* Breadcrumbs — sticky just under the main menu (56px AppBar) so the
                     trail + employee name (the last crumb) stay visible while scrolling. */}

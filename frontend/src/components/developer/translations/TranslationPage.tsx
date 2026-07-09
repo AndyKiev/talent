@@ -1,5 +1,6 @@
 import AppShell from "../../layout/AppShell.tsx";
-import {Box, Breadcrumbs, Typography} from "@mui/material";
+import { PageContainer } from '../../layout/PageContainer';
+import { Breadcrumbs, Typography } from "@mui/material";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import {Link} from "@tanstack/react-router";
 import LocaleAdminReduced from "./LocaleAdminReduced.tsx";
@@ -12,7 +13,7 @@ export function TranslationsPage() {
     const getString = useString({ str });
     return (
         <AppShell>
-            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1100, mx: 'auto' }}>
+            <PageContainer>
                 {/* Breadcrumb */}
                 <Breadcrumbs
                     separator={<NavigateNextIcon fontSize="small" />}
@@ -28,7 +29,7 @@ export function TranslationsPage() {
                     </Typography>
                 </Breadcrumbs>
                 <LocaleAdminReduced/>
-            </Box>
+            </PageContainer>
         </AppShell>
     );
 }

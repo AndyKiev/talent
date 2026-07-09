@@ -1,15 +1,14 @@
-import { useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import {
     Box,
     Button,
     IconButton,
     Stack,
-    Tab,
-    Tabs,
     TextField,
     Tooltip,
     Typography,
 } from '@mui/material';
+import { ResponsiveTabs, type TabItem } from '../../ui/ResponsiveTabs';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
@@ -115,22 +114,24 @@ export function EmployeeDataTabs({
     const [editSections, setEditSections] = useState<Record<string, boolean>>({});
     const toggle = (key: string) => setEditSections(p => ({ ...p, [key]: !p[key] }));
 
+    const tabSx = { textTransform: 'none', fontWeight: 600, fontSize: 12 } as const;
+    const TAB_ITEMS: TabItem[] = useMemo(() => [
+        { label: getString('personalInfo'),      value: '0', sx: tabSx },
+        { label: getString('jobInfo'),            value: '1', sx: tabSx },
+        { label: getString('employeeFeedback'),   value: '2', sx: tabSx },
+        { label: getString('managerFeedback'),    value: '3', sx: tabSx },
+        { label: getString('resultsAchievements'),value: '4', sx: tabSx },
+        { label: getString('trainings'),          value: '5', sx: tabSx },
+    ], [getString]);
+
     return (
         <Box sx={{ mb: 3, border: `1px solid ${t.borderLight}`, borderRadius: '12px', overflow: 'hidden', background: t.cardBg }}>
-            <Tabs
-                value={dataTab}
-                onChange={(_, v) => onDataTabChange(v)}
-                variant="scrollable"
-                scrollButtons="auto"
-                sx={{ borderBottom: `1px solid ${t.borderLight}` }}
-            >
-                <Tab label={getString('personalInfo')} sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12 }} />
-                <Tab label={getString('jobInfo')} sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12 }} />
-                <Tab label={getString('employeeFeedback')} sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12 }} />
-                <Tab label={getString('managerFeedback')} sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12 }} />
-                <Tab label={getString('resultsAchievements')} sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12 }} />
-                <Tab label={getString('trainings')} sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12 }} />
-            </Tabs>
+            <ResponsiveTabs
+                tabs={TAB_ITEMS}
+                activeTab={String(dataTab)}
+                onChange={(v) => onDataTabChange(Number(v))}
+                tabsProps={{ sx: { borderBottom: `1px solid ${t.borderLight}` } }}
+            />
 
             <Box sx={{ p: 3 }}>
                 {dataTab === 0 && personalInfo}

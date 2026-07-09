@@ -13,6 +13,7 @@ import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import AppShell from '../layout/AppShell.tsx';
+import { PageContainer } from '../layout/PageContainer';
 import { fetchMyReviews, type ReviewSessionEmployeeList } from './peopleReviewApi';
 import { useDataGridLocale } from '../../hooks/useDataGridLocale';
 import useString from '../../hooks/useString';
@@ -60,7 +61,7 @@ export function MyReviewsPage() {
 
     return (
         <AppShell>
-            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 800, mx: 'auto' }}>
+            <PageContainer>
                 <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
                     <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
                         <Typography variant="body2" color="text.secondary">
@@ -106,7 +107,7 @@ export function MyReviewsPage() {
                         />
                     </Paper>
                 )}
-            </Box>
+            </PageContainer>
         </AppShell>
     );
 }

@@ -16,6 +16,8 @@ from backend.api_v1.language_level.language_level_schema import (
 )
 from backend.api_v1.language_level.language_level_service import LanguageLevelService
 from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/language_levels",
@@ -40,7 +42,10 @@ async def get_language_level(
 
 
 @router.post(
-    "", response_model=LanguageLevelSchema, status_code=status.HTTP_201_CREATED
+    "",
+    response_model=LanguageLevelSchema,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.LANGUAGE_LEVEL)],
 )
 async def create_language_level(
     payload: LanguageLevelCreate,
@@ -49,7 +54,11 @@ async def create_language_level(
     return await service.create(payload)
 
 
-@router.patch("/{language_level_id}", response_model=LanguageLevelSchema)
+@router.patch(
+    "/{language_level_id}",
+    response_model=LanguageLevelSchema,
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.LANGUAGE_LEVEL)],
+)
 async def update_language_level(
     payload: LanguageLevelUpdate,
     record: LanguageLevelModel = Depends(language_level_by_id),
@@ -60,7 +69,11 @@ async def update_language_level(
     return await service.update(record, payload)
 
 
-@router.delete("/{language_level_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{language_level_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.LANGUAGE_LEVEL)],
+)
 async def delete_language_level(
     service: Annotated[LanguageLevelService, Depends(get_language_level_service)],
     record: LanguageLevelModel = Depends(language_level_by_id),

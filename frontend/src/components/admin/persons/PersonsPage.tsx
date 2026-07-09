@@ -1,6 +1,7 @@
 // src/components/admin/persons/PersonsPage.tsx
 import AppShell from '../../layout/AppShell.tsx';
-import { Box, Breadcrumbs, Typography } from '@mui/material';
+import { PageContainer } from '../../layout/PageContainer';
+import { Breadcrumbs, Typography } from '@mui/material';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { Link } from '@tanstack/react-router';
 import { PersonCrud } from './PersonCrud.tsx';
@@ -11,7 +12,7 @@ export function PersonsPage() {
     const getString = useString();
     return (
         <AppShell>
-            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1300, mx: 'auto' }}>
+            <PageContainer>
                 <Breadcrumbs
                     separator={<NavigateNextIcon fontSize="small" />}
                     sx={{ mb: 3 }}
@@ -27,7 +28,7 @@ export function PersonsPage() {
                 </Breadcrumbs>
 
                 <PersonCrud />
-            </Box>
+            </PageContainer>
         </AppShell>
     );
 }

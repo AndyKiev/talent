@@ -1,7 +1,8 @@
 // src/components/admin/department_types/DepartmentTypesPage.tsx
 import { useState } from 'react';
 import AppShell from '../../layout/AppShell.tsx';
-import { Box, Breadcrumbs, Tab, Tabs, Typography } from '@mui/material';
+import { PageContainer } from '../../layout/PageContainer';
+import { Breadcrumbs, Tab, Tabs, Typography } from '@mui/material';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { Link } from '@tanstack/react-router';
 import { DepartmentTypeCrud } from './DepartmentTypeCrud.tsx';
@@ -18,7 +19,7 @@ export function DepartmentTypesPage() {
 
     return (
         <AppShell>
-            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1100, mx: 'auto' }}>
+            <PageContainer>
                 <Breadcrumbs
                     separator={<NavigateNextIcon fontSize="small" />}
                     sx={{ mb: 3 }}
@@ -46,7 +47,7 @@ export function DepartmentTypesPage() {
                 {tab === 0 && <DepartmentTypeCrud />}
                 {tab === 1 && <DepartmentTypeHierarchy />}
                 {tab === 2 && <DepartmentTypeJobLinkPanel />}
-            </Box>
+            </PageContainer>
         </AppShell>
     );
 }

@@ -471,9 +471,12 @@ export function SessionEmployeesPage() {
             />
             <Box
                 sx={{
-                    p: { xs: 1.5, sm: 3 },
-                    px: { xs: 1.5, sm: 4, md: 6 },
-                    maxWidth: '100%',
+                    // Keep page padding identical to the Employees page so breadcrumbs
+                    // and content start at the same x when switching between the two.
+                    p: { xs: 2, sm: 3 },
+                    maxWidth: 1800,
+                    mx: 'auto',
+                    width: '100%',
                     // On phones (xs) and short viewports (phone landscape): let the
                     // page scroll naturally — fixed-height leaves too little room for
                     // the DataGrid to render rows.

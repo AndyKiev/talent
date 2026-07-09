@@ -13,6 +13,8 @@ from backend.api_v1.review_level.review_level_dependencies import (
 )
 from backend.api_v1.review_level.review_level_service import ReviewLevelService
 from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/review_levels",
@@ -41,6 +43,7 @@ async def get_review_level(
     "",
     response_model=MutationResponse[ReviewLevelSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.REVIEW_LEVEL)],
 )
 async def create_review_level(
     level_in: ReviewLevelCreate,
@@ -52,6 +55,7 @@ async def create_review_level(
 @router.patch(
     "/{review_level_id}",
     response_model=MutationResponse[ReviewLevelSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.REVIEW_LEVEL)],
 )
 async def update_review_level(
     level_update: ReviewLevelUpdate,
@@ -61,7 +65,11 @@ async def update_review_level(
     return await service.update_level(record.id, level_update)
 
 
-@router.delete("/{review_level_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{review_level_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.REVIEW_LEVEL)],
+)
 async def delete_review_level(
     review_level_id: int,
     service: Annotated[ReviewLevelService, Depends(get_review_level_service)],

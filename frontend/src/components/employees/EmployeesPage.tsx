@@ -56,9 +56,11 @@ export function EmployeesPage() {
     const localeText = useDataGridLocale();
     const navigate = useNavigate();
     const muiTheme = useTheme();
-    // Below md the filter selects don't fit on one line — they move into a Drawer
+    // Below lg the filter selects don't all fit on one line alongside the search +
+    // Add button — squeezing further would clip the Add button (the toolbar is a
+    // no-wrap row inside an overflow:hidden box). So at lg they move into a Drawer
     // opened by the filter-lines icon, and the Add button collapses to an icon.
-    const isCompact = useMediaQuery(muiTheme.breakpoints.down('md'));
+    const isCompact = useMediaQuery(muiTheme.breakpoints.down('lg'));
 
     // Dev/superadmin (bypass) users may force-cascade related records on delete.
     const isDev = useAuthStore(
@@ -253,7 +255,7 @@ export function EmployeesPage() {
     const employeeSearch = (
         <Autocomplete<Employee>
             size="small"
-            sx={{ width: isCompact ? undefined : 280, flex: isCompact ? 1 : undefined, minWidth: 0 }}
+            sx={{ width: isCompact ? undefined : 280, flex: isCompact ? 1 : undefined, minWidth: 160 }}
             options={employees}
             value={selectedEmp}
             onChange={(_, opt) => setSelectedEmpId(opt?.id ?? null)}
@@ -407,6 +409,7 @@ export function EmployeesPage() {
                             variant="contained"
                             startIcon={<AddIcon />}
                             onClick={() => setCreateOpen(true)}
+                            sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
                         >
                             {cfl(getString('addEmployee') || 'Add Employee')}
                         </Button>

@@ -4,6 +4,7 @@ import { Box, Breadcrumbs, Tab, Tabs, Typography } from '@mui/material';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { Link } from '@tanstack/react-router';
 import AppShell from '../../layout/AppShell';
+import { PageContainer } from '../../layout/PageContainer';
 import { EmployeeEventTypeCrud } from './employee_event_types/EmployeeEventTypeCrud';
 import { EmployeeEventDirectionTypeCrud } from './employee_event_direction_types/EmployeeEventDirectionTypeCrud';
 import { EmployeeEventStatusCrud } from './employee_event_statuses/EmployeeEventStatusCrud';
@@ -25,7 +26,7 @@ export function EmployeeEventsPage() {
 
     return (
         <AppShell>
-            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1800, mx: 'auto' }}>
+            <PageContainer>
                 <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
                     <Link to="/admin" style={{ textDecoration: 'none', color: 'inherit' }}>
                         <Typography variant="body2" color="text.secondary">
@@ -46,7 +47,7 @@ export function EmployeeEventsPage() {
                 <TabPanel value={tab} index={0}><EmployeeEventTypeCrud /></TabPanel>
                 <TabPanel value={tab} index={1}><EmployeeEventDirectionTypeCrud /></TabPanel>
                 <TabPanel value={tab} index={2}><EmployeeEventStatusCrud /></TabPanel>
-            </Box>
+            </PageContainer>
         </AppShell>
     );
 }

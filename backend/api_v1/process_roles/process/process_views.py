@@ -13,6 +13,8 @@ from backend.api_v1.process_roles.process.process_dependencies import (
 )
 from backend.api_v1.process_roles.process.process_service import ProcessService
 from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/admin/processes",
@@ -21,7 +23,11 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[ProcessSchema])
+@router.get(
+    "",
+    response_model=List[ProcessSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.PROCESS)],
+)
 async def get_processes(
     service: Annotated[ProcessService, Depends(get_process_service)],
     is_active: Optional[bool] = None,
@@ -30,7 +36,11 @@ async def get_processes(
     return await service.get_processes(is_active=is_active, sort=sort)
 
 
-@router.get("/{process_id}", response_model=ProcessSchema)
+@router.get(
+    "/{process_id}",
+    response_model=ProcessSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.PROCESS)],
+)
 async def get_process(
     record: ProcessSchema = Depends(process_by_id),
 ):
@@ -41,6 +51,7 @@ async def get_process(
     "",
     response_model=MutationResponse[ProcessSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.PROCESS)],
 )
 async def create_process(
     process_in: ProcessCreate,
@@ -49,7 +60,11 @@ async def create_process(
     return await service.create_process(process_in)
 
 
-@router.patch("/{process_id}", response_model=MutationResponse[ProcessSchema])
+@router.patch(
+    "/{process_id}",
+    response_model=MutationResponse[ProcessSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.PROCESS)],
+)
 async def update_process(
     process_update: ProcessUpdate,
     record: ProcessSchema = Depends(process_by_id),
@@ -58,7 +73,11 @@ async def update_process(
     return await service.update_process(record.id, process_update)
 
 
-@router.delete("/{process_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{process_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.PROCESS)],
+)
 async def delete_process(
     process_id: int,
     service: Annotated[ProcessService, Depends(get_process_service)],

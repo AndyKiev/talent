@@ -279,7 +279,7 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
     );
 
     return (
-        <Box sx={{ minHeight: "100vh", background: t.bg, transition: "background 0.3s" }}>
+        <Box sx={{ minHeight: "100vh", overflowX: "hidden", background: t.bg, transition: "background 0.3s" }}>
             <AppBar
                 position="sticky"
                 elevation={0}

@@ -433,8 +433,10 @@ export function ReviewSessionsPage() {
             <Box
                 sx={{
                     p: { xs: 2, sm: 3 },
-                    px: { xs: 2, sm: 4, md: 6 },
-                    maxWidth: '100%',
+                    // Canonical width so breadcrumbs line up with every other page.
+                    maxWidth: 1800,
+                    mx: 'auto',
+                    width: '100%',
                     // Fixed-height page so the grid scrolls internally (pinned headers)
                     // instead of the whole page scrolling under the 56px AppBar.
                     height: 'calc(100vh - 56px)',

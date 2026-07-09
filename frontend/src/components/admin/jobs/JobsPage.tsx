@@ -1,6 +1,7 @@
 // src/components/admin/jobs/JobsPage.tsx
 import AppShell from '../../layout/AppShell';
-import { Box, Breadcrumbs, Typography } from '@mui/material';
+import { PageContainer } from '../../layout/PageContainer';
+import { Breadcrumbs, Typography } from '@mui/material';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { Link } from '@tanstack/react-router';
 import { JobCrud } from './JobCrud';
@@ -15,7 +16,7 @@ export function JobsPage() {
 
   return (
     <AppShell>
-      <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1100, mx: 'auto' }}>
+      <PageContainer>
         <Breadcrumbs
           separator={<NavigateNextIcon fontSize="small" />}
           sx={{ mb: 3 }}
@@ -31,7 +32,7 @@ export function JobsPage() {
         </Breadcrumbs>
 
         <JobCrud />
-      </Box>
+      </PageContainer>
     </AppShell>
   );
 }

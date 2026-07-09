@@ -15,6 +15,8 @@ from backend.api_v1.review_level_requirement.review_level_requirement_service im
     ReviewLevelRequirementService,
 )
 from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/review_level_requirements",
@@ -49,6 +51,7 @@ async def get_single_requirement(
     "",
     response_model=MutationResponse[ReviewLevelRequirementSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.REVIEW_LEVEL_REQUIREMENT)],
 )
 async def create_requirement(
     req_in: ReviewLevelRequirementCreate,
@@ -63,6 +66,7 @@ async def create_requirement(
 @router.patch(
     "/{requirement_id}",
     response_model=MutationResponse[ReviewLevelRequirementSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.REVIEW_LEVEL_REQUIREMENT)],
 )
 async def update_requirement(
     req_update: ReviewLevelRequirementUpdate,
@@ -75,7 +79,11 @@ async def update_requirement(
     return await service.update_requirement(record.id, req_update)
 
 
-@router.delete("/{requirement_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{requirement_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.REVIEW_LEVEL_REQUIREMENT)],
+)
 async def delete_requirement(
     requirement_id: int,
     service: Annotated[

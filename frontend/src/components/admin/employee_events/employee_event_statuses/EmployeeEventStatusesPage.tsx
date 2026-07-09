@@ -1,6 +1,7 @@
 // src/components/admin/employee_events/employee_event_statuses/EmployeeEventStatusesPage.tsx
 import AppShell from '../../../layout/AppShell';
-import { Box, Breadcrumbs, Typography } from '@mui/material';
+import { PageContainer } from '../../../layout/PageContainer';
+import { Breadcrumbs, Typography } from '@mui/material';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { Link } from '@tanstack/react-router';
 import { EmployeeEventStatusCrud } from './EmployeeEventStatusCrud';
@@ -13,7 +14,7 @@ export function EmployeeEventStatusesPage() {
 
   return (
     <AppShell>
-      <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1100, mx: 'auto' }}>
+      <PageContainer>
         <Breadcrumbs
           separator={<NavigateNextIcon fontSize="small" />}
           sx={{ mb: 3 }}
@@ -34,7 +35,7 @@ export function EmployeeEventStatusesPage() {
         </Breadcrumbs>
 
         <EmployeeEventStatusCrud />
-      </Box>
+      </PageContainer>
     </AppShell>
   );
 }

@@ -30,8 +30,9 @@ export function PlanningSessionsPage() {
             <Box
                 sx={{
                     p: { xs: 2, sm: 3 },
-                    maxWidth: 1300,
+                    maxWidth: 1800,
                     mx: 'auto',
+                    width: '100%',
                     // Fixed-height page so the sessions grid scrolls internally with
                     // pinned headers instead of the page scrolling under the AppBar.
                     height: 'calc(100vh - 56px)',

@@ -23,6 +23,7 @@ import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import AppShell from '../layout/AppShell';
+import { PageContainer } from '../layout/PageContainer';
 import { useTheme } from '../theme/ThemeContext';
 import useString from '../../hooks/useString';
 import { USER_SETTINGS_EFFECTIVE_QK, EFFECTIVE_SETTINGS_QK } from '../../utils/queryKeys';
@@ -246,7 +247,7 @@ export function UserSettingsPage() {
 
     return (
         <AppShell>
-            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 900, mx: 'auto' }}>
+            <PageContainer>
                 <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
                     <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
                         <Typography variant="body2" color="text.secondary">
@@ -290,7 +291,7 @@ export function UserSettingsPage() {
                         {snackbar.message}
                     </Alert>
                 </Snackbar>
-            </Box>
+            </PageContainer>
         </AppShell>
     );
 }

@@ -220,34 +220,32 @@ export function DevelopmentPlanSection({
                                     </Stack>
                                 ) : (
                                     <Stack direction="column" spacing={0.25} sx={{ flex: 1, pt: '4px' }}>
-                                        <Stack direction="row" spacing={1} alignItems="flex-start">
-                                            <Typography fontSize={13} sx={{ flex: 1, whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: mission.text ? t.text : t.textMuted }}>
-                                                {mission.text || '—'}
-                                            </Typography>
-                                            {comp && (
-                                                <Chip
-                                                    size="small"
-                                                    label={comp.name}
-                                                    sx={{
-                                                        color: comp.color,
-                                                        borderColor: comp.color,
-                                                        fontWeight: 600,
-                                                        bgcolor: comp.color + '14',
-                                                        flex: 'none',
-                                                    }}
-                                                    variant="outlined"
-                                                />
-                                            )}
-                                        </Stack>
+                                        {comp && (
+                                            <Chip
+                                                size="small"
+                                                label={comp.name}
+                                                sx={{
+                                                    color: comp.color,
+                                                    borderColor: comp.color,
+                                                    fontWeight: 600,
+                                                    bgcolor: comp.color + '14',
+                                                    alignSelf: 'flex-start',
+                                                }}
+                                                variant="outlined"
+                                            />
+                                        )}
+                                        <Typography fontSize={13} sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: mission.text ? t.text : t.textMuted }}>
+                                            {mission.text || '—'}
+                                        </Typography>
                                         {mission.kpi ? (
-                                            <Typography fontSize={11} color={t.textMuted} sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                                            <Typography fontSize={11} color={t.textMuted} sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', mt: 0.125 }}>
                                                 <Box component="span" sx={{ fontWeight: 600, color: t.textSecondary }}>
                                                     {getString('missionKpi')}:
                                                 </Box>{' '}
                                                 {mission.kpi}
                                             </Typography>
                                         ) : (
-                                            <Typography fontSize={11} color={t.textMuted}>
+                                            <Typography fontSize={11} color={t.textMuted} sx={{ mt: 0.125 }}>
                                                 {getString('missionKpi')}: —
                                             </Typography>
                                         )}

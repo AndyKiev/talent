@@ -52,8 +52,9 @@ export function PlanSessionDetailPage() {
             <Box
                 sx={{
                     p: { xs: 2, sm: 3 },
-                    maxWidth: 1300,
+                    maxWidth: 1800,
                     mx: 'auto',
+                    width: '100%',
                     height: 'calc(100vh - 56px)',
                     display: 'flex',
                     flexDirection: 'column',

@@ -119,6 +119,20 @@ class EssenceName(str, Enum):
     # ── Developer tools ──────────────────────────────────────────────────────
     DB_TABLE = "db_table"
     MENU = "menu"
+    APP_SETTING = "app_setting"
+    SETTING_VALUE_TYPE = "setting_value_type"
+
+    # ── Process roles ────────────────────────────────────────────────────────
+    PROCESS = "process"
+    PROCESS_ROLE = "process_role"
+    PROCESS_ROLE_HOLDER = "process_role_holder"
+
+    # ── Review setup ─────────────────────────────────────────────────────────
+    LANGUAGE_LEVEL = "language_level"
+    REVIEW_DIMENSION = "review_dimension"
+    REVIEW_DIMENSION_CRITERION = "review_dimension_criterion"
+    REVIEW_LEVEL = "review_level"
+    REVIEW_LEVEL_REQUIREMENT = "review_level_requirement"
 
 
 class PlanSessionStatusKey(str, Enum):

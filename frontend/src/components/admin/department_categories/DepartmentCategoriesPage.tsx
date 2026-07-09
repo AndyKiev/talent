@@ -1,6 +1,7 @@
 // src/components/admin/department_categories/DepartmentCategoriesPage.tsx
 import AppShell from '../../layout/AppShell.tsx';
-import { Box, Breadcrumbs, Typography } from '@mui/material';
+import { PageContainer } from '../../layout/PageContainer';
+import { Breadcrumbs, Typography } from '@mui/material';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { Link } from '@tanstack/react-router';
 import { DepartmentCategoryCrud } from './DepartmentCategoryCrud.tsx';
@@ -12,7 +13,7 @@ export function DepartmentCategoriesPage() {
     const getString = useString({ str });
     return (
         <AppShell>
-            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1100, mx: 'auto' }}>
+            <PageContainer>
                 <Breadcrumbs
                     separator={<NavigateNextIcon fontSize="small" />}
                     sx={{ mb: 3 }}
@@ -28,7 +29,7 @@ export function DepartmentCategoriesPage() {
                 </Breadcrumbs>
 
                 <DepartmentCategoryCrud />
-            </Box>
+            </PageContainer>
         </AppShell>
     );
 }

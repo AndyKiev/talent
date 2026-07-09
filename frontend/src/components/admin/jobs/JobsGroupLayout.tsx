@@ -1,8 +1,9 @@
 // src/components/admin/jobs/JobsGroupLayout.tsx
 import { Outlet, useRouter, useMatchRoute, Link } from '@tanstack/react-router';
-import { Box, Tabs, Tab, Breadcrumbs, Typography } from '@mui/material';
+import { Tabs, Tab, Breadcrumbs, Typography } from '@mui/material';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import AppShell from '../../layout/AppShell';
+import { PageContainer } from '../../layout/PageContainer';
 import cfl from '../../../utils/helpers.ts';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
@@ -29,7 +30,7 @@ export function JobsGroupLayout() {
 
     return (
         <AppShell>
-            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1800, mx: 'auto' }}>
+            <PageContainer>
                 <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
                     <Link to="/admin" style={{ textDecoration: 'none', color: 'inherit' }}>
                         <Typography variant="body2" color="text.secondary">
@@ -52,7 +53,7 @@ export function JobsGroupLayout() {
                 </Tabs>
 
                 <Outlet />
-            </Box>
+            </PageContainer>
         </AppShell>
     );
 }

@@ -1,6 +1,7 @@
 // src/components/admin/departments/StructurePage.tsx
 import AppShell from '../../layout/AppShell';
-import { Box, Breadcrumbs, Typography } from '@mui/material';
+import { PageContainer } from '../../layout/PageContainer';
+import { Breadcrumbs, Typography } from '@mui/material';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { Link } from '@tanstack/react-router';
 import { DepartmentTree } from './DepartmentTree';
@@ -13,7 +14,7 @@ export function StructurePage() {
 
   return (
     <AppShell>
-      <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1200, mx: 'auto' }}>
+      <PageContainer>
         <Breadcrumbs
           separator={<NavigateNextIcon fontSize="small" />}
           sx={{ mb: 3 }}
@@ -29,7 +30,7 @@ export function StructurePage() {
         </Breadcrumbs>
 
         <DepartmentTree selectedId={null} />
-      </Box>
+      </PageContainer>
     </AppShell>
   );
 }

@@ -1,6 +1,7 @@
 // src/components/admin/departments/DepartmentDetailPage.tsx
 import AppShell from '../../layout/AppShell';
-import { Box, Breadcrumbs, Typography } from '@mui/material';
+import { PageContainer } from '../../layout/PageContainer';
+import { Breadcrumbs, Typography } from '@mui/material';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { Link } from '@tanstack/react-router';
 import { DepartmentTree } from './DepartmentTree';
@@ -17,7 +18,7 @@ export function DepartmentDetailPage({ departmentId }: Props) {
 
     return (
         <AppShell>
-            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1200, mx: 'auto' }}>
+            <PageContainer>
                 {/* Breadcrumbs */}
                 <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
                     <Link to="/admin" style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -36,7 +37,7 @@ export function DepartmentDetailPage({ departmentId }: Props) {
                 </Breadcrumbs>
 
                 <DepartmentTree selectedId={departmentId} />
-            </Box>
+            </PageContainer>
         </AppShell>
     );
 }

@@ -1,10 +1,14 @@
+import { useMemo } from "react";
 import { Outlet, useNavigate, useParams, useRouterState, Link } from "@tanstack/react-router";
 import useString from "../../hooks/useString.ts";
 import str from "../../strings/str.ts";
 import { useQuery } from "@tanstack/react-query";
 import { fetchEmployeeById } from "./employeeApi.ts";
 import AppShell from "../layout/AppShell.tsx";
-import { Box, Breadcrumbs, Chip, Divider, Paper, Stack, Tab, Tabs, Typography } from "@mui/material";
+import { PageContainer } from '../layout/PageContainer';
+import { Breadcrumbs, Chip, Divider, Paper, Stack, Typography } from "@mui/material";
+import { ResponsiveTabs } from "../ui/ResponsiveTabs.tsx";
+import type { TabItem } from "../ui/ResponsiveTabs.tsx";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import cfl from "../../utils/helpers.ts";
 
@@ -43,9 +47,19 @@ export function EmployeeCardLayout() {
 
     const statusName = employee?.status?.name ?? '';
 
+    // Build tab definitions with resolved translations.
+    const TABS: TabItem[] = useMemo(() => [
+        { label: cfl(getString('summary') || 'Summary'), value: 'summary' },
+        { label: cfl(getString('events') || 'Events'), value: 'events' },
+        { label: cfl(getString('talentAudit') || 'Talent Audit'), value: 'talent_audit' },
+        { label: cfl(getString('careerHistory') || 'Career History'), value: 'career_history' },
+        { label: cfl(getString('responsibilityHistory') || 'Responsibility History'), value: 'responsibility_history' },
+        { label: cfl(getString('trainings') || 'Trainings'), value: 'trainings' },
+    ], [getString]);
+
     return (
         <AppShell>
-            <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
+            <PageContainer>
                 {/* ── Breadcrumbs: back to the employees table ─────────────── */}
                 <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 1.5 }}>
                     <Link to="/employees" style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -86,27 +100,19 @@ export function EmployeeCardLayout() {
                     </Stack>
                 </Paper>
 
-                {/* ── Tab bar ─────────────────────────────────────────────── */}
+                {/* ── Tab bar (collapses into hamburger menu on narrow screens) */}
                 <Paper variant="outlined" sx={{ mb: 1.5 }}>
-                    <Tabs
-                        value={activeTab}
-                        onChange={(_, v) => goTo(v)}
-                        variant="scrollable"
-                        scrollButtons="auto"
-                    >
-                        <Tab label={cfl(getString('summary') || 'Summary')} value="summary" />
-                        <Tab label={cfl(getString('events') || 'Events')} value="events" />
-                        <Tab label={cfl(getString('talentAudit') || 'Talent Audit')} value="talent_audit" />
-                        <Tab label={cfl(getString('careerHistory') || 'Career History')} value="career_history" />
-                        <Tab label={cfl(getString('responsibilityHistory') || 'Responsibility History')} value="responsibility_history" />
-                        <Tab label={cfl(getString('trainings') || 'Trainings')} value="trainings" />
-                    </Tabs>
+                    <ResponsiveTabs
+                        tabs={TABS}
+                        activeTab={activeTab}
+                        onChange={goTo}
+                    />
                     <Divider />
                 </Paper>
 
                 {/* ── Active tab content ──────────────────────────────────── */}
                 <Outlet />
-            </Box>
+            </PageContainer>
         </AppShell>
     );
 }

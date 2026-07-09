@@ -15,6 +15,8 @@ from backend.api_v1.process_roles.process_role.process_role_service import (
     ProcessRoleService,
 )
 from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.auth.guards import Guard
+from backend.utils.enums import OperationVerb, EssenceName
 
 router = APIRouter(
     prefix="/admin/process_roles",
@@ -23,7 +25,11 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[ProcessRoleSchema])
+@router.get(
+    "",
+    response_model=List[ProcessRoleSchema],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.PROCESS_ROLE)],
+)
 async def get_process_roles(
     service: Annotated[ProcessRoleService, Depends(get_process_role_service)],
     process_id: Optional[int] = None,
@@ -35,7 +41,11 @@ async def get_process_roles(
     )
 
 
-@router.get("/{process_role_id}", response_model=ProcessRoleSchema)
+@router.get(
+    "/{process_role_id}",
+    response_model=ProcessRoleSchema,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.PROCESS_ROLE)],
+)
 async def get_process_role(
     record: ProcessRoleSchema = Depends(process_role_by_id),
 ):
@@ -46,6 +56,7 @@ async def get_process_role(
     "",
     response_model=MutationResponse[ProcessRoleSchema],
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Guard(OperationVerb.CREATE, EssenceName.PROCESS_ROLE)],
 )
 async def create_process_role(
     role_in: ProcessRoleCreate,
@@ -54,7 +65,11 @@ async def create_process_role(
     return await service.create_process_role(role_in)
 
 
-@router.patch("/{process_role_id}", response_model=MutationResponse[ProcessRoleSchema])
+@router.patch(
+    "/{process_role_id}",
+    response_model=MutationResponse[ProcessRoleSchema],
+    dependencies=[Guard(OperationVerb.MODIFY, EssenceName.PROCESS_ROLE)],
+)
 async def update_process_role(
     role_update: ProcessRoleUpdate,
     record: ProcessRoleSchema = Depends(process_role_by_id),
@@ -63,7 +78,11 @@ async def update_process_role(
     return await service.update_process_role(record.id, role_update)
 
 
-@router.delete("/{process_role_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{process_role_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Guard(OperationVerb.DELETE, EssenceName.PROCESS_ROLE)],
+)
 async def delete_process_role(
     process_role_id: int,
     service: Annotated[ProcessRoleService, Depends(get_process_role_service)],
