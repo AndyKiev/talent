@@ -20,9 +20,12 @@ import {
   Stack,
   Switch,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Tooltip,
   Typography,
 } from '@mui/material';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DownloadIcon from '@mui/icons-material/Download';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SyncIcon from '@mui/icons-material/Sync';
@@ -36,6 +39,7 @@ import {
   type OESL,
   type UserGroup,
 } from './permissionMatrixApi';
+import { applyPermissionMatrix } from '../operation_essence_set_links/oeslApi';
 
 import { OESL_QK } from '../../../../utils/queryKeys';
 import useString from '../../../../hooks/useString';
@@ -114,6 +118,7 @@ export function PermissionMatrixGrid() {
   const [search, setSearch] = useState('');
   const [operationFilter, setOperationFilter] = useState('');
   const [essenceFilter, setEssenceFilter] = useState('');
+  const [essenceSort, setEssenceSort] = useState<'translation' | 'key'>('translation');
 
   // Draft lives in the store (survives navigation).
   const draft = usePermissionMatrixStore((s) => s.draft);
@@ -140,6 +145,34 @@ export function PermissionMatrixGrid() {
       setSnackbar({
         open: true,
         message: (err as Error).message || (getString('syncFailed') || 'Sync failed'),
+        severity: 'error',
+      }),
+  });
+
+  const applyMutation = useMutation({
+    mutationFn: () => {
+      const payload = buildMatrixExport(
+        selectableGroups.map((g) => ({ id: g.id, name: g.name })),
+        draft,
+      );
+      return applyPermissionMatrix(payload.groups, false);
+    },
+    onSuccess: async (res) => {
+      await qc.invalidateQueries({ queryKey: OESL_QK });
+      await qc.invalidateQueries({ queryKey: USER_GROUP_QK });
+      // After a successful apply, reset the draft to the new server state
+      // (the next re-render will pick up the refreshed groups).
+      const msg =
+        getString('matrixApplied', {
+          added: res.total_added,
+          removed: res.total_removed,
+        }) || `Applied: ${res.total_added} added, ${res.total_removed} removed`;
+      setSnackbar({ open: true, message: msg, severity: 'success' });
+    },
+    onError: (err) =>
+      setSnackbar({
+        open: true,
+        message: (err as Error).message || (getString('applyFailed') || 'Apply failed'),
         severity: 'error',
       }),
   });
@@ -173,8 +206,13 @@ export function PermissionMatrixGrid() {
     [permissions],
   );
   const distinctEssences = useMemo(
-    () => Array.from(new Set(permissions.flatMap((p) => p.essence_names))).sort(),
-    [permissions],
+    () =>
+      Array.from(new Set(permissions.flatMap((p) => p.essence_names))).sort((a, b) => {
+        const labelA = essenceSort === 'translation' ? essenceLabel(a) : a;
+        const labelB = essenceSort === 'translation' ? essenceLabel(b) : b;
+        return labelA.localeCompare(labelB);
+      }),
+    [permissions, essenceSort],
   );
 
   const visiblePermissions = useMemo(() => {
@@ -325,6 +363,20 @@ export function PermissionMatrixGrid() {
             </Button>
           </span>
         </Tooltip>
+        <Tooltip title={getString('applyMatrixHint') || 'Save all changes to the database'}>
+          <span>
+            <Button
+              size="small"
+              variant="contained"
+              color="primary"
+              startIcon={<CloudUploadIcon />}
+              onClick={() => applyMutation.mutate()}
+              disabled={changedGroupCount === 0 || applyMutation.isPending}
+            >
+              {getString('apply') || 'Apply'}
+            </Button>
+          </span>
+        </Tooltip>
         <Button size="small" variant="contained" startIcon={<DownloadIcon />} onClick={handleDownload}>
           {getString('downloadJson') || 'Download JSON'}
         </Button>
@@ -353,15 +405,34 @@ export function PermissionMatrixGrid() {
           label={cfl(getString('essence')) || 'Essence'}
           value={essenceFilter}
           onChange={(e) => setEssenceFilter(e.target.value)}
-          sx={{ width: 220 }}
+          sx={{ width: 300 }}
         >
           <MenuItem value="">{cfl(getString('all')) || 'All'}</MenuItem>
           {distinctEssences.map((e) => (
-            <MenuItem key={e} value={e}>
-              {essenceLabel(e)}
+            <MenuItem key={e} value={e} dense>
+              <Typography variant="body2" noWrap>
+                <Box component="span" sx={{ fontWeight: 500 }}>{essenceLabel(e)}</Box>
+                <Box component="span" sx={{ color: 'text.secondary', ml: 0.75 }}>
+                  ({e})
+                </Box>
+              </Typography>
             </MenuItem>
           ))}
         </TextField>
+        <ToggleButtonGroup
+          size="small"
+          value={essenceSort}
+          exclusive
+          onChange={(_, v) => v && setEssenceSort(v)}
+          sx={{ height: 40 }}
+        >
+          <ToggleButton value="translation" sx={{ textTransform: 'none' }}>
+            {getString('byTranslation') || 'A→Å'}
+          </ToggleButton>
+          <ToggleButton value="key" sx={{ textTransform: 'none' }}>
+            {getString('byKey') || 'Key'}
+          </ToggleButton>
+        </ToggleButtonGroup>
       </Stack>
 
       {visiblePermissions.length === 0 ? (
