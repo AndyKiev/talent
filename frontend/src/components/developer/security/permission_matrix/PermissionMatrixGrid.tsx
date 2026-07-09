@@ -402,6 +402,7 @@ export function PermissionMatrixGrid() {
         </TextField>
         <Autocomplete
           size="small"
+          handleHomeEndKeys={false}
           options={distinctEssences}
           value={essenceFilter || null}
           onChange={(_, v) => setEssenceFilter(v ?? '')}
