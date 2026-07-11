@@ -35,32 +35,37 @@ export function ResponsiveTabs({ tabs, activeTab, onChange, tabsProps }: Respons
     const [containerWidth, setContainerWidth] = useState(0);
     const [moreAnchorEl, setMoreAnchorEl] = useState<HTMLElement | null>(null);
 
-    // ── Measure real tab widths via a hidden Tabs clone ──────────────────
-    useLayoutEffect(() => {
-        if (!measureRowRef.current) return;
+    // setState bail-outs: ResizeObserver refires with UNCHANGED sizes must not
+    // re-render (a new array identity every callback means every refire renders,
+    // and a render that nudges layout refires the observer — a feedback loop
+    // that ends in "Maximum update depth exceeded").
+    const applyTabWidths = useCallback(() => {
         const refs = tabRefs.current;
         const widths: number[] = [];
         for (let i = 0; i < refs.length; i++) {
             widths.push((refs[i]?.offsetWidth ?? 0) + 8); // 8px for MUI Tab gap
         }
-        setTabWidths(widths);
-    }, [tabs]);
+        setTabWidths((prev) =>
+            prev.length === widths.length && prev.every((w, i) => w === widths[i])
+                ? prev
+                : widths,
+        );
+    }, []);
+
+    // ── Measure real tab widths via a hidden Tabs clone ──────────────────
+    useLayoutEffect(() => {
+        if (!measureRowRef.current) return;
+        applyTabWidths();
+    }, [tabs, applyTabWidths]);
 
     // Re-measure on resize (tab widths shouldn't change, but just in case).
     useEffect(() => {
         const el = measureRowRef.current;
         if (!el) return;
-        const ro = new ResizeObserver(() => {
-            const refs = tabRefs.current;
-            const widths: number[] = [];
-            for (let i = 0; i < refs.length; i++) {
-                widths.push((refs[i]?.offsetWidth ?? 0) + 8);
-            }
-            setTabWidths(widths);
-        });
+        const ro = new ResizeObserver(() => applyTabWidths());
         ro.observe(el);
         return () => ro.disconnect();
-    }, [tabs]);
+    }, [tabs, applyTabWidths]);
 
     // ── Observe container width ──────────────────────────────────────────
     useEffect(() => {
@@ -68,7 +73,9 @@ export function ResponsiveTabs({ tabs, activeTab, onChange, tabsProps }: Respons
         if (!el) return;
         const ro = new ResizeObserver((entries) => {
             for (const entry of entries) {
-                setContainerWidth(entry.contentRect.width);
+                // Round: sub-pixel jitter between layout passes must not count
+                // as a resize (primitive state — equal values already bail out).
+                setContainerWidth(Math.round(entry.contentRect.width));
             }
         });
         ro.observe(el);
@@ -105,11 +112,15 @@ export function ResponsiveTabs({ tabs, activeTab, onChange, tabsProps }: Respons
         }
 
         if (rest.length > 0) {
+            // Widths are indexed by the ORIGINAL tabs order — once anything sits
+            // in `rest`, positions in `visible` no longer line up with tabWidths,
+            // so subtract the popped tab's OWN width, looked up by value.
+            const widthOf = new Map(tabs.map((t, i) => [t.value, tabWidths[i] ?? 100]));
             while (visible.length > 0 && used + MORE_BTN_WIDTH > containerWidth) {
                 const last = visible[visible.length - 1];
                 if (last.value === activeTab) break;
                 visible.pop();
-                used -= tabWidths[visible.length];
+                used -= widthOf.get(last.value) ?? 100;
                 rest.unshift(last);
             }
         }
@@ -151,10 +162,14 @@ export function ResponsiveTabs({ tabs, activeTab, onChange, tabsProps }: Respons
 
     const tabValue = overflowTabs.some((t) => t.value === activeTab) ? false : activeTab;
 
-    // Stabilise the ref callback so it doesn't recreate on every render.
-    const makeRef = useCallback((i: number) => (el: HTMLElement | null) => {
-        tabRefs.current[i] = el;
-    }, []);
+    // Stabilise the per-index ref callbacks: a fresh closure every render makes
+    // React detach+re-attach every measured ref on each render (needless churn
+    // next to a ResizeObserver). Cache one setter per index for the lifetime.
+    const refSetters = useRef<((el: HTMLElement | null) => void)[]>([]);
+    const makeRef = (i: number) =>
+        (refSetters.current[i] ??= (el: HTMLElement | null) => {
+            tabRefs.current[i] = el;
+        });
 
     return (
         <div

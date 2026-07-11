@@ -1,3 +1,13 @@
+/* Reserve the scrollbar gutter permanently: content width must NOT change when
+   the vertical scrollbar appears/disappears. Without this, width-measuring
+   components (ResponsiveTabs) oscillate — collapsing tabs shortens the page,
+   the scrollbar vanishes, the page widens, tabs expand, the page grows, the
+   scrollbar returns… an infinite ResizeObserver/render loop ("Maximum update
+   depth exceeded"). */
+html {
+  scrollbar-gutter: stable;
+}
+
 #root {
   width: 100%;
   margin: 10px;

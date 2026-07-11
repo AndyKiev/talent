@@ -20,6 +20,12 @@ interface UseStringParams {
 // Define the return type - accept any value that can be converted to string
 type UseStringReturn = (stringKey: string, variables?: Record<string, unknown>) => string;
 
+// Translation keys are camelCase by project rule, but some domain identifiers
+// arrive snake_case (e.g. process-role keys like `oversight_manager`). Convert
+// so a snake_case lookup transparently resolves the camelCase entry.
+const snakeToCamel = (key: string): string =>
+    key.replace(/_([a-z0-9])/g, (_, c: string) => c.toUpperCase());
+
 const useString = ({ exrStr, str }: UseStringParams = {}):
     UseStringReturn => {
     // Primitive selectors only: subscribing to the whole store (or the whole
@@ -33,24 +39,32 @@ const useString = ({ exrStr, str }: UseStringParams = {}):
 
     const getString = useMemo(() => {
         return (stringKey: string, variables: Record<string, unknown> = {}): string => {
-            if (typeof stringKey !== 'string' || stringKey.length === 0) {
-                console.warn('Invalid string key provided:', stringKey);
+            // An empty/whitespace key is a no-op (empty in → empty out). Callers
+            // frequently pass an optional/dynamic key that may be blank; that is
+            // not an error and must not spam the console.
+            if (typeof stringKey !== 'string' || stringKey.trim().length === 0) {
                 return '';
             }
+            // Try the key as given, then its camelCase form (snake_case domain
+            // identifiers resolve their camelCase translation entry).
+            const camel = snakeToCamel(stringKey);
+            const candidates = camel === stringKey ? [stringKey] : [stringKey, camel];
+
             let baseString: string | undefined;
-            // First, check database str
-            if (strings?.[stringKey]) {
-                baseString = strings[stringKey][userLang] || strings[stringKey][defaultLangShortName];
-            }
-
-            // Then, check exrStr (external str passed as parameter)
-            if (!baseString && exrStr?.[stringKey]) {
-                baseString = exrStr[stringKey][userLang] || exrStr[stringKey][defaultLangShortName];
-            }
-
-            // Finally, check str (hardcoded str)
-            if (!baseString && str?.[stringKey]) {
-                baseString = str[stringKey][userLang] || str[stringKey][defaultLangShortName];
+            for (const key of candidates) {
+                // First, check database str
+                if (strings?.[key]) {
+                    baseString = strings[key][userLang] || strings[key][defaultLangShortName];
+                }
+                // Then, check exrStr (external str passed as parameter)
+                if (!baseString && exrStr?.[key]) {
+                    baseString = exrStr[key][userLang] || exrStr[key][defaultLangShortName];
+                }
+                // Finally, check str (hardcoded str)
+                if (!baseString && str?.[key]) {
+                    baseString = str[key][userLang] || str[key][defaultLangShortName];
+                }
+                if (baseString) break;
             }
 
             // If still not found, return the key and log warning
