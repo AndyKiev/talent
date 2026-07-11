@@ -138,7 +138,7 @@ export function MenuForm({
         const flags = modeToFlags(data.visibility_mode);
         const payload: MenuCreate = {
             key: data.key,
-            label_key: data.label_key,
+            label_key: data.label_key ?? '',
             path: data.path,
             icon: data.icon || null,
             parent_id: data.parent_id,
