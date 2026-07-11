@@ -28,6 +28,10 @@ from backend.api_v1.menu.menu_messages import (
 )
 from backend.api_v1.user_group.user_group_model import UserGroup
 from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.app_setting.app_setting_service import (
+    get_bool_setting,
+    TRAINING_MODULE_ENABLED_KEY,
+)
 
 
 class MenuService(BaseService):
@@ -172,6 +176,12 @@ class MenuService(BaseService):
             return bool(user_group_ids & set(menu.allowed_group_ids))
 
         records = await self.repository.get_active_ordered()
+        # Training feature flag: with the module off the 'training' item is
+        # dropped for EVERYONE (the flag is app-only, never user-overridable).
+        if not await get_bool_setting(
+            self.session, TRAINING_MODULE_ENABLED_KEY, default=True
+        ):
+            records = [m for m in records if m.key != "training"]
         visible_ids = {m.id for m in records if item_visible(m)}
         return [
             MenuSchema.model_validate(m)

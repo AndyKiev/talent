@@ -16,6 +16,7 @@ import DoneIcon from '@mui/icons-material/Done';
 import type { GetStringFn } from '../../../types/getStringFn';
 import { useTheme } from '../../theme/ThemeContext';
 import { EmployeeTrainingsPanel } from '../../employees/trainings/EmployeeTrainingsPanel';
+import { useBooleanSetting } from '../../../hooks/useAppSetting';
 
 /** Title row with an on-demand edit / done pencil (shown only when editable). */
 function SectionHeader({
@@ -109,6 +110,13 @@ export function EmployeeDataTabs({
     employeeId, trainings, onTrainingsChange,
 }: Props) {
     const { t } = useTheme();
+    // Training module master flag: OFF hides the assign+status panel, while the
+    // tab itself and the free-text "required trainings" notes stay usable.
+    const { enabled: trainingModuleOn } = useBooleanSetting('training_module_enabled');
+    // People-review-scoped display switch: even with the master ON, the review
+    // Trainings tab shows the assign+status panel only when this is ON too. The
+    // free-text notes below stay regardless.
+    const { enabled: showTrainingsInReview } = useBooleanSetting('people_review_show_trainings');
     // Which sections are currently in edit mode (inputs revealed). Read-only by
     // default — same on-demand pattern as the competence summary / dimension lists.
     const [editSections, setEditSections] = useState<Record<string, boolean>>({});
@@ -245,7 +253,7 @@ export function EmployeeDataTabs({
                             getString={getString}
                         />
 
-                        {employeeId && (
+                        {trainingModuleOn && showTrainingsInReview && employeeId && (
                             <Box sx={{ mb: 3 }}>
                                 <EmployeeTrainingsPanel
                                     employeeId={employeeId}

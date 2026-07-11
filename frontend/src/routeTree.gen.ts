@@ -36,6 +36,7 @@ import { Route as AdminJobs_groupRouteRouteImport } from './routes/admin/jobs_gr
 import { Route as AdminDepartments_groupRouteRouteImport } from './routes/admin/departments_group/route'
 import { Route as TrainingTypesIndexRouteImport } from './routes/training/types/index'
 import { Route as TrainingStateIndexRouteImport } from './routes/training/state/index'
+import { Route as SettingsGroupKeyIndexRouteImport } from './routes/settings/$groupKey/index'
 import { Route as PlanningSessionIdIndexRouteImport } from './routes/planning/$sessionId/index'
 import { Route as People_reviewSessionIdIndexRouteImport } from './routes/people_review/$sessionId/index'
 import { Route as EmployeesEmployeeIdIndexRouteImport } from './routes/employees/$employeeId/index'
@@ -78,6 +79,7 @@ import { Route as EmployeesEmployeeIdResponsibility_historyIndexRouteImport } fr
 import { Route as EmployeesEmployeeIdEventsIndexRouteImport } from './routes/employees/$employeeId/events/index'
 import { Route as EmployeesEmployeeIdDepartmentsIndexRouteImport } from './routes/employees/$employeeId/departments/index'
 import { Route as EmployeesEmployeeIdCareer_historyIndexRouteImport } from './routes/employees/$employeeId/career_history/index'
+import { Route as DeveloperSettingsGroupKeyIndexRouteImport } from './routes/developer/settings/$groupKey/index'
 import { Route as DeveloperSecurityUser_groupsIndexRouteImport } from './routes/developer/security/user_groups/index'
 import { Route as DeveloperSecurityUser_group_typesIndexRouteImport } from './routes/developer/security/user_group_types/index'
 import { Route as DeveloperSecurityPermissions_overviewIndexRouteImport } from './routes/developer/security/permissions_overview/index'
@@ -276,6 +278,11 @@ const TrainingStateIndexRoute = TrainingStateIndexRouteImport.update({
   id: '/state/',
   path: '/state/',
   getParentRoute: () => TrainingRouteRoute,
+} as any)
+const SettingsGroupKeyIndexRoute = SettingsGroupKeyIndexRouteImport.update({
+  id: '/settings/$groupKey/',
+  path: '/settings/$groupKey/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const PlanningSessionIdIndexRoute = PlanningSessionIdIndexRouteImport.update({
   id: '/planning/$sessionId/',
@@ -511,6 +518,12 @@ const EmployeesEmployeeIdCareer_historyIndexRoute =
     id: '/career_history/',
     path: '/career_history/',
     getParentRoute: () => EmployeesEmployeeIdRouteRoute,
+  } as any)
+const DeveloperSettingsGroupKeyIndexRoute =
+  DeveloperSettingsGroupKeyIndexRouteImport.update({
+    id: '/developer/settings/$groupKey/',
+    path: '/developer/settings/$groupKey/',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const DeveloperSecurityUser_groupsIndexRoute =
   DeveloperSecurityUser_groupsIndexRouteImport.update({
@@ -921,6 +934,7 @@ export interface FileRoutesByFullPath {
   '/employees/$employeeId/': typeof EmployeesEmployeeIdIndexRoute
   '/people_review/$sessionId': typeof People_reviewSessionIdIndexRoute
   '/planning/$sessionId': typeof PlanningSessionIdIndexRoute
+  '/settings/$groupKey': typeof SettingsGroupKeyIndexRoute
   '/training/state': typeof TrainingStateIndexRoute
   '/training/types': typeof TrainingTypesIndexRoute
   '/admin/people_review/review_setup/dimensions': typeof AdminPeople_reviewReview_setupDimensionsRouteRouteWithChildren
@@ -966,6 +980,7 @@ export interface FileRoutesByFullPath {
   '/developer/security/permissions_overview': typeof DeveloperSecurityPermissions_overviewIndexRoute
   '/developer/security/user_group_types': typeof DeveloperSecurityUser_group_typesIndexRoute
   '/developer/security/user_groups': typeof DeveloperSecurityUser_groupsIndexRoute
+  '/developer/settings/$groupKey': typeof DeveloperSettingsGroupKeyIndexRoute
   '/employees/$employeeId/career_history': typeof EmployeesEmployeeIdCareer_historyIndexRoute
   '/employees/$employeeId/departments': typeof EmployeesEmployeeIdDepartmentsIndexRoute
   '/employees/$employeeId/events': typeof EmployeesEmployeeIdEventsIndexRoute
@@ -1031,6 +1046,7 @@ export interface FileRoutesByTo {
   '/employees/$employeeId': typeof EmployeesEmployeeIdIndexRoute
   '/people_review/$sessionId': typeof People_reviewSessionIdIndexRoute
   '/planning/$sessionId': typeof PlanningSessionIdIndexRoute
+  '/settings/$groupKey': typeof SettingsGroupKeyIndexRoute
   '/training/state': typeof TrainingStateIndexRoute
   '/training/types': typeof TrainingTypesIndexRoute
   '/people_review/$sessionId/employee/$employeeId': typeof People_reviewSessionIdEmployeeEmployeeIdRoute
@@ -1074,6 +1090,7 @@ export interface FileRoutesByTo {
   '/developer/security/permissions_overview': typeof DeveloperSecurityPermissions_overviewIndexRoute
   '/developer/security/user_group_types': typeof DeveloperSecurityUser_group_typesIndexRoute
   '/developer/security/user_groups': typeof DeveloperSecurityUser_groupsIndexRoute
+  '/developer/settings/$groupKey': typeof DeveloperSettingsGroupKeyIndexRoute
   '/employees/$employeeId/career_history': typeof EmployeesEmployeeIdCareer_historyIndexRoute
   '/employees/$employeeId/departments': typeof EmployeesEmployeeIdDepartmentsIndexRoute
   '/employees/$employeeId/events': typeof EmployeesEmployeeIdEventsIndexRoute
@@ -1159,6 +1176,7 @@ export interface FileRoutesById {
   '/employees/$employeeId/': typeof EmployeesEmployeeIdIndexRoute
   '/people_review/$sessionId/': typeof People_reviewSessionIdIndexRoute
   '/planning/$sessionId/': typeof PlanningSessionIdIndexRoute
+  '/settings/$groupKey/': typeof SettingsGroupKeyIndexRoute
   '/training/state/': typeof TrainingStateIndexRoute
   '/training/types/': typeof TrainingTypesIndexRoute
   '/admin/people_review/review_setup/dimensions': typeof AdminPeople_reviewReview_setupDimensionsRouteRouteWithChildren
@@ -1204,6 +1222,7 @@ export interface FileRoutesById {
   '/developer/security/permissions_overview/': typeof DeveloperSecurityPermissions_overviewIndexRoute
   '/developer/security/user_group_types/': typeof DeveloperSecurityUser_group_typesIndexRoute
   '/developer/security/user_groups/': typeof DeveloperSecurityUser_groupsIndexRoute
+  '/developer/settings/$groupKey/': typeof DeveloperSettingsGroupKeyIndexRoute
   '/employees/$employeeId/career_history/': typeof EmployeesEmployeeIdCareer_historyIndexRoute
   '/employees/$employeeId/departments/': typeof EmployeesEmployeeIdDepartmentsIndexRoute
   '/employees/$employeeId/events/': typeof EmployeesEmployeeIdEventsIndexRoute
@@ -1290,6 +1309,7 @@ export interface FileRouteTypes {
     | '/employees/$employeeId/'
     | '/people_review/$sessionId'
     | '/planning/$sessionId'
+    | '/settings/$groupKey'
     | '/training/state'
     | '/training/types'
     | '/admin/people_review/review_setup/dimensions'
@@ -1335,6 +1355,7 @@ export interface FileRouteTypes {
     | '/developer/security/permissions_overview'
     | '/developer/security/user_group_types'
     | '/developer/security/user_groups'
+    | '/developer/settings/$groupKey'
     | '/employees/$employeeId/career_history'
     | '/employees/$employeeId/departments'
     | '/employees/$employeeId/events'
@@ -1400,6 +1421,7 @@ export interface FileRouteTypes {
     | '/employees/$employeeId'
     | '/people_review/$sessionId'
     | '/planning/$sessionId'
+    | '/settings/$groupKey'
     | '/training/state'
     | '/training/types'
     | '/people_review/$sessionId/employee/$employeeId'
@@ -1443,6 +1465,7 @@ export interface FileRouteTypes {
     | '/developer/security/permissions_overview'
     | '/developer/security/user_group_types'
     | '/developer/security/user_groups'
+    | '/developer/settings/$groupKey'
     | '/employees/$employeeId/career_history'
     | '/employees/$employeeId/departments'
     | '/employees/$employeeId/events'
@@ -1527,6 +1550,7 @@ export interface FileRouteTypes {
     | '/employees/$employeeId/'
     | '/people_review/$sessionId/'
     | '/planning/$sessionId/'
+    | '/settings/$groupKey/'
     | '/training/state/'
     | '/training/types/'
     | '/admin/people_review/review_setup/dimensions'
@@ -1572,6 +1596,7 @@ export interface FileRouteTypes {
     | '/developer/security/permissions_overview/'
     | '/developer/security/user_group_types/'
     | '/developer/security/user_groups/'
+    | '/developer/settings/$groupKey/'
     | '/employees/$employeeId/career_history/'
     | '/employees/$employeeId/departments/'
     | '/employees/$employeeId/events/'
@@ -1637,10 +1662,12 @@ export interface RootRouteChildren {
   DeveloperTranslationsIndexRoute: typeof DeveloperTranslationsIndexRoute
   People_reviewSessionIdIndexRoute: typeof People_reviewSessionIdIndexRoute
   PlanningSessionIdIndexRoute: typeof PlanningSessionIdIndexRoute
+  SettingsGroupKeyIndexRoute: typeof SettingsGroupKeyIndexRoute
   People_reviewSessionIdEmployeeEmployeeIdRoute: typeof People_reviewSessionIdEmployeeEmployeeIdRoute
   AdminEmployee_eventsEmployee_event_direction_typesIndexRoute: typeof AdminEmployee_eventsEmployee_event_direction_typesIndexRoute
   AdminEmployee_eventsEmployee_event_statusesIndexRoute: typeof AdminEmployee_eventsEmployee_event_statusesIndexRoute
   AdminEmployee_eventsEmployee_event_typesIndexRoute: typeof AdminEmployee_eventsEmployee_event_typesIndexRoute
+  DeveloperSettingsGroupKeyIndexRoute: typeof DeveloperSettingsGroupKeyIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1833,6 +1860,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/training/state'
       preLoaderRoute: typeof TrainingStateIndexRouteImport
       parentRoute: typeof TrainingRouteRoute
+    }
+    '/settings/$groupKey/': {
+      id: '/settings/$groupKey/'
+      path: '/settings/$groupKey'
+      fullPath: '/settings/$groupKey'
+      preLoaderRoute: typeof SettingsGroupKeyIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/planning/$sessionId/': {
       id: '/planning/$sessionId/'
@@ -2127,6 +2161,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/employees/$employeeId/career_history'
       preLoaderRoute: typeof EmployeesEmployeeIdCareer_historyIndexRouteImport
       parentRoute: typeof EmployeesEmployeeIdRouteRoute
+    }
+    '/developer/settings/$groupKey/': {
+      id: '/developer/settings/$groupKey/'
+      path: '/developer/settings/$groupKey'
+      fullPath: '/developer/settings/$groupKey'
+      preLoaderRoute: typeof DeveloperSettingsGroupKeyIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/developer/security/user_groups/': {
       id: '/developer/security/user_groups/'
@@ -3034,6 +3075,7 @@ const rootRouteChildren: RootRouteChildren = {
   DeveloperTranslationsIndexRoute: DeveloperTranslationsIndexRoute,
   People_reviewSessionIdIndexRoute: People_reviewSessionIdIndexRoute,
   PlanningSessionIdIndexRoute: PlanningSessionIdIndexRoute,
+  SettingsGroupKeyIndexRoute: SettingsGroupKeyIndexRoute,
   People_reviewSessionIdEmployeeEmployeeIdRoute:
     People_reviewSessionIdEmployeeEmployeeIdRoute,
   AdminEmployee_eventsEmployee_event_direction_typesIndexRoute:
@@ -3042,6 +3084,7 @@ const rootRouteChildren: RootRouteChildren = {
     AdminEmployee_eventsEmployee_event_statusesIndexRoute,
   AdminEmployee_eventsEmployee_event_typesIndexRoute:
     AdminEmployee_eventsEmployee_event_typesIndexRoute,
+  DeveloperSettingsGroupKeyIndexRoute: DeveloperSettingsGroupKeyIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

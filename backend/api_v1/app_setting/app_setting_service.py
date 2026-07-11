@@ -29,6 +29,13 @@ from backend.api_v1.app_setting.app_setting_messages import (
 )
 from backend.api_v1.setting_value_type.setting_value_type_model import SettingValueType
 
+# Training-module feature flag (master) + its delete-on-disable child. The
+# master gates the whole training feature (menu item, /training pages, the
+# assign panel in people review / employee card); the child decides whether
+# flipping the master OFF also purges employee training assignments.
+TRAINING_MODULE_ENABLED_KEY = "training_module_enabled"
+TRAINING_DELETE_ON_DISABLE_KEY = "training_module_delete_data_on_disable"
+
 
 def cast_value(value: Any, type_key: Optional[str]) -> Any:
     """
@@ -296,6 +303,9 @@ class AppSettingService(BaseService):
     ) -> MutationResponse[AppSettingSchema]:
         orm_record = await self.get_by_id(setting_id)
         update_data = setting_update.model_dump(exclude_unset=True)
+        # Captured before the update commits — the training master's OFF
+        # transition (see _purge_training_data_on_disable) needs the old value.
+        old_value = orm_record.value
         # A setting locked to app-level (user_override_allowed=False) can never be
         # made user-overridable — force it off regardless of what the client sends.
         allowed = update_data.get(
@@ -337,6 +347,7 @@ class AppSettingService(BaseService):
         # Lowering an integer cap clamps every user override above it down to the
         # new cap (e.g. cap 5 -> 4 turns a user's stored 5 into 4).
         if "value" in update_data:
+            await self._purge_training_data_on_disable(updated, old_value)
             await self._clamp_user_overrides(updated)
         if group_ids is not None:
             await self.repository.set_group_links(setting_id, group_ids)
@@ -344,6 +355,32 @@ class AppSettingService(BaseService):
         schema = AppSettingSchema.from_orm_with_groups(orm_record)
         detail = await self._resolve_domain_success(AppSettingUpdateSuccess(schema.key))
         return MutationResponse(detail=detail, data=schema)
+
+    async def _purge_training_data_on_disable(self, setting, old_value: Any) -> None:
+        """When the training master flips ON->OFF and its delete-on-disable
+        child is ON, delete every employee training assignment
+        (employee_trainings rows). The training catalog (types / categories /
+        statuses) and the free-text training notes in people review are never
+        touched; with the child OFF the flip only hides the feature."""
+        if setting.key != TRAINING_MODULE_ENABLED_KEY:
+            return
+        type_key = await self._value_type_key(setting.value_type_id)
+        was_on = cast_value(old_value, type_key) is True
+        now_on = cast_value(setting.value, type_key) is True
+        if not was_on or now_on:
+            return
+        if not await get_bool_setting(
+            self.session, TRAINING_DELETE_ON_DISABLE_KEY, default=False
+        ):
+            return
+        from sqlalchemy import delete
+
+        from backend.api_v1.employee_training.employee_training_model import (
+            EmployeeTraining,
+        )
+
+        await self.session.execute(delete(EmployeeTraining))
+        await self.session.commit()
 
     async def _clamp_user_overrides(self, setting) -> None:
         """Clamp per-user overrides of an integer cap setting down to the global

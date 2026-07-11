@@ -188,6 +188,16 @@ APP_SETTINGS = [
         "description_key": "settingEmployeePhotosPeopleReviewDesc",
     },
     {
+        # Author avatars inside the review-notes drawer. Split out of the
+        # people_review surface so note avatars can be switched independently.
+        "key": "employee_photos_review_comments",
+        "value": True,
+        "value_type_key": "boolean",
+        "parent_key": "employee_photos_enabled",
+        "label_key": "settingEmployeePhotosReviewComments",
+        "description_key": "settingEmployeePhotosReviewCommentsDesc",
+    },
+    {
         "key": "employee_photos_presentation_session",
         "value": True,
         "value_type_key": "boolean",
@@ -232,6 +242,84 @@ APP_SETTINGS = [
         "label_key": "settingTempoShowProposedLevelSame",
         "description_key": "settingTempoShowProposedLevelSameDesc",
         "user_overridable": True,
+    },
+    {
+        # MASTER of the training module. When OFF the whole feature is hidden:
+        # the 'training' main-menu item disappears (filtered server-side in
+        # get_my_menus), /training pages redirect away, the trainings assign
+        # panel is hidden in people review (the tab + free-text "required
+        # trainings" notes stay) and on the employee card. The training catalog
+        # (types/categories/statuses) is NEVER deleted by this switch. App-only.
+        "key": "training_module_enabled",
+        "value": True,
+        "value_type_key": "boolean",
+        "label_key": "settingTrainingModuleEnabled",
+        "description_key": "settingTrainingModuleEnabledDesc",
+        "user_override_allowed": False,
+        # Visible to regular (group-less) reviewers so their client can read the
+        # master flag that gates the review Trainings panel (see
+        # people_review_show_trainings).
+        "visible_to_regular": True,
+    },
+    {
+        # People-review-scoped display switch for the training module. When ON
+        # (and the training master is ON) the review evaluation "Trainings" tab
+        # shows the real assign+status panel; when OFF the panel is hidden there
+        # while the free-text training notes stay. Independent of the master:
+        # master OFF hides the panel everywhere regardless. App-only.
+        "key": "people_review_show_trainings",
+        "value": True,
+        "value_type_key": "boolean",
+        "label_key": "settingPeopleReviewShowTrainings",
+        "description_key": "settingPeopleReviewShowTrainingsDesc",
+        "user_override_allowed": False,
+        # Visible to regular (group-less) reviewers so their client can read the
+        # flag — the review Trainings panel then behaves the same for everyone.
+        "visible_to_regular": True,
+    },
+    {
+        # Child of the training master. When ON, turning the master OFF also
+        # DELETES all employee training assignments (employee_trainings rows) —
+        # the developer settings UI warns with a modal first. Training types /
+        # categories (the catalog behind the main menu) are kept either way.
+        # When OFF, turning the master off only hides/disables the feature.
+        "key": "training_module_delete_data_on_disable",
+        "value": False,
+        "value_type_key": "boolean",
+        "parent_key": "training_module_enabled",
+        "label_key": "settingTrainingModuleDeleteDataOnDisable",
+        "description_key": "settingTrainingModuleDeleteDataOnDisableDesc",
+        "user_override_allowed": False,
+    },
+    {
+        # When ON the people-review evaluation page silently prefetches the
+        # per-employee data (detail, evaluations, languages, notes, proposed
+        # level, education, children, trainings) of the OTHER employees in the
+        # viewer's scope, in the same order as the prev/next arrows, so
+        # switching employees renders instantly from the TanStack Query cache.
+        # Network-only warm-up — never touches the current employee's draft.
+        # Per-user overridable; visible to regular (group-less) reviewers so
+        # their client can read the flag.
+        "key": "people_review_prefetch_employees",
+        "value": False,
+        "value_type_key": "boolean",
+        "label_key": "settingPeopleReviewPrefetchEmployees",
+        "description_key": "settingPeopleReviewPrefetchEmployeesDesc",
+        "user_overridable": True,
+        "visible_to_regular": True,
+    },
+    {
+        # Cap of the prefetch queue: at most this many employees AHEAD of the
+        # current one (arrow order, wrapping) are warmed up. Protects the
+        # browser/backend from flooding in large scopes. 0 disables the
+        # warm-up entirely. App-only (never user-overridable).
+        "key": "people_review_prefetch_max_employees",
+        "value": 5,
+        "value_type_key": "integer",
+        "label_key": "settingPeopleReviewPrefetchMaxEmployees",
+        "description_key": "settingPeopleReviewPrefetchMaxEmployeesDesc",
+        "user_override_allowed": False,
+        "visible_to_regular": True,
     },
     {
         # The menu (menus table id) users land on after login. App default here;
@@ -283,6 +371,8 @@ async def seed_app_settings():
                     user_overridable=s.get("user_overridable", False),
                     options_source=s.get("options_source"),
                     user_override_allowed=s.get("user_override_allowed", True),
+                    visible_to_all_groups=s.get("visible_to_all_groups", True),
+                    visible_to_regular=s.get("visible_to_regular", False),
                 )
             )
             print(f"Seeded app setting: {s['key']}")
