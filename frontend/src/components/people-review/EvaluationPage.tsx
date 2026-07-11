@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from '@tanstack/react-router';
 import {
     Alert,
+    Autocomplete,
     Badge,
     Box,
     Breadcrumbs,
@@ -21,6 +22,7 @@ import {
     Switch,
     Tab,
     Tabs,
+    TextField,
     Tooltip,
     Typography,
 } from '@mui/material';
@@ -104,7 +106,9 @@ import { useEvaluationAutosave } from './evaluation/useEvaluationAutosave';
 import EmployeeAvatar from '../ui/EmployeeAvatar';
 import BusyBackdrop from '../ui/BusyBackdrop';
 import { OversightManagerPicker } from './OversightManagerPicker';
+import { ScopeSettings } from './ScopeSettings';
 import { useOnlyMeMode } from './useOnlyMeMode';
+import { useSiblingPrefetch } from './useSiblingPrefetch';
 
 export function EvaluationPage() {
     const { sessionId: sessionIdParam, employeeId: employeeIdParam } = useParams({ strict: false }) as { sessionId: string; employeeId: string };
@@ -164,7 +168,7 @@ export function EvaluationPage() {
     // can gate their polling on it. Supervision (department-target role) = read-only
     // "watch": until my_scopes loads, default to view-only so a supervisor never
     // sees an editable flash, and so editors don't poll before their role is known.
-    const { data: scopes } = useQuery({
+    const { data: scopes, isFetching: scopesFetching } = useQuery({
         queryKey: PEOPLE_REVIEW_MY_SCOPES_QK,
         queryFn: fetchMyScopes,
         staleTime: 60_000,
@@ -179,30 +183,49 @@ export function EvaluationPage() {
     // on demand — see `refreshPersonData` below. Editors never refetch in the
     // background so their in-memory draft is never clobbered.
 
-    const { data: rseDetail, isLoading: rseLoading, isFetching: rseFetching } = useQuery({
+    const { data: rseDetail, isLoading: rseLoading } = useQuery({
         queryKey: ['rse_detail', sid, eid],
         queryFn: () => fetchRSEBySessionEmployee(sid, eid),
         staleTime: 30_000,
         enabled: !!sid && !!eid,
+        // Out-of-scope employees 404 by design (scope guard). Don't retry — 3
+        // retries just repeat the same 404 and delay the realign redirect.
+        retry: false,
     });
     // Flat rse id, resolved from (session, employee). Everything below keys off it
     // exactly as before; 0 until the detail loads, so dependent queries stay gated.
     const rid = rseDetail?.id ?? 0;
 
-    // Fetch sibling employees for prev/next navigation
-    const sessionId = rseDetail?.session_id;
-    const { data: siblings = [] } = useQuery({
+    // Fetch sibling employees for prev/next navigation. Keyed by the URL session
+    // id — NOT rseDetail.session_id: after a scope/department switch the detail
+    // for the URL employee 404s (out of the new scope), and a roster gated on the
+    // detail would never load, leaving the page dead-ended with no realign.
+    const sessionId = sid;
+    const { data: siblings = [], isFetching: siblingsFetching } = useQuery({
         queryKey: ['session_employees', sessionId],
-        queryFn: () => fetchSessionEmployees(sessionId!),
+        queryFn: () => fetchSessionEmployees(sessionId),
         staleTime: 30_000,
         enabled: !!sessionId,
     });
 
-    const { data: evaluations = [], isLoading: evalLoading, isFetching: evalFetching } = useQuery({
+    const { data: evaluations = [], isLoading: evalLoading } = useQuery({
         queryKey: ['evaluations', rid],
         queryFn: () => fetchEvaluations(rid),
         staleTime: 30_000,
         enabled: !!rid,
+    });
+
+    // Background warm-up of the other in-scope employees (arrow order), gated by
+    // the `people_review_prefetch_employees` setting. Starts only once the
+    // current employee's evaluations have landed so it never competes with the
+    // visible load, and pauses while the scope/roster is switching (a walk
+    // against the outgoing scope would only 404 and slow the switch down).
+    useSiblingPrefetch({
+        sid,
+        currentEid: eid,
+        siblings,
+        ready: !!rid && !evalLoading,
+        paused: scopesFetching || siblingsFetching,
     });
 
     // --- Foreign languages ---
@@ -212,7 +235,7 @@ export function EvaluationPage() {
         queryFn: fetchLanguageLevels,
         staleTime: 5 * 60_000,
     });
-    const { data: langProfile, isFetching: langFetching } = useQuery({
+    const { data: langProfile, isLoading: langLoading } = useQuery({
         queryKey: ['employee_language_profile', employeeId],
         queryFn: () => fetchEmployeeLanguageProfile(employeeId!),
         staleTime: 30_000,
@@ -495,12 +518,15 @@ export function EvaluationPage() {
     const [newResultText, setNewResultText] = useState('');
     const [analysisTab, setAnalysisTab] = useState(0);
 
-    // Hydrate the draft once all server data for this rseId is loaded and settled.
+    // Hydrate the draft as soon as data for this rseId EXISTS — first-load flags,
+    // not isFetching: prefetched/cached data renders the full page instantly while
+    // any 30s-stale background refresh completes silently (a switch to a warmed
+    // sibling must not blank the lower tabs until the refetch settles).
     // Editable path: skipped when a draft already exists, so in-progress edits survive
     // navigating away and back (the draft is the live source; autosave keeps it).
     const hydrationReady =
-        !!rseDetail && !rseFetching && !evalFetching &&
-        (!employeeId || (langProfile !== undefined && !langFetching));
+        !!rseDetail && !rseLoading && !evalLoading &&
+        (!employeeId || (langProfile !== undefined && !langLoading));
     useEffect(() => {
         if (viewOnly) return; // view-only re-hydration is handled separately below
         if (!hydrationReady || !rseDetail || storeDraft) return;
@@ -571,6 +597,32 @@ export function EvaluationPage() {
         });
     };
 
+    // After a scope/department switch (ScopeSettings) the URL employee is usually
+    // NOT in the newly-scoped sibling list (they belonged to the previous
+    // department). Realign to the FIRST employee of the new scope so the shown
+    // data always matches the selected department.
+    //
+    // `realignTargetId` is a PRIMITIVE (number | null). The redirect runs in an
+    // effect keyed on that primitive + `eid` — NOT rendered as <Navigate> during
+    // render (which re-navigated on every render and blew the update-depth
+    // limit), and NOT keyed on the `siblings` array (whose identity churns on
+    // every refetch). Once the redirect lands, `eid` becomes the target, the
+    // target is now in `siblings`, so `realignTargetId` flips to null and the
+    // effect stops — loop-proof by construction.
+    const realignTargetId =
+        !siblingsFetching && siblings.length > 0 && !siblings.some(s => s.employee_id === eid)
+            ? siblings[0].employee_id
+            : null;
+    useEffect(() => {
+        if (realignTargetId != null && realignTargetId !== eid) {
+            navigate({
+                to: '/people_review/$sessionId/employee/$employeeId',
+                params: { sessionId: String(sid), employeeId: String(realignTargetId) },
+                replace: true,
+            });
+        }
+    }, [realignTargetId, eid, sid, navigate]);
+
     const isLoading = rseLoading || evalLoading;
     const sessionStatus = rseDetail?.session_status ?? 'open';
     // Editable only if BOTH session is open AND employee status is open
@@ -596,7 +648,8 @@ export function EvaluationPage() {
     const canComment = !!activeRoleId && !isOwnRecord && isEditable && !presentationMode;
     const showCommentsButton = comments.length > 0 || canComment;
     // The role a NEW note would be authored under — drives the composer's scopes
-    // (supervision unlocks the 'to_oversight' escalation scope). Null when role-less.
+    // (oversight: to_subject; supervision: to_oversight — see /review-comments skill).
+    // Null when role-less.
     const myAuthorRole: 'oversight' | 'supervision' | null =
         activeRole?.link_target === 'department' ? 'supervision'
             : activeRole?.link_target === 'employee' ? 'oversight'
@@ -1043,10 +1096,33 @@ export function EvaluationPage() {
         });
     };
 
-    if (isLoading) {
+    // Scope switched and the URL employee fell out of it — the effect above is
+    // redirecting to the first in-scope employee; show a spinner meanwhile
+    // instead of flashing the empty (rseDetail-less) body.
+    if (realignTargetId != null || isLoading) {
         return (
             <AppShell>
                 <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}><CircularProgress /></Box>
+            </AppShell>
+        );
+    }
+
+    // Loaded, but the record is out of the current view's scope (404) and there
+    // is no in-scope employee to realign to (e.g. empty roster / "only myself").
+    // Render an explicit notice instead of the blank "#0" header.
+    if (!rseDetail) {
+        return (
+            <AppShell>
+                <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 900, mx: 'auto', width: '100%' }}>
+                    <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 2 }}>
+                        <Link to="/people_review" style={{ textDecoration: 'none', color: 'inherit' }}>
+                            <Typography variant="body2" color="text.secondary">{getString('peopleReview')}</Typography>
+                        </Link>
+                    </Breadcrumbs>
+                    <Alert severity="info" icon={<VisibilityIcon />} sx={{ borderRadius: '10px' }}>
+                        {getString('employeeNotInScope')}
+                    </Alert>
+                </Box>
             </AppShell>
         );
     }
@@ -1118,7 +1194,7 @@ export function EvaluationPage() {
                                             {rseDetail.employee_name}
                                         </Typography>
                                         <Chip
-                                            label={rseDetail.status}
+                                            label={getString(rseDetail.status)}
                                             size="small"
                                             sx={{
                                                 fontWeight: 700, fontSize: 11,
@@ -1146,7 +1222,7 @@ export function EvaluationPage() {
                                 {/* Employee nav (prev/next) + presentation toggle — opposite the name */}
                                 <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
                                     <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                        <Tooltip title={prevId ? `Previous employee` : 'No previous'}>
+                                        <Tooltip title={prevId ? getString('previousEmployee') : getString('noPrevious')}>
                                             <span>
                                                 <IconButton
                                                     size="small" disabled={!prevId}
@@ -1157,7 +1233,7 @@ export function EvaluationPage() {
                                                 </IconButton>
                                             </span>
                                         </Tooltip>
-                                        <Tooltip title={nextId ? `Next employee` : 'No next'}>
+                                        <Tooltip title={nextId ? getString('nextEmployee') : getString('noNext')}>
                                             <span>
                                                 <IconButton
                                                     size="small" disabled={!nextId}
@@ -1172,6 +1248,35 @@ export function EvaluationPage() {
                                             <Typography fontSize={11} color={t.textMuted} alignSelf="center" ml={0.5}>
                                                 {currentIdx + 1}/{siblings.length}
                                             </Typography>
+                                        )}
+                                        {/* Jump straight to any in-scope employee — same list & order the
+                                            arrows walk, searchable by name (names only, no codes). */}
+                                        {siblings.length > 1 && (
+                                            <Autocomplete
+                                                size="small"
+                                                options={siblings}
+                                                value={siblings.find(s => s.employee_id === eid) ?? null}
+                                                onChange={(_, opt) => {
+                                                    if (opt && opt.employee_id !== eid) goToEmployee(opt.employee_id);
+                                                }}
+                                                getOptionLabel={(o) => o.employee_name}
+                                                isOptionEqualToValue={(o, v) => o.employee_id === v.employee_id}
+                                                renderOption={(props, o) => (
+                                                    <li {...props} key={o.employee_id}>{o.employee_name}</li>
+                                                )}
+                                                handleHomeEndKeys={false}
+                                                renderInput={(params) => (
+                                                    <TextField
+                                                        {...params}
+                                                        variant="outlined"
+                                                        placeholder={getString('goToEmployee')}
+                                                    />
+                                                )}
+                                                sx={{
+                                                    width: 220, ml: 0.5,
+                                                    '& .MuiOutlinedInput-root': { fontSize: 13, py: 0 },
+                                                }}
+                                            />
                                         )}
                                     </Box>
 
@@ -1253,6 +1358,10 @@ export function EvaluationPage() {
                                             </Stack>
                                         </Tooltip>
                                     )}
+
+                                    {/* People-review scope switcher — same top-right spot as on the
+                                        sessions list and inside the session. */}
+                                    <ScopeSettings sessionId={rseDetail.session_id} />
                                 </Stack>
                             </Box>
 
