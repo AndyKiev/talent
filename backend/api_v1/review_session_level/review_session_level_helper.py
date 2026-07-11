@@ -7,6 +7,7 @@ freeze), mirroring how the criteria read path falls back to the live hint.
 """
 
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload, raiseload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.review_level.review_level_model import ReviewLevel
@@ -25,7 +26,14 @@ async def frozen_levels_for_session(
     frozen = (
         (
             await session.execute(
+                # requirements loaded (used below); everything else raiseloaded —
+                # ReviewSessionLevel.session would re-enter the session's roster ->
+                # employees graph (hundreds of queries) for 4 levels of columns.
                 select(ReviewSessionLevel)
+                .options(
+                    selectinload(ReviewSessionLevel.requirements).raiseload("*"),
+                    raiseload("*"),
+                )
                 .where(ReviewSessionLevel.session_id == session_id)
                 .order_by(ReviewSessionLevel.sort_order, ReviewSessionLevel.id)
             )
@@ -64,6 +72,10 @@ async def frozen_levels_for_session(
         (
             await session.execute(
                 select(ReviewLevel)
+                .options(
+                    selectinload(ReviewLevel.requirements).raiseload("*"),
+                    raiseload("*"),
+                )
                 .where(ReviewLevel.is_active == True)
                 .order_by(ReviewLevel.sort_order, ReviewLevel.id)
             )
