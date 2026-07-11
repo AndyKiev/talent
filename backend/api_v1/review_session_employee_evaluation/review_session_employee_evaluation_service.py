@@ -40,6 +40,7 @@ from backend.api_v1.review_session_criterion.review_session_criterion_schema imp
     FrozenCriterionSchema,
 )
 from sqlalchemy import select
+from sqlalchemy.orm import raiseload
 
 import json
 
@@ -86,9 +87,7 @@ class ReviewSessionEmployeeEvaluationService(BaseService):
         review_session_employee_id: int,
     ) -> List[EvaluationSchema]:
         await self._assert_rse_visible(review_session_employee_id)
-        records = await self.get_all(
-            params={"review_session_employee_id": review_session_employee_id}
-        )
+        records = await self.repository.list_by_rse(review_session_employee_id)
         frozen_by_dim = await self._frozen_criteria_by_dimension(
             review_session_employee_id
         )
@@ -115,7 +114,12 @@ class ReviewSessionEmployeeEvaluationService(BaseService):
         rows = (
             (
                 await self.session.execute(
+                    # raiseload("*"): frozen criteria only need columns (id/text/
+                    # sort_order/dimension_id); the session/dimension selectin
+                    # relationships otherwise cascade into the reviewed employees'
+                    # whole graph (hundreds of queries) via ReviewSession.
                     select(ReviewSessionCriterion)
+                    .options(raiseload("*"))
                     .where(ReviewSessionCriterion.session_id == session_id)
                     .order_by(
                         ReviewSessionCriterion.sort_order,

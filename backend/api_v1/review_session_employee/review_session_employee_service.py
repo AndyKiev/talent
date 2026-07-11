@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, NamedTuple
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -58,8 +58,8 @@ from backend.api_v1.process_roles.process_role_holder_department_link.process_ro
 from backend.api_v1.process_roles.process_role_active_context.process_role_active_context_repository import (
     ProcessRoleActiveContextRepository,
 )
-from backend.api_v1.process_roles.process_role.process_role_repository import (
-    ProcessRoleRepository,
+from backend.api_v1.process_roles.process_role.process_role_model import (
+    ProcessRole,
 )
 from backend.api_v1.department.department_repository import DepartmentRepository
 from backend.api_v1.employee_department.employee_department_repository import (
@@ -90,6 +90,15 @@ RSE_STATUS_LABEL_KEYS = {
     "reviewed": "statusReviewed",
     "closed": "statusClosed",
 }
+
+
+class _ActiveRoleFields(NamedTuple):
+    """The only two scalar ProcessRole columns people-review scoping needs
+    (link_target, key). Loaded column-only via _active_role_fields to avoid the
+    ProcessRole.holders selectin cascade — see that method."""
+
+    link_target: str
+    key: Optional[str]
 
 
 class ReviewSessionEmployeeService(BaseService):
@@ -156,6 +165,26 @@ class ReviewSessionEmployeeService(BaseService):
         review-record visibility the user already has."""
         return employee_id in await self._visible_employee_ids()
 
+    async def _active_role_fields(
+        self, process_role_id: int
+    ) -> Optional[_ActiveRoleFields]:
+        """(link_target, key) of a ProcessRole via a COLUMN-ONLY query.
+
+        Deliberately NOT ProcessRoleRepository.get_by_id: ProcessRole.holders is
+        lazy="selectin", so get_by_id hydrates every holder -> their Employee ->
+        Employee's whole selectin graph (~488 queries) just to read two scalar
+        columns. This runs on every people-review request (visibility guard), so
+        the difference is seconds per call. Returns None if the role is gone."""
+        row = (
+            await self.session.execute(
+                select(ProcessRole.link_target, ProcessRole.key).where(
+                    ProcessRole.id == process_role_id
+                )
+            )
+        ).first()
+        # Positional access matches the select order (link_target, key).
+        return _ActiveRoleFields(row[0], row[1]) if row else None
+
     async def _visible_employee_ids(self) -> set[int]:
         """Employee ids the current user may see in people-review (§9).
 
@@ -177,9 +206,7 @@ class ReviewSessionEmployeeService(BaseService):
         if ctx is None or ctx.process_role_id is None:
             return visible  # no mode on -> self only
 
-        role = await ProcessRoleRepository(session=self.session).get_by_id(
-            ctx.process_role_id
-        )
+        role = await self._active_role_fields(ctx.process_role_id)
         if role is None:
             return visible
 
@@ -218,12 +245,14 @@ class ReviewSessionEmployeeService(BaseService):
             )
         return visible
 
-    async def get_active_role(self):
-        """The current user's ACTIVE people-review role (ProcessRole) or None.
+    async def get_active_role(self) -> Optional[_ActiveRoleFields]:
+        """The current user's ACTIVE people-review role (link_target + key) or None.
 
         None == 'only myself' mode (no active context / no role). Used by the
         comment service to classify the viewer as oversight (link_target
-        'employee') vs supervision (link_target 'department')."""
+        'employee') vs supervision (link_target 'department'). Returns the two
+        scalar fields only — every consumer uses just .link_target / .key, so it
+        loads column-only (see _active_role_fields) instead of the full model."""
         if not self.user:
             return None
         ctx = await ProcessRoleActiveContextRepository(
@@ -231,9 +260,7 @@ class ReviewSessionEmployeeService(BaseService):
         ).get_for_employee(self.user.id)
         if ctx is None or ctx.process_role_id is None:
             return None
-        return await ProcessRoleRepository(session=self.session).get_by_id(
-            ctx.process_role_id
-        )
+        return await self._active_role_fields(ctx.process_role_id)
 
     async def assert_rse_visible(self, rse_id: int) -> None:
         """Visibility guard for RSE sub-resources (evaluations, proposed level):
@@ -242,11 +269,17 @@ class ReviewSessionEmployeeService(BaseService):
         missing rse_id is left for the caller to handle (returns empty/None), since
         there is nothing to leak. Called by the evaluation / proposed-level services
         so a typed-in out-of-scope URL can't pull another employee's review data."""
-        rse = await self.session.get(RSEModel, rse_id)
-        if rse is None:
+        # Column-only employee_id: session.get(RSEModel) would selectin-load the
+        # reviewed employee's whole graph (~112 queries) just to read one column,
+        # and this guard runs on every evaluations / level / comment sub-resource
+        # request. A missing id returns (nothing to leak), same as before.
+        employee_id = await self.session.scalar(
+            select(RSEModel.employee_id).where(RSEModel.id == rse_id)
+        )
+        if employee_id is None:
             return
         visible = await self._visible_employee_ids()
-        if rse.employee_id not in visible:
+        if employee_id not in visible:
             raise await self._resolve_domain_error(
                 ReviewSessionEmployeeNotFound(rse_id)
             )
@@ -258,19 +291,28 @@ class ReviewSessionEmployeeService(BaseService):
         /people_review/{session_id}/employee/{employee_id} route. Gated by the same
         visibility resolver as get_rse_detail: a non-existent record AND an
         out-of-scope employee both raise NotFound (no existence leak)."""
-        record = await self.session.scalar(
-            select(RSEModel).where(
-                RSEModel.session_id == session_id,
-                RSEModel.employee_id == employee_id,
+        # Column-only guard: resolve id + employee_id WITHOUT loading the RSE entity.
+        # A select(RSEModel) here would selectin the reviewed employee's whole graph
+        # up front — the double-hydration (this guard + the detail loader) that kept
+        # the endpoint slow. Then load the detail once, cascade-free, below.
+        row = (
+            await self.session.execute(
+                select(RSEModel.id, RSEModel.employee_id).where(
+                    RSEModel.session_id == session_id,
+                    RSEModel.employee_id == employee_id,
+                )
             )
-        )
+        ).first()
         visible = await self._visible_employee_ids()
-        if record is None or record.employee_id not in visible:
+        if row is None or row.employee_id not in visible:
             raise await self._resolve_domain_error(
-                ReviewSessionEmployeeNotFound(record.id if record else employee_id)
+                ReviewSessionEmployeeNotFound(row.id if row else employee_id)
             )
-        # Re-fetch so employee + session relationships are selectin-loaded for _to_schema.
-        record = await self.repository.get_by_id(record.id)
+        # Detail loader RAISELOADS the reviewed employee's deep graph (trainings,
+        # role links, events, person, job link-tables …) that _to_schema never reads
+        # — keeps employee columns + job.name + main department.name + light
+        # evaluations + session, so the detail resolves in a handful of queries.
+        record = await self.repository.get_detail_by_id(row.id)
         return self._to_schema(record)
 
     async def get_session_employees(
@@ -551,6 +593,48 @@ class ReviewSessionEmployeeService(BaseService):
             },
         }
         return build_tempo_pptx(session_info, sheets)
+
+    async def _tempo_training_lines(self, employee_id: Optional[int]) -> list[str]:
+        """The employee's assigned trainings as '• name — status' lines for the
+        TEMPO training section (all artifacts: PDF/HTML/presentation/PPTX).
+        Empty while the training-module master switch is OFF — the free-text
+        required-trainings notes are appended by the caller regardless, since
+        they survive the module being disabled."""
+        from backend.api_v1.app_setting.app_setting_service import (
+            get_bool_setting,
+            TRAINING_MODULE_ENABLED_KEY,
+        )
+
+        if employee_id is None:
+            return []
+        if not await get_bool_setting(
+            self.session, TRAINING_MODULE_ENABLED_KEY, default=True
+        ):
+            return []
+        from backend.api_v1.employee_training.employee_training_model import (
+            EmployeeTraining,
+        )
+
+        rows = (
+            await self.session.scalars(
+                select(EmployeeTraining)
+                .where(EmployeeTraining.employee_id == employee_id)
+                .order_by(EmployeeTraining.id)
+            )
+        ).all()
+        lines: list[str] = []
+        for r in rows:
+            name = r.training_type.name if r.training_type else "—"
+            status = r.training_status
+            label = None
+            if status:
+                # Same key convention as the frontend (trainingStatusInProcess).
+                label = await self._translate(
+                    f"trainingStatus{self._pascal_dim_key(status.key)}",
+                    fallback=status.key.replace("_", " "),
+                )
+            lines.append(f"• {name} — {label}" if label else f"• {name}")
+        return lines
 
     async def _tempo_data(self, rse_id: int, photo_enabled: bool = True) -> dict:
         """Gather this review's data into the flat dict the TEMPO album builder
@@ -942,6 +1026,14 @@ class ReviewSessionEmployeeService(BaseService):
         strengths_items = _summary_items("strong")
         development_items = _summary_items("develop")
 
+        # Training section body: assigned trainings (gated by the training-module
+        # master switch) above the free-text required-trainings notes.
+        training_lines = await self._tempo_training_lines(emp_id)
+        training_done = (
+            "\n\n".join(p for p in ("\n".join(training_lines), record.trainings) if p)
+            or None
+        )
+
         # All section/field labels resolved here so the renderer stays pure (no DB)
         # and nothing in the album is hardcoded.
         label_keys = {
@@ -996,7 +1088,7 @@ class ReviewSessionEmployeeService(BaseService):
             "not_achieved": None,
             "employee_feedback": record.employee_feedback,
             "manager_feedback": record.manager_feedback,
-            "training_done": record.trainings,
+            "training_done": training_done,
             "idp_missions": self._development_missions(
                 record.development_plan, dim_meta
             ),
