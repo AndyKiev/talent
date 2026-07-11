@@ -5,6 +5,7 @@ from backend.api_v1.process_roles.process_role_active_context.process_role_activ
     MyScopes,
     ActiveContextRead,
     ActiveContextUpdate,
+    SessionScopeAvailability,
 )
 from backend.api_v1.process_roles.process_role_active_context.process_role_active_context_dependencies import (
     get_process_role_active_context_service,
@@ -29,6 +30,19 @@ async def get_my_scopes(
     ],
 ):
     return await service.get_my_scopes()
+
+
+@router.get(
+    "/session_availability/{session_id}", response_model=SessionScopeAvailability
+)
+async def get_session_availability(
+    session_id: int,
+    service: Annotated[
+        ProcessRoleActiveContextService,
+        Depends(get_process_role_active_context_service),
+    ],
+):
+    return await service.get_session_availability(session_id)
 
 
 @router.put("/active_context", response_model=ActiveContextRead)

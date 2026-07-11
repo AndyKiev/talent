@@ -18,17 +18,26 @@ import {
     Popover, Select, Stack, Tooltip, Typography,
 } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
-import { fetchMyScopes, setActiveContext } from './peopleReviewApi';
-import { PEOPLE_REVIEW_MY_SCOPES_QK } from '../../utils/queryKeys';
+import { fetchMyScopes, fetchSessionScopeAvailability, setActiveContext } from './peopleReviewApi';
+import {
+    PEOPLE_REVIEW_MY_SCOPES_QK,
+    PEOPLE_REVIEW_SESSION_AVAILABILITY_QK,
+} from '../../utils/queryKeys';
 import useString from '../../hooks/useString';
 import cfl from '../../utils/capitalizeFirstLetter';
 
 export function ScopeSettings({
     disabled = false,
+    sessionId,
     sessionDepartmentIds,
     sessionDepartmentName,
 }: {
     disabled?: boolean;
+    /** Current review-session id. When provided, modes with no one to show in
+     *  this session are disabled with an on-hover hint: 'only myself' when the
+     *  user is not an employee of the session, an oversight role when none of
+     *  its linked employees are in the session. */
+    sessionId?: number;
     /** Department ids linked to the current review session. When provided, only
      *  intersecting supervised departments are selectable; others are disabled
      *  with an on-hover hint.  When undefined/empty, behaves as before. */
@@ -48,14 +57,27 @@ export function ScopeSettings({
         staleTime: 60_000,
     });
 
+    // Session-context availability of the modes (see the sessionId prop docs).
+    // Until it loads, nothing is disabled — options only lock once we KNOW.
+    const { data: availability } = useQuery({
+        queryKey: PEOPLE_REVIEW_SESSION_AVAILABILITY_QK(sessionId ?? 0),
+        queryFn: () => fetchSessionScopeAvailability(sessionId as number),
+        staleTime: 60_000,
+        enabled: sessionId != null,
+    });
+
     const mut = useMutation({
         mutationFn: setActiveContext,
         onSuccess: async (_data, variables) => {
             const r = roles.find((x) => x.process_role_id === variables.process_role_id);
             const awaitingDept = r?.link_target === 'department' && variables.department_id == null;
             if (!awaitingDept) setAnchor(null);
-            await qc.invalidateQueries({ queryKey: PEOPLE_REVIEW_MY_SCOPES_QK });
-            if (!awaitingDept) await qc.invalidateQueries({ queryKey: ['session_employees'] });
+            // Parallel: the roster refetch must not wait for my_scopes (each
+            // sequential await added a full round-trip to every scope switch).
+            await Promise.all([
+                qc.invalidateQueries({ queryKey: PEOPLE_REVIEW_MY_SCOPES_QK }),
+                ...(!awaitingDept ? [qc.invalidateQueries({ queryKey: ['session_employees'] })] : []),
+            ]);
         },
     });
 
@@ -137,6 +159,19 @@ export function ScopeSettings({
     // ── Disabled-option hint text ────────────────────────────────────────────
     const disabledHint = getString('deptNotInSession') || 'This department is not part of this review session';
 
+    // ── Session-context mode availability ───────────────────────────────────
+    // 'Only myself' needs the user to BE in the session; an oversight role needs
+    // at least one of its linked employees in the session. No availability data
+    // (sessions-list level, or still loading) -> everything selectable.
+    const selfSelectable = !availability || availability.self_in_session;
+    const isOversightSelectable = (roleId: number) =>
+        !availability || availability.oversight_role_ids_with_members.includes(roleId);
+    const selfNotInSessionHint =
+        getString('selfNotInSession') || 'You are not an employee of this review session';
+    const oversightNoneInSessionHint =
+        getString('oversightNoneInSession') ||
+        'None of your oversight employees are in this session';
+
     if (roles.length === 0) return null;
 
     return (
@@ -198,12 +233,43 @@ export function ScopeSettings({
                             displayEmpty
                             onChange={(e) => setMode(e.target.value)}
                         >
-                            <MenuItem value="">{onlyMyselfLabel}</MenuItem>
-                            {roles.map((r) => (
-                                <MenuItem key={r.process_role_id} value={String(r.process_role_id)}>
-                                    {roleLabel(r.key, r.name)}
-                                </MenuItem>
-                            ))}
+                            {selfSelectable ? (
+                                <MenuItem value="">{onlyMyselfLabel}</MenuItem>
+                            ) : (
+                                <Tooltip title={selfNotInSessionHint} placement="left">
+                                    <span>
+                                        <MenuItem value="" disabled>{onlyMyselfLabel}</MenuItem>
+                                    </span>
+                                </Tooltip>
+                            )}
+                            {roles.map((r) => {
+                                // Oversight roles are session-gated; supervision roles
+                                // stay selectable (their department select is gated).
+                                const selectable =
+                                    r.link_target !== 'employee' ||
+                                    isOversightSelectable(r.process_role_id);
+                                const item = (
+                                    <MenuItem
+                                        key={r.process_role_id}
+                                        value={String(r.process_role_id)}
+                                        disabled={!selectable}
+                                    >
+                                        {roleLabel(r.key, r.name)}
+                                    </MenuItem>
+                                );
+                                if (!selectable) {
+                                    return (
+                                        <Tooltip
+                                            key={r.process_role_id}
+                                            title={oversightNoneInSessionHint}
+                                            placement="left"
+                                        >
+                                            <span>{item}</span>
+                                        </Tooltip>
+                                    );
+                                }
+                                return item;
+                            })}
                         </Select>
                     </FormControl>
 

@@ -37,6 +37,7 @@ import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutli
 import TuneIcon from '@mui/icons-material/Tune';
 import { SessionAnalyticsDialog } from './SessionAnalyticsDialog';
 import { SessionParamsDialog } from './SessionParamsDialog';
+import { ScopeSettings } from './ScopeSettings';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -485,6 +486,10 @@ export function ReviewSessionsPage() {
                     >
                         {getString('newSession')}
                     </Button>
+                    {/* People-review scope switcher — same top-right spot as inside a session. */}
+                    <Box sx={{ ml: 'auto' }}>
+                        <ScopeSettings />
+                    </Box>
                 </Box>
 
                 {isLoading && (

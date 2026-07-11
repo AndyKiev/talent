@@ -13,6 +13,7 @@ from backend.api_v1.process_roles.process_role_active_context.process_role_activ
     MyRole,
     MyDepartment,
     MyScopes,
+    SessionScopeAvailability,
 )
 from backend.api_v1.process_roles.process_role_active_context.process_role_active_context_messages import (
     ActiveContextRoleNotHeld,
@@ -58,6 +59,21 @@ class ProcessRoleActiveContextService(BaseService):
             else ActiveContextRead()
         )
         return MyScopes(roles=roles, departments=departments, active=active)
+
+    async def get_session_availability(
+        self, session_id: int
+    ) -> SessionScopeAvailability:
+        emp_id = self.user.id
+        self_in_session = await self.repository.is_employee_in_session(
+            emp_id, session_id
+        )
+        role_ids = await self.repository.get_oversight_role_ids_with_session_members(
+            emp_id, session_id, PEOPLE_REVIEW_PROCESS_KEY
+        )
+        return SessionScopeAvailability(
+            self_in_session=self_in_session,
+            oversight_role_ids_with_members=list(role_ids),
+        )
 
     async def set_active(self, payload: ActiveContextUpdate) -> ActiveContextRead:
         emp_id = self.user.id

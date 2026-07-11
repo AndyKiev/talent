@@ -36,6 +36,8 @@ export const PROCESS_ROLE_HOLDER_DEPARTMENT_QK = ['process_role_holder_departmen
 export const PEOPLE_REVIEW_MY_SCOPES_QK = ['people_review_my_scopes'] as const;
 export const PEOPLE_REVIEW_MY_LATEST_QK = ['people_review_my_latest'] as const;
 export const SESSION_DEPARTMENTS_QK = (sessionId: number) => ['session_departments', sessionId] as const;
+export const PEOPLE_REVIEW_SESSION_AVAILABILITY_QK = (sessionId: number) =>
+    ['people_review_session_availability', sessionId] as const;
 export const OVERSIGHT_MANAGER_OPTIONS_QK = ['oversight_manager_options'] as const;
 export const MY_OVERSIGHT_MANAGER_QK = ['my_oversight_manager'] as const;
 // Dynamic main-navigation menus

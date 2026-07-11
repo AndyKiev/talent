@@ -29,6 +29,16 @@ class MyDepartment(BaseModel):
     process_role_id: int
 
 
+class SessionScopeAvailability(BaseModel):
+    """Per-review-session availability of the scope modes: whether the current
+    user is themselves an employee of the session ('only myself' selectable) and
+    which of their employee-target (oversight) roles have at least one linked
+    employee in the session."""
+
+    self_in_session: bool
+    oversight_role_ids_with_members: List[int] = []
+
+
 class MyScopes(BaseModel):
     """Everything the people-review scope controls need: the roles the current
     user holds, the departments they supervise (per dept-target role), and the

@@ -1,12 +1,12 @@
 // People-review landing dispatcher.
 //
-// - Managers KEEP the full management page (sessions list / create / open / close):
-//   a manager holds a SUPERVISION role (department subtree) OR belongs to a
-//   management group (admin / HRM / HRS / dev).
-// - Everyone else fills only their own data -> redirect straight to their row in
-//   the most-recently-created OPEN session. This includes a user whose only role is
-//   OVERSIGHT (a linked-employee roster) and who isn't in a management group: an
-//   oversight-only role does NOT grant management access. If they aren't listed in
+// - Role holders KEEP the full management page (sessions list): a user who holds
+//   ANY people-review role — SUPERVISION (department subtree) or OVERSIGHT (a
+//   linked-employee roster) — or belongs to a management group (admin / HRM /
+//   HRS / dev). Both role kinds need the sessions level to pick a session and
+//   walk their roster.
+// - Everyone else (role-less) fills only their own data -> redirect straight to
+//   their row in the most-recently-created OPEN session. If they aren't listed in
 //   any open session, show a "not listed — ask your supervisor" message instead.
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -49,14 +49,15 @@ export function PeopleReviewEntry() {
         enabled: !inMgmtGroup, // a group manager already stays on mgmt; skip the call
     });
 
-    // Only a SUPERVISION role (link_target 'department') keeps a user on the
-    // management page; an oversight-only role does not.
-    const hasSupervisionRole = (scopes?.roles ?? []).some((r) => r.link_target === 'department');
-    // Redirect candidate = non-manager user, once the user (for the group check) AND
-    // scopes have loaded. `user` is null on a hard refresh until /me repopulates it
+    // ANY people-review role (supervision OR oversight) keeps a user on the
+    // management page — an oversight holder needs the sessions level to switch
+    // between their linked employees just like a supervisor.
+    const hasAnyRole = (scopes?.roles ?? []).length > 0;
+    // Redirect candidate = role-less non-manager, once the user (for the group check)
+    // AND scopes have loaded. `user` is null on a hard refresh until /me repopulates it
     // (authStore persists only the token), so gate on it — otherwise a group-only
     // manager could be wrongly redirected before their groups are known.
-    const redirectCandidate = !!user && !inMgmtGroup && !!scopes && !hasSupervisionRole;
+    const redirectCandidate = !!user && !inMgmtGroup && !!scopes && !hasAnyRole;
 
     const { data: latest, isLoading: latestLoading } = useQuery({
         queryKey: PEOPLE_REVIEW_MY_LATEST_QK,
@@ -82,9 +83,9 @@ export function PeopleReviewEntry() {
     // so treat it as a loading state (covers both wrong-redirect and wrong-message).
     if (!user) return <Centered><CircularProgress /></Centered>;
 
-    // Managers (mgmt group or supervision role) -> existing management page.
+    // Managers (mgmt group) and role holders (supervision OR oversight) -> management page.
     // On a scopes failure, fall back to the management page rather than a blank screen.
-    if (inMgmtGroup || hasSupervisionRole || scopesError) return <ReviewSessionsPage />;
+    if (inMgmtGroup || hasAnyRole || scopesError) return <ReviewSessionsPage />;
 
     // Still resolving scopes, or fetching / about to navigate to the user's review.
     if (scopesLoading || !scopes || (redirectCandidate && (latestLoading || latest))) {

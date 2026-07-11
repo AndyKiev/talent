@@ -187,7 +187,7 @@ export function SessionEmployeesPage() {
 
     // Active people-review scope. Drives both the supervision "context complete"
     // gate (below) and the oversight-only reorder toggle (further down).
-    const { data: scopes } = useQuery({
+    const { data: scopes, error: scopesError } = useQuery({
         queryKey: PEOPLE_REVIEW_MY_SCOPES_QK,
         queryFn: fetchMyScopes,
         staleTime: 60_000,
@@ -208,7 +208,7 @@ export function SessionEmployeesPage() {
     // a placeholder instead.
     const contextIncomplete = activeRole?.link_target === 'department' && scopes?.active.department_id == null;
 
-    const { data: rows = [], isLoading, isFetching, error } = useQuery({
+    const { data: rows = [], isPending, isFetching, error: rowsError } = useQuery({
         queryKey: qk,
         queryFn: () => fetchSessionEmployees(sid),
         staleTime: 30_000,
@@ -217,6 +217,13 @@ export function SessionEmployeesPage() {
         // the self-only roster for one render before the gate engages.
         enabled: !!sid && !!scopes && !contextIncomplete,
     });
+
+    // One loading gate for everything the table needs: role recognition (scopes)
+    // AND the roster fetch. isPending (unlike isLoading) stays true while the
+    // roster query is still disabled waiting for scopes, so the spinner shows
+    // from the first render — no empty-grid flash before the role is known.
+    const error = scopesError ?? rowsError;
+    const rosterLoading = isPending && !error;
 
     // Need session info for status + name
     const { data: sessions = [] } = useQuery({ queryKey: sessQk, queryFn: fetchReviewSessions, staleTime: 60_000 });
@@ -466,7 +473,7 @@ export function SessionEmployeesPage() {
     return (
         <AppShell>
             <BusyBackdrop
-                open={presLoading || (isFetching && !isLoading)}
+                open={presLoading || (isFetching && !isPending)}
                 label={presLoading ? getString('tempoPresentationBuilding') : (getString('loading') || 'Loading\u2026')}
             />
             <Box
@@ -529,7 +536,7 @@ export function SessionEmployeesPage() {
                     </Stack>
 
                     {/* People-review scope switcher (mode + department) */}
-                    <ScopeSettings sessionDepartmentIds={sessionDeptIds} sessionDepartmentName={session?.department_name} />
+                    <ScopeSettings sessionId={sid} sessionDepartmentIds={sessionDeptIds} sessionDepartmentName={session?.department_name} />
 
                     {/* Session is closed from the sessions grid's action column, not here. */}
                 </Stack>
@@ -547,10 +554,10 @@ export function SessionEmployeesPage() {
                     </Alert>
                 )}
 
-                {!contextIncomplete && isLoading && <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>}
-                {!contextIncomplete && !isLoading && error && <Alert severity="error">{(error as Error).message}</Alert>}
+                {!contextIncomplete && rosterLoading && <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>}
+                {!contextIncomplete && !rosterLoading && error && <Alert severity="error">{(error as Error).message}</Alert>}
 
-                {!contextIncomplete && !isLoading && !error && (
+                {!contextIncomplete && !rosterLoading && !error && (
                     <>
                         <Box sx={{ mb: compact ? 0.5 : 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: compact ? 0.75 : 1.5, flexWrap: 'wrap' }}>
                             {compact ? (
