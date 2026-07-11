@@ -6,7 +6,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class ReviewCommentCreate(BaseModel):
     body: str = Field(min_length=1)
-    # 'private' (default) | 'public'. Validated server-side.
+    # 'private' (default) | 'to_subject' | 'to_oversight' | 'public'.
+    # Validated server-side against the author's role.
     visibility: str = "private"
 
 
@@ -26,7 +27,7 @@ class ReviewCommentSchema(BaseModel):
     author_name: str = ""
     # 'oversight' | 'supervision' — the role the note was written under.
     author_role: str
-    # 'private' | 'public'.
+    # 'private' | 'to_subject' | 'to_oversight' | 'public'.
     visibility: str
     body: str
     created_at: Optional[datetime] = None

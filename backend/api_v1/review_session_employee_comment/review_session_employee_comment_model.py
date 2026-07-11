@@ -16,15 +16,17 @@ class ReviewSessionEmployeeComment(IntIdPkMixin, TimestampMixin, Base):
     """A reviewer's note about one employee's review (many per rse).
 
     Authored only by an oversight/supervision reviewer (never the subject), and
-    only while the review is open. The note's audience depends on the role it was
-    written under, so `author_role` is frozen at creation and the read filter keys
-    off it (see the service):
-      - author_role 'oversight'  : public = subject + oversight reviewers (not supervisors)
-      - author_role 'supervision': public       = supervisors + oversight reviewers (not subject)
-                                   to_oversight = author + oversight reviewers only
-                                                  (not the subject, not other supervisors)
-      - visibility 'private'     : author only (either role)
-    `visibility` is owner-editable any time the review is still open.
+    only while the review is open. Three visibility tiers per author role
+    (full matrix: .claude/skills/review-comments/SKILL.md):
+      - 'private'      : author only (either role)
+      - 'to_subject'   : oversight-only scope — author + the reviewed employee
+      - 'to_oversight' : supervision-only scope — author + oversight reviewers
+                         (not the subject, not other supervisors)
+      - 'public'       : everyone who can open the review (subject + oversight
+                         reviewers + supervisors)
+    `author_role` is frozen at creation so the allowed scopes stay stable even if
+    the author later switches active mode. `visibility` is owner-editable any
+    time the review is still open.
     """
 
     __tablename__ = "review_session_employee_comments"
@@ -35,11 +37,12 @@ class ReviewSessionEmployeeComment(IntIdPkMixin, TimestampMixin, Base):
     )
     author_id: Mapped[int] = mapped_column(ForeignKey("employees.id"), nullable=False)
     # Role the note was written under: 'oversight' (link_target 'employee') |
-    # 'supervision' (link_target 'department'). Fixes the audience even if the
-    # author later switches active mode.
+    # 'supervision' (link_target 'department'). Fixes the allowed scopes even if
+    # the author later switches active mode.
     author_role: Mapped[str] = mapped_column(String(20), nullable=False)
-    # 'private' (author only) | 'public' (role-dependent audience) |
-    # 'to_oversight' (supervision-only: author + oversight reviewers). Default private.
+    # 'private' (author only) | 'to_subject' (oversight-only: author + subject) |
+    # 'to_oversight' (supervision-only: author + oversight reviewers) |
+    # 'public' (everyone in the review). Default private.
     visibility: Mapped[str] = mapped_column(
         String(20), nullable=False, default="private", server_default="private"
     )

@@ -1,11 +1,13 @@
 from typing import Optional, List, Tuple
 
 from sqlalchemy import select
+from sqlalchemy.orm import raiseload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.employee.employee_model import Employee
 from backend.api_v1.review_session_employee_comment.review_session_employee_comment_repository import (
     ReviewSessionEmployeeCommentRepository,
 )
@@ -42,12 +44,14 @@ from backend.api_v1.review_session_employee.review_session_employee_messages imp
     ReviewSessionEmployeeNotFound,
 )
 
-# Which visibility scopes each author role may pick. 'to_oversight' (author +
-# oversight reviewers, hidden from the subject and other supervisors) is a
-# supervision-only escalation scope.
+# Which visibility scopes each author role may pick. Three tiers per role:
+# private (author only) -> role-specific middle scope -> public (everyone who can
+# open the review). 'to_subject' is oversight-only (author + the reviewed
+# employee); 'to_oversight' is supervision-only (author + oversight reviewers).
+# Full rules matrix: .claude/skills/review-comments/SKILL.md
 VISIBILITY_BY_ROLE = {
-    "oversight": {"private", "public"},
-    "supervision": {"private", "public", "to_oversight"},
+    "oversight": {"private", "to_subject", "public"},
+    "supervision": {"private", "to_oversight", "public"},
 }
 # Active-role link_target -> the author_role label frozen on the comment.
 LINK_TARGET_TO_ROLE = {"employee": "oversight", "department": "supervision"}
@@ -94,14 +98,21 @@ class ReviewSessionEmployeeCommentService(BaseService):
             raise ReviewCommentInvalid()
         return v
 
-    def _to_schema(self, c: CommentModel) -> ReviewCommentSchema:
+    def _to_schema(
+        self, c: CommentModel, author_name: Optional[str] = None
+    ) -> ReviewCommentSchema:
+        # author_name passed in (list path) avoids touching c.author, whose
+        # lazy="selectin" would drag the author's whole Employee graph. The single
+        # comment mutation paths still fall back to the loaded relationship.
         schema = ReviewCommentSchema.model_validate(c)
-        if c.author:
+        if author_name is not None:
+            schema.author_name = author_name
+        elif c.author:
             schema.author_name = c.author.name
         return schema
 
     # ---- viewer classification -------------------------------------------------
-    async def _viewer_flags(self, rse: RSEModel) -> Tuple[bool, bool, bool]:
+    async def _viewer_flags(self, employee_id: int) -> Tuple[bool, bool, bool]:
         """(is_subject, is_oversighter, is_supervisor) for the current user vs this
         employee. Oversighter/supervisor are decided by the viewer's ACTIVE mode AND
         the employee being inside that mode's expanded scope, so a stale/foreign
@@ -109,10 +120,10 @@ class ReviewSessionEmployeeCommentService(BaseService):
         """
         rse_service = self._rse_service()
         me = self.user.id if self.user else None
-        is_subject = me is not None and me == rse.employee_id
+        is_subject = me is not None and me == employee_id
 
         visible = await rse_service._visible_employee_ids()
-        in_scope = rse.employee_id in visible and rse.employee_id != me
+        in_scope = employee_id in visible and employee_id != me
 
         active_role = await rse_service.get_active_role()
         link_target = active_role.link_target if active_role else None
@@ -132,34 +143,66 @@ class ReviewSessionEmployeeCommentService(BaseService):
             return True  # author always sees own notes (any scope)
         if c.visibility == "private":
             return False  # someone else's private note is never visible
-        if c.author_role == "oversight":
-            # public oversight note: the subject + oversight reviewers (not supervisors)
-            return is_subject or is_oversighter
-        # supervision-authored note:
+        if c.visibility == "public":
+            # public = everyone who can open this review: the subject,
+            # oversight reviewers and supervisors alike.
+            return is_subject or is_oversighter or is_supervisor
+        if c.visibility == "to_subject":
+            # oversight-only scope: author (handled above) + the reviewed employee.
+            return is_subject
         if c.visibility == "to_oversight":
-            # author (handled above) + oversight reviewers only — not the subject,
-            # not other supervisors.
+            # supervision-only scope: author (handled above) + oversight reviewers —
+            # not the subject, not other supervisors.
             return is_oversighter
-        # public supervision note: supervisors + oversight reviewers (not the subject)
-        return is_supervisor or is_oversighter
+        return False
 
     # ---- read ------------------------------------------------------------------
+    async def _author_names(self, author_ids: set[int]) -> dict[int, str]:
+        """{employee_id: name} for the given author ids via a COLUMN-ONLY query —
+        never the Employee entity (its selectin graph is hundreds of queries)."""
+        if not author_ids:
+            return {}
+        rows = await self.session.execute(
+            select(Employee.id, Employee.name).where(Employee.id.in_(author_ids))
+        )
+        return {row[0]: row[1] for row in rows.all()}
+
     async def list_comments(self, rse_id: int) -> List[ReviewCommentSchema]:
-        rse = await self._load_rse(rse_id)
-        is_subject, is_oversighter, is_supervisor = await self._viewer_flags(rse)
+        # Guard visibility (out-of-scope -> 404), then load ONLY the reviewee id —
+        # not the RSE entity (whose selectin employee/evaluations cost ~112 queries).
+        # list needs just employee_id (viewer classification) + the comment rows.
+        rse_service = self._rse_service()
+        await rse_service.assert_rse_visible(rse_id)
+        employee_id = await self.session.scalar(
+            select(RSEModel.employee_id).where(RSEModel.id == rse_id)
+        )
+        if employee_id is None:
+            raise await self._resolve_domain_error(
+                ReviewSessionEmployeeNotFound(rse_id)
+            )
+
+        is_subject, is_oversighter, is_supervisor = await self._viewer_flags(
+            employee_id
+        )
         me = self.user.id if self.user else None
+        # raiseload(author): CommentModel.author is lazy="selectin"; without this,
+        # loading the rows hydrates every author's full Employee graph. Names come
+        # from the column-only batch below, for the visible rows only.
         rows = (
             await self.session.scalars(
                 select(CommentModel)
+                .options(raiseload(CommentModel.author))
                 .where(CommentModel.review_session_employee_id == rse_id)
                 .order_by(CommentModel.created_at.asc(), CommentModel.id.asc())
             )
         ).all()
-        return [
-            self._to_schema(c)
+        visible = [
+            c
             for c in rows
             if self._can_see(c, me, is_subject, is_oversighter, is_supervisor)
         ]
+        author_names = await self._author_names({c.author_id for c in visible})
+        return [self._to_schema(c, author_names.get(c.author_id, "")) for c in visible]
 
     # ---- create ----------------------------------------------------------------
     async def create_comment(

@@ -19,6 +19,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LockIcon from '@mui/icons-material/Lock';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import PublicIcon from '@mui/icons-material/Public';
 import SupervisorAccountOutlinedIcon from '@mui/icons-material/SupervisorAccountOutlined';
 import dayjs from 'dayjs';
@@ -50,21 +51,24 @@ interface Props {
     setSnackbar: (s: { open: boolean; message: string; severity: 'success' | 'error' }) => void;
 }
 
-/** Visibility scopes a note may take, per the role it was authored under. The
- *  'to_oversight' escalation scope is supervision-only. */
+/** Visibility scopes a note may take, per the role it was authored under.
+ *  Three tiers each: private -> role-specific middle scope -> public (everyone).
+ *  Full rules matrix: .claude/skills/review-comments/SKILL.md */
 const VIS_OPTIONS: Record<CommentAuthorRole, CommentVisibility[]> = {
-    oversight: ['private', 'public'],
+    oversight: ['private', 'to_subject', 'public'],
     supervision: ['private', 'to_oversight', 'public'],
 };
 
 const VIS_META: Record<CommentVisibility, { labelKey: string; hintKey: string }> = {
     private: { labelKey: 'reviewCommentVisibilityPrivate', hintKey: 'reviewCommentVisibilityPrivateHint' },
-    public: { labelKey: 'reviewCommentVisibilityPublic', hintKey: 'reviewCommentVisibilityPublicHint' },
+    to_subject: { labelKey: 'reviewCommentVisibilityToSubject', hintKey: 'reviewCommentVisibilityToSubjectHint' },
     to_oversight: { labelKey: 'reviewCommentVisibilityOversight', hintKey: 'reviewCommentVisibilityOversightHint' },
+    public: { labelKey: 'reviewCommentVisibilityPublic', hintKey: 'reviewCommentVisibilityPublicHint' },
 };
 
 function VisibilityIconFor({ v }: { v: CommentVisibility }) {
     if (v === 'public') return <PublicIcon sx={{ fontSize: 13 }} />;
+    if (v === 'to_subject') return <PersonOutlineIcon sx={{ fontSize: 13 }} />;
     if (v === 'to_oversight') return <SupervisorAccountOutlinedIcon sx={{ fontSize: 13 }} />;
     return <LockIcon sx={{ fontSize: 13 }} />;
 }
@@ -201,7 +205,7 @@ export function ReviewCommentsDrawer({ open, onClose, rseId, canComment, myAutho
                                         sx={{ mb: 1.5, p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}
                                     >
                                         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.75 }}>
-                                            <EmployeeAvatar employeeId={c.author_id} name={c.author_name} scope="peopleReview" size={28} />
+                                            <EmployeeAvatar employeeId={c.author_id} name={c.author_name} scope="reviewComments" size={28} />
                                             <Box sx={{ minWidth: 0, flex: 1 }}>
                                                 <Typography fontSize={13} fontWeight={700} noWrap>
                                                     {c.author_name}

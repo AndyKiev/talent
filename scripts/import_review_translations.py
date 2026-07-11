@@ -425,12 +425,16 @@ TRANSLATIONS = {
     # ── Review comments ──
     "reviewComments": {"ukr": "Нотатки оцінювання", "eng": "Review Notes"},
     "reviewCommentNoneYet": {"ukr": "Нотаток ще немає.", "eng": "No notes yet."},
+    "reviewCommentRoleOversight": {"ukr": "Куратор", "eng": "Oversight"},
+    "reviewCommentRoleSupervision": {"ukr": "Супервайзер", "eng": "Supervisor"},
     "reviewCommentVisibilityPrivate": {"ukr": "Приватна", "eng": "Private"},
     "reviewCommentVisibilityPublic": {"ukr": "Публічна", "eng": "Public"},
+    "reviewCommentVisibilityToSubject": {"ukr": "Для працівника", "eng": "To employee"},
     "reviewCommentVisibilityOversight": {"ukr": "Для нагляду", "eng": "To oversight"},
     "reviewCommentVisibilityPrivateHint": {"ukr": "Видно лише вам", "eng": "Visible only to you"},
     "reviewCommentVisibilityPublicHint": {"ukr": "Видно всім у цьому оцінюванні", "eng": "Visible to everyone in this review"},
-    "reviewCommentVisibilityOversightHint": {"ukr": "Передано наглядовому рецензенту", "eng": "Forwarded to oversight reviewer"},
+    "reviewCommentVisibilityToSubjectHint": {"ukr": "Видно працівнику та вам", "eng": "Visible to the employee and you"},
+    "reviewCommentVisibilityOversightHint": {"ukr": "Видно наглядовим рецензентам та вам", "eng": "Visible to oversight reviewers and you"},
 
     # ── Children ──
     "childrenUnder14": {"ukr": "Діти ≤ 14", "eng": "Children ≤ 14"},

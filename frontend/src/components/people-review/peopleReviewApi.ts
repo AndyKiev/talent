@@ -235,6 +235,23 @@ export const setActiveContext = async (body: ActiveContext): Promise<ActiveConte
     return res.data;
 };
 
+// Per-session availability of the scope modes: is the current user themselves in
+// the session ('only myself' selectable), and which of their oversight roles have
+// at least one linked employee in the session.
+export interface SessionScopeAvailability {
+    self_in_session: boolean;
+    oversight_role_ids_with_members: number[];
+}
+
+export const fetchSessionScopeAvailability = async (
+    sessionId: number,
+): Promise<SessionScopeAvailability> => {
+    const res = await axiosInstance.get<SessionScopeAvailability>(
+        `${PR_SCOPE_BASE}/session_availability/${sessionId}`,
+    );
+    return res.data;
+};
+
 // --- Session departments (for supervision scope cross-check) ---
 export interface SessionDepartment {
     id: number;
@@ -695,11 +712,11 @@ export const deleteProposedLevel = async (
 };
 
 // --- Review comments (per-employee reviewer notes) ---
-// Visibility audience is role-dependent (see backend): oversight-public = subject +
-// oversighters; supervision-public = supervisors + oversighters. Private = author only.
-// 'to_oversight' is a supervision-only scope: author + oversight reviewers, hidden
-// from the reviewed employee and from other supervisors.
-export type CommentVisibility = 'private' | 'public' | 'to_oversight';
+// Three scopes per author role (full matrix: .claude/skills/review-comments/SKILL.md):
+// 'private' = author only; 'to_subject' (oversight-only) = author + the reviewed
+// employee; 'to_oversight' (supervision-only) = author + oversight reviewers;
+// 'public' = everyone who can open the review.
+export type CommentVisibility = 'private' | 'to_subject' | 'to_oversight' | 'public';
 export type CommentAuthorRole = 'oversight' | 'supervision';
 
 export interface ReviewComment {
