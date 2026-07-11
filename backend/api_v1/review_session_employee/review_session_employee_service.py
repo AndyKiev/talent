@@ -321,10 +321,11 @@ class ReviewSessionEmployeeService(BaseService):
         status: Optional[str] = None,
         sort: Optional[str] = None,
     ) -> List[RSEListSchema]:
-        filters = {"session_id": session_id}
-        if status:
-            filters["status"] = status
-        records = await self.get_all(params=filters, sort_json=sort)
+        # Constrained roster load: employee name/code + light evaluations only,
+        # not each of the 33 employees' full selectin graph (see list_by_session).
+        # The final ordering is applied below from the roster order map, so `sort`
+        # (a legacy DB-order hint) no longer affects the output.
+        records = await self.repository.list_by_session(session_id, status)
         visible = await self._visible_employee_ids()
         # In a role mode (oversight / supervision) a reviewer doesn't review
         # themselves, so self is dropped from the roster. In "only myself" mode

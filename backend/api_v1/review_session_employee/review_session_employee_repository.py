@@ -47,3 +47,21 @@ class ReviewSessionEmployeeRepository(BaseRepository):
             )
         )
         return await self.session.scalar(stmt)
+
+    async def list_by_session(self, session_id: int, status: str | None = None):
+        """Roster load: RSE rows for a session with the reviewed employee's
+        name/code columns + the light evaluations (score/facts) ONLY. Raiseloads
+        the employee's deep graph, the evaluations' relationships, and the session
+        — none of which _to_list_schema reads — so a 33-row roster doesn't hydrate
+        33 employees' whole graphs (~1300 queries). The service re-sorts by roster
+        order, so no DB order_by is needed here."""
+        stmt = select(self.model).where(self.model.session_id == session_id)
+        if status:
+            stmt = stmt.where(self.model.status == status)
+        stmt = stmt.options(
+            selectinload(self.model.employee).raiseload("*"),
+            selectinload(self.model.evaluations).raiseload("*"),
+            raiseload(self.model.session),
+        )
+        result = await self.session.scalars(stmt)
+        return result.all()
