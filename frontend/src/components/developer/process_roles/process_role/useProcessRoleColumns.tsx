@@ -88,6 +88,7 @@ export function useProcessRoleColumns({
             ),
         },
         textEditCol('name', 'name', 200, 1),
+        textEditCol('short_name', 'shortName', 140, 0.5),
         textEditCol('key', 'key', 160, 0.7),
         {
             field: 'link_target',

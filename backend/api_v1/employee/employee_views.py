@@ -87,6 +87,31 @@ async def get_scope_departments(
     return await service.get_scope_select_departments()
 
 
+class ResponsibilityTypeOption(BaseModel):
+    id: int
+    name: str
+
+
+@router.get(
+    "/{employee_id}/responsibility_type_options",
+    response_model=List[ResponsibilityTypeOption],
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE)],
+)
+async def get_responsibility_type_options(
+    employee_id: int,
+    department_category_id: int,
+    service: Annotated[EmployeeService, Depends(get_employee_service)],
+):
+    """
+    Department TYPES an employee may be made responsible for: the types of the
+    instances in the employee's MAIN-department subtree that belong to the given
+    (responsibility-flagged) category. Sorted by name; empty when none apply.
+    """
+    return await service.get_responsibility_type_options(
+        employee_id, department_category_id
+    )
+
+
 @router.get(
     "/{employee_id}",
     response_model=EmployeeSchema,

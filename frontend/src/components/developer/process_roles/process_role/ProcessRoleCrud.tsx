@@ -69,6 +69,7 @@ export function ProcessRoleCrud() {
         (row: ProcessRole, field: string, newValue: string) => {
             const fieldLabelMap: Record<string, string> = {
                 name: getString('name') || 'Name',
+                short_name: getString('shortName') || 'Short name',
                 key: getString('key') || 'Key',
             };
             setPendingEdit({

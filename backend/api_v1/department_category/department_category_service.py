@@ -47,6 +47,7 @@ class DepartmentCategoryService(BaseService):
         name: Optional[str] = None,
         is_active: Optional[bool] = None,
         is_main: Optional[bool] = None,
+        is_responsibility: Optional[bool] = None,
         sort: Optional[str] = None,
     ) -> List[DepartmentCategorySchema]:
         if name:
@@ -59,6 +60,8 @@ class DepartmentCategoryService(BaseService):
             filters["is_active"] = is_active
         if is_main is not None:
             filters["is_main"] = is_main
+        if is_responsibility is not None:
+            filters["is_responsibility"] = is_responsibility
         records = await self.get_all(params=filters or None, sort_json=sort)
         return [DepartmentCategorySchema.model_validate(r) for r in records]
 

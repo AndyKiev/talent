@@ -137,10 +137,23 @@ class EmployeeService(BaseService):
                 ),
             )
 
+        # Responsibility links carry a department TYPE (no org-tree position),
+        # so they build a different slim schema than the MAIN instance link.
+        def _resp_link_schema(link) -> MainDepartmentSchema:
+            return MainDepartmentSchema(
+                id=link.id,
+                department_type_id=link.department_type_id,
+                name=(
+                    link.department_type.name
+                    if link.department_type
+                    else f"TYPE {link.department_type_id}"
+                ),
+            )
+
         main_links = orm_employee.departments or []
         schema.main_department = _link_schema(main_links[0]) if main_links else None
         schema.responsibility_departments = [
-            _link_schema(link)
+            _resp_link_schema(link)
             for link in (orm_employee.responsibility_departments or [])
         ]
 
@@ -214,6 +227,51 @@ class EmployeeService(BaseService):
         # Build the org-unit index once for the whole list.
         org_index = await self._get_org_index()
         return [await self._to_schema(u, org_index) for u in users]
+
+    async def get_responsibility_type_options(
+        self, employee_id: int, department_category_id: int
+    ) -> list[dict]:
+        """
+        Distinct department TYPES available as responsibility options for an
+        employee: the types of the department INSTANCES inside the employee's
+        MAIN-department subtree that belong to the given category. Sorted by
+        type name. Empty when the employee has no main department or no matching
+        children (graceful — never an error).
+        """
+        from backend.api_v1.employee_department.employee_department_model import (
+            EmployeeDepartment,
+        )
+        from backend.api_v1.department.department_model import Department
+        from backend.api_v1.department_type.department_type_model import DepartmentType
+
+        main_dept_id = (
+            await self.session.scalars(
+                select(EmployeeDepartment.department_id).where(
+                    EmployeeDepartment.employee_id == employee_id
+                )
+            )
+        ).first()
+        if main_dept_id is None:
+            return []
+
+        dept_repo = DepartmentRepository(session=self.session)
+        subtree_ids = await dept_repo.get_subtree_ids({main_dept_id})
+        if not subtree_ids:
+            return []
+
+        stmt = (
+            select(DepartmentType.id, DepartmentType.name)
+            .join(Department, Department.department_type_id == DepartmentType.id)
+            .where(
+                Department.id.in_(subtree_ids),
+                Department.department_category_id == department_category_id,
+                Department.is_active.is_(True),
+            )
+            .distinct()
+            .order_by(DepartmentType.name.asc())
+        )
+        rows = (await self.session.execute(stmt)).all()
+        return [{"id": r.id, "name": r.name} for r in rows]
 
     async def get_scope_select_departments(self) -> list[dict]:
         """

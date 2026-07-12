@@ -331,29 +331,11 @@ export function EmployeeAddDeptJobDialog({
 
                     <Divider />
 
-                    {/* is_main toggle ABOVE the category select */}
-                    <Controller
-                        name="is_main"
-                        control={control}
-                        render={({ field }) => (
-                            <FormControlLabel
-                                control={
-                                    <Switch
-                                        checked={field.value}
-                                        onChange={(_, checked) => field.onChange(checked)}
-                                    />
-                                }
-                                label={
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                        <ApartmentIcon fontSize="small" />
-                                        <span>{cfl(getString('mainDepartment') || 'Main Department')}</span>
-                                    </Box>
-                                }
-                            />
-                        )}
-                    />
+                    {/* MAIN department only — responsibility departments are
+                        TYPE-based and managed via the RESPONSIBILITY_DEPTS_CHANGE
+                        event, not this dialog. */}
 
-                    {/* Step 1 — Category (filtered by is_main) */}
+                    {/* Step 1 — Category (is_main=true) */}
                     <Controller
                         name="department_category_id"
                         control={control}

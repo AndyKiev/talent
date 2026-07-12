@@ -27,6 +27,8 @@ class ProcessRole(IntIdPkMixin, TimestampMixin, Base):
         index=True,
     )
     name: Mapped[str] = mapped_column(String(128), nullable=False)
+    # Compact label for tight UIs (jobs-grid chips); falls back to name when NULL.
+    short_name: Mapped[str | None] = mapped_column(String(32), nullable=True)
     key: Mapped[str | None] = mapped_column(String(64), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     # What this role's holders are linked to: 'employee' (oversight-style roster)

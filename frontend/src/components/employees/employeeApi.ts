@@ -138,8 +138,11 @@ export const fetchEmployeesByDepartment = async (
 // ── Main department slim shape (mirrors backend MainDepartmentSchema) ──────────
 
 export interface MainDepartment {
-    id: number;           // EmployeeDepartment link id
-    department_id: number;
+    id: number;           // link-row id
+    // main_department carries a department INSTANCE; responsibility_departments
+    // carry a department TYPE — exactly one of these ids is set.
+    department_id?: number | null;
+    department_type_id?: number | null;
     name: string;
     // Derived top-level org unit (board / directorate / store) for this dept.
     top_department: TopOrgUnit | null;

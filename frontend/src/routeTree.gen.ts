@@ -130,6 +130,7 @@ import { Route as AdminReview_setupDimensionsListIndexRouteImport } from './rout
 import { Route as AdminReview_setupDimensionsCriteriaIndexRouteImport } from './routes/admin/review_setup/dimensions/criteria/index'
 import { Route as AdminPeople_reviewReviewersHoldersIndexRouteImport } from './routes/admin/people_review/reviewers/holders/index'
 import { Route as AdminPeople_reviewReviewersEmployeesIndexRouteImport } from './routes/admin/people_review/reviewers/employees/index'
+import { Route as AdminPeople_reviewReviewersAuto_assignmentIndexRouteImport } from './routes/admin/people_review/reviewers/auto_assignment/index'
 import { Route as AdminPeople_reviewReview_setupLevelsIndexRouteImport } from './routes/admin/people_review/review_setup/levels/index'
 import { Route as AdminPeople_reviewReview_setupDimensionsIndexRouteImport } from './routes/admin/people_review/review_setup/dimensions/index'
 import { Route as AdminDepartments_groupDepartment_typesListIndexRouteImport } from './routes/admin/departments_group/department_types/list/index'
@@ -824,6 +825,12 @@ const AdminPeople_reviewReviewersEmployeesIndexRoute =
     path: '/employees/',
     getParentRoute: () => AdminPeople_reviewReviewersRouteRoute,
   } as any)
+const AdminPeople_reviewReviewersAuto_assignmentIndexRoute =
+  AdminPeople_reviewReviewersAuto_assignmentIndexRouteImport.update({
+    id: '/auto_assignment/',
+    path: '/auto_assignment/',
+    getParentRoute: () => AdminPeople_reviewReviewersRouteRoute,
+  } as any)
 const AdminPeople_reviewReview_setupLevelsIndexRoute =
   AdminPeople_reviewReview_setupLevelsIndexRouteImport.update({
     id: '/',
@@ -1000,6 +1007,7 @@ export interface FileRoutesByFullPath {
   '/admin/departments_group/department_types/list': typeof AdminDepartments_groupDepartment_typesListIndexRoute
   '/admin/people_review/review_setup/dimensions/': typeof AdminPeople_reviewReview_setupDimensionsIndexRoute
   '/admin/people_review/review_setup/levels/': typeof AdminPeople_reviewReview_setupLevelsIndexRoute
+  '/admin/people_review/reviewers/auto_assignment': typeof AdminPeople_reviewReviewersAuto_assignmentIndexRoute
   '/admin/people_review/reviewers/employees': typeof AdminPeople_reviewReviewersEmployeesIndexRoute
   '/admin/people_review/reviewers/holders': typeof AdminPeople_reviewReviewersHoldersIndexRoute
   '/admin/review_setup/dimensions/criteria': typeof AdminReview_setupDimensionsCriteriaIndexRoute
@@ -1111,6 +1119,7 @@ export interface FileRoutesByTo {
   '/admin/departments_group/department_types/list': typeof AdminDepartments_groupDepartment_typesListIndexRoute
   '/admin/people_review/review_setup/dimensions': typeof AdminPeople_reviewReview_setupDimensionsIndexRoute
   '/admin/people_review/review_setup/levels': typeof AdminPeople_reviewReview_setupLevelsIndexRoute
+  '/admin/people_review/reviewers/auto_assignment': typeof AdminPeople_reviewReviewersAuto_assignmentIndexRoute
   '/admin/people_review/reviewers/employees': typeof AdminPeople_reviewReviewersEmployeesIndexRoute
   '/admin/people_review/reviewers/holders': typeof AdminPeople_reviewReviewersHoldersIndexRoute
   '/admin/review_setup/dimensions/criteria': typeof AdminReview_setupDimensionsCriteriaIndexRoute
@@ -1244,6 +1253,7 @@ export interface FileRoutesById {
   '/admin/departments_group/department_types/list/': typeof AdminDepartments_groupDepartment_typesListIndexRoute
   '/admin/people_review/review_setup/dimensions/': typeof AdminPeople_reviewReview_setupDimensionsIndexRoute
   '/admin/people_review/review_setup/levels/': typeof AdminPeople_reviewReview_setupLevelsIndexRoute
+  '/admin/people_review/reviewers/auto_assignment/': typeof AdminPeople_reviewReviewersAuto_assignmentIndexRoute
   '/admin/people_review/reviewers/employees/': typeof AdminPeople_reviewReviewersEmployeesIndexRoute
   '/admin/people_review/reviewers/holders/': typeof AdminPeople_reviewReviewersHoldersIndexRoute
   '/admin/review_setup/dimensions/criteria/': typeof AdminReview_setupDimensionsCriteriaIndexRoute
@@ -1378,6 +1388,7 @@ export interface FileRouteTypes {
     | '/admin/departments_group/department_types/list'
     | '/admin/people_review/review_setup/dimensions/'
     | '/admin/people_review/review_setup/levels/'
+    | '/admin/people_review/reviewers/auto_assignment'
     | '/admin/people_review/reviewers/employees'
     | '/admin/people_review/reviewers/holders'
     | '/admin/review_setup/dimensions/criteria'
@@ -1489,6 +1500,7 @@ export interface FileRouteTypes {
     | '/admin/departments_group/department_types/list'
     | '/admin/people_review/review_setup/dimensions'
     | '/admin/people_review/review_setup/levels'
+    | '/admin/people_review/reviewers/auto_assignment'
     | '/admin/people_review/reviewers/employees'
     | '/admin/people_review/reviewers/holders'
     | '/admin/review_setup/dimensions/criteria'
@@ -1621,6 +1633,7 @@ export interface FileRouteTypes {
     | '/admin/departments_group/department_types/list/'
     | '/admin/people_review/review_setup/dimensions/'
     | '/admin/people_review/review_setup/levels/'
+    | '/admin/people_review/reviewers/auto_assignment/'
     | '/admin/people_review/reviewers/employees/'
     | '/admin/people_review/reviewers/holders/'
     | '/admin/review_setup/dimensions/criteria/'
@@ -2532,6 +2545,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPeople_reviewReviewersEmployeesIndexRouteImport
       parentRoute: typeof AdminPeople_reviewReviewersRouteRoute
     }
+    '/admin/people_review/reviewers/auto_assignment/': {
+      id: '/admin/people_review/reviewers/auto_assignment/'
+      path: '/auto_assignment'
+      fullPath: '/admin/people_review/reviewers/auto_assignment'
+      preLoaderRoute: typeof AdminPeople_reviewReviewersAuto_assignmentIndexRouteImport
+      parentRoute: typeof AdminPeople_reviewReviewersRouteRoute
+    }
     '/admin/people_review/review_setup/levels/': {
       id: '/admin/people_review/review_setup/levels/'
       path: '/'
@@ -2750,6 +2770,7 @@ const AdminPeople_reviewReview_setupRouteRouteWithChildren =
 
 interface AdminPeople_reviewReviewersRouteRouteChildren {
   AdminPeople_reviewReviewersIndexRoute: typeof AdminPeople_reviewReviewersIndexRoute
+  AdminPeople_reviewReviewersAuto_assignmentIndexRoute: typeof AdminPeople_reviewReviewersAuto_assignmentIndexRoute
   AdminPeople_reviewReviewersEmployeesIndexRoute: typeof AdminPeople_reviewReviewersEmployeesIndexRoute
   AdminPeople_reviewReviewersHoldersIndexRoute: typeof AdminPeople_reviewReviewersHoldersIndexRoute
 }
@@ -2758,6 +2779,8 @@ const AdminPeople_reviewReviewersRouteRouteChildren: AdminPeople_reviewReviewers
   {
     AdminPeople_reviewReviewersIndexRoute:
       AdminPeople_reviewReviewersIndexRoute,
+    AdminPeople_reviewReviewersAuto_assignmentIndexRoute:
+      AdminPeople_reviewReviewersAuto_assignmentIndexRoute,
     AdminPeople_reviewReviewersEmployeesIndexRoute:
       AdminPeople_reviewReviewersEmployeesIndexRoute,
     AdminPeople_reviewReviewersHoldersIndexRoute:

@@ -29,12 +29,12 @@ class EmployeeResponsibilityDepartmentRepository(BaseRepository):
     async def get_by_double(
         self,
         employee_id: int,
-        department_id: int,
+        department_type_id: int,
     ) -> EmployeeResponsibilityDepartment | None:
-        """Lookup by the unique (employee, department) pair."""
+        """Lookup by the unique (employee, department_type) pair."""
         stmt = select(self.model).where(
             self.model.employee_id == employee_id,
-            self.model.department_id == department_id,
+            self.model.department_type_id == department_type_id,
         )
         result = await self.session.scalars(stmt)
         return result.one_or_none()

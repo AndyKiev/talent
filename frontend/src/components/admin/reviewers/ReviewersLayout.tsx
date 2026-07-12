@@ -9,6 +9,7 @@ import useString from '../../../hooks/useString';
 const TOP_TABS = [
     { label: 'reviewers', path: '/admin/people_review/reviewers/holders' },
     { label: 'reviewerAssignments', path: '/admin/people_review/reviewers/employees' },
+    { label: 'oversightAutoAssignment', path: '/admin/people_review/reviewers/auto_assignment' },
 ] as const;
 
 export function ReviewersLayout() {

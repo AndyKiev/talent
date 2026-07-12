@@ -31,13 +31,22 @@ class DepartmentTypeLinkInfo(BaseModel):
     is_active: bool
 
 
+class ProcessRoleLinkInfo(BaseModel):
+    """A process role linked to a job: short = role short_name (or name) for
+    compact chips, full = 'process / role' for the tooltip."""
+
+    model_config = ConfigDict(from_attributes=True)
+    short: str
+    full: str
+
+
 class Job(JobBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
     created_at: datetime
     groups: List[str] = []  # user group names linked to this job
     job_group_names: List[str] = []  # job group names linked to this job
-    process_role_link_names: List[str] = []  # "process_name / role_name" per link
+    process_role_links_info: List[ProcessRoleLinkInfo] = []  # role links (short + full)
     department_type_links: List[DepartmentTypeLinkInfo] = (
         []
     )  # dept types + link is_active

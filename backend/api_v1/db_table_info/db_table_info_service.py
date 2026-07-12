@@ -206,7 +206,6 @@ class DbTableInfoService:
         "job_groups": "Группы должностей",
         "job_job_group_links": "Связи должность–группа должностей",
         "job_process_role_links": "Связи должность–роль процесса",
-        "job_responsibility_category_links": "Категории ответственности должностей",
         "plan_session_statuses": "Статусы сессий планирования",
         "plan_sessions": "Сессии планирования преемственности",
         "plan_category_defaults": "Категории планирования по умолчанию",

@@ -46,7 +46,6 @@ import {
     createEmployeeDepartment,
     fetchEmployeeResponsibilityDepartments,
     deleteEmployeeResponsibilityDepartment,
-    createEmployeeResponsibilityDepartment,
     type EmployeeDepartment,
 } from './employeeDepartmentApi';
 import {
@@ -135,15 +134,11 @@ export function EmployeeDepartmentsDrawer({ employee, onClose }: Props) {
 
     const addMutation = useMutation({
         mutationFn: async (payload: AddDeptJobPayload) => {
-            if (payload.isMain) {
-                await createEmployeeDepartment(employee!.id, {
-                    department_id: payload.departmentId,
-                });
-            } else {
-                await createEmployeeResponsibilityDepartment(employee!.id, {
-                    department_id: payload.departmentId,
-                });
-            }
+            // MAIN only — responsibility departments are TYPE-based and set via
+            // the RESPONSIBILITY_DEPTS_CHANGE event, not this drawer.
+            await createEmployeeDepartment(employee!.id, {
+                department_id: payload.departmentId,
+            });
             if (payload.newJobId != null) {
                 await updateEmployeeJob({ id: employee!.id, job_id: payload.newJobId });
             }
@@ -176,6 +171,12 @@ export function EmployeeDepartmentsDrawer({ employee, onClose }: Props) {
 
     // ── Render ────────────────────────────────────────────────────────────────
 
+    // MAIN rows carry a department INSTANCE; RD rows carry a department TYPE.
+    const deptLabel = (dept: EmployeeDepartment, isMain: boolean) =>
+        isMain
+            ? (dept.department?.name ?? `ID ${dept.department_id}`)
+            : (dept.department_type?.name ?? `TYPE ${dept.department_type_id}`);
+
     const renderDeptItem = (dept: EmployeeDepartment, isMain: boolean, idx: number) => (
         <Box key={`${isMain ? 'm' : 'r'}-${dept.id}`}>
             {idx > 0 && <Divider component="li" />}
@@ -199,7 +200,7 @@ export function EmployeeDepartmentsDrawer({ employee, onClose }: Props) {
                                 }
                             </Tooltip>
                             <Typography variant="body2" fontWeight={600}>
-                                {dept.department?.name ?? `ID ${dept.department_id}`}
+                                {deptLabel(dept, isMain)}
                             </Typography>
                             {isMain && (
                                 <Chip
@@ -428,9 +429,9 @@ export function EmployeeDepartmentsDrawer({ employee, onClose }: Props) {
                         {getString('areYouSureDeleteDeptAssignment') ||
                             'Are you sure you want to remove this department assignment?'}
                     </Typography>
-                    {deleteConfirm?.dept.department?.name && (
+                    {deleteConfirm && (
                         <Chip
-                            label={deleteConfirm.dept.department.name}
+                            label={deptLabel(deleteConfirm.dept, deleteConfirm.isMain)}
                             size="small"
                             variant="outlined"
                         />

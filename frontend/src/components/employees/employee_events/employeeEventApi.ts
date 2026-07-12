@@ -34,8 +34,8 @@ export interface EmployeeEventType {
 
 export interface EmployeeEventChangeDepartment {
     id: number;
-    department_id: number;
-    department?: { id: number; name: string } | null;
+    department_type_id: number;
+    department_type?: { id: number; name: string } | null;
 }
 
 export interface EmployeeEventChange {
@@ -97,7 +97,7 @@ export interface EmployeeEventChangeCreate {
     new_status_id?: number | null;
     prev_department_id?: number | null;
     new_department_id?: number | null;
-    dept_changes?: { department_id: number }[];
+    dept_changes?: { department_type_id: number }[];
 }
 
 // ── Event API calls ───────────────────────────────────────────────────────────
@@ -265,7 +265,35 @@ export interface DepartmentCategoryOption {
     id: number;
     name: string;
     is_main: boolean;
+    is_responsibility: boolean;
 }
+
+// A department TYPE offered as a responsibility option for an employee.
+export interface ResponsibilityTypeOption {
+    id: number;
+    name: string;
+}
+
+// Categories flagged as responsibility-list sources (drive the RD-event dropdown).
+export const fetchResponsibilityListCategories = async (): Promise<DepartmentCategoryOption[]> => {
+    const res = await axiosInstance.get<DepartmentCategoryOption[]>(
+        `${BASE_URL}/admin/department_categories`,
+        { params: { is_responsibility: true, is_active: true } },
+    );
+    return res.data ?? [];
+};
+
+// Department TYPES an employee may be made responsible for, within a category.
+export const fetchResponsibilityTypeOptions = async (
+    employeeId: number,
+    departmentCategoryId: number,
+): Promise<ResponsibilityTypeOption[]> => {
+    const res = await axiosInstance.get<ResponsibilityTypeOption[]>(
+        `${BASE_URL}/employees/${employeeId}/responsibility_type_options`,
+        { params: { department_category_id: departmentCategoryId } },
+    );
+    return res.data ?? [];
+};
 
 export const fetchJobs = async (): Promise<JobOption[]> => {
     const res = await axiosInstance.get<JobOption[]>(`${BASE_URL}/jobs`);
@@ -300,23 +328,6 @@ export const fetchMainDepartmentCategories = async (): Promise<DepartmentCategor
     const res = await axiosInstance.get<DepartmentCategoryOption[]>(
         `${BASE_URL}/admin/department_categories`,
         { params: { is_main: true, is_active: true } },
-    );
-    return res.data ?? [];
-};
-
-// Responsibility categories valid for a job (with is_main=false fallback).
-export interface ResponsibilityCategoryOption {
-    id: number;
-    name: string;
-    is_main: boolean;
-    is_fallback: boolean;
-}
-
-export const fetchResponsibilityCategoriesForJob = async (
-    jobId: number,
-): Promise<ResponsibilityCategoryOption[]> => {
-    const res = await axiosInstance.get<ResponsibilityCategoryOption[]>(
-        `${BASE_URL}/job_responsibility_category_links/by_job/${jobId}/categories`,
     );
     return res.data ?? [];
 };

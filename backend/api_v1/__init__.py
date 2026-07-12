@@ -58,7 +58,6 @@ __all__ = {
     "JobGroup",
     "JobJobGroupLink",
     "JobProcessRoleLink",
-    "JobResponsibilityCategoryLink",
     "JobCategory",
     "JobJobCategoryLink",
     # Planning
@@ -264,10 +263,6 @@ from backend.api_v1.essence.essence_model import Essence
 from backend.api_v1.table_relationship_links.user_group_operation_essence_link_model import (
     UserGroupOperationEssenceLink,
 )
-from backend.api_v1.job_responsibility_category_link.job_responsibility_category_link_model import (
-    JobResponsibilityCategoryLink,
-)
-
 from backend.api_v1.essence_set.essence_set_model import EssenceSet
 from backend.api_v1.essence_set.essence_set_member_model import EssenceSetMember
 from backend.api_v1.operation_essence_set_link.operation_essence_set_link_model import (

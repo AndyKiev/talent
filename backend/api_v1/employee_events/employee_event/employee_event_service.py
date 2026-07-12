@@ -300,12 +300,12 @@ class EmployeeEventService(BaseService):
         resp_repo = EmployeeResponsibilityDepartmentRepository(session=self.session)
         await resp_repo.delete_all_by_employee(employee_id)
 
-        target_dept_ids = {dc.department_id for dc in dept_changes}
-        for dept_id in target_dept_ids:
+        target_type_ids = {dc.department_type_id for dc in dept_changes}
+        for type_id in target_type_ids:
             await resp_repo.create_from_dict(
                 {
                     "employee_id": employee_id,
-                    "department_id": dept_id,
+                    "department_type_id": type_id,
                 }
             )
 
@@ -519,8 +519,10 @@ class EmployeeEventService(BaseService):
                     continue
                 depts = [
                     {
-                        "id": dc.department_id,
-                        "name": dc.department.name if dc.department else None,
+                        "id": dc.department_type_id,
+                        "name": (
+                            dc.department_type.name if dc.department_type else None
+                        ),
                     }
                     for dc in (change.dept_changes or [])
                 ]
@@ -1384,7 +1386,7 @@ class EmployeeEventService(BaseService):
             resp_change = changes_by_code.get("RESPONSIBILITY_DEPTS_CHANGE")
             if resp_change is not None and resp_change.dept_changes:
                 final_resp_dept_ids = {
-                    dc.department_id for dc in resp_change.dept_changes
+                    dc.department_type_id for dc in resp_change.dept_changes
                 }
 
         employee = await self._employee_repo.get_by_id(employee_id)
@@ -1414,11 +1416,11 @@ class EmployeeEventService(BaseService):
         # Responsibility links — rewrite the whole set to match the replay.
         resp_repo = EmployeeResponsibilityDepartmentRepository(session=self.session)
         await resp_repo.delete_all_by_employee(employee_id)
-        for dept_id in final_resp_dept_ids:
+        for type_id in final_resp_dept_ids:
             await resp_repo.create_from_dict(
                 {
                     "employee_id": employee_id,
-                    "department_id": dept_id,
+                    "department_type_id": type_id,
                 }
             )
 

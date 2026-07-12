@@ -22,18 +22,28 @@ export interface DepartmentFlat {
     department_category: { id: number; name: string } | null;
 }
 
+// The MAIN link carries a department INSTANCE; the RESPONSIBILITY link carries a
+// department TYPE — so only the fields for the relevant kind are populated.
 export interface EmployeeDepartment {
     id: number;
     employee_id: number;
-    department_id: number;
     created_at: string;
-    department: DepartmentFlat | null;
-    // Derived top-level org unit (board / directorate / store) for this dept.
-    top_department: TopOrgUnit | null;
+    // MAIN link (department instance)
+    department_id?: number;
+    department?: DepartmentFlat | null;
+    // Derived top-level org unit (board / directorate / store) for the instance.
+    top_department?: TopOrgUnit | null;
+    // RESPONSIBILITY link (department type)
+    department_type_id?: number;
+    department_type?: { id: number; name: string } | null;
 }
 
 export interface EmployeeDepartmentCreate {
     department_id: number;
+}
+
+export interface EmployeeResponsibilityDepartmentCreate {
+    department_type_id: number;
 }
 
 export interface MutationResponse<T> {
@@ -82,7 +92,7 @@ export const fetchEmployeeResponsibilityDepartments = async (
 
 export const createEmployeeResponsibilityDepartment = async (
     employeeId: number,
-    body: EmployeeDepartmentCreate,
+    body: EmployeeResponsibilityDepartmentCreate,
 ): Promise<MutationResponse<EmployeeDepartment>> => {
     const res = await axiosInstance.post<MutationResponse<EmployeeDepartment>>(
         respBase(employeeId),

@@ -25,6 +25,7 @@ interface Params {
     updateIsPending: boolean;
     onToggleActive: (row: DepartmentCategory) => void;
     onToggleMain: (row: DepartmentCategory) => void;
+    onToggleResponsibility: (row: DepartmentCategory) => void;
     toggleIsPending: boolean;
     onDeleteClick: (row: DepartmentCategory) => void;
     deleteIsPending: boolean;
@@ -40,6 +41,7 @@ export function useDepartmentCategoryColumns({
     updateIsPending,
     onToggleActive,
     onToggleMain,
+    onToggleResponsibility,
     toggleIsPending,
     onDeleteClick,
     deleteIsPending,
@@ -80,7 +82,7 @@ export function useDepartmentCategoryColumns({
     }
 
     function toggleCol(
-        field: 'is_active' | 'is_main',
+        field: 'is_active' | 'is_main' | 'is_responsibility',
         headerKey: string,
         onToggle: (row: DepartmentCategory) => void,
     ): GridColDef {
@@ -110,6 +112,7 @@ export function useDepartmentCategoryColumns({
         textEditCol('description', 'description', 240, 1),
         toggleCol('is_active', 'isActive', onToggleActive),
         toggleCol('is_main', 'isMain', onToggleMain),
+        toggleCol('is_responsibility', 'isResponsibility', onToggleResponsibility),
         {
             field: 'created_at',
             headerName: getString('createdAt'),

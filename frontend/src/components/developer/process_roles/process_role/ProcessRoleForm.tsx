@@ -31,6 +31,7 @@ import cfl from '../../../../utils/capitalizeFirstLetter.ts';
 const schema = z.object({
     process_id: z.number().int().positive('processRequired'),
     name: z.string().min(1, 'nameRequired').max(128, 'nameTooLong'),
+    short_name: z.string().max(32, 'nameTooLong').optional().or(z.literal('')),
     key: z.string().max(64, 'keyTooLong').optional().or(z.literal('')),
     is_active: z.boolean(),
     link_target: z.enum(['employee', 'department']),
@@ -63,7 +64,7 @@ export function ProcessRoleForm({ open, onClose, createMutation }: Props) {
         setValue,
     } = useForm<FormData>({
         resolver: zodResolver(schema),
-        defaultValues: { process_id: 0, name: '', key: '', is_active: true, link_target: 'employee' },
+        defaultValues: { process_id: 0, name: '', short_name: '', key: '', is_active: true, link_target: 'employee' },
     });
 
     const handleClose = () => {
@@ -75,6 +76,7 @@ export function ProcessRoleForm({ open, onClose, createMutation }: Props) {
         createMutation.mutate({
             process_id: data.process_id,
             name: data.name,
+            short_name: data.short_name || null,
             key: data.key || null,
             is_active: data.is_active,
             link_target: data.link_target,
@@ -122,6 +124,14 @@ export function ProcessRoleForm({ open, onClose, createMutation }: Props) {
                         error={!!errors.name}
                         helperText={errors.name?.message && (getString(errors.name.message) || errors.name.message)}
                         {...register('name')}
+                    />
+                    <TextField
+                        label={cfl(getString('shortName')) || 'Short name'}
+                        fullWidth
+                        slotProps={{ htmlInput: { maxLength: 32 } }}
+                        error={!!errors.short_name}
+                        helperText={errors.short_name?.message && (getString(errors.short_name.message) || errors.short_name.message)}
+                        {...register('short_name')}
                     />
                     <TextField
                         label={cfl(getString('key')) || 'Key'}

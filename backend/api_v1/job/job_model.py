@@ -128,10 +128,20 @@ class Job(IntIdPkMixin, TimestampMixin, Base):
         ]
 
     @property
-    def process_role_link_names(self) -> list[str]:
-        return [
-            f"{link.process_role.process.name} / {link.process_role.name}"
-            if link.process_role and link.process_role.process
-            else f"? / {link.process_role.name if link.process_role else '?'}"
-            for link in self.process_role_links
-        ]
+    def process_role_links_info(self) -> list[dict]:
+        """Process-role links as {short, full}: short prefers the role's
+        short_name (compact grid chips), full = 'process / role' (tooltip)."""
+        out: list[dict] = []
+        for link in self.process_role_links:
+            role = link.process_role
+            if role is None:
+                out.append({"short": "?", "full": "? / ?"})
+                continue
+            process_name = role.process.name if role.process else "?"
+            out.append(
+                {
+                    "short": role.short_name or role.name,
+                    "full": f"{process_name} / {role.name}",
+                }
+            )
+        return out

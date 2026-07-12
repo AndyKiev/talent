@@ -27,6 +27,7 @@ const schema = z.object({
     description: z.string().max(256, 'descriptionTooLong').optional().or(z.literal('')),
     is_active: z.boolean(),
     is_main: z.boolean(),
+    is_responsibility: z.boolean(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -49,7 +50,7 @@ export function DepartmentCategoryForm({ open, onClose, createMutation }: Props)
         setValue,
     } = useForm<FormData>({
         resolver: zodResolver(schema),
-        defaultValues: { name: '', key: '', description: '', is_active: true, is_main: false },
+        defaultValues: { name: '', key: '', description: '', is_active: true, is_main: false, is_responsibility: false },
     });
 
     const handleClose = () => {
@@ -64,6 +65,7 @@ export function DepartmentCategoryForm({ open, onClose, createMutation }: Props)
             description: data.description || null,
             is_active: data.is_active,
             is_main: data.is_main,
+            is_responsibility: data.is_responsibility,
         });
     };
 
@@ -121,6 +123,15 @@ export function DepartmentCategoryForm({ open, onClose, createMutation }: Props)
                             />
                         }
                         label={cfl(getString('isMain')) || 'Main'}
+                    />
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={watch('is_responsibility')}
+                                onChange={(_, checked) => setValue('is_responsibility', checked)}
+                            />
+                        }
+                        label={cfl(getString('isResponsibility')) || 'Responsibility list'}
                     />
                 </Box>
             </DialogContent>

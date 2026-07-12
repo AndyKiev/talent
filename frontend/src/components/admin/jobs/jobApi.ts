@@ -11,6 +11,11 @@ export interface DepartmentTypeLinkInfo {
   is_active: boolean;
 }
 
+export interface ProcessRoleLinkInfo {
+  short: string;  // role short_name (or name) — compact chip label
+  full: string;   // "process / role" — tooltip
+}
+
 export interface Job {
   id: number;
   name: string;
@@ -21,7 +26,7 @@ export interface Job {
   created_at: string;
   groups: string[];           // user group names (existing)
   job_group_names: string[];  // job group names (new)
-  process_role_link_names: string[];  // "process_name / role_name" per link
+  process_role_links_info: ProcessRoleLinkInfo[];  // role links (short chip + full tooltip)
   department_type_links: DepartmentTypeLinkInfo[];  // dept types + link is_active
   job_category_id: number | null;     // 1:1 category (via job_job_category_links)
   job_category_key: string | null;    // snake_case key; label = getString(snakeToCamel(key))

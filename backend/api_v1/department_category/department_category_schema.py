@@ -9,6 +9,7 @@ class DepartmentCategoryBase(BaseModel):
     description: Optional[str] = Field(None, max_length=256)
     is_active: bool = True
     is_main: bool = False
+    is_responsibility: bool = False
     sort_order: int = 0
 
 
@@ -22,6 +23,7 @@ class DepartmentCategoryUpdate(BaseModel):
     description: Optional[str] = Field(None, max_length=256)
     is_active: Optional[bool] = None
     is_main: Optional[bool] = None
+    is_responsibility: Optional[bool] = None
     sort_order: Optional[int] = None
 
 

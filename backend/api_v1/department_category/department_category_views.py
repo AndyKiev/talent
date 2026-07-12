@@ -37,10 +37,15 @@ async def get_department_categories(
     name: Optional[str] = None,
     is_active: Optional[bool] = None,
     is_main: Optional[bool] = None,
+    is_responsibility: Optional[bool] = None,
     sort: Optional[str] = Query(None, description='JSON: {"field": "asc|desc"}'),
 ):
     return await service.get_department_categories(
-        name=name, is_active=is_active, is_main=is_main, sort=sort
+        name=name,
+        is_active=is_active,
+        is_main=is_main,
+        is_responsibility=is_responsibility,
+        sort=sort,
     )
 
 

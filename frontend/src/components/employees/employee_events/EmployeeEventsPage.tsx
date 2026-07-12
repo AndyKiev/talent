@@ -185,7 +185,7 @@ export function EmployeeEventsPage() {
                         </span>
                     </Tooltip>
                 ) : (
-                    <span style={{ color: '#bbb' }}>—</span>
+                    <Box component="span" sx={{ color: 'text.secondary' }}>—</Box>
                 ),
         },
         {
@@ -228,6 +228,7 @@ export function EmployeeEventsPage() {
                                 <IconButton
                                     size="small"
                                     color="warning"
+                                    aria-label={cfl(getString('revert') || 'Revert')}
                                     disabled={!canRevert}
                                     onClick={(e) => handleRevertClick(e, row)}
                                 >
@@ -247,6 +248,7 @@ export function EmployeeEventsPage() {
                                 <IconButton
                                     size="small"
                                     color="error"
+                                    aria-label={cfl(getString('delete') || 'Delete')}
                                     disabled={!isLast}
                                     onClick={(e) => handleDeleteClick(e, row)}
                                 >

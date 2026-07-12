@@ -312,6 +312,7 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
                             <AccessTestButton />
                             <UserMenu />
                             <IconButton
+                                aria-label={cfl(getString("menu"))}
                                 onClick={() => setMobileDrawerOpen(true)}
                                 sx={{ color: t.text, borderRadius: "9px" }}
                             >
@@ -324,7 +325,7 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
             </AppBar>
 
             {/* Page content */}
-            {children}
+            <Box component="main">{children}</Box>
         </Box>
     );
 };

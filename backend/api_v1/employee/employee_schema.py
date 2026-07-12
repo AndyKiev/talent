@@ -127,7 +127,14 @@ class EmployeeSchema(EmployeeBase):
     lang: Optional["Lang"] = None
     # Populated by EmployeeService._to_schema from the selectin-loaded relationships.
     main_department: Optional["MainDepartmentSchema"] = None  # single MAIN link
-    responsibility_departments: List["MainDepartmentSchema"] = []
+    # validation_alias points at a non-existent ORM attr so model_validate
+    # (from_attributes) does NOT auto-pull the same-named ORM relationship
+    # (list of EmployeeResponsibilityDepartment rows, which lack `name`) and
+    # blow up. Populated manually in EmployeeService._to_schema; serialized
+    # under the field name `responsibility_departments`.
+    responsibility_departments: List["MainDepartmentSchema"] = Field(
+        default=[], validation_alias="responsibility_departments_manual"
+    )
 
 
 # ── Slim read schema used inside EmployeeSchema ───────────────────────────────
@@ -140,8 +147,11 @@ class MainDepartmentSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
     id: int  # link-row id (useful for delete)
-    department_id: int
-    name: str  # department name — populated manually in _to_schema
+    # main_department carries a department INSTANCE; responsibility_departments
+    # carry a department TYPE — so exactly one of these id fields is set.
+    department_id: Optional[int] = None
+    department_type_id: Optional[int] = None
+    name: str  # department (main) or type (responsibility) name — set in _to_schema
     # Derived top-level org unit (board / directorate / store) for this
     # department. Resolved server-side by walking up the department tree.
     top_department: Optional[TopOrgUnit] = None

@@ -11,6 +11,7 @@ export interface DepartmentCategory {
     description: string | null;
     is_active: boolean;
     is_main: boolean;
+    is_responsibility: boolean;
     sort_order: number;
     created_at: string;
 }
@@ -21,6 +22,7 @@ export interface DepartmentCategoryCreate {
     description?: string | null;
     is_active: boolean;
     is_main: boolean;
+    is_responsibility: boolean;
 }
 
 export interface DepartmentCategoryUpdate {
@@ -29,6 +31,7 @@ export interface DepartmentCategoryUpdate {
     description?: string | null;
     is_active?: boolean;
     is_main?: boolean;
+    is_responsibility?: boolean;
     sort_order?: number;
 }
 

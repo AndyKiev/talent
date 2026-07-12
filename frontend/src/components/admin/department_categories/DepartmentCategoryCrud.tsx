@@ -143,6 +143,19 @@ export function DepartmentCategoryCrud() {
         [getString],
     );
 
+    const handleToggleResponsibility = useCallback(
+        (row: DepartmentCategory) => {
+            setPendingEdit({
+                id: row.id,
+                fieldLabel: getString('isResponsibility') || 'Responsibility list',
+                field: 'is_responsibility',
+                newValue: !row.is_responsibility,
+                oldValue: row.is_responsibility,
+            });
+        },
+        [getString],
+    );
+
     const handleDeleteClick = useCallback((row: DepartmentCategory) => {
         setRowToDelete(row);
     }, []);
@@ -161,6 +174,7 @@ export function DepartmentCategoryCrud() {
         updateIsPending: updateMutation.isPending,
         onToggleActive: handleToggleActive,
         onToggleMain: handleToggleMain,
+        onToggleResponsibility: handleToggleResponsibility,
         toggleIsPending: updateMutation.isPending,
         onDeleteClick: handleDeleteClick,
         deleteIsPending: deleteMutation.isPending,

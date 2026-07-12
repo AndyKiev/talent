@@ -1,18 +1,15 @@
 // src/components/employees/employee_events/EmployeeEventDrawer.tsx
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     Alert,
     Box,
     Button,
-    Checkbox,
     Chip,
     CircularProgress,
     Divider,
     Drawer,
     FormControl,
-    FormControlLabel,
-    FormGroup,
     IconButton,
     InputLabel,
     MenuItem,
@@ -34,7 +31,8 @@ import {
     fetchDepartmentsByCategory,
     fetchMainDepartmentCategories,
     fetchJobsByDepartmentType,
-    fetchResponsibilityCategoriesForJob,
+    fetchResponsibilityListCategories,
+    fetchResponsibilityTypeOptions,
     createEventChange,
     deleteEventChange,
     applyEmployeeEvent,
@@ -45,7 +43,8 @@ import {
     type JobOption,
     type EmployeeStatusOption,
     type DepartmentOption,
-    type ResponsibilityCategoryOption,
+    type DepartmentCategoryOption,
+    type ResponsibilityTypeOption,
 } from './employeeEventApi';
 import { fetchEmployeeById } from '../employeeApi';
 import { employeeEventsQK } from './useEmployeeEventMutations';
@@ -133,18 +132,16 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
         staleTime: 5 * 60 * 1000,
     });
 
-    // Job source for responsibility categories: the job assigned IN this event
-    // (JOB_CHANGE.new_job_id) if present, otherwise the employee's current job.
-    const jobChangeInEvent = (fullEvent?.changes ?? []).find(
-        (c) => c.direction_type?.code === 'JOB_CHANGE',
-    );
-    const responsibilityJobId =
-        jobChangeInEvent?.new_job_id ?? employee?.job_id ?? null;
+    // Responsibility is keyed on department TYPE and driven by the employee's
+    // MAIN department, not their job. The category dropdown lists categories
+    // flagged is_responsibility; picking one yields the department TYPES of the
+    // employee's main-department children in that category.
+    const hasMainDepartment = employee?.main_department != null;
 
-    const { data: responsibilityCategories = [] } = useQuery<ResponsibilityCategoryOption[]>({
-        queryKey: ['responsibility-categories', responsibilityJobId],
-        queryFn: () => fetchResponsibilityCategoriesForJob(responsibilityJobId as number),
-        enabled: open && responsibilityJobId != null,
+    const { data: responsibilityCategories = [] } = useQuery<DepartmentCategoryOption[]>({
+        queryKey: ['responsibility-list-categories'],
+        queryFn: fetchResponsibilityListCategories,
+        enabled: open,
         staleTime: 5 * 60 * 1000,
     });
 
@@ -267,9 +264,10 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
 
     // ── Current employee state (for exclusions in TRANSFER / PROMOTION) ───────
     const currentJobId = employee?.job_id ?? null;
-    const currentMainDeptIds = employee?.main_department
-        ? [employee.main_department.department_id]
-        : [];
+    const currentMainDeptIds =
+        employee?.main_department?.department_id != null
+            ? [employee.main_department.department_id]
+            : [];
     // For PROMOTION (no MAIN_DEPT_CHANGE), jobs are scoped to the current main
     // department's type. We need that type id.
     const currentMainDept = departments.find((d) =>
@@ -344,14 +342,15 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
     });
 
     // ── RESPONSIBILITY_DEPTS_CHANGE state ─────────────────────────────────────
-    // Pick a responsibility category (job-driven, with is_main=false fallback),
-    // then multi-select departments within it.
+    // Pick a responsibility-flagged category, then multi-select department TYPES
+    // (the types of the employee's main-department children in that category).
     const [respCategoryId, setRespCategoryId] = useState<number | ''>('');
-    const [respDeptIds, setRespDeptIds] = useState<number[]>([]);
+    const [respTypeIds, setRespTypeIds] = useState<number[]>([]);
 
-    const { data: respDeptsByCategory = [] } = useQuery({
-        queryKey: ['resp-departments-by-category', respCategoryId],
-        queryFn: () => fetchDepartmentsByCategory(respCategoryId as number),
+    const { data: respTypeOptions = [] } = useQuery<ResponsibilityTypeOption[]>({
+        queryKey: ['responsibility-type-options', employeeId, respCategoryId],
+        queryFn: () =>
+            fetchResponsibilityTypeOptions(employeeId, respCategoryId as number),
         enabled:
             open &&
             addingCode === 'RESPONSIBILITY_DEPTS_CHANGE' &&
@@ -359,23 +358,37 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
         staleTime: 5 * 60 * 1000,
     });
 
+    // When exactly one responsibility category exists, auto-select it (the
+    // dropdown then renders disabled) so the user goes straight to the types.
+    const singleRespCategoryId =
+        responsibilityCategories.length === 1 ? responsibilityCategories[0].id : null;
+    useEffect(() => {
+        if (
+            addingCode === 'RESPONSIBILITY_DEPTS_CHANGE' &&
+            singleRespCategoryId != null &&
+            respCategoryId === ''
+        ) {
+            setRespCategoryId(singleRespCategoryId);
+        }
+    }, [addingCode, singleRespCategoryId, respCategoryId]);
+
     const handleAddChange = () => {
         if (!addingDirectionId || !addingCode) return;
 
         // RESPONSIBILITY_DEPTS_CHANGE: build dept_changes from the multi-select.
         if (addingCode === 'RESPONSIBILITY_DEPTS_CHANGE') {
-            if (respDeptIds.length === 0) return;
+            if (respTypeIds.length === 0) return;
             const payload: EmployeeEventChangeCreate = {
                 direction_type_id: addingDirectionId,
-                dept_changes: respDeptIds.map((deptId) => ({
-                    department_id: deptId,
+                dept_changes: respTypeIds.map((typeId) => ({
+                    department_type_id: typeId,
                 })),
             };
             addChangeMutation.mutate(payload, {
                 onSuccess: () => {
                     setAddingDirectionId(null);
                     setRespCategoryId('');
-                    setRespDeptIds([]);
+                    setRespTypeIds([]);
                 },
             });
             return;
@@ -521,7 +534,7 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
                                                     {(change.dept_changes ?? []).map((dc) => (
                                                         <Chip
                                                             key={dc.id}
-                                                            label={dc.department?.name ?? `#${dc.department_id}`}
+                                                            label={dc.department_type?.name ?? `#${dc.department_type_id}`}
                                                             size="small"
                                                             variant="outlined"
                                                         />
@@ -692,10 +705,15 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
 
                         {addingCode === 'RESPONSIBILITY_DEPTS_CHANGE' && (
                             <>
-                                {responsibilityJobId == null ? (
+                                {!hasMainDepartment ? (
                                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                        {cfl(getString('responsibilityNeedsJob') ||
-                                            'Assign a job first to choose responsibility departments')}
+                                        {cfl(getString('responsibilityNeedsMainDept') ||
+                                            'Assign a main department first to choose responsibility departments')}
+                                    </Typography>
+                                ) : responsibilityCategories.length === 0 ? (
+                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                        {cfl(getString('noResponsibilityCategories') ||
+                                            'No responsibility categories configured')}
                                     </Typography>
                                 ) : (
                                     <>
@@ -707,9 +725,10 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
                                                 variant="outlined"
                                                 value={respCategoryId}
                                                 label={cfl(getString('departmentCategory') || 'Department category')}
+                                                disabled={singleRespCategoryId != null}
                                                 onChange={(e) => {
                                                     setRespCategoryId(e.target.value as number);
-                                                    setRespDeptIds([]);
+                                                    setRespTypeIds([]);
                                                 }}
                                             >
                                                 {responsibilityCategories.map((c) => (
@@ -721,47 +740,44 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
                                         </FormControl>
 
                                         {respCategoryId !== '' && (
-                                            <Box sx={{ mb: 1.5 }}>
-                                                <Typography variant="caption" color="text.secondary">
+                                            <FormControl fullWidth size="small" sx={{ mb: 1.5 }}>
+                                                <InputLabel>
                                                     {cfl(getString('responsibilityDepts') || 'Responsibility departments')}
-                                                </Typography>
-                                                <FormGroup
-                                                    sx={{
-                                                        maxHeight: 220,
-                                                        overflowY: 'auto',
-                                                        border: '1px solid',
-                                                        borderColor: 'divider',
-                                                        borderRadius: 1,
-                                                        px: 1,
-                                                        mt: 0.5,
-                                                    }}
-                                                >
-                                                    {respDeptsByCategory.map((d) => (
-                                                        <FormControlLabel
-                                                            key={d.id}
-                                                            control={
-                                                                <Checkbox
+                                                </InputLabel>
+                                                <Select
+                                                    multiple
+                                                    variant="outlined"
+                                                    value={respTypeIds}
+                                                    label={cfl(getString('responsibilityDepts') || 'Responsibility departments')}
+                                                    onChange={(e) =>
+                                                        setRespTypeIds(
+                                                            typeof e.target.value === 'string'
+                                                                ? []
+                                                                : (e.target.value as number[]),
+                                                        )
+                                                    }
+                                                    renderValue={(selected) => (
+                                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                                            {(selected as number[]).map((id) => (
+                                                                <Chip
+                                                                    key={id}
                                                                     size="small"
-                                                                    checked={respDeptIds.includes(d.id)}
-                                                                    onChange={(_, checked) =>
-                                                                        setRespDeptIds((prev) =>
-                                                                            checked
-                                                                                ? [...prev, d.id]
-                                                                                : prev.filter((id) => id !== d.id),
-                                                                        )
+                                                                    label={
+                                                                        respTypeOptions.find((o) => o.id === id)?.name ??
+                                                                        `#${id}`
                                                                     }
                                                                 />
-                                                            }
-                                                            label={d.name}
-                                                        />
+                                                            ))}
+                                                        </Box>
+                                                    )}
+                                                >
+                                                    {respTypeOptions.map((o) => (
+                                                        <MenuItem key={o.id} value={o.id}>
+                                                            {o.name}
+                                                        </MenuItem>
                                                     ))}
-                                                </FormGroup>
-                                                {respDeptIds.length > 0 && (
-                                                    <Typography variant="caption" color="primary" sx={{ mt: 0.5, display: 'block' }}>
-                                                        {respDeptIds.length} {getString('selected') || 'selected'}
-                                                    </Typography>
-                                                )}
-                                            </Box>
+                                                </Select>
+                                            </FormControl>
                                         )}
                                     </>
                                 )}
@@ -777,7 +793,7 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
                                 !addingDirectionId ||
                                 addChangeMutation.isPending ||
                                 (addingCode === 'RESPONSIBILITY_DEPTS_CHANGE'
-                                    ? respDeptIds.length === 0
+                                    ? respTypeIds.length === 0
                                     : !newValue)
                             }
                         >

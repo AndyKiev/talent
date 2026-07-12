@@ -361,6 +361,19 @@ APP_SETTINGS = [
         "user_overridable": True,
     },
     {
+        # Oversight auto-assignment: how many hierarchy levels ABOVE the
+        # employee's main department the candidate search may climb when the
+        # department itself holds no employee with an oversight-linked job
+        # (0 = own department only). Beyond this depth the employee is reported
+        # as a not-found anomaly. App-only (never user-overridable).
+        "key": "oversight_assign_max_levels_up",
+        "value": 2,
+        "value_type_key": "integer",
+        "label_key": "settingOversightAssignMaxLevelsUp",
+        "description_key": "settingOversightAssignMaxLevelsUpDesc",
+        "user_override_allowed": False,
+    },
+    {
         # The menu (menus table id) users land on after login. App default here;
         # each user may override it in /settings with any menu THEY can see —
         # if the chosen menu later disappears from their access, the override

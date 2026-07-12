@@ -12,24 +12,26 @@ if TYPE_CHECKING:
     from backend.api_v1.employee_events.employee_event_change.employee_event_change_model import (
         EmployeeEventChange,
     )
-    from backend.api_v1.department.department_model import Department
+    from backend.api_v1.department_type.department_type_model import DepartmentType
 
 
 class EmployeeEventChangeDepartment(IntIdPkMixin, Base):
     """
-    One responsibility-department entry within an EmployeeEventChange row
+    One responsibility department-TYPE entry within an EmployeeEventChange row
     (direction type RESPONSIBILITY_DEPTS_CHANGE — the only direction that
-    carries child department rows; MAIN_DEPT_CHANGE stores its department in
+    carries child type rows; MAIN_DEPT_CHANGE stores its department INSTANCE in
     the scalar new_department_id on the change row itself).
 
-    Uniqueness: the same department cannot appear twice in the same change row.
+    Responsibility is keyed on department TYPE, not instance (see
+    EmployeeResponsibilityDepartment). Uniqueness: the same type cannot appear
+    twice in the same change row.
     """
 
     __tablename__ = "employee_event_change_departments"
     __table_args__ = (
         UniqueConstraint(
             "event_change_id",
-            "department_id",
+            "department_type_id",
             name="uq_event_change_department",
         ),
     )
@@ -39,8 +41,8 @@ class EmployeeEventChangeDepartment(IntIdPkMixin, Base):
         nullable=False,
         index=True,
     )
-    department_id: Mapped[int] = mapped_column(
-        ForeignKey("departments.id", ondelete="RESTRICT"),
+    department_type_id: Mapped[int] = mapped_column(
+        ForeignKey("department_types.id", ondelete="RESTRICT"),
         nullable=False,
     )
 
@@ -48,7 +50,7 @@ class EmployeeEventChangeDepartment(IntIdPkMixin, Base):
         back_populates="dept_changes",
         lazy="selectin",
     )
-    department: Mapped["Department"] = relationship(
+    department_type: Mapped["DepartmentType"] = relationship(
         lazy="selectin",
     )
 
@@ -57,6 +59,6 @@ class EmployeeEventChangeDepartment(IntIdPkMixin, Base):
             f"<EmployeeEventChangeDepartment("
             f"id={self.id}, "
             f"event_change_id={self.event_change_id}, "
-            f"department_id={self.department_id}"
+            f"department_type_id={self.department_type_id}"
             f")>"
         )

@@ -26,17 +26,10 @@ from backend.api_v1.employee_responsibility_department.employee_responsibility_d
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 
-# Top-level org-unit derivation (board / directorate / store).
-from backend.api_v1.department.department_repository import DepartmentRepository
-from backend.api_v1.department.department_org_units import (
-    resolve_top_org_unit,
-    DepartmentIndex,
-)
 
-
-def _link_label(department_id: int) -> str:
+def _link_label(department_type_id: int) -> str:
     """Human-readable identifier used in success/error messages."""
-    return f"department={department_id}"
+    return f"department_type={department_type_id}"
 
 
 class EmployeeResponsibilityDepartmentService(BaseService):
@@ -51,31 +44,25 @@ class EmployeeResponsibilityDepartmentService(BaseService):
 
     # ── Internal helpers ───────────────────────────────────────────────────────
 
-    async def _get_org_index(self) -> DepartmentIndex:
-        """Flat department index for deriving each assignment's top-level org
-        unit. Uses the repository's session (always present)."""
-        dept_repo = DepartmentRepository(session=self.repository.session)
-        return await dept_repo.get_org_unit_index()
-
     def _to_schema(
-        self, orm_record, org_index: DepartmentIndex
+        self, orm_record
     ) -> EmployeeResponsibilityDepartmentSchema:
-        schema = EmployeeResponsibilityDepartmentSchema.model_validate(orm_record)
-        schema.top_department = resolve_top_org_unit(
-            orm_record.department_id, org_index
-        )
-        return schema
+        # Responsibility is keyed on a department TYPE, which has no position in
+        # the org tree — so there is no top-level org unit to derive here.
+        return EmployeeResponsibilityDepartmentSchema.model_validate(orm_record)
 
     async def _assert_double_is_free(
         self,
         employee_id: int,
-        department_id: int,
+        department_type_id: int,
         exclude_link_id: Optional[int] = None,
     ) -> None:
-        existing = await self.repository.get_by_double(employee_id, department_id)
+        existing = await self.repository.get_by_double(
+            employee_id, department_type_id
+        )
         if existing and (exclude_link_id is None or existing.id != exclude_link_id):
             exc = EmployeeResponsibilityDepartmentAlreadyExists(
-                employee_id, department_id
+                employee_id, department_type_id
             )
             raise await self._resolve_domain_error(exc)
 
@@ -89,15 +76,13 @@ class EmployeeResponsibilityDepartmentService(BaseService):
             raise await self._resolve_domain_error(
                 EmployeeResponsibilityDepartmentNotFound(link_id)
             )
-        org_index = await self._get_org_index()
-        return self._to_schema(record, org_index)
+        return self._to_schema(record)
 
     async def get_by_employee(
         self, employee_id: int
     ) -> List[EmployeeResponsibilityDepartmentSchema]:
         records = await self.repository.get_by_employee(employee_id)
-        org_index = await self._get_org_index()
-        return [self._to_schema(r, org_index) for r in records]
+        return [self._to_schema(r) for r in records]
 
     # ── Write ──────────────────────────────────────────────────────────────────
 
@@ -106,20 +91,19 @@ class EmployeeResponsibilityDepartmentService(BaseService):
         employee_id: int,
         link_in: EmployeeResponsibilityDepartmentCreate,
     ) -> MutationResponse[EmployeeResponsibilityDepartmentSchema]:
-        await self._assert_double_is_free(employee_id, link_in.department_id)
+        await self._assert_double_is_free(employee_id, link_in.department_type_id)
 
         try:
             orm_record = await self.repository.create_from_dict(
                 {
                     "employee_id": employee_id,
-                    "department_id": link_in.department_id,
+                    "department_type_id": link_in.department_type_id,
                 }
             )
             orm_record = await self.repository.get_by_id(orm_record.id)
 
-            org_index = await self._get_org_index()
-            schema = self._to_schema(orm_record, org_index)
-            label = _link_label(link_in.department_id)
+            schema = self._to_schema(orm_record)
+            label = _link_label(link_in.department_type_id)
             detail = await self._resolve_domain_success(
                 EmployeeResponsibilityDepartmentCreateSuccess(label)
             )
@@ -127,7 +111,7 @@ class EmployeeResponsibilityDepartmentService(BaseService):
         except IntegrityError:
             raise await self._resolve_domain_error(
                 EmployeeResponsibilityDepartmentAlreadyExists(
-                    employee_id, link_in.department_id
+                    employee_id, link_in.department_type_id
                 )
             )
 
@@ -143,24 +127,23 @@ class EmployeeResponsibilityDepartmentService(BaseService):
                 EmployeeResponsibilityDepartmentNotFound(link_id)
             )
 
-        effective_department_id = (
-            link_update.department_id
-            if link_update.department_id is not None
-            else orm_record.department_id
+        effective_type_id = (
+            link_update.department_type_id
+            if link_update.department_type_id is not None
+            else orm_record.department_type_id
         )
 
-        if effective_department_id != orm_record.department_id:
+        if effective_type_id != orm_record.department_type_id:
             await self._assert_double_is_free(
                 employee_id,
-                effective_department_id,
+                effective_type_id,
                 exclude_link_id=link_id,
             )
 
         try:
             updated = await self.update(orm_record, link_update, partial=True)
-            org_index = await self._get_org_index()
-            schema = self._to_schema(updated, org_index)
-            label = _link_label(effective_department_id)
+            schema = self._to_schema(updated)
+            label = _link_label(effective_type_id)
             detail = await self._resolve_domain_success(
                 EmployeeResponsibilityDepartmentUpdateSuccess(label)
             )
@@ -168,7 +151,7 @@ class EmployeeResponsibilityDepartmentService(BaseService):
         except IntegrityError:
             raise await self._resolve_domain_error(
                 EmployeeResponsibilityDepartmentAlreadyExists(
-                    employee_id, effective_department_id
+                    employee_id, effective_type_id
                 )
             )
 
@@ -178,7 +161,7 @@ class EmployeeResponsibilityDepartmentService(BaseService):
             raise await self._resolve_domain_error(
                 EmployeeResponsibilityDepartmentNotFound(link_id)
             )
-        label = _link_label(orm_record.department_id)
+        label = _link_label(orm_record.department_type_id)
         await self.delete_by_id(
             link_id,
             name=label,

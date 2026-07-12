@@ -15,6 +15,12 @@ class DepartmentCategory(IntIdPkMixin, TimestampMixin, Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     is_main: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # When True, this category is offered in the RESPONSIBILITY_DEPTS_CHANGE
+    # event as a source of responsibility department TYPES (the types of the
+    # employee's main-department children in this category).
+    is_responsibility: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     departments: Mapped[list["Department"]] = relationship(
         back_populates="department_category",

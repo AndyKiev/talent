@@ -10,6 +10,7 @@ export interface ProcessRole {
     id: number;
     process_id: number;
     name: string;
+    short_name: string | null;
     key: string | null;
     is_active: boolean;
     created_at: string;
@@ -20,6 +21,7 @@ export interface ProcessRole {
 export interface ProcessRoleCreate {
     process_id: number;
     name: string;
+    short_name?: string | null;
     key?: string | null;
     is_active: boolean;
     link_target: LinkTarget;
@@ -27,6 +29,7 @@ export interface ProcessRoleCreate {
 
 export interface ProcessRoleUpdate {
     name?: string;
+    short_name?: string | null;
     key?: string | null;
     is_active?: boolean;
     link_target?: LinkTarget;

@@ -9,7 +9,7 @@ import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import BadgeIcon from '@mui/icons-material/Badge';
 import SchoolIcon from '@mui/icons-material/School';
 
-import type { Job } from './jobApi';
+import type { Job, ProcessRoleLinkInfo } from './jobApi';
 import type { JobCategory } from '../job_categories/jobCategoryApi';
 import type { GetStringFn } from '../../../types/getStringFn';
 import { TextEditCell } from '../TextEditCell';
@@ -175,20 +175,20 @@ export function useJobColumns({
       },
     },
 
-    // New: process-role links column
+    // New: process-role links column (short chip label, full name in tooltip)
     {
-      field: 'process_role_link_names',
+      field: 'process_role_links_info',
       headerName: cfl(getString('processRoles')) || 'Process Roles',
-      width: 260,
+      width: 200,
       sortable: true,
-      sortComparator: (v1: string[], v2: string[]) => {
-        const a = (v1 ?? []).join(', ');
-        const b = (v2 ?? []).join(', ');
+      sortComparator: (v1: ProcessRoleLinkInfo[], v2: ProcessRoleLinkInfo[]) => {
+        const a = (v1 ?? []).map((l) => l.short).join(', ');
+        const b = (v2 ?? []).map((l) => l.short).join(', ');
         return a.localeCompare(b);
       },
       renderCell: (params: GridRenderCellParams<Job>) => {
         const row = params.row;
-        const links: string[] = row.process_role_link_names ?? [];
+        const links: ProcessRoleLinkInfo[] = row.process_role_links_info ?? [];
         return (
             <Box
                 sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', py: 0.5, cursor: 'pointer' }}
@@ -204,8 +204,10 @@ export function useJobColumns({
                       onClick={() => onProcessRoleClick(row)}
                   />
               ) : (
-                  links.map((name) => (
-                      <Chip key={name} label={name} size="small" variant="outlined" color="success" />
+                  links.map((link) => (
+                      <Tooltip key={link.full} title={link.full}>
+                        <Chip label={link.short} size="small" variant="outlined" color="success" />
+                      </Tooltip>
                   ))
               )}
             </Box>

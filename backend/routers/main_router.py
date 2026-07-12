@@ -152,9 +152,6 @@ from backend.api_v1.job_job_category_link.job_job_category_link_views import (
     router as job_job_category_link_router,
 )
 from backend.api_v1.essence.essence_views import router as essence_router
-from backend.api_v1.job_responsibility_category_link.job_responsibility_category_link_views import (
-    router as job_responsibility_category_link_router,
-)
 from backend.api_v1.operation_essence_set_link.operation_essence_set_link_views import (
     router as operation_essence_set_link_router,
 )
@@ -214,6 +211,9 @@ from backend.api_v1.process_roles.process_role_active_context.process_role_activ
 )
 from backend.api_v1.process_roles.oversight_manager.oversight_manager_views import (
     router as oversight_manager_router,
+)
+from backend.api_v1.process_roles.oversight_assignment.oversight_assignment_views import (
+    router as oversight_assignment_router,
 )
 
 # Access testing ("test as group")
@@ -353,7 +353,6 @@ router.include_router(job_category_router)
 router.include_router(job_job_category_link_router)
 router.include_router(essence_router)
 router.include_router(operation_essence_set_link_router)
-router.include_router(job_responsibility_category_link_router)
 router.include_router(talent_audit_interview_job_router)
 
 # Planning
@@ -377,6 +376,7 @@ router.include_router(process_role_holder_employee_link_router)
 router.include_router(process_role_holder_department_link_router)
 router.include_router(process_role_active_context_router)
 router.include_router(oversight_manager_router)
+router.include_router(oversight_assignment_router)
 router.include_router(access_test_context_router)
 
 # App settings (typed key/value)

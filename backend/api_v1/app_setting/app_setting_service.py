@@ -94,6 +94,29 @@ async def get_bool_setting(
     return value if isinstance(value, bool) else default
 
 
+async def get_int_setting(
+    session: AsyncSession, key: str, default: int = 0
+) -> int:
+    """Read an integer app setting by key from server-side business logic.
+
+    Returns ``default`` when the row is missing or its value can't be read as
+    an int. The integer counterpart of ``get_bool_setting``.
+    """
+    from backend.api_v1.app_setting.app_setting_model import (
+        AppSetting as AppSettingModel,
+    )
+
+    row = await session.scalar(
+        select(AppSettingModel).where(AppSettingModel.key == key)
+    )
+    if row is None:
+        return default
+    try:
+        return int(cast_value(row.value, "integer"))
+    except (TypeError, ValueError):
+        return default
+
+
 async def get_list_setting(
     session: AsyncSession, key: str, default: Optional[List] = None
 ) -> List:
