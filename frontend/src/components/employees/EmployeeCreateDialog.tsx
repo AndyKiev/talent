@@ -48,7 +48,7 @@ import { DepartmentTreePicker } from './DepartmentTreePicker';
 import { TalentTargetJobPicker } from './talent_audit/TalentTargetJobPicker';
 import { EmployeeDuplicatePersonDialog } from './EmployeeDuplicatePersonDialog';
 import { checkPersonName, type PersonNameMatch } from '../admin/persons/personApi';
-import BirthDateWheelPicker from '../people-review/personal-data/BirthDateWheelPicker';
+import DateWheelPicker from '../people-review/personal-data/DateWheelPicker';
 import { formatDate } from '../../utils/date';
 import type { DepartmentNode } from '../admin/departments/departmentApi';
 import { DATE_FORMAT } from '../../utils/eNums';
@@ -769,7 +769,7 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
                             {formatDate(draftBirth)}
                         </Typography>
                     </Box>
-                    <BirthDateWheelPicker value={draftBirth} onChange={setDraftBirth} />
+                    <DateWheelPicker value={draftBirth} onChange={setDraftBirth} />
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setBirthOpen(false)}>

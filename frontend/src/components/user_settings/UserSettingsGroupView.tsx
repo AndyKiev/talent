@@ -39,6 +39,7 @@ import {
     type EffectiveUserSetting,
 } from './userSettingsApi';
 import { fetchMyMenus } from '../layout/menuApi';
+import { EMPLOYEE_SELECT_TARGET_OPTIONS } from '../employees/employeeLandingTarget';
 import { MENUS_MY_QK } from '../../utils/queryKeys';
 import cfl from '../../utils/helpers.ts';
 import type { GetStringFn } from '../../types/getStringFn';
@@ -231,6 +232,10 @@ export function UserSettingsGroupView({ groupKey }: { groupKey: string }) {
                 value: String(m.id),
                 label: cfl(getString(m.label_key)) || m.key,
             })),
+        employee_select_target: EMPLOYEE_SELECT_TARGET_OPTIONS.map((o) => ({
+            value: o.value,
+            label: cfl(getString(o.labelKey)) || o.labelKey,
+        })),
     };
 
     const groupSettings = settings.filter((s) => groupForKey(s.key) === groupKey);

@@ -20,6 +20,7 @@ import { Route as DeveloperIndexRouteImport } from './routes/developer/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as People_reviewMyRouteImport } from './routes/people_review/my'
 import { Route as EmployeesNewRouteImport } from './routes/employees/new'
+import { Route as EmployeesHeadcount_planRouteImport } from './routes/employees/headcount_plan'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as EmployeesEmployeeIdRouteRouteImport } from './routes/employees/$employeeId/route'
 import { Route as DeveloperSecurityRouteRouteImport } from './routes/developer/security/route'
@@ -192,6 +193,11 @@ const People_reviewMyRoute = People_reviewMyRouteImport.update({
 const EmployeesNewRoute = EmployeesNewRouteImport.update({
   id: '/employees/new',
   path: '/employees/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmployeesHeadcount_planRoute = EmployeesHeadcount_planRouteImport.update({
+  id: '/employees/headcount_plan',
+  path: '/employees/headcount_plan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
@@ -890,6 +896,7 @@ export interface FileRoutesByFullPath {
   '/developer/security': typeof DeveloperSecurityRouteRouteWithChildren
   '/employees/$employeeId': typeof EmployeesEmployeeIdRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
+  '/employees/headcount_plan': typeof EmployeesHeadcount_planRoute
   '/employees/new': typeof EmployeesNewRoute
   '/people_review/my': typeof People_reviewMyRoute
   '/admin': typeof AdminIndexRoute
@@ -1007,6 +1014,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth/login': typeof AuthLoginRoute
+  '/employees/headcount_plan': typeof EmployeesHeadcount_planRoute
   '/employees/new': typeof EmployeesNewRoute
   '/people_review/my': typeof People_reviewMyRoute
   '/admin': typeof AdminIndexRoute
@@ -1132,6 +1140,7 @@ export interface FileRoutesById {
   '/developer/security': typeof DeveloperSecurityRouteRouteWithChildren
   '/employees/$employeeId': typeof EmployeesEmployeeIdRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
+  '/employees/headcount_plan': typeof EmployeesHeadcount_planRoute
   '/employees/new': typeof EmployeesNewRoute
   '/people_review/my': typeof People_reviewMyRoute
   '/admin/': typeof AdminIndexRoute
@@ -1265,6 +1274,7 @@ export interface FileRouteTypes {
     | '/developer/security'
     | '/employees/$employeeId'
     | '/auth/login'
+    | '/employees/headcount_plan'
     | '/employees/new'
     | '/people_review/my'
     | '/admin'
@@ -1382,6 +1392,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth/login'
+    | '/employees/headcount_plan'
     | '/employees/new'
     | '/people_review/my'
     | '/admin'
@@ -1506,6 +1517,7 @@ export interface FileRouteTypes {
     | '/developer/security'
     | '/employees/$employeeId'
     | '/auth/login'
+    | '/employees/headcount_plan'
     | '/employees/new'
     | '/people_review/my'
     | '/admin/'
@@ -1638,6 +1650,7 @@ export interface RootRouteChildren {
   DeveloperSecurityRouteRoute: typeof DeveloperSecurityRouteRouteWithChildren
   EmployeesEmployeeIdRouteRoute: typeof EmployeesEmployeeIdRouteRouteWithChildren
   AuthLoginRoute: typeof AuthLoginRoute
+  EmployeesHeadcount_planRoute: typeof EmployeesHeadcount_planRoute
   EmployeesNewRoute: typeof EmployeesNewRoute
   People_reviewMyRoute: typeof People_reviewMyRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -1747,6 +1760,13 @@ declare module '@tanstack/react-router' {
       path: '/employees/new'
       fullPath: '/employees/new'
       preLoaderRoute: typeof EmployeesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/employees/headcount_plan': {
+      id: '/employees/headcount_plan'
+      path: '/employees/headcount_plan'
+      fullPath: '/employees/headcount_plan'
+      preLoaderRoute: typeof EmployeesHeadcount_planRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/login': {
@@ -3051,6 +3071,7 @@ const rootRouteChildren: RootRouteChildren = {
   DeveloperSecurityRouteRoute: DeveloperSecurityRouteRouteWithChildren,
   EmployeesEmployeeIdRouteRoute: EmployeesEmployeeIdRouteRouteWithChildren,
   AuthLoginRoute: AuthLoginRoute,
+  EmployeesHeadcount_planRoute: EmployeesHeadcount_planRoute,
   EmployeesNewRoute: EmployeesNewRoute,
   People_reviewMyRoute: People_reviewMyRoute,
   AdminIndexRoute: AdminIndexRoute,

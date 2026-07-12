@@ -71,6 +71,16 @@ export const REGION_QK = ['regions'] as const;
 // ── Developer tools ──────────────────────────────────────────────────────────
 export const DB_TABLES_QK = ['db_tables'] as const;
 
+// ── Headcount plan (department job targets) ──────────────────────────────────
+export const HEADCOUNT_CALC_QK = (departmentId: number, isoDate: string) =>
+    ['headcount_calc', departmentId, isoDate] as const;
+export const HEADCOUNT_TARGETS_QK = (departmentId: number, linkId: number) =>
+    ['headcount_targets', departmentId, linkId] as const;
+export const HEADCOUNT_TARGET_COUNT_BY_LINK_QK = (linkId: number) =>
+    ['headcount_target_count_by_link', linkId] as const;
+export const HEADCOUNT_FACT_EMPLOYEES_QK = (departmentId: number, isoDate: string, jobId: number) =>
+    ['headcount_fact_employees', departmentId, isoDate, jobId] as const;
+
 // ── Training ─────────────────────────────────────────────────────────────────
 export const TRAINING_LINK_TYPE_QK = ['training_link_types'] as const;
 export const TRAINING_CATEGORY_QK = ['training_categories'] as const;

@@ -85,6 +85,10 @@ export const SETTING_GROUP_BY_KEY: Record<string, string> = {
     // Photo master is cross-menu (employees + review + presentation); grouped
     // under the primary home menu. Its 6 children inherit this via parent_id.
     employee_photos_enabled: 'employees',
+    // Headcount-plan master; its fact-humans-only child inherits via parent_id.
+    headcount_plan_enabled: 'employees',
+    // Where clicking an employee forwards (career_history / events / summary).
+    employee_select_target: 'employees',
     // ── People review ────────────────────────────────────────────────────────
     people_review_edit_talent_status: 'people_review',
     idp_min_missions: 'people_review',

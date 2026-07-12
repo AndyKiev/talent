@@ -38,6 +38,7 @@ HR_ESSENCES = [
     "review_level",
     "review_level_requirement",
     "language_level",
+    "department_job_target",
 ]
 HR_VERBS = ["view", "create", "modify", "delete"]
 HR_GROUPS = ["HRM", "HRS"]

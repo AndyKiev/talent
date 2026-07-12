@@ -109,7 +109,7 @@ export function WheelColumn({
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 
-export default function BirthDateWheelPicker({
+export default function DateWheelPicker({
     value,
     onChange,
     minYear,

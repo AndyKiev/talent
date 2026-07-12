@@ -322,6 +322,45 @@ APP_SETTINGS = [
         "visible_to_regular": True,
     },
     {
+        # MASTER of the headcount-plan feature. When OFF the whole feature is
+        # dormant: the 'employees_list'/'headcount_plan' sub-menu items are
+        # dropped server-side in get_my_menus (so 'employees' renders as a
+        # plain item again), /employees/headcount_plan redirects away and every
+        # /department_job_targets endpoint answers 403. Target rows are never
+        # deleted by this switch. App-only.
+        "key": "headcount_plan_enabled",
+        "value": False,
+        "value_type_key": "boolean",
+        "label_key": "settingHeadcountPlanEnabled",
+        "description_key": "settingHeadcountPlanEnabledDesc",
+        "user_override_allowed": False,
+    },
+    {
+        # Child of the headcount-plan master. When ON (default) the FACT count
+        # includes only human-origin employees; when OFF robots/system accounts
+        # are counted too. App-only.
+        "key": "headcount_plan_fact_humans_only",
+        "value": True,
+        "value_type_key": "boolean",
+        "parent_key": "headcount_plan_enabled",
+        "label_key": "settingHeadcountPlanFactHumansOnly",
+        "description_key": "settingHeadcountPlanFactHumansOnlyDesc",
+        "user_override_allowed": False,
+    },
+    {
+        # Where a click on an employee (e.g. from the headcount-plan fact list)
+        # forwards: the tab of the employee card. Integer bound to a fixed
+        # option set (1=summary [current default], 2=events, 3=career_history);
+        # per-user overridable so each user lands where they prefer.
+        "key": "employee_select_target",
+        "value": 1,
+        "value_type_key": "integer",
+        "label_key": "settingEmployeeSelectTarget",
+        "description_key": "settingEmployeeSelectTargetDesc",
+        "options_source": "employee_select_target",
+        "user_overridable": True,
+    },
+    {
         # The menu (menus table id) users land on after login. App default here;
         # each user may override it in /settings with any menu THEY can see —
         # if the chosen menu later disappears from their access, the override

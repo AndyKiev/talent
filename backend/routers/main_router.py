@@ -21,6 +21,10 @@ from backend.api_v1.department_type_job_link.department_type_job_link_views impo
     router as department_type_job_link_router,
 )
 
+from backend.api_v1.department_job_target.department_job_target_views import (
+    router as department_job_target_router,
+)
+
 from backend.api_v1.department_category.department_category_views import (
     router as department_category_router,
 )
@@ -302,6 +306,7 @@ router.include_router(department_router)
 router.include_router(department_type_router)
 router.include_router(dept_type_parental_link_router)
 router.include_router(department_type_job_link_router)
+router.include_router(department_job_target_router)
 router.include_router(department_category_router)
 router.include_router(job_router)
 router.include_router(person_router)

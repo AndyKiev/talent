@@ -19,11 +19,20 @@ import cfl from '../../utils/helpers.ts';
 interface Props {
     value: number | null;
     onChange: (departmentId: number | null) => void;
+    /** Offer the "All departments" item (value null). Default true. */
+    allowAll?: boolean;
+    /** Render even when there is only one option. Default false. */
+    alwaysShow?: boolean;
 }
 
 const ALL_VALUE = '__all__';
 
-export function SelectScopeDepartment({ value, onChange }: Props) {
+export function SelectScopeDepartment({
+    value,
+    onChange,
+    allowAll = true,
+    alwaysShow = false,
+}: Props) {
     const getString = useString({ str });
 
     const { data: departments = [], isLoading } = useQuery({
@@ -56,7 +65,7 @@ export function SelectScopeDepartment({ value, onChange }: Props) {
     }
 
     // Show the Select only when there is a real choice to make.
-    if (departments.length < 2) return null;
+    if (!alwaysShow && departments.length < 2) return null;
 
     return (
         <FormControl size="small" sx={{ minWidth: 260 }}>
@@ -65,15 +74,17 @@ export function SelectScopeDepartment({ value, onChange }: Props) {
             <Select
                 variant="outlined"
                 label={cfl(getString('mainDepartment') || 'main Department')}
-                value={value == null ? ALL_VALUE : String(value)}
+                value={value == null ? (allowAll ? ALL_VALUE : '') : String(value)}
                 onChange={(e) => {
                     const v = e.target.value;
                     onChange(v === ALL_VALUE ? null : Number(v));
                 }}
             >
-                <MenuItem value={ALL_VALUE}>
-                    <em>{getString('allDepartments') || 'All departments'}</em>
-                </MenuItem>
+                {allowAll && (
+                    <MenuItem value={ALL_VALUE}>
+                        <em>{getString('allDepartments') || 'All departments'}</em>
+                    </MenuItem>
+                )}
                 {groups.flatMap((g) => [
                     g.label ? (
                         <ListSubheader key={`h_${g.key}`}>{cfl(g.label)}</ListSubheader>

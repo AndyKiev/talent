@@ -31,6 +31,7 @@ from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.app_setting.app_setting_service import (
     get_bool_setting,
     TRAINING_MODULE_ENABLED_KEY,
+    HEADCOUNT_PLAN_ENABLED_KEY,
 )
 
 
@@ -182,6 +183,16 @@ class MenuService(BaseService):
             self.session, TRAINING_MODULE_ENABLED_KEY, default=True
         ):
             records = [m for m in records if m.key != "training"]
+        # Headcount-plan flag: with the feature off BOTH children under
+        # 'employees' are dropped, so 'employees' becomes childless again and
+        # renders as a plain clickable item (parents with children only open
+        # a dropdown in AppShell, they never navigate).
+        if not await get_bool_setting(
+            self.session, HEADCOUNT_PLAN_ENABLED_KEY, default=False
+        ):
+            records = [
+                m for m in records if m.key not in ("headcount_plan", "employees_list")
+            ]
         visible_ids = {m.id for m in records if item_visible(m)}
         return [
             MenuSchema.model_validate(m)

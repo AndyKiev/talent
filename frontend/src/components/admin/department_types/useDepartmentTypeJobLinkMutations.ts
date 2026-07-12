@@ -75,6 +75,10 @@ export function useDepartmentTypeJobLinkMutations({
                 }),
                 // Refresh the list so the job_count chip stays accurate
                 qc.invalidateQueries({ queryKey: DEPARTMENT_TYPE_QK }),
+                // Headcount targets referencing the link were cascade-deleted.
+                qc.invalidateQueries({ queryKey: ['headcount_calc'] }),
+                qc.invalidateQueries({ queryKey: ['headcount_targets'] }),
+                qc.invalidateQueries({ queryKey: ['headcount_target_count_by_link'] }),
             ]);
             setSnackbar({ open: true, message: res.detail, severity: 'success' });
             onDeleteSuccess?.();

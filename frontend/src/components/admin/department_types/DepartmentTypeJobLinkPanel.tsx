@@ -15,6 +15,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { fetchDepartmentTypes } from './departmentTypeApi';
 import { useDepartmentTypeJobLinkMutations } from './useDepartmentTypeJobLinkMutations';
 import { DepartmentTypeJobLinkRow } from './DepartmentTypeJobLinkRow';
+import { DepartmentTypeJobLinkDeleteDialog } from './DepartmentTypeJobLinkDeleteDialog';
 import { fetchJobs } from '../jobs/jobApi';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
@@ -66,12 +67,31 @@ export function DepartmentTypeJobLinkPanel() {
 
     // ── Handlers ─────────────────────────────────────────────────────────────
 
+    // Unlink goes through a confirm dialog that also warns about headcount
+    // target rows the delete will cascade away.
+    const [deleteTarget, setDeleteTarget] = useState<{
+        linkId: number;
+        departmentTypeId: number;
+        jobName: string;
+    } | null>(null);
+
     const handleDeleteLink = useCallback(
-        (linkId: number, departmentTypeId: number) => {
-            deleteLinkMutation.mutate({ linkId, departmentTypeId });
+        (linkId: number, departmentTypeId: number, jobName: string) => {
+            setDeleteTarget({ linkId, departmentTypeId, jobName });
         },
-        [deleteLinkMutation],
+        [],
     );
+
+    const handleConfirmDelete = useCallback(() => {
+        if (!deleteTarget) return;
+        deleteLinkMutation.mutate(
+            {
+                linkId: deleteTarget.linkId,
+                departmentTypeId: deleteTarget.departmentTypeId,
+            },
+            { onSettled: () => setDeleteTarget(null) },
+        );
+    }, [deleteLinkMutation, deleteTarget]);
 
     const handleToggleLink = useCallback(
         (linkId: number, currentIsActive: boolean) => {
@@ -159,6 +179,18 @@ export function DepartmentTypeJobLinkPanel() {
                     </Box>
                 )}
             </Paper>
+
+            {deleteTarget && (
+                <DepartmentTypeJobLinkDeleteDialog
+                    open
+                    linkId={deleteTarget.linkId}
+                    jobName={deleteTarget.jobName}
+                    getString={getString}
+                    onClose={() => setDeleteTarget(null)}
+                    onConfirm={handleConfirmDelete}
+                    isPending={deleteLinkMutation.isPending}
+                />
+            )}
 
             <Snackbar
                 open={snackbar.open}

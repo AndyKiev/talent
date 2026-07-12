@@ -68,6 +68,7 @@ import type { MenuVisibilityMode } from '../../developer/security/menus/menuAdmi
 import { deriveMode, modeToFlags, MODE_LABEL_KEY } from '../../developer/security/menus/menuVisibility';
 import { fetchUserGroups, type UserGroup } from '../../admin/user_groups/userGroupApi';
 import { groupForSetting, SETTINGS_GROUP_BY_KEY } from './settingsGroups';
+import { EMPLOYEE_SELECT_TARGET_OPTIONS } from '../../employees/employeeLandingTarget';
 
 type Severity = 'success' | 'error';
 
@@ -568,6 +569,11 @@ export function SettingsGroupView({ groupKey }: { groupKey: string }) {
         menus: allMenus.map((m) => ({
             value: String(m.id),
             label: cfl(getString(m.label_key)) || m.key,
+        })),
+        // Single-select (integer): the employee-card tab to forward to on select.
+        employee_select_target: EMPLOYEE_SELECT_TARGET_OPTIONS.map((o) => ({
+            value: o.value,
+            label: cfl(getString(o.labelKey)) || o.labelKey,
         })),
     }), [jobCategories, employeeStatuses, allMenus, getString]);
 

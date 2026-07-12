@@ -36,6 +36,13 @@ from backend.api_v1.setting_value_type.setting_value_type_model import SettingVa
 TRAINING_MODULE_ENABLED_KEY = "training_module_enabled"
 TRAINING_DELETE_ON_DISABLE_KEY = "training_module_delete_data_on_disable"
 
+# Headcount-plan feature flag (master) + its fact-scope child. The master
+# gates the whole feature (menu items, the /employees/headcount_plan page,
+# every /department_job_targets endpoint); the child decides whether the
+# fact count includes only human-origin employees (default) or all.
+HEADCOUNT_PLAN_ENABLED_KEY = "headcount_plan_enabled"
+HEADCOUNT_FACT_HUMANS_ONLY_KEY = "headcount_plan_fact_humans_only"
+
 
 def cast_value(value: Any, type_key: Optional[str]) -> Any:
     """
@@ -448,7 +455,12 @@ class AppSettingService(BaseService):
             schema = AppSettingSchema.model_validate(r)
             if r.user_overridable and overrides.get(r.id) is not None:
                 val = overrides[r.id]
-                if r.value_type_key == "integer":
+                # Quantity clamp applies to plain integers only. Options-driven
+                # integer settings (options_source set, e.g. default_menu,
+                # employee_select_target) store a picked id from a fixed set —
+                # clamping to [1, global] would wrongly cap the choice. Mirrors
+                # UserSettingService.get_effective_user_setting.
+                if r.value_type_key == "integer" and not r.options_source:
                     try:
                         val = max(1, min(int(val), int(r.value)))
                     except (TypeError, ValueError):

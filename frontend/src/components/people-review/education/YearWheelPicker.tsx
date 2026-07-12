@@ -5,7 +5,7 @@ import {
     ITEM_H,
     PAD,
     type WheelItem,
-} from '../personal-data/BirthDateWheelPicker';
+} from '../personal-data/DateWheelPicker';
 
 // Year-only spin wheel — reuses the WheelColumn from the birth-date picker.
 export default function YearWheelPicker({

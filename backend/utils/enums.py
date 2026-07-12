@@ -71,6 +71,7 @@ class EssenceName(str, Enum):
     DEPARTMENT = "department"
     DEPARTMENT_TYPE = "department_type"
     DEPARTMENT_CATEGORY = "department_category"
+    DEPARTMENT_JOB_TARGET = "department_job_target"
     JOB = "job"
     JOB_GROUP = "job_group"
     JOB_GROUP_TYPE = "job_group_type"

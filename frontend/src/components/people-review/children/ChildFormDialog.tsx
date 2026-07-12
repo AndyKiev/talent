@@ -10,7 +10,7 @@ import {
     DialogTitle,
     Typography,
 } from '@mui/material';
-import BirthDateWheelPicker from '../personal-data/BirthDateWheelPicker';
+import DateWheelPicker from '../personal-data/DateWheelPicker';
 import { createEmployeeChild } from '../peopleReviewApi';
 import type { GetStringFn } from '../../../types/getStringFn';
 import { formatDate } from '../../../utils/date';
@@ -73,7 +73,7 @@ export default function ChildFormDialog({
                     name="date"
                     control={control}
                     render={({ field: f }) => (
-                        <BirthDateWheelPicker value={f.value} onChange={f.onChange} />
+                        <DateWheelPicker value={f.value} onChange={f.onChange} />
                     )}
                 />
             </DialogContent>

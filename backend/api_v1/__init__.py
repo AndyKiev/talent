@@ -43,6 +43,7 @@ __all__ = {
     "EmployeeEventChange",
     "EmployeeEventChangeDepartment",
     "DepartmentTypeParentalLink",
+    "DepartmentJobTarget",
     # Essence-set access control
     "Essence",
     "OperationEssenceLink",
@@ -151,6 +152,11 @@ from backend.api_v1.department_type_job_link.department_type_job_link_model impo
 
 from backend.api_v1.department_type_parental_links.department_type_parental_link_model import (
     DepartmentTypeParentalLink,
+)
+
+# Effective-dated headcount targets — FKs into departments + department_type_job_links.
+from backend.api_v1.department_job_target.department_job_target_model import (
+    DepartmentJobTarget,
 )
 from backend.api_v1.department_category.department_category_model import (
     DepartmentCategory,

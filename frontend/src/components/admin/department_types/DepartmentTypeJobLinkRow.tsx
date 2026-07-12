@@ -42,7 +42,7 @@ interface Props {
         Error,
         DepartmentTypeJobLinkCreate
     >;
-    onDeleteLink: (linkId: number, departmentTypeId: number) => void;
+    onDeleteLink: (linkId: number, departmentTypeId: number, jobName: string) => void;
     onToggleLink: (linkId: number, currentIsActive: boolean) => void;
     deleteLinkIsPending: boolean;
     updateLinkIsPending: boolean;
@@ -246,7 +246,7 @@ interface LinkedJobRowProps {
     departmentTypeId: number;
     deleteLinkIsPending: boolean;
     updateLinkIsPending: boolean;
-    onDeleteLink: (linkId: number, departmentTypeId: number) => void;
+    onDeleteLink: (linkId: number, departmentTypeId: number, jobName: string) => void;
     onToggleLink: (linkId: number, currentIsActive: boolean) => void;
     getString: (key: string) => string;
 }
@@ -326,7 +326,7 @@ function LinkedJobRow({
                         size="small"
                         color="error"
                         disabled={deleteLinkIsPending}
-                        onClick={() => onDeleteLink(job.link_id, departmentTypeId)}
+                        onClick={() => onDeleteLink(job.link_id, departmentTypeId, job.name)}
                     >
                         <LinkOffIcon sx={{ fontSize: 16 }} />
                     </IconButton>

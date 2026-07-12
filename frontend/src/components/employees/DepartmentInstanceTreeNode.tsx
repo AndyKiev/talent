@@ -6,8 +6,11 @@
 // department instance (top-level or any descendant).
 //
 // Nodes render COLLAPSED by default; expand a node via its caret to drill down.
+// Exception: a node whose subtree holds the current selection auto-expands, so
+// a restored selection (e.g. browser Back onto a URL-driven page) is visible
+// and highlighted without re-drilling.
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Box, Chip, Collapse, IconButton, Tooltip, Typography } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -22,22 +25,41 @@ interface Props {
     onSelect: (node: DepartmentNode) => void;
 }
 
+function subtreeContains(node: DepartmentNode, id: number | null): boolean {
+    if (id == null) return false;
+    return node.children.some((c) => c.id === id || subtreeContains(c, id));
+}
+
 export function DepartmentInstanceTreeNode({ node, depth, selectedId, onSelect }: Props) {
     // Collapsed by default — the user expands nodes to drill into the subtree.
-    const [expanded, setExpanded] = useState(false);
+    // Auto-expanded when the selection sits somewhere below this node.
+    const hasSelectedDescendant = subtreeContains(node, selectedId);
+    const [expanded, setExpanded] = useState(hasSelectedDescendant);
+    useEffect(() => {
+        if (hasSelectedDescendant) setExpanded(true);
+    }, [hasSelectedDescendant]);
 
     const hasChildren = node.children.length > 0;
     const isSelected = selectedId === node.id;
     const indentPx = depth * 20;
 
+    // Bring a restored selection into view inside the scrollable tree box.
+    const rowRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (isSelected) rowRef.current?.scrollIntoView({ block: 'nearest' });
+    }, [isSelected]);
+
     return (
         <Box>
             {/* Row */}
             <Box
+                ref={rowRef}
                 onClick={() => onSelect(node)}
                 sx={{
                     display: 'flex',
-                    alignItems: 'center',
+                    // flex-start so the caret / id / tick align to the FIRST text
+                    // line when the name (or type chip) wraps onto extra lines.
+                    alignItems: 'flex-start',
                     gap: 0.5,
                     pl: `${indentPx + 8}px`,
                     pr: 1,
@@ -53,7 +75,7 @@ export function DepartmentInstanceTreeNode({ node, depth, selectedId, onSelect }
                 }}
             >
                 {/* Expand / collapse */}
-                <Box sx={{ width: 24, flexShrink: 0 }}>
+                <Box sx={{ width: 24, flexShrink: 0, mt: 0.25 }}>
                     {hasChildren && (
                         <IconButton
                             size="small"
@@ -74,38 +96,59 @@ export function DepartmentInstanceTreeNode({ node, depth, selectedId, onSelect }
 
                 {/* Leaf marker */}
                 {!hasChildren && (
-                    <AccountTreeIcon sx={{ fontSize: 14, color: 'text.disabled', mr: 0.5 }} />
+                    <AccountTreeIcon
+                        sx={{ fontSize: 14, color: 'text.disabled', mr: 0.5, mt: 0.5, flexShrink: 0 }}
+                    />
                 )}
 
-                {/* Name (single line — no wrapping/squeezing; tooltip shows full) */}
-                <Tooltip title={node.name} placement="top-start">
-                    <Typography
-                        variant="body2"
-                        sx={{
-                            flex: 1,
-                            minWidth: 0,
-                            fontWeight: isSelected ? 600 : 400,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                        }}
-                    >
-                        {node.name}
-                    </Typography>
-                </Tooltip>
-
-                {/* Type chip */}
-                <Chip
-                    label={node.department_type?.name ?? `#${node.department_type_id}`}
-                    size="small"
+                {/* Name + type chip. They share a line while they fit; the chip
+                    drops to the next line once it would crowd the name, and the
+                    name / chip label each wrap internally when very long. */}
+                <Box
                     sx={{
-                        height: 20,
-                        fontSize: '0.7rem',
-                        bgcolor: 'info.light',
-                        color: 'info.contrastText',
-                        '& .MuiChip-label': { px: 1 },
+                        flex: 1,
+                        minWidth: 0,
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        py: 0.25,
                     }}
-                />
+                >
+                    <Tooltip title={node.name} placement="top-start">
+                        <Typography
+                            variant="body2"
+                            sx={{
+                                flex: '0 1 auto',
+                                minWidth: 0,
+                                fontWeight: isSelected ? 600 : 400,
+                                whiteSpace: 'normal',
+                                overflowWrap: 'anywhere',
+                            }}
+                        >
+                            {node.name}
+                        </Typography>
+                    </Tooltip>
+
+                    <Chip
+                        label={node.department_type?.name ?? `#${node.department_type_id}`}
+                        size="small"
+                        sx={{
+                            height: 'auto',
+                            flexShrink: 0,
+                            maxWidth: '100%',
+                            fontSize: '0.7rem',
+                            bgcolor: 'info.light',
+                            color: 'info.contrastText',
+                            '& .MuiChip-label': {
+                                px: 1,
+                                py: 0.25,
+                                whiteSpace: 'normal',
+                                overflowWrap: 'anywhere',
+                            },
+                        }}
+                    />
+                </Box>
 
                 {/* ID */}
                 <Typography
@@ -114,6 +157,8 @@ export function DepartmentInstanceTreeNode({ node, depth, selectedId, onSelect }
                         color: 'text.disabled',
                         fontFamily: 'monospace',
                         minWidth: 40,
+                        flexShrink: 0,
+                        mt: 0.5,
                         textAlign: 'right',
                     }}
                 >
@@ -121,7 +166,7 @@ export function DepartmentInstanceTreeNode({ node, depth, selectedId, onSelect }
                 </Typography>
 
                 {/* Selected tick */}
-                <Box sx={{ width: 20, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+                <Box sx={{ width: 20, flexShrink: 0, mt: 0.25, display: 'flex', justifyContent: 'center' }}>
                     {isSelected && <CheckCircleIcon sx={{ fontSize: 18, color: 'primary.main' }} />}
                 </Box>
             </Box>
