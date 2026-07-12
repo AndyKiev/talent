@@ -65,6 +65,10 @@ interface Props {
     deleteTargetMutation: UseMutationResult<string, Error, number>;
 }
 
+// Effective date may be set up to 20 years back / 10 years forward.
+const YEARS_BACK = 20;
+const YEARS_FORWARD = 10;
+
 const denseCell = { py: 0.25, px: 1 } as const;
 // Header sits lower (shorter) than body rows; actions never wrap so rows stay dense.
 const headCell = { py: 0, px: 1, lineHeight: 1.1, fontWeight: 600 } as const;
@@ -83,9 +87,11 @@ export function PlanHistoryDialog({
     const [qty, setQty] = useState<string>('');
     const [effectiveDate, setEffectiveDate] = useState<string>(dayjs().format('YYYY-MM-DD'));
     const [dateDialogOpen, setDateDialogOpen] = useState(false);
-    // Inline edit of one row's qty.
+    // Inline edit of one row (qty + effective date).
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editQty, setEditQty] = useState<string>('');
+    const [editDate, setEditDate] = useState<string>(dayjs().format('YYYY-MM-DD'));
+    const [editDateDialogOpen, setEditDateDialogOpen] = useState(false);
 
     // Reset the forms whenever the dialog (re)opens for a row.
     useEffect(() => {
@@ -121,7 +127,7 @@ export function PlanHistoryDialog({
     const handleSaveEdit = (targetId: number) => {
         if (!isValidQty(editQty)) return;
         updateTargetMutation.mutate(
-            { targetId, data: { qty: Number(editQty) } },
+            { targetId, data: { qty: Number(editQty), effective_date: editDate } },
             { onSuccess: () => setEditingId(null) },
         );
     };
@@ -222,9 +228,20 @@ export function PlanHistoryDialog({
                                             )}
                                         </TableCell>
                                         <TableCell sx={denseCell}>
-                                            <Typography variant="body2">
-                                                {formatDate(t.effective_date)}
-                                            </Typography>
+                                            {editingId === t.id ? (
+                                                <Button
+                                                    variant="outlined"
+                                                    size="small"
+                                                    startIcon={<EventIcon />}
+                                                    onClick={() => setEditDateDialogOpen(true)}
+                                                >
+                                                    {formatDate(editDate)}
+                                                </Button>
+                                            ) : (
+                                                <Typography variant="body2">
+                                                    {formatDate(t.effective_date)}
+                                                </Typography>
+                                            )}
                                         </TableCell>
                                         <TableCell sx={denseCell}>
                                             <Typography variant="body2" noWrap>
@@ -266,6 +283,7 @@ export function PlanHistoryDialog({
                                                             onClick={() => {
                                                                 setEditingId(t.id);
                                                                 setEditQty(String(t.qty));
+                                                                setEditDate(t.effective_date);
                                                             }}
                                                         >
                                                             <EditIcon fontSize="inherit" />
@@ -300,6 +318,7 @@ export function PlanHistoryDialog({
                 <Button onClick={onClose}>{getString('close')}</Button>
             </DialogActions>
 
+            {/* Add-entry effective date */}
             <DateWheelDialog
                 open={dateDialogOpen}
                 onClose={() => setDateDialogOpen(false)}
@@ -307,8 +326,19 @@ export function PlanHistoryDialog({
                 titleKey="effectiveDate"
                 getString={getString}
                 onSave={(iso) => setEffectiveDate(iso)}
-                minYear={thisYear - 5}
-                maxYear={thisYear + 10}
+                minYear={thisYear - YEARS_BACK}
+                maxYear={thisYear + YEARS_FORWARD}
+            />
+            {/* Edit-entry effective date */}
+            <DateWheelDialog
+                open={editDateDialogOpen}
+                onClose={() => setEditDateDialogOpen(false)}
+                value={editDate}
+                titleKey="effectiveDate"
+                getString={getString}
+                onSave={(iso) => setEditDate(iso)}
+                minYear={thisYear - YEARS_BACK}
+                maxYear={thisYear + YEARS_FORWARD}
             />
         </Dialog>
     );

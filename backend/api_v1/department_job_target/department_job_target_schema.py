@@ -17,6 +17,7 @@ class DepartmentJobTargetCreate(DepartmentJobTargetBase):
 
 class DepartmentJobTargetUpdate(BaseModel):
     qty: int = Field(ge=0)
+    effective_date: date
 
 
 class DepartmentJobTarget(DepartmentJobTargetBase):

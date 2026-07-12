@@ -17,6 +17,7 @@ export interface DepartmentJobTarget {
 
 export interface DepartmentJobTargetUpdate {
     qty: number;
+    effective_date: string; // ISO YYYY-MM-DD
 }
 
 export interface FactEmployee {

@@ -23,6 +23,7 @@ import { fetchFactEmployees, type FactEmployee, type HeadcountCalcRow } from './
 import { useEmployeeLandingSegment } from '../employeeLandingTarget';
 import { HEADCOUNT_FACT_EMPLOYEES_QK } from '../../../utils/queryKeys';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
+import { centeredGridCellsSx } from '../../../utils/dataGridSx';
 import { formatDate } from '../../../utils/date';
 import type { GetStringFn } from '../../../types/getStringFn';
 import cfl from '../../../utils/helpers.ts';
@@ -115,7 +116,7 @@ export function FactEmployeesPanel({ departmentId, isoDate, row, getString, onCl
                     onRowClick={(params) =>
                         navigate({ to: `/employees/${params.row.id}/${segment}` as '/' })
                     }
-                    sx={{ '& .MuiDataGrid-row': { cursor: 'pointer' } }}
+                    sx={{ '& .MuiDataGrid-row': { cursor: 'pointer' }, ...centeredGridCellsSx }}
                 />
             )}
         </Paper>

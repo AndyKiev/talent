@@ -388,11 +388,32 @@ class DepartmentJobTargetService(BaseService):
             )
         await self._ensure_department_allowed(record.department_id)
 
+        # Moving the entry to a date that already has a target for this
+        # department + job would violate the unique triple — reject it with the
+        # same translated "already exists" message the create path uses.
+        if target_update.effective_date != record.effective_date:
+            clash = await self.repository.get_by_dept_link_date(
+                record.department_id,
+                record.department_type_job_link_id,
+                target_update.effective_date,
+            )
+            if clash and clash.id != record.id:
+                raise await self._resolve_domain_error(
+                    DepartmentJobTargetAlreadyExists(str(target_update.effective_date))
+                )
+
         # The row keeps answering "who set this qty and when".
         record.qty = target_update.qty
+        record.effective_date = target_update.effective_date
         record.created_by = self.user.id if self.user else None
         record.created_at = datetime.now(timezone.utc)
-        await self.session.commit()
+        try:
+            await self.session.commit()
+        except IntegrityError:
+            await self.session.rollback()
+            raise await self._resolve_domain_error(
+                DepartmentJobTargetAlreadyExists(str(target_update.effective_date))
+            )
 
         schema = DepartmentJobTargetSchema.model_validate(record)
         schema.created_by_name = self.user.name if self.user else None

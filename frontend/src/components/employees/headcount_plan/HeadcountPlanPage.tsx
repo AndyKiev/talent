@@ -37,6 +37,7 @@ import { useHeadcountPlanMutations } from './useHeadcountPlanMutations';
 import { HEADCOUNT_CALC_QK } from '../../../utils/queryKeys';
 import { useBooleanSetting } from '../../../hooks/useAppSetting';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
+import { centeredGridCellsSx } from '../../../utils/dataGridSx';
 import { formatDate } from '../../../utils/date';
 import useString from '../../../hooks/useString';
 import cfl from '../../../utils/helpers.ts';
@@ -191,6 +192,7 @@ export function HeadcountPlanPage() {
                                     initialState={{
                                         pagination: { paginationModel: { page: 0, pageSize: 25 } },
                                     }}
+                                    sx={centeredGridCellsSx}
                                 />
                             </Paper>
                         )}
@@ -216,7 +218,7 @@ export function HeadcountPlanPage() {
                     titleKey="viewDate"
                     getString={getString}
                     onSave={(iso) => setSearch({ date: iso, job: undefined })}
-                    minYear={thisYear - 5}
+                    minYear={thisYear - 20}
                     maxYear={thisYear + 10}
                 />
 
