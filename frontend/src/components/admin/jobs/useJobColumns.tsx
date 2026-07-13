@@ -204,11 +204,22 @@ export function useJobColumns({
                       onClick={() => onProcessRoleClick(row)}
                   />
               ) : (
-                  links.map((link) => (
-                      <Tooltip key={link.full} title={link.full}>
-                        <Chip label={link.short} size="small" variant="outlined" color="success" />
-                      </Tooltip>
-                  ))
+                  links.map((link) => {
+                    const types = link.department_types ?? [];
+                    const title = types.length > 0
+                        ? `${link.full} → ${types.join(', ')}`
+                        : `${link.full} — ${getString('noCoveredDepartmentTypes') || 'no covered department types'}`;
+                    return (
+                        <Tooltip key={link.full} title={title}>
+                          <Chip
+                              label={types.length > 0 ? `${link.short} (${types.length})` : link.short}
+                              size="small"
+                              variant="outlined"
+                              color={types.length > 0 ? 'success' : 'warning'}
+                          />
+                        </Tooltip>
+                    );
+                  })
               )}
             </Box>
         );

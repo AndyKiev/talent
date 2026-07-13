@@ -13,16 +13,22 @@ from backend.api_v1.job_process_role_link.job_process_role_link_model import (
 from backend.api_v1.job_process_role_link.job_process_role_link_schema import (
     JobProcessRoleLink as JobProcessRoleLinkSchema,
     JobProcessRoleLinkCreate,
+    SetLinkDepartmentTypes,
+)
+from backend.api_v1.job_process_role_link.job_process_role_link_department_type_model import (
+    JobProcessRoleLinkDepartmentType,
 )
 from backend.api_v1.job_process_role_link.job_process_role_link_messages import (
     JobProcessRoleLinkNotFound,
     JobAlreadyLinkedToProcessRole,
     JobNotFoundForProcessRoleLink,
     ProcessRoleNotFoundForLink,
+    DepartmentTypeNotFoundForLink,
 )
 from backend.api_v1.job_process_role_link.job_process_role_link_messages import (
     JobProcessRoleLinkCreateSuccess,
     JobProcessRoleLinkDeleteSuccess,
+    JobProcessRoleLinkDepartmentTypesSetSuccess,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.job.job_model import Job
@@ -81,6 +87,28 @@ class JobProcessRoleLinkService(BaseService):
             )
         return role
 
+    async def _validate_department_type_ids(self, ids: list[int]) -> list[int]:
+        """Deduplicated ids, each verified to exist."""
+        from sqlalchemy import select
+        from backend.api_v1.department_type.department_type_model import DepartmentType
+
+        unique_ids = list(dict.fromkeys(ids))
+        if not unique_ids:
+            return []
+        existing = set(
+            (
+                await self.session.scalars(
+                    select(DepartmentType.id).where(DepartmentType.id.in_(unique_ids))
+                )
+            ).all()
+        )
+        for type_id in unique_ids:
+            if type_id not in existing:
+                raise await self._resolve_domain_error(
+                    DepartmentTypeNotFoundForLink(type_id)
+                )
+        return unique_ids
+
     # ------------------------------------------------------------------
     # Read
     # ------------------------------------------------------------------
@@ -114,10 +142,22 @@ class JobProcessRoleLinkService(BaseService):
                 )
             )
 
+        type_ids = await self._validate_department_type_ids(
+            payload.department_type_ids
+        )
         link = JobProcessRoleLink(
             job_id=payload.job_id, process_role_id=payload.process_role_id
         )
         created = await self.repository.create(link)
+        if type_ids:
+            for type_id in type_ids:
+                self.session.add(
+                    JobProcessRoleLinkDepartmentType(
+                        job_process_role_link_id=created.id,
+                        department_type_id=type_id,
+                    )
+                )
+            await self.session.commit()
         # Re-fetch so relationships are loaded
         created = await self.repository.get_link(
             payload.job_id, payload.process_role_id
@@ -128,6 +168,45 @@ class JobProcessRoleLinkService(BaseService):
                 job.name,
                 role.process.name if role.process else "?",
                 role.name,
+            )
+        )
+        return MutationResponse(detail=detail, data=schema)
+
+    # ------------------------------------------------------------------
+    # Write — replace the oversight-target department types of a link
+    # ------------------------------------------------------------------
+
+    async def set_department_types(
+        self, link_id: int, payload: SetLinkDepartmentTypes
+    ) -> MutationResponse[JobProcessRoleLinkSchema]:
+        from sqlalchemy import select
+
+        link = await self.session.scalar(
+            select(JobProcessRoleLink).where(JobProcessRoleLink.id == link_id)
+        )
+        if not link:
+            raise await self._resolve_domain_error(
+                JobProcessRoleLinkNotFound(link_id, 0)
+            )
+        type_ids = await self._validate_department_type_ids(
+            payload.department_type_ids
+        )
+        # delete-orphan cascade removes the dropped rows
+        link.department_type_links = [
+            JobProcessRoleLinkDepartmentType(
+                job_process_role_link_id=link.id,
+                department_type_id=type_id,
+            )
+            for type_id in type_ids
+        ]
+        await self.session.commit()
+        await self.session.refresh(link)
+        schema = self._to_schema(link)
+        detail = await self._resolve_domain_success(
+            JobProcessRoleLinkDepartmentTypesSetSuccess(
+                link.job.name if link.job else "?",
+                link.process_role.name if link.process_role else "?",
+                len(type_ids),
             )
         )
         return MutationResponse(detail=detail, data=schema)

@@ -14,6 +14,7 @@ export interface DepartmentTypeLinkInfo {
 export interface ProcessRoleLinkInfo {
   short: string;  // role short_name (or name) — compact chip label
   full: string;   // "process / role" — tooltip
+  department_types: string[];  // oversight-target type names (tooltip list)
 }
 
 export interface Job {
@@ -210,6 +211,10 @@ export interface JobProcessRoleLink {
   job_name: string | null;
   process_name: string | null;
   role_name: string | null;
+  // Oversight targets: dept types whose EMPLOYEES this job+role oversees
+  // (NOT the staffing types the job is linked to).
+  department_type_ids: number[];
+  department_type_names: string[];
 }
 
 export const fetchJobProcessRoleLinks = async (
@@ -224,10 +229,22 @@ export const fetchJobProcessRoleLinks = async (
 export const createJobProcessRoleLink = async (body: {
   job_id: number;
   process_role_id: number;
+  department_type_ids?: number[];
 }): Promise<MutationResponse<JobProcessRoleLink>> => {
   const res = await axiosInstance.post<MutationResponse<JobProcessRoleLink>>(
     JOB_PROCESS_ROLE_LINKS_BASE,
     body,
+  );
+  return res.data;
+};
+
+export const setJobProcessRoleLinkDepartmentTypes = async (
+  linkId: number,
+  departmentTypeIds: number[],
+): Promise<MutationResponse<JobProcessRoleLink>> => {
+  const res = await axiosInstance.put<MutationResponse<JobProcessRoleLink>>(
+    `${JOB_PROCESS_ROLE_LINKS_BASE}/${linkId}/department_types`,
+    { department_type_ids: departmentTypeIds },
   );
   return res.data;
 };

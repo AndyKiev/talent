@@ -6,6 +6,7 @@ from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.job_process_role_link.job_process_role_link_schema import (
     JobProcessRoleLink as JobProcessRoleLinkSchema,
     JobProcessRoleLinkCreate,
+    SetLinkDepartmentTypes,
 )
 from backend.api_v1.job_process_role_link.job_process_role_link_dependencies import (
     get_job_process_role_link_service,
@@ -56,6 +57,22 @@ async def add_link(
     Raises **JobAlreadyLinkedToProcessRole** if the link already exists.
     """
     return await service.add_link(payload)
+
+
+@router.put(
+    "/{link_id}/department_types",
+    response_model=MutationResponse[JobProcessRoleLinkSchema],
+    dependencies=[Guard(OperationVerb.LINK, EssenceName.JOB)],
+)
+async def set_link_department_types(
+    link_id: int,
+    payload: SetLinkDepartmentTypes,
+    service: Annotated[
+        JobProcessRoleLinkService, Depends(get_job_process_role_link_service)
+    ],
+):
+    """Replace the oversight-target department types of a job↔role link."""
+    return await service.set_department_types(link_id, payload)
 
 
 @router.delete(

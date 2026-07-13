@@ -33,11 +33,13 @@ class DepartmentTypeLinkInfo(BaseModel):
 
 class ProcessRoleLinkInfo(BaseModel):
     """A process role linked to a job: short = role short_name (or name) for
-    compact chips, full = 'process / role' for the tooltip."""
+    compact chips, full = 'process / role' for the tooltip, department_types =
+    oversight-target type names (whose employees the job+role oversees)."""
 
     model_config = ConfigDict(from_attributes=True)
     short: str
     full: str
+    department_types: List[str] = []
 
 
 class Job(JobBase):

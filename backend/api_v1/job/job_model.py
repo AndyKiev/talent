@@ -129,19 +129,22 @@ class Job(IntIdPkMixin, TimestampMixin, Base):
 
     @property
     def process_role_links_info(self) -> list[dict]:
-        """Process-role links as {short, full}: short prefers the role's
-        short_name (compact grid chips), full = 'process / role' (tooltip)."""
+        """Process-role links as {short, full, department_types}: short prefers
+        the role's short_name (compact grid chips), full = 'process / role'
+        (tooltip), department_types = the OVERSIGHT-TARGET types whose
+        employees this job+role oversees (not the staffing types)."""
         out: list[dict] = []
         for link in self.process_role_links:
             role = link.process_role
             if role is None:
-                out.append({"short": "?", "full": "? / ?"})
+                out.append({"short": "?", "full": "? / ?", "department_types": []})
                 continue
             process_name = role.process.name if role.process else "?"
             out.append(
                 {
                     "short": role.short_name or role.name,
                     "full": f"{process_name} / {role.name}",
+                    "department_types": link.department_type_names,
                 }
             )
         return out

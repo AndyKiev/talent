@@ -68,6 +68,15 @@ class ProcessRoleNotFoundForLink(NotFoundError):
         super().__init__("ProcessRole", "id", process_role_id)
 
 
+class DepartmentTypeNotFoundForLink(NotFoundError):
+    message_key = "departmentTypeNotFoundForLink"
+
+    def __init__(self, department_type_id: int) -> None:
+        self.template_vars = {"departmentTypeId": department_type_id}
+        self.fallback = f"Department type with ID {department_type_id} not found"
+        super().__init__("DepartmentType", "id", department_type_id)
+
+
 class JobProcessRoleLinkCreateSuccess(CreateSuccess):
     message_key = "jobProcessRoleLinkCreateSuccess"
 
@@ -80,6 +89,21 @@ class JobProcessRoleLinkCreateSuccess(CreateSuccess):
         self.fallback = (
             f"Job '{job_name}' successfully linked to "
             f"process role '{process_name} / {role_name}'"
+        )
+        DomainSuccess.__init__(self, self.fallback)
+
+
+class JobProcessRoleLinkDepartmentTypesSetSuccess(DomainSuccess):
+    message_key = "jobProcessRoleLinkDepartmentTypesSetSuccess"
+
+    def __init__(self, job_name: str, role_name: str, count: int) -> None:
+        self.template_vars = {
+            "jobName": job_name,
+            "roleName": role_name,
+            "count": count,
+        }
+        self.fallback = (
+            f"'{job_name}' / '{role_name}': now overseeing {count} department type(s)"
         )
         DomainSuccess.__init__(self, self.fallback)
 

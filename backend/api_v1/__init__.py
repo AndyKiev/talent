@@ -58,6 +58,7 @@ __all__ = {
     "JobGroup",
     "JobJobGroupLink",
     "JobProcessRoleLink",
+    "JobProcessRoleLinkDepartmentType",
     "JobCategory",
     "JobJobCategoryLink",
     # Planning
@@ -247,6 +248,9 @@ from backend.api_v1.job_group.job_group_model import JobGroup
 from backend.api_v1.job_job_group_link.job_job_group_link_model import JobJobGroupLink
 from backend.api_v1.job_process_role_link.job_process_role_link_model import (
     JobProcessRoleLink,
+)
+from backend.api_v1.job_process_role_link.job_process_role_link_department_type_model import (
+    JobProcessRoleLinkDepartmentType,
 )
 
 # Job category (1:1 optional property via job_job_category_links) — category

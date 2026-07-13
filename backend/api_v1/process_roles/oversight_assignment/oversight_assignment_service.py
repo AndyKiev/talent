@@ -9,8 +9,8 @@ from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.department.department_messages import DepartmentNotFound
 from backend.api_v1.department.department_model import Department
 from backend.api_v1.department.department_repository import DepartmentRepository
-from backend.api_v1.department_type_job_link.department_type_job_link_model import (
-    DepartmentTypeJobLink,
+from backend.api_v1.job_process_role_link.job_process_role_link_department_type_model import (
+    JobProcessRoleLinkDepartmentType,
 )
 from backend.api_v1.employee.employee_model import Employee
 from backend.api_v1.employee.employee_schema import EmployeeSchema
@@ -70,11 +70,11 @@ class _Candidate:
 
 @dataclass
 class _SearchLevel:
-    """One department up the chain: the oversight jobs its TYPE is linked to
-    and the employees holding such a job with this department as their main."""
+    """One department up the chain: the employees holding an oversight job
+    (resolved from the SUBORDINATE's department type) whose main department
+    is this level's department instance."""
 
     department_id: int
-    has_jobs: bool
     candidates: list[_Candidate] = field(default_factory=list)
 
 
@@ -82,11 +82,13 @@ class OversightAssignmentService(BaseService):
     """Batch auto-assignment of the oversight manager (people-review reviewer).
 
     For every employee of the selected department subtree that participates in
-    the latest OPEN review session: take the employee's main department, find
-    the job(s) linked BOTH to that department's type and to the oversight
-    process role, and look for the employee holding such a job in that same
-    department. When the department itself has no holder, climb the parent
-    chain up to the `oversight_assign_max_levels_up` app setting. Exactly one
+    the latest OPEN review session: take the employee's main department TYPE
+    and resolve the curator job(s) through the explicit oversight-target link
+    (job_process_role_link_department_types — "this job+role oversees the
+    employees of departments of this type"). Then look for the holder of such
+    a job in the employee's own department; when nobody holds it there, climb
+    the parent chain up to the `oversight_assign_max_levels_up` app setting
+    (the holder may sit above — e.g. the store manager). Exactly one
     candidate -> the link is written; two or more -> anomaly, nobody assigned.
     """
 
@@ -184,9 +186,11 @@ class OversightAssignmentService(BaseService):
             ).all()
             existing_links = {link.employee_id: link for link in links}
 
+        # Oversight coverage: subordinate dept type -> curator job ids, from
+        # the explicit oversight-target link (NOT the staffing link).
+        jobs_by_type = await self._oversight_jobs_by_type(role_ids)
         # Search traces are shared by every employee of the same department.
         traces: dict[int, list[_SearchLevel]] = {}
-        jobs_by_type: dict[int, list[int]] = {}
 
         rows: list[OversightAssignmentResultRow] = []
         counts = {"assigned": 0, "overwritten": 0, "already_assigned": 0, "failed": 0}
@@ -210,13 +214,23 @@ class OversightAssignmentService(BaseService):
                 counts["already_assigned"] += 1
                 continue
 
-            if main_dept_id not in traces:
-                traces[main_dept_id] = await self._build_trace(
-                    main_dept_id, dept_info, jobs_by_type, role_ids, max_levels_up
+            type_id = dept_row.department_type_id if dept_row else None
+            job_ids = jobs_by_type.get(type_id, []) if type_id is not None else []
+            if not job_ids:
+                candidate, levels_up, reason, conflict_names = (
+                    None,
+                    None,
+                    "notParametrized",
+                    [],
                 )
-            candidate, levels_up, reason, conflict_names = self._resolve_candidate(
-                traces[main_dept_id], emp_id
-            )
+            else:
+                if main_dept_id not in traces:
+                    traces[main_dept_id] = await self._build_trace(
+                        main_dept_id, dept_info, job_ids, max_levels_up
+                    )
+                candidate, levels_up, reason, conflict_names = (
+                    self._resolve_candidate(traces[main_dept_id], emp_id)
+                )
 
             if candidate is None:
                 row.reason_key = reason
@@ -341,16 +355,47 @@ class OversightAssignmentService(BaseService):
         first_id, first_name = open_sessions[0]
         return (first_id, first_name), False
 
+    async def _oversight_jobs_by_type(
+        self, role_ids: list[int]
+    ) -> dict[int, list[int]]:
+        """subordinate department_type_id -> ACTIVE job ids overseeing it,
+        resolved through job_process_role_link_department_types."""
+        rows = (
+            await self.session.execute(
+                select(
+                    JobProcessRoleLinkDepartmentType.department_type_id,
+                    JobProcessRoleLink.job_id,
+                )
+                .join(
+                    JobProcessRoleLink,
+                    JobProcessRoleLink.id
+                    == JobProcessRoleLinkDepartmentType.job_process_role_link_id,
+                )
+                .join(Job, Job.id == JobProcessRoleLink.job_id)
+                .where(
+                    JobProcessRoleLink.process_role_id.in_(role_ids),
+                    Job.is_active == True,
+                )
+            )
+        ).all()
+        jobs_by_type: dict[int, list[int]] = {}
+        for type_id, job_id in rows:
+            jobs_by_type.setdefault(type_id, [])
+            if job_id not in jobs_by_type[type_id]:
+                jobs_by_type[type_id].append(job_id)
+        return jobs_by_type
+
     async def _build_trace(
         self,
         main_dept_id: int,
         dept_info: dict,
-        jobs_by_type: dict[int, list[int]],
-        role_ids: list[int],
+        job_ids: list[int],
         max_levels_up: int,
     ) -> list[_SearchLevel]:
         """The department itself plus up to max_levels_up ancestors, each with
-        its type's oversight jobs and the employees holding them there."""
+        the employees holding one of the curator jobs there. The job set is
+        fixed (from the SUBORDINATE's dept type); levels only widen WHERE the
+        holder may sit."""
         trace: list[_SearchLevel] = []
         dept_id: Optional[int] = main_dept_id
         for _ in range(max_levels_up + 1):
@@ -359,49 +404,27 @@ class OversightAssignmentService(BaseService):
             dept_row = dept_info.get(dept_id)
             if dept_row is None:
                 break
-
-            type_id = dept_row.department_type_id
-            if type_id not in jobs_by_type:
-                jobs_by_type[type_id] = list(
-                    (
-                        await self.session.scalars(
-                            select(DepartmentTypeJobLink.job_id)
-                            .join(Job, Job.id == DepartmentTypeJobLink.job_id)
-                            .join(
-                                JobProcessRoleLink,
-                                JobProcessRoleLink.job_id
-                                == DepartmentTypeJobLink.job_id,
-                            )
-                            .where(
-                                DepartmentTypeJobLink.department_type_id == type_id,
-                                DepartmentTypeJobLink.is_active == True,
-                                Job.is_active == True,
-                                JobProcessRoleLink.process_role_id.in_(role_ids),
-                            )
-                        )
-                    ).all()
-                )
-            job_ids = jobs_by_type[type_id]
-
-            level = _SearchLevel(department_id=dept_id, has_jobs=bool(job_ids))
-            if job_ids:
-                found = (
-                    await self.session.execute(
-                        select(Employee.id, Employee.code, Employee.name)
-                        .join(
-                            EmployeeDepartment,
-                            EmployeeDepartment.employee_id == Employee.id,
-                        )
-                        .where(
-                            EmployeeDepartment.department_id == dept_id,
-                            Employee.job_id.in_(job_ids),
-                            Employee.is_active == True,
-                        )
-                        .order_by(Employee.id)
+            found = (
+                await self.session.execute(
+                    select(Employee.id, Employee.code, Employee.name)
+                    .join(
+                        EmployeeDepartment,
+                        EmployeeDepartment.employee_id == Employee.id,
                     )
-                ).all()
-                level.candidates = [_Candidate(*row) for row in found]
-            trace.append(level)
+                    .where(
+                        EmployeeDepartment.department_id == dept_id,
+                        Employee.job_id.in_(job_ids),
+                        Employee.is_active == True,
+                    )
+                    .order_by(Employee.id)
+                )
+            ).all()
+            trace.append(
+                _SearchLevel(
+                    department_id=dept_id,
+                    candidates=[_Candidate(*row) for row in found],
+                )
+            )
             dept_id = dept_row.parent_id
         return trace
 
@@ -411,10 +434,8 @@ class OversightAssignmentService(BaseService):
     ) -> tuple[Optional[_Candidate], Optional[int], Optional[str], list[str]]:
         """Walk the levels: the first one holding a non-self candidate decides.
         Returns (candidate, levels_up, failure_reason_key, conflict_names)."""
-        saw_jobs = False
         saw_self_only = False
         for levels_up, level in enumerate(trace):
-            saw_jobs = saw_jobs or level.has_jobs
             others = [c for c in level.candidates if c.id != employee_id]
             if len(others) == 1:
                 return others[0], levels_up, None, []
@@ -422,12 +443,10 @@ class OversightAssignmentService(BaseService):
                 names = [c.name or c.code or str(c.id) for c in others]
                 return None, levels_up, "multipleCandidates", names
             if level.candidates:
-                # only the employee themself holds the oversight job here
+                # only the employee themself holds the curator job here
                 saw_self_only = True
         if saw_self_only:
             return None, None, "onlySelfCandidate", []
-        if not saw_jobs:
-            return None, None, "notParametrized", []
         return None, None, "noHolderFound", []
 
     async def _ensure_holder(
