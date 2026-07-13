@@ -170,9 +170,16 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
             if (!appliedStatus) throw new Error('Applied status not found');
             return applyEmployeeEvent(employeeId, event!.id, appliedStatus.id);
         },
-        onSuccess: () => {
+        onSuccess: async () => {
+            // Await the detail refetch so the event flips ready -> applied (and
+            // isReady becomes false, unmounting the button) BEFORE the mutation's
+            // isPending clears. Otherwise there's a render gap where isPending is
+            // already false but the status is still "ready", and the Apply button
+            // briefly re-appears enabled before disappearing.
+            await qc.invalidateQueries({
+                queryKey: ['employee-event-detail', employeeId, event?.id],
+            });
             qc.invalidateQueries({ queryKey: employeeEventsQK(employeeId) });
-            qc.invalidateQueries({ queryKey: ['employee-event-detail', employeeId, event?.id] });
             // Applying writes status/job/department to the employee — refresh
             // the employees grid so the projection shows immediately.
             qc.invalidateQueries({ queryKey: ['employees'] });
