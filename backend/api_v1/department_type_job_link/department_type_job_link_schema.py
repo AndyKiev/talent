@@ -40,3 +40,17 @@ class JobWithLinkId(JobSchema):
     model_config = ConfigDict(from_attributes=True)
     link_id: int
     link_is_active: bool
+
+
+class DepartmentTypeJobLinkBulkSync(BaseModel):
+    """Batch payload: the department type's links become EXACTLY job_ids —
+    missing links are created (active), links absent from the list are
+    deleted. Used by the drag-and-drop linking board's batch mode."""
+
+    department_type_id: int
+    job_ids: list[int] = Field(default_factory=list)
+
+
+class DepartmentTypeJobLinkBulkSyncResult(BaseModel):
+    created: int
+    removed: int

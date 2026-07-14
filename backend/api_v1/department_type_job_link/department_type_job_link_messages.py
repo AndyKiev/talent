@@ -82,3 +82,12 @@ class DepartmentTypeJobLinkUpdateSuccess(UpdateSuccess):
         self.template_vars = {"name": name}
         self.fallback = f"Department type–job link '{name}' successfully updated"
         DomainSuccess.__init__(self, self.fallback)
+
+
+class DepartmentTypeJobLinkBulkSyncSuccess(DomainSuccess):
+    message_key = "departmentTypeJobLinkBulkSyncSuccess"
+
+    def __init__(self, created: int, removed: int) -> None:
+        self.template_vars = {"created": created, "removed": removed}
+        self.fallback = f"Links updated: {created} added, {removed} removed"
+        DomainSuccess.__init__(self, self.fallback)

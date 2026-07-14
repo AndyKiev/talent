@@ -10,6 +10,8 @@ from backend.api_v1.department_type_job_link.department_type_job_link_repository
 )
 from backend.api_v1.department_type_job_link.department_type_job_link_schema import (
     DepartmentTypeJobLink as DepartmentTypeJobLinkSchema,
+    DepartmentTypeJobLinkBulkSync,
+    DepartmentTypeJobLinkBulkSyncResult,
     DepartmentTypeJobLinkCreate,
     DepartmentTypeJobLinkUpdate,
     JobWithLinkId,
@@ -26,6 +28,7 @@ from backend.api_v1.department_type_job_link.department_type_job_link_messages i
     DepartmentTypeJobLinkDeleteSuccess,
     DepartmentTypeJobLinkCreateSuccess,
     DepartmentTypeJobLinkUpdateSuccess,
+    DepartmentTypeJobLinkBulkSyncSuccess,
 )
 
 
@@ -162,6 +165,45 @@ class DepartmentTypeJobLinkService(BaseService):
                     orm_record.department_type_id, orm_record.job_id
                 )
             )
+
+    async def bulk_sync(
+        self, sync_in: DepartmentTypeJobLinkBulkSync
+    ) -> MutationResponse[DepartmentTypeJobLinkBulkSyncResult]:
+        """
+        Make the department type's links EXACTLY ``job_ids`` in one call:
+        missing links are created (active), links whose job is absent from
+        the list are deleted (their headcount targets cascade away, same as
+        a single delete). Used by the linking board's batch mode.
+        """
+        existing = await self.repository.get_all(
+            filters={"department_type_id": sync_in.department_type_id}
+        )
+        wanted = set(sync_in.job_ids)
+        existing_by_job = {link.job_id: link for link in existing}
+
+        to_create = wanted - set(existing_by_job)
+        to_delete = [
+            link for job_id, link in existing_by_job.items() if job_id not in wanted
+        ]
+
+        for job_id in to_create:
+            await self.repository.create_from_dict(
+                {
+                    "department_type_id": sync_in.department_type_id,
+                    "job_id": job_id,
+                    "is_active": True,
+                }
+            )
+        for link in to_delete:
+            await self.repository.delete_by_id(link.id)
+
+        result = DepartmentTypeJobLinkBulkSyncResult(
+            created=len(to_create), removed=len(to_delete)
+        )
+        detail = await self._resolve_domain_success(
+            DepartmentTypeJobLinkBulkSyncSuccess(result.created, result.removed)
+        )
+        return MutationResponse(detail=detail, data=result)
 
     async def delete_link(self, link_id: int) -> None:
         record = await self.get_by_id(link_id)

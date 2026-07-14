@@ -5,6 +5,8 @@ from typing import Annotated, Optional, List
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.department_type_job_link.department_type_job_link_schema import (
     DepartmentTypeJobLink as DepartmentTypeJobLinkSchema,
+    DepartmentTypeJobLinkBulkSync,
+    DepartmentTypeJobLinkBulkSyncResult,
     DepartmentTypeJobLinkCreate,
     DepartmentTypeJobLinkUpdate,
     JobWithLinkId,
@@ -134,6 +136,24 @@ async def create_department_type_job_link(
 ):
     """Link a department type to a job. The (department_type_id, job_id) pair must be unique."""
     return await service.create_link(link_in)
+
+
+@router.post(
+    "/bulk_sync",
+    response_model=MutationResponse[DepartmentTypeJobLinkBulkSyncResult],
+    dependencies=[
+        Guard(OperationVerb.LINK, EssenceName.DEPARTMENT_TYPE, EssenceName.JOB)
+    ],
+)
+async def bulk_sync_department_type_job_links(
+    sync_in: DepartmentTypeJobLinkBulkSync,
+    service: Annotated[
+        DepartmentTypeJobLinkService, Depends(get_department_type_job_link_service)
+    ],
+):
+    """Make the type's links EXACTLY job_ids (create missing, delete absent).
+    Used by the drag-and-drop linking board's batch mode."""
+    return await service.bulk_sync(sync_in)
 
 
 @router.patch(

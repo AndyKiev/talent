@@ -89,6 +89,28 @@ export const updateDepartmentTypeJobLink = async ({
     return res.data;
 };
 
+export interface DepartmentTypeJobLinkBulkSyncResult {
+    created: number;
+    removed: number;
+}
+
+/**
+ * Batch apply (linking board): the type's links become EXACTLY job_ids —
+ * missing links are created (active), links absent from the list are deleted.
+ */
+export const bulkSyncDepartmentTypeJobLinks = async (
+    departmentTypeId: number,
+    jobIds: number[],
+): Promise<MutationResponse<DepartmentTypeJobLinkBulkSyncResult>> => {
+    const res = await axiosInstance.post<
+        MutationResponse<DepartmentTypeJobLinkBulkSyncResult>
+    >(`${BASE}/bulk_sync`, {
+        department_type_id: departmentTypeId,
+        job_ids: jobIds,
+    });
+    return res.data;
+};
+
 /** Delete a link by its ID */
 export const deleteDepartmentTypeJobLink = async (
     linkId: number,

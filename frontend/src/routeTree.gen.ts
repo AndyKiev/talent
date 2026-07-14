@@ -134,6 +134,7 @@ import { Route as AdminPeople_reviewReviewersAuto_assignmentIndexRouteImport } f
 import { Route as AdminPeople_reviewReview_setupLevelsIndexRouteImport } from './routes/admin/people_review/review_setup/levels/index'
 import { Route as AdminPeople_reviewReview_setupDimensionsIndexRouteImport } from './routes/admin/people_review/review_setup/dimensions/index'
 import { Route as AdminDepartments_groupDepartment_typesListIndexRouteImport } from './routes/admin/departments_group/department_types/list/index'
+import { Route as AdminDepartments_groupDepartment_typesJob_links_boardIndexRouteImport } from './routes/admin/departments_group/department_types/job_links_board/index'
 import { Route as AdminDepartments_groupDepartment_typesJob_linksIndexRouteImport } from './routes/admin/departments_group/department_types/job_links/index'
 import { Route as AdminDepartments_groupDepartment_typesHierarchyIndexRouteImport } from './routes/admin/departments_group/department_types/hierarchy/index'
 import { Route as AdminPeople_reviewReview_setupLevelsRequirementsIndexRouteImport } from './routes/admin/people_review/review_setup/levels/requirements/index'
@@ -849,6 +850,12 @@ const AdminDepartments_groupDepartment_typesListIndexRoute =
     path: '/list/',
     getParentRoute: () => AdminDepartments_groupDepartment_typesRouteRoute,
   } as any)
+const AdminDepartments_groupDepartment_typesJob_links_boardIndexRoute =
+  AdminDepartments_groupDepartment_typesJob_links_boardIndexRouteImport.update({
+    id: '/job_links_board/',
+    path: '/job_links_board/',
+    getParentRoute: () => AdminDepartments_groupDepartment_typesRouteRoute,
+  } as any)
 const AdminDepartments_groupDepartment_typesJob_linksIndexRoute =
   AdminDepartments_groupDepartment_typesJob_linksIndexRouteImport.update({
     id: '/job_links/',
@@ -1004,6 +1011,7 @@ export interface FileRoutesByFullPath {
   '/employees/$employeeId/trainings': typeof EmployeesEmployeeIdTrainingsIndexRoute
   '/admin/departments_group/department_types/hierarchy': typeof AdminDepartments_groupDepartment_typesHierarchyIndexRoute
   '/admin/departments_group/department_types/job_links': typeof AdminDepartments_groupDepartment_typesJob_linksIndexRoute
+  '/admin/departments_group/department_types/job_links_board': typeof AdminDepartments_groupDepartment_typesJob_links_boardIndexRoute
   '/admin/departments_group/department_types/list': typeof AdminDepartments_groupDepartment_typesListIndexRoute
   '/admin/people_review/review_setup/dimensions/': typeof AdminPeople_reviewReview_setupDimensionsIndexRoute
   '/admin/people_review/review_setup/levels/': typeof AdminPeople_reviewReview_setupLevelsIndexRoute
@@ -1116,6 +1124,7 @@ export interface FileRoutesByTo {
   '/employees/$employeeId/trainings': typeof EmployeesEmployeeIdTrainingsIndexRoute
   '/admin/departments_group/department_types/hierarchy': typeof AdminDepartments_groupDepartment_typesHierarchyIndexRoute
   '/admin/departments_group/department_types/job_links': typeof AdminDepartments_groupDepartment_typesJob_linksIndexRoute
+  '/admin/departments_group/department_types/job_links_board': typeof AdminDepartments_groupDepartment_typesJob_links_boardIndexRoute
   '/admin/departments_group/department_types/list': typeof AdminDepartments_groupDepartment_typesListIndexRoute
   '/admin/people_review/review_setup/dimensions': typeof AdminPeople_reviewReview_setupDimensionsIndexRoute
   '/admin/people_review/review_setup/levels': typeof AdminPeople_reviewReview_setupLevelsIndexRoute
@@ -1250,6 +1259,7 @@ export interface FileRoutesById {
   '/employees/$employeeId/trainings/': typeof EmployeesEmployeeIdTrainingsIndexRoute
   '/admin/departments_group/department_types/hierarchy/': typeof AdminDepartments_groupDepartment_typesHierarchyIndexRoute
   '/admin/departments_group/department_types/job_links/': typeof AdminDepartments_groupDepartment_typesJob_linksIndexRoute
+  '/admin/departments_group/department_types/job_links_board/': typeof AdminDepartments_groupDepartment_typesJob_links_boardIndexRoute
   '/admin/departments_group/department_types/list/': typeof AdminDepartments_groupDepartment_typesListIndexRoute
   '/admin/people_review/review_setup/dimensions/': typeof AdminPeople_reviewReview_setupDimensionsIndexRoute
   '/admin/people_review/review_setup/levels/': typeof AdminPeople_reviewReview_setupLevelsIndexRoute
@@ -1385,6 +1395,7 @@ export interface FileRouteTypes {
     | '/employees/$employeeId/trainings'
     | '/admin/departments_group/department_types/hierarchy'
     | '/admin/departments_group/department_types/job_links'
+    | '/admin/departments_group/department_types/job_links_board'
     | '/admin/departments_group/department_types/list'
     | '/admin/people_review/review_setup/dimensions/'
     | '/admin/people_review/review_setup/levels/'
@@ -1497,6 +1508,7 @@ export interface FileRouteTypes {
     | '/employees/$employeeId/trainings'
     | '/admin/departments_group/department_types/hierarchy'
     | '/admin/departments_group/department_types/job_links'
+    | '/admin/departments_group/department_types/job_links_board'
     | '/admin/departments_group/department_types/list'
     | '/admin/people_review/review_setup/dimensions'
     | '/admin/people_review/review_setup/levels'
@@ -1630,6 +1642,7 @@ export interface FileRouteTypes {
     | '/employees/$employeeId/trainings/'
     | '/admin/departments_group/department_types/hierarchy/'
     | '/admin/departments_group/department_types/job_links/'
+    | '/admin/departments_group/department_types/job_links_board/'
     | '/admin/departments_group/department_types/list/'
     | '/admin/people_review/review_setup/dimensions/'
     | '/admin/people_review/review_setup/levels/'
@@ -2573,6 +2586,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDepartments_groupDepartment_typesListIndexRouteImport
       parentRoute: typeof AdminDepartments_groupDepartment_typesRouteRoute
     }
+    '/admin/departments_group/department_types/job_links_board/': {
+      id: '/admin/departments_group/department_types/job_links_board/'
+      path: '/job_links_board'
+      fullPath: '/admin/departments_group/department_types/job_links_board'
+      preLoaderRoute: typeof AdminDepartments_groupDepartment_typesJob_links_boardIndexRouteImport
+      parentRoute: typeof AdminDepartments_groupDepartment_typesRouteRoute
+    }
     '/admin/departments_group/department_types/job_links/': {
       id: '/admin/departments_group/department_types/job_links/'
       path: '/job_links'
@@ -2638,6 +2658,7 @@ interface AdminDepartments_groupDepartment_typesRouteRouteChildren {
   AdminDepartments_groupDepartment_typesIndexRoute: typeof AdminDepartments_groupDepartment_typesIndexRoute
   AdminDepartments_groupDepartment_typesHierarchyIndexRoute: typeof AdminDepartments_groupDepartment_typesHierarchyIndexRoute
   AdminDepartments_groupDepartment_typesJob_linksIndexRoute: typeof AdminDepartments_groupDepartment_typesJob_linksIndexRoute
+  AdminDepartments_groupDepartment_typesJob_links_boardIndexRoute: typeof AdminDepartments_groupDepartment_typesJob_links_boardIndexRoute
   AdminDepartments_groupDepartment_typesListIndexRoute: typeof AdminDepartments_groupDepartment_typesListIndexRoute
 }
 
@@ -2649,6 +2670,8 @@ const AdminDepartments_groupDepartment_typesRouteRouteChildren: AdminDepartments
       AdminDepartments_groupDepartment_typesHierarchyIndexRoute,
     AdminDepartments_groupDepartment_typesJob_linksIndexRoute:
       AdminDepartments_groupDepartment_typesJob_linksIndexRoute,
+    AdminDepartments_groupDepartment_typesJob_links_boardIndexRoute:
+      AdminDepartments_groupDepartment_typesJob_links_boardIndexRoute,
     AdminDepartments_groupDepartment_typesListIndexRoute:
       AdminDepartments_groupDepartment_typesListIndexRoute,
   }
