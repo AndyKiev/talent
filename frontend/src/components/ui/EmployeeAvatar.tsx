@@ -30,11 +30,12 @@ import {
 // Which surface this avatar lives on — selects the per-surface child setting that
 // gates its photo display. Each child is effective only when it AND the master
 // `employee_photos_enabled` are on, so OFF here means: no circle, no read, no add.
-export type EmployeePhotoScope = 'employeesMenu' | 'peopleReview' | 'reviewComments';
+export type EmployeePhotoScope = 'employeesMenu' | 'peopleReview' | 'reviewComments' | 'organigram';
 const PHOTO_SCOPE_KEY: Record<EmployeePhotoScope, string> = {
     employeesMenu: 'employee_photos_employees_menu',
     peopleReview: 'employee_photos_people_review',
     reviewComments: 'employee_photos_review_comments',
+    organigram: 'employee_photos_organigram',
 };
 
 /** Two-letter initials from a name ("Andrey Bakulin" -> "AB", single word -> first letter). */

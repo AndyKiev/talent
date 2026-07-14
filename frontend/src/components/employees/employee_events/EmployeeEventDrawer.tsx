@@ -53,6 +53,7 @@ import type { DepartmentNode } from '../../admin/departments/departmentApi';
 import type { GetStringFn } from '../../../types/getStringFn';
 import cfl from '../../../utils/helpers.ts';
 import { formatToUkrDate } from '../../../utils/dateFormatter';
+import { departmentMapById, departmentPathLabel } from '../../../utils/departmentPath';
 
 interface Props {
     event: EmployeeEventFlat | null;
@@ -211,6 +212,12 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
             setSnackMsg({ text: msg, severity: 'error' });
         },
     });
+
+    // Department id -> "Root - Dept" labels (e.g. "Почайна - Комерція") so a
+    // department change always names its MAIN (root) instance too.
+    const deptById = departmentMapById(departments);
+    const deptLabel = (deptId: number | null | undefined, fallback?: string | null) =>
+        departmentPathLabel(deptId, deptById) ?? fallback ?? '—';
 
     // ── Derive the saved main department + its type (drives job filtering) ─────
     const savedMainDeptChange = (fullEvent?.changes ?? []).find(
@@ -529,7 +536,8 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
                                         )}
                                         {code === 'MAIN_DEPT_CHANGE' && (
                                             <Typography variant="body2">
-                                                {change.prev_department?.name ?? '—'} → <strong>{change.new_department?.name ?? '—'}</strong>
+                                                {deptLabel(change.prev_department_id, change.prev_department?.name)} →{' '}
+                                                <strong>{deptLabel(change.new_department_id, change.new_department?.name)}</strong>
                                             </Typography>
                                         )}
                                         {code === 'RESPONSIBILITY_DEPTS_CHANGE' && (

@@ -46,7 +46,7 @@ async def apply_due_employee_events(
 
 @router.get(
     "/{employee_id}/events",
-    response_model=List[EmployeeEventFlat],
+    response_model=List[EmployeeEventSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE_EVENT)],
 )
 async def get_employee_events(

@@ -93,14 +93,47 @@ class DepartmentJobTargetRepository(BaseRepository):
         rows = (await self.session.execute(stmt)).all()
         return {link_id: qty for link_id, qty in rows}
 
-    async def get_candidate_employee_ids(self, department_id: int) -> set[int]:
+    async def get_plan_as_of_multi(
+        self, department_ids: set[int], on_date: date
+    ) -> dict[tuple[int, int], int]:
+        """Plan qty per (department, link) as of ``on_date`` for a whole
+        subtree in one DISTINCT ON query (latest row per pair wins)."""
+        if not department_ids:
+            return {}
+        stmt = (
+            select(
+                DepartmentJobTarget.department_id,
+                DepartmentJobTarget.department_type_job_link_id,
+                DepartmentJobTarget.qty,
+            )
+            .distinct(
+                DepartmentJobTarget.department_id,
+                DepartmentJobTarget.department_type_job_link_id,
+            )
+            .where(
+                DepartmentJobTarget.department_id.in_(department_ids),
+                DepartmentJobTarget.effective_date <= on_date,
+            )
+            .order_by(
+                DepartmentJobTarget.department_id,
+                DepartmentJobTarget.department_type_job_link_id,
+                DepartmentJobTarget.effective_date.desc(),
+                DepartmentJobTarget.id.desc(),
+            )
+        )
+        rows = (await self.session.execute(stmt)).all()
+        return {(dept_id, link_id): qty for dept_id, link_id, qty in rows}
+
+    async def get_candidate_employee_ids(self, department_ids: set[int]) -> set[int]:
         """
-        Employees whose as-of state COULD place them in this department:
-        currently linked to it, or having any event change into/out of it.
+        Employees whose as-of state COULD place them in one of these departments:
+        currently linked to one, or having any event change into/out of one.
         Keeps the fact replay bounded instead of replaying every employee.
         """
+        if not department_ids:
+            return set()
         current = select(EmployeeDepartment.employee_id).where(
-            EmployeeDepartment.department_id == department_id
+            EmployeeDepartment.department_id.in_(department_ids)
         )
         via_events = (
             select(EmployeeEvent.employee_id)
@@ -109,8 +142,8 @@ class DepartmentJobTargetRepository(BaseRepository):
                 EmployeeEventChange.event_id == EmployeeEvent.id,
             )
             .where(
-                (EmployeeEventChange.new_department_id == department_id)
-                | (EmployeeEventChange.prev_department_id == department_id)
+                EmployeeEventChange.new_department_id.in_(department_ids)
+                | EmployeeEventChange.prev_department_id.in_(department_ids)
             )
         )
         rows = (await self.session.execute(union(current, via_events))).scalars().all()

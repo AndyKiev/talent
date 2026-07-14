@@ -3,7 +3,6 @@ from typing import Annotated
 
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee_photo.employee_photo_schema import EmployeePhotoMeta
-from backend.api_v1.employee_photo.employee_photo_messages import EmployeePhotoNotFound
 from backend.api_v1.employee_photo.employee_photo_dependencies import (
     get_employee_photo_service,
 )
@@ -25,8 +24,10 @@ async def get_employee_photo(
 ):
     record = await service.get_photo(employee_id)
     if record is None:
-        # 404 → the frontend falls back to the initials avatar.
-        raise EmployeePhotoNotFound(employee_id)
+        # 204 (not 404) → the frontend falls back to the initials avatar
+        # without the browser logging a console error for every photo-less
+        # employee on photo-heavy screens (e.g. the organigram).
+        return Response(status_code=204)
     return Response(
         content=record.data,
         media_type=record.content_type,

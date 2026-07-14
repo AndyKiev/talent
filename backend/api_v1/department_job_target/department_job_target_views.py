@@ -15,6 +15,7 @@ from backend.api_v1.department_job_target.department_job_target_schema import (
     DepartmentJobTargetUpdate,
     FactEmployee,
     HeadcountCalcRow,
+    OrganigramNode,
     TargetCountByLink,
 )
 from backend.api_v1.department_job_target.department_job_target_service import (
@@ -64,6 +65,22 @@ async def get_fact_employees(
 ):
     """The employees behind one fact qty (dept + job + date, as-of replay)."""
     return await service.get_fact_employees(department_id, on_date, job_id)
+
+
+@router.get(
+    "/organigram",
+    response_model=OrganigramNode,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT_JOB_TARGET)],
+)
+async def get_organigram(
+    service: Annotated[
+        DepartmentJobTargetService, Depends(get_department_job_target_service)
+    ],
+    department_id: int = Query(...),
+    on_date: date = Query(...),
+):
+    """Top-down department/job/employee tree for the subtree as of a date."""
+    return await service.get_organigram(department_id, on_date)
 
 
 @router.get(

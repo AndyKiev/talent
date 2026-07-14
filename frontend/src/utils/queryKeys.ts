@@ -80,6 +80,8 @@ export const HEADCOUNT_TARGET_COUNT_BY_LINK_QK = (linkId: number) =>
     ['headcount_target_count_by_link', linkId] as const;
 export const HEADCOUNT_FACT_EMPLOYEES_QK = (departmentId: number, isoDate: string, jobId: number) =>
     ['headcount_fact_employees', departmentId, isoDate, jobId] as const;
+export const HEADCOUNT_ORGANIGRAM_QK = (departmentId: number, isoDate: string) =>
+    ['headcount_organigram', departmentId, isoDate] as const;
 
 // ── Training ─────────────────────────────────────────────────────────────────
 export const TRAINING_LINK_TYPE_QK = ['training_link_types'] as const;

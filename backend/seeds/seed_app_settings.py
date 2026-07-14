@@ -222,6 +222,17 @@ APP_SETTINGS = [
         "description_key": "settingEmployeePhotosPresentationPptxDesc",
     },
     {
+        # Photo display in the headcount-plan organigram boxes. Per-user
+        # overridable so each planner can switch pictures on/off for themselves.
+        "key": "employee_photos_organigram",
+        "value": True,
+        "value_type_key": "boolean",
+        "parent_key": "employee_photos_enabled",
+        "label_key": "settingEmployeePhotosOrganigram",
+        "description_key": "settingEmployeePhotosOrganigramDesc",
+        "user_overridable": True,
+    },
+    {
         # TEMPO artifacts (PDF / individual HTML / presentation HTML / PPTX):
         # show the proposed-level block when the proposed level is the BASIC
         # (lowest) level. Off hides the whole proposal (identity field +

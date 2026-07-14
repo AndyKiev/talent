@@ -488,12 +488,15 @@ class EmployeeEventService(BaseService):
         self,
         employee_id: int,
         sort: Optional[str] = None,
-    ) -> List[EmployeeEventFlat]:
+    ) -> List[EmployeeEventSchema]:
+        # Full schema (changes included): every relationship is selectin-loaded
+        # on the model, so the list costs no extra queries and the events grid
+        # can show the affected job / departments per row.
         records = await self.repository.get_all(
             filters={"employee_id": employee_id},
             sort=sort,
         )
-        return [EmployeeEventFlat.model_validate(r) for r in records]
+        return [EmployeeEventSchema.model_validate(r) for r in records]
 
     async def get_responsibility_history(self, employee_id: int) -> list[dict]:
         """
@@ -758,7 +761,9 @@ class EmployeeEventService(BaseService):
 
             schema = EmployeeEventSchema.model_validate(fresh)
             detail = await self._resolve_domain_success(
-                EmployeeEventCreateSuccess(schema.id)
+                EmployeeEventCreateSuccess(
+                    fresh.employee.name if fresh.employee else f"#{schema.employee_id}"
+                )
             )
             return MutationResponse(detail=detail, data=schema)
 

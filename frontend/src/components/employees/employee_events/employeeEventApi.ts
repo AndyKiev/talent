@@ -106,8 +106,10 @@ const base = (employeeId: number) => `${BASE_URL}/employees/${employeeId}/events
 
 export const fetchEmployeeEvents = async (
     employeeId: number,
-): Promise<EmployeeEventFlat[]> => {
-    const res = await axiosInstance.get<EmployeeEventFlat[]>(base(employeeId));
+): Promise<EmployeeEventFull[]> => {
+    // The list endpoint returns full events (changes included) so the grid
+    // can show the affected job / departments per row.
+    const res = await axiosInstance.get<EmployeeEventFull[]>(base(employeeId));
     return res.data ?? [];
 };
 
@@ -258,6 +260,7 @@ export interface EmployeeStatusOption {
 export interface DepartmentOption {
     id: number;
     name: string;
+    parent_id: number | null;
     department_type_id: number;
 }
 

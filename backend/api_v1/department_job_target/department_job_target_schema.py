@@ -37,6 +37,10 @@ class FactEmployee(BaseModel):
     name: str
     # True when this placement depends on a ready (not-yet-applied) event.
     is_pending: bool = False
+    # True when the employee has ANY open (draft/ready) event — regardless of
+    # its effective date. A new event cannot be created until it is applied,
+    # so the organigram disables dragging such employees.
+    has_open_event: bool = False
 
 
 class HeadcountCalcRow(BaseModel):
@@ -57,3 +61,30 @@ class TargetCountByLink(BaseModel):
     """How many target rows reference a department-type job link (delete warning)."""
 
     count: int
+
+
+class OrganigramJob(BaseModel):
+    """One job inside an organigram department card — occupied or vacant
+    (vacant jobs still render as drop targets and carry the plan qty)."""
+
+    job_id: int
+    job_name: str
+    # As-of the view date: planned qty (effective-dated targets) and fact qty
+    # (provisional placements — matches the calc grid).
+    plan_qty: int = 0
+    fact_qty: int = 0
+    employees: list[FactEmployee]
+
+
+class OrganigramNode(BaseModel):
+    """One department box of the top-down organigram (recursive)."""
+
+    department_id: int
+    department_name: str
+    department_type_id: Optional[int] = None
+    department_type_name: Optional[str] = None
+    # Category `key` (e.g. 'store_departments') — drives the FE layout
+    # (store departments stack vertically instead of fanning out).
+    department_category_key: Optional[str] = None
+    jobs: list[OrganigramJob]
+    children: list["OrganigramNode"]

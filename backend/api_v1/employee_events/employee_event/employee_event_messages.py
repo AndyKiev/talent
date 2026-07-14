@@ -161,9 +161,9 @@ class EmployeeEventDeleteSuccess(DeleteSuccess):
 class EmployeeEventCreateSuccess(CreateSuccess):
     message_key = "employeeEventCreateSuccess"
 
-    def __init__(self, event_id: int) -> None:
-        self.template_vars = {"eventId": event_id}
-        self.fallback = f"Employee event with ID {event_id} successfully created"
+    def __init__(self, employee_name: str) -> None:
+        self.template_vars = {"name": employee_name}
+        self.fallback = f"Event for {employee_name} successfully created"
         DomainSuccess.__init__(self, self.fallback)
 
 

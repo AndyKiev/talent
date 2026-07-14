@@ -19,7 +19,14 @@ import EventNoteIcon from '@mui/icons-material/EventNote';
 import DeleteIcon from '@mui/icons-material/Delete';
 import UndoIcon from '@mui/icons-material/Undo';
 import { useParams } from '@tanstack/react-router';
-import { fetchEmployeeEvents, type EmployeeEventFlat, type EmployeeEventCreate } from './employeeEventApi';
+import {
+    fetchDepartments,
+    fetchEmployeeEvents,
+    type EmployeeEventFlat,
+    type EmployeeEventFull,
+    type EmployeeEventCreate,
+} from './employeeEventApi';
+import { departmentMapById, departmentPathLabel } from '../../../utils/departmentPath';
 import { employeeEventsQK, useEmployeeEventMutations } from './useEmployeeEventMutations';
 import { EmployeeEventDeleteDialog } from './EmployeeEventDeleteDialog';
 import { EmployeeEventRevertDialog } from './EmployeeEventRevertDialog';
@@ -68,6 +75,15 @@ export function EmployeeEventsPage() {
         queryFn: () => fetchEmployeeEvents(employeeId),
         staleTime: 2 * 60 * 1000,
     });
+
+    // Departments flat (with parent_id) — resolves an event's target
+    // department to "Root - Dept" (e.g. "Почайна - Комерція") in the grid.
+    const { data: departmentsFlat = [] } = useQuery({
+        queryKey: ['departments'],
+        queryFn: fetchDepartments,
+        staleTime: 5 * 60 * 1000,
+    });
+    const deptById = useMemo(() => departmentMapById(departmentsFlat), [departmentsFlat]);
 
     // ── Mutations ─────────────────────────────────────────────────────────────
     const { createMutation, deleteMutation, revertMutation } = useEmployeeEventMutations({
@@ -134,7 +150,7 @@ export function EmployeeEventsPage() {
     };
 
     // ── Columns ───────────────────────────────────────────────────────────────
-    const columns: GridColDef<EmployeeEventFlat>[] = [
+    const columns: GridColDef<EmployeeEventFull>[] = [
         {
             field: 'effective_date',
             headerName: cfl(getString('effectiveDate') || 'Effective date'),
@@ -147,6 +163,58 @@ export function EmployeeEventsPage() {
             flex: 1,
             minWidth: 160,
             valueGetter: (_v, row) => row.event_type?.name ?? `#${row.event_type_id}`,
+        },
+        {
+            // The job this event sets (JOB_CHANGE row), when affected.
+            field: '_new_job',
+            headerName: cfl(getString('eventNewJob') || 'New job'),
+            flex: 1,
+            minWidth: 150,
+            valueGetter: (_v, row) =>
+                row.changes?.find((c) => c.direction_type?.code === 'JOB_CHANGE')
+                    ?.new_job?.name ?? '',
+            renderCell: ({ value }) =>
+                value ? (
+                    <span>{value as string}</span>
+                ) : (
+                    <Box component="span" sx={{ color: 'text.secondary' }}>—</Box>
+                ),
+        },
+        {
+            // The main department this event sets (MAIN_DEPT_CHANGE row), shown
+            // together with its root instance: "Почайна - Комерція".
+            field: '_new_department',
+            headerName: cfl(getString('eventNewDepartment') || 'New department'),
+            flex: 1,
+            minWidth: 180,
+            valueGetter: (_v, row) => {
+                const change = row.changes?.find(
+                    (c) => c.direction_type?.code === 'MAIN_DEPT_CHANGE',
+                );
+                if (!change) return '';
+                return (
+                    departmentPathLabel(change.new_department_id, deptById) ??
+                    change.new_department?.name ??
+                    ''
+                );
+            },
+            renderCell: ({ value }) =>
+                value ? (
+                    <Tooltip title={value as string}>
+                        <span
+                            style={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                display: 'block',
+                            }}
+                        >
+                            {value as string}
+                        </span>
+                    </Tooltip>
+                ) : (
+                    <Box component="span" sx={{ color: 'text.secondary' }}>—</Box>
+                ),
         },
         {
             field: 'status',

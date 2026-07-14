@@ -29,6 +29,7 @@ import { PageContainer } from '../../layout/PageContainer';
 import { HeadcountDepartmentSelector } from './HeadcountDepartmentSelector';
 import DateWheelDialog from './DateWheelDialog';
 import { FactEmployeesPanel } from './FactEmployeesPanel';
+import { OrganigramPanel } from '../../organigram/OrganigramPanel';
 import { PlanHistoryDialog } from './PlanHistoryDialog';
 import { fetchHeadcountCalc, type HeadcountCalcRow } from './headcountPlanApi';
 import type { HeadcountPlanSearch } from '../../../routes/employees/headcount_plan';
@@ -209,6 +210,16 @@ export function HeadcountPlanPage() {
                         )}
                     </Box>
                 </Box>
+
+                {/* ── Top-down organigram of the selected subtree ────────── */}
+                {departmentId != null && (
+                    <OrganigramPanel
+                        departmentId={departmentId}
+                        isoDate={onDate}
+                        getString={getString}
+                        setSnackbar={setSnackbar}
+                    />
+                )}
 
                 {/* ── View-date wheel ────────────────────────────────────── */}
                 <DateWheelDialog

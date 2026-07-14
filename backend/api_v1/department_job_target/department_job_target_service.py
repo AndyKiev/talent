@@ -26,6 +26,8 @@ from backend.api_v1.department_job_target.department_job_target_schema import (
     DepartmentJobTargetUpdate,
     FactEmployee,
     HeadcountCalcRow,
+    OrganigramJob,
+    OrganigramNode,
     TargetCountByLink,
 )
 from backend.api_v1.department_job_target.department_job_target_messages import (
@@ -169,37 +171,41 @@ class DepartmentJobTargetService(BaseService):
         rows.sort(key=lambda r: r.job_name.lower())
         return rows
 
-    async def _replay_employee_states(
-        self, department_id: int, on_date: date
-    ) -> dict[int, dict[str, Optional[int]]]:
-        """
-        As-of state per candidate employee (job / status / main dept), replayed
-        from applied + ready events (drafts ignored) — so future dates already
-        reflect approved transfers/leaves. Bulk queries, Python fold; mirrors
-        EmployeeEventService._reproject_employee_projection semantics.
-
-        Each of the three determinants also carries a ``*_pending`` flag: True
-        when the LAST event that set it is still ``ready`` (not yet applied), so
-        the caller can distinguish confirmed from provisional placements.
-        """
+    async def _get_candidate_change_rows(
+        self, department_ids: set[int], on_date: date
+    ) -> list[tuple]:
+        """Flattened change rows for every employee whose state COULD place
+        them in one of these departments (applied + ready events due by the
+        date, in replay order)."""
         candidate_ids = await self.repository.get_candidate_employee_ids(
-            department_id
+            department_ids
         )
         if not candidate_ids:
-            return {}
-
+            return []
         humans_only = await get_effective_bool_setting(
             self.session, HEADCOUNT_FACT_HUMANS_ONLY_KEY, default=True
         )
-        change_rows = await self.repository.get_event_change_rows(
+        return await self.repository.get_event_change_rows(
             candidate_ids,
             on_date,
             humans_only=humans_only,
             human_origin_id=HUMAN_ORIGIN_ID,
         )
 
-        # Fold per employee in (effective_date, event_id) order — the rows
-        # arrive pre-ordered; the last change of each direction wins.
+    @staticmethod
+    def _fold_change_rows(
+        change_rows: list[tuple], only_applied: bool = False
+    ) -> dict[int, dict[str, Optional[int]]]:
+        """
+        Fold change rows into an as-of state per employee (job / status / main
+        dept); the rows arrive pre-ordered, the last change of each direction
+        wins. Mirrors EmployeeEventService._reproject_employee_projection.
+
+        Each determinant carries a ``*_pending`` flag: True when the LAST event
+        that set it is still ``ready`` (not applied). ``only_applied=True``
+        skips ready events entirely — the CONFIRMED state before any pending
+        move.
+        """
         state: dict[int, dict[str, Optional[int]]] = defaultdict(
             lambda: {
                 "job": None,
@@ -220,8 +226,10 @@ class DepartmentJobTargetService(BaseService):
             new_status_id,
             new_department_id,
         ) in change_rows:
-            st = state[employee_id]
             pending = event_status_name != "applied"
+            if only_applied and pending:
+                continue
+            st = state[employee_id]
             if direction_code == "JOB_CHANGE" and new_job_id is not None:
                 st["job"] = new_job_id
                 st["job_pending"] = pending
@@ -232,6 +240,15 @@ class DepartmentJobTargetService(BaseService):
                 st["dept"] = new_department_id
                 st["dept_pending"] = pending
         return state
+
+    async def _replay_employee_states(
+        self, department_ids: set[int], on_date: date
+    ) -> dict[int, dict[str, Optional[int]]]:
+        """As-of state per candidate employee, replayed from applied + ready
+        events (drafts ignored) — future dates already reflect approved
+        transfers/leaves."""
+        rows = await self._get_candidate_change_rows(department_ids, on_date)
+        return self._fold_change_rows(rows)
 
     async def _working_status_id(self) -> Optional[int]:
         return (
@@ -271,7 +288,7 @@ class DepartmentJobTargetService(BaseService):
         working_status_id = await self._working_status_id()
         if working_status_id is None:
             return {}
-        state = await self._replay_employee_states(department_id, on_date)
+        state = await self._replay_employee_states({department_id}, on_date)
         total: dict[int, int] = defaultdict(int)
         pending: dict[int, int] = defaultdict(int)
         for st in state.values():
@@ -289,7 +306,7 @@ class DepartmentJobTargetService(BaseService):
         working_status_id = await self._working_status_id()
         if working_status_id is None:
             return []
-        state = await self._replay_employee_states(department_id, on_date)
+        state = await self._replay_employee_states({department_id}, on_date)
         pending_by_id = {
             emp_id: self._is_pending(st)
             for emp_id, st in state.items()
@@ -316,6 +333,251 @@ class DepartmentJobTargetService(BaseService):
             )
             for r in rows
         ]
+
+    async def get_organigram(
+        self, department_id: int, on_date: date
+    ) -> OrganigramNode:
+        """
+        Top-down organigram of the department SUBTREE as of a date: every
+        active descendant department, its occupied jobs, and the working
+        employees holding each job (same as-of replay as the fact counts,
+        done ONCE for the whole subtree).
+        """
+        await self._ensure_department_allowed(department_id)
+
+        from backend.api_v1.department.department_model import Department
+        from backend.api_v1.department_category.department_category_model import (
+            DepartmentCategory,
+        )
+        from backend.api_v1.department_type.department_type_model import (
+            DepartmentType,
+        )
+        from backend.api_v1.employee.employee_model import Employee
+        from backend.api_v1.job.job_model import Job
+
+        dept_repo = DepartmentRepository(session=self.repository.session)
+        root = await dept_repo.get_by_id(department_id)
+        if not root:
+            raise await self._resolve_domain_error(DepartmentNotFound(department_id))
+
+        from backend.api_v1.department_type_job_link.department_type_job_link_model import (
+            DepartmentTypeJobLink,
+        )
+
+        subtree_ids = await dept_repo.get_subtree_ids({department_id})
+        dept_rows = (
+            await self.session.execute(
+                select(
+                    Department.id,
+                    Department.name,
+                    Department.parent_id,
+                    Department.is_active,
+                    Department.department_type_id,
+                    DepartmentType.name.label("type_name"),
+                    DepartmentCategory.key.label("category_key"),
+                )
+                .join(
+                    DepartmentType,
+                    DepartmentType.id == Department.department_type_id,
+                    isouter=True,
+                )
+                .join(
+                    DepartmentCategory,
+                    DepartmentCategory.id == Department.department_category_id,
+                    isouter=True,
+                )
+                .where(Department.id.in_(subtree_ids))
+            )
+        ).all()
+
+        # Every job linked to any department TYPE present in the subtree —
+        # vacant jobs render too (they are valid drop targets and carry a plan).
+        type_ids = {r.department_type_id for r in dept_rows if r.department_type_id}
+        link_rows = (
+            (
+                await self.session.execute(
+                    select(
+                        DepartmentTypeJobLink.department_type_id,
+                        DepartmentTypeJobLink.id,
+                        DepartmentTypeJobLink.is_active,
+                        Job.id.label("job_id"),
+                        Job.name.label("job_name"),
+                    )
+                    .join(Job, Job.id == DepartmentTypeJobLink.job_id)
+                    .where(DepartmentTypeJobLink.department_type_id.in_(type_ids))
+                )
+            ).all()
+            if type_ids
+            else []
+        )
+        links_by_type: dict[int, list] = defaultdict(list)
+        link_by_type_job: dict[tuple[int, int], int] = {}
+        for lr in link_rows:
+            links_by_type[lr.department_type_id].append(lr)
+            link_by_type_job[(lr.department_type_id, lr.job_id)] = lr.id
+
+        # Plan qty per (department, link) as of the date — one query.
+        plan_map = await self.repository.get_plan_as_of_multi(subtree_ids, on_date)
+
+        # One replay for the entire subtree, folded twice:
+        #  - full (applied + ready)  -> the provisional as-of placement;
+        #  - applied-only            -> the confirmed placement.
+        # A pending (ready-event) move shows the employee GHOSTED at the
+        # provisional spot AND normally at the confirmed spot; only the
+        # provisional placement is counted in fact (matches the calc grid).
+        # Entries: (emp_id, is_pending, counted).
+        placements: dict[int, dict[int, list[tuple[int, bool, bool]]]] = defaultdict(
+            lambda: defaultdict(list)
+        )
+        working_status_id = await self._working_status_id()
+        if working_status_id is not None:
+            rows = await self._get_candidate_change_rows(subtree_ids, on_date)
+            full_state = self._fold_change_rows(rows)
+            applied_state = self._fold_change_rows(rows, only_applied=True)
+
+            def _placement(st) -> Optional[tuple[int, int]]:
+                if (
+                    st is not None
+                    and st["status"] == working_status_id
+                    and st["job"] is not None
+                    and st["dept"] in subtree_ids
+                ):
+                    return (st["dept"], st["job"])
+                return None
+
+            for emp_id, st in full_state.items():
+                prov = _placement(st)
+                pending = self._is_pending(st)
+                if prov is not None:
+                    placements[prov[0]][prov[1]].append((emp_id, pending, True))
+                if pending:
+                    conf = _placement(applied_state.get(emp_id))
+                    if conf is not None and conf != prov:
+                        placements[conf[0]][conf[1]].append((emp_id, False, False))
+
+        emp_ids = {
+            e
+            for by_job in placements.values()
+            for emps in by_job.values()
+            for e, _, _ in emps
+        }
+        # Employees with ANY open (draft/ready) event — regardless of its
+        # effective date. The backend rejects a second event while one is
+        # open, so the FE disables dragging them.
+        open_event_emp_ids: set[int] = set()
+        if emp_ids:
+            from backend.api_v1.employee_events.employee_event.employee_event_model import (
+                EmployeeEvent,
+            )
+            from backend.api_v1.employee_events.employee_event_status.employee_event_status_model import (
+                EmployeeEventStatus,
+            )
+
+            open_event_emp_ids = set(
+                (
+                    await self.session.execute(
+                        select(EmployeeEvent.employee_id)
+                        .join(
+                            EmployeeEventStatus,
+                            EmployeeEventStatus.id == EmployeeEvent.status_id,
+                        )
+                        .where(
+                            EmployeeEvent.employee_id.in_(emp_ids),
+                            EmployeeEventStatus.name.in_(("draft", "ready")),
+                        )
+                    )
+                )
+                .scalars()
+                .all()
+            )
+        occupied_job_ids = {j for by_job in placements.values() for j in by_job}
+        emp_by_id = {
+            r.id: r
+            for r in (
+                await self.session.execute(
+                    select(Employee.id, Employee.code, Employee.name).where(
+                        Employee.id.in_(emp_ids)
+                    )
+                )
+            ).all()
+        } if emp_ids else {}
+        job_name_by_id = {lr.job_id: lr.job_name for lr in link_rows}
+        missing_job_ids = occupied_job_ids - set(job_name_by_id)
+        if missing_job_ids:
+            job_name_by_id.update(
+                dict(
+                    (
+                        await self.session.execute(
+                            select(Job.id, Job.name).where(Job.id.in_(missing_job_ids))
+                        )
+                    ).all()
+                )
+            )
+
+        def jobs_of(dept_id: int, type_id: Optional[int]) -> list[OrganigramJob]:
+            # Active-link jobs (vacant included) plus any occupied job.
+            job_ids = {
+                lr.job_id for lr in links_by_type.get(type_id, []) if lr.is_active
+            } | set(placements.get(dept_id, {}).keys())
+            jobs = []
+            for job_id in job_ids:
+                link_id = (
+                    link_by_type_job.get((type_id, job_id)) if type_id else None
+                )
+                entries = placements.get(dept_id, {}).get(job_id, [])
+                jobs.append(
+                    OrganigramJob(
+                        job_id=job_id,
+                        job_name=job_name_by_id.get(job_id, str(job_id)),
+                        plan_qty=(
+                            plan_map.get((dept_id, link_id), 0)
+                            if link_id is not None
+                            else 0
+                        ),
+                        fact_qty=sum(1 for _, _, counted in entries if counted),
+                        employees=sorted(
+                            (
+                                FactEmployee(
+                                    id=e.id,
+                                    code=e.code,
+                                    name=e.name,
+                                    is_pending=pending,
+                                    has_open_event=emp_id in open_event_emp_ids,
+                                )
+                                for emp_id, pending, _ in entries
+                                if (e := emp_by_id.get(emp_id)) is not None
+                            ),
+                            key=lambda e: e.name.lower(),
+                        ),
+                    )
+                )
+            jobs.sort(key=lambda j: j.job_name.lower())
+            return jobs
+
+        # Assemble the recursive tree from parent_id (root kept even if
+        # inactive; inactive descendants are dropped).
+        node_by_id = {
+            r.id: OrganigramNode(
+                department_id=r.id,
+                department_name=r.name,
+                department_type_id=r.department_type_id,
+                department_type_name=r.type_name,
+                department_category_key=r.category_key,
+                jobs=jobs_of(r.id, r.department_type_id),
+                children=[],
+            )
+            for r in dept_rows
+            if r.is_active or r.id == department_id
+        }
+        for r in dept_rows:
+            if r.id == department_id or r.id not in node_by_id:
+                continue
+            parent = node_by_id.get(r.parent_id)
+            if parent is not None:
+                parent.children.append(node_by_id[r.id])
+        for node in node_by_id.values():
+            node.children.sort(key=lambda n: n.department_name.lower())
+        return node_by_id[department_id]
 
     # ------------------------------------------------------------------
     # Write
