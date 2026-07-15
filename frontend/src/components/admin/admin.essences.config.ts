@@ -19,6 +19,7 @@ import RuleFolderIcon from '@mui/icons-material/RuleFolder';
 import RateReviewIcon from '@mui/icons-material/RateReview';
 import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
 import SchoolIcon from '@mui/icons-material/School';
+import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 
 import PersonIcon from '@mui/icons-material/Person';
 
@@ -318,5 +319,26 @@ export const ESSENCES: RawEssenceConfig[] = [
     Icon: FlagIcon,
     color: '#6366f1',
     parentGroup: 'training',
+  },
+
+  // ── Recruitment (group) ──────────────────────────────────────────────────
+  {
+    parent: 'admin',
+    key: 'recruitment',
+    labelKey: 'recruitment',
+    descriptionKey: 'recruitmentGroupDesc',
+    Icon: PersonSearchIcon,
+    color: '#e97a1e',
+    isGroup: true,
+    groupKey: 'recruitment',
+  },
+  {
+    parent: 'admin',
+    key: 'recruitment_dimensions',
+    labelKey: 'recruitmentDimensions',
+    descriptionKey: 'recruitmentDimensionsDesc',
+    Icon: CategoryIcon,
+    color: '#f59e0b',
+    parentGroup: 'recruitment',
   },
 ];

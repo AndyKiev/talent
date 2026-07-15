@@ -135,6 +135,12 @@ class EssenceName(str, Enum):
     REVIEW_LEVEL = "review_level"
     REVIEW_LEVEL_REQUIREMENT = "review_level_requirement"
 
+    # ── Recruitment ──────────────────────────────────────────────────────────
+    RECRUITMENT_TASK = "recruitment_task"
+    RECRUITMENT_TASK_STATUS = "recruitment_task_status"
+    RECRUITMENT_DIMENSION = "recruitment_dimension"
+    JOB_REQUIREMENT = "job_requirement"
+
 
 class PlanSessionStatusKey(str, Enum):
     PENDING = "pending"

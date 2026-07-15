@@ -31,6 +31,7 @@ from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.app_setting.app_setting_service import (
     get_bool_setting,
     TRAINING_MODULE_ENABLED_KEY,
+    RECRUITMENT_MODULE_ENABLED_KEY,
     HEADCOUNT_PLAN_ENABLED_KEY,
 )
 
@@ -183,6 +184,12 @@ class MenuService(BaseService):
             self.session, TRAINING_MODULE_ENABLED_KEY, default=True
         ):
             records = [m for m in records if m.key != "training"]
+        # Recruitment feature flag: same rule as training — with the module
+        # off the 'recruitment' item is dropped for EVERYONE.
+        if not await get_bool_setting(
+            self.session, RECRUITMENT_MODULE_ENABLED_KEY, default=True
+        ):
+            records = [m for m in records if m.key != "recruitment"]
         # Headcount-plan flag: with the feature off BOTH children under
         # 'employees' are dropped, so 'employees' becomes childless again and
         # renders as a plain clickable item (parents with children only open

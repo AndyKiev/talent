@@ -1,0 +1,26 @@
+import { Box } from '@mui/material';
+import { Navigate, Outlet } from '@tanstack/react-router';
+import AppShell from '../layout/AppShell';
+import { PageContainer } from '../layout/PageContainer';
+import { useBooleanSetting } from '../../hooks/useAppSetting';
+
+/**
+ * Recruitment section shell. The module master flag hides the menu item
+ * server-side, so a direct /recruitment URL just redirects home when the
+ * module is OFF. Child routes (tasks list, task detail) render in the Outlet.
+ */
+export function RecruitmentLayout() {
+    const { enabled: recruitmentModuleOn, isLoading } = useBooleanSetting('recruitment_module_enabled');
+    if (isLoading) return null;
+    if (!recruitmentModuleOn) return <Navigate to="/" replace />;
+
+    return (
+        <AppShell>
+            <PageContainer>
+                <Box>
+                    <Outlet />
+                </Box>
+            </PageContainer>
+        </AppShell>
+    );
+}

@@ -39,6 +39,12 @@ HR_ESSENCES = [
     "review_level_requirement",
     "language_level",
     "department_job_target",
+    # Recruitment module — HRM/HRS create tasks, manage per-job requirements and
+    # the recruitment dimensions; recruitment_task_status is read-only (VIEW).
+    "recruitment_task",
+    "recruitment_task_status",
+    "recruitment_dimension",
+    "job_requirement",
 ]
 HR_VERBS = ["view", "create", "modify", "delete"]
 HR_GROUPS = ["HRM", "HRS"]

@@ -127,6 +127,12 @@ __all__ = {
     "TrainingTypeJobLink",
     "TrainingTypeJobCategoryLink",
     "EmployeeTraining",
+    # Recruitment
+    "RecruitmentDimension",
+    "RecruitmentTaskStatus",
+    "JobRequirementGroup",
+    "JobRequirementItem",
+    "RecruitmentTask",
 }
 
 from backend.api_v1.lang.lang_model import Lang
@@ -418,3 +424,20 @@ from backend.api_v1.training_type_job_category_link.training_type_job_category_l
     TrainingTypeJobCategoryLink,
 )
 from backend.api_v1.employee_training.employee_training_model import EmployeeTraining
+
+# Recruitment — dimension (lookup) + task status (lookup), then job requirement
+# groups/items (FK into recruitment_dimensions), then recruitment_task (FKs into
+# jobs, job_requirement_groups, recruitment_task_statuses, employees).
+from backend.api_v1.recruitment_dimension.recruitment_dimension_model import (
+    RecruitmentDimension,
+)
+from backend.api_v1.recruitment_task_status.recruitment_task_status_model import (
+    RecruitmentTaskStatus,
+)
+from backend.api_v1.job_requirement_group.job_requirement_group_model import (
+    JobRequirementGroup,
+)
+from backend.api_v1.job_requirement_item.job_requirement_item_model import (
+    JobRequirementItem,
+)
+from backend.api_v1.recruitment_task.recruitment_task_model import RecruitmentTask

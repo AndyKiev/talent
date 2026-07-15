@@ -7,9 +7,13 @@ import {
   Box,
   Button,
   CircularProgress,
+  FormControlLabel,
   InputAdornment,
+  MenuItem,
   Paper,
+  Select,
   Snackbar,
+  Switch,
   TextField,
   Typography,
 } from '@mui/material';
@@ -27,6 +31,7 @@ import { JobGroupsDialog } from './JobGroupsDialog';
 import { JobJobGroupsDialog } from './JobJobGroupsDialog';
 import { JobProcessRoleDialog } from './JobProcessRoleDialog';
 import { JobRecommendedTrainingsDialog } from './JobRecommendedTrainingsDialog';
+import { JobRequirementGroupsDialog } from '../../recruitment/requirements/JobRequirementGroupsDialog';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
@@ -37,11 +42,25 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import {JOB_QK, DEPARTMENT_TYPE_QK, JOB_CATEGORY_QK} from "../../../utils/queryKeys.ts";
 import { fetchDepartmentTypes } from '../department_types/departmentTypeApi';
 import { fetchJobCategories } from '../job_categories/jobCategoryApi';
+import { useBooleanSetting } from '../../../hooks/useAppSetting';
+import { useUserGridColumns } from '../../../hooks/useUserGridColumns';
+import { UserGridTable } from '../../../utils/userGridTables';
+import { centeredGridCellsSx } from '../../../utils/dataGridSx';
 
 const REQUIRE_EDIT_CONFIRMATION = false;
 
+type ActiveFilterValue = 'all' | 'active' | 'inactive';
+
 export function JobCrud() {
   const getString = useString({ str });
+
+  // ── Training-module master switch: OFF hides the recommended-trainings
+  //     column and disables the assignment dialog.
+  const { enabled: trainingModuleOn } = useBooleanSetting('training_module_enabled');
+
+  // ── Recruitment-module master switch: OFF hides the requirements action
+  //     button and its per-job requirement-groups dialog.
+  const { enabled: recruitmentModuleOn } = useBooleanSetting('recruitment_module_enabled');
 
   // ── Snackbar ──────────────────────────────────────────────────────────────
   const [snackbar, setSnackbar] = useState({
@@ -51,10 +70,14 @@ export function JobCrud() {
   });
   const [bulkUploadResult, setBulkUploadResult] = useState<JobBulkUploadResult | null>(null);
 
-  // ── Filters (job name + job group + department type) ─────────────────────
+  // ── Filters (job name + job group + department type + is_active) ─────────
   const [filter, setFilter] = useState('');
   const [jobGroupFilter, setJobGroupFilter] = useState<string | null>(null);
   const [deptTypeFilter, setDeptTypeFilter] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<ActiveFilterValue>('all');
+
+  // ── Edit mode: OFF (default) = read-only grid ─────────────────────────────
+  const [editMode, setEditMode] = useState(false);
 
   // ── Add form ──────────────────────────────────────────────────────────────
   const [formOpen, setFormOpen] = useState(false);
@@ -77,6 +100,9 @@ export function JobCrud() {
 
   // ── Recommended-trainings dialog ─────────────────────────────────────────
   const [trainingTypesJob, setTrainingTypesJob] = useState<Job | null>(null);
+
+  // ── Requirement-groups dialog (recruitment) ──────────────────────────────
+  const [requirementsJob, setRequirementsJob] = useState<Job | null>(null);
 
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -115,7 +141,7 @@ export function JobCrud() {
       [rows],
   );
 
-  // ── Filter rows: job name AND job group AND department type ───────────────
+  // ── Filter rows: job name AND job group AND department type AND status ────
   const filteredRows = useMemo(() => {
     const q = filter.trim().toLowerCase();
     return rows.filter((r) => {
@@ -125,9 +151,11 @@ export function JobCrud() {
       const deptOk =
           !deptTypeFilter ||
           (r.department_type_links ?? []).some((l) => l.name === deptTypeFilter);
-      return nameOk && jobGroupOk && deptOk;
+      const activeOk =
+          activeFilter === 'all' || (activeFilter === 'active') === r.is_active;
+      return nameOk && jobGroupOk && deptOk && activeOk;
     });
-  }, [rows, filter, jobGroupFilter, deptTypeFilter]);
+  }, [rows, filter, jobGroupFilter, deptTypeFilter, activeFilter]);
 
   // ── Mutations ─────────────────────────────────────────────────────────────
   const {
@@ -243,7 +271,20 @@ export function JobCrud() {
   const handleGroupsClick = useCallback((row: Job) => setGroupsJob(row), []);
   const handleJobGroupsClick = useCallback((row: Job) => setJobGroupsJob(row), []);
   const handleProcessRoleClick = useCallback((row: Job) => setProcessRoleJob(row), []);
-  const handleTrainingTypesClick = useCallback((row: Job) => setTrainingTypesJob(row), []);
+  const handleTrainingTypesClick = useCallback(
+      (row: Job) => {
+        if (!trainingModuleOn) return;
+        setTrainingTypesJob(row);
+      },
+      [trainingModuleOn],
+  );
+  const handleRequirementsClick = useCallback(
+      (row: Job) => {
+        if (!recruitmentModuleOn) return;
+        setRequirementsJob(row);
+      },
+      [recruitmentModuleOn],
+  );
   const handleDeleteClick = useCallback((row: Job) => setRowToDelete(row), []);
 
   const handleConfirmDelete = useCallback(() => {
@@ -265,12 +306,19 @@ export function JobCrud() {
     onJobGroupsClick: handleJobGroupsClick,
     onProcessRoleClick: handleProcessRoleClick,
     onTrainingTypesClick: handleTrainingTypesClick,
+    onRequirementsClick: handleRequirementsClick,
     onDeleteClick: handleDeleteClick,
     deleteIsPending: deleteMutation.isPending,
     categories: jobCategories,
     onSetCategory: handleSetCategory,
     setCategoryIsPending: setCategoryMutation.isPending,
+    trainingModuleOn,
+    recruitmentModuleOn,
+    editMode,
   });
+
+  // ── Per-user column visibility (user-grid-columns system) ────────────────
+  const userGridColumns = useUserGridColumns(UserGridTable.JOBS, columns);
 
   return (
       <Box>
@@ -278,6 +326,21 @@ export function JobCrud() {
           <Typography variant="h6" fontWeight={600} sx={{ flex: 1 }}>
             {getString('jobs') || 'Jobs'}
           </Typography>
+          <FormControlLabel
+              sx={{ mr: 1 }}
+              control={
+                <Switch
+                    size="small"
+                    checked={editMode}
+                    onChange={(e) => setEditMode(e.target.checked)}
+                />
+              }
+              label={
+                <Typography variant="body2" color="text.secondary">
+                  {getString('editMode') || 'Edit mode'}
+                </Typography>
+              }
+          />
           <>
             {/* Hidden file input */}
             <input
@@ -366,21 +429,41 @@ export function JobCrud() {
                         />
                     )}
                 />
+                <Select
+                    value={activeFilter}
+                    onChange={(e) => setActiveFilter(e.target.value as ActiveFilterValue)}
+                    size="small"
+                    variant="outlined"
+                    sx={{ minWidth: 180 }}
+                >
+                  <MenuItem value="all">{getString('allStatuses') || 'All statuses'}</MenuItem>
+                  <MenuItem value="active">{getString('active') || 'Active'}</MenuItem>
+                  <MenuItem value="inactive">{getString('inactive') || 'Inactive'}</MenuItem>
+                </Select>
               </Box>
 
               <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
                 <DataGrid
                     rows={filteredRows}
                     columns={columns}
+                    {...userGridColumns}
                     paginationModel={paginationModel}
                     onPaginationModelChange={setPaginationModel}
                     pageSizeOptions={[5, 10, 25, 50]}
                     disableRowSelectionOnClick
                     getRowId={(row) => row.id}
                     getRowHeight={() => 'auto'}
+                    density="compact"
                     localeText={localeText}
                     hideFooterSelectedRowCount
-                    sx={{ '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
+                    sx={{
+                      ...centeredGridCellsSx,
+                      '& .MuiDataGrid-cell': {
+                        display: 'flex',
+                        alignItems: 'center',
+                        py: 0.25,
+                      },
+                    }}
                 />
               </Paper>
             </>
@@ -432,13 +515,23 @@ export function JobCrud() {
             onClose={() => setProcessRoleJob(null)}
         />
 
-        {/* Recommended-trainings dialog */}
-        <JobRecommendedTrainingsDialog
-            job={trainingTypesJob}
-            isPending={setTrainingTypesMutation.isPending}
-            setTrainingTypesMutation={setTrainingTypesMutation}
-            onClose={() => setTrainingTypesJob(null)}
-        />
+        {/* Recommended-trainings dialog — only mounted when the training module is ON */}
+        {trainingModuleOn && (
+          <JobRecommendedTrainingsDialog
+              job={trainingTypesJob}
+              isPending={setTrainingTypesMutation.isPending}
+              setTrainingTypesMutation={setTrainingTypesMutation}
+              onClose={() => setTrainingTypesJob(null)}
+          />
+        )}
+
+        {/* Requirement-groups dialog — only mounted when the recruitment module is ON */}
+        {recruitmentModuleOn && (
+          <JobRequirementGroupsDialog
+              job={requirementsJob}
+              onClose={() => setRequirementsJob(null)}
+          />
+        )}
 
         <JobBulkUploadDialog
             result={bulkUploadResult}

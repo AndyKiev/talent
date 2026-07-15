@@ -43,7 +43,8 @@ import { EMPLOYEE_SELECT_TARGET_OPTIONS } from '../employees/employeeLandingTarg
 import { MENUS_MY_QK } from '../../utils/queryKeys';
 import cfl from '../../utils/helpers.ts';
 import type { GetStringFn } from '../../types/getStringFn';
-import { groupForKey, SETTINGS_GROUP_BY_KEY } from '../developer/settings/settingsGroups';
+import { groupForKey, SETTINGS_GROUP_BY_KEY, GENERAL_GROUP_KEY } from '../developer/settings/settingsGroups';
+import { UserGridColumnsPanel } from '../user_grid_columns/UserGridColumnsPanel';
 
 // One option in a select-driven setting (value stored, label shown).
 interface SettingOption { value: string; label: string; }
@@ -132,7 +133,12 @@ function UserSettingRow({ setting, getString, onSave, onReset, saving, options }
                         <Select
                             size="small"
                             variant="outlined"
-                            value={typeof draft === 'number' ? String(draft) : ''}
+                            value={
+                                typeof draft === 'number' &&
+                                options?.some((o) => o.value === String(draft))
+                                    ? String(draft)
+                                    : ''
+                            }
                             onChange={(e) => {
                                 const v = e.target.value === '' ? null : Number(e.target.value);
                                 setDraft(v);
@@ -302,6 +308,9 @@ export function UserSettingsGroupView({ groupKey }: { groupKey: string }) {
                         ))}
                     </Stack>
                 )}
+
+                {/* Per-user grid-columns tool — lives on the General card only */}
+                {groupKey === GENERAL_GROUP_KEY && <UserGridColumnsPanel />}
 
                 <Snackbar
                     open={snackbar.open}

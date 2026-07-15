@@ -43,6 +43,11 @@ TRAINING_DELETE_ON_DISABLE_KEY = "training_module_delete_data_on_disable"
 HEADCOUNT_PLAN_ENABLED_KEY = "headcount_plan_enabled"
 HEADCOUNT_FACT_HUMANS_ONLY_KEY = "headcount_plan_fact_humans_only"
 
+# Recruitment feature flag (master). Gates the whole recruitment module: the
+# menu item, the /recruitment pages and the jobs-grid requirements button.
+# App-only, never user-overridable; data is never deleted on disable.
+RECRUITMENT_MODULE_ENABLED_KEY = "recruitment_module_enabled"
+
 
 def cast_value(value: Any, type_key: Optional[str]) -> Any:
     """
@@ -94,9 +99,7 @@ async def get_bool_setting(
     return value if isinstance(value, bool) else default
 
 
-async def get_int_setting(
-    session: AsyncSession, key: str, default: int = 0
-) -> int:
+async def get_int_setting(session: AsyncSession, key: str, default: int = 0) -> int:
     """Read an integer app setting by key from server-side business logic.
 
     Returns ``default`` when the row is missing or its value can't be read as
@@ -305,9 +308,7 @@ class AppSettingService(BaseService):
         except IntegrityError:
             raise await self._resolve_domain_error(AppSettingKeyTaken(setting_in.key))
 
-    async def _validate_setting_groups(
-        self, group_ids: List[int]
-    ) -> None:
+    async def _validate_setting_groups(self, group_ids: List[int]) -> None:
         """Raise if any group_id doesn't exist."""
         if not group_ids:
             return

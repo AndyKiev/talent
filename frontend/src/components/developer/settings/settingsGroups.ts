@@ -14,6 +14,7 @@
 import PeopleIcon from '@mui/icons-material/People';
 import RateReviewIcon from '@mui/icons-material/RateReview';
 import SchoolIcon from '@mui/icons-material/School';
+import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import TuneIcon from '@mui/icons-material/Tune';
 import type { ElementType } from 'react';
@@ -50,6 +51,13 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
         descriptionKey: 'settingsGroupTrainingDesc',
         Icon: SchoolIcon,
         color: '#f65c6b',
+    },
+    {
+        key: 'recruitment',
+        labelKey: 'settingsGroupRecruitment',
+        descriptionKey: 'settingsGroupRecruitmentDesc',
+        Icon: PersonSearchIcon,
+        color: '#e97a1e',
     },
     {
         key: 'admin',
@@ -107,6 +115,8 @@ export const SETTING_GROUP_BY_KEY: Record<string, string> = {
     // ── Training ─────────────────────────────────────────────────────────────
     // Master; its delete-on-disable child inherits this via parent_id.
     training_module_enabled: 'training',
+    // ── Recruitment ──────────────────────────────────────────────────────────
+    recruitment_module_enabled: 'recruitment',
     // ── Admin ────────────────────────────────────────────────────────────────
     job_apply_category_on_create: 'admin',
     // ── General (not tied to a single menu) ──────────────────────────────────

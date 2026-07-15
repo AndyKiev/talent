@@ -91,3 +91,10 @@ export const TRAINING_TYPE_QK = ['training_types'] as const;
 export const TRAINING_TYPES_ELIGIBLE_QK = (employeeId: number) => ['training_types', 'eligible', employeeId] as const;
 export const EMPLOYEE_TRAININGS_QK = (employeeId: number) => ['employee_trainings', employeeId] as const;
 export const TRAINING_STATE_QK = (trainingTypeId: number | null) => ['training_state', trainingTypeId] as const;
+
+// ── Recruitment ────────────────────────────────────────────────────────────────
+export const RECRUITMENT_TASK_QK = ['recruitment_tasks'] as const;
+export const RECRUITMENT_TASK_STATUS_QK = ['recruitment_task_statuses'] as const;
+export const RECRUITMENT_DIMENSION_QK = ['recruitment_dimensions'] as const;
+export const JOB_REQUIREMENT_GROUPS_QK = (jobId: number) => ['job_requirement_groups', jobId] as const;
+export const JOB_REQUIREMENT_ITEMS_QK = (groupId: number) => ['job_requirement_items', groupId] as const;

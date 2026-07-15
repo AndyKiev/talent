@@ -1,10 +1,15 @@
 from typing import List, Optional
 
+from fastapi import status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.app_setting.app_setting_service import (
+    get_bool_setting,
+    TRAINING_MODULE_ENABLED_KEY,
+)
 from backend.api_v1.training_type.training_type_model import TrainingType
 from backend.api_v1.training_type_job_link.training_type_job_link_repository import (
     TrainingTypeJobLinkRepository,
@@ -76,6 +81,14 @@ class TrainingTypeJobLinkService(BaseService):
     async def set_links(
         self, training_type_id: int, payload: TrainingTypeJobLinkBulkSet
     ) -> MutationResponse[List[TrainingTypeJobLinkSchema]]:
+        if not await get_bool_setting(
+            self.session, TRAINING_MODULE_ENABLED_KEY, default=False
+        ):
+            await self._raise_error(
+                "trainingModuleDisabled",
+                status_code=status.HTTP_403_FORBIDDEN,
+                fallback="Training module is disabled.",
+            )
         training_type = await self._get_training_type_or_raise(training_type_id)
 
         jobs = await self.repository.get_jobs_by_ids(payload.job_ids)
@@ -105,6 +118,14 @@ class TrainingTypeJobLinkService(BaseService):
         self, job_id: int, payload: TrainingTypeJobLinkBulkSetForJob
     ) -> MutationResponse[List[TrainingTypeJobLinkSchema]]:
         """Reverse side of set_links: replace all training types recommending a job."""
+        if not await get_bool_setting(
+            self.session, TRAINING_MODULE_ENABLED_KEY, default=False
+        ):
+            await self._raise_error(
+                "trainingModuleDisabled",
+                status_code=status.HTTP_403_FORBIDDEN,
+                fallback="Training module is disabled.",
+            )
         job = await self._get_job_or_raise(job_id)
 
         training_types = await self.repository.get_training_types_by_ids(

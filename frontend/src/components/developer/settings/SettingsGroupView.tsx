@@ -67,8 +67,9 @@ import type { GetStringFn } from '../../../types/getStringFn';
 import type { MenuVisibilityMode } from '../../developer/security/menus/menuAdminApi';
 import { deriveMode, modeToFlags, MODE_LABEL_KEY } from '../../developer/security/menus/menuVisibility';
 import { fetchUserGroups, type UserGroup } from '../../admin/user_groups/userGroupApi';
-import { groupForSetting, SETTINGS_GROUP_BY_KEY } from './settingsGroups';
+import { groupForSetting, SETTINGS_GROUP_BY_KEY, GENERAL_GROUP_KEY } from './settingsGroups';
 import { EMPLOYEE_SELECT_TARGET_OPTIONS } from '../../employees/employeeLandingTarget';
+import { UserGridColumnsPanel } from '../../user_grid_columns/UserGridColumnsPanel';
 
 type Severity = 'success' | 'error';
 
@@ -110,7 +111,10 @@ function SettingValueEditor({ typeKey, value, onChange, getString, optionsSource
     // Single-select: an INTEGER value bound to a known option set (e.g. the
     // default menu — value is the picked row's id).
     if (optionsSource && typeKey === 'integer') {
-        const current = value === null || value === undefined ? '' : String(value);
+        const raw = value === null || value === undefined ? '' : String(value);
+        // Only feed the Select a value once its option has actually loaded —
+        // otherwise MUI warns "out-of-range value" while options are fetching.
+        const current = options?.some((o) => o.value === raw) ? raw : '';
         return (
             <Select
                 size="small"
@@ -735,6 +739,9 @@ export function SettingsGroupView({ groupKey }: { groupKey: string }) {
                         })}
                     </Stack>
                 )}
+
+                {/* Per-user grid-columns tool — lives on the General card only */}
+                {groupKey === GENERAL_GROUP_KEY && <UserGridColumnsPanel />}
 
                 <AddSettingDialog
                     open={addOpen}

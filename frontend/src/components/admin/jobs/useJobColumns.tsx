@@ -8,6 +8,7 @@ import WorkspacesIcon from '@mui/icons-material/Workspaces';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import BadgeIcon from '@mui/icons-material/Badge';
 import SchoolIcon from '@mui/icons-material/School';
+import ChecklistIcon from '@mui/icons-material/Checklist';
 
 import type { Job, ProcessRoleLinkInfo } from './jobApi';
 import type { JobCategory } from '../job_categories/jobCategoryApi';
@@ -35,11 +36,15 @@ interface Params {
   onJobGroupsClick: (row: Job) => void;    // job-groups dialog (new)
   onProcessRoleClick: (row: Job) => void;  // process-role dialog
   onTrainingTypesClick: (row: Job) => void;  // recommended-trainings dialog
+  onRequirementsClick: (row: Job) => void;  // recruitment requirement-groups dialog
   onDeleteClick: (row: Job) => void;
   deleteIsPending: boolean;
   categories: JobCategory[];                       // options for the category select
   onSetCategory: (row: Job, jobCategoryId: number) => void;
   setCategoryIsPending: boolean;
+  trainingModuleOn: boolean;  // training_module_enabled master switch
+  recruitmentModuleOn: boolean;  // recruitment_module_enabled master switch
+  editMode: boolean;          // OFF = read-only grid (no inline edits/toggles/delete)
 }
 
 export function useJobColumns({
@@ -55,26 +60,33 @@ export function useJobColumns({
                                  onJobGroupsClick,
                                  onProcessRoleClick,
                                  onTrainingTypesClick,
+                                 onRequirementsClick,
                                  onDeleteClick,
                                 deleteIsPending,
                                  categories,
                                  onSetCategory,
                                  setCategoryIsPending,
+                                 trainingModuleOn,
+                                 recruitmentModuleOn,
+                                 editMode,
                               }: Params): GridColDef[] {
   function textEditCol(
       field: keyof Job,
       headerKey: string,
       width: number,
       flex?: number,
+      minWidth?: number,
   ): GridColDef {
     return {
       field: field as string,
       headerName: cfl(getString(headerKey)) || headerKey,
       width: flex ? undefined : width,
       flex,
+      minWidth,
       renderCell: (params: GridRenderCellParams<Job>) => {
         const row = params.row;
-        const isEditing = editingState.rowId === row.id && editingState.field === field;
+        const isEditing =
+            editMode && editingState.rowId === row.id && editingState.field === field;
         const value = String((row as unknown as Record<string, unknown>)[field] ?? '');
         return isEditing ? (
             <TextEditCell
@@ -86,8 +98,8 @@ export function useJobColumns({
         ) : (
             <ReadonlyCell
                 value={value}
-                onEdit={(e) => onEditFieldClick(row, field as string, e)}
-                editTitle={`${getString("edit")} + ' ' + ${getString(snakeToCamel(field))}`}
+                onEdit={editMode ? (e) => onEditFieldClick(row, field as string, e) : undefined}
+                editTitle={`${getString('edit')} ${getString(snakeToCamel(field))}`}
                 placeholder="—"
             />
         );
@@ -96,7 +108,7 @@ export function useJobColumns({
   }
 
   return [
-    textEditCol('name', 'name', 200, 1),
+    textEditCol('name', 'name', 200, 1.5, 260),
 
     textEditCol('short_name', 'shortName', 160),
 
@@ -227,42 +239,47 @@ export function useJobColumns({
     },
 
     // New: recommended-trainings column (many-to-many, "by_job" link)
-    {
-      field: 'recommended_training_names',
-      headerName: cfl(getString('recommendedTrainings')) || 'Recommended Trainings',
-      width: 240,
-      sortable: true,
-      sortComparator: (v1: string[], v2: string[]) => {
-        const a = (v1 ?? []).join(', ');
-        const b = (v2 ?? []).join(', ');
-        return a.localeCompare(b);
-      },
-      renderCell: (params: GridRenderCellParams<Job>) => {
-        const row = params.row;
-        const names: string[] = row.recommended_training_names ?? [];
-        return (
-            <Box
-                sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', py: 0.5, cursor: 'pointer' }}
-                onClick={() => onTrainingTypesClick(row)}
-            >
-              {names.length === 0 ? (
-                  <Chip
-                      label={getString('noRecommendedTrainings') || 'No recommended trainings'}
-                      size="small"
-                      variant="outlined"
-                      color="default"
-                      icon={<SchoolIcon />}
+    // Only rendered when the training-module master switch is ON.
+    ...(trainingModuleOn
+      ? [
+          {
+            field: 'recommended_training_names' as const,
+            headerName: cfl(getString('recommendedTrainings')) || 'Recommended Trainings',
+            width: 240,
+            sortable: true as const,
+            sortComparator: (v1: string[], v2: string[]) => {
+              const a = (v1 ?? []).join(', ');
+              const b = (v2 ?? []).join(', ');
+              return a.localeCompare(b);
+            },
+            renderCell: (params: GridRenderCellParams<Job>) => {
+              const row = params.row;
+              const names: string[] = row.recommended_training_names ?? [];
+              return (
+                  <Box
+                      sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', py: 0.5, cursor: 'pointer' }}
                       onClick={() => onTrainingTypesClick(row)}
-                  />
-              ) : (
-                  names.map((n) => (
-                      <Chip key={n} label={n} size="small" variant="outlined" color="secondary" />
-                  ))
-              )}
-            </Box>
-        );
-      },
-    },
+                  >
+                    {names.length === 0 ? (
+                        <Chip
+                            label={getString('noRecommendedTrainings') || 'No recommended trainings'}
+                            size="small"
+                            variant="outlined"
+                            color="default"
+                            icon={<SchoolIcon />}
+                            onClick={() => onTrainingTypesClick(row)}
+                        />
+                    ) : (
+                        names.map((n) => (
+                            <Chip key={n} label={n} size="small" variant="outlined" color="secondary" />
+                        ))
+                    )}
+                  </Box>
+              );
+            },
+          } as GridColDef,
+        ]
+      : []),
 
     // New: department-types column (chip color reflects the link's is_active)
     {
@@ -311,13 +328,19 @@ export function useJobColumns({
       sortable: false,
       renderCell: (params: GridRenderCellParams<Job>) => {
         const row = params.row;
+        // Only use the id as the Select value once its option is actually
+        // loaded — otherwise MUI warns "out-of-range value" while categories
+        // are still fetching (options momentarily empty).
+        const hasOption =
+            row.job_category_id != null &&
+            categories.some((c) => c.id === row.job_category_id);
         return (
             <Select
                 size="small"
                 variant="outlined"
-                value={row.job_category_id != null ? String(row.job_category_id) : ''}
+                value={hasOption ? String(row.job_category_id) : ''}
                 displayEmpty
-                disabled={setCategoryIsPending}
+                disabled={setCategoryIsPending || !editMode}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => {
                   const val = e.target.value;
@@ -331,7 +354,11 @@ export function useJobColumns({
                   const cat = categories.find((c) => String(c.id) === val);
                   return cat ? (cfl(getString(snakeToCamel(cat.key))) || cat.key) : val;
                 }}
-                sx={{ minWidth: 150 }}
+                sx={{
+                  minWidth: 150,
+                  fontSize: '0.8125rem',
+                  '& .MuiSelect-select': { py: 0.25, minHeight: 'unset' },
+                }}
             >
               {categories.map((c) => (
                   <MenuItem key={c.id} value={String(c.id)}>
@@ -356,7 +383,7 @@ export function useJobColumns({
                   size="small"
                   checked={row.is_active}
                   onChange={() => onToggleActive(row)}
-                  disabled={toggleIsPending}
+                  disabled={toggleIsPending || !editMode}
                   onClick={(e) => e.stopPropagation()}
               />
             </Box>
@@ -375,12 +402,27 @@ export function useJobColumns({
     {
       field: '_actions',
       headerName: '',
-      width: 56,
+      width: recruitmentModuleOn ? 96 : 56,
       sortable: false,
       filterable: false,
       disableColumnMenu: true,
       renderCell: (params: GridRenderCellParams<Job>) => (
           <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+            {recruitmentModuleOn && (
+                <Tooltip title={cfl(getString('jobRequirements')) || 'Job requirements'}>
+                  <span>
+                    <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRequirementsClick(params.row);
+                        }}
+                    >
+                      <ChecklistIcon fontSize="small" />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+            )}
             <Tooltip title={getString('delete') || 'Delete'}>
             <span>
               <IconButton
@@ -390,7 +432,7 @@ export function useJobColumns({
                     e.stopPropagation();
                     onDeleteClick(params.row);
                   }}
-                  disabled={deleteIsPending}
+                  disabled={deleteIsPending || !editMode}
               >
                 <DeleteIcon fontSize="small" />
               </IconButton>

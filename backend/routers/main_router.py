@@ -288,6 +288,23 @@ from backend.api_v1.employee_training.employee_training_views import (
     router as employee_training_router,
 )
 
+# Recruitment
+from backend.api_v1.recruitment_dimension.recruitment_dimension_views import (
+    router as recruitment_dimension_router,
+)
+from backend.api_v1.recruitment_task_status.recruitment_task_status_views import (
+    router as recruitment_task_status_router,
+)
+from backend.api_v1.job_requirement_group.job_requirement_group_views import (
+    router as job_requirement_group_router,
+)
+from backend.api_v1.job_requirement_item.job_requirement_item_views import (
+    router as job_requirement_item_router,
+)
+from backend.api_v1.recruitment_task.recruitment_task_views import (
+    router as recruitment_task_router,
+)
+
 
 router = APIRouter(prefix=settings.api_v1_prefix)
 
@@ -411,3 +428,10 @@ router.include_router(training_type_router)
 router.include_router(training_type_job_link_router)
 router.include_router(training_type_job_category_link_router)
 router.include_router(employee_training_router)
+
+# Recruitment
+router.include_router(recruitment_dimension_router)
+router.include_router(recruitment_task_status_router)
+router.include_router(job_requirement_group_router)
+router.include_router(job_requirement_item_router)
+router.include_router(recruitment_task_router)

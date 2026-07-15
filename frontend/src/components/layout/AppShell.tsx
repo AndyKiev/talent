@@ -28,7 +28,7 @@ import SettingsRounded from '@mui/icons-material/SettingsRounded';
 import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
 import ExpandLessRounded from '@mui/icons-material/ExpandLessRounded';
 import MenuRounded from '@mui/icons-material/MenuRounded';
-import { PeopleAltRounded, AdminPanelSettingsRounded, RateReviewRounded, SchoolRounded, LogoutRounded } from "@mui/icons-material";
+import { PeopleAltRounded, AdminPanelSettingsRounded, RateReviewRounded, SchoolRounded, PersonSearchRounded, LogoutRounded } from "@mui/icons-material";
 import { useTheme as useAppTheme } from "../theme/ThemeContext";
 import { useAuthStore } from "../../store/authStore";
 import UserMenu from "./UserMenu";
@@ -46,6 +46,7 @@ const MENU_ICONS: Record<string, ReactNode> = {
     insights: <InsightsRounded sx={{ fontSize: 16 }} />,
     review: <RateReviewRounded sx={{ fontSize: 16 }} />,
     school: <SchoolRounded sx={{ fontSize: 16 }} />,
+    recruitment: <PersonSearchRounded sx={{ fontSize: 16 }} />,
     adminPanel: <AdminPanelSettingsRounded sx={{ fontSize: 16 }} />,
     code: <CodeIcon sx={{ fontSize: 16 }} />,
     settings: <SettingsRounded sx={{ fontSize: 16 }} />,

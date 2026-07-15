@@ -273,6 +273,19 @@ APP_SETTINGS = [
         "visible_to_regular": True,
     },
     {
+        # Master switch for the whole recruitment module. When OFF the
+        # 'recruitment' menu item is dropped for EVERYONE (menu_service
+        # get_my_menus), the /recruitment pages redirect away and the jobs-grid
+        # requirements button is hidden. Data is NEVER deleted by this switch.
+        # App-only, never user-overridable.
+        "key": "recruitment_module_enabled",
+        "value": True,
+        "value_type_key": "boolean",
+        "label_key": "settingRecruitmentModuleEnabled",
+        "description_key": "settingRecruitmentModuleEnabledDesc",
+        "user_override_allowed": False,
+    },
+    {
         # People-review-scoped display switch for the training module. When ON
         # (and the training master is ON) the review evaluation "Trainings" tab
         # shows the real assign+status panel; when OFF the panel is hidden there
