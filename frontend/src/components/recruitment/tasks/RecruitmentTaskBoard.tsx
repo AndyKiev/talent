@@ -1,0 +1,240 @@
+import { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+    Alert,
+    Box,
+    Button,
+    CircularProgress,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
+    Paper,
+    Snackbar,
+    Stack,
+    Typography,
+} from '@mui/material';
+import useString from '../../../hooks/useString';
+import type { GetStringFn } from '../../../types/getStringFn';
+import { useEffectiveBooleanSetting } from '../../../hooks/useAppSetting';
+import {
+    CANDIDATE_APPLICATIONS_BY_TASK_QK,
+    CANDIDATE_QK,
+} from '../../../utils/queryKeys';
+import {
+    fetchApplicationsByTask,
+    changeApplicationStatus,
+    type CandidateApplication,
+    type PipelineStatusKey,
+} from '../../candidates/candidateApplicationApi';
+import { PIPELINE_ORDER, PIPELINE_STATUS_COLOR, canMove, pipelineLabel } from '../../candidates/pipelineStatus';
+
+interface Props {
+    taskId: number;
+    getString: GetStringFn;
+}
+
+type DragState = { appId: number; from: PipelineStatusKey } | null;
+type PendingMove = { app: CandidateApplication; to: PipelineStatusKey } | null;
+
+export function RecruitmentTaskBoard({ taskId, getString }: Props) {
+    const qc = useQueryClient();
+    const { enabled: confirmOnDrag } = useEffectiveBooleanSetting('pipeline_drag_confirm');
+
+    const [drag, setDrag] = useState<DragState>(null);
+    const [dragOverCol, setDragOverCol] = useState<PipelineStatusKey | null>(null);
+    const [pendingMove, setPendingMove] = useState<PendingMove>(null);
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+
+    const { data: applications = [], isLoading, error } = useQuery({
+        queryKey: CANDIDATE_APPLICATIONS_BY_TASK_QK(taskId),
+        queryFn: () => fetchApplicationsByTask(taskId),
+        staleTime: 15 * 1000,
+    });
+
+    const byStage = useMemo(() => {
+        const map = new Map<PipelineStatusKey, CandidateApplication[]>();
+        for (const key of PIPELINE_ORDER) map.set(key, []);
+        for (const app of applications) {
+            const key = app.status?.name;
+            if (key) map.get(key)?.push(app);
+        }
+        return map;
+    }, [applications]);
+
+    const statusMutation = useMutation({
+        mutationFn: changeApplicationStatus,
+        onSuccess: async (res) => {
+            await Promise.all([
+                qc.invalidateQueries({ queryKey: CANDIDATE_APPLICATIONS_BY_TASK_QK(taskId) }),
+                qc.invalidateQueries({ queryKey: CANDIDATE_QK }),
+            ]);
+            setSnackbar({ open: true, message: res.detail, severity: 'success' });
+        },
+        onError: (e: Error) => setSnackbar({ open: true, message: e.message, severity: 'error' }),
+    });
+
+    const doMove = (app: CandidateApplication, to: PipelineStatusKey) =>
+        statusMutation.mutate({ id: app.id, statusKey: to });
+
+    const handleDrop = (to: PipelineStatusKey) => {
+        setDragOverCol(null);
+        const d = drag;
+        setDrag(null);
+        if (!d) return;
+        if (d.from === to) return;
+        if (!canMove(d.from, to)) {
+            setSnackbar({
+                open: true,
+                message: getString('pipelineIllegalMove') || 'That move is not allowed.',
+                severity: 'error',
+            });
+            return;
+        }
+        const app = applications.find((a) => a.id === d.appId);
+        if (!app) return;
+        if (confirmOnDrag) setPendingMove({ app, to });
+        else doMove(app, to);
+    };
+
+    if (isLoading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                <CircularProgress size={22} />
+            </Box>
+        );
+    }
+    if (error) return <Alert severity="error">{(error as Error).message}</Alert>;
+
+    return (
+        <Box>
+            <Box sx={{ display: 'flex', gap: 1.5, overflowX: 'auto', pb: 1 }}>
+                {PIPELINE_ORDER.map((key) => {
+                    const cards = byStage.get(key) ?? [];
+                    return (
+                        <Paper
+                            key={key}
+                            elevation={0}
+                            onDragOver={(e) => {
+                                if (drag && drag.from !== key) {
+                                    e.preventDefault();
+                                    e.dataTransfer.dropEffect = 'move';
+                                    if (dragOverCol !== key) setDragOverCol(key);
+                                }
+                            }}
+                            onDragLeave={() => setDragOverCol((c) => (c === key ? null : c))}
+                            onDrop={(e) => {
+                                e.preventDefault();
+                                handleDrop(key);
+                            }}
+                            sx={{
+                                minWidth: 220,
+                                flex: '1 0 220px',
+                                border: '1px solid',
+                                borderColor: dragOverCol === key ? 'primary.main' : 'divider',
+                                bgcolor: dragOverCol === key ? 'action.hover' : undefined,
+                                borderRadius: 2,
+                                p: 1,
+                                display: 'flex',
+                                flexDirection: 'column',
+                            }}
+                        >
+                            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+                                <Typography variant="subtitle2" sx={{ flex: 1 }}>
+                                    {pipelineLabel(key, getString)}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                    {cards.length}
+                                </Typography>
+                            </Stack>
+                            <Stack spacing={1} sx={{ minHeight: 80 }}>
+                                {cards.map((app) => (
+                                    <Paper
+                                        key={app.id}
+                                        variant="outlined"
+                                        draggable
+                                        onDragStart={(e) => {
+                                            e.dataTransfer.effectAllowed = 'move';
+                                            e.dataTransfer.setData('text/plain', String(app.id));
+                                            setDrag({ appId: app.id, from: key });
+                                        }}
+                                        onDragEnd={() => {
+                                            setDrag(null);
+                                            setDragOverCol(null);
+                                        }}
+                                        sx={{
+                                            p: 1,
+                                            cursor: 'grab',
+                                            borderLeft: '3px solid',
+                                            borderLeftColor: `${PIPELINE_STATUS_COLOR[key]}.main`,
+                                        }}
+                                    >
+                                        <Typography variant="body2" fontWeight={600}>
+                                            {app.candidate
+                                                ? `${app.candidate.first_name} ${app.candidate.last_name}`
+                                                : `#${app.candidate_id}`}
+                                        </Typography>
+                                        {app.candidate?.email && (
+                                            <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>
+                                                {app.candidate.email}
+                                            </Typography>
+                                        )}
+                                    </Paper>
+                                ))}
+                            </Stack>
+                        </Paper>
+                    );
+                })}
+            </Box>
+
+            <Dialog open={pendingMove !== null} onClose={() => setPendingMove(null)} maxWidth="xs" fullWidth>
+                <DialogTitle>{getString('confirm') || 'Confirm'}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        {getString('pipelineMoveConfirm', {
+                            candidate: pendingMove?.app.candidate
+                                ? `${pendingMove.app.candidate.first_name} ${pendingMove.app.candidate.last_name}`
+                                : '',
+                            stage: pendingMove ? pipelineLabel(pendingMove.to, getString) : '',
+                        }) ||
+                            `Move ${
+                                pendingMove?.app.candidate
+                                    ? `${pendingMove.app.candidate.first_name} ${pendingMove.app.candidate.last_name}`
+                                    : ''
+                            } to ${pendingMove ? pipelineLabel(pendingMove.to, getString) : ''}?`}
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setPendingMove(null)}>{getString('cancel') || 'Cancel'}</Button>
+                    <Button
+                        variant="contained"
+                        onClick={() => {
+                            if (pendingMove) doMove(pendingMove.app, pendingMove.to);
+                            setPendingMove(null);
+                        }}
+                    >
+                        {getString('confirm') || 'Confirm'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={5000}
+                onClose={() => setSnackbar((p) => ({ ...p, open: false }))}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            >
+                <Alert severity={snackbar.severity} onClose={() => setSnackbar((p) => ({ ...p, open: false }))} sx={{ width: '100%' }}>
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
+        </Box>
+    );
+}
+
+// Convenience wrapper for use where a local getString isn't already threaded.
+export function RecruitmentTaskBoardSection({ taskId }: { taskId: number }) {
+    const getString = useString();
+    return <RecruitmentTaskBoard taskId={taskId} getString={getString} />;
+}

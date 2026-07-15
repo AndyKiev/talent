@@ -133,6 +133,14 @@ __all__ = {
     "JobRequirementGroup",
     "JobRequirementItem",
     "RecruitmentTask",
+    # Candidates / hiring pipeline
+    "CandidateSource",
+    "PipelineStatus",
+    "Candidate",
+    "CandidatePhone",
+    "CandidateNote",
+    "CandidateApplication",
+    "ApplicationStatusHistory",
 }
 
 from backend.api_v1.lang.lang_model import Lang
@@ -441,3 +449,18 @@ from backend.api_v1.job_requirement_item.job_requirement_item_model import (
     JobRequirementItem,
 )
 from backend.api_v1.recruitment_task.recruitment_task_model import RecruitmentTask
+
+# Candidates / hiring pipeline — lookups first (candidate_source, pipeline_status),
+# then candidate + its children (phone, note), then the per-task application row
+# (FKs into candidates, recruitment_tasks, pipeline_statuses) and its status log.
+from backend.api_v1.candidate_source.candidate_source_model import CandidateSource
+from backend.api_v1.pipeline_status.pipeline_status_model import PipelineStatus
+from backend.api_v1.candidate.candidate_model import Candidate
+from backend.api_v1.candidate_phone.candidate_phone_model import CandidatePhone
+from backend.api_v1.candidate_note.candidate_note_model import CandidateNote
+from backend.api_v1.candidate_application.candidate_application_model import (
+    CandidateApplication,
+)
+from backend.api_v1.application_status_history.application_status_history_model import (
+    ApplicationStatusHistory,
+)

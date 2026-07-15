@@ -6,13 +6,22 @@ import {
     Box,
     Breadcrumbs,
     Button,
+    Card,
+    CardActionArea,
+    CardContent,
+    Chip,
     CircularProgress,
     Paper,
     Snackbar,
+    Stack,
+    ToggleButton,
+    ToggleButtonGroup,
     Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import ViewModuleIcon from '@mui/icons-material/ViewModule';
+import ViewListIcon from '@mui/icons-material/ViewList';
 import { DataGrid } from '@mui/x-data-grid';
 import useString from '../../../hooks/useString';
 import cfl from '../../../utils/helpers.ts';
@@ -24,6 +33,7 @@ import { fetchRecruitmentTasks, type RecruitmentStatusKey, type RecruitmentTask 
 import { useRecruitmentTaskColumns } from './useRecruitmentTaskColumns';
 import { useRecruitmentTaskMutations } from './useRecruitmentTaskMutations';
 import { RecruitmentTaskCreateDialog } from './RecruitmentTaskCreateDialog';
+import { STATUS_COLOR, statusLabel } from './recruitmentStatus';
 
 export function RecruitmentTasksPage() {
     const getString = useString();
@@ -32,6 +42,7 @@ export function RecruitmentTasksPage() {
     const [createOpen, setCreateOpen] = useState(false);
     const [pendingDelete, setPendingDelete] = useState<RecruitmentTask | null>(null);
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
+    const [view, setView] = useState<'grid' | 'cards'>('grid');
 
     const { data: rows = [], isLoading, error } = useQuery({
         queryKey: RECRUITMENT_TASK_QK,
@@ -78,6 +89,19 @@ export function RecruitmentTasksPage() {
                 <Typography variant="h6" fontWeight={600} sx={{ flex: 1 }}>
                     {getString('recruitmentTasks') || 'Recruitment tasks'}
                 </Typography>
+                <ToggleButtonGroup
+                    size="small"
+                    exclusive
+                    value={view}
+                    onChange={(_, v) => v && setView(v)}
+                >
+                    <ToggleButton value="grid">
+                        <ViewListIcon fontSize="small" />
+                    </ToggleButton>
+                    <ToggleButton value="cards">
+                        <ViewModuleIcon fontSize="small" />
+                    </ToggleButton>
+                </ToggleButtonGroup>
                 <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
                     {getString('createRecruitmentTask') || 'Create task'}
                 </Button>
@@ -91,7 +115,7 @@ export function RecruitmentTasksPage() {
 
             {!isLoading && error && <Alert severity="error" sx={{ m: 2 }}>{(error as Error).message}</Alert>}
 
-            {!isLoading && !error && (
+            {!isLoading && !error && view === 'grid' && (
                 <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
                     <DataGrid
                         rows={rows}
@@ -107,6 +131,44 @@ export function RecruitmentTasksPage() {
                         sx={{ ...centeredGridCellsSx, '& .MuiDataGrid-cell': { py: 1 } }}
                     />
                 </Paper>
+            )}
+
+            {!isLoading && !error && view === 'cards' && (
+                <Box
+                    sx={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                        gap: 2,
+                    }}
+                >
+                    {rows.map((t) => {
+                        const key = t.status?.name;
+                        return (
+                            <Card key={t.id} variant="outlined">
+                                <CardActionArea onClick={() => handleOpen(t)}>
+                                    <CardContent>
+                                        <Stack direction="row" alignItems="flex-start" spacing={1}>
+                                            <Typography variant="subtitle1" fontWeight={600} sx={{ flex: 1 }}>
+                                                {t.job?.name ?? t.job_id}
+                                            </Typography>
+                                            {key && (
+                                                <Chip size="small" label={statusLabel(key, getString)} color={STATUS_COLOR[key]} />
+                                            )}
+                                        </Stack>
+                                        {(t.department || t.top_org_unit) && (
+                                            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                                                {[t.top_org_unit?.name, t.department?.name].filter(Boolean).join(' · ')}
+                                            </Typography>
+                                        )}
+                                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                                            {getString('viewBoard') || 'View board →'}
+                                        </Typography>
+                                    </CardContent>
+                                </CardActionArea>
+                            </Card>
+                        );
+                    })}
+                </Box>
             )}
 
             <RecruitmentTaskCreateDialog

@@ -70,6 +70,24 @@ export function useRecruitmentTaskColumns({
             },
         },
         {
+            field: 'department',
+            headerName: getString('department') || 'Department',
+            width: 160,
+            sortable: false,
+            renderCell: (params: GridRenderCellParams<RecruitmentTask>) => (
+                <Typography variant="body2">{params.row.department?.name ?? '—'}</Typography>
+            ),
+        },
+        {
+            field: 'top_org_unit',
+            headerName: getString('topOrgUnit') || 'Top unit',
+            width: 150,
+            sortable: false,
+            renderCell: (params: GridRenderCellParams<RecruitmentTask>) => (
+                <Typography variant="body2">{params.row.top_org_unit?.name ?? '—'}</Typography>
+            ),
+        },
+        {
             field: 'target_deadline',
             headerName: getString('targetDeadline') || 'Target deadline',
             width: 130,

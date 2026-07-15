@@ -4,6 +4,7 @@ import { Link, useParams } from '@tanstack/react-router';
 import type { UseMutationResult } from '@tanstack/react-query';
 import {
     Alert,
+    Autocomplete,
     Box,
     Breadcrumbs,
     Button,
@@ -27,7 +28,8 @@ import cfl from '../../../utils/helpers.ts';
 import { DATE_FORMAT } from '../../../utils/eNums.ts';
 import { formatToUkrDate } from '../../../utils/dateFormatter';
 import type { GetStringFn } from '../../../types/getStringFn';
-import { RECRUITMENT_TASK_QK, JOB_REQUIREMENT_GROUPS_QK } from '../../../utils/queryKeys';
+import { RECRUITMENT_TASK_QK, JOB_REQUIREMENT_GROUPS_QK, DEPARTMENT_FLAT_QK } from '../../../utils/queryKeys';
+import { fetchDepartmentsFlat } from '../../admin/departments/departmentApi';
 import {
     fetchRecruitmentTask,
     fetchRecruitmentTaskStatuses,
@@ -39,6 +41,7 @@ import {
 import { fetchJobRequirementGroups, type JobRequirementGroup } from '../requirements/jobRequirementApi';
 import { useRecruitmentTaskMutations } from './useRecruitmentTaskMutations';
 import { JobRequirementGroupsManager } from '../requirements/JobRequirementGroupsManager';
+import { RecruitmentTaskBoard } from './RecruitmentTaskBoard';
 import { NEXT_STATUSES, STATUS_COLOR, statusLabel, transitionColor, transitionLabel } from './recruitmentStatus';
 
 const fmt = (v: string | null): string => (v ? formatToUkrDate(v) : '—');
@@ -60,6 +63,13 @@ function TaskDetailCard({ task, groups, getString, updateMutation, statusMutatio
     const [comment, setComment] = useState(task.comment ?? '');
     const [deadline, setDeadline] = useState(task.target_deadline ?? '');
     const [groupId, setGroupId] = useState<number | ''>(task.requirement_group_id ?? '');
+    const [departmentId, setDepartmentId] = useState<number | null>(task.department_id);
+
+    const { data: departments = [] } = useQuery({
+        queryKey: DEPARTMENT_FLAT_QK,
+        queryFn: fetchDepartmentsFlat,
+    });
+    const selectedDept = departments.find((d) => d.id === departmentId) ?? null;
 
     const statusKey = task.status?.name;
     const closed = statusKey === 'fulfilled' || statusKey === 'rejected';
@@ -72,6 +82,7 @@ function TaskDetailCard({ task, groups, getString, updateMutation, statusMutatio
                 comment: comment.trim() || null,
                 target_deadline: deadline || null,
                 requirement_group_id: groupId === '' ? null : groupId,
+                department_id: departmentId,
             },
         });
     };
@@ -107,6 +118,11 @@ function TaskDetailCard({ task, groups, getString, updateMutation, statusMutatio
                 <Typography variant="body2" color="text.secondary">
                     {getString('closedAt') || 'Closed at'}: {fmt(task.closed_at)}
                 </Typography>
+                {task.top_org_unit && (
+                    <Typography variant="body2" color="text.secondary">
+                        {getString('topOrgUnit') || 'Top unit'}: {task.top_org_unit.name}
+                    </Typography>
+                )}
             </Stack>
 
             <Divider sx={{ mb: 2 }} />
@@ -131,6 +147,17 @@ function TaskDetailCard({ task, groups, getString, updateMutation, statusMutatio
                         </MenuItem>
                     ))}
                 </TextField>
+                <Autocomplete
+                    value={selectedDept}
+                    onChange={(_, v) => setDepartmentId(v?.id ?? null)}
+                    options={departments}
+                    getOptionLabel={(o) => o.name}
+                    isOptionEqualToValue={(a, b) => a.id === b.id}
+                    disabled={closed}
+                    renderInput={(params) => (
+                        <TextField {...params} label={getString('department') || 'Department'} />
+                    )}
+                />
                 <TextField
                     label={getString('comment') || 'Comment'}
                     value={comment}
@@ -217,6 +244,13 @@ export function RecruitmentTaskPage() {
                         updateMutation={updateMutation}
                         statusMutation={statusMutation}
                     />
+
+                    <Box>
+                        <Typography variant="h6" sx={{ mb: 2 }}>
+                            {getString('candidateBoard') || 'Candidate board'}
+                        </Typography>
+                        <RecruitmentTaskBoard taskId={task.id} getString={getString} />
+                    </Box>
 
                     <Box>
                         <Typography variant="h6" sx={{ mb: 2 }}>

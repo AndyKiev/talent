@@ -98,3 +98,13 @@ export const RECRUITMENT_TASK_STATUS_QK = ['recruitment_task_statuses'] as const
 export const RECRUITMENT_DIMENSION_QK = ['recruitment_dimensions'] as const;
 export const JOB_REQUIREMENT_GROUPS_QK = (jobId: number) => ['job_requirement_groups', jobId] as const;
 export const JOB_REQUIREMENT_ITEMS_QK = (groupId: number) => ['job_requirement_items', groupId] as const;
+
+// ── Candidates / hiring pipeline ────────────────────────────────────────────────
+export const CANDIDATE_QK = ['candidates'] as const;
+export const CANDIDATE_SOURCE_QK = ['candidate_sources'] as const;
+export const PIPELINE_STATUS_QK = ['pipeline_statuses'] as const;
+export const CANDIDATE_NOTES_QK = (candidateId: number) => ['candidate_notes', candidateId] as const;
+export const CANDIDATE_APPLICATIONS_BY_CANDIDATE_QK = (candidateId: number) =>
+    ['candidate_applications', 'candidate', candidateId] as const;
+export const CANDIDATE_APPLICATIONS_BY_TASK_QK = (taskId: number) =>
+    ['candidate_applications', 'task', taskId] as const;

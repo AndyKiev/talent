@@ -18,8 +18,9 @@ import dayjs from 'dayjs';
 import type { UseMutationResult } from '@tanstack/react-query';
 import useString from '../../../hooks/useString';
 import { DATE_FORMAT } from '../../../utils/eNums.ts';
-import { JOB_QK, JOB_REQUIREMENT_GROUPS_QK } from '../../../utils/queryKeys';
+import { JOB_QK, JOB_REQUIREMENT_GROUPS_QK, DEPARTMENT_FLAT_QK } from '../../../utils/queryKeys';
 import { fetchJobs, type Job } from '../../admin/jobs/jobApi';
+import { fetchDepartmentsFlat, type DepartmentFlat } from '../../admin/departments/departmentApi';
 import { fetchJobRequirementGroups } from '../requirements/jobRequirementApi';
 import type { MutationResponse, RecruitmentTask, RecruitmentTaskCreate } from './recruitmentTaskApi';
 
@@ -35,11 +36,18 @@ function CreateForm({ onClose, createMutation }: Omit<Props, 'open'>) {
     const getString = useString();
     const [job, setJob] = useState<Job | null>(null);
     const [groupId, setGroupId] = useState<number | ''>('');
+    const [department, setDepartment] = useState<DepartmentFlat | null>(null);
     const [comment, setComment] = useState('');
     const [deadline, setDeadline] = useState('');
 
     // Jobs are pickable regardless of is_active — search all of them.
     const { data: jobs = [] } = useQuery({ queryKey: JOB_QK, queryFn: () => fetchJobs() });
+
+    // Exact (possibly deep) department this search is for — optional.
+    const { data: departments = [] } = useQuery({
+        queryKey: DEPARTMENT_FLAT_QK,
+        queryFn: fetchDepartmentsFlat,
+    });
 
     // Requirement groups of the chosen job (optional at creation).
     const { data: groups = [] } = useQuery({
@@ -49,12 +57,17 @@ function CreateForm({ onClose, createMutation }: Omit<Props, 'open'>) {
     });
 
     const sortedJobs = useMemo(() => [...jobs].sort((a, b) => a.name.localeCompare(b.name)), [jobs]);
+    const sortedDepartments = useMemo(
+        () => [...departments].sort((a, b) => a.name.localeCompare(b.name)),
+        [departments],
+    );
 
     const handleSubmit = () => {
         if (!job) return;
         createMutation.mutate({
             job_id: job.id,
             requirement_group_id: groupId === '' ? null : groupId,
+            department_id: department?.id ?? null,
             comment: comment.trim() || null,
             target_deadline: deadline || null,
         });
@@ -76,6 +89,20 @@ function CreateForm({ onClose, createMutation }: Omit<Props, 'open'>) {
                         getOptionLabel={(o) => o.name}
                         isOptionEqualToValue={(a, b) => a.id === b.id}
                         renderInput={(params) => <TextField {...params} label={getString('job') || 'Job'} required />}
+                    />
+                    <Autocomplete
+                        value={department}
+                        onChange={(_, v) => setDepartment(v)}
+                        options={sortedDepartments}
+                        getOptionLabel={(o) => o.name}
+                        isOptionEqualToValue={(a, b) => a.id === b.id}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label={getString('department') || 'Department'}
+                                helperText={getString('recruitmentDepartmentHint') || 'Exact department; its top unit (store / directorate) is derived'}
+                            />
+                        )}
                     />
                     <TextField
                         select

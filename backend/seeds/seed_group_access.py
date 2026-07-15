@@ -45,6 +45,17 @@ HR_ESSENCES = [
     "recruitment_task_status",
     "recruitment_dimension",
     "job_requirement",
+    # Candidates / hiring pipeline — HRM/HRS manage sources, candidates and the
+    # per-task applications (drag cards through stages).
+    "candidate_source",
+    "candidate",
+    "candidate_application",
+]
+# Read-only reference essences HRM/HRS may VIEW but must not mutate (e.g. pick a
+# department for a recruitment task, or read the fixed pipeline stages).
+HR_VIEW_ONLY_ESSENCES = [
+    "department",
+    "pipeline_status",
 ]
 HR_VERBS = ["view", "create", "modify", "delete"]
 HR_GROUPS = ["HRM", "HRS"]
@@ -149,6 +160,12 @@ async def main():
                 for verb in HR_VERBS:
                     oesl = await _get_or_create_oesl(s, ops[verb].id, es.id)
                     added += await _grant(s, g.id, oesl.id)
+            # View-only reference essences (no create/modify/delete).
+            for ename in HR_VIEW_ONLY_ESSENCES:
+                eid = await _essence_id(s, ecache, ename)
+                es = await _get_or_create_set(s, [eid])
+                oesl = await _get_or_create_oesl(s, ops["view"].id, es.id)
+                added += await _grant(s, g.id, oesl.id)
             print(f"{gname}: +{added} grants (review-setup + language, CRUD)")
 
         await s.commit()

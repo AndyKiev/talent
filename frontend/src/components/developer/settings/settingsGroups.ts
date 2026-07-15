@@ -117,6 +117,7 @@ export const SETTING_GROUP_BY_KEY: Record<string, string> = {
     training_module_enabled: 'training',
     // ── Recruitment ──────────────────────────────────────────────────────────
     recruitment_module_enabled: 'recruitment',
+    pipeline_drag_confirm: 'recruitment',
     // ── Admin ────────────────────────────────────────────────────────────────
     job_apply_category_on_create: 'admin',
     // ── General (not tied to a single menu) ──────────────────────────────────

@@ -304,6 +304,21 @@ from backend.api_v1.job_requirement_item.job_requirement_item_views import (
 from backend.api_v1.recruitment_task.recruitment_task_views import (
     router as recruitment_task_router,
 )
+from backend.api_v1.candidate_source.candidate_source_views import (
+    router as candidate_source_router,
+)
+from backend.api_v1.pipeline_status.pipeline_status_views import (
+    router as pipeline_status_router,
+)
+from backend.api_v1.candidate.candidate_views import (
+    router as candidate_router,
+)
+from backend.api_v1.candidate_note.candidate_note_views import (
+    router as candidate_note_router,
+)
+from backend.api_v1.candidate_application.candidate_application_views import (
+    router as candidate_application_router,
+)
 
 
 router = APIRouter(prefix=settings.api_v1_prefix)
@@ -435,3 +450,8 @@ router.include_router(recruitment_task_status_router)
 router.include_router(job_requirement_group_router)
 router.include_router(job_requirement_item_router)
 router.include_router(recruitment_task_router)
+router.include_router(candidate_source_router)
+router.include_router(pipeline_status_router)
+router.include_router(candidate_router)
+router.include_router(candidate_note_router)
+router.include_router(candidate_application_router)

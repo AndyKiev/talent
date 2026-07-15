@@ -19,6 +19,11 @@ from backend.api_v1.recruitment_task.recruitment_task_state_machine import (
     can_transition,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.department.department_repository import DepartmentRepository
+from backend.api_v1.department.department_org_units import (
+    resolve_top_org_unit,
+    DepartmentIndex,
+)
 from backend.api_v1.job_requirement_group.job_requirement_group_repository import (
     JobRequirementGroupRepository,
 )
@@ -63,6 +68,26 @@ class RecruitmentTaskService(BaseService):
     async def _status_by_name(self, name: str):
         return await self.status_repository.get_by_field("name", name)
 
+    async def _org_index(self) -> DepartmentIndex:
+        # Flat department index (id -> (parent_id, name, category_key)); built once
+        # per request so list endpoints don't rebuild it per task. Uses the repo
+        # session (always present).
+        dept_repo = DepartmentRepository(session=self.repository.session)
+        return await dept_repo.get_org_unit_index()
+
+    def _attach_top_org_unit(
+        self, schema: RecruitmentTaskSchema, index: DepartmentIndex
+    ) -> RecruitmentTaskSchema:
+        if schema.department_id is not None:
+            schema.top_org_unit = resolve_top_org_unit(schema.department_id, index)
+        return schema
+
+    async def get_recruitment_task_detail(self, task_id: int) -> RecruitmentTaskSchema:
+        """Single task as a schema WITH the derived top_org_unit (GET by id)."""
+        record = await self.get_by_id(task_id)
+        schema = RecruitmentTaskSchema.model_validate(record)
+        return self._attach_top_org_unit(schema, await self._org_index())
+
     async def _validate_group_for_job(self, group_id: int, job_id: int) -> None:
         group = await self.group_repository.get_by_id(group_id)
         if not group:
@@ -90,7 +115,13 @@ class RecruitmentTaskService(BaseService):
             sort_json=sort,
             sort=None if sort else [{"created_at": "desc"}, {"id": "desc"}],
         )
-        return [RecruitmentTaskSchema.model_validate(r) for r in records]
+        index = await self._org_index()
+        return [
+            self._attach_top_org_unit(
+                RecruitmentTaskSchema.model_validate(r), index
+            )
+            for r in records
+        ]
 
     async def create_recruitment_task(
         self, task_in: RecruitmentTaskCreate
@@ -111,6 +142,7 @@ class RecruitmentTaskService(BaseService):
         record = await self.repository.create(instance=record)
         record = await self.get_by_id(record.id)
         schema = RecruitmentTaskSchema.model_validate(record)
+        schema = self._attach_top_org_unit(schema, await self._org_index())
         job_name = record.job.name if record.job else str(record.job_id)
         detail = await self._resolve_domain_success(
             RecruitmentTaskCreateSuccess(job_name)
@@ -139,6 +171,7 @@ class RecruitmentTaskService(BaseService):
         self.session.expunge(updated)
         updated = await self.get_by_id(updated.id)
         schema = RecruitmentTaskSchema.model_validate(updated)
+        schema = self._attach_top_org_unit(schema, await self._org_index())
         detail = await self._resolve_domain_success(
             RecruitmentTaskUpdateSuccess(str(task_id))
         )
@@ -174,6 +207,7 @@ class RecruitmentTaskService(BaseService):
         await self.session.commit()
         refreshed = await self.get_by_id(task_id)
         schema = RecruitmentTaskSchema.model_validate(refreshed)
+        schema = self._attach_top_org_unit(schema, await self._org_index())
         detail = await self._resolve_domain_success(
             RecruitmentTaskStatusChangeSuccess(target_key.value)
         )

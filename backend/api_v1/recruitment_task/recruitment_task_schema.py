@@ -5,6 +5,7 @@ from typing import Optional
 from backend.api_v1.recruitment_task.recruitment_task_state_machine import (
     RecruitmentTaskStatusKey,
 )
+from backend.api_v1.department.department_org_units import TopOrgUnit
 
 
 class RecruitmentTaskJobMini(BaseModel):
@@ -34,9 +35,16 @@ class RecruitmentTaskCreatorMini(BaseModel):
     code: Optional[str] = None
 
 
+class RecruitmentTaskDepartmentMini(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    name: str
+
+
 class RecruitmentTaskBase(BaseModel):
     job_id: int
     requirement_group_id: Optional[int] = None
+    department_id: Optional[int] = None
     comment: Optional[str] = None
     target_deadline: Optional[date] = None
 
@@ -47,6 +55,7 @@ class RecruitmentTaskCreate(RecruitmentTaskBase):
 
 class RecruitmentTaskUpdate(BaseModel):
     requirement_group_id: Optional[int] = None
+    department_id: Optional[int] = None
     comment: Optional[str] = None
     target_deadline: Optional[date] = None
 
@@ -67,3 +76,7 @@ class RecruitmentTaskSchema(RecruitmentTaskBase):
     status: Optional[RecruitmentTaskStatusMini] = None
     requirement_group: Optional[RecruitmentTaskGroupMini] = None
     creator: Optional[RecruitmentTaskCreatorMini] = None
+    department: Optional[RecruitmentTaskDepartmentMini] = None
+    # Derived (not an ORM column): the exact department's top-level org unit
+    # (store / directorate / board), resolved in the service.
+    top_org_unit: Optional[TopOrgUnit] = None

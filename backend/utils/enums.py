@@ -140,6 +140,11 @@ class EssenceName(str, Enum):
     RECRUITMENT_TASK_STATUS = "recruitment_task_status"
     RECRUITMENT_DIMENSION = "recruitment_dimension"
     JOB_REQUIREMENT = "job_requirement"
+    # Candidates / hiring pipeline
+    CANDIDATE_SOURCE = "candidate_source"
+    PIPELINE_STATUS = "pipeline_status"
+    CANDIDATE = "candidate"
+    CANDIDATE_APPLICATION = "candidate_application"
 
 
 class PlanSessionStatusKey(str, Enum):

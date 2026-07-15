@@ -29,10 +29,21 @@ export interface RecruitmentTaskCreatorMini {
     code: string | null;
 }
 
+export interface RecruitmentTaskDepartmentMini {
+    id: number;
+    name: string;
+}
+
+export interface TopOrgUnitMini {
+    id: number;
+    name: string;
+}
+
 export interface RecruitmentTask {
     id: number;
     job_id: number;
     requirement_group_id: number | null;
+    department_id: number | null;
     status_id: number;
     comment: string | null;
     target_deadline: string | null;
@@ -44,6 +55,9 @@ export interface RecruitmentTask {
     status: RecruitmentTaskStatusMini | null;
     requirement_group: RecruitmentTaskGroupMini | null;
     creator: RecruitmentTaskCreatorMini | null;
+    department: RecruitmentTaskDepartmentMini | null;
+    // Derived server-side: the exact department's store / directorate / board.
+    top_org_unit: TopOrgUnitMini | null;
 }
 
 export interface RecruitmentTaskStatusRow {
@@ -60,12 +74,14 @@ export interface MutationResponse<T> {
 export interface RecruitmentTaskCreate {
     job_id: number;
     requirement_group_id?: number | null;
+    department_id?: number | null;
     comment?: string | null;
     target_deadline?: string | null;
 }
 
 export interface RecruitmentTaskUpdate {
     requirement_group_id?: number | null;
+    department_id?: number | null;
     comment?: string | null;
     target_deadline?: string | null;
 }

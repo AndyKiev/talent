@@ -10,6 +10,7 @@ import useString from '../../../hooks/useString';
 // recruitment-admin lookups can be added later without restructuring.
 const TABS = [
     { to: '/admin/recruitment/dimensions', labelKey: 'recruitmentDimensions', fallback: 'Recruitment dimensions' },
+    { to: '/admin/recruitment/sources', labelKey: 'candidateSources', fallback: 'Candidate sources' },
 ] as const;
 
 export function RecruitmentAdminLayout() {

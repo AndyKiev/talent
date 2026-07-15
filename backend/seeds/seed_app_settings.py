@@ -286,6 +286,18 @@ APP_SETTINGS = [
         "user_override_allowed": False,
     },
     {
+        # When ON (default) dragging a candidate card to a new pipeline stage on
+        # the recruitment task board asks for confirmation before committing the
+        # move; when OFF the drop applies immediately. Per-user overridable so
+        # each recruiter can turn the confirm dialog off for themselves.
+        "key": "pipeline_drag_confirm",
+        "value": True,
+        "value_type_key": "boolean",
+        "label_key": "settingPipelineDragConfirm",
+        "description_key": "settingPipelineDragConfirmDesc",
+        "user_override_allowed": True,
+    },
+    {
         # People-review-scoped display switch for the training module. When ON
         # (and the training master is ON) the review evaluation "Trainings" tab
         # shows the real assign+status panel; when OFF the panel is hidden there

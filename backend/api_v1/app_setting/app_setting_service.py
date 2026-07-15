@@ -48,6 +48,11 @@ HEADCOUNT_FACT_HUMANS_ONLY_KEY = "headcount_plan_fact_humans_only"
 # App-only, never user-overridable; data is never deleted on disable.
 RECRUITMENT_MODULE_ENABLED_KEY = "recruitment_module_enabled"
 
+# Per-user toggle: whether dragging a candidate card to a new pipeline stage on
+# the recruitment task board asks for confirmation before committing the move.
+# User-overridable (each user can turn the confirm dialog on/off for themselves).
+PIPELINE_DRAG_CONFIRM_KEY = "pipeline_drag_confirm"
+
 
 def cast_value(value: Any, type_key: Optional[str]) -> Any:
     """

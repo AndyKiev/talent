@@ -8,6 +8,7 @@ from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
 
 if TYPE_CHECKING:
+    from backend.api_v1.department.department_model import Department
     from backend.api_v1.employee.employee_model import Employee
     from backend.api_v1.job.job_model import Job
     from backend.api_v1.job_requirement_group.job_requirement_group_model import (
@@ -38,6 +39,13 @@ class RecruitmentTask(IntIdPkMixin, Base):
         ForeignKey("recruitment_task_statuses.id", ondelete="RESTRICT"),
         nullable=False,
     )
+    # The exact (possibly deep) department this search is for. Its top-level org
+    # unit (store / directorate / board) is derived in the service, not stored.
+    department_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("departments.id", ondelete="RESTRICT"),
+        nullable=True,
+    )
     comment: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     target_deadline: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     created_by: Mapped[int] = mapped_column(
@@ -56,6 +64,7 @@ class RecruitmentTask(IntIdPkMixin, Base):
 
     # Relationships
     job: Mapped["Job"] = relationship(lazy="selectin")
+    department: Mapped[Optional["Department"]] = relationship(lazy="selectin")
     requirement_group: Mapped[Optional["JobRequirementGroup"]] = relationship(
         lazy="selectin",
     )

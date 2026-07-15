@@ -48,9 +48,10 @@ async def get_recruitment_tasks(
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.RECRUITMENT_TASK)],
 )
 async def get_recruitment_task(
-    record: RecruitmentTaskSchema = Depends(recruitment_task_by_id),
+    recruitment_task_id: int,
+    service: Annotated[RecruitmentTaskService, Depends(get_recruitment_task_service)],
 ):
-    return record
+    return await service.get_recruitment_task_detail(recruitment_task_id)
 
 
 @router.post(

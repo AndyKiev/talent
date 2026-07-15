@@ -341,4 +341,13 @@ export const ESSENCES: RawEssenceConfig[] = [
     color: '#f59e0b',
     parentGroup: 'recruitment',
   },
+  {
+    parent: 'admin',
+    key: 'candidate_sources',
+    labelKey: 'candidateSources',
+    descriptionKey: 'candidateSourcesDesc',
+    Icon: CategoryIcon,
+    color: '#f59e0b',
+    parentGroup: 'recruitment',
+  },
 ];
