@@ -322,7 +322,14 @@ export function RecruitmentTaskBoardTab() {
     const id = useTaskId();
     const { data: task } = useTaskQuery(id);
     if (!task) return null;
-    return <RecruitmentTaskBoard taskId={task.id} getString={getString} openings={task.openings} />;
+    return (
+        <RecruitmentTaskBoard
+            taskId={task.id}
+            getString={getString}
+            openings={task.openings}
+            departmentId={task.department_id}
+        />
+    );
 }
 
 export function RecruitmentTaskDetailsTab() {

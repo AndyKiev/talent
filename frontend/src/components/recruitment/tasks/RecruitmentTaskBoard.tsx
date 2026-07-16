@@ -33,18 +33,21 @@ import {
 } from '../../candidates/candidateApplicationApi';
 import { PIPELINE_ORDER, PIPELINE_STATUS_COLOR, canMove, pipelineLabel } from '../../candidates/pipelineStatus';
 import { InterviewScheduleDialog } from '../../interviews/InterviewScheduleDialog';
+import { RegisterEmployeeDialog } from '../RegisterEmployeeDialog';
 
 interface Props {
     taskId: number;
     getString: GetStringFn;
     /** Vacancy openings — offer + hired combined may not exceed this. */
     openings?: number;
+    /** Task department — prefills the hired→register-employee dialog. */
+    departmentId?: number | null;
 }
 
 type DragState = { appId: number; from: PipelineStatusKey } | null;
 type PendingMove = { app: CandidateApplication; to: PipelineStatusKey } | null;
 
-export function RecruitmentTaskBoard({ taskId, getString, openings }: Props) {
+export function RecruitmentTaskBoard({ taskId, getString, openings, departmentId }: Props) {
     const qc = useQueryClient();
     const { enabled: confirmOnDrag } = useEffectiveBooleanSetting('pipeline_drag_confirm');
 
@@ -54,6 +57,8 @@ export function RecruitmentTaskBoard({ taskId, getString, openings }: Props) {
     // Dropping a card onto `interview` opens the scheduling dialog instead of a
     // direct move — creating the interview advances the card server-side.
     const [scheduleFor, setScheduleFor] = useState<CandidateApplication | null>(null);
+    // Hired card → register the candidate as an employee.
+    const [registerFor, setRegisterFor] = useState<CandidateApplication | null>(null);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
     const { data: applications = [], isLoading, error } = useQuery({
@@ -248,6 +253,17 @@ export function RecruitmentTaskBoard({ taskId, getString, openings }: Props) {
                                                 {app.candidate.email}
                                             </Typography>
                                         )}
+                                        {key === 'hired' && (
+                                            <Button
+                                                size="small"
+                                                variant="outlined"
+                                                color="success"
+                                                sx={{ mt: 0.5, alignSelf: 'flex-start' }}
+                                                onClick={() => setRegisterFor(app)}
+                                            >
+                                                {getString('registerEmployee') || 'Register employee'}
+                                            </Button>
+                                        )}
                                     </Paper>
                                 ))}
                             </Stack>
@@ -294,6 +310,18 @@ export function RecruitmentTaskBoard({ taskId, getString, openings }: Props) {
                 onScheduled={(detail) => {
                     setScheduleFor(null);
                     setSnackbar({ open: true, message: detail, severity: 'success' });
+                }}
+                onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
+            />
+
+            <RegisterEmployeeDialog
+                open={registerFor !== null}
+                application={registerFor}
+                departmentId={departmentId}
+                onClose={() => setRegisterFor(null)}
+                onRegistered={(message) => {
+                    setRegisterFor(null);
+                    setSnackbar({ open: true, message, severity: 'success' });
                 }}
                 onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
             />

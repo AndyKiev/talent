@@ -152,6 +152,7 @@ export function RecruitmentBoardPage() {
                             taskId={selectedTask.id}
                             getString={getString}
                             openings={selectedTask.openings}
+                            departmentId={selectedTask.department_id}
                         />
                     ) : (
                         <Paper
