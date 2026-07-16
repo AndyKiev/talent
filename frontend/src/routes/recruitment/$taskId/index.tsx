@@ -1,7 +1,8 @@
-// src/routes/recruitment/$taskId/index.tsx
-import { createFileRoute } from '@tanstack/react-router';
-import { RecruitmentTaskPage } from '../../../components/recruitment/tasks/RecruitmentTaskPage';
+// src/routes/recruitment/$taskId/index.tsx — the board is the default tab.
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/recruitment/$taskId/')({
-    component: RecruitmentTaskPage,
+    beforeLoad: ({ params }) => {
+        throw redirect({ to: '/recruitment/$taskId/board', params });
+    },
 });

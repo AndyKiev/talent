@@ -22,7 +22,9 @@ import { useEffectiveBooleanSetting } from '../../../hooks/useAppSetting';
 import {
     CANDIDATE_APPLICATIONS_BY_TASK_QK,
     CANDIDATE_QK,
+    PIPELINE_STATUS_QK,
 } from '../../../utils/queryKeys';
+import { fetchPipelineStatuses } from '../../candidates/candidateApi';
 import {
     fetchApplicationsByTask,
     changeApplicationStatus,
@@ -60,15 +62,33 @@ export function RecruitmentTaskBoard({ taskId, getString, openings }: Props) {
         staleTime: 15 * 1000,
     });
 
+    // Columns come from the DB stage set (sort_order), so the board adapts if
+    // the seeded statuses ever change; falls back to the static order while
+    // the lookup loads.
+    const { data: statusRows = [] } = useQuery({
+        queryKey: PIPELINE_STATUS_QK,
+        queryFn: fetchPipelineStatuses,
+        staleTime: 5 * 60 * 1000,
+    });
+    const columnKeys = useMemo<PipelineStatusKey[]>(
+        () =>
+            statusRows.length
+                ? [...statusRows]
+                      .sort((a, b) => a.sort_order - b.sort_order)
+                      .map((s) => s.name as PipelineStatusKey)
+                : PIPELINE_ORDER,
+        [statusRows],
+    );
+
     const byStage = useMemo(() => {
         const map = new Map<PipelineStatusKey, CandidateApplication[]>();
-        for (const key of PIPELINE_ORDER) map.set(key, []);
+        for (const key of columnKeys) map.set(key, []);
         for (const app of applications) {
             const key = app.status?.name;
             if (key) map.get(key)?.push(app);
         }
         return map;
-    }, [applications]);
+    }, [applications, columnKeys]);
 
     const boardQK = CANDIDATE_APPLICATIONS_BY_TASK_QK(taskId);
 
@@ -154,7 +174,7 @@ export function RecruitmentTaskBoard({ taskId, getString, openings }: Props) {
                 {statusMutation.isPending && <CircularProgress size={16} />}
             </Stack>
             <Box sx={{ display: 'flex', gap: 1.5, overflowX: 'auto', pb: 1 }}>
-                {PIPELINE_ORDER.map((key) => {
+                {columnKeys.map((key) => {
                     const cards = byStage.get(key) ?? [];
                     return (
                         <Paper

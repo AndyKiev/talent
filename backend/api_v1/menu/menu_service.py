@@ -194,7 +194,14 @@ class MenuService(BaseService):
                 m
                 for m in records
                 if m.key
-                not in ("recruitment", "candidates", "recruitment_tasks", "interviews")
+                not in (
+                    "recruitment",
+                    "recruitment_dashboard",
+                    "recruitment_tasks",
+                    "recruitment_board",
+                    "candidates",
+                    "interviews",
+                )
             ]
         # Headcount-plan flag: with the feature off BOTH children under
         # 'employees' are dropped, so 'employees' becomes childless again and

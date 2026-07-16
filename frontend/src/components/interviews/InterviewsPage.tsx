@@ -184,7 +184,9 @@ function InterviewCard({
 
 export function InterviewsPage() {
     const getString = useString();
-    const [mineOnly, setMineOnly] = useState(true);
+    // Default OFF so HR/admin immediately see interviews they scheduled;
+    // interviewers can flip it to filter to their own.
+    const [mineOnly, setMineOnly] = useState(false);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
     const { data: interviews = [], isLoading, error } = useQuery({

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useParams } from '@tanstack/react-router';
+import { Link, Outlet, useLocation, useNavigate, useParams } from '@tanstack/react-router';
 import type { UseMutationResult } from '@tanstack/react-query';
 import {
     Alert,
@@ -33,7 +33,6 @@ import { RECRUITMENT_TASK_QK, JOB_REQUIREMENT_GROUPS_QK, DEPARTMENT_FLAT_QK } fr
 import { fetchDepartmentsFlat } from '../../admin/departments/departmentApi';
 import {
     fetchRecruitmentTask,
-    fetchRecruitmentTaskStatuses,
     type MutationResponse,
     type RecruitmentStatusKey,
     type RecruitmentTask,
@@ -49,6 +48,20 @@ const fmt = (v: string | null): string => (v ? formatToUkrDate(v) : '—');
 
 type UpdateMutation = UseMutationResult<MutationResponse<RecruitmentTask>, Error, { id: number; data: RecruitmentTaskUpdate }>;
 type StatusMutation = UseMutationResult<MutationResponse<RecruitmentTask>, Error, { id: number; statusKey: RecruitmentStatusKey }>;
+
+/** taskId from the URL regardless of which child route rendered us. */
+function useTaskId(): number {
+    const params = useParams({ strict: false }) as { taskId?: string };
+    return Number(params.taskId);
+}
+
+function useTaskQuery(id: number) {
+    return useQuery({
+        queryKey: [...RECRUITMENT_TASK_QK, id],
+        queryFn: () => fetchRecruitmentTask(id),
+        enabled: Number.isFinite(id),
+    });
+}
 
 // ── Header: job, status chip, transition buttons, timestamps (always visible) ──
 function TaskHeaderCard({
@@ -96,9 +109,9 @@ function TaskHeaderCard({
                 <Typography variant="body2" color="text.secondary">
                     {getString('closedAt') || 'Closed at'}: {fmt(task.closed_at)}
                 </Typography>
-                {task.top_org_unit && (
+                {task.department && (
                     <Typography variant="body2" color="text.secondary">
-                        {getString('topOrgUnit') || 'Top unit'}: {task.top_org_unit.name}
+                        {getString('department') || 'Department'}: {task.department.name}
                     </Typography>
                 )}
             </Stack>
@@ -106,8 +119,7 @@ function TaskHeaderCard({
     );
 }
 
-// ── Details tab: the editable main fields. Keyed by task.id so useState
-//    initializers prefill without a setState-in-effect. ─────────────────────────
+// ── Details form (keyed by task.id so useState initializers prefill) ──────────
 function TaskDetailsForm({
     task,
     groups,
@@ -221,30 +233,31 @@ function TaskDetailsForm({
     );
 }
 
-export function RecruitmentTaskPage() {
+// ── Layout route: breadcrumb + header + tab LINKS + Outlet ────────────────────
+// Each tab is its own URL: /recruitment/$taskId/{board|details|requirements};
+// the index redirects to board (the default tab).
+export function RecruitmentTaskLayout() {
     const getString = useString();
-    const { taskId } = useParams({ from: '/recruitment/$taskId/' });
-    const id = Number(taskId);
+    const id = useTaskId();
+    const { pathname } = useLocation();
 
-    const [tab, setTab] = useState(0);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+    const { data: task, isLoading, error } = useTaskQuery(id);
+    const { statusMutation } = useRecruitmentTaskMutations({ setSnackbar });
 
-    const { data: task, isLoading, error } = useQuery({
-        queryKey: [...RECRUITMENT_TASK_QK, id],
-        queryFn: () => fetchRecruitmentTask(id),
-        enabled: Number.isFinite(id),
-    });
-
-    const { data: groups = [] } = useQuery({
-        queryKey: JOB_REQUIREMENT_GROUPS_QK(task?.job_id ?? 0),
-        queryFn: () => fetchJobRequirementGroups(task!.job_id),
-        enabled: !!task,
-    });
-
-    // Kept warm so the read-only status lookup is available app-wide.
-    useQuery({ queryKey: ['recruitment_task_statuses'], queryFn: fetchRecruitmentTaskStatuses, staleTime: 5 * 60 * 1000 });
-
-    const { updateMutation, statusMutation } = useRecruitmentTaskMutations({ setSnackbar });
+    const navigate = useNavigate();
+    const TABS = [
+        { seg: 'board', labelKey: 'candidateBoard', fallback: 'Candidates' },
+        { seg: 'details', labelKey: 'details', fallback: 'Details' },
+        { seg: 'requirements', labelKey: 'jobRequirements', fallback: 'Requirements' },
+    ] as const;
+    const active = Math.max(0, TABS.findIndex((t) => pathname.includes(`/${t.seg}`)));
+    const gotoTab = (seg: (typeof TABS)[number]['seg']) => {
+        const params = { taskId: String(id) };
+        if (seg === 'board') navigate({ to: '/recruitment/$taskId/board', params });
+        else if (seg === 'details') navigate({ to: '/recruitment/$taskId/details', params });
+        else navigate({ to: '/recruitment/$taskId/requirements', params });
+    };
 
     return (
         <>
@@ -255,7 +268,7 @@ export function RecruitmentTaskPage() {
                     </Typography>
                 </Link>
                 <Typography variant="body2" color="text.primary" fontWeight={600}>
-                    {getString('recruitmentTask') || 'Recruitment task'} #{taskId}
+                    {getString('recruitmentTask') || 'Recruitment task'} #{id}
                 </Typography>
             </Breadcrumbs>
 
@@ -264,25 +277,22 @@ export function RecruitmentTaskPage() {
                     <CircularProgress />
                 </Box>
             )}
-
             {!isLoading && error && <Alert severity="error">{(error as Error).message}</Alert>}
 
             {!isLoading && task && (
                 <Stack spacing={3}>
                     <TaskHeaderCard key={`h-${task.id}`} task={task} getString={getString} statusMutation={statusMutation} />
-
                     <Box>
-                        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-                            <Tab label={cfl(getString('details') || 'Details')} />
-                            <Tab label={cfl(getString('candidateBoard') || 'Candidates')} />
-                            <Tab label={cfl(getString('jobRequirements') || 'Requirements')} />
+                        <Tabs
+                            value={active}
+                            onChange={(_, v: number) => gotoTab(TABS[v].seg)}
+                            sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}
+                        >
+                            {TABS.map((t) => (
+                                <Tab key={t.seg} label={cfl(getString(t.labelKey) || t.fallback)} />
+                            ))}
                         </Tabs>
-
-                        {tab === 0 && (
-                            <TaskDetailsForm key={task.id} task={task} groups={groups} getString={getString} updateMutation={updateMutation} />
-                        )}
-                        {tab === 1 && <RecruitmentTaskBoard taskId={task.id} getString={getString} openings={task.openings} />}
-                        {tab === 2 && <JobRequirementGroupsManager jobId={task.job_id} getString={getString} />}
+                        <Outlet />
                     </Box>
                 </Stack>
             )}
@@ -303,4 +313,55 @@ export function RecruitmentTaskPage() {
             </Snackbar>
         </>
     );
+}
+
+// ── Tab route components ──────────────────────────────────────────────────────
+
+export function RecruitmentTaskBoardTab() {
+    const getString = useString();
+    const id = useTaskId();
+    const { data: task } = useTaskQuery(id);
+    if (!task) return null;
+    return <RecruitmentTaskBoard taskId={task.id} getString={getString} openings={task.openings} />;
+}
+
+export function RecruitmentTaskDetailsTab() {
+    const getString = useString();
+    const id = useTaskId();
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+    const { data: task } = useTaskQuery(id);
+    const { data: groups = [] } = useQuery({
+        queryKey: JOB_REQUIREMENT_GROUPS_QK(task?.job_id ?? 0),
+        queryFn: () => fetchJobRequirementGroups(task!.job_id),
+        enabled: !!task,
+    });
+    const { updateMutation } = useRecruitmentTaskMutations({ setSnackbar });
+    if (!task) return null;
+    return (
+        <>
+            <TaskDetailsForm key={task.id} task={task} groups={groups} getString={getString} updateMutation={updateMutation} />
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={6000}
+                onClose={() => setSnackbar((p) => ({ ...p, open: false }))}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            >
+                <Alert
+                    severity={snackbar.severity}
+                    onClose={() => setSnackbar((p) => ({ ...p, open: false }))}
+                    sx={{ width: '100%' }}
+                >
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
+        </>
+    );
+}
+
+export function RecruitmentTaskRequirementsTab() {
+    const getString = useString();
+    const id = useTaskId();
+    const { data: task } = useTaskQuery(id);
+    if (!task) return null;
+    return <JobRequirementGroupsManager jobId={task.job_id} getString={getString} />;
 }

@@ -169,9 +169,9 @@ export function RecruitmentTasksPage() {
                                         <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
                                             {getString('openings') || 'Openings'}: {t.openings}
                                         </Typography>
-                                        {(t.department || t.top_org_unit) && (
+                                        {t.department && (
                                             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                                                {[t.top_org_unit?.name, t.department?.name].filter(Boolean).join(' · ')}
+                                                {t.department.name}
                                             </Typography>
                                         )}
                                         <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
