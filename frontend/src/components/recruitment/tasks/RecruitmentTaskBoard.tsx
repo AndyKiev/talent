@@ -45,7 +45,7 @@ interface Props {
 }
 
 type DragState = { appId: number; from: PipelineStatusKey } | null;
-type PendingMove = { app: CandidateApplication; to: PipelineStatusKey } | null;
+type PendingMove = { app: CandidateApplication; to: PipelineStatusKey; backward: boolean } | null;
 
 export function RecruitmentTaskBoard({ taskId, getString, openings, departmentId }: Props) {
     const qc = useQueryClient();
@@ -138,21 +138,20 @@ export function RecruitmentTaskBoard({ taskId, getString, openings, departmentId
         setDrag(null);
         if (!d) return;
         if (d.from === to) return;
-        if (!canMove(d.from, to)) {
-            setSnackbar({
-                open: true,
-                message: getString('pipelineIllegalMove') || 'That move is not allowed.',
-                severity: 'error',
-            });
-            return;
-        }
         const app = applications.find((a) => a.id === d.appId);
         if (!app) return;
+        // Backward/unusual moves are permitted for admin/HRS (server-enforced)
+        // — ALWAYS behind a consequences warning, whatever the confirm setting.
+        const backward = !canMove(d.from, to);
+        if (backward) {
+            setPendingMove({ app, to, backward: true });
+            return;
+        }
         if (to === 'interview') {
             setScheduleFor(app);
             return;
         }
-        if (confirmOnDrag) setPendingMove({ app, to });
+        if (confirmOnDrag) setPendingMove({ app, to, backward: false });
         else doMove(app, to);
     };
 
@@ -275,6 +274,12 @@ export function RecruitmentTaskBoard({ taskId, getString, openings, departmentId
             <Dialog open={pendingMove !== null} onClose={() => setPendingMove(null)} maxWidth="xs" fullWidth>
                 <DialogTitle>{getString('confirm') || 'Confirm'}</DialogTitle>
                 <DialogContent>
+                    {pendingMove?.backward && (
+                        <Alert severity="warning" sx={{ mb: 2 }}>
+                            {getString('pipelineBackwardWarn') ||
+                                'You are moving the candidate BACKWARD along the pipeline. The step is recorded in the status history; interviews, offers and capacity counters stay as they are. Only admin / HRS may do this.'}
+                        </Alert>
+                    )}
                     <DialogContentText>
                         {getString('pipelineMoveConfirm', {
                             candidate: pendingMove?.app.candidate
@@ -293,6 +298,7 @@ export function RecruitmentTaskBoard({ taskId, getString, openings, departmentId
                     <Button onClick={() => setPendingMove(null)}>{getString('cancel') || 'Cancel'}</Button>
                     <Button
                         variant="contained"
+                        color={pendingMove?.backward ? 'warning' : 'primary'}
                         onClick={() => {
                             if (pendingMove) doMove(pendingMove.app, pendingMove.to);
                             setPendingMove(null);

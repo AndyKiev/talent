@@ -119,16 +119,20 @@ function RegisterForm({ application, departmentId, onClose, onRegistered, onErro
             <DialogContent>
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <Stack spacing={2} sx={{ mt: 1 }}>
-                        <Stack direction="row" spacing={1} alignItems="center">
-                            <WorkIcon fontSize="small" color="action" />
-                            <Typography variant="body2" color="text.secondary">
+                        <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+                            <WorkIcon fontSize="small" color="action" sx={{ flexShrink: 0 }} />
+                            <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0 }}>
                                 {getString('job') || 'Job'}:
                             </Typography>
+                            {/* Long job names ellipsize inside the dialog instead of
+                                stretching the chip past the form width. */}
                             <Chip
                                 size="small"
                                 color="primary"
                                 variant="outlined"
                                 label={application?.recruitment_task?.job?.name ?? jobId ?? '—'}
+                                title={application?.recruitment_task?.job?.name ?? ''}
+                                sx={{ maxWidth: '100%', minWidth: 0 }}
                             />
                         </Stack>
                         <TextField

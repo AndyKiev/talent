@@ -217,17 +217,33 @@ class CandidateApplicationService(BaseService):
         )
         return MutationResponse(detail=detail, data=schema)
 
+    def _can_override_transitions(self) -> bool:
+        """admin / HRS (and the bypass dev group) may move a candidate BACKWARD
+        along the pipeline without limits — the frontend warns about the
+        consequences first. Everyone else is held to the state machine."""
+        groups = {g.lower() for g in (getattr(self.user, "groups", None) or [])}
+        return bool(groups & {"admin", "hrs", "dev"})
+
     async def change_status(
         self, application_id: int, target_key: PipelineStatusKey
     ) -> MutationResponse[CandidateApplicationSchema]:
         orm_record = await self.get_by_id(application_id)
         current_key = PipelineStatusKey(orm_record.status.name)
-        if not can_transition(current_key, target_key):
+        if target_key == current_key:
             raise await self._resolve_domain_error(
                 CandidateApplicationInvalidTransition(
                     current_key.value, target_key.value
                 )
             )
+        if not can_transition(current_key, target_key):
+            # Backward/unusual move — only the privileged groups may do it.
+            # The interview/capacity gates below still apply even then.
+            if not self._can_override_transitions():
+                raise await self._resolve_domain_error(
+                    CandidateApplicationInvalidTransition(
+                        current_key.value, target_key.value
+                    )
+                )
         # Interview gate: a card may only sit in `interview` once an interview
         # is actually scheduled for it (creating one auto-advances the card, so
         # this refusal only hits direct drags without a scheduled interview).
