@@ -38,6 +38,15 @@ class CandidateApplicationInvalidTransition(DomainError):
         super().__init__(self.fallback)
 
 
+class CandidateApplicationInterviewRequired(DomainError):
+    message_key = "candidateApplicationInterviewRequired"
+
+    def __init__(self) -> None:
+        self.template_vars = {}
+        self.fallback = "Schedule an interview before moving to the interview stage"
+        super().__init__(self.fallback)
+
+
 class CandidateApplicationNoOpenings(DomainError):
     message_key = "candidateApplicationNoOpenings"
 

@@ -30,6 +30,7 @@ import {
     type PipelineStatusKey,
 } from '../../candidates/candidateApplicationApi';
 import { PIPELINE_ORDER, PIPELINE_STATUS_COLOR, canMove, pipelineLabel } from '../../candidates/pipelineStatus';
+import { InterviewScheduleDialog } from '../../interviews/InterviewScheduleDialog';
 
 interface Props {
     taskId: number;
@@ -48,6 +49,9 @@ export function RecruitmentTaskBoard({ taskId, getString, openings }: Props) {
     const [drag, setDrag] = useState<DragState>(null);
     const [dragOverCol, setDragOverCol] = useState<PipelineStatusKey | null>(null);
     const [pendingMove, setPendingMove] = useState<PendingMove>(null);
+    // Dropping a card onto `interview` opens the scheduling dialog instead of a
+    // direct move — creating the interview advances the card server-side.
+    const [scheduleFor, setScheduleFor] = useState<CandidateApplication | null>(null);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
     const { data: applications = [], isLoading, error } = useQuery({
@@ -119,6 +123,10 @@ export function RecruitmentTaskBoard({ taskId, getString, openings }: Props) {
         }
         const app = applications.find((a) => a.id === d.appId);
         if (!app) return;
+        if (to === 'interview') {
+            setScheduleFor(app);
+            return;
+        }
         if (confirmOnDrag) setPendingMove({ app, to });
         else doMove(app, to);
     };
@@ -258,6 +266,17 @@ export function RecruitmentTaskBoard({ taskId, getString, openings }: Props) {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            <InterviewScheduleDialog
+                open={scheduleFor !== null}
+                application={scheduleFor}
+                onClose={() => setScheduleFor(null)}
+                onScheduled={(detail) => {
+                    setScheduleFor(null);
+                    setSnackbar({ open: true, message: detail, severity: 'success' });
+                }}
+                onError={(message) => setSnackbar({ open: true, message, severity: 'error' })}
+            />
 
             <Snackbar
                 open={snackbar.open}

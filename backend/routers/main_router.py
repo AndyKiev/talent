@@ -319,6 +319,12 @@ from backend.api_v1.candidate_note.candidate_note_views import (
 from backend.api_v1.candidate_application.candidate_application_views import (
     router as candidate_application_router,
 )
+from backend.api_v1.interview.interview_views import (
+    router as interview_router,
+)
+from backend.api_v1.interview_feedback.interview_feedback_views import (
+    router as interview_feedback_router,
+)
 
 
 router = APIRouter(prefix=settings.api_v1_prefix)
@@ -455,3 +461,5 @@ router.include_router(pipeline_status_router)
 router.include_router(candidate_router)
 router.include_router(candidate_note_router)
 router.include_router(candidate_application_router)
+router.include_router(interview_router)
+router.include_router(interview_feedback_router)

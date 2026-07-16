@@ -41,6 +41,7 @@ from backend.api_v1.candidate_application.candidate_application_messages import 
     CandidateApplicationNotFound,
     CandidateApplicationAlreadyExists,
     CandidateApplicationInvalidTransition,
+    CandidateApplicationInterviewRequired,
     CandidateApplicationNoOpenings,
     CandidateApplicationDeleteError,
     CandidateApplicationDeleteSuccess,
@@ -131,6 +132,18 @@ class CandidateApplicationService(BaseService):
         record = await self.get_by_id(application_id)
         return await self._enrich(CandidateApplicationSchema.model_validate(record))
 
+    async def _has_interview(self, application_id: int) -> bool:
+        # Local import keeps the module import graph acyclic (interview_service
+        # imports THIS module).
+        from backend.api_v1.interview.interview_model import Interview
+
+        stmt = (
+            select(func.count())
+            .select_from(Interview)
+            .where(Interview.application_id == application_id)
+        )
+        return (await self.repository.session.execute(stmt)).scalar_one() > 0
+
     async def _task_openings(self, task_id: int) -> int:
         stmt = select(RecruitmentTask.openings).where(RecruitmentTask.id == task_id)
         return (await self.repository.session.execute(stmt)).scalar_one()
@@ -215,9 +228,15 @@ class CandidateApplicationService(BaseService):
                     current_key.value, target_key.value
                 )
             )
-        # NOTE (Phase B): moving to `interview` will require/auto-open an
-        # interview record here — same shape as the recruitment_task in_process
-        # gate. In Phase A the transition is open.
+        # Interview gate: a card may only sit in `interview` once an interview
+        # is actually scheduled for it (creating one auto-advances the card, so
+        # this refusal only hits direct drags without a scheduled interview).
+        if target_key == PipelineStatusKey.INTERVIEW and not (
+            await self._has_interview(application_id)
+        ):
+            raise await self._resolve_domain_error(
+                CandidateApplicationInterviewRequired()
+            )
         # Vacancy capacity: offer + hired together may not exceed the task's
         # openings. Only enforce when ENTERING that set (offer→hired keeps the
         # same seat, so it stays allowed).

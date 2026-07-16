@@ -108,3 +108,8 @@ export const CANDIDATE_APPLICATIONS_BY_CANDIDATE_QK = (candidateId: number) =>
     ['candidate_applications', 'candidate', candidateId] as const;
 export const CANDIDATE_APPLICATIONS_BY_TASK_QK = (taskId: number) =>
     ['candidate_applications', 'task', taskId] as const;
+export const INTERVIEWS_QK = (scope: string, id: number | 'mine' | 'all') =>
+    ['interviews', scope, id] as const;
+export const AVAILABLE_INTERVIEWERS_QK = ['available_interviewers'] as const;
+export const INTERVIEW_FEEDBACKS_BY_CANDIDATE_QK = (candidateId: number) =>
+    ['interview_feedbacks', 'candidate', candidateId] as const;

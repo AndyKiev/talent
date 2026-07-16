@@ -141,6 +141,9 @@ __all__ = {
     "CandidateNote",
     "CandidateApplication",
     "ApplicationStatusHistory",
+    "Interview",
+    "InterviewInterviewer",
+    "InterviewFeedback",
 }
 
 from backend.api_v1.lang.lang_model import Lang
@@ -463,4 +466,14 @@ from backend.api_v1.candidate_application.candidate_application_model import (
 )
 from backend.api_v1.application_status_history.application_status_history_model import (
     ApplicationStatusHistory,
+)
+
+# Interviews — the interview (FKs into candidate_applications, employees), then
+# its interviewer links and feedback rows.
+from backend.api_v1.interview.interview_model import Interview
+from backend.api_v1.interview_interviewer.interview_interviewer_model import (
+    InterviewInterviewer,
+)
+from backend.api_v1.interview_feedback.interview_feedback_model import (
+    InterviewFeedback,
 )

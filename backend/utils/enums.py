@@ -145,6 +145,8 @@ class EssenceName(str, Enum):
     PIPELINE_STATUS = "pipeline_status"
     CANDIDATE = "candidate"
     CANDIDATE_APPLICATION = "candidate_application"
+    INTERVIEW = "interview"
+    INTERVIEW_FEEDBACK = "interview_feedback"
 
 
 class PlanSessionStatusKey(str, Enum):

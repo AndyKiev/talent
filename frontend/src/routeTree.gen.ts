@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TrainingRouteRouteImport } from './routes/training/route'
 import { Route as RecruitmentRouteRouteImport } from './routes/recruitment/route'
+import { Route as InterviewsRouteRouteImport } from './routes/interviews/route'
 import { Route as CandidatesRouteRouteImport } from './routes/candidates/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrainingIndexRouteImport } from './routes/training/index'
@@ -18,6 +19,7 @@ import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as RecruitmentIndexRouteImport } from './routes/recruitment/index'
 import { Route as PlanningIndexRouteImport } from './routes/planning/index'
 import { Route as People_reviewIndexRouteImport } from './routes/people_review/index'
+import { Route as InterviewsIndexRouteImport } from './routes/interviews/index'
 import { Route as EmployeesIndexRouteImport } from './routes/employees/index'
 import { Route as DeveloperIndexRouteImport } from './routes/developer/index'
 import { Route as CandidatesIndexRouteImport } from './routes/candidates/index'
@@ -162,6 +164,11 @@ const RecruitmentRouteRoute = RecruitmentRouteRouteImport.update({
   path: '/recruitment',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InterviewsRouteRoute = InterviewsRouteRouteImport.update({
+  id: '/interviews',
+  path: '/interviews',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CandidatesRouteRoute = CandidatesRouteRouteImport.update({
   id: '/candidates',
   path: '/candidates',
@@ -196,6 +203,11 @@ const People_reviewIndexRoute = People_reviewIndexRouteImport.update({
   id: '/people_review/',
   path: '/people_review/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const InterviewsIndexRoute = InterviewsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => InterviewsRouteRoute,
 } as any)
 const EmployeesIndexRoute = EmployeesIndexRouteImport.update({
   id: '/employees/',
@@ -959,6 +971,7 @@ const AdminPeople_reviewReview_setupDimensionsCriteriaIndexRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/candidates': typeof CandidatesRouteRouteWithChildren
+  '/interviews': typeof InterviewsRouteRouteWithChildren
   '/recruitment': typeof RecruitmentRouteRouteWithChildren
   '/training': typeof TrainingRouteRouteWithChildren
   '/admin/departments_group': typeof AdminDepartments_groupRouteRouteWithChildren
@@ -983,6 +996,7 @@ export interface FileRoutesByFullPath {
   '/candidates/': typeof CandidatesIndexRoute
   '/developer': typeof DeveloperIndexRoute
   '/employees': typeof EmployeesIndexRoute
+  '/interviews/': typeof InterviewsIndexRoute
   '/people_review': typeof People_reviewIndexRoute
   '/planning': typeof PlanningIndexRoute
   '/recruitment/': typeof RecruitmentIndexRoute
@@ -1110,6 +1124,7 @@ export interface FileRoutesByTo {
   '/candidates': typeof CandidatesIndexRoute
   '/developer': typeof DeveloperIndexRoute
   '/employees': typeof EmployeesIndexRoute
+  '/interviews': typeof InterviewsIndexRoute
   '/people_review': typeof People_reviewIndexRoute
   '/planning': typeof PlanningIndexRoute
   '/recruitment': typeof RecruitmentIndexRoute
@@ -1224,6 +1239,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/candidates': typeof CandidatesRouteRouteWithChildren
+  '/interviews': typeof InterviewsRouteRouteWithChildren
   '/recruitment': typeof RecruitmentRouteRouteWithChildren
   '/training': typeof TrainingRouteRouteWithChildren
   '/admin/departments_group': typeof AdminDepartments_groupRouteRouteWithChildren
@@ -1248,6 +1264,7 @@ export interface FileRoutesById {
   '/candidates/': typeof CandidatesIndexRoute
   '/developer/': typeof DeveloperIndexRoute
   '/employees/': typeof EmployeesIndexRoute
+  '/interviews/': typeof InterviewsIndexRoute
   '/people_review/': typeof People_reviewIndexRoute
   '/planning/': typeof PlanningIndexRoute
   '/recruitment/': typeof RecruitmentIndexRoute
@@ -1370,6 +1387,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/candidates'
+    | '/interviews'
     | '/recruitment'
     | '/training'
     | '/admin/departments_group'
@@ -1394,6 +1412,7 @@ export interface FileRouteTypes {
     | '/candidates/'
     | '/developer'
     | '/employees'
+    | '/interviews/'
     | '/people_review'
     | '/planning'
     | '/recruitment/'
@@ -1521,6 +1540,7 @@ export interface FileRouteTypes {
     | '/candidates'
     | '/developer'
     | '/employees'
+    | '/interviews'
     | '/people_review'
     | '/planning'
     | '/recruitment'
@@ -1634,6 +1654,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/candidates'
+    | '/interviews'
     | '/recruitment'
     | '/training'
     | '/admin/departments_group'
@@ -1658,6 +1679,7 @@ export interface FileRouteTypes {
     | '/candidates/'
     | '/developer/'
     | '/employees/'
+    | '/interviews/'
     | '/people_review/'
     | '/planning/'
     | '/recruitment/'
@@ -1779,6 +1801,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CandidatesRouteRoute: typeof CandidatesRouteRouteWithChildren
+  InterviewsRouteRoute: typeof InterviewsRouteRouteWithChildren
   RecruitmentRouteRoute: typeof RecruitmentRouteRouteWithChildren
   TrainingRouteRoute: typeof TrainingRouteRouteWithChildren
   AdminDepartments_groupRouteRoute: typeof AdminDepartments_groupRouteRouteWithChildren
@@ -1845,6 +1868,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RecruitmentRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/interviews': {
+      id: '/interviews'
+      path: '/interviews'
+      fullPath: '/interviews'
+      preLoaderRoute: typeof InterviewsRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/candidates': {
       id: '/candidates'
       path: '/candidates'
@@ -1893,6 +1923,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/people_review'
       preLoaderRoute: typeof People_reviewIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/interviews/': {
+      id: '/interviews/'
+      path: '/'
+      fullPath: '/interviews/'
+      preLoaderRoute: typeof InterviewsIndexRouteImport
+      parentRoute: typeof InterviewsRouteRoute
     }
     '/employees/': {
       id: '/employees/'
@@ -2842,6 +2879,18 @@ const CandidatesRouteRouteWithChildren = CandidatesRouteRoute._addFileChildren(
   CandidatesRouteRouteChildren,
 )
 
+interface InterviewsRouteRouteChildren {
+  InterviewsIndexRoute: typeof InterviewsIndexRoute
+}
+
+const InterviewsRouteRouteChildren: InterviewsRouteRouteChildren = {
+  InterviewsIndexRoute: InterviewsIndexRoute,
+}
+
+const InterviewsRouteRouteWithChildren = InterviewsRouteRoute._addFileChildren(
+  InterviewsRouteRouteChildren,
+)
+
 interface RecruitmentRouteRouteChildren {
   RecruitmentIndexRoute: typeof RecruitmentIndexRoute
   RecruitmentTaskIdIndexRoute: typeof RecruitmentTaskIdIndexRoute
@@ -3334,6 +3383,7 @@ const EmployeesEmployeeIdRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CandidatesRouteRoute: CandidatesRouteRouteWithChildren,
+  InterviewsRouteRoute: InterviewsRouteRouteWithChildren,
   RecruitmentRouteRoute: RecruitmentRouteRouteWithChildren,
   TrainingRouteRoute: TrainingRouteRouteWithChildren,
   AdminDepartments_groupRouteRoute:

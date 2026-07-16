@@ -50,6 +50,9 @@ HR_ESSENCES = [
     "candidate_source",
     "candidate",
     "candidate_application",
+    # Interviews — HRM/HRS schedule them and may write feedback directly.
+    "interview",
+    "interview_feedback",
 ]
 # Read-only reference essences HRM/HRS may VIEW but must not mutate (e.g. pick a
 # department for a recruitment task, or read the fixed pipeline stages).
@@ -59,6 +62,16 @@ HR_VIEW_ONLY_ESSENCES = [
 ]
 HR_VERBS = ["view", "create", "modify", "delete"]
 HR_GROUPS = ["HRM", "HRS"]
+
+# The Interviewer group (employees auto-added when assigned to an interview):
+# read the interviews/candidates they work with, write interview feedback.
+INTERVIEWER_GRANTS: dict[str, list[str]] = {
+    "interview": ["view"],
+    "candidate": ["view"],
+    "candidate_application": ["view"],
+    "pipeline_status": ["view"],
+    "interview_feedback": ["view", "create"],
+}
 
 
 async def _essence_id(s, cache, name):
@@ -167,6 +180,23 @@ async def main():
                 oesl = await _get_or_create_oesl(s, ops["view"].id, es.id)
                 added += await _grant(s, g.id, oesl.id)
             print(f"{gname}: +{added} grants (review-setup + language, CRUD)")
+
+        # ── Interviewer: read interviews/candidates, write feedback ───────────
+        interviewer = next(
+            (g for name, g in groups.items() if name and name.lower() == "interviewer"),
+            None,
+        )
+        if interviewer:
+            added = 0
+            for ename, verbs in INTERVIEWER_GRANTS.items():
+                eid = await _essence_id(s, ecache, ename)
+                es = await _get_or_create_set(s, [eid])
+                for verb in verbs:
+                    oesl = await _get_or_create_oesl(s, ops[verb].id, es.id)
+                    added += await _grant(s, interviewer.id, oesl.id)
+            print(f"Interviewer: +{added} grants (interviews view + feedback)")
+        else:
+            print("  (group Interviewer not found, skipped — run the Phase B migration)")
 
         await s.commit()
         print("done.")

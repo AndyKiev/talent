@@ -40,6 +40,9 @@ import {
 } from './candidateApplicationApi';
 import { PIPELINE_STATUS_COLOR, pipelineLabel } from './pipelineStatus';
 import { fetchRecruitmentTasks, type RecruitmentTask } from '../recruitment/tasks/recruitmentTaskApi';
+import { INTERVIEW_FEEDBACKS_BY_CANDIDATE_QK } from '../../utils/queryKeys';
+import { fetchInterviewFeedbacks, type Recommendation } from '../interviews/interviewApi';
+import { recommendationLabel } from '../interviews/recommendation';
 
 const fmtDateTime = (v: string): string => dayjs(v).format('DD.MM.YYYY HH:mm');
 
@@ -129,12 +132,7 @@ export function CandidateDetailPage() {
 
                     {tab === 0 && <TimelineTab candidateId={id} getString={getString} onError={(m) => setSnackbar({ open: true, message: m, severity: 'error' })} />}
                     {tab === 1 && <ApplicationsTab candidateId={id} getString={getString} setSnackbar={setSnackbar} />}
-                    {tab === 2 && (
-                        <Alert severity="info">
-                            {getString('feedbackComingSoon') ||
-                                'Feedback is captured during the interview stage — available once interviews are enabled.'}
-                        </Alert>
-                    )}
+                    {tab === 2 && <FeedbackTab candidateId={id} getString={getString} />}
 
                     <CandidateFormDialog
                         open={editOpen}
@@ -269,6 +267,59 @@ function TimelineTab({ candidateId, getString, onError }: TabProps & { onError: 
                 ))}
             </Stack>
         </Box>
+    );
+}
+
+// ── Feedback tab: interview feedback across all the candidate's interviews ─────
+const REC_CHIP_COLOR: Record<Recommendation, 'success' | 'error' | 'warning'> = {
+    hire: 'success',
+    no_hire: 'error',
+    maybe: 'warning',
+};
+
+function FeedbackTab({ candidateId, getString }: TabProps) {
+    const { data: feedbacks = [], isLoading } = useQuery({
+        queryKey: INTERVIEW_FEEDBACKS_BY_CANDIDATE_QK(candidateId),
+        queryFn: () => fetchInterviewFeedbacks({ candidate_id: candidateId }),
+    });
+
+    if (isLoading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                <CircularProgress size={22} />
+            </Box>
+        );
+    }
+    if (feedbacks.length === 0) {
+        return (
+            <Alert severity="info">
+                {getString('noFeedbackYet') ||
+                    'No feedback yet — it is written by interviewers (and HR) once interviews are scheduled.'}
+            </Alert>
+        );
+    }
+    return (
+        <Stack spacing={1}>
+            {feedbacks.map((f) => (
+                <Paper key={f.id} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', p: 1.5 }}>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        {f.recommendation && (
+                            <Chip
+                                size="small"
+                                color={REC_CHIP_COLOR[f.recommendation]}
+                                label={recommendationLabel(f.recommendation, getString)}
+                            />
+                        )}
+                        <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
+                            {f.author?.name ?? f.author_id} · {fmtDateTime(f.created_at)}
+                        </Typography>
+                    </Stack>
+                    <Typography variant="body2" sx={{ mt: 0.5, whiteSpace: 'pre-wrap' }}>
+                        {f.body}
+                    </Typography>
+                </Paper>
+            ))}
+        </Stack>
     );
 }
 
