@@ -38,6 +38,17 @@ class CandidateApplicationInvalidTransition(DomainError):
         super().__init__(self.fallback)
 
 
+class CandidateApplicationNoOpenings(DomainError):
+    message_key = "candidateApplicationNoOpenings"
+
+    def __init__(self, openings: int) -> None:
+        self.template_vars = {"openings": openings}
+        self.fallback = (
+            f"This vacancy has {openings} opening(s); offer + hired are already full"
+        )
+        super().__init__(self.fallback)
+
+
 class CandidateApplicationDeleteError(DeleteError):
     message_key = "candidateApplicationDeleteError"
 

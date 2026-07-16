@@ -10,12 +10,6 @@ export interface CandidateSourceMini {
     key: string;
 }
 
-export interface CandidateCreatorMini {
-    id: number;
-    name: string;
-    code: string | null;
-}
-
 export interface CandidatePhoneMini {
     id: number;
     phone: string;
@@ -31,7 +25,6 @@ export interface Candidate {
     created_by: number;
     created_at: string;
     source: CandidateSourceMini | null;
-    creator: CandidateCreatorMini | null;
     phones: CandidatePhoneMini[];
     application_count: number;
     furthest_stage: string | null;

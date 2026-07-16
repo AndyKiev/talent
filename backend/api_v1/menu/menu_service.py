@@ -190,7 +190,11 @@ class MenuService(BaseService):
         if not await get_bool_setting(
             self.session, RECRUITMENT_MODULE_ENABLED_KEY, default=True
         ):
-            records = [m for m in records if m.key not in ("recruitment", "candidates")]
+            records = [
+                m
+                for m in records
+                if m.key not in ("recruitment", "candidates", "recruitment_tasks")
+            ]
         # Headcount-plan flag: with the feature off BOTH children under
         # 'employees' are dropped, so 'employees' becomes childless again and
         # renders as a plain clickable item (parents with children only open

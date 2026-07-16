@@ -338,9 +338,10 @@ function ApplicationsTab({
                     <Button
                         variant="contained"
                         disabled={!task || applyMutation.isPending}
+                        startIcon={applyMutation.isPending ? <CircularProgress size={16} color="inherit" /> : undefined}
                         onClick={() => task && applyMutation.mutate({ candidate_id: candidateId, recruitment_task_id: task.id })}
                     >
-                        {getString('apply') || 'Apply'}
+                        {applyMutation.isPending ? getString('applying') || 'Applying…' : getString('apply') || 'Apply'}
                     </Button>
                 </Stack>
             </Paper>

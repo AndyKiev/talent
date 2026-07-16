@@ -26,6 +26,9 @@ import { DataGrid } from '@mui/x-data-grid';
 import useString from '../../../hooks/useString';
 import cfl from '../../../utils/helpers.ts';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
+import { useUserGridColumns } from '../../../hooks/useUserGridColumns';
+import { UserGridTable } from '../../../utils/userGridTables';
+import { useRecruitmentViewStore } from '../../../store/recruitmentViewStore';
 import { centeredGridCellsSx } from '../../../utils/dataGridSx';
 import ConfirmDeleteDialog from '../../people-review/ConfirmDeleteDialog';
 import { RECRUITMENT_TASK_QK } from '../../../utils/queryKeys';
@@ -42,7 +45,10 @@ export function RecruitmentTasksPage() {
     const [createOpen, setCreateOpen] = useState(false);
     const [pendingDelete, setPendingDelete] = useState<RecruitmentTask | null>(null);
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
-    const [view, setView] = useState<'grid' | 'cards'>('grid');
+    // View mode persists per user (localStorage-backed zustand), so it's
+    // remembered across navigation and reloads.
+    const view = useRecruitmentViewStore((s) => s.taskView);
+    const setView = useRecruitmentViewStore((s) => s.setTaskView);
 
     const { data: rows = [], isLoading, error } = useQuery({
         queryKey: RECRUITMENT_TASK_QK,
@@ -71,6 +77,9 @@ export function RecruitmentTasksPage() {
         transitionPending: statusMutation.isPending,
         deletePending: deleteMutation.isPending,
     });
+
+    // Per-user column visibility (which fields to show), persisted to localStorage.
+    const userGridColumns = useUserGridColumns(UserGridTable.RECRUITMENT_TASKS, columns);
 
     return (
         <Box>
@@ -120,6 +129,8 @@ export function RecruitmentTasksPage() {
                     <DataGrid
                         rows={rows}
                         columns={columns}
+                        {...userGridColumns}
+                        onRowDoubleClick={(params) => handleOpen(params.row as RecruitmentTask)}
                         paginationModel={paginationModel}
                         onPaginationModelChange={setPaginationModel}
                         pageSizeOptions={[10, 25, 50]}
@@ -128,7 +139,7 @@ export function RecruitmentTasksPage() {
                         getRowHeight={() => 'auto'}
                         localeText={localeText}
                         hideFooterSelectedRowCount
-                        sx={{ ...centeredGridCellsSx, '& .MuiDataGrid-cell': { py: 1 } }}
+                        sx={{ ...centeredGridCellsSx, '& .MuiDataGrid-cell': { py: 1 }, '& .MuiDataGrid-row': { cursor: 'pointer' } }}
                     />
                 </Paper>
             )}
@@ -155,6 +166,9 @@ export function RecruitmentTasksPage() {
                                                 <Chip size="small" label={statusLabel(key, getString)} color={STATUS_COLOR[key]} />
                                             )}
                                         </Stack>
+                                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                                            {getString('openings') || 'Openings'}: {t.openings}
+                                        </Typography>
                                         {(t.department || t.top_org_unit) && (
                                             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                                                 {[t.top_org_unit?.name, t.department?.name].filter(Boolean).join(' · ')}

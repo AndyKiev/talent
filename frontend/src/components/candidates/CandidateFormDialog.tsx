@@ -66,8 +66,10 @@ function CandidateForm({ onClose, createMutation, updateMutation, editing }: Omi
     const addPhone = () => setPhones((prev) => [...prev, '']);
     const removePhone = (i: number) => setPhones((prev) => prev.filter((_, idx) => idx !== i));
 
+    const emailInvalid = email.trim() !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
     const isPending = createMutation.isPending || updateMutation.isPending;
-    const canSubmit = firstName.trim() !== '' && lastName.trim() !== '' && !isPending;
+    const canSubmit = firstName.trim() !== '' && lastName.trim() !== '' && !emailInvalid && !isPending;
 
     const handleSubmit = () => {
         const cleanPhones = phones.map((p) => p.trim()).filter((p) => p !== '');
@@ -110,6 +112,8 @@ function CandidateForm({ onClose, createMutation, updateMutation, editing }: Omi
                         onChange={(e) => setEmail(e.target.value)}
                         fullWidth
                         type="email"
+                        error={emailInvalid}
+                        helperText={emailInvalid ? getString('invalidEmail') || 'Enter a valid email address' : ''}
                     />
                     <TextField
                         select

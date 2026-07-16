@@ -44,6 +44,7 @@ export interface RecruitmentTask {
     job_id: number;
     requirement_group_id: number | null;
     department_id: number | null;
+    openings: number;
     status_id: number;
     comment: string | null;
     target_deadline: string | null;
@@ -75,6 +76,7 @@ export interface RecruitmentTaskCreate {
     job_id: number;
     requirement_group_id?: number | null;
     department_id?: number | null;
+    openings?: number;
     comment?: string | null;
     target_deadline?: string | null;
 }
@@ -82,6 +84,7 @@ export interface RecruitmentTaskCreate {
 export interface RecruitmentTaskUpdate {
     requirement_group_id?: number | null;
     department_id?: number | null;
+    openings?: number;
     comment?: string | null;
     target_deadline?: string | null;
 }

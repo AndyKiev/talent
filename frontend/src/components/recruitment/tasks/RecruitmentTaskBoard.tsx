@@ -4,6 +4,7 @@ import {
     Alert,
     Box,
     Button,
+    Chip,
     CircularProgress,
     Dialog,
     DialogActions,
@@ -33,12 +34,14 @@ import { PIPELINE_ORDER, PIPELINE_STATUS_COLOR, canMove, pipelineLabel } from '.
 interface Props {
     taskId: number;
     getString: GetStringFn;
+    /** Vacancy openings — offer + hired combined may not exceed this. */
+    openings?: number;
 }
 
 type DragState = { appId: number; from: PipelineStatusKey } | null;
 type PendingMove = { app: CandidateApplication; to: PipelineStatusKey } | null;
 
-export function RecruitmentTaskBoard({ taskId, getString }: Props) {
+export function RecruitmentTaskBoard({ taskId, getString, openings }: Props) {
     const qc = useQueryClient();
     const { enabled: confirmOnDrag } = useEffectiveBooleanSetting('pipeline_drag_confirm');
 
@@ -63,17 +66,39 @@ export function RecruitmentTaskBoard({ taskId, getString }: Props) {
         return map;
     }, [applications]);
 
+    const boardQK = CANDIDATE_APPLICATIONS_BY_TASK_QK(taskId);
+
     const statusMutation = useMutation({
         mutationFn: changeApplicationStatus,
-        onSuccess: async (res) => {
-            await Promise.all([
-                qc.invalidateQueries({ queryKey: CANDIDATE_APPLICATIONS_BY_TASK_QK(taskId) }),
-                qc.invalidateQueries({ queryKey: CANDIDATE_QK }),
-            ]);
-            setSnackbar({ open: true, message: res.detail, severity: 'success' });
+        // Optimistically move the card so the board feels instant; the real
+        // request runs in the background (and completes even if the user
+        // navigates away — the cache already reflects the move).
+        onMutate: async ({ id, statusKey }) => {
+            await qc.cancelQueries({ queryKey: boardQK });
+            const prev = qc.getQueryData<CandidateApplication[]>(boardQK);
+            qc.setQueryData<CandidateApplication[]>(boardQK, (old) =>
+                (old ?? []).map((a) =>
+                    a.id === id && a.status
+                        ? { ...a, status: { ...a.status, name: statusKey, sort_order: PIPELINE_ORDER.indexOf(statusKey) } }
+                        : a,
+                ),
+            );
+            return { prev };
         },
-        onError: (e: Error) => setSnackbar({ open: true, message: e.message, severity: 'error' }),
+        onError: (e: Error, _vars, ctx) => {
+            if (ctx?.prev) qc.setQueryData(boardQK, ctx.prev);
+            setSnackbar({ open: true, message: e.message, severity: 'error' });
+        },
+        onSuccess: (res) => setSnackbar({ open: true, message: res.detail, severity: 'success' }),
+        onSettled: () => {
+            qc.invalidateQueries({ queryKey: boardQK });
+            qc.invalidateQueries({ queryKey: CANDIDATE_QK });
+        },
     });
+
+    const filledCount = applications.filter(
+        (a) => a.status?.name === 'offer' || a.status?.name === 'hired',
+    ).length;
 
     const doMove = (app: CandidateApplication, to: PipelineStatusKey) =>
         statusMutation.mutate({ id: app.id, statusKey: to });
@@ -109,6 +134,17 @@ export function RecruitmentTaskBoard({ taskId, getString }: Props) {
 
     return (
         <Box>
+            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1, minHeight: 28 }}>
+                {openings != null && (
+                    <Chip
+                        size="small"
+                        variant="outlined"
+                        color={filledCount >= openings ? 'success' : 'default'}
+                        label={`${getString('filled') || 'Filled'}: ${filledCount} / ${openings}`}
+                    />
+                )}
+                {statusMutation.isPending && <CircularProgress size={16} />}
+            </Stack>
             <Box sx={{ display: 'flex', gap: 1.5, overflowX: 'auto', pb: 1 }}>
                 {PIPELINE_ORDER.map((key) => {
                     const cards = byStage.get(key) ?? [];
@@ -164,7 +200,11 @@ export function RecruitmentTaskBoard({ taskId, getString }: Props) {
                                             setDragOverCol(null);
                                         }}
                                         sx={{
-                                            p: 1,
+                                            p: 1.25,
+                                            minHeight: 84,
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'center',
                                             cursor: 'grab',
                                             borderLeft: '3px solid',
                                             borderLeftColor: `${PIPELINE_STATUS_COLOR[key]}.main`,

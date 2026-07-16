@@ -20,18 +20,32 @@ CLOSED_STATUS_KEYS = frozenset(
     {RecruitmentTaskStatusKey.FULFILLED, RecruitmentTaskStatusKey.REJECTED}
 )
 
+# Transitions are REVERSIBLE — a closed task can be reopened, and a task in work
+# can be sent back to created. The service clears the in_process_at / closed_at
+# stamps when a transition moves the task back out of those states.
 ALLOWED_TRANSITIONS: dict[
     RecruitmentTaskStatusKey, frozenset[RecruitmentTaskStatusKey]
 ] = {
-    # A created task may be cancelled without ever going to work.
+    # A created task may go to work or be cancelled outright.
     RecruitmentTaskStatusKey.CREATED: frozenset(
         {RecruitmentTaskStatusKey.IN_PROCESS, RecruitmentTaskStatusKey.REJECTED}
     ),
+    # In work: close it (fulfilled/rejected) or send it back to created.
     RecruitmentTaskStatusKey.IN_PROCESS: frozenset(
-        {RecruitmentTaskStatusKey.FULFILLED, RecruitmentTaskStatusKey.REJECTED}
+        {
+            RecruitmentTaskStatusKey.CREATED,
+            RecruitmentTaskStatusKey.FULFILLED,
+            RecruitmentTaskStatusKey.REJECTED,
+        }
     ),
-    RecruitmentTaskStatusKey.FULFILLED: frozenset(),
-    RecruitmentTaskStatusKey.REJECTED: frozenset(),
+    # Reopen a fulfilled task back into work.
+    RecruitmentTaskStatusKey.FULFILLED: frozenset(
+        {RecruitmentTaskStatusKey.IN_PROCESS}
+    ),
+    # Reopen a rejected task into work or back to created.
+    RecruitmentTaskStatusKey.REJECTED: frozenset(
+        {RecruitmentTaskStatusKey.CREATED, RecruitmentTaskStatusKey.IN_PROCESS}
+    ),
 }
 
 

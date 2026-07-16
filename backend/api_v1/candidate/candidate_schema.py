@@ -9,13 +9,6 @@ class CandidateSourceMini(BaseModel):
     key: str
 
 
-class CandidateCreatorMini(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    id: int
-    name: str
-    code: Optional[str] = None
-
-
 class CandidatePhoneMini(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
@@ -50,7 +43,6 @@ class CandidateSchema(CandidateBase):
     created_by: int
     created_at: datetime
     source: Optional[CandidateSourceMini] = None
-    creator: Optional[CandidateCreatorMini] = None
     phones: List[CandidatePhoneMini] = Field(default_factory=list)
     # Derived (set in service): how many tasks the candidate is applied to and
     # the furthest pipeline stage reached across them.

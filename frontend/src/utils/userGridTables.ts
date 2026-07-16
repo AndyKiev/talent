@@ -13,6 +13,7 @@
 // Const-object "enum" (a real `enum` is banned by erasableSyntaxOnly).
 export const UserGridTable = {
     JOBS: 'jobs',
+    RECRUITMENT_TASKS: 'recruitment_tasks',
 } as const;
 
 export type UserGridTable = (typeof UserGridTable)[keyof typeof UserGridTable];
@@ -27,4 +28,5 @@ export interface UserGridTableConfig {
 // grid column's (already translated) headerName — no per-field list to keep.
 export const USER_GRID_TABLES: UserGridTableConfig[] = [
     { key: UserGridTable.JOBS, labelKey: 'jobs' },
+    { key: UserGridTable.RECRUITMENT_TASKS, labelKey: 'recruitmentTasks' },
 ];

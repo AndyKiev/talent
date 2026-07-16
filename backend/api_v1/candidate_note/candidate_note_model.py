@@ -29,7 +29,9 @@ class CandidateNote(IntIdPkMixin, Base):
     )
 
     candidate: Mapped["Candidate"] = relationship(back_populates="notes")
-    author: Mapped["Employee"] = relationship(foreign_keys=[author_id], lazy="selectin")
+    # NOLOAD: the service fills the author mini (id/name/code) via a column
+    # query — a full Employee eager-load drags its whole selectin graph.
+    author: Mapped["Employee"] = relationship(foreign_keys=[author_id], lazy="noload")
 
     def __repr__(self) -> str:
         return f"<CandidateNote(id={self.id}, candidate_id={self.candidate_id})>"

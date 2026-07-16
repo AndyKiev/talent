@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional
 
 from backend.api_v1.recruitment_task.recruitment_task_state_machine import (
@@ -45,6 +45,7 @@ class RecruitmentTaskBase(BaseModel):
     job_id: int
     requirement_group_id: Optional[int] = None
     department_id: Optional[int] = None
+    openings: int = Field(1, ge=1)
     comment: Optional[str] = None
     target_deadline: Optional[date] = None
 
@@ -56,6 +57,7 @@ class RecruitmentTaskCreate(RecruitmentTaskBase):
 class RecruitmentTaskUpdate(BaseModel):
     requirement_group_id: Optional[int] = None
     department_id: Optional[int] = None
+    openings: Optional[int] = Field(None, ge=1)
     comment: Optional[str] = None
     target_deadline: Optional[date] = None
 

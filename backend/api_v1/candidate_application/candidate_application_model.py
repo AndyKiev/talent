@@ -15,7 +15,6 @@ from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
 
 if TYPE_CHECKING:
     from backend.api_v1.candidate.candidate_model import Candidate
-    from backend.api_v1.employee.employee_model import Employee
     from backend.api_v1.recruitment_task.recruitment_task_model import RecruitmentTask
     from backend.api_v1.pipeline_status.pipeline_status_model import PipelineStatus
     from backend.api_v1.application_status_history.application_status_history_model import (
@@ -56,15 +55,17 @@ class CandidateApplication(IntIdPkMixin, Base):
     )
 
     # Relationships
+    # candidate / recruitment_task are NOLOAD on purpose: eagerly loading them
+    # drags huge object graphs (candidate → its whole tree; task → job/creator/
+    # department …). The service enriches the slim minis the API exposes via
+    # cheap column queries instead. `status` and `status_history` stay eager —
+    # they are tiny lookups the pipeline logic reads on every move.
     candidate: Mapped["Candidate"] = relationship(
-        back_populates="applications", lazy="selectin"
+        back_populates="applications", lazy="noload"
     )
-    recruitment_task: Mapped["RecruitmentTask"] = relationship(lazy="selectin")
+    recruitment_task: Mapped["RecruitmentTask"] = relationship(lazy="noload")
     status: Mapped["PipelineStatus"] = relationship(
         back_populates="applications", lazy="selectin"
-    )
-    creator: Mapped["Employee"] = relationship(
-        foreign_keys=[created_by], lazy="selectin"
     )
     status_history: Mapped[List["ApplicationStatusHistory"]] = relationship(
         back_populates="application",

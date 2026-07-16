@@ -42,8 +42,10 @@ class ApplicationStatusHistory(IntIdPkMixin, Base):
         back_populates="status_history"
     )
     status: Mapped["PipelineStatus"] = relationship(lazy="selectin")
+    # NOLOAD: a full Employee eager-load drags its whole selectin graph. The
+    # service fills the changer mini (id/name/code) via a column query.
     changer: Mapped["Employee"] = relationship(
-        foreign_keys=[changed_by], lazy="selectin"
+        foreign_keys=[changed_by], lazy="noload"
     )
 
     def __repr__(self) -> str:

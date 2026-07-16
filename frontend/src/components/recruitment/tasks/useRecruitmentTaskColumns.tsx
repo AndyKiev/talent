@@ -70,6 +70,15 @@ export function useRecruitmentTaskColumns({
             },
         },
         {
+            field: 'openings',
+            headerName: getString('openings') || 'Openings',
+            width: 100,
+            sortable: true,
+            renderCell: (params: GridRenderCellParams<RecruitmentTask>) => (
+                <Typography variant="body2">{params.row.openings}</Typography>
+            ),
+        },
+        {
             field: 'department',
             headerName: getString('department') || 'Department',
             width: 160,

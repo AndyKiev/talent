@@ -10,11 +10,12 @@ import {
     Button,
     Chip,
     CircularProgress,
-    Divider,
     MenuItem,
     Paper,
     Snackbar,
     Stack,
+    Tab,
+    Tabs,
     TextField,
     Typography,
 } from '@mui/material';
@@ -49,50 +50,28 @@ const fmt = (v: string | null): string => (v ? formatToUkrDate(v) : '—');
 type UpdateMutation = UseMutationResult<MutationResponse<RecruitmentTask>, Error, { id: number; data: RecruitmentTaskUpdate }>;
 type StatusMutation = UseMutationResult<MutationResponse<RecruitmentTask>, Error, { id: number; statusKey: RecruitmentStatusKey }>;
 
-interface DetailCardProps {
+// ── Header: job, status chip, transition buttons, timestamps (always visible) ──
+function TaskHeaderCard({
+    task,
+    getString,
+    statusMutation,
+}: {
     task: RecruitmentTask;
-    groups: JobRequirementGroup[];
     getString: GetStringFn;
-    updateMutation: UpdateMutation;
     statusMutation: StatusMutation;
-}
-
-// Mounted with key={task.id}, so the editable fields prefill via useState
-// initializers instead of a setState-in-effect.
-function TaskDetailCard({ task, groups, getString, updateMutation, statusMutation }: DetailCardProps) {
-    const [comment, setComment] = useState(task.comment ?? '');
-    const [deadline, setDeadline] = useState(task.target_deadline ?? '');
-    const [groupId, setGroupId] = useState<number | ''>(task.requirement_group_id ?? '');
-    const [departmentId, setDepartmentId] = useState<number | null>(task.department_id);
-
-    const { data: departments = [] } = useQuery({
-        queryKey: DEPARTMENT_FLAT_QK,
-        queryFn: fetchDepartmentsFlat,
-    });
-    const selectedDept = departments.find((d) => d.id === departmentId) ?? null;
-
+}) {
     const statusKey = task.status?.name;
-    const closed = statusKey === 'fulfilled' || statusKey === 'rejected';
     const nexts = statusKey ? NEXT_STATUSES[statusKey] : [];
-
-    const handleSave = () => {
-        updateMutation.mutate({
-            id: task.id,
-            data: {
-                comment: comment.trim() || null,
-                target_deadline: deadline || null,
-                requirement_group_id: groupId === '' ? null : groupId,
-                department_id: departmentId,
-            },
-        });
-    };
-
     return (
         <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', p: 2 }}>
-            <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
+            <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 1.5 }} flexWrap="wrap" useFlexGap>
                 <Typography variant="h6" sx={{ flex: 1 }}>
                     {task.job?.name ?? task.job_id}
                 </Typography>
+                <Chip
+                    variant="outlined"
+                    label={`${getString('openings') || 'Openings'}: ${task.openings}`}
+                />
                 {statusKey && <Chip label={statusLabel(statusKey, getString)} color={STATUS_COLOR[statusKey]} />}
                 {nexts.map((target) => (
                     <Button
@@ -107,8 +86,7 @@ function TaskDetailCard({ task, groups, getString, updateMutation, statusMutatio
                     </Button>
                 ))}
             </Stack>
-
-            <Stack direction="row" spacing={4} sx={{ mb: 2 }}>
+            <Stack direction="row" spacing={4} flexWrap="wrap" useFlexGap>
                 <Typography variant="body2" color="text.secondary">
                     {getString('createdAt') || 'Created at'}: {fmt(task.created_at)}
                 </Typography>
@@ -124,68 +102,122 @@ function TaskDetailCard({ task, groups, getString, updateMutation, statusMutatio
                     </Typography>
                 )}
             </Stack>
-
-            <Divider sx={{ mb: 2 }} />
-
-            <Stack spacing={2} sx={{ maxWidth: 520 }}>
-                <TextField
-                    select
-                    variant="outlined"
-                    label={getString('requirementGroup') || 'Requirement group'}
-                    value={groupId}
-                    onChange={(e) => setGroupId(e.target.value === '' ? '' : Number(e.target.value))}
-                    fullWidth
-                    disabled={closed}
-                >
-                    <MenuItem value="">
-                        <em>{getString('noRequirementGroup') || 'No requirement group'}</em>
-                    </MenuItem>
-                    {groups.map((g) => (
-                        <MenuItem key={g.id} value={g.id}>
-                            {g.name}
-                            {g.is_active ? ` (${getString('activeRequirementGroup') || 'Active'})` : ''}
-                        </MenuItem>
-                    ))}
-                </TextField>
-                <Autocomplete
-                    value={selectedDept}
-                    onChange={(_, v) => setDepartmentId(v?.id ?? null)}
-                    options={departments}
-                    getOptionLabel={(o) => o.name}
-                    isOptionEqualToValue={(a, b) => a.id === b.id}
-                    disabled={closed}
-                    renderInput={(params) => (
-                        <TextField {...params} label={getString('department') || 'Department'} />
-                    )}
-                />
-                <TextField
-                    label={getString('comment') || 'Comment'}
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    fullWidth
-                    multiline
-                    rows={3}
-                    disabled={closed}
-                />
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                        label={getString('targetDeadline') || 'Target deadline'}
-                        format={DATE_FORMAT}
-                        value={deadline ? dayjs(deadline) : null}
-                        onChange={(d) => setDeadline(d ? dayjs(d).format('YYYY-MM-DD') : '')}
-                        disabled={closed}
-                        slotProps={{ textField: { fullWidth: true } }}
-                    />
-                </LocalizationProvider>
-                {!closed && (
-                    <Box>
-                        <Button variant="contained" onClick={handleSave} disabled={updateMutation.isPending}>
-                            {updateMutation.isPending ? getString('saving') || 'Saving…' : getString('save') || 'Save'}
-                        </Button>
-                    </Box>
-                )}
-            </Stack>
         </Paper>
+    );
+}
+
+// ── Details tab: the editable main fields. Keyed by task.id so useState
+//    initializers prefill without a setState-in-effect. ─────────────────────────
+function TaskDetailsForm({
+    task,
+    groups,
+    getString,
+    updateMutation,
+}: {
+    task: RecruitmentTask;
+    groups: JobRequirementGroup[];
+    getString: GetStringFn;
+    updateMutation: UpdateMutation;
+}) {
+    const [comment, setComment] = useState(task.comment ?? '');
+    const [deadline, setDeadline] = useState(task.target_deadline ?? '');
+    const [groupId, setGroupId] = useState<number | ''>(task.requirement_group_id ?? '');
+    const [departmentId, setDepartmentId] = useState<number | null>(task.department_id);
+    const [openings, setOpenings] = useState(task.openings ?? 1);
+
+    const { data: departments = [] } = useQuery({
+        queryKey: DEPARTMENT_FLAT_QK,
+        queryFn: fetchDepartmentsFlat,
+    });
+    const selectedDept = departments.find((d) => d.id === departmentId) ?? null;
+
+    const statusKey = task.status?.name;
+    const closed = statusKey === 'fulfilled' || statusKey === 'rejected';
+
+    const handleSave = () => {
+        updateMutation.mutate({
+            id: task.id,
+            data: {
+                comment: comment.trim() || null,
+                target_deadline: deadline || null,
+                requirement_group_id: groupId === '' ? null : groupId,
+                department_id: departmentId,
+                openings: Math.max(1, openings),
+            },
+        });
+    };
+
+    return (
+        <Stack spacing={2} sx={{ maxWidth: 520 }}>
+            {closed && (
+                <Alert severity="info">
+                    {getString('recruitmentTaskClosedHint') || 'Task is closed — reopen it to edit these fields.'}
+                </Alert>
+            )}
+            <TextField
+                select
+                variant="outlined"
+                label={getString('requirementGroup') || 'Requirement group'}
+                value={groupId}
+                onChange={(e) => setGroupId(e.target.value === '' ? '' : Number(e.target.value))}
+                fullWidth
+                disabled={closed}
+            >
+                <MenuItem value="">
+                    <em>{getString('noRequirementGroup') || 'No requirement group'}</em>
+                </MenuItem>
+                {groups.map((g) => (
+                    <MenuItem key={g.id} value={g.id}>
+                        {g.name}
+                        {g.is_active ? ` (${getString('activeRequirementGroup') || 'Active'})` : ''}
+                    </MenuItem>
+                ))}
+            </TextField>
+            <Autocomplete
+                value={selectedDept}
+                onChange={(_, v) => setDepartmentId(v?.id ?? null)}
+                options={departments}
+                getOptionLabel={(o) => o.name}
+                isOptionEqualToValue={(a, b) => a.id === b.id}
+                disabled={closed}
+                renderInput={(params) => <TextField {...params} label={getString('department') || 'Department'} />}
+            />
+            <TextField
+                label={getString('openings') || 'Openings (positions)'}
+                type="number"
+                value={openings}
+                onChange={(e) => setOpenings(Math.max(1, Number(e.target.value) || 1))}
+                fullWidth
+                disabled={closed}
+                slotProps={{ htmlInput: { min: 1 } }}
+            />
+            <TextField
+                label={getString('comment') || 'Comment'}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                fullWidth
+                multiline
+                rows={3}
+                disabled={closed}
+            />
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                    label={getString('targetDeadline') || 'Target deadline'}
+                    format={DATE_FORMAT}
+                    value={deadline ? dayjs(deadline) : null}
+                    onChange={(d) => setDeadline(d ? dayjs(d).format('YYYY-MM-DD') : '')}
+                    disabled={closed}
+                    slotProps={{ textField: { fullWidth: true } }}
+                />
+            </LocalizationProvider>
+            {!closed && (
+                <Box>
+                    <Button variant="contained" onClick={handleSave} disabled={updateMutation.isPending}>
+                        {updateMutation.isPending ? getString('saving') || 'Saving…' : getString('save') || 'Save'}
+                    </Button>
+                </Box>
+            )}
+        </Stack>
     );
 }
 
@@ -194,6 +226,7 @@ export function RecruitmentTaskPage() {
     const { taskId } = useParams({ from: '/recruitment/$taskId/' });
     const id = Number(taskId);
 
+    const [tab, setTab] = useState(0);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
     const { data: task, isLoading, error } = useQuery({
@@ -236,27 +269,20 @@ export function RecruitmentTaskPage() {
 
             {!isLoading && task && (
                 <Stack spacing={3}>
-                    <TaskDetailCard
-                        key={task.id}
-                        task={task}
-                        groups={groups}
-                        getString={getString}
-                        updateMutation={updateMutation}
-                        statusMutation={statusMutation}
-                    />
+                    <TaskHeaderCard key={`h-${task.id}`} task={task} getString={getString} statusMutation={statusMutation} />
 
                     <Box>
-                        <Typography variant="h6" sx={{ mb: 2 }}>
-                            {getString('candidateBoard') || 'Candidate board'}
-                        </Typography>
-                        <RecruitmentTaskBoard taskId={task.id} getString={getString} />
-                    </Box>
+                        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+                            <Tab label={cfl(getString('details') || 'Details')} />
+                            <Tab label={cfl(getString('candidateBoard') || 'Candidates')} />
+                            <Tab label={cfl(getString('jobRequirements') || 'Requirements')} />
+                        </Tabs>
 
-                    <Box>
-                        <Typography variant="h6" sx={{ mb: 2 }}>
-                            {getString('jobRequirements') || 'Job requirements'}
-                        </Typography>
-                        <JobRequirementGroupsManager jobId={task.job_id} getString={getString} />
+                        {tab === 0 && (
+                            <TaskDetailsForm key={task.id} task={task} groups={groups} getString={getString} updateMutation={updateMutation} />
+                        )}
+                        {tab === 1 && <RecruitmentTaskBoard taskId={task.id} getString={getString} openings={task.openings} />}
+                        {tab === 2 && <JobRequirementGroupsManager jobId={task.job_id} getString={getString} />}
                     </Box>
                 </Stack>
             )}

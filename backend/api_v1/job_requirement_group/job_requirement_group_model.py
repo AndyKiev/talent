@@ -35,10 +35,14 @@ class JobRequirementGroup(IntIdPkMixin, Base):
     )
 
     # Relationships
-    job: Mapped["Job"] = relationship(lazy="selectin")
+    # NOLOAD: the API never exposes the job object (job_id is enough), and an
+    # eager Job load drags its link graphs (process roles, trainings, groups).
+    job: Mapped["Job"] = relationship(lazy="noload")
+    # NOLOAD: creator isn't exposed by the API, and a full Employee eager-load
+    # drags its whole selectin graph (events, departments, person, …).
     creator: Mapped["Employee"] = relationship(
         foreign_keys=[created_by],
-        lazy="selectin",
+        lazy="noload",
     )
     items: Mapped[List["JobRequirementItem"]] = relationship(
         back_populates="group",

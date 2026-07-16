@@ -1,7 +1,13 @@
 from datetime import datetime, timezone
 from typing import Optional, List
 
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from backend.api_v1.candidate_application.candidate_application_model import (
+    CandidateApplication,
+)
+from backend.api_v1.pipeline_status.pipeline_status_model import PipelineStatus
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
@@ -12,6 +18,15 @@ from backend.api_v1.recruitment_task.recruitment_task_schema import (
     RecruitmentTaskSchema,
     RecruitmentTaskCreate,
     RecruitmentTaskUpdate,
+    RecruitmentTaskCreatorMini,
+    RecruitmentTaskDepartmentMini,
+    RecruitmentTaskGroupMini,
+    RecruitmentTaskJobMini,
+)
+from backend.api_v1.employee.employee_minis import fetch_employee_minis
+from backend.api_v1.job.job_model import Job
+from backend.api_v1.job_requirement_group.job_requirement_group_model import (
+    JobRequirementGroup,
 )
 from backend.api_v1.recruitment_task.recruitment_task_state_machine import (
     RecruitmentTaskStatusKey,
@@ -34,6 +49,7 @@ from backend.api_v1.recruitment_task.recruitment_task_messages import (
     RecruitmentTaskNotFound,
     RecruitmentTaskInvalidTransition,
     RecruitmentTaskRequirementGroupRequired,
+    RecruitmentTaskFulfillNeedsCandidate,
     RecruitmentTaskClosed,
     RecruitmentTaskDeleteError,
     RecruitmentTaskDeleteSuccess,
@@ -68,6 +84,20 @@ class RecruitmentTaskService(BaseService):
     async def _status_by_name(self, name: str):
         return await self.status_repository.get_by_field("name", name)
 
+    async def _has_hired_candidate(self, task_id: int) -> bool:
+        """True if at least one application for this task reached the 'hired' stage."""
+        stmt = (
+            select(func.count())
+            .select_from(CandidateApplication)
+            .join(PipelineStatus, PipelineStatus.id == CandidateApplication.status_id)
+            .where(
+                CandidateApplication.recruitment_task_id == task_id,
+                PipelineStatus.name == "hired",
+            )
+        )
+        count = (await self.repository.session.execute(stmt)).scalar_one()
+        return count > 0
+
     async def _org_index(self) -> DepartmentIndex:
         # Flat department index (id -> (parent_id, name, category_key)); built once
         # per request so list endpoints don't rebuild it per task. Uses the repo
@@ -75,18 +105,74 @@ class RecruitmentTaskService(BaseService):
         dept_repo = DepartmentRepository(session=self.repository.session)
         return await dept_repo.get_org_unit_index()
 
-    def _attach_top_org_unit(
-        self, schema: RecruitmentTaskSchema, index: DepartmentIndex
-    ) -> RecruitmentTaskSchema:
-        if schema.department_id is not None:
-            schema.top_org_unit = resolve_top_org_unit(schema.department_id, index)
+    async def _enrich_many(
+        self, schemas: List[RecruitmentTaskSchema]
+    ) -> List[RecruitmentTaskSchema]:
+        """Fill the display minis (creator / department / top_org_unit /
+        requirement_group) via cheap batched COLUMN queries — the corresponding
+        model relationships are lazy="noload" to avoid dragging heavy graphs."""
+        if not schemas:
+            return schemas
+        session = self.repository.session
+        index = await self._org_index()
+        emp_minis = await fetch_employee_minis(
+            session, (s.created_by for s in schemas)
+        )
+        job_rows = (
+            await session.execute(
+                select(Job.id, Job.name, Job.is_active).where(
+                    Job.id.in_({s.job_id for s in schemas})
+                )
+            )
+        ).all()
+        job_minis = {
+            r[0]: RecruitmentTaskJobMini(id=r[0], name=r[1], is_active=r[2])
+            for r in job_rows
+        }
+        group_ids = {
+            s.requirement_group_id
+            for s in schemas
+            if s.requirement_group_id is not None
+        }
+        group_minis: dict[int, RecruitmentTaskGroupMini] = {}
+        if group_ids:
+            rows = (
+                await session.execute(
+                    select(
+                        JobRequirementGroup.id,
+                        JobRequirementGroup.name,
+                        JobRequirementGroup.is_active,
+                    ).where(JobRequirementGroup.id.in_(group_ids))
+                )
+            ).all()
+            group_minis = {
+                r[0]: RecruitmentTaskGroupMini(id=r[0], name=r[1], is_active=r[2])
+                for r in rows
+            }
+        for s in schemas:
+            s.job = job_minis.get(s.job_id)
+            if s.department_id is not None:
+                s.top_org_unit = resolve_top_org_unit(s.department_id, index)
+                entry = index.get(s.department_id)
+                if entry:
+                    s.department = RecruitmentTaskDepartmentMini(
+                        id=s.department_id, name=entry[1]
+                    )
+            mini = emp_minis.get(s.created_by)
+            if mini:
+                s.creator = RecruitmentTaskCreatorMini(**mini)
+            if s.requirement_group_id is not None:
+                s.requirement_group = group_minis.get(s.requirement_group_id)
+        return schemas
+
+    async def _enrich(self, schema: RecruitmentTaskSchema) -> RecruitmentTaskSchema:
+        await self._enrich_many([schema])
         return schema
 
     async def get_recruitment_task_detail(self, task_id: int) -> RecruitmentTaskSchema:
-        """Single task as a schema WITH the derived top_org_unit (GET by id)."""
+        """Single task as a fully enriched schema (GET by id)."""
         record = await self.get_by_id(task_id)
-        schema = RecruitmentTaskSchema.model_validate(record)
-        return self._attach_top_org_unit(schema, await self._org_index())
+        return await self._enrich(RecruitmentTaskSchema.model_validate(record))
 
     async def _validate_group_for_job(self, group_id: int, job_id: int) -> None:
         group = await self.group_repository.get_by_id(group_id)
@@ -115,13 +201,9 @@ class RecruitmentTaskService(BaseService):
             sort_json=sort,
             sort=None if sort else [{"created_at": "desc"}, {"id": "desc"}],
         )
-        index = await self._org_index()
-        return [
-            self._attach_top_org_unit(
-                RecruitmentTaskSchema.model_validate(r), index
-            )
-            for r in records
-        ]
+        return await self._enrich_many(
+            [RecruitmentTaskSchema.model_validate(r) for r in records]
+        )
 
     async def create_recruitment_task(
         self, task_in: RecruitmentTaskCreate
@@ -141,9 +223,8 @@ class RecruitmentTaskService(BaseService):
         )
         record = await self.repository.create(instance=record)
         record = await self.get_by_id(record.id)
-        schema = RecruitmentTaskSchema.model_validate(record)
-        schema = self._attach_top_org_unit(schema, await self._org_index())
-        job_name = record.job.name if record.job else str(record.job_id)
+        schema = await self._enrich(RecruitmentTaskSchema.model_validate(record))
+        job_name = schema.job.name if schema.job else str(schema.job_id)
         detail = await self._resolve_domain_success(
             RecruitmentTaskCreateSuccess(job_name)
         )
@@ -170,8 +251,7 @@ class RecruitmentTaskService(BaseService):
         # so a plain re-fetch would return the stale cached relationship.
         self.session.expunge(updated)
         updated = await self.get_by_id(updated.id)
-        schema = RecruitmentTaskSchema.model_validate(updated)
-        schema = self._attach_top_org_unit(schema, await self._org_index())
+        schema = await self._enrich(RecruitmentTaskSchema.model_validate(updated))
         detail = await self._resolve_domain_success(
             RecruitmentTaskUpdateSuccess(str(task_id))
         )
@@ -194,20 +274,34 @@ class RecruitmentTaskService(BaseService):
             raise await self._resolve_domain_error(
                 RecruitmentTaskRequirementGroupRequired()
             )
+        # A task can only be marked fulfilled once a candidate has been hired for
+        # it — "fulfilled" means the position was filled.
+        if target_key == RecruitmentTaskStatusKey.FULFILLED and not (
+            await self._has_hired_candidate(task_id)
+        ):
+            raise await self._resolve_domain_error(
+                RecruitmentTaskFulfillNeedsCandidate()
+            )
         target_status = await self._status_by_name(target_key.value)
         # Assign the relationship (not just the FK) so the returned schema's
         # nested status is correct even though the session keeps instances live
         # across commit (expire_on_commit=False).
         orm_record.status = target_status
         now = datetime.now(timezone.utc)
-        if target_key == RecruitmentTaskStatusKey.IN_PROCESS:
-            orm_record.in_process_at = now
+        # Stamp / clear the transition timestamps — transitions are reversible, so
+        # reopening a closed task clears closed_at, and reverting to created clears
+        # both stamps.
+        if target_key == RecruitmentTaskStatusKey.CREATED:
+            orm_record.in_process_at = None
+            orm_record.closed_at = None
+        elif target_key == RecruitmentTaskStatusKey.IN_PROCESS:
+            orm_record.in_process_at = orm_record.in_process_at or now
+            orm_record.closed_at = None
         elif target_key in CLOSED_STATUS_KEYS:
             orm_record.closed_at = now
         await self.session.commit()
         refreshed = await self.get_by_id(task_id)
-        schema = RecruitmentTaskSchema.model_validate(refreshed)
-        schema = self._attach_top_org_unit(schema, await self._org_index())
+        schema = await self._enrich(RecruitmentTaskSchema.model_validate(refreshed))
         detail = await self._resolve_domain_success(
             RecruitmentTaskStatusChangeSuccess(target_key.value)
         )

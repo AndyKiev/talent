@@ -48,9 +48,12 @@ async def get_candidate_applications(
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.CANDIDATE_APPLICATION)],
 )
 async def get_candidate_application(
-    record: CandidateApplicationSchema = Depends(candidate_application_by_id),
+    candidate_application_id: int,
+    service: Annotated[
+        CandidateApplicationService, Depends(get_candidate_application_service)
+    ],
 ):
-    return record
+    return await service.get_application_detail(candidate_application_id)
 
 
 @router.post(

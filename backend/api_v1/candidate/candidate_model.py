@@ -8,7 +8,6 @@ from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
 
 if TYPE_CHECKING:
-    from backend.api_v1.employee.employee_model import Employee
     from backend.api_v1.candidate_source.candidate_source_model import CandidateSource
     from backend.api_v1.candidate_phone.candidate_phone_model import CandidatePhone
     from backend.api_v1.candidate_note.candidate_note_model import CandidateNote
@@ -35,10 +34,10 @@ class Candidate(IntIdPkMixin, Base):
     )
 
     # Relationships
+    # NOTE: no `creator` relationship on purpose — eagerly loading an Employee
+    # drags its whole selectin graph (events, departments, person, …) and made
+    # the candidates list take seconds. `created_by` (the id) is enough.
     source: Mapped[Optional["CandidateSource"]] = relationship(lazy="selectin")
-    creator: Mapped["Employee"] = relationship(
-        foreign_keys=[created_by], lazy="selectin"
-    )
     phones: Mapped[List["CandidatePhone"]] = relationship(
         back_populates="candidate",
         lazy="selectin",

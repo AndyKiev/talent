@@ -46,8 +46,10 @@ class ApplicationHistoryMini(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     status_id: int
+    changed_by: int
     changed_at: datetime
     status: Optional[ApplicationStatusMini] = None
+    # Filled by the service via a column lookup (model relationship is noload).
     changer: Optional[ApplicationCreatorMini] = None
 
 
@@ -68,8 +70,9 @@ class CandidateApplicationSchema(BaseModel):
     status_id: int
     created_by: int
     created_at: datetime
+    # candidate / recruitment_task / changers are filled by the service via
+    # cheap column queries (the model relationships are lazy="noload").
     candidate: Optional[ApplicationCandidateMini] = None
     recruitment_task: Optional[ApplicationTaskMini] = None
     status: Optional[ApplicationStatusMini] = None
-    creator: Optional[ApplicationCreatorMini] = None
     status_history: List[ApplicationHistoryMini] = []

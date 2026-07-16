@@ -27,23 +27,24 @@ const STATUS_FALLBACK: Record<RecruitmentStatusKey, string> = {
 export const statusLabel = (key: RecruitmentStatusKey, getString: GetStringFn): string =>
     getString(STATUS_LABEL_KEY[key]) || STATUS_FALLBACK[key];
 
-/** Allowed transitions per current status (mirrors the backend state machine). */
+/** Allowed transitions per current status (mirrors the REVERSIBLE backend state
+ *  machine — a closed task can be reopened, in-work can go back to created). */
 export const NEXT_STATUSES: Record<RecruitmentStatusKey, RecruitmentStatusKey[]> = {
     created: ['in_process', 'rejected'],
-    in_process: ['fulfilled', 'rejected'],
-    fulfilled: [],
-    rejected: [],
+    in_process: ['created', 'fulfilled', 'rejected'],
+    fulfilled: ['in_process'],
+    rejected: ['created', 'in_process'],
 };
 
 const TRANSITION_LABEL_KEY: Record<RecruitmentStatusKey, string> = {
-    created: 'recruitmentTaskStart',
+    created: 'recruitmentTaskToCreated',
     in_process: 'recruitmentTaskStart',
     fulfilled: 'recruitmentTaskFulfill',
     rejected: 'recruitmentTaskReject',
 };
 
 const TRANSITION_FALLBACK: Record<RecruitmentStatusKey, string> = {
-    created: 'Start',
+    created: 'Back to created',
     in_process: 'Start',
     fulfilled: 'Fulfill',
     rejected: 'Reject',

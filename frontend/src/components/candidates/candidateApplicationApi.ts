@@ -45,6 +45,7 @@ export interface ApplicationCreatorMini {
 export interface ApplicationHistoryMini {
     id: number;
     status_id: number;
+    changed_by: number;
     changed_at: string;
     status: ApplicationStatusMini | null;
     changer: ApplicationCreatorMini | null;
@@ -60,7 +61,6 @@ export interface CandidateApplication {
     candidate: ApplicationCandidateMini | null;
     recruitment_task: ApplicationTaskMini | null;
     status: ApplicationStatusMini | null;
-    creator: ApplicationCreatorMini | null;
     status_history: ApplicationHistoryMini[];
 }
 

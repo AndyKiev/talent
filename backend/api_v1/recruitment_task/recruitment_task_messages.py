@@ -34,6 +34,15 @@ class RecruitmentTaskRequirementGroupRequired(DomainError):
         super().__init__(self.fallback)
 
 
+class RecruitmentTaskFulfillNeedsCandidate(DomainError):
+    message_key = "recruitmentTaskFulfillNeedsCandidate"
+
+    def __init__(self) -> None:
+        self.template_vars = {}
+        self.fallback = "A task can only be fulfilled once a candidate is hired for it"
+        super().__init__(self.fallback)
+
+
 class RecruitmentTaskClosed(DomainError):
     message_key = "recruitmentTaskClosed"
 
