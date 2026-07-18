@@ -7,7 +7,7 @@ import {
     DialogContentText,
     DialogTitle,
 } from '@mui/material';
-import type { GetStringFn } from '../../types/getStringFn';
+import useString from '../../hooks/useString';
 
 interface Props {
     open: boolean;
@@ -20,7 +20,6 @@ interface Props {
     /** Confirm-button colour. Defaults to 'primary'. */
     confirmColor?: 'primary' | 'warning' | 'error' | 'success';
     isPending?: boolean;
-    getString: GetStringFn;
     onConfirm: () => void;
     onClose: () => void;
 }
@@ -36,10 +35,10 @@ export default function ConfirmDialog({
     confirmLabel,
     confirmColor = 'primary',
     isPending = false,
-    getString,
     onConfirm,
     onClose,
 }: Props) {
+    const getString = useString();
     return (
         <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
             <DialogTitle>{title}</DialogTitle>

@@ -316,7 +316,7 @@ export function DbTablesPage() {
             ),
         },
         {
-            field: 'description_ru', headerName: getString('descriptionRu') || 'Описание',
+            field: 'description_ru', headerName: getString('descriptionRu') || 'Description',
             width: prefsByField.description_ru?.width ?? 220,
             sortable: prefsByField.description_ru?.sortable !== false,
             filterable: prefsByField.description_ru?.filterable !== false,

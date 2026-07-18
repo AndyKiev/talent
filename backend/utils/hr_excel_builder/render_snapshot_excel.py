@@ -4,7 +4,12 @@ render_snapshot_excel.py
 Renders a staffing-snapshot Excel report from a v2 snapshot JSON file.
 
 Usage:
-    python render_snapshot_excel.py snapshot_v2.json output.xlsx
+    python render_snapshot_excel.py snapshot_v2.json output.xlsx [ukr|eng]
+
+Header labels are localized: pass a ``labels`` dict to ``render_excel`` (see
+``snapshot_labels`` — resolves the hrSnapshot* message keys from the DB for the
+target language), or give the CLI a language code (default ukr). The in-code
+``DEFAULT_LABELS`` fallback is English, per the project translation rule.
 
 The JSON schema is config-driven: each job_group carries a `config` block
 that controls both data shape and Excel column layout:
@@ -30,6 +35,49 @@ import sys
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Header labels (localized; English = in-code fallback)
+# ─────────────────────────────────────────────────────────────────────────────
+DEFAULT_LABELS = {
+    "object": "Object",
+    "total": "Total",
+    "target": "target",
+    "fact": "actual",
+    "pct": "% done",
+    "base_target": "base target",
+    "object_target": "object target",
+    "status_pa": "Pas",
+    "status_po": "Cur",
+}
+
+# slot -> msg_keys.name (resolved from the DB by snapshot_labels)
+LABEL_KEYS = {
+    "object": "hrSnapshotObject",
+    "total": "hrSnapshotTotal",
+    "target": "hrSnapshotTarget",
+    "fact": "hrSnapshotFact",
+    "pct": "hrSnapshotPctDone",
+    "base_target": "hrSnapshotBaseTarget",
+    "object_target": "hrSnapshotObjectTarget",
+    "status_pa": "hrSnapshotStatusPa",
+    "status_po": "hrSnapshotStatusPo",
+}
+
+
+async def snapshot_labels(session, lang_id: int) -> dict:
+    """Resolve the header labels from the msg_keys/msgs tables for one language.
+
+    Missing keys keep their English DEFAULT_LABELS value. Imports are lazy so
+    the renderer stays importable/runnable without the backend DB stack.
+    """
+    from backend.api_v1.msg_pg.msg_translate import translate_keys
+
+    key_to_slot = {key: slot for slot, key in LABEL_KEYS.items()}
+    keys = {LABEL_KEYS[slot]: fallback for slot, fallback in DEFAULT_LABELS.items()}
+    resolved = await translate_keys(session, keys, lang_id)
+    return {key_to_slot[key]: value for key, value in resolved.items()}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -172,13 +220,15 @@ def _build_column_plan(job_groups: list) -> tuple:
 # ─────────────────────────────────────────────────────────────────────────────
 # Header writers  (rows 1 – 4)
 # ─────────────────────────────────────────────────────────────────────────────
-def _write_headers(ws, jg_plans: list, summary_cols: dict):
+def _write_headers(ws, jg_plans: list, summary_cols: dict, labels: dict):
     sc = summary_cols
     COL_ORG, COL_DEPT = 1, 2
 
     # ── Row 1 & 2: job-group titles ───────────────────────────────────────────
-    # "Об'єкт" always spans rows 1–2
-    _merge(ws, 1, COL_ORG, 2, COL_DEPT, "Об'єкт", font=_hdr_font(), fill_color=C_H1)
+    # The object column always spans rows 1–2
+    _merge(
+        ws, 1, COL_ORG, 2, COL_DEPT, labels["object"], font=_hdr_font(), fill_color=C_H1
+    )
 
     for p in jg_plans:
         has_sub_jobs = bool(p["jg"]["config"]["jobs"])
@@ -194,14 +244,14 @@ def _write_headers(ws, jg_plans: list, summary_cols: dict):
             fill_color=C_H1,
         )
 
-    # "Всього" always spans rows 1–2
+    # The totals block always spans rows 1–2
     _merge(
         ws,
         1,
         sc["base_target"],
         2,
         sc["pct"],
-        "Всього",
+        labels["total"],
         font=_hdr_font(),
         fill_color=C_H1,
     )
@@ -219,7 +269,7 @@ def _write_headers(ws, jg_plans: list, summary_cols: dict):
                 p["target_cols"][0],
                 2,
                 p["target_cols"][-1],
-                "ціль",
+                labels["target"],
                 font=_hdr_font(),
                 fill_color=C_H2,
             )
@@ -228,7 +278,7 @@ def _write_headers(ws, jg_plans: list, summary_cols: dict):
                 ws,
                 2,
                 p["target_cols"][0],
-                "ціль",
+                labels["target"],
                 font=_hdr_font(),
                 fill_color=C_H2,
                 align=ALIGN_CENTER,
@@ -262,7 +312,7 @@ def _write_headers(ws, jg_plans: list, summary_cols: dict):
                 ws,
                 3,
                 p["target_cols"][0],
-                "ціль",
+                labels["target"],
                 font=_hdr_font("1F3864", bold=False),
                 fill_color=C_H3,
                 align=ALIGN_CENTER,
@@ -274,12 +324,12 @@ def _write_headers(ws, jg_plans: list, summary_cols: dict):
                 p["target_cols"][0],
                 3,
                 p["target_cols"][1],
-                "ціль",
+                labels["target"],
                 font=_hdr_font("1F3864", bold=False),
                 fill_color=C_H3,
             )
 
-        # "реалізовано" spanning all fact columns
+        # Fact label spanning all fact columns
         if cfg["fact_mode"] == "by_status":
             _merge(
                 ws,
@@ -287,7 +337,7 @@ def _write_headers(ws, jg_plans: list, summary_cols: dict):
                 p["fact_cols"][0],
                 3,
                 p["fact_cols"][1],
-                "реалізовано",
+                labels["fact"],
                 font=_hdr_font("1F3864", bold=False),
                 fill_color=C_H3,
             )
@@ -299,17 +349,17 @@ def _write_headers(ws, jg_plans: list, summary_cols: dict):
                 min(all_fact),
                 3,
                 max(all_fact),
-                "реалізовано",
+                labels["fact"],
                 font=_hdr_font("1F3864", bold=False),
                 fill_color=C_H3,
             )
 
-        # % вик.
+        # % done
         _set_cell(
             ws,
             3,
             p["pct_col"],
-            "% вик.",
+            labels["pct"],
             font=_hdr_font("1F3864", bold=False),
             fill_color=C_PCT,
             align=ALIGN_CENTER,
@@ -317,10 +367,10 @@ def _write_headers(ws, jg_plans: list, summary_cols: dict):
 
     # Summary row-3 labels
     for col, label in [
-        (sc["base_target"], "ціль базова"),
-        (sc["object_target"], "ціль об'єкта"),
-        (sc["fact"], "реалізовано"),
-        (sc["pct"], "% вик."),
+        (sc["base_target"], labels["base_target"]),
+        (sc["object_target"], labels["object_target"]),
+        (sc["fact"], labels["fact"]),
+        (sc["pct"], labels["pct"]),
     ]:
         fc = C_PCT if col == sc["pct"] else C_H3
         _set_cell(
@@ -342,7 +392,7 @@ def _write_headers(ws, jg_plans: list, summary_cols: dict):
                 ws,
                 4,
                 p["target_cols"][0],
-                "Па",
+                labels["status_pa"],
                 font=_hdr_font("1F3864", bold=False, size=8),
                 fill_color=C_H4,
                 align=ALIGN_CENTER,
@@ -351,7 +401,7 @@ def _write_headers(ws, jg_plans: list, summary_cols: dict):
                 ws,
                 4,
                 p["target_cols"][1],
-                "По",
+                labels["status_po"],
                 font=_hdr_font("1F3864", bold=False, size=8),
                 fill_color=C_H4,
                 align=ALIGN_CENTER,
@@ -372,7 +422,7 @@ def _write_headers(ws, jg_plans: list, summary_cols: dict):
                 ws,
                 4,
                 p["fact_cols"][0],
-                "Па",
+                labels["status_pa"],
                 font=_hdr_font("1F3864", bold=False, size=8),
                 fill_color=C_H4,
                 align=ALIGN_CENTER,
@@ -381,7 +431,7 @@ def _write_headers(ws, jg_plans: list, summary_cols: dict):
                 ws,
                 4,
                 p["fact_cols"][1],
-                "По",
+                labels["status_po"],
                 font=_hdr_font("1F3864", bold=False, size=8),
                 fill_color=C_H4,
                 align=ALIGN_CENTER,
@@ -392,7 +442,7 @@ def _write_headers(ws, jg_plans: list, summary_cols: dict):
                     ws,
                     4,
                     jc[0],
-                    "Па",
+                    labels["status_pa"],
                     font=_hdr_font("1F3864", bold=False, size=8),
                     fill_color=C_H4,
                     align=ALIGN_CENTER,
@@ -401,7 +451,7 @@ def _write_headers(ws, jg_plans: list, summary_cols: dict):
                     ws,
                     4,
                     jc[1],
-                    "По",
+                    labels["status_po"],
                     font=_hdr_font("1F3864", bold=False, size=8),
                     fill_color=C_H4,
                     align=ALIGN_CENTER,
@@ -447,6 +497,7 @@ def _write_data_row(
     row_data: dict,
     jg_plans: list,
     summary_cols: dict,
+    labels: dict,
     is_total: bool = False,
     row_index: int = 0,
 ):
@@ -485,7 +536,7 @@ def _write_data_row(
             COL_ORG,
             excel_row,
             COL_DEPT,
-            row_data.get("label", "Всього"),
+            row_data.get("label") or labels["total"],
             font=_hdr_font("7F6000", bold=True),
             fill_color=C_TOT,
         )
@@ -571,7 +622,7 @@ def _apply_dimensions(
 # ─────────────────────────────────────────────────────────────────────────────
 # Public entry point
 # ─────────────────────────────────────────────────────────────────────────────
-def render_excel(snapshot: dict, out_path: str) -> None:
+def render_excel(snapshot: dict, out_path: str, labels: dict = None) -> None:
     """
     Render a v2 staffing snapshot dict to an Excel file at `out_path`.
 
@@ -579,7 +630,10 @@ def render_excel(snapshot: dict, out_path: str) -> None:
     ----------
     snapshot  : dict loaded from snapshot_v2.json
     out_path  : destination .xlsx path
+    labels    : header labels for the target language (see ``snapshot_labels``);
+                missing slots fall back to the English DEFAULT_LABELS
     """
+    labels = {**DEFAULT_LABELS, **(labels or {})}
     job_groups = snapshot["essences"]["job_groups"]
     jg_plans, summary_cols, max_col = _build_column_plan(job_groups)
 
@@ -587,16 +641,16 @@ def render_excel(snapshot: dict, out_path: str) -> None:
     ws = wb.active
     ws.title = "Snapshot"
 
-    _write_headers(ws, jg_plans, summary_cols)
+    _write_headers(ws, jg_plans, summary_cols, labels)
 
     # Grand-totals row → always row 5
     _write_data_row(
-        ws, 5, snapshot["grand_totals"], jg_plans, summary_cols, is_total=True
+        ws, 5, snapshot["grand_totals"], jg_plans, summary_cols, labels, is_total=True
     )
 
     # Data rows → rows 6 +
     for i, row in enumerate(snapshot["data"]):
-        _write_data_row(ws, 6 + i, row, jg_plans, summary_cols, row_index=i)
+        _write_data_row(ws, 6 + i, row, jg_plans, summary_cols, labels, row_index=i)
 
     _apply_dimensions(
         ws, jg_plans, summary_cols, max_col, data_row_count=len(snapshot["data"])
@@ -612,14 +666,46 @@ def render_excel(snapshot: dict, out_path: str) -> None:
 # ─────────────────────────────────────────────────────────────────────────────
 # CLI
 # ─────────────────────────────────────────────────────────────────────────────
+def _cli_fetch_labels(lang_code: str) -> dict:
+    """Resolve labels from the DB for the CLI (ukr/eng); English fallback when
+    the backend stack or the DB is unavailable."""
+    import asyncio
+    from pathlib import Path
+
+    repo_root = Path(__file__).resolve().parents[3]
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+    try:
+        from backend.database.db_helper import db_helper
+        from backend.api_v1.msg_pg.msg_translate import LANG_ID_ENG, LANG_ID_UKR
+
+        lang_id = LANG_ID_UKR if lang_code == "ukr" else LANG_ID_ENG
+
+        async def _fetch() -> dict:
+            async with db_helper.session_factory() as session:
+                return await snapshot_labels(session, lang_id)
+
+        return asyncio.run(_fetch())
+    except Exception as exc:
+        print(f"[WARN] Could not load '{lang_code}' labels from the DB ({exc}); "
+              "using English fallbacks.")
+        return dict(DEFAULT_LABELS)
+
+
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: python render_snapshot_excel.py <snapshot.json> <output.xlsx>")
+    if len(sys.argv) not in (3, 4):
+        print(
+            "Usage: python render_snapshot_excel.py <snapshot.json> <output.xlsx> [ukr|eng]"
+        )
         sys.exit(1)
 
     json_path, xlsx_path = sys.argv[1], sys.argv[2]
+    lang_code = sys.argv[3] if len(sys.argv) == 4 else "ukr"
+    if lang_code not in ("ukr", "eng"):
+        print(f"Unknown language '{lang_code}' — use ukr or eng.")
+        sys.exit(1)
 
     with open(json_path, encoding="utf-8") as f:
         data = json.load(f)
 
-    render_excel(data, xlsx_path)
+    render_excel(data, xlsx_path, labels=_cli_fetch_labels(lang_code))

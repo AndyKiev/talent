@@ -20,14 +20,14 @@ import { DataGrid } from '@mui/x-data-grid';
 import { fetchJobCategories, updateJobCategory, type JobCategory } from './jobCategoryApi';
 import { useJobCategoryMutations } from './useJobCategoryMutations';
 import { useJobCategoryColumns, type EditingState } from './useJobCategoryColumns';
-import { useArrowReorder } from '../review_dimensions/useArrowReorder';
+import { useArrowReorder } from '../../../hooks/useArrowReorder';
 import { JobCategoryForm } from './JobCategoryForm';
-import { JobCategoryEditDialog, type PendingEdit } from './JobCategoryEditDialog';
-import { JobCategoryDeleteDialog } from './JobCategoryDeleteDialog';
+import { FieldEditConfirmDialog, type PendingEdit } from '../../ui/FieldEditConfirmDialog';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import useString from '../../../hooks/useString';
 import cfl from '../../../utils/helpers.ts';
 import { JOB_CATEGORY_QK } from '../../../utils/queryKeys.ts';
+import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
 
 export function JobCategoryCrud() {
     const getString = useString();
@@ -204,18 +204,20 @@ export function JobCategoryCrud() {
                 nextSortOrder={sortedRows.length}
             />
 
-            <JobCategoryEditDialog
+            <FieldEditConfirmDialog
                 pending={pendingEdit}
                 isPending={updateMutation.isPending}
                 onConfirm={handleConfirmEdit}
                 onCancel={handleCancelPending}
             />
 
-            <JobCategoryDeleteDialog
-                row={rowToDelete}
-                isPending={deleteMutation.isPending}
+            <ConfirmDeleteDialog
+                open={!!rowToDelete}
+                title={getString('deleteJobCategory') || 'Delete Job Category'}
+                message={getString('areYouSureDeleteJobCategory', { key: rowToDelete?.key ?? '' }) || `Are you sure you want to delete "${rowToDelete?.key}"? Its job links will be removed. This action cannot be undone.`}
+                isDeleting={deleteMutation.isPending}
                 onConfirm={handleConfirmDelete}
-                onCancel={() => setRowToDelete(null)}
+                onClose={() => setRowToDelete(null)}
             />
 
             {/* Deliberate, confirm-gated bulk removal of every job ↔ category link. */}

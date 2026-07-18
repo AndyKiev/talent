@@ -21,12 +21,12 @@ import { useDepartmentTypeMutations } from './useDepartmentTypeMutations';
 import { DEPARTMENT_TYPE_QK } from '../../../utils/queryKeys.ts';
 import { useDepartmentTypeColumns, type EditingState } from './useDepartmentTypeColumns';
 import { DepartmentTypeForm } from './DepartmentTypeForm';
-import { DepartmentTypeEditDialog, type PendingEdit } from './DepartmentTypeEditDialog';
-import { DepartmentTypeDeleteDialog } from './DepartmentTypeDeleteDialog';
+import { FieldEditConfirmDialog, type PendingEdit } from '../../ui/FieldEditConfirmDialog';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import cfl from "../../../utils/helpers.ts";
+import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
 
 
 export function DepartmentTypeCrud() {
@@ -247,18 +247,20 @@ export function DepartmentTypeCrud() {
                 createMutation={createMutation}
             />
 
-            <DepartmentTypeEditDialog
+            <FieldEditConfirmDialog
                 pending={pendingEdit}
                 isPending={updateMutation.isPending}
                 onConfirm={handleConfirmEdit}
                 onCancel={handleCancelPending}
             />
 
-            <DepartmentTypeDeleteDialog
-                row={rowToDelete}
-                isPending={deleteMutation.isPending}
+            <ConfirmDeleteDialog
+                open={!!rowToDelete}
+                title={getString('deleteDepartmentType') || 'Delete Department Type'}
+                message={getString('areYouSureDeleteDepartmentType') || `Are you sure you want to delete "${rowToDelete?.name}"? This action cannot be undone.`}
+                isDeleting={deleteMutation.isPending}
                 onConfirm={handleConfirmDelete}
-                onCancel={() => setRowToDelete(null)}
+                onClose={() => setRowToDelete(null)}
             />
 
             <Snackbar

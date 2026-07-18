@@ -10,7 +10,7 @@
 // the full new top-to-bottom id order, which the parent persists (server assigns
 // positions 10, 20, 30 …). Rows are expected to arrive already in their stored
 // order; the displayed position number is (index + 1) * 10 to match the backend.
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Box, IconButton, Stack, Tooltip, Typography } from '@mui/material';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
@@ -48,15 +48,14 @@ export function ReorderableList<T>({
     // real time, while onReorder persists to the DB in the background. We re-sync
     // from `rows` only when the server's SET of ids changes (add/remove), so an
     // in-flight refetch that returns the pre-save order can't snap our move back.
+    // Adjust-during-render — no effect needed.
     const [order, setOrder] = useState<T[]>(rows);
     const idsKey = rows.map(getRowId).slice().sort((a, b) => a - b).join(',');
-    const lastIdsKey = useRef(idsKey);
-    useEffect(() => {
-        if (lastIdsKey.current !== idsKey) {
-            lastIdsKey.current = idsKey;
-            setOrder(rows);
-        }
-    }, [idsKey, rows]);
+    const [prevIdsKey, setPrevIdsKey] = useState(idsKey);
+    if (prevIdsKey !== idsKey) {
+        setPrevIdsKey(idsKey);
+        setOrder(rows);
+    }
 
     // Index of the row being dragged, and the row currently hovered as a drop
     // target (for the top-border drop indicator). Both reset on drag end.

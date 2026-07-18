@@ -1,6 +1,9 @@
 // src/components/admin/job_categories/jobCategoryApi.ts
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums.ts';
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
+import { createCrudApi } from '../../../api/createCrudApi';
 
 const BASE = `${BASE_URL}/job_categories`;
 
@@ -24,38 +27,15 @@ export interface JobCategoryUpdate {
     sort_order?: number;
 }
 
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
-}
+const crud = createCrudApi<JobCategory, JobCategoryCreate, JobCategoryUpdate>(BASE);
 
-export const fetchJobCategories = async (): Promise<JobCategory[]> => {
-    const res = await axiosInstance.get<JobCategory[]>(BASE);
-    return res.data ?? [];
-};
+export const fetchJobCategories = crud.fetchList;
 
-export const createJobCategory = async (
-    body: JobCategoryCreate,
-): Promise<MutationResponse<JobCategory>> => {
-    const res = await axiosInstance.post<MutationResponse<JobCategory>>(BASE, body);
-    return res.data;
-};
+export const createJobCategory = crud.create;
 
-export const updateJobCategory = async ({
-    id,
-    data,
-}: {
-    id: number;
-    data: JobCategoryUpdate;
-}): Promise<MutationResponse<JobCategory>> => {
-    const res = await axiosInstance.patch<MutationResponse<JobCategory>>(`${BASE}/${id}`, data);
-    return res.data;
-};
+export const updateJobCategory = crud.update;
 
-export const deleteJobCategory = async (id: number): Promise<MutationResponse<null>> => {
-    const res = await axiosInstance.delete<MutationResponse<null>>(`${BASE}/${id}`);
-    return res.data;
-};
+export const deleteJobCategory = crud.remove;
 
 // ── Bulk clear (deliberate): remove the category link from every job ──────────
 export interface JobCategoryClearAllResult {

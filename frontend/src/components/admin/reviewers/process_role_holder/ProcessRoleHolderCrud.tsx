@@ -17,10 +17,10 @@ import { PROCESS_ROLE_HOLDER_QK } from '../../../../utils/queryKeys';
 import { useProcessRoleHolderMutations } from './useProcessRoleHolderMutations';
 import { useProcessRoleHolderColumns } from './useProcessRoleHolderColumns';
 import { ProcessRoleHolderForm } from './ProcessRoleHolderForm';
-import { ProcessRoleHolderDeleteDialog } from './ProcessRoleHolderDeleteDialog';
 import { useDataGridLocale } from '../../../../hooks/useDataGridLocale';
 import useString from '../../../../hooks/useString';
 import cfl from '../../../../utils/capitalizeFirstLetter';
+import ConfirmDeleteDialog from '../../../ui/ConfirmDeleteDialog';
 
 export function ProcessRoleHolderCrud() {
     const getString = useString();
@@ -58,6 +58,8 @@ export function ProcessRoleHolderCrud() {
         if (!rowToDelete) return;
         deleteMutation.mutate(rowToDelete.id);
     }, [rowToDelete, deleteMutation]);
+
+    const deleteWho = rowToDelete?.holder_name || rowToDelete?.holder_code || '';
 
     const columns = useProcessRoleHolderColumns({
         getString,
@@ -117,11 +119,13 @@ export function ProcessRoleHolderCrud() {
                 createMutation={createMutation}
             />
 
-            <ProcessRoleHolderDeleteDialog
-                row={rowToDelete}
-                isPending={deleteMutation.isPending}
+            <ConfirmDeleteDialog
+                open={!!rowToDelete}
+                title={getString('removeReviewer') || 'Remove Reviewer'}
+                message={getString('areYouSureRemoveReviewer', { employee: deleteWho }) || `Remove reviewer "${deleteWho}"?`}
+                isDeleting={deleteMutation.isPending}
                 onConfirm={handleConfirmDelete}
-                onCancel={() => setRowToDelete(null)}
+                onClose={() => setRowToDelete(null)}
             />
 
             <Snackbar

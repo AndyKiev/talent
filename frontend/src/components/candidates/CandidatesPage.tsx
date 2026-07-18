@@ -25,7 +25,7 @@ import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import useString from '../../hooks/useString';
 import cfl from '../../utils/helpers.ts';
 import { snakeToCamel } from '../../utils/helpers.ts';
-import ConfirmDeleteDialog from '../people-review/ConfirmDeleteDialog';
+import ConfirmDeleteDialog from '../ui/ConfirmDeleteDialog';
 import { CANDIDATE_QK } from '../../utils/queryKeys';
 import { fetchCandidates, type Candidate } from './candidateApi';
 import { useCandidateMutations } from './useCandidateMutations';
@@ -174,7 +174,6 @@ export function CandidatesPage() {
                 message={getString('confirmDeleteMessage')}
                 itemLabel={pendingDelete ? `${pendingDelete.first_name} ${pendingDelete.last_name}` : undefined}
                 isDeleting={deleteMutation.isPending}
-                getString={getString}
                 onConfirm={() => {
                     if (pendingDelete) deleteMutation.mutate(pendingDelete.id);
                     setPendingDelete(null);

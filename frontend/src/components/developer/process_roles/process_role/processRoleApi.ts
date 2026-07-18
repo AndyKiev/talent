@@ -1,6 +1,8 @@
 // src/components/developer/process_roles/process_role/processRoleApi.ts
-import { axiosInstance } from '../../../../api/axiosInstance';
 import { BASE_URL } from '../../../../utils/eNums.ts';
+import type { MutationResponse } from '../../../../types/mutationResponse';
+export type { MutationResponse };
+import { createCrudApi } from '../../../../api/createCrudApi';
 
 const BASE = `${BASE_URL}/admin/process_roles`;
 
@@ -35,37 +37,12 @@ export interface ProcessRoleUpdate {
     link_target?: LinkTarget;
 }
 
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
-}
+const crud = createCrudApi<ProcessRole, ProcessRoleCreate, ProcessRoleUpdate, { process_id?: number; is_active?: boolean }>(BASE);
 
-export const fetchProcessRoles = async (
-    params?: { process_id?: number; is_active?: boolean },
-): Promise<ProcessRole[]> => {
-    const res = await axiosInstance.get<ProcessRole[]>(BASE, { params });
-    return res.data ?? [];
-};
+export const fetchProcessRoles = crud.fetchAll;
 
-export const createProcessRole = async (
-    body: ProcessRoleCreate,
-): Promise<MutationResponse<ProcessRole>> => {
-    const res = await axiosInstance.post<MutationResponse<ProcessRole>>(BASE, body);
-    return res.data;
-};
+export const createProcessRole = crud.create;
 
-export const updateProcessRole = async ({
-    id,
-    data,
-}: {
-    id: number;
-    data: ProcessRoleUpdate;
-}): Promise<MutationResponse<ProcessRole>> => {
-    const res = await axiosInstance.patch<MutationResponse<ProcessRole>>(`${BASE}/${id}`, data);
-    return res.data;
-};
+export const updateProcessRole = crud.update;
 
-export const deleteProcessRole = async (id: number): Promise<MutationResponse<null>> => {
-    const res = await axiosInstance.delete<MutationResponse<null>>(`${BASE}/${id}`);
-    return res.data;
-};
+export const deleteProcessRole = crud.remove;

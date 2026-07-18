@@ -1,7 +1,9 @@
 // src/components/admin/departments/departmentRegionLinkApi.ts
-import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums';
 import type { Region } from '../regions/regionApi';
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
+import { createCrudApi } from '../../../api/createCrudApi';
 
 const BASE = `${BASE_URL}/department_region_links`;
 
@@ -25,37 +27,12 @@ export interface DepartmentRegionLinkUpdate {
     is_active?: boolean;
 }
 
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
-}
+const crud = createCrudApi<DepartmentRegionLink, DepartmentRegionLinkCreate, DepartmentRegionLinkUpdate, { department_id?: number; region_id?: number; is_active?: boolean }>(BASE);
 
-export const fetchDepartmentRegionLinks = async (
-    params?: { department_id?: number; region_id?: number; is_active?: boolean },
-): Promise<DepartmentRegionLink[]> => {
-    const res = await axiosInstance.get<DepartmentRegionLink[]>(BASE, { params });
-    return res.data ?? [];
-};
+export const fetchDepartmentRegionLinks = crud.fetchAll;
 
-export const createDepartmentRegionLink = async (
-    body: DepartmentRegionLinkCreate,
-): Promise<MutationResponse<DepartmentRegionLink>> => {
-    const res = await axiosInstance.post<MutationResponse<DepartmentRegionLink>>(BASE, body);
-    return res.data;
-};
+export const createDepartmentRegionLink = crud.create;
 
-export const updateDepartmentRegionLink = async ({
-    id,
-    data,
-}: {
-    id: number;
-    data: DepartmentRegionLinkUpdate;
-}): Promise<MutationResponse<DepartmentRegionLink>> => {
-    const res = await axiosInstance.patch<MutationResponse<DepartmentRegionLink>>(`${BASE}/${id}`, data);
-    return res.data;
-};
+export const updateDepartmentRegionLink = crud.update;
 
-export const deleteDepartmentRegionLink = async (id: number): Promise<MutationResponse<null>> => {
-    const res = await axiosInstance.delete<MutationResponse<null>>(`${BASE}/${id}`);
-    return res.data;
-};
+export const deleteDepartmentRegionLink = crud.remove;

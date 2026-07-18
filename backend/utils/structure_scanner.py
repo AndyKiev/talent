@@ -198,7 +198,7 @@ def scan_frontend_structure(output_file: str = None) -> str:
 
     # Save to file
     scanner.save_to_file(str(output_file))
-    print(f"✅ Frontend structure saved to: {output_file}")
+    print(f"[OK] Frontend structure saved to: {output_file}")
 
     return tree
 
@@ -228,7 +228,7 @@ def scan_backend_structure(output_file: str = None) -> str:
 
     # Save to file
     scanner.save_to_file(str(output_file))
-    print(f"✅ Backend structure saved to: {output_file}")
+    print(f"[OK] Backend structure saved to: {output_file}")
 
     return tree
 
@@ -240,13 +240,13 @@ def scan_all_structures() -> dict:
     Returns:
         Dictionary with both structures
     """
-    print("🔍 Scanning project structures...\n")
+    print("Scanning project structures...\n")
 
     frontend_tree = scan_frontend_structure()
     print()  # Add spacing
     backend_tree = scan_backend_structure()
 
-    print("\n✨ All structures generated successfully!")
+    print("\nAll structures generated successfully!")
 
     return {"frontend": frontend_tree, "backend": backend_tree}
 
@@ -277,7 +277,7 @@ if __name__ == "__main__":
         elif command == "help" or command == "--help" or command == "-h":
             print(
                 """
-📁 Project Structure Scanner
+Project Structure Scanner
 ============================
 
 Usage:

@@ -1,6 +1,8 @@
 // src/components/employees/headcount_plan/headcountPlanApi.ts
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums';
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
 
 const BASE = `${BASE_URL}/department_job_targets`;
 
@@ -49,11 +51,6 @@ export interface HeadcountCalcRow {
 
 export interface TargetCountByLink {
     count: number;
-}
-
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
 }
 
 export const fetchHeadcountCalc = async (

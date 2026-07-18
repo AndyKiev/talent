@@ -17,11 +17,11 @@ import { PROCESS_ROLE_QK } from '../../../../utils/queryKeys';
 import { useProcessRoleMutations } from './useProcessRoleMutations';
 import { useProcessRoleColumns, type EditingState } from './useProcessRoleColumns';
 import { ProcessRoleForm } from './ProcessRoleForm';
-import { ProcessRoleEditDialog, type PendingEdit } from './ProcessRoleEditDialog';
-import { ProcessRoleDeleteDialog } from './ProcessRoleDeleteDialog';
+import { FieldEditConfirmDialog, type PendingEdit } from '../../../ui/FieldEditConfirmDialog';
 import { useDataGridLocale } from '../../../../hooks/useDataGridLocale';
 import useString from '../../../../hooks/useString';
 import cfl from '../../../../utils/capitalizeFirstLetter';
+import ConfirmDeleteDialog from '../../../ui/ConfirmDeleteDialog';
 
 export function ProcessRoleCrud() {
     const getString = useString();
@@ -187,18 +187,20 @@ export function ProcessRoleCrud() {
                 createMutation={createMutation}
             />
 
-            <ProcessRoleEditDialog
+            <FieldEditConfirmDialog
                 pending={pendingEdit}
                 isPending={updateMutation.isPending}
                 onConfirm={handleConfirmEdit}
                 onCancel={handleCancelPending}
             />
 
-            <ProcessRoleDeleteDialog
-                row={rowToDelete}
-                isPending={deleteMutation.isPending}
+            <ConfirmDeleteDialog
+                open={!!rowToDelete}
+                title={getString('deleteProcessRole') || 'Delete Role'}
+                message={getString('areYouSureDeleteProcessRole', { name: rowToDelete?.name ?? '' }) || `Are you sure you want to delete "${rowToDelete?.name}"?`}
+                isDeleting={deleteMutation.isPending}
                 onConfirm={handleConfirmDelete}
-                onCancel={() => setRowToDelete(null)}
+                onClose={() => setRowToDelete(null)}
             />
 
             <Snackbar

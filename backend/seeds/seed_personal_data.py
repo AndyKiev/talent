@@ -151,7 +151,7 @@ async def _seed_personal_data(session, emp: Employee):
         select(EmployeePersonalData).where(EmployeePersonalData.employee_id == emp.id)
     )
     if result.scalar_one_or_none() is not None:
-        print(f"   ⏭️  personal_data — already exists, skipping.")
+        print(f"   [SKIP] personal_data — already exists, skipping.")
         return
 
     sex = random.choice(["male", "female"])
@@ -175,7 +175,7 @@ async def _seed_personal_data(session, emp: Employee):
         hire_date=hire,
     )
     session.add(pd_row)
-    print(f"   👤 personal_data: {sex}, {marital}, born {birth}, hired {hire}")
+    print(f"   personal_data: {sex}, {marital}, born {birth}, hired {hire}")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -188,7 +188,7 @@ async def _seed_education(session, emp: Employee, degree_map: dict[str, int]):
         select(EmployeeEducation).where(EmployeeEducation.employee_id == emp.id)
     )
     if list(result.scalars().all()):
-        print(f"   ⏭️  education — already exists, skipping.")
+        print(f"   [SKIP] education — already exists, skipping.")
         return
 
     uni = random.choice(_INSTITUTIONS)
@@ -202,7 +202,7 @@ async def _seed_education(session, emp: Employee, degree_map: dict[str, int]):
         graduation_year=grad_year,
     )
     session.add(edu1)
-    print(f"   🎓 education: {uni['name']} ({uni['speciality']}, {grad_year})")
+    print(f"   education: {uni['name']} ({uni['speciality']}, {grad_year})")
 
     if random.random() < 0.4:
         col = random.choice(_COLLEGES)
@@ -217,7 +217,7 @@ async def _seed_education(session, emp: Employee, degree_map: dict[str, int]):
         )
         session.add(edu2)
         print(
-            f"   🎓 education (college): {col['name']} ({col['speciality']}, {grad_year2})"
+            f"   education (college): {col['name']} ({col['speciality']}, {grad_year2})"
         )
 
 
@@ -236,7 +236,7 @@ async def _seed_languages(session, emp: Employee, level_by_code: dict[str, int])
     existing_profile = result.scalar_one_or_none()
 
     if existing_profile is not None and existing_profile.languages:
-        print(f"   ⏭️  languages — already exist, skipping.")
+        print(f"   [SKIP] languages — already exist, skipping.")
         return
 
     if existing_profile is None:
@@ -260,7 +260,7 @@ async def _seed_languages(session, emp: Employee, level_by_code: dict[str, int])
             level_id=level_id,
         )
         session.add(el)
-        print(f"   🌐 language: {lang['language']} ({lang['level_code']})")
+        print(f"   language: {lang['language']} ({lang['level_code']})")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -274,7 +274,7 @@ async def _seed_children(session, emp: Employee):
         select(EmployeeChild).where(EmployeeChild.person_id == emp.person_id)
     )
     if list(result.scalars().all()):
-        print(f"   ⏭️  children — already exist, skipping.")
+        print(f"   [SKIP] children — already exist, skipping.")
         return
 
     count = random.choices([0, 1, 2], weights=[30, 40, 30])[0]
@@ -282,7 +282,7 @@ async def _seed_children(session, emp: Employee):
         birth = _random_date(date(2005, 1, 1), date(2025, 12, 31))
         child = EmployeeChild(person_id=emp.person_id, birth_date=birth)
         session.add(child)
-        print(f"   👶 child born {birth}")
+        print(f"   child born {birth}")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -298,9 +298,9 @@ async def seed_personal_data():
         )
         session_obj = result.scalar_one_or_none()
         if not session_obj:
-            print("❌ No review session found — seed aborted.")
+            print("[ERR] No review session found — seed aborted.")
             return
-        print(f"📋 Session: {session_obj.name} (id={session_obj.id})")
+        print(f"Session: {session_obj.name} (id={session_obj.id})")
 
         # ── 2. Excluded employee ────────────────────────────────────────────
         result = await session.execute(
@@ -309,7 +309,7 @@ async def seed_personal_data():
         excluded_emp = result.scalar_one_or_none()
         excluded_id = excluded_emp.id if excluded_emp else None
         if excluded_emp:
-            print(f"🚫 Excluding: {excluded_emp.name} ({excluded_emp.code})")
+            print(f"[SKIP] Excluding: {excluded_emp.name} ({excluded_emp.code})")
 
         # ── 3. Get distinct employee IDs in the session ─────────────────────
         result = await session.execute(
@@ -320,10 +320,10 @@ async def seed_personal_data():
         emp_ids = [row[0] for row in result.all()]
         if excluded_id is not None and excluded_id in emp_ids:
             emp_ids.remove(excluded_id)
-        print(f"👥 {len(emp_ids)} unique employees to seed.")
+        print(f"{len(emp_ids)} unique employees to seed.")
 
         if not emp_ids:
-            print("⚠️ No employees to seed.")
+            print("[WARN] No employees to seed.")
             return
 
         # ── 4. Load employees ───────────────────────────────────────────────
@@ -347,7 +347,7 @@ async def seed_personal_data():
                 degree_map["junior_specialist"] = d.id
         if not degree_map and degrees:
             degree_map["bachelor"] = degrees[0].id
-        print(f"🎓 {len(degrees)} education degrees, map: {list(degree_map.keys())}")
+        print(f"{len(degrees)} education degrees, map: {list(degree_map.keys())}")
 
         # ── 6. Lookup: language levels ──────────────────────────────────────
         result = await session.execute(
@@ -355,12 +355,12 @@ async def seed_personal_data():
         )
         lang_levels = list(result.scalars().all())
         level_by_code: dict[str, int] = {ll.code: ll.id for ll in lang_levels}
-        print(f"🌐 {len(lang_levels)} language levels: {list(level_by_code.keys())}")
+        print(f"{len(lang_levels)} language levels: {list(level_by_code.keys())}")
 
         # ── 7. Per-employee loop ────────────────────────────────────────────
         for emp in employees:
             print(f"\n{'─'*60}")
-            print(f"🔹 {emp.name} ({emp.code})")
+            print(f"{emp.name} ({emp.code})")
             print(f"{'─'*60}")
 
             await _seed_personal_data(session, emp)
@@ -371,7 +371,7 @@ async def seed_personal_data():
 
         await session.commit()
         print(f"\n{'='*60}")
-        print(f"🎉 Done! Personal data seeded for {len(employees)} employees.")
+        print(f"[DONE] Done! Personal data seeded for {len(employees)} employees.")
         print(f"{'='*60}")
 
 

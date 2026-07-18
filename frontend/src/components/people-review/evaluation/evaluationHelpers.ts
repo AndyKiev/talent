@@ -1,6 +1,54 @@
 import dayjs from 'dayjs';
 import type { GetStringFn } from '../../../types/getStringFn';
 
+/**
+ * The summary list a competence is picked into. Values ('strong'/'develop') are
+ * the wire/persisted form — they match the `competence_summary` JSON keys and the
+ * API `leaving_side`, so a string enum keeps serialization identical.
+ */
+export enum CompetenceSide {
+    Strong = 'strong',
+    Develop = 'develop',
+}
+
+/** Which list a dragged item belongs to — facts/achievements or improvements. */
+export enum DragItemKind {
+    Fact = 'fact',
+    Improvement = 'improvement',
+}
+
+// Enum → translation-key maps: the ONE place these domain concepts are mapped to
+// message keys (callers resolve via getString instead of inline string ternaries).
+const COMPETENCE_SIDE_LABEL_KEYS: Record<CompetenceSide, string> = {
+    [CompetenceSide.Strong]: 'strongCompetences',
+    [CompetenceSide.Develop]: 'competencesToDevelop',
+};
+const COMPETENCE_SIDE_FLIP_KEYS: Record<CompetenceSide, string> = {
+    [CompetenceSide.Strong]: 'flipCompetenceFromStrong',
+    [CompetenceSide.Develop]: 'flipCompetenceFromDevelop',
+};
+const DRAG_ITEM_TITLE_KEYS: Record<DragItemKind, string> = {
+    [DragItemKind.Fact]: 'moveFactTitle',
+    [DragItemKind.Improvement]: 'moveImprovementTitle',
+};
+const DRAG_ITEM_CONFIRM_KEYS: Record<DragItemKind, string> = {
+    [DragItemKind.Fact]: 'moveFactConfirm',
+    [DragItemKind.Improvement]: 'moveImprovementConfirm',
+};
+
+/** Translation key for a summary side's header label. */
+export const competenceSideLabelKey = (side: CompetenceSide): string =>
+    COMPETENCE_SIDE_LABEL_KEYS[side];
+/** Translation key for the confirm text shown when a competence flips OUT of `side`. */
+export const competenceSideFlipKey = (side: CompetenceSide): string =>
+    COMPETENCE_SIDE_FLIP_KEYS[side];
+/** Translation key for the "move item" dialog title, by dragged-item kind. */
+export const dragItemTitleKey = (kind: DragItemKind): string =>
+    DRAG_ITEM_TITLE_KEYS[kind];
+/** Translation key for the "move item" confirm text, by dragged-item kind. */
+export const dragItemConfirmKey = (kind: DragItemKind): string =>
+    DRAG_ITEM_CONFIRM_KEYS[kind];
+
 // Ukrainian (and similar) need 3 plural forms; English collapses few→many.
 // Returns the key suffix used to pick the right noun-form translation key.
 function pluralCat(n: number, lang: string): 'One' | 'Few' | 'Many' {
@@ -75,8 +123,8 @@ function colorDistance(a: [number, number, number], b: [number, number, number])
  * competence color is farthest away (maximize the minimum distance). This avoids
  * "different hex but same-looking hue" collisions, while staying in the family.
  */
-export function pickSummaryAccent(family: 'strong' | 'develop', usedColors: Iterable<string>): string {
-    const palette = family === 'strong' ? STRONG_ACCENTS : DEVELOP_ACCENTS;
+export function pickSummaryAccent(family: CompetenceSide, usedColors: Iterable<string>): string {
+    const palette = family === CompetenceSide.Strong ? STRONG_ACCENTS : DEVELOP_ACCENTS;
     const used = [...usedColors]
         .map(hexToRgb)
         .filter((c): c is [number, number, number] => c !== null);
@@ -147,9 +195,6 @@ export interface LocalEval {
     improvements: string[];
 }
 
-/** Which list an item belongs to — facts/achievements or directions for improvement. */
-export type DragItemKind = 'fact' | 'improvement';
-
 /** An item being dragged: its list (kind), competence (evalId) and row index. */
 export interface DraggedItem {
     kind: DragItemKind;
@@ -205,12 +250,6 @@ export function evalMean(le: LocalEval): number | null {
 export function evalFilled(le: LocalEval): boolean {
     return le.descriptors.length > 0 && le.descriptors.every((_, i) => le.criterionScores[i] != null);
 }
-
-export const RSE_STATUS_COLORS: Record<string, string> = {
-    open: '#1565C0',
-    reviewed: '#E65100',
-    closed: '#2E7D32',
-};
 
 // Fixed set of foreign languages the employee declares a level for.
 export const FOREIGN_LANGUAGES: { key: string; labelKey: 'english' | 'french' }[] = [
@@ -272,7 +311,11 @@ export interface SummaryOption {
     comments: string[];
 }
 
-/** Minimum number of competences each summary select should offer. */
+/**
+ * Default minimum number of competences each summary select should offer. The
+ * live value comes from the `pr_summary_min_options` developer setting, threaded
+ * in as the `minOptions` argument; this constant is only the safety fallback.
+ */
 const SUMMARY_MIN_OPTIONS = 2;
 
 /** Parse a stored {strong, develop} summary array for one side. */
@@ -292,22 +335,25 @@ export function parseSummarySide(raw: unknown): SummaryOption[] {
 
 /**
  * Candidate competences for a summary select: the top (or bottom) scored ones.
- * Always offers at least SUMMARY_MIN_OPTIONS, plus any tied at the boundary score
- * — up to all of them when scores are equal.
+ * Always offers at least `minOptions`, plus any tied at the boundary score — up
+ * to all of them when scores are equal. `minOptions` comes from the
+ * `pr_summary_min_options` setting (default SUMMARY_MIN_OPTIONS).
  */
-export function rankedCompetences(evals: LocalEval[], direction: 'desc' | 'asc'): LocalEval[] {
-    if (evals.length <= SUMMARY_MIN_OPTIONS) return [...evals];
+export function rankedCompetences(
+    evals: LocalEval[],
+    direction: 'desc' | 'asc',
+    minOptions: number = SUMMARY_MIN_OPTIONS,
+): LocalEval[] {
+    const min = Math.max(1, Math.floor(minOptions));
+    if (evals.length <= min) return [...evals];
     const sorted = [...evals].sort((a, b) =>
         direction === 'desc' ? (evalMean(b) ?? 0) - (evalMean(a) ?? 0) : (evalMean(a) ?? 0) - (evalMean(b) ?? 0),
     );
-    const threshold = evalMean(sorted[SUMMARY_MIN_OPTIONS - 1]) ?? 0;
+    const threshold = evalMean(sorted[min - 1]) ?? 0;
     return sorted.filter(e =>
         direction === 'desc' ? (evalMean(e) ?? 0) >= threshold : (evalMean(e) ?? 0) <= threshold,
     );
 }
-
-/** The summary side a competence is picked into, mirrored from the page state. */
-export type SummarySide = 'strong' | 'develop';
 
 /** A star re-rating pending confirmation because it flips a competence's summary list. */
 export interface PendingFlip {
@@ -316,7 +362,7 @@ export interface PendingFlip {
     value: number;
     key: string;
     // The side the competence currently sits in and will be removed FROM.
-    side: SummarySide;
+    side: CompetenceSide;
     name: string;
     // True when the competence is leaving the develop list AND is attached to a
     // development-plan mission — that link is dropped on confirm, so warn first.
@@ -339,10 +385,11 @@ export function detectCompetenceFlip(
     key: string,
     isStrongPicked: boolean,
     isDevelopPicked: boolean,
-): SummarySide | null {
-    const strongKeys = new Set(rankedCompetences(evals, 'desc').map(e => e.dimension_key));
-    const developKeys = new Set(rankedCompetences(evals, 'asc').map(e => e.dimension_key));
-    if (isStrongPicked && developKeys.has(key) && !strongKeys.has(key)) return 'strong';
-    if (isDevelopPicked && strongKeys.has(key) && !developKeys.has(key)) return 'develop';
+    minOptions: number = SUMMARY_MIN_OPTIONS,
+): CompetenceSide | null {
+    const strongKeys = new Set(rankedCompetences(evals, 'desc', minOptions).map(e => e.dimension_key));
+    const developKeys = new Set(rankedCompetences(evals, 'asc', minOptions).map(e => e.dimension_key));
+    if (isStrongPicked && developKeys.has(key) && !strongKeys.has(key)) return CompetenceSide.Strong;
+    if (isDevelopPicked && strongKeys.has(key) && !developKeys.has(key)) return CompetenceSide.Develop;
     return null;
 }

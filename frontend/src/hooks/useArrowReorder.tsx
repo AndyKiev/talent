@@ -5,7 +5,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
 import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
 import type { GridColDef } from '@mui/x-data-grid';
-import type { GetStringFn } from '../../../types/getStringFn';
+import type { GetStringFn } from '../types/getStringFn';
 
 /** Any row that carries a numeric sort_order can be reordered by this hook. */
 interface Orderable {

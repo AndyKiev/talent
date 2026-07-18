@@ -1,6 +1,9 @@
 // src/components/training/training_types/trainingTypeApi.ts
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums.ts';
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
+import { createCrudApi } from '../../../api/createCrudApi';
 
 const BASE = `${BASE_URL}/training_types`;
 
@@ -40,40 +43,17 @@ export interface TrainingTypeUpdate {
     job_ids?: number[];
 }
 
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
-}
+const crud = createCrudApi<TrainingType, TrainingTypeCreate, TrainingTypeUpdate>(BASE);
 
-export const fetchTrainingTypes = async (): Promise<TrainingType[]> => {
-    const res = await axiosInstance.get<TrainingType[]>(BASE);
-    return res.data ?? [];
-};
+export const fetchTrainingTypes = crud.fetchList;
 
 export const fetchEligibleTrainingTypes = async (employeeId: number): Promise<TrainingType[]> => {
     const res = await axiosInstance.get<TrainingType[]>(`${BASE}/eligible/${employeeId}`);
     return res.data ?? [];
 };
 
-export const createTrainingType = async (
-    body: TrainingTypeCreate,
-): Promise<MutationResponse<TrainingType>> => {
-    const res = await axiosInstance.post<MutationResponse<TrainingType>>(BASE, body);
-    return res.data;
-};
+export const createTrainingType = crud.create;
 
-export const updateTrainingType = async ({
-    id,
-    data,
-}: {
-    id: number;
-    data: TrainingTypeUpdate;
-}): Promise<MutationResponse<TrainingType>> => {
-    const res = await axiosInstance.patch<MutationResponse<TrainingType>>(`${BASE}/${id}`, data);
-    return res.data;
-};
+export const updateTrainingType = crud.update;
 
-export const deleteTrainingType = async (id: number): Promise<MutationResponse<null>> => {
-    const res = await axiosInstance.delete<MutationResponse<null>>(`${BASE}/${id}`);
-    return res.data;
-};
+export const deleteTrainingType = crud.remove;

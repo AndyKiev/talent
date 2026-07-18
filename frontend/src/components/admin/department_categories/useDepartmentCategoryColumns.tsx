@@ -1,20 +1,14 @@
 // src/components/admin/department_categories/useDepartmentCategoryColumns.tsx
 import React from 'react';
 import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Box, IconButton, Switch, Tooltip } from '@mui/material';
+import { Box, IconButton, Tooltip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 import type { DepartmentCategory } from './departmentCategoryApi.ts';
-import cfl from '../../../utils/helpers.ts';
 import type { GetStringFn } from '../../../types/getStringFn.ts';
-import { TextEditCell } from '../TextEditCell.tsx';
-import { ReadonlyCell } from '../ReadonlyCell.tsx';
 import { formatToUkrDate } from '../../../utils/dateFormatter.ts';
-
-export interface EditingState {
-    userId: number | null;
-    field: string | null;
-}
+import { makeTextEditCol, makeToggleCol, type EditingState } from '../../../utils/columnBuilders';
+export type { EditingState };
 
 interface Params {
     getString: GetStringFn;
@@ -48,62 +42,11 @@ export function useDepartmentCategoryColumns({
     orderColumn,
 }: Params): GridColDef[] {
 
-    function textEditCol(
-        field: keyof DepartmentCategory,
-        headerKey: string,
-        width: number,
-        flex?: number,
-    ): GridColDef {
-        return {
-            field: field as string,
-            headerName: cfl(getString(headerKey)) || headerKey,
-            width: flex ? undefined : width,
-            flex,
-            renderCell: (params: GridRenderCellParams<DepartmentCategory>) => {
-                const row = params.row;
-                const isEditing = editingState.userId === row.id && editingState.field === field;
-                return isEditing ? (
-                    <TextEditCell
-                        value={String(row[field] ?? '')}
-                        onSave={(val) => onRequestSave(row, field as string, val)}
-                        onCancel={onCancelEdit}
-                        isPending={updateIsPending}
-                    />
-                ) : (
-                    <ReadonlyCell
-                        value={String(row[field] ?? '')}
-                        onEdit={(e) => onEditFieldClick(row, field as string, e)}
-                        editTitle={getString(`edit${cfl(field)}`) || `Edit ${field}`}
-                        placeholder="—"
-                    />
-                );
-            },
-        };
-    }
+    const textEditCol = makeTextEditCol<DepartmentCategory>({
+        getString, editingState, onEditFieldClick, onRequestSave, onCancelEdit, updateIsPending,
+    });
 
-    function toggleCol(
-        field: 'is_active' | 'is_main' | 'is_responsibility',
-        headerKey: string,
-        onToggle: (row: DepartmentCategory) => void,
-    ): GridColDef {
-        return {
-            field,
-            headerName: cfl(getString(headerKey)) || headerKey,
-            width: 120,
-            sortable: false,
-            renderCell: (params: GridRenderCellParams<DepartmentCategory>) => (
-                <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                    <Switch
-                        size="small"
-                        checked={params.row[field]}
-                        onChange={() => onToggle(params.row)}
-                        disabled={toggleIsPending}
-                        onClick={(e) => e.stopPropagation()}
-                    />
-                </Box>
-            ),
-        };
-    }
+    const toggleCol = makeToggleCol<DepartmentCategory>({ getString, toggleIsPending });
 
     return [
         ...(orderColumn ? [orderColumn] : []),

@@ -30,7 +30,7 @@ import { useUserGridColumns } from '../../../hooks/useUserGridColumns';
 import { UserGridTable } from '../../../utils/userGridTables';
 import { useRecruitmentViewStore } from '../../../store/recruitmentViewStore';
 import { centeredGridCellsSx } from '../../../utils/dataGridSx';
-import ConfirmDeleteDialog from '../../people-review/ConfirmDeleteDialog';
+import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
 import { RECRUITMENT_TASK_QK } from '../../../utils/queryKeys';
 import { fetchRecruitmentTasks, type RecruitmentStatusKey, type RecruitmentTask } from './recruitmentTaskApi';
 import { useRecruitmentTaskColumns } from './useRecruitmentTaskColumns';
@@ -47,8 +47,8 @@ export function RecruitmentTasksPage() {
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
     // View mode persists per user (localStorage-backed zustand), so it's
     // remembered across navigation and reloads.
-    const view = useRecruitmentViewStore((s) => s.taskView);
-    const setView = useRecruitmentViewStore((s) => s.setTaskView);
+    const view = useRecruitmentViewStore((s) => s.view);
+    const setView = useRecruitmentViewStore((s) => s.setView);
 
     const { data: rows = [], isLoading, error } = useQuery({
         queryKey: RECRUITMENT_TASK_QK,
@@ -196,7 +196,6 @@ export function RecruitmentTasksPage() {
                 message={getString('confirmDeleteMessage')}
                 itemLabel={pendingDelete?.job?.name}
                 isDeleting={deleteMutation.isPending}
-                getString={getString}
                 onConfirm={() => {
                     if (pendingDelete) deleteMutation.mutate(pendingDelete.id);
                     setPendingDelete(null);

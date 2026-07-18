@@ -13,17 +13,17 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import { DataGrid } from '@mui/x-data-grid';
 import { fetchEmployeeTrainingStatuses, updateEmployeeTrainingStatus, type EmployeeTrainingStatus } from './employeeTrainingStatusApi';
-import { useArrowReorder } from '../../admin/review_dimensions/useArrowReorder';
+import { useArrowReorder } from '../../../hooks/useArrowReorder';
 import { useEmployeeTrainingStatusMutations } from './useEmployeeTrainingStatusMutations';
 import { useEmployeeTrainingStatusColumns, type EditingState } from './useEmployeeTrainingStatusColumns';
 import { EmployeeTrainingStatusForm } from './EmployeeTrainingStatusForm';
-import { EmployeeTrainingStatusEditDialog, type PendingEdit } from './EmployeeTrainingStatusEditDialog';
-import { EmployeeTrainingStatusDeleteDialog } from './EmployeeTrainingStatusDeleteDialog';
+import { FieldEditConfirmDialog, type PendingEdit } from '../../ui/FieldEditConfirmDialog';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import cfl from '../../../utils/helpers.ts';
 import { EMPLOYEE_TRAINING_STATUS_QK } from '../../../utils/queryKeys.ts';
+import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
 
 export function EmployeeTrainingStatusCrud() {
     const getString = useString({ str });
@@ -184,18 +184,20 @@ export function EmployeeTrainingStatusCrud() {
                 createMutation={createMutation}
             />
 
-            <EmployeeTrainingStatusEditDialog
+            <FieldEditConfirmDialog
                 pending={pendingEdit}
                 isPending={updateMutation.isPending}
                 onConfirm={handleConfirmEdit}
                 onCancel={handleCancelPending}
             />
 
-            <EmployeeTrainingStatusDeleteDialog
-                row={rowToDelete}
-                isPending={deleteMutation.isPending}
+            <ConfirmDeleteDialog
+                open={!!rowToDelete}
+                title={getString('deleteEmployeeTrainingStatus') || 'Delete Employee Training Status'}
+                message={getString('areYouSureDeleteEmployeeTrainingStatus') || `Are you sure you want to delete "${rowToDelete?.key}"? This action cannot be undone.`}
+                isDeleting={deleteMutation.isPending}
                 onConfirm={handleConfirmDelete}
-                onCancel={() => setRowToDelete(null)}
+                onClose={() => setRowToDelete(null)}
             />
 
             <Snackbar

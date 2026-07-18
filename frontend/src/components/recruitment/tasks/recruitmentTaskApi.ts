@@ -1,5 +1,7 @@
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums.ts';
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
 
 const TASK_BASE = `${BASE_URL}/recruitment_tasks`;
 const STATUS_BASE = `${BASE_URL}/recruitment_task_statuses`;
@@ -65,11 +67,6 @@ export interface RecruitmentTaskStatusRow {
     id: number;
     name: RecruitmentStatusKey;
     description: string | null;
-}
-
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
 }
 
 export interface RecruitmentTaskCreate {

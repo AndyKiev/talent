@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -43,6 +43,9 @@ interface Props {
     >;
 }
 
+// The body mounts fresh per open (MUI unmounts Dialog children when closed)
+// and per edited row (key) — every useState initializes straight from
+// `editing`/`defaultLevelId`, so no reset-on-open effect is needed.
 export function ReviewLevelRequirementForm({
     open,
     onClose,
@@ -53,32 +56,46 @@ export function ReviewLevelRequirementForm({
     updateMutation,
 }: Props) {
     const getString: GetStringFn = useString();
+    const isEdit = !!editing;
+
+    return (
+        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+            <DialogTitle>
+                {getString(isEdit ? 'editReviewLevelRequirement' : 'addReviewLevelRequirement')}
+            </DialogTitle>
+            <ReviewLevelRequirementFormBody
+                key={editing?.id ?? `new:${defaultLevelId}`}
+                onClose={onClose}
+                levels={levels}
+                defaultLevelId={defaultLevelId}
+                editing={editing}
+                createMutation={createMutation}
+                updateMutation={updateMutation}
+            />
+        </Dialog>
+    );
+}
+
+function ReviewLevelRequirementFormBody({
+    onClose,
+    levels,
+    defaultLevelId,
+    editing,
+    createMutation,
+    updateMutation,
+}: Omit<Props, 'open'>) {
+    const getString: GetStringFn = useString();
     const strings = useTranslationsStore((s) => s.strings);
-    const [levelId, setLevelId] = useState<number | ''>(defaultLevelId);
-    const [textKey, setTextKey] = useState('');
+    const [levelId, setLevelId] = useState<number | ''>(editing?.level_id ?? defaultLevelId);
+    const [textKey, setTextKey] = useState(editing?.text_key ?? '');
     const [textEng, setTextEng] = useState('');
     const [textUkr, setTextUkr] = useState('');
     // Whether the admin hand-edited the key (stops auto-derivation from the EN text).
-    const [keyTouched, setKeyTouched] = useState(false);
-    const [sortOrder, setSortOrder] = useState('0');
-    const [isActive, setIsActive] = useState(true);
+    const [keyTouched, setKeyTouched] = useState(!!editing);
+    const [sortOrder, setSortOrder] = useState(String(editing?.sort_order ?? 0));
+    const [isActive, setIsActive] = useState(editing?.is_active ?? true);
 
     const isEdit = !!editing;
-
-    // Sync the form to its props each time the dialog opens / the edited row changes
-    // (the standard reset-on-open pattern used by the other admin forms).
-    /* eslint-disable react-hooks/set-state-in-effect */
-    useEffect(() => {
-        if (!open) return;
-        setLevelId(editing?.level_id ?? defaultLevelId);
-        setTextKey(editing?.text_key ?? '');
-        setTextEng('');
-        setTextUkr('');
-        setKeyTouched(!!editing);
-        setSortOrder(String(editing?.sort_order ?? 0));
-        setIsActive(editing?.is_active ?? true);
-    }, [open, editing, defaultLevelId]);
-    /* eslint-enable react-hooks/set-state-in-effect */
 
     // Auto-derive a meaning-based, collision-free key from the EN text (derived, not
     // stored, so it can't cascade renders). Once the admin edits the key, their value
@@ -121,10 +138,7 @@ export function ReviewLevelRequirementForm({
     const canSubmit = levelId !== '' && (createValid || editValid) && !pending;
 
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-            <DialogTitle>
-                {getString(isEdit ? 'editReviewLevelRequirement' : 'addReviewLevelRequirement')}
-            </DialogTitle>
+        <>
             <DialogContent>
                 <Stack spacing={2} sx={{ mt: 1 }}>
                     <TextField
@@ -194,6 +208,6 @@ export function ReviewLevelRequirementForm({
                     {pending ? getString('saving') : getString(isEdit ? 'save' : 'create')}
                 </Button>
             </DialogActions>
-        </Dialog>
+        </>
     );
 }

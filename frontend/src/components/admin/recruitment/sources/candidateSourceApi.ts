@@ -1,5 +1,7 @@
-import { axiosInstance } from '../../../../api/axiosInstance';
 import { BASE_URL } from '../../../../utils/eNums';
+import type { MutationResponse } from '../../../../types/mutationResponse';
+export type { MutationResponse };
+import { createCrudApi } from '../../../../api/createCrudApi';
 
 const BASE = `${BASE_URL}/candidate_sources`;
 
@@ -22,35 +24,12 @@ export interface CandidateSourceUpdate {
     sort_order?: number;
 }
 
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
-}
+const crud = createCrudApi<CandidateSource, CandidateSourceCreate, CandidateSourceUpdate>(BASE);
 
-export const fetchCandidateSources = async (): Promise<CandidateSource[]> => {
-    const res = await axiosInstance.get<CandidateSource[]>(BASE);
-    return res.data ?? [];
-};
+export const fetchCandidateSources = crud.fetchList;
 
-export const createCandidateSource = async (
-    body: CandidateSourceCreate,
-): Promise<MutationResponse<CandidateSource>> => {
-    const res = await axiosInstance.post<MutationResponse<CandidateSource>>(BASE, body);
-    return res.data;
-};
+export const createCandidateSource = crud.create;
 
-export const updateCandidateSource = async ({
-    id,
-    data,
-}: {
-    id: number;
-    data: CandidateSourceUpdate;
-}): Promise<MutationResponse<CandidateSource>> => {
-    const res = await axiosInstance.patch<MutationResponse<CandidateSource>>(`${BASE}/${id}`, data);
-    return res.data;
-};
+export const updateCandidateSource = crud.update;
 
-export const deleteCandidateSource = async (id: number): Promise<MutationResponse<null>> => {
-    const res = await axiosInstance.delete<MutationResponse<null>>(`${BASE}/${id}`);
-    return res.data;
-};
+export const deleteCandidateSource = crud.remove;

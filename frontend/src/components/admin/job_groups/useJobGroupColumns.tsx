@@ -67,8 +67,7 @@ export function useJobGroupColumns({
           <ReadonlyCell
             value={value}
             onEdit={(e) => onEditFieldClick(row, field as string, e)}
-            // editTitle={getString(`edit_${field}`) || `Edit ${field}`}
-            editTitle={`${getString("edit")} + ' ' + ${getString(snakeToCamel(field))}`}
+            editTitle={`${getString("edit")} ${getString(snakeToCamel(field))}`}
             placeholder="—"
           />
         );

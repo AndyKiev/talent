@@ -1,6 +1,8 @@
 // src/components/admin/operations/operationApi.ts
-import { axiosInstance } from '../../../../api/axiosInstance.ts';
 import { BASE_URL } from '../../../../utils/eNums.ts';
+import type { MutationResponse } from '../../../../types/mutationResponse';
+export type { MutationResponse };
+import { createCrudApi } from '../../../../api/createCrudApi';
 
 const BASE = `${BASE_URL}/operations`;
 
@@ -21,34 +23,12 @@ export interface OperationUpdate {
   description?: string | null;
 }
 
-export interface MutationResponse<T> {
-  detail: string;
-  data: T;
-}
+const crud = createCrudApi<Operation, OperationCreate, OperationUpdate>(BASE);
 
-export const fetchOperations = async (): Promise<Operation[]> => {
-  const res = await axiosInstance.get<Operation[]>(BASE);
-  return res.data ?? [];
-};
+export const fetchOperations = crud.fetchList;
 
-export const createOperation = async (
-  body: OperationCreate,
-): Promise<MutationResponse<Operation>> => {
-  const res = await axiosInstance.post<MutationResponse<Operation>>(BASE, body);
-  return res.data;
-};
+export const createOperation = crud.create;
 
-export const updateOperation = async ({
-  id,
-  data,
-}: {
-  id: number;
-  data: OperationUpdate;
-}): Promise<MutationResponse<Operation>> => {
-  const res = await axiosInstance.patch<MutationResponse<Operation>>(`${BASE}/${id}`, data);
-  return res.data;
-};
+export const updateOperation = crud.update;
 
-export const deleteOperation = async (id: number): Promise<void> => {
-  await axiosInstance.delete(`${BASE}/${id}`);
-};
+export const deleteOperation = crud.remove;

@@ -13,14 +13,15 @@ import {
     Stack,
 } from '@mui/material';
 import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined';
-import { patchEmployeePersonalData, type Sex, type MaritalStatus } from '../peopleReviewApi';
+import { patchEmployeePersonalData, type MaritalStatus } from '../peopleReviewApi';
+import { PersonSex, sexKeySuffix, sexShortLabelKey } from '../../admin/persons/personApi';
 import type { GetStringFn } from '../../../types/getStringFn';
 import { useTheme } from '../../theme/ThemeContext';
 import { FactItem } from '../evaluation/FactItem';
 
 // The marital-status word is sex-dependent (заміжня/незаміжня vs одружений/неодружений).
-const maritalWordKey = (sex: Sex, marital: MaritalStatus): string => {
-    const suffix = sex === 'female' ? 'Female' : 'Male';
+const maritalWordKey = (sex: PersonSex, marital: MaritalStatus): string => {
+    const suffix = sexKeySuffix(sex);
     return marital === 'married' ? `maritalMarried${suffix}` : `maritalNotMarried${suffix}`;
 };
 
@@ -39,7 +40,7 @@ export default function MaritalStatusBlock({
     onSaved,
 }: {
     employeeId: number;
-    sex: Sex | null;
+    sex: PersonSex | null;
     maritalStatus: MaritalStatus | null;
     isEditable: boolean;
     getString: GetStringFn;
@@ -50,7 +51,7 @@ export default function MaritalStatusBlock({
 }) {
     const { t } = useTheme();
     const [open, setOpen] = useState(false);
-    const [draftSex, setDraftSex] = useState<Sex | ''>('');
+    const [draftSex, setDraftSex] = useState<PersonSex | ''>('');
     const [draftMarital, setDraftMarital] = useState<MaritalStatus | ''>('');
 
     // Seed the draft from the current values when opening the dialog (in the
@@ -75,7 +76,7 @@ export default function MaritalStatusBlock({
     });
 
     // Collapsed display: "жін · заміжня" — sex short tag + sex-correct marital word.
-    const sexShort = sex ? getString(sex === 'female' ? 'sexFemaleShort' : 'sexMaleShort') : null;
+    const sexShort = sex ? getString(sexShortLabelKey(sex)) : null;
     const maritalWord = sex && maritalStatus ? getString(maritalWordKey(sex, maritalStatus)) : null;
     const display = [sexShort, maritalWord].filter(Boolean).join(' · ');
 
@@ -103,10 +104,10 @@ export default function MaritalStatusBlock({
                                 labelId="sex-label"
                                 label={getString('sex')}
                                 value={draftSex}
-                                onChange={(e) => setDraftSex(e.target.value as Sex)}
+                                onChange={(e) => setDraftSex(e.target.value as PersonSex)}
                             >
-                                <MenuItem value="male">{getString('sexMale')}</MenuItem>
-                                <MenuItem value="female">{getString('sexFemale')}</MenuItem>
+                                <MenuItem value={PersonSex.Male}>{getString('sexMale')}</MenuItem>
+                                <MenuItem value={PersonSex.Female}>{getString('sexFemale')}</MenuItem>
                             </Select>
                         </FormControl>
 

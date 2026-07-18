@@ -1,6 +1,7 @@
 // src/components/auth/LoginPage.tsx
-import React, { useEffect, useState, type FC } from "react";
+import React, { useState, type FC } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { z } from "zod/v4";
 import {
     Box,
@@ -15,8 +16,10 @@ import {
     MenuItem,
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
+import BoltRounded from "@mui/icons-material/BoltRounded";
 import { useAuthStore } from "../../store/authStore.ts";
-import { authApi, type RegisterConfig } from "../../api/authApi.ts";
+import { authApi } from "../../api/authApi.ts";
+import { AUTH_REGISTER_CONFIG_QK } from "../../utils/queryKeys.ts";
 import { useTheme } from "../theme/ThemeContext.tsx";
 import ThemeSwitch from "../theme/ThemeSwitch.tsx";
 import useString from "../../hooks/useString.ts";
@@ -42,31 +45,22 @@ const LoginPage: FC = () => {
     const [success, setSuccess] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
-    // Self-registration (offered only when the app setting is on).
-    const [registerConfig, setRegisterConfig] = useState<RegisterConfig | null>(null);
+    // Self-registration (offered only when the app setting is on). Fetch
+    // failure (backend unreachable / endpoint missing) just hides the option.
+    const { data: registerConfig = null } = useQuery({
+        queryKey: AUTH_REGISTER_CONFIG_QK,
+        queryFn: authApi.registerConfig,
+        staleTime: Infinity,
+        retry: false,
+    });
     const [mode, setMode] = useState<"login" | "register">("login");
     const [regCode, setRegCode] = useState("");
     const [regCodeError, setRegCodeError] = useState<string | null>(null);
     const [regName, setRegName] = useState("");
     const [regEmailLocal, setRegEmailLocal] = useState("");
-    const [regDomain, setRegDomain] = useState("");
-
-    useEffect(() => {
-        let cancelled = false;
-        authApi
-            .registerConfig()
-            .then((cfg) => {
-                if (cancelled) return;
-                setRegisterConfig(cfg);
-                setRegDomain(cfg.domains[0] ?? "");
-            })
-            .catch(() => {
-                // Backend unreachable or endpoint missing — just hide the option.
-            });
-        return () => {
-            cancelled = true;
-        };
-    }, []);
+    // User's explicit pick wins; otherwise default to the first allowed domain.
+    const [regDomainPick, setRegDomainPick] = useState("");
+    const regDomain = regDomainPick || registerConfig?.domains[0] || "";
 
     const handleRegister = async () => {
         if (!regCode.trim() || !regName.trim() || !regEmailLocal.trim() || !regDomain) {
@@ -208,7 +202,7 @@ const LoginPage: FC = () => {
                                 flexShrink: 0,
                             }}
                         >
-                            <Typography sx={{ fontSize: 22 }}>⚡</Typography>
+                            <BoltRounded sx={{ fontSize: 26, color: "#fff" }} />
                         </Box>
                         <Typography
                             variant="h6"
@@ -291,7 +285,7 @@ const LoginPage: FC = () => {
                                 variant="outlined"
                                 label={cfl(getString("emailDomain"))}
                                 value={regDomain}
-                                onChange={(e) => setRegDomain(e.target.value)}
+                                onChange={(e) => setRegDomainPick(e.target.value)}
                                 size="small"
                                 sx={{ ...fieldSx(t), flex: 1 }}
                             >

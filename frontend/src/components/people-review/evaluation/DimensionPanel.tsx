@@ -25,6 +25,7 @@ import {
     type LocalEval,
     type DraggedItem,
     type PendingMove,
+    DragItemKind,
     getDimColor,
     competenceName,
     evalMean,
@@ -142,7 +143,7 @@ export function DimensionPanel({
                         setDragOverTab(null);
                         if (!draggedItem || draggedItem.evalId === e.id) { setDraggedItem(null); return; }
                         const src = localEvals.find(le => le.id === draggedItem.evalId);
-                        const list = draggedItem.kind === 'fact' ? src?.facts : src?.improvements;
+                        const list = draggedItem.kind === DragItemKind.Fact ? src?.facts : src?.improvements;
                         const text = list?.[draggedItem.index];
                         if (text == null) { setDraggedItem(null); return; }
                         setPendingMove({
@@ -270,7 +271,7 @@ export function DimensionPanel({
                                         alignItems="flex-start"
                                         spacing={0.5}
                                         onDragOver={(e) => {
-                                            if (draggedItem?.kind !== 'fact' || draggedItem.evalId !== activeEval.id) return;
+                                            if (draggedItem?.kind !== DragItemKind.Fact || draggedItem.evalId !== activeEval.id) return;
                                             e.preventDefault();
                                             if (dragOverFactIndex !== idx) setDragOverFactIndex(idx);
                                         }}
@@ -278,7 +279,7 @@ export function DimensionPanel({
                                         onDrop={(e) => {
                                             e.preventDefault();
                                             setDragOverFactIndex(null);
-                                            if (draggedItem?.kind === 'fact' && draggedItem.evalId === activeEval.id) {
+                                            if (draggedItem?.kind === DragItemKind.Fact && draggedItem.evalId === activeEval.id) {
                                                 reorderFact(activeEval.id, draggedItem.index, idx);
                                             }
                                             setDraggedItem(null);
@@ -288,7 +289,7 @@ export function DimensionPanel({
                                             py: 0.5,
                                             px: 0.75,
                                             borderRadius: '6px',
-                                            opacity: draggedItem?.kind === 'fact' && draggedItem.evalId === activeEval.id && draggedItem.index === idx ? 0.4 : 1,
+                                            opacity: draggedItem?.kind === DragItemKind.Fact && draggedItem.evalId === activeEval.id && draggedItem.index === idx ? 0.4 : 1,
                                             borderTop: dragOverFactIndex === idx ? `2px solid ${activeColor}` : '2px solid transparent',
                                             '&:hover': { bgcolor: activeColor + '10' },
                                         }}
@@ -415,7 +416,7 @@ export function DimensionPanel({
                                             alignItems="flex-start"
                                             spacing={0.5}
                                             onDragOver={(e) => {
-                                                if (draggedItem?.kind !== 'improvement' || draggedItem.evalId !== activeEval.id) return;
+                                                if (draggedItem?.kind !== DragItemKind.Improvement || draggedItem.evalId !== activeEval.id) return;
                                                 e.preventDefault();
                                                 if (dragOverImpIndex !== idx) setDragOverImpIndex(idx);
                                             }}
@@ -423,14 +424,14 @@ export function DimensionPanel({
                                             onDrop={(e) => {
                                                 e.preventDefault();
                                                 setDragOverImpIndex(null);
-                                                if (draggedItem?.kind === 'improvement' && draggedItem.evalId === activeEval.id) {
+                                                if (draggedItem?.kind === DragItemKind.Improvement && draggedItem.evalId === activeEval.id) {
                                                     reorderImprovement(activeEval.id, draggedItem.index, idx);
                                                 }
                                                 setDraggedItem(null);
                                             }}
                                             sx={{
                                                 mb: 0.5, py: 0.5, px: 0.75, borderRadius: '6px',
-                                                opacity: draggedItem?.kind === 'improvement' && draggedItem.evalId === activeEval.id && draggedItem.index === idx ? 0.4 : 1,
+                                                opacity: draggedItem?.kind === DragItemKind.Improvement && draggedItem.evalId === activeEval.id && draggedItem.index === idx ? 0.4 : 1,
                                                 borderTop: dragOverImpIndex === idx ? `2px solid ${activeColor}` : '2px solid transparent',
                                                 '&:hover': { bgcolor: activeColor + '10' },
                                             }}

@@ -1,5 +1,7 @@
-import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums.ts';
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
+import { createCrudApi } from '../../../api/createCrudApi';
 
 const BASE = `${BASE_URL}/review_levels`;
 
@@ -40,35 +42,12 @@ export interface ReviewLevelUpdate {
     is_active?: boolean;
 }
 
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
-}
+const crud = createCrudApi<ReviewLevel, ReviewLevelCreate, ReviewLevelUpdate>(BASE);
 
-export const fetchReviewLevels = async (): Promise<ReviewLevel[]> => {
-    const res = await axiosInstance.get<ReviewLevel[]>(BASE);
-    return res.data ?? [];
-};
+export const fetchReviewLevels = crud.fetchList;
 
-export const createReviewLevel = async (
-    body: ReviewLevelCreate,
-): Promise<MutationResponse<ReviewLevel>> => {
-    const res = await axiosInstance.post<MutationResponse<ReviewLevel>>(BASE, body);
-    return res.data;
-};
+export const createReviewLevel = crud.create;
 
-export const updateReviewLevel = async ({
-    id,
-    data,
-}: {
-    id: number;
-    data: ReviewLevelUpdate;
-}): Promise<MutationResponse<ReviewLevel>> => {
-    const res = await axiosInstance.patch<MutationResponse<ReviewLevel>>(`${BASE}/${id}`, data);
-    return res.data;
-};
+export const updateReviewLevel = crud.update;
 
-export const deleteReviewLevel = async (id: number): Promise<MutationResponse<null>> => {
-    const res = await axiosInstance.delete<MutationResponse<null>>(`${BASE}/${id}`);
-    return res.data;
-};
+export const deleteReviewLevel = crud.remove;

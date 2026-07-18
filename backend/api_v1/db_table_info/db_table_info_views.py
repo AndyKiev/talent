@@ -158,7 +158,7 @@ async def save_column_prefs(
 async def auto_describe(
     service: Annotated[DbTableInfoService, Depends(get_db_table_info_service)],
 ):
-    """Auto-generate Russian descriptions for all tables."""
+    """Auto-generate table descriptions, localized to the requester's language."""
     count = await service.auto_describe()
     return {"described": count}
 

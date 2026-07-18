@@ -21,7 +21,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
-import { useArrowReorder } from '../../admin/review_dimensions/useArrowReorder';
+import { useArrowReorder } from '../../../hooks/useArrowReorder';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import { centeredGridCellsSx } from '../../../utils/dataGridSx';
 import { JOB_REQUIREMENT_ITEMS_QK, JOB_REQUIREMENT_GROUPS_QK } from '../../../utils/queryKeys';

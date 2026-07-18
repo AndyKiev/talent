@@ -1,15 +1,12 @@
 // src/components/admin/planning_setup/planningSetupApi.ts
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums';
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
 
 const STATUSES = `${BASE_URL}/admin/plan_session_statuses`;
 const CATEGORY_DEFAULTS = `${BASE_URL}/admin/plan_category_defaults`;
 const SCOPE_DEFAULTS = `${BASE_URL}/admin/plan_scope_defaults`;
-
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
-}
 
 // ── Plan session status ───────────────────────────────────────────────────────
 

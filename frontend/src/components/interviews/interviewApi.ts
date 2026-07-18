@@ -1,5 +1,7 @@
 import { axiosInstance } from '../../api/axiosInstance';
 import { BASE_URL } from '../../utils/eNums.ts';
+import type { MutationResponse } from '../../types/mutationResponse';
+export type { MutationResponse };
 
 const BASE = `${BASE_URL}/interviews`;
 const FEEDBACK_BASE = `${BASE_URL}/interview_feedbacks`;
@@ -64,11 +66,6 @@ export interface InterviewUpdate {
     scheduled_at?: string;
     location?: string;
     interviewer_ids?: number[];
-}
-
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
 }
 
 export const fetchInterviews = async (params: {

@@ -1,6 +1,8 @@
 // src/components/admin/department_types/departmentTypeJobLinkApi.ts
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums';
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
 
 const BASE = `${BASE_URL}/department_type_job_links`;
 
@@ -31,11 +33,6 @@ export interface DepartmentTypeJobLinkCreate {
 
 export interface DepartmentTypeJobLinkUpdate {
     is_active: boolean;
-}
-
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
 }
 
 /**

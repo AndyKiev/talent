@@ -17,11 +17,11 @@ import { fetchDepartmentTypes, type DepartmentType } from './departmentTypeApi';
 import { useDepartmentTypeMutations } from './useDepartmentTypeMutations';
 import { useDepartmentTypeLinkMutations } from './useDepartmentTypeLinkMutations';
 import { DepartmentTypeHierarchyRow } from './DepartmentTypeHierarchyRow';
-import { DepartmentTypeEditDialog, type PendingEdit } from './DepartmentTypeEditDialog';
-import { DepartmentTypeDeleteDialog } from './DepartmentTypeDeleteDialog';
+import { FieldEditConfirmDialog, type PendingEdit } from '../../ui/FieldEditConfirmDialog';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import { DEPARTMENT_TYPE_QK } from '../../../utils/queryKeys.ts';
+import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
 
 export function DepartmentTypeHierarchy() {
     const getString = useString({ str });
@@ -180,18 +180,20 @@ export function DepartmentTypeHierarchy() {
             </Paper>
 
             {/* Confirmation dialogs */}
-            <DepartmentTypeEditDialog
+            <FieldEditConfirmDialog
                 pending={pendingEdit}
                 isPending={updateMutation.isPending}
                 onConfirm={handleConfirmEdit}
                 onCancel={() => setPendingEdit(null)}
             />
 
-            <DepartmentTypeDeleteDialog
-                row={typeToDelete}
-                isPending={deleteMutation.isPending}
+            <ConfirmDeleteDialog
+                open={!!typeToDelete}
+                title={getString('deleteDepartmentType') || 'Delete Department Type'}
+                message={getString('areYouSureDeleteDepartmentType') || `Are you sure you want to delete "${typeToDelete?.name}"? This action cannot be undone.`}
+                isDeleting={deleteMutation.isPending}
                 onConfirm={handleConfirmDelete}
-                onCancel={() => setTypeToDelete(null)}
+                onClose={() => setTypeToDelete(null)}
             />
 
             <Snackbar

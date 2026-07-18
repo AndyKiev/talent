@@ -1,6 +1,8 @@
 // src/components/employees/trainings/employeeTrainingApi.ts
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums.ts';
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
 
 const BASE = `${BASE_URL}/employee_trainings`;
 
@@ -22,11 +24,6 @@ export interface EmployeeTrainingCreate {
 
 export interface EmployeeTrainingUpdate {
     training_status_id: number;
-}
-
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
 }
 
 export const fetchEmployeeTrainings = async (employeeId: number): Promise<EmployeeTraining[]> => {

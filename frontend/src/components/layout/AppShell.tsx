@@ -28,6 +28,7 @@ import SettingsRounded from '@mui/icons-material/SettingsRounded';
 import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
 import ExpandLessRounded from '@mui/icons-material/ExpandLessRounded';
 import MenuRounded from '@mui/icons-material/MenuRounded';
+import BoltRounded from '@mui/icons-material/BoltRounded';
 import { PeopleAltRounded, AdminPanelSettingsRounded, RateReviewRounded, SchoolRounded, PersonSearchRounded, RecentActorsRounded, ForumRounded, LogoutRounded } from "@mui/icons-material";
 import { useTheme as useAppTheme } from "../theme/ThemeContext";
 import { useAuthStore } from "../../store/authStore";
@@ -277,11 +278,10 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                fontSize: 14,
                                 flexShrink: 0,
                             }}
                         >
-                            ⚡
+                            <BoltRounded sx={{ fontSize: 18, color: "#fff" }} />
                         </Box>
                         <Typography
                             fontWeight={700}

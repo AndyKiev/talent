@@ -1,6 +1,8 @@
 // src/components/admin/job_groups/jobGroupApi.ts
-import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums';
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
+import { createCrudApi } from '../../../api/createCrudApi';
 
 const BASE = `${BASE_URL}/job_groups`;
 
@@ -28,34 +30,12 @@ export interface JobGroupUpdate {
   job_group_type_id?: number;
 }
 
-export interface MutationResponse<T> {
-  detail: string;
-  data: T;
-}
+const crud = createCrudApi<JobGroup, JobGroupCreate, JobGroupUpdate>(BASE);
 
-export const fetchJobGroups = async (): Promise<JobGroup[]> => {
-  const res = await axiosInstance.get<JobGroup[]>(BASE);
-  return res.data ?? [];
-};
+export const fetchJobGroups = crud.fetchList;
 
-export const createJobGroup = async (
-  body: JobGroupCreate,
-): Promise<MutationResponse<JobGroup>> => {
-  const res = await axiosInstance.post<MutationResponse<JobGroup>>(BASE, body);
-  return res.data;
-};
+export const createJobGroup = crud.create;
 
-export const updateJobGroup = async ({
-  id,
-  data,
-}: {
-  id: number;
-  data: JobGroupUpdate;
-}): Promise<MutationResponse<JobGroup>> => {
-  const res = await axiosInstance.patch<MutationResponse<JobGroup>>(`${BASE}/${id}`, data);
-  return res.data;
-};
+export const updateJobGroup = crud.update;
 
-export const deleteJobGroup = async (id: number): Promise<void> => {
-  await axiosInstance.delete(`${BASE}/${id}`);
-};
+export const deleteJobGroup = crud.remove;

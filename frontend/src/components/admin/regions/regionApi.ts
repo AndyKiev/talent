@@ -1,6 +1,9 @@
 // src/components/admin/regions/regionApi.ts
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums.ts';
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
+import { createCrudApi } from '../../../api/createCrudApi';
 
 const BASE = `${BASE_URL}/regions`;
 
@@ -25,40 +28,15 @@ export interface RegionUpdate {
     is_active?: boolean;
 }
 
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
-}
+const crud = createCrudApi<Region, RegionCreate, RegionUpdate, { is_active?: boolean }>(BASE);
 
-export const fetchRegions = async (
-    params?: { is_active?: boolean },
-): Promise<Region[]> => {
-    const res = await axiosInstance.get<Region[]>(BASE, { params });
-    return res.data ?? [];
-};
+export const fetchRegions = crud.fetchAll;
 
-export const createRegion = async (
-    body: RegionCreate,
-): Promise<MutationResponse<Region>> => {
-    const res = await axiosInstance.post<MutationResponse<Region>>(BASE, body);
-    return res.data;
-};
+export const createRegion = crud.create;
 
-export const updateRegion = async ({
-    id,
-    data,
-}: {
-    id: number;
-    data: RegionUpdate;
-}): Promise<MutationResponse<Region>> => {
-    const res = await axiosInstance.patch<MutationResponse<Region>>(`${BASE}/${id}`, data);
-    return res.data;
-};
+export const updateRegion = crud.update;
 
-export const deleteRegion = async (id: number): Promise<MutationResponse<null>> => {
-    const res = await axiosInstance.delete<MutationResponse<null>>(`${BASE}/${id}`);
-    return res.data;
-};
+export const deleteRegion = crud.remove;
 
 export type MoveDirection = 'up' | 'down' | 'top' | 'bottom';
 

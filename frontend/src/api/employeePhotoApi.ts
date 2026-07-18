@@ -1,13 +1,10 @@
 import { axiosInstance } from './axiosInstance';
 import { BASE_URL } from '../utils/eNums.ts';
+import type { MutationResponse } from '../types/mutationResponse';
 
 const EMP_BASE = `${BASE_URL}/employees`;
 
 // Mirror of the backend MutationResponse wrapper ({ detail, data }).
-interface MutationResponse<T> {
-    detail: string;
-    data: T;
-}
 
 export interface EmployeePhotoMeta {
     employee_id: number;

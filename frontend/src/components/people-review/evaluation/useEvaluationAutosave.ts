@@ -111,9 +111,21 @@ export function useEvaluationAutosave({
     const inFlightRef = useRef<Promise<void> | null>(null);
 
     // Latest props read by stable callbacks without widening their deps.
-    const draftRef = useRef(draft); draftRef.current = draft;
-    const onErrorRef = useRef(onError); onErrorRef.current = onError;
-    const sessionIdRef = useRef(sessionId); sessionIdRef.current = sessionId;
+    // Synced in an effect (React 19 forbids ref writes during render). This
+    // effect is declared BEFORE every effect that reads the refs, so within a
+    // commit the refs are always fresh by the time a reader runs; the async
+    // callbacks (timers, saves) run later still.
+    const draftRef = useRef(draft);
+    const onErrorRef = useRef(onError);
+    const sessionIdRef = useRef(sessionId);
+    // Self-reference handle for the retry/follow-up timers scheduled INSIDE
+    // runSave (a direct `runSave` reference there is a use-before-declaration).
+    const runSaveRef = useRef<(() => Promise<void>) | null>(null);
+    useEffect(() => {
+        draftRef.current = draft;
+        onErrorRef.current = onError;
+        sessionIdRef.current = sessionId;
+    });
 
     const clearTimer = () => {
         if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
@@ -155,7 +167,7 @@ export function useEvaluationAutosave({
                 setStatus('error');
                 onErrorRef.current(err instanceof Error ? err.message : String(err));
                 if (retryRef.current) clearTimeout(retryRef.current);
-                retryRef.current = setTimeout(() => { void runSave(); }, RETRY_MS);
+                retryRef.current = setTimeout(() => { void runSaveRef.current?.(); }, RETRY_MS);
             } finally {
                 inFlightRef.current = null;
             }
@@ -164,9 +176,15 @@ export function useEvaluationAutosave({
         await work;
         // A change landed during the save — schedule a follow-up flush.
         if (pendingRef.current && !timerRef.current) {
-            timerRef.current = setTimeout(() => { void runSave(); }, 0);
+            timerRef.current = setTimeout(() => { void runSaveRef.current?.(); }, 0);
         }
     }, [qc]);
+
+    // Keep the self-reference handle current (runSave is identity-stable — its
+    // only dep is the stable query client — so this never changes in practice).
+    useEffect(() => {
+        runSaveRef.current = runSave;
+    }, [runSave]);
 
     // Detect dirty draft vs the saved baseline and (re)arm the debounce timer.
     useEffect(() => {
@@ -203,6 +221,18 @@ export function useEvaluationAutosave({
         timerRef.current = setTimeout(() => { void runSave(); }, DEBOUNCE_MS);
     }, [enabled, rid, employeeId, draft, runSave]);
 
+    // Seed the visible status whenever the record or editability changes —
+    // adjust-during-render; the baseline itself is re-established in the effect
+    // below (same [enabled, rid] trigger, so the two stay in lock-step).
+    // prev starts null so an already-enabled first render seeds 'saved' exactly
+    // like the old on-mount effect did.
+    const statusSeedKey = enabled ? String(rid) : null;
+    const [prevStatusSeedKey, setPrevStatusSeedKey] = useState<string | null>(null);
+    if (statusSeedKey !== prevStatusSeedKey) {
+        setPrevStatusSeedKey(statusSeedKey);
+        if (statusSeedKey !== null) setStatus('saved');
+    }
+
     // Establish (and reset) the baseline when the record or editability changes.
     // The cleanup flushes the OUTGOING record before the baseline is replaced, so a
     // pending edit is never silently dropped or written to the next employee.
@@ -216,7 +246,6 @@ export function useEvaluationAutosave({
             langs: JSON.stringify(buildLangs(d)),
         };
         lastSigRef.current = null;
-        setStatus('saved');
         return () => {
             clearTimer();
             if (retryRef.current) { clearTimeout(retryRef.current); retryRef.current = null; }

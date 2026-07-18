@@ -73,7 +73,7 @@ def group_files(api_v1_dir: Path, output_dir: Path) -> None:
 
         if not files:
             print(
-                f"  ⚠️  No files found for suffix '{suffix}{FILE_EXTENSION}' — skipping."
+                f"  [WARN] No files found for suffix '{suffix}{FILE_EXTENSION}' — skipping."
             )
             continue
 
@@ -93,11 +93,11 @@ def group_files(api_v1_dir: Path, output_dir: Path) -> None:
                 out.write("\n")
 
         print(
-            f"  ✅  {output_file.name:35s}  ({len(files)} file{'s' if len(files) != 1 else ''})"
+            f"  [OK] {output_file.name:35s}  ({len(files)} file{'s' if len(files) != 1 else ''})"
         )
         total_written += 1
 
-    print(f"\n✨  Done — {total_written} joint file(s) written to: {output_dir}")
+    print(f"\nDone — {total_written} joint file(s) written to: {output_dir}")
 
 
 # ---------------------------------------------------------------------------
@@ -121,11 +121,11 @@ def main() -> None:
         output_dir = project_root / "backend" / "utils" / "grouped_essence_files"
 
     if not api_v1_dir.exists():
-        print(f"❌  api_v1 directory not found: {api_v1_dir}")
+        print(f"[ERR] api_v1 directory not found: {api_v1_dir}")
         sys.exit(1)
 
-    print(f"🔍  Scanning: {api_v1_dir}")
-    print(f"📁  Output:   {output_dir}\n")
+    print(f"Scanning: {api_v1_dir}")
+    print(f"Output:   {output_dir}\n")
 
     group_files(api_v1_dir, output_dir)
 

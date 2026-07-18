@@ -9,6 +9,7 @@ from sqlalchemy.orm import selectinload
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.app_setting.app_setting_service import get_int_setting
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.utils.enums import (
     PlanSessionStatusKey,
@@ -170,14 +171,20 @@ class PlanSessionService(BaseService):
         pending = await self.repository.count_by_status_keys(
             [PlanSessionStatusKey.PENDING.value]
         )
-        if pending >= 1:
+        max_pending = await get_int_setting(
+            self.session, "plan_max_pending_sessions", 1
+        )
+        if pending >= max_pending:
             raise await self._resolve_domain_error(PlanSessionPendingExists())
 
     async def _assert_active_capacity(self, adding: int = 1) -> None:
         active = await self.repository.count_by_status_keys(
             list(PLAN_SESSION_ACTIVE_STATUS_KEYS)
         )
-        if active + adding > 2:
+        max_active = await get_int_setting(
+            self.session, "plan_max_active_sessions", 2
+        )
+        if active + adding > max_active:
             raise await self._resolve_domain_error(PlanSessionActiveLimit())
 
     # ------------------------------------------------------------------
@@ -487,7 +494,7 @@ class PlanSessionService(BaseService):
                         sorted(job_names.get(j, str(j)) for j in missing)
                     )
                     lines.append(
-                        f"• '{dept_names.get(dept_id, dept_id)}' ✗ "
+                        f"- '{dept_names.get(dept_id, dept_id)}' / "
                         f"'{group_names.get(gid, gid)}': uncovered job(s): {missing_names}"
                     )
 
@@ -581,7 +588,10 @@ class PlanSessionService(BaseService):
         active = await self.repository.count_by_status_keys(
             list(PLAN_SESSION_ACTIVE_STATUS_KEYS)
         )
-        if active + 1 > 2:
+        max_active = await get_int_setting(
+            self.session, "plan_max_active_sessions", 2
+        )
+        if active + 1 > max_active:
             raise await self._resolve_domain_error(PlanSessionRevertBlocked())
 
         updated = await self._set_status(session_id, PlanSessionStatusKey.OPEN.value)

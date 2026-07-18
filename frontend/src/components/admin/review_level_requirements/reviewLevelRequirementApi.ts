@@ -1,5 +1,7 @@
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums.ts';
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
 
 const BASE = `${BASE_URL}/review_level_requirements`;
 
@@ -27,11 +29,6 @@ export interface ReviewLevelRequirementUpdate {
     text_key?: string;
     sort_order?: number;
     is_active?: boolean;
-}
-
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
 }
 
 export const fetchReviewLevelRequirements = async (

@@ -32,12 +32,15 @@ function subtreeContains(node: DepartmentNode, id: number | null): boolean {
 
 export function DepartmentInstanceTreeNode({ node, depth, selectedId, onSelect }: Props) {
     // Collapsed by default — the user expands nodes to drill into the subtree.
-    // Auto-expanded when the selection sits somewhere below this node.
+    // Auto-expanded when the selection sits somewhere below this node
+    // (adjust-during-render pattern — no effect needed).
     const hasSelectedDescendant = subtreeContains(node, selectedId);
     const [expanded, setExpanded] = useState(hasSelectedDescendant);
-    useEffect(() => {
+    const [prevHasSelected, setPrevHasSelected] = useState(hasSelectedDescendant);
+    if (hasSelectedDescendant !== prevHasSelected) {
+        setPrevHasSelected(hasSelectedDescendant);
         if (hasSelectedDescendant) setExpanded(true);
-    }, [hasSelectedDescendant]);
+    }
 
     const hasChildren = node.children.length > 0;
     const isSelected = selectedId === node.id;

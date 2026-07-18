@@ -21,7 +21,7 @@ import useString from '../../../../hooks/useString';
 
 import { ExportJsonDialog } from './dialogs/ExportJsonDialog';
 import { ExportExcelDialog } from './dialogs/ExportExcelDialog';
-import { ImportFileDialog } from './dialogs/ImportFileDialog';
+import { ImportFileDialog, ImportMode } from './dialogs/ImportFileDialog';
 import { ImportJsonTextDialogNew } from './dialogs/ImportJsonTextDialogNew.tsx';
 import type { ImportResult } from './dialogs/ImportJsonTextDialogNew.tsx';
 import {useBulkTranslations} from "../useBulkTranslations.ts";
@@ -166,7 +166,7 @@ export const BulkActionsToolbar: React.FC = () => {
 
             <ImportFileDialog
                 open={importJsonFileOpen}
-                mode="json"
+                mode={ImportMode.Json}
                 isPending={importJsonFileMutation.isPending}
                 result={jsonFileResult}
                 onClose={() => setImportJsonFileOpen(false)}
@@ -183,7 +183,7 @@ export const BulkActionsToolbar: React.FC = () => {
 
             <ImportFileDialog
                 open={importExcelOpen}
-                mode="excel"
+                mode={ImportMode.Excel}
                 isPending={importExcelMutation.isPending}
                 result={excelResult}
                 onClose={() => setImportExcelOpen(false)}

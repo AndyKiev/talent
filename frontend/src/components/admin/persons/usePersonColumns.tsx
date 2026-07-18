@@ -5,7 +5,7 @@ import { Box, Chip, IconButton, Tooltip } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import dayjs from 'dayjs';
-import type { Person } from './personApi';
+import { type Person, sexLabelKey } from './personApi';
 import type { GetStringFn } from '../../../types/getStringFn.ts';
 import { DATE_FORMAT } from '../../../utils/eNums';
 import cfl from '../../../utils/helpers.ts';
@@ -49,7 +49,7 @@ export function usePersonColumns({
                 headerName: cfl(getString('sex') || 'Sex'),
                 width: 100,
                 valueGetter: (value: Person['sex']) =>
-                    value ? getString(value === 'female' ? 'sexFemale' : 'sexMale') || value : '',
+                    value ? getString(sexLabelKey(value)) || value : '',
             },
             {
                 field: 'birth_date',

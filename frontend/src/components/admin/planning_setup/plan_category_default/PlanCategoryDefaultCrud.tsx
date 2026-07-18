@@ -17,12 +17,12 @@ import { fetchPlanCategoryDefaults, type PlanCategoryDefault } from '../planning
 import { usePlanCategoryDefaultMutations } from './usePlanCategoryDefaultMutations';
 import { usePlanCategoryDefaultColumns } from './usePlanCategoryDefaultColumns';
 import { PlanCategoryDefaultForm } from './PlanCategoryDefaultForm';
-import { PlanCategoryDefaultDeleteDialog } from './PlanCategoryDefaultDeleteDialog';
 import { useDataGridLocale } from '../../../../hooks/useDataGridLocale';
 import { PLAN_CATEGORY_DEFAULT_QK } from '../../../../utils/queryKeys.ts';
 import useString from '../../../../hooks/useString';
 import str from '../../../../strings/str';
 import cfl from '../../../../utils/helpers.ts';
+import ConfirmDeleteDialog from '../../../ui/ConfirmDeleteDialog';
 
 export function PlanCategoryDefaultCrud() {
     const getString = useString({ str });
@@ -55,6 +55,11 @@ export function PlanCategoryDefaultCrud() {
         if (!rowToDelete) return;
         deleteMutation.mutate(rowToDelete.id);
     }, [rowToDelete, deleteMutation]);
+
+    // Category name label for the delete confirmation.
+    const deleteLabel = rowToDelete
+        ? rowToDelete.department_category?.name ?? `#${rowToDelete.department_category_id}`
+        : '';
 
     const columns = usePlanCategoryDefaultColumns({
         getString,
@@ -121,11 +126,13 @@ export function PlanCategoryDefaultCrud() {
                 createMutation={createMutation}
             />
 
-            <PlanCategoryDefaultDeleteDialog
-                row={rowToDelete}
-                isPending={deleteMutation.isPending}
+            <ConfirmDeleteDialog
+                open={!!rowToDelete}
+                title={getString('removePlanCategoryDefault') || 'Remove Planning Category'}
+                message={getString('areYouSureRemovePlanCategoryDefault', { name: deleteLabel }) || `Remove "${deleteLabel}" from planning defaults? Future sessions will no longer include it.`}
+                isDeleting={deleteMutation.isPending}
                 onConfirm={handleConfirmDelete}
-                onCancel={() => setRowToDelete(null)}
+                onClose={() => setRowToDelete(null)}
             />
 
             <Snackbar

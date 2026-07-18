@@ -29,7 +29,6 @@ import { Route as DeveloperIndexRouteImport } from './routes/developer/index'
 import { Route as CandidatesIndexRouteImport } from './routes/candidates/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as People_reviewMyRouteImport } from './routes/people_review/my'
-import { Route as EmployeesNewRouteImport } from './routes/employees/new'
 import { Route as EmployeesHeadcount_planRouteImport } from './routes/employees/headcount_plan'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as RecruitmentTaskIdRouteRouteImport } from './routes/recruitment/$taskId/route'
@@ -81,7 +80,6 @@ import { Route as AdminEmployee_eventsIndexRouteImport } from './routes/admin/em
 import { Route as AdminDepartments_groupIndexRouteImport } from './routes/admin/departments_group/index'
 import { Route as AdminDepartment_typesIndexRouteImport } from './routes/admin/department_types/index'
 import { Route as AdminDepartment_categoriesIndexRouteImport } from './routes/admin/department_categories/index'
-import { Route as EmployeesEmployeeIdEditRouteImport } from './routes/employees/$employeeId/edit'
 import { Route as AdminStructureDepartmentIdRouteImport } from './routes/admin/structure/$departmentId'
 import { Route as AdminReview_setupLevelsRouteRouteImport } from './routes/admin/review_setup/levels/route'
 import { Route as AdminReview_setupDimensionsRouteRouteImport } from './routes/admin/review_setup/dimensions/route'
@@ -262,11 +260,6 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const People_reviewMyRoute = People_reviewMyRouteImport.update({
   id: '/people_review/my',
   path: '/people_review/my',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EmployeesNewRoute = EmployeesNewRouteImport.update({
-  id: '/employees/new',
-  path: '/employees/new',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EmployeesHeadcount_planRoute = EmployeesHeadcount_planRouteImport.update({
@@ -542,11 +535,6 @@ const AdminDepartment_categoriesIndexRoute =
     path: '/admin/department_categories/',
     getParentRoute: () => rootRouteImport,
   } as any)
-const EmployeesEmployeeIdEditRoute = EmployeesEmployeeIdEditRouteImport.update({
-  id: '/edit',
-  path: '/edit',
-  getParentRoute: () => EmployeesEmployeeIdRouteRoute,
-} as any)
 const AdminStructureDepartmentIdRoute =
   AdminStructureDepartmentIdRouteImport.update({
     id: '/admin/structure/$departmentId',
@@ -1046,7 +1034,6 @@ export interface FileRoutesByFullPath {
   '/recruitment/$taskId': typeof RecruitmentTaskIdRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/employees/headcount_plan': typeof EmployeesHeadcount_planRoute
-  '/employees/new': typeof EmployeesNewRoute
   '/people_review/my': typeof People_reviewMyRoute
   '/admin': typeof AdminIndexRoute
   '/candidates/': typeof CandidatesIndexRoute
@@ -1066,7 +1053,6 @@ export interface FileRoutesByFullPath {
   '/admin/review_setup/dimensions': typeof AdminReview_setupDimensionsRouteRouteWithChildren
   '/admin/review_setup/levels': typeof AdminReview_setupLevelsRouteRouteWithChildren
   '/admin/structure/$departmentId': typeof AdminStructureDepartmentIdRoute
-  '/employees/$employeeId/edit': typeof EmployeesEmployeeIdEditRoute
   '/admin/department_categories': typeof AdminDepartment_categoriesIndexRoute
   '/admin/department_types': typeof AdminDepartment_typesIndexRoute
   '/admin/departments_group/': typeof AdminDepartments_groupIndexRoute
@@ -1179,7 +1165,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth/login': typeof AuthLoginRoute
   '/employees/headcount_plan': typeof EmployeesHeadcount_planRoute
-  '/employees/new': typeof EmployeesNewRoute
   '/people_review/my': typeof People_reviewMyRoute
   '/admin': typeof AdminIndexRoute
   '/candidates': typeof CandidatesIndexRoute
@@ -1194,7 +1179,6 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsIndexRoute
   '/training': typeof TrainingIndexRoute
   '/admin/structure/$departmentId': typeof AdminStructureDepartmentIdRoute
-  '/employees/$employeeId/edit': typeof EmployeesEmployeeIdEditRoute
   '/admin/department_categories': typeof AdminDepartment_categoriesIndexRoute
   '/admin/department_types': typeof AdminDepartment_typesIndexRoute
   '/admin/departments_group': typeof AdminDepartments_groupIndexRoute
@@ -1327,7 +1311,6 @@ export interface FileRoutesById {
   '/recruitment/$taskId': typeof RecruitmentTaskIdRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/employees/headcount_plan': typeof EmployeesHeadcount_planRoute
-  '/employees/new': typeof EmployeesNewRoute
   '/people_review/my': typeof People_reviewMyRoute
   '/admin/': typeof AdminIndexRoute
   '/candidates/': typeof CandidatesIndexRoute
@@ -1347,7 +1330,6 @@ export interface FileRoutesById {
   '/admin/review_setup/dimensions': typeof AdminReview_setupDimensionsRouteRouteWithChildren
   '/admin/review_setup/levels': typeof AdminReview_setupLevelsRouteRouteWithChildren
   '/admin/structure/$departmentId': typeof AdminStructureDepartmentIdRoute
-  '/employees/$employeeId/edit': typeof EmployeesEmployeeIdEditRoute
   '/admin/department_categories/': typeof AdminDepartment_categoriesIndexRoute
   '/admin/department_types/': typeof AdminDepartment_typesIndexRoute
   '/admin/departments_group/': typeof AdminDepartments_groupIndexRoute
@@ -1483,7 +1465,6 @@ export interface FileRouteTypes {
     | '/recruitment/$taskId'
     | '/auth/login'
     | '/employees/headcount_plan'
-    | '/employees/new'
     | '/people_review/my'
     | '/admin'
     | '/candidates/'
@@ -1503,7 +1484,6 @@ export interface FileRouteTypes {
     | '/admin/review_setup/dimensions'
     | '/admin/review_setup/levels'
     | '/admin/structure/$departmentId'
-    | '/employees/$employeeId/edit'
     | '/admin/department_categories'
     | '/admin/department_types'
     | '/admin/departments_group/'
@@ -1616,7 +1596,6 @@ export interface FileRouteTypes {
     | '/'
     | '/auth/login'
     | '/employees/headcount_plan'
-    | '/employees/new'
     | '/people_review/my'
     | '/admin'
     | '/candidates'
@@ -1631,7 +1610,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/training'
     | '/admin/structure/$departmentId'
-    | '/employees/$employeeId/edit'
     | '/admin/department_categories'
     | '/admin/department_types'
     | '/admin/departments_group'
@@ -1763,7 +1741,6 @@ export interface FileRouteTypes {
     | '/recruitment/$taskId'
     | '/auth/login'
     | '/employees/headcount_plan'
-    | '/employees/new'
     | '/people_review/my'
     | '/admin/'
     | '/candidates/'
@@ -1783,7 +1760,6 @@ export interface FileRouteTypes {
     | '/admin/review_setup/dimensions'
     | '/admin/review_setup/levels'
     | '/admin/structure/$departmentId'
-    | '/employees/$employeeId/edit'
     | '/admin/department_categories/'
     | '/admin/department_types/'
     | '/admin/departments_group/'
@@ -1917,7 +1893,6 @@ export interface RootRouteChildren {
   EmployeesEmployeeIdRouteRoute: typeof EmployeesEmployeeIdRouteRouteWithChildren
   AuthLoginRoute: typeof AuthLoginRoute
   EmployeesHeadcount_planRoute: typeof EmployeesHeadcount_planRoute
-  EmployeesNewRoute: typeof EmployeesNewRoute
   People_reviewMyRoute: typeof People_reviewMyRoute
   AdminIndexRoute: typeof AdminIndexRoute
   DeveloperIndexRoute: typeof DeveloperIndexRoute
@@ -2089,13 +2064,6 @@ declare module '@tanstack/react-router' {
       path: '/people_review/my'
       fullPath: '/people_review/my'
       preLoaderRoute: typeof People_reviewMyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/employees/new': {
-      id: '/employees/new'
-      path: '/employees/new'
-      fullPath: '/employees/new'
-      preLoaderRoute: typeof EmployeesNewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/employees/headcount_plan': {
@@ -2454,13 +2422,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/department_categories'
       preLoaderRoute: typeof AdminDepartment_categoriesIndexRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/employees/$employeeId/edit': {
-      id: '/employees/$employeeId/edit'
-      path: '/edit'
-      fullPath: '/employees/$employeeId/edit'
-      preLoaderRoute: typeof EmployeesEmployeeIdEditRouteImport
-      parentRoute: typeof EmployeesEmployeeIdRouteRoute
     }
     '/admin/structure/$departmentId': {
       id: '/admin/structure/$departmentId'
@@ -3548,7 +3509,6 @@ const DeveloperSecurityRouteRouteWithChildren =
   )
 
 interface EmployeesEmployeeIdRouteRouteChildren {
-  EmployeesEmployeeIdEditRoute: typeof EmployeesEmployeeIdEditRoute
   EmployeesEmployeeIdIndexRoute: typeof EmployeesEmployeeIdIndexRoute
   EmployeesEmployeeIdCareer_historyIndexRoute: typeof EmployeesEmployeeIdCareer_historyIndexRoute
   EmployeesEmployeeIdDepartmentsIndexRoute: typeof EmployeesEmployeeIdDepartmentsIndexRoute
@@ -3561,7 +3521,6 @@ interface EmployeesEmployeeIdRouteRouteChildren {
 
 const EmployeesEmployeeIdRouteRouteChildren: EmployeesEmployeeIdRouteRouteChildren =
   {
-    EmployeesEmployeeIdEditRoute: EmployeesEmployeeIdEditRoute,
     EmployeesEmployeeIdIndexRoute: EmployeesEmployeeIdIndexRoute,
     EmployeesEmployeeIdCareer_historyIndexRoute:
       EmployeesEmployeeIdCareer_historyIndexRoute,
@@ -3609,7 +3568,6 @@ const rootRouteChildren: RootRouteChildren = {
   EmployeesEmployeeIdRouteRoute: EmployeesEmployeeIdRouteRouteWithChildren,
   AuthLoginRoute: AuthLoginRoute,
   EmployeesHeadcount_planRoute: EmployeesHeadcount_planRoute,
-  EmployeesNewRoute: EmployeesNewRoute,
   People_reviewMyRoute: People_reviewMyRoute,
   AdminIndexRoute: AdminIndexRoute,
   DeveloperIndexRoute: DeveloperIndexRoute,

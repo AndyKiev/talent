@@ -1,6 +1,8 @@
 // src/components/developer/settings/settingsApi.ts
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums';
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
 
 const SETTINGS_BASE = `${BASE_URL}/app_settings`;
 const VALUE_TYPES_BASE = `${BASE_URL}/setting_value_types`;
@@ -64,11 +66,6 @@ export interface AppSettingUpdate {
     visible_to_all_groups?: boolean;
     visible_to_regular?: boolean;
     group_ids?: number[];
-}
-
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
 }
 
 export const fetchAppSettings = async (): Promise<AppSetting[]> => {

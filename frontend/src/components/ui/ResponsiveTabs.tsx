@@ -28,7 +28,6 @@ interface ResponsiveTabsProps {
  * match the real MUI rendering exactly, regardless of label complexity.
  */
 export function ResponsiveTabs({ tabs, activeTab, onChange, tabsProps }: ResponsiveTabsProps) {
-    const containerRef = useRef<HTMLDivElement>(null);
     const measureRowRef = useRef<HTMLDivElement>(null);
     const tabRefs = useRef<(HTMLElement | null)[]>([]);
     const [tabWidths, setTabWidths] = useState<number[]>([]);
@@ -68,8 +67,9 @@ export function ResponsiveTabs({ tabs, activeTab, onChange, tabsProps }: Respons
     }, [tabs, applyTabWidths]);
 
     // ── Observe container width ──────────────────────────────────────────
-    useEffect(() => {
-        const el = containerRef.current;
+    // React 19 ref callback with cleanup: observer setup/teardown co-located
+    // with the node it watches — no effect, no separate ref.
+    const containerRefCallback = useCallback((el: HTMLDivElement | null) => {
         if (!el) return;
         const ro = new ResizeObserver((entries) => {
             for (const entry of entries) {
@@ -173,7 +173,7 @@ export function ResponsiveTabs({ tabs, activeTab, onChange, tabsProps }: Respons
 
     return (
         <div
-            ref={containerRef}
+            ref={containerRefCallback}
             style={{ width: '100%', overflow: 'hidden', position: 'relative' }}
         >
             {/* Hidden measurement Tabs — renders real <Tab> elements so widths

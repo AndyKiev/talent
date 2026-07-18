@@ -1,6 +1,8 @@
 // src/components/admin/talent-periods/talentPeriodApi.ts
-import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from "../../../utils/eNums.ts"
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
+import { createCrudApi } from '../../../api/createCrudApi';
 
 const BASE = `${BASE_URL}/admin/talent_periods`;
 
@@ -27,35 +29,12 @@ export interface TalentPeriodUpdate {
     qty_months?: number;  // Added
 }
 
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
-}
+const crud = createCrudApi<TalentPeriod, TalentPeriodCreate, TalentPeriodUpdate>(BASE);
 
-export const fetchTalentPeriods = async (): Promise<TalentPeriod[]> => {
-    const res = await axiosInstance.get<TalentPeriod[]>(BASE);
-    return res.data ?? [];
-};
+export const fetchTalentPeriods = crud.fetchList;
 
-export const createTalentPeriod = async (
-    body: TalentPeriodCreate,
-): Promise<MutationResponse<TalentPeriod>> => {
-    const res = await axiosInstance.post<MutationResponse<TalentPeriod>>(BASE, body);
-    return res.data;
-};
+export const createTalentPeriod = crud.create;
 
-export const updateTalentPeriod = async ({
-                                             id,
-                                             data,
-                                         }: {
-    id: number;
-    data: TalentPeriodUpdate;
-}): Promise<MutationResponse<TalentPeriod>> => {
-    const res = await axiosInstance.patch<MutationResponse<TalentPeriod>>(`${BASE}/${id}`, data);
-    return res.data;
-};
+export const updateTalentPeriod = crud.update;
 
-export const deleteTalentPeriod = async (id: number): Promise<MutationResponse<null>> => {
-    const res = await axiosInstance.delete<MutationResponse<null>>(`${BASE}/${id}`);
-    return res.data;
-};
+export const deleteTalentPeriod = crud.remove;

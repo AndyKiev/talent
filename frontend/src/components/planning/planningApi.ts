@@ -1,16 +1,13 @@
 // src/components/planning/planningApi.ts
 import { axiosInstance } from '../../api/axiosInstance';
 import { BASE_URL } from '../../utils/eNums';
+import type { MutationResponse } from '../../types/mutationResponse';
+export type { MutationResponse };
 
 const SESSIONS = `${BASE_URL}/admin/plan_sessions`;
 const SCOPES = `${BASE_URL}/admin/plan_scopes`;
 
 // ── Shared ──────────────────────────────────────────────────────────────────
-
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
-}
 
 // ── Plan session status (read-only here; full CRUD lives in admin setup) ──────
 

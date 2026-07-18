@@ -1,5 +1,5 @@
-// components/Customized/Admin/Locale/dialogs/AddTranslationDialog.tsx
-import React, { useEffect } from 'react';
+// components/developer/translations/components/dialogs/AddTranslationDialog.tsx
+import React from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -10,9 +10,9 @@ import {
     Stack,
 } from '@mui/material';
 import { useForm, useFieldArray } from 'react-hook-form';
-import type {TranslationFormData} from "../../types.ts";
+import type { TranslationFormData } from "../../types.ts";
 import useString from "../../../../../hooks/useString.ts";
-import {useTranslations} from "../../../../../hooks/useTranslations.ts";
+import { useTranslations } from "../../../../../hooks/useTranslations.ts";
 
 interface AddTranslationDialogProps {
     open: boolean;
@@ -20,18 +20,37 @@ interface AddTranslationDialogProps {
     onSubmit: (data: TranslationFormData) => Promise<void>;
 }
 
+// The form lives INSIDE the Dialog, so MUI unmounts it when the dialog closes
+// and mounts it fresh on each open — useForm re-initializes from defaultValues
+// and no reset-on-open effect is needed. Keyed on the langs count so the field
+// list rebuilds if languages arrive while the dialog is already open.
 export const AddTranslationDialog: React.FC<AddTranslationDialogProps> = ({
-                                                                              open,
-                                                                              onClose,
-                                                                              onSubmit,
-                                                                          }) => {
+    open,
+    onClose,
+    onSubmit,
+}) => {
+    const getString = useString();
+    const { langs } = useTranslations();
+
+    return (
+        <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+            <DialogTitle>{getString("addNewTranslation")}</DialogTitle>
+            <AddTranslationForm key={langs?.length ?? 0} onClose={onClose} onSubmit={onSubmit} />
+        </Dialog>
+    );
+};
+
+const AddTranslationForm: React.FC<Omit<AddTranslationDialogProps, 'open'>> = ({ onClose, onSubmit }) => {
     const getString = useString();
     const { langs, addKeyMutation } = useTranslations();
 
-    const { control, register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<TranslationFormData>({
+    const { control, register, handleSubmit, getValues, setValue, formState: { errors } } = useForm<TranslationFormData>({
         defaultValues: {
             key: '',
-            translations: [],
+            translations: (langs ?? []).map(lang => ({
+                lang_id: lang.id,
+                value: '',
+            })),
         }
     });
 
@@ -40,82 +59,60 @@ export const AddTranslationDialog: React.FC<AddTranslationDialogProps> = ({
         name: 'translations',
     });
 
-    // Reset form when dialog opens
-    useEffect(() => {
-        if (open && langs && langs.length > 0) {
-            reset({
-                key: '',
-                translations: langs.map(lang => ({
-                    lang_id: lang.id,
-                    value: '',
-                })),
-            });
-        }
-    }, [open, langs, reset]);
-
-    // Watch for English field changes to auto-generate key
-    const englishField = watch('translations')?.find(t => {
-        const lang = langs?.find(l => l.id === t.lang_id);
-        return lang?.name.toLowerCase() === 'english';
-    });
-
-    useEffect(() => {
-        if (englishField?.value && !watch('key')) {
-            const camelCaseKey = englishField.value
-                .toLowerCase()
-                .replace(/[^a-zA-Z0-9]+(.)/g, (_, chr) => chr.toUpperCase())
-                .replace(/[^a-zA-Z0-9]/g, '');
-            setValue('key', camelCaseKey);
-        }
-    }, [englishField?.value, setValue, watch]);
-
-    const handleClose = () => {
-        onClose();
-        reset();
+    // Auto-generate a camelCase key from the English value while the key field
+    // is still empty (event-driven — no effect needed).
+    const deriveKeyFromEnglish = (english: string) => {
+        if (!english || getValues('key')) return;
+        const camelCaseKey = english
+            .toLowerCase()
+            .replace(/[^a-zA-Z0-9]+(.)/g, (_, chr) => chr.toUpperCase())
+            .replace(/[^a-zA-Z0-9]/g, '');
+        setValue('key', camelCaseKey);
     };
 
     return (
-        <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-            <DialogTitle>{getString("addNewTranslation")}</DialogTitle>
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <DialogContent>
-                    <Stack spacing={2}>
-                        <TextField
-                            label={getString("keyName")}
-                            {...register('key', { required: getString("keyNameIsRequired") })}
-                            error={!!errors.key}
-                            helperText={errors.key?.message}
-                            fullWidth
-                        />
+        <form onSubmit={handleSubmit(onSubmit)}>
+            <DialogContent>
+                <Stack spacing={2}>
+                    <TextField
+                        label={getString("keyName")}
+                        {...register('key', { required: getString("keyNameIsRequired") })}
+                        error={!!errors.key}
+                        helperText={errors.key?.message}
+                        fullWidth
+                    />
 
-                        {fields.map((field, index) => {
-                            const lang = langs?.find(l => l.id === field.lang_id);
-                            if (!lang) return null;
+                    {fields.map((field, index) => {
+                        const lang = langs?.find(l => l.id === field.lang_id);
+                        if (!lang) return null;
 
-                            return (
-                                <TextField
-                                    key={field.id}
-                                    label={`${lang.name} ${getString("translation")}`}
-                                    {...register(`translations.${index}.value`)}
-                                    multiline
-                                    rows={2}
-                                    fullWidth
-                                />
-                            );
-                        })}
-                    </Stack>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleClose}>{getString("cancel")}</Button>
-                    <Button
-                        type="submit"
-                        variant="contained"
-                        disabled={addKeyMutation.isPending}
-                    >
-                        {addKeyMutation.isPending ? getString("adding") : getString("addTranslation")}
-                    </Button>
-                </DialogActions>
-            </form>
-        </Dialog>
+                        const isEnglish = lang.name.toLowerCase() === 'english';
+                        return (
+                            <TextField
+                                key={field.id}
+                                label={`${lang.name} ${getString("translation")}`}
+                                {...register(`translations.${index}.value`, isEnglish ? {
+                                    onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+                                        deriveKeyFromEnglish(e.target.value),
+                                } : undefined)}
+                                multiline
+                                rows={2}
+                                fullWidth
+                            />
+                        );
+                    })}
+                </Stack>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={onClose}>{getString("cancel")}</Button>
+                <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={addKeyMutation.isPending}
+                >
+                    {addKeyMutation.isPending ? getString("adding") : getString("addTranslation")}
+                </Button>
+            </DialogActions>
+        </form>
     );
 };

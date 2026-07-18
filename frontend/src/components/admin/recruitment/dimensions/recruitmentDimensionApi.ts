@@ -1,5 +1,7 @@
-import { axiosInstance } from '../../../../api/axiosInstance';
 import { BASE_URL } from '../../../../utils/eNums.ts';
+import type { MutationResponse } from '../../../../types/mutationResponse';
+export type { MutationResponse };
+import { createCrudApi } from '../../../../api/createCrudApi';
 
 const BASE = `${BASE_URL}/recruitment_dimensions`;
 
@@ -31,35 +33,12 @@ export interface RecruitmentDimensionUpdate {
     sort_order?: number;
 }
 
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
-}
+const crud = createCrudApi<RecruitmentDimension, RecruitmentDimensionCreate, RecruitmentDimensionUpdate>(BASE);
 
-export const fetchRecruitmentDimensions = async (): Promise<RecruitmentDimension[]> => {
-    const res = await axiosInstance.get<RecruitmentDimension[]>(BASE);
-    return res.data ?? [];
-};
+export const fetchRecruitmentDimensions = crud.fetchList;
 
-export const createRecruitmentDimension = async (
-    body: RecruitmentDimensionCreate,
-): Promise<MutationResponse<RecruitmentDimension>> => {
-    const res = await axiosInstance.post<MutationResponse<RecruitmentDimension>>(BASE, body);
-    return res.data;
-};
+export const createRecruitmentDimension = crud.create;
 
-export const updateRecruitmentDimension = async ({
-    id,
-    data,
-}: {
-    id: number;
-    data: RecruitmentDimensionUpdate;
-}): Promise<MutationResponse<RecruitmentDimension>> => {
-    const res = await axiosInstance.patch<MutationResponse<RecruitmentDimension>>(`${BASE}/${id}`, data);
-    return res.data;
-};
+export const updateRecruitmentDimension = crud.update;
 
-export const deleteRecruitmentDimension = async (id: number): Promise<MutationResponse<null>> => {
-    const res = await axiosInstance.delete<MutationResponse<null>>(`${BASE}/${id}`);
-    return res.data;
-};
+export const deleteRecruitmentDimension = crud.remove;

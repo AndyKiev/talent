@@ -1,5 +1,5 @@
 // src/components/admin/departments/DepartmentRegionLinkDialog.tsx
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -36,20 +36,41 @@ interface Props {
     setSnackbar: (s: SnackbarType) => void;
 }
 
+// Body mounts fresh per department/link (keyed) inside the Dialog, so the
+// selected region initializes from the current link — no reset effect.
 export function DepartmentRegionLinkDialog({ node, currentLink, onClose, setSnackbar }: Props) {
     const getString = useString({ str });
-    const [regionId, setRegionId] = useState<number | ''>('');
+
+    return (
+        <Dialog open={!!node} onClose={onClose} maxWidth="xs" fullWidth>
+            <DialogTitle>{cfl(getString('assignRegion')) || 'Assign Region'}</DialogTitle>
+            {node && (
+                <RegionLinkBody
+                    key={`${node.id}:${currentLink?.id ?? 'none'}`}
+                    node={node}
+                    currentLink={currentLink}
+                    onClose={onClose}
+                    setSnackbar={setSnackbar}
+                />
+            )}
+        </Dialog>
+    );
+}
+
+function RegionLinkBody({
+    node,
+    currentLink,
+    onClose,
+    setSnackbar,
+}: Omit<Props, 'node'> & { node: DepartmentNode }) {
+    const getString = useString({ str });
+    const [regionId, setRegionId] = useState<number | ''>(currentLink?.region_id ?? '');
 
     const { data: regions = [], isLoading: regionsLoading } = useQuery({
         queryKey: REGION_QK,
         queryFn: () => fetchRegions({ is_active: true }),
         staleTime: 5 * 60 * 1000,
-        enabled: !!node,
     });
-
-    useEffect(() => {
-        setRegionId(currentLink?.region_id ?? '');
-    }, [currentLink, node]);
 
     const { createMutation, updateMutation, deleteMutation } = useDepartmentRegionLinkMutations({
         setSnackbar,
@@ -62,7 +83,7 @@ export function DepartmentRegionLinkDialog({ node, currentLink, onClose, setSnac
         createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
 
     const handleSave = () => {
-        if (!node || regionId === '') return;
+        if (regionId === '') return;
         if (currentLink) {
             if (currentLink.region_id === regionId) {
                 onClose();
@@ -84,15 +105,12 @@ export function DepartmentRegionLinkDialog({ node, currentLink, onClose, setSnac
     };
 
     return (
-        <Dialog open={!!node} onClose={onClose} maxWidth="xs" fullWidth>
-            <DialogTitle>{cfl(getString('assignRegion')) || 'Assign Region'}</DialogTitle>
+        <>
             <DialogContent>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-                    {node && (
-                        <Typography variant="body2" color="text.secondary">
-                            {getString('department') || 'Department'}: <strong>{node.name}</strong>
-                        </Typography>
-                    )}
+                    <Typography variant="body2" color="text.secondary">
+                        {getString('department') || 'Department'}: <strong>{node.name}</strong>
+                    </Typography>
 
                     {currentLink?.region && (
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -153,6 +171,6 @@ export function DepartmentRegionLinkDialog({ node, currentLink, onClose, setSnac
                     </Button>
                 </Box>
             </DialogActions>
-        </Dialog>
+        </>
     );
 }

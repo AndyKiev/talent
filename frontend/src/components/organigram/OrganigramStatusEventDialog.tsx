@@ -25,7 +25,7 @@ import {
     Typography,
 } from '@mui/material';
 import dayjs from 'dayjs';
-import OrganigramDateWheelPicker from './OrganigramDateWheelPicker';
+import DateWheelPicker from '../people-review/personal-data/DateWheelPicker';
 import {
     createOrganigramEvent,
     type OrganigramEventChangeCreate,
@@ -198,11 +198,13 @@ export function OrganigramStatusEventDialog({ request, getString, onClose, setSn
                 <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>
                     {formatDate(effectiveDate)}
                 </Typography>
-                <OrganigramDateWheelPicker
+                <DateWheelPicker
                     value={effectiveDate}
                     onChange={setEffectiveDate}
                     minYear={thisYear - 1}
                     maxYear={thisYear + 10}
+                    defaultBase={dayjs().format('YYYY-MM-DD')}
+                    emitDefault={false}
                 />
             </DialogContent>
             <DialogActions>

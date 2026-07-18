@@ -45,6 +45,9 @@ export const MENUS_MY_QK = ['menus_my'] as const;
 // Access testing ("test as group")
 export const ACCESS_TEST_QK = ['access_test_my'] as const;
 export const LANGS_QK = ['langs'] as const;
+// Auth: current user (/jwt/users/me) + pre-auth self-registration config
+export const AUTH_ME_QK = ['auth_me'] as const;
+export const AUTH_REGISTER_CONFIG_QK = ['auth_register_config'] as const;
 export const MENUS_ALL_QK = ['menus_all'] as const;
 // Developer menu editor (full list with visibility config)
 export const MENUS_MANAGE_QK = ['menus_manage'] as const;

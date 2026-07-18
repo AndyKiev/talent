@@ -17,13 +17,13 @@ import { fetchJobGroupTypes, type JobGroupType } from './jobGroupTypeApi';
 import { useJobGroupTypeMutations } from './useJobGroupTypeMutations';
 import { useJobGroupTypeColumns, type EditingState } from './useJobGroupTypeColumns';
 import { JobGroupTypeForm } from './JobGroupTypeForm';
-import { JobGroupTypeEditDialog, type PendingEdit } from './JobGroupTypeEditDialog';
-import { JobGroupTypeDeleteDialog } from './JobGroupTypeDeleteDialog';
+import { FieldEditConfirmDialog, type PendingEdit } from '../../ui/FieldEditConfirmDialog';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import cfl from '../../../utils/helpers.ts';
 import {JOB_GROUP_TYPE_QK} from "../../../utils/queryKeys.ts";
+import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
 
 export function JobGroupTypeCrud() {
   const getString = useString({ str });
@@ -171,18 +171,20 @@ export function JobGroupTypeCrud() {
       )}
 
       <JobGroupTypeForm open={formOpen} onClose={() => setFormOpen(false)} createMutation={createMutation} />
-      <JobGroupTypeEditDialog
+      <FieldEditConfirmDialog
         pending={pendingEdit}
         isPending={updateMutation.isPending}
         onConfirm={handleConfirmEdit}
         onCancel={handleCancelPending}
       />
-      <JobGroupTypeDeleteDialog
-        row={rowToDelete}
-        isPending={deleteMutation.isPending}
-        onConfirm={handleConfirmDelete}
-        onCancel={() => setRowToDelete(null)}
-      />
+      <ConfirmDeleteDialog
+                open={!!rowToDelete}
+                title={getString('deleteJobGroupType') || 'Delete Job Group Type'}
+                message={getString('areYouSureDeleteJobGroupType') || `Are you sure you want to delete "${rowToDelete?.name}"? This action cannot be undone.`}
+                isDeleting={deleteMutation.isPending}
+                onConfirm={handleConfirmDelete}
+                onClose={() => setRowToDelete(null)}
+            />
 
       <Snackbar
         open={snackbar.open}

@@ -20,11 +20,11 @@ import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import useString from '../../../hooks/useString';
 import { fetchReviewLevels, updateReviewLevel, type ReviewLevel } from './reviewLevelApi';
 import { REVIEW_LEVEL_QK, useReviewLevelMutations } from './useReviewLevelMutations';
-import { useArrowReorder } from '../review_dimensions/useArrowReorder';
+import { useArrowReorder } from '../../../hooks/useArrowReorder';
 import { ReviewLevelForm } from './ReviewLevelForm';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import ConfirmDialog from '../../ui/ConfirmDialog';
-import ConfirmDeleteDialog from '../../people-review/ConfirmDeleteDialog';
+import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
 
 export function ReviewLevelCrud() {
     const getString = useString();
@@ -226,7 +226,6 @@ export function ReviewLevelCrud() {
                 }
                 confirmColor="warning"
                 isPending={updateMutation.isPending}
-                getString={getString}
                 onConfirm={() => {
                     if (pendingToggle) {
                         updateMutation.mutate({
@@ -244,7 +243,6 @@ export function ReviewLevelCrud() {
                 message={getString('confirmDeleteMessage')}
                 itemLabel={pendingDelete ? getString(pendingDelete.name_key) : undefined}
                 isDeleting={deleteMutation.isPending}
-                getString={getString}
                 onConfirm={() => {
                     if (pendingDelete) deleteMutation.mutate(pendingDelete.id);
                     setPendingDelete(null);

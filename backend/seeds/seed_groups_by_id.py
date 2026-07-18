@@ -134,7 +134,7 @@ async def seed_groups_by_id() -> None:
         )
         if not all(counts):
             print(
-                "  ⚠️  A role-flag count is 0 — the auth path will lock users "
+                "  [WARN] A role-flag count is 0 — the auth path will lock users "
                 "out. Check the seeded group/type NAMES before serving new code."
             )
 

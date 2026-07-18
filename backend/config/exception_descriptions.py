@@ -1,30 +1,32 @@
 from pydantic import BaseModel
 
 
+# Fallback messages returned in HTTP `detail` — English only (project rule:
+# never hardcode non-English text; localized text comes from the DB msg tables).
 class GeneralExceptionDescription(BaseModel):
-    exist: str = "Запис вже існує"
-    current_exist: str = "цей запис вже має таку назву"
-    not_exist: str = "Відсутні дані"
-    delete: str = "Запис видалено"
-    update: str = "Оновлено %s записів"
-    archiving: str = "Заархівовано %s записів"
-    rebranding: str = "Ребрендинг проведено"
-    added: str = "Дані додано/оновлено, %s записів"
-    margin_validation_error: str = "Помилка. Дані які передаються дублюються: %s"
-    no_comment: str = "Коментар не може бути пустим рядком"
-    create_error: str = "Неможливо створити запис з такими даними"
-    orig_type_error: str = "поле origin_type_name некоректне"
+    exist: str = "Record already exists"
+    current_exist: str = "this record already has that name"
+    not_exist: str = "Data not found"
+    delete: str = "Record deleted"
+    update: str = "Updated %s records"
+    archiving: str = "Archived %s records"
+    rebranding: str = "Rebranding completed"
+    added: str = "Data added/updated, %s records"
+    margin_validation_error: str = "Error. The submitted data contains duplicates: %s"
+    no_comment: str = "Comment cannot be an empty string"
+    create_error: str = "Cannot create a record with this data"
+    orig_type_error: str = "field origin_type_name is invalid"
     delete_failed_integrity_error: str = (
-        "Неможливо видалити запис '%s', оскільки він використовується в інших записах."
+        "Cannot delete record '%s' because it is referenced by other records."
     )
 
 
 class ServerExceptionDescription(BaseModel):
-    internal_server_error: str = "Внутрішня помилка сервера"
-    service_unavailable: str = "Сервіс недоступний"
+    internal_server_error: str = "Internal server error"
+    service_unavailable: str = "Service unavailable"
 
 
 class ClientExceptionDescription(BaseModel):
-    unauthorized: str = "Невірний логін чи пароль"
-    not_unauthorized: str = "Необхідна повторна автентифікація"
-    forbidden: str = "Доступ заборонено"
+    unauthorized: str = "Invalid login or password"
+    not_unauthorized: str = "Re-authentication required"
+    forbidden: str = "Access denied"

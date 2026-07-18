@@ -1,6 +1,8 @@
 // src/components/admin/talent-statuses/talentStatusApi.ts
-import { axiosInstance } from '../../../api/axiosInstance';
 import {BASE_URL} from "../../../utils/eNums.ts"
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
+import { createCrudApi } from '../../../api/createCrudApi';
 const BASE = `${BASE_URL}/admin/talent_statuses`;
 
 export interface TalentStatus {
@@ -26,35 +28,12 @@ export interface TalentStatusUpdate {
   is_active?: boolean;
 }
 
-export interface MutationResponse<T> {
-  detail: string;
-  data: T;
-}
+const crud = createCrudApi<TalentStatus, TalentStatusCreate, TalentStatusUpdate>(BASE);
 
-export const fetchTalentStatuses = async (): Promise<TalentStatus[]> => {
-  const res = await axiosInstance.get<TalentStatus[]>(BASE);
-  return res.data ?? [];
-};
+export const fetchTalentStatuses = crud.fetchList;
 
-export const createTalentStatus = async (
-  body: TalentStatusCreate,
-): Promise<MutationResponse<TalentStatus>> => {
-  const res = await axiosInstance.post<MutationResponse<TalentStatus>>(BASE, body);
-  return res.data;
-};
+export const createTalentStatus = crud.create;
 
-export const updateTalentStatus = async ({
-  id,
-  data,
-}: {
-  id: number;
-  data: TalentStatusUpdate;
-}): Promise<MutationResponse<TalentStatus>> => {
-  const res = await axiosInstance.patch<MutationResponse<TalentStatus>>(`${BASE}/${id}`, data);
-  return res.data;
-};
+export const updateTalentStatus = crud.update;
 
-export const deleteTalentStatus = async (id: number): Promise<MutationResponse<null>> => {
-  const res = await axiosInstance.delete<MutationResponse<null>>(`${BASE}/${id}`);
-  return res.data;
-};
+export const deleteTalentStatus = crud.remove;

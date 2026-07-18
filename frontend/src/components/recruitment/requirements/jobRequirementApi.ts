@@ -1,5 +1,7 @@
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums.ts';
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
 
 const DIMENSION_BASE = `${BASE_URL}/recruitment_dimensions`;
 const GROUP_BASE = `${BASE_URL}/job_requirement_groups`;
@@ -46,11 +48,6 @@ export interface JobRequirementItem {
     text: string;
     sort_order: number;
     dimension: RecruitmentDimensionMini | null;
-}
-
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
 }
 
 // ── Dimensions (read for the manager; full CRUD lives in the admin slice) ──

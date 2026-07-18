@@ -17,8 +17,7 @@ import { fetchJobGroups, type JobGroup } from './jobGroupApi';
 import { useJobGroupMutations } from './useJobGroupMutations';
 import { useJobGroupColumns, type EditingState } from './useJobGroupColumns';
 import { JobGroupForm } from './JobGroupForm';
-import { JobGroupEditDialog, type PendingEdit } from './JobGroupEditDialog';
-import { JobGroupDeleteDialog } from './JobGroupDeleteDialog';
+import { FieldEditConfirmDialog, type PendingEdit } from '../../ui/FieldEditConfirmDialog';
 import { JobGroupTypeSelectDialog } from './JobGroupTypeSelectDialog';
 import { fetchJobGroupTypes } from '../job_group_types/jobGroupTypeApi';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
@@ -26,6 +25,7 @@ import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import cfl from '../../../utils/helpers.ts';
 import {JOB_GROUP_QK, JOB_GROUP_TYPE_QK} from "../../../utils/queryKeys.ts";
+import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
 
 export function JobGroupCrud() {
   const getString = useString({ str });
@@ -189,19 +189,21 @@ export function JobGroupCrud() {
 
         <JobGroupForm open={formOpen} onClose={() => setFormOpen(false)} createMutation={createMutation} />
 
-        <JobGroupEditDialog
+        <FieldEditConfirmDialog
             pending={pendingEdit}
             isPending={updateMutation.isPending}
             onConfirm={handleConfirmEdit}
             onCancel={handleCancelPending}
         />
 
-        <JobGroupDeleteDialog
-            row={rowToDelete}
-            isPending={deleteMutation.isPending}
-            onConfirm={handleConfirmDelete}
-            onCancel={() => setRowToDelete(null)}
-        />
+        <ConfirmDeleteDialog
+                open={!!rowToDelete}
+                title={getString('deleteJobGroup') || 'Delete Job Group'}
+                message={getString('areYouSureDeleteJobGroup') || `Are you sure you want to delete "${rowToDelete?.name}"? This action cannot be undone.`}
+                isDeleting={deleteMutation.isPending}
+                onConfirm={handleConfirmDelete}
+                onClose={() => setRowToDelete(null)}
+            />
 
         <JobGroupTypeSelectDialog
             group={typeSelectGroup}

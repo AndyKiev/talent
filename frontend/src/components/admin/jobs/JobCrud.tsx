@@ -25,8 +25,7 @@ import { fetchJobs, type Job } from './jobApi';
 import { useJobMutations } from './useJobMutations';
 import { useJobColumns, type EditingState } from './useJobColumns';
 import { JobForm } from './JobForm';
-import { JobEditDialog, type PendingEdit } from './JobEditDialog';
-import { JobDeleteDialog } from './JobDeleteDialog';
+import { FieldEditConfirmDialog, type PendingEdit } from '../../ui/FieldEditConfirmDialog';
 import { JobGroupsDialog } from './JobGroupsDialog';
 import { JobJobGroupsDialog } from './JobJobGroupsDialog';
 import { JobProcessRoleDialog } from './JobProcessRoleDialog';
@@ -46,6 +45,7 @@ import { useBooleanSetting } from '../../../hooks/useAppSetting';
 import { useUserGridColumns } from '../../../hooks/useUserGridColumns';
 import { UserGridTable } from '../../../utils/userGridTables';
 import { centeredGridCellsSx } from '../../../utils/dataGridSx';
+import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
 
 const REQUIRE_EDIT_CONFIRMATION = false;
 
@@ -475,19 +475,21 @@ export function JobCrud() {
             createMutation={createMutation}
         />
 
-        <JobEditDialog
+        <FieldEditConfirmDialog
             pending={pendingEdit}
             isPending={updateMutation.isPending}
             onConfirm={handleConfirmEdit}
             onCancel={handleCancelPending}
         />
 
-        <JobDeleteDialog
-            row={rowToDelete}
-            isPending={deleteMutation.isPending}
-            onConfirm={handleConfirmDelete}
-            onCancel={() => setRowToDelete(null)}
-        />
+        <ConfirmDeleteDialog
+                open={!!rowToDelete}
+                title={getString('deleteJob') || 'Delete Job'}
+                message={getString('areYouSureDeleteJob') || `Are you sure you want to delete "${rowToDelete?.name}"? This action cannot be undone.`}
+                isDeleting={deleteMutation.isPending}
+                onConfirm={handleConfirmDelete}
+                onClose={() => setRowToDelete(null)}
+            />
 
         {/* Existing user-groups dialog */}
         <JobGroupsDialog

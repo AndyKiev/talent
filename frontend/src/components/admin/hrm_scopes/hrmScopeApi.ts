@@ -1,6 +1,8 @@
 // src/components/admin/hrm_scopes/hrmScopeApi.ts
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums';
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
 
 const BASE = `${BASE_URL}/admin/hrm_scopes`;
 
@@ -42,11 +44,6 @@ export interface HrmScopeUpdate {
     department_id?: number;
     start_date?: string;
     end_date?: string;
-}
-
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
 }
 
 // ── Calls ──────────────────────────────────────────────────────────────────

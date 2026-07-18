@@ -1,6 +1,8 @@
 // src/components/developer/process_roles/process/processApi.ts
-import { axiosInstance } from '../../../../api/axiosInstance';
 import { BASE_URL } from '../../../../utils/eNums.ts';
+import type { MutationResponse } from '../../../../types/mutationResponse';
+export type { MutationResponse };
+import { createCrudApi } from '../../../../api/createCrudApi';
 
 const BASE = `${BASE_URL}/admin/processes`;
 
@@ -24,37 +26,12 @@ export interface ProcessUpdate {
     is_active?: boolean;
 }
 
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
-}
+const crud = createCrudApi<Process, ProcessCreate, ProcessUpdate, { is_active?: boolean }>(BASE);
 
-export const fetchProcesses = async (
-    params?: { is_active?: boolean },
-): Promise<Process[]> => {
-    const res = await axiosInstance.get<Process[]>(BASE, { params });
-    return res.data ?? [];
-};
+export const fetchProcesses = crud.fetchAll;
 
-export const createProcess = async (
-    body: ProcessCreate,
-): Promise<MutationResponse<Process>> => {
-    const res = await axiosInstance.post<MutationResponse<Process>>(BASE, body);
-    return res.data;
-};
+export const createProcess = crud.create;
 
-export const updateProcess = async ({
-    id,
-    data,
-}: {
-    id: number;
-    data: ProcessUpdate;
-}): Promise<MutationResponse<Process>> => {
-    const res = await axiosInstance.patch<MutationResponse<Process>>(`${BASE}/${id}`, data);
-    return res.data;
-};
+export const updateProcess = crud.update;
 
-export const deleteProcess = async (id: number): Promise<MutationResponse<null>> => {
-    const res = await axiosInstance.delete<MutationResponse<null>>(`${BASE}/${id}`);
-    return res.data;
-};
+export const deleteProcess = crud.remove;

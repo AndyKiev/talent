@@ -28,7 +28,7 @@ import {
 } from '@mui/material';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import dayjs from 'dayjs';
-import OrganigramDateWheelPicker from './OrganigramDateWheelPicker';
+import DateWheelPicker from '../people-review/personal-data/DateWheelPicker';
 import { OrganigramScopeSelect } from './OrganigramScopeSelect';
 import { OrganigramDeptTreePicker } from './OrganigramDeptTreePicker';
 import {
@@ -289,11 +289,13 @@ export function OrganigramMoveDialog({ move, getString, onClose, setSnackbar }: 
                 <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>
                     {formatDate(effectiveDate)}
                 </Typography>
-                <OrganigramDateWheelPicker
+                <DateWheelPicker
                     value={effectiveDate}
                     onChange={setEffectiveDate}
                     minYear={thisYear - 1}
                     maxYear={thisYear + 10}
+                    defaultBase={dayjs().format('YYYY-MM-DD')}
+                    emitDefault={false}
                 />
             </DialogContent>
             <DialogActions>

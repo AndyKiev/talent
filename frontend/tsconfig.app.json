@@ -18,7 +18,10 @@
     /* Linting */
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
+    /* erasableSyntaxOnly off: project convention uses real TS enums for domain
+       concepts (CLAUDE.md "Domain enums, not magic strings"); esbuild/Vite
+       compiles them fine. */
+    "erasableSyntaxOnly": false,
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src"]

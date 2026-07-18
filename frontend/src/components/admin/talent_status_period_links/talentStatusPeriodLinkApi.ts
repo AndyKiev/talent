@@ -2,6 +2,9 @@
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums';
 import type { TalentPeriod } from '../talent_periods/talentPeriodApi';
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
+import { createCrudApi } from '../../../api/createCrudApi';
 
 const BASE = `${BASE_URL}/talent_status_period_links`;
 
@@ -47,17 +50,11 @@ export interface TalentStatusPeriodLinkUpdate {
     is_active?: boolean;
 }
 
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
-}
-
 // ── API functions ─────────────────────────────────────────────────────────────
 
-export const fetchTalentStatusPeriodLinks = async (): Promise<TalentStatusPeriodLink[]> => {
-    const res = await axiosInstance.get<TalentStatusPeriodLink[]>(BASE);
-    return res.data ?? [];
-};
+const crud = createCrudApi<TalentStatusPeriodLink, TalentStatusPeriodLinkCreate, TalentStatusPeriodLinkUpdate>(BASE);
+
+export const fetchTalentStatusPeriodLinks = crud.fetchList;
 
 /**
  * GET /talent_status_period_links/active-pairs
@@ -77,30 +74,8 @@ export const fetchActivePairs = async (
     return res.data ?? [];
 };
 
-export const createTalentStatusPeriodLink = async (
-    body: TalentStatusPeriodLinkCreate,
-): Promise<MutationResponse<TalentStatusPeriodLink>> => {
-    const res = await axiosInstance.post<MutationResponse<TalentStatusPeriodLink>>(BASE, body);
-    return res.data;
-};
+export const createTalentStatusPeriodLink = crud.create;
 
-export const updateTalentStatusPeriodLink = async ({
-                                                       id,
-                                                       data,
-                                                   }: {
-    id: number;
-    data: TalentStatusPeriodLinkUpdate;
-}): Promise<MutationResponse<TalentStatusPeriodLink>> => {
-    const res = await axiosInstance.patch<MutationResponse<TalentStatusPeriodLink>>(
-        `${BASE}/${id}`,
-        data,
-    );
-    return res.data;
-};
+export const updateTalentStatusPeriodLink = crud.update;
 
-export const deleteTalentStatusPeriodLink = async (
-    id: number,
-): Promise<MutationResponse<null>> => {
-    const res = await axiosInstance.delete<MutationResponse<null>>(`${BASE}/${id}`);
-    return res.data;
-};
+export const deleteTalentStatusPeriodLink = crud.remove;

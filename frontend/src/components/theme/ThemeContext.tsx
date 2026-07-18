@@ -62,6 +62,15 @@ export const ThemeProvider: FC<{ children: ReactNode }> = ({ children }) => {
                             root: { backgroundImage: "none" },
                         },
                     },
+                    // GLOBAL: while an Autocomplete popup is open, MUI's default
+                    // Home/End handler hijacks the keys (and, ignoring modifiers,
+                    // Ctrl+Home/End and Shift+Home/End too) to jump the option
+                    // highlight — so the user can't move/select within the text
+                    // they typed. Off everywhere: those keys stay native caret
+                    // keys; option navigation keeps ↑/↓/PageUp/PageDown.
+                    MuiAutocomplete: {
+                        defaultProps: { handleHomeEndKeys: false },
+                    },
                     MuiButton: {
                         styleOverrides: {
                             root: { textTransform: "none", fontWeight: 600 },

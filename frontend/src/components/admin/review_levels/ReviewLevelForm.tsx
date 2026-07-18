@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -34,39 +34,42 @@ interface Props {
     >;
 }
 
+// The body mounts fresh per open (MUI unmounts Dialog children when closed)
+// and per edited row (key) — every useState initializes straight from
+// `editing`, so no reset-on-open effect is needed.
 export function ReviewLevelForm({ open, onClose, editing, createMutation, updateMutation }: Props) {
     const getString = useString();
-    const strings = useTranslationsStore((s) => s.strings);
-    const [nameKey, setNameKey] = useState('');
-    const [nameEng, setNameEng] = useState('');
-    const [nameUkr, setNameUkr] = useState('');
-    const [nameKeyTouched, setNameKeyTouched] = useState(false);
-    const [descKey, setDescKey] = useState('');
-    const [descEng, setDescEng] = useState('');
-    const [descUkr, setDescUkr] = useState('');
-    const [descKeyTouched, setDescKeyTouched] = useState(false);
-    const [sortOrder, setSortOrder] = useState('0');
-    const [isActive, setIsActive] = useState(true);
-
     const isEdit = !!editing;
 
-    // Sync the form to its props each time the dialog opens / the edited row changes
-    // (the standard reset-on-open pattern used by the other admin forms).
-    /* eslint-disable react-hooks/set-state-in-effect */
-    useEffect(() => {
-        if (!open) return;
-        setNameKey(editing?.name_key ?? '');
-        setNameEng('');
-        setNameUkr('');
-        setNameKeyTouched(!!editing);
-        setDescKey(editing?.description_key ?? '');
-        setDescEng('');
-        setDescUkr('');
-        setDescKeyTouched(!!editing);
-        setSortOrder(String(editing?.sort_order ?? 0));
-        setIsActive(editing?.is_active ?? true);
-    }, [open, editing]);
-    /* eslint-enable react-hooks/set-state-in-effect */
+    return (
+        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+            <DialogTitle>{getString(isEdit ? 'editReviewLevel' : 'addReviewLevel')}</DialogTitle>
+            <ReviewLevelFormBody
+                key={editing?.id ?? 'new'}
+                onClose={onClose}
+                editing={editing}
+                createMutation={createMutation}
+                updateMutation={updateMutation}
+            />
+        </Dialog>
+    );
+}
+
+function ReviewLevelFormBody({ onClose, editing, createMutation, updateMutation }: Omit<Props, 'open'>) {
+    const getString = useString();
+    const strings = useTranslationsStore((s) => s.strings);
+    const [nameKey, setNameKey] = useState(editing?.name_key ?? '');
+    const [nameEng, setNameEng] = useState('');
+    const [nameUkr, setNameUkr] = useState('');
+    const [nameKeyTouched, setNameKeyTouched] = useState(!!editing);
+    const [descKey, setDescKey] = useState(editing?.description_key ?? '');
+    const [descEng, setDescEng] = useState('');
+    const [descUkr, setDescUkr] = useState('');
+    const [descKeyTouched, setDescKeyTouched] = useState(!!editing);
+    const [sortOrder, setSortOrder] = useState(String(editing?.sort_order ?? 0));
+    const [isActive, setIsActive] = useState(editing?.is_active ?? true);
+
+    const isEdit = !!editing;
 
     const keyExists = useMemo(() => (k: string) => !!strings?.[k], [strings]);
 
@@ -115,8 +118,7 @@ export function ReviewLevelForm({ open, onClose, editing, createMutation, update
     const canSubmit = (createValid || editValid) && !pending;
 
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-            <DialogTitle>{getString(isEdit ? 'editReviewLevel' : 'addReviewLevel')}</DialogTitle>
+        <>
             <DialogContent>
                 <Stack spacing={2} sx={{ mt: 1 }}>
                     {!isEdit && (
@@ -195,6 +197,6 @@ export function ReviewLevelForm({ open, onClose, editing, createMutation, update
                     {pending ? getString('saving') : getString(isEdit ? 'save' : 'create')}
                 </Button>
             </DialogActions>
-        </Dialog>
+        </>
     );
 }

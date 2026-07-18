@@ -424,7 +424,7 @@ def _header(fig, title):
     )
 
 
-def _photo(fig, x, y, w, h, photo_bytes):
+def _photo(fig, x, y, w, h, photo_bytes, placeholder="PHOTO"):
     _card(fig, x, y, w, h)
     if photo_bytes:
         try:
@@ -442,7 +442,7 @@ def _photo(fig, x, y, w, h, photo_bytes):
     fig.text(
         x + w / 2,
         y + h / 2,
-        "ФОТО",
+        placeholder,
         color=MUTED,
         fontsize=9,
         ha="center",
@@ -556,7 +556,9 @@ def _identity_band(fig, data) -> float:
     L = data.get("labels", {})
     g = data.get
     _header(fig, g("full_name") or "—")
-    _photo(fig, 0.025, 0.70, 0.11, 0.205, g("photo"))
+    _photo(
+        fig, 0.025, 0.70, 0.11, 0.205, g("photo"), L.get("photo_placeholder") or "PHOTO"
+    )
 
     col1_x, col2_x = 0.15, 0.37
     proposed = g("proposed_level")

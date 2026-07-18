@@ -51,12 +51,14 @@ from backend.api_v1.interview.interview_schema import (
 from backend.api_v1.interview.interview_messages import (
     InterviewNotFound,
     InterviewInterviewerNotManager,
+    InterviewTooManyInterviewers,
     InterviewerGroupMissing,
     InterviewDeleteError,
     InterviewDeleteSuccess,
     InterviewCreateSuccess,
     InterviewUpdateSuccess,
 )
+from backend.api_v1.app_setting.app_setting_service import get_int_setting
 
 
 class InterviewService(BaseService):
@@ -78,8 +80,16 @@ class InterviewService(BaseService):
     # ── Validation / side-effects ─────────────────────────────────────────────
 
     async def _validate_managers(self, employee_ids: List[int]) -> None:
-        """Every interviewer must hold a job linked to the `manager` category."""
+        """Every interviewer must hold a job linked to the `manager` category, and
+        the count may not exceed the `interview_max_interviewers` setting."""
         session = self.repository.session
+        max_interviewers = await get_int_setting(
+            session, "interview_max_interviewers", 3
+        )
+        if len(employee_ids) > max_interviewers:
+            raise await self._resolve_domain_error(
+                InterviewTooManyInterviewers(max_interviewers)
+            )
         rows = (
             await session.execute(
                 select(Employee.id)

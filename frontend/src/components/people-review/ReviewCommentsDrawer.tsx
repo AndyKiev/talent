@@ -25,7 +25,7 @@ import SupervisorAccountOutlinedIcon from '@mui/icons-material/SupervisorAccount
 import dayjs from 'dayjs';
 import useString from '../../hooks/useString';
 import EmployeeAvatar from '../ui/EmployeeAvatar';
-import ConfirmDeleteDialog from './ConfirmDeleteDialog';
+import ConfirmDeleteDialog from '../ui/ConfirmDeleteDialog';
 import {
     fetchReviewComments,
     createReviewComment,
@@ -344,7 +344,6 @@ export function ReviewCommentsDrawer({ open, onClose, rseId, canComment, myAutho
                 open={confirmDeleteId != null}
                 message={getString('reviewCommentDeleteConfirm')}
                 isDeleting={deleteMut.isPending}
-                getString={getString}
                 onConfirm={() => confirmDeleteId != null && deleteMut.mutate(confirmDeleteId)}
                 onClose={() => setConfirmDeleteId(null)}
             />

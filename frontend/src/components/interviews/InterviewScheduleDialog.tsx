@@ -16,6 +16,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import dayjs from 'dayjs';
 import useString from '../../hooks/useString';
+import { useIntegerSetting } from '../../hooks/useAppSetting';
 import { AVAILABLE_INTERVIEWERS_QK } from '../../utils/queryKeys';
 import {
     createInterview,
@@ -36,6 +37,8 @@ interface Props {
 function ScheduleForm({ application, onClose, onScheduled, onError }: Omit<Props, 'open'>) {
     const getString = useString();
     const qc = useQueryClient();
+    // Max interviewers per interview (developer setting; backend enforces the same).
+    const { value: maxInterviewers } = useIntegerSetting('interview_max_interviewers', 3);
     const [when, setWhen] = useState<string>(''); // ISO datetime
     const [location, setLocation] = useState('');
     const [interviewers, setInterviewers] = useState<InterviewEmployeeMini[]>([]);
@@ -61,7 +64,7 @@ function ScheduleForm({ application, onClose, onScheduled, onError }: Omit<Props
         when !== '' &&
         location.trim() !== '' &&
         interviewers.length >= 1 &&
-        interviewers.length <= 3 &&
+        interviewers.length <= maxInterviewers &&
         !createMutation.isPending;
 
     const handleSubmit = () => {
@@ -97,7 +100,7 @@ function ScheduleForm({ application, onClose, onScheduled, onError }: Omit<Props
                         <Autocomplete
                             multiple
                             value={interviewers}
-                            onChange={(_, v) => setInterviewers(v.slice(0, 3))}
+                            onChange={(_, v) => setInterviewers(v.slice(0, maxInterviewers))}
                             options={available}
                             loading={isLoading}
                             getOptionLabel={(o) => o.name}
@@ -108,8 +111,8 @@ function ScheduleForm({ application, onClose, onScheduled, onError }: Omit<Props
                                     label={getString('interviewers') || 'Interviewers'}
                                     required
                                     helperText={
-                                        getString('interviewersHint') ||
-                                        'Up to 3, manager-category jobs only'
+                                        getString('interviewersHint', { max: maxInterviewers }) ||
+                                        `Up to ${maxInterviewers}, manager-category jobs only`
                                     }
                                 />
                             )}

@@ -2,9 +2,13 @@
 
 import json
 from pathlib import Path
+from typing import Optional, TYPE_CHECKING
 
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import text
+
+if TYPE_CHECKING:
+    from backend.api_v1.employee.employee_schema import EmployeeSchema
 
 from backend.api_v1.db_table_info.db_table_info_repository import (
     DbTableInfoRepository,
@@ -31,6 +35,142 @@ _MANIFEST_PATH = (
     / "restore_manifest.json"
 )
 
+# Heuristic mapping: table_name → ENGLISH description. In-code fallback only —
+# auto_describe resolves the localized text from the msg_keys/msgs tables
+# (dbTableDesc<PascalTableName> keys, seeded by
+# backend/seeds/seed_db_table_desc_translations.py, which imports this dict).
+TABLE_DESCRIPTIONS_EN: dict[str, str] = {
+    "access_test_contexts": "Access-testing contexts (dev test-as-group mode)",
+    "app_setting_user_group_links": "App setting–user group links",
+    "app_settings": "Application settings (key–value)",
+    "application_status_history": "Candidate application status history",
+    "candidate_applications": "Candidate applications (kanban cards)",
+    "candidate_notes": "Candidate notes",
+    "candidate_phones": "Candidate phone numbers",
+    "candidate_sources": "Candidate sources",
+    "candidates": "Candidates",
+    "change_log": "Change log records",
+    "change_session": "Change audit sessions",
+    "department_categories": "Department categories",
+    "department_job_targets": "Department job (headcount) targets",
+    "department_region_links": "Department–region links",
+    "department_type_job_links": "Department type–job links",
+    "department_type_parental_links": "Department type parent links",
+    "department_types": "Department types",
+    "departments": "Departments / units",
+    "education_degrees": "Education degrees / levels",
+    "employee_children": "Employees' children",
+    "employee_current_levels": "Employees' current levels (grades)",
+    "employee_departments": "Employee's main department",
+    "employee_educations": "Employees' education records",
+    "employee_event_change_departments": "Departments changed in events",
+    "employee_event_changes": "Changes within employee events",
+    "employee_event_direction_types": "Employee event direction types",
+    "employee_event_statuses": "Employee event statuses",
+    "employee_event_type_directions": "Event type–direction links",
+    "employee_event_types": "Employee event types",
+    "employee_events": "Employee career events",
+    "employee_language_profiles": "Language profiles (person level)",
+    "employee_languages": "Person's individual languages",
+    "employee_origins": "Employee origins (human / robot)",
+    "employee_personal_data": "Employees' personal data",
+    "employee_photos": "Employee photos",
+    "employee_responsibility_departments": "Employee's responsibility departments",
+    "employee_statuses": "Employee statuses",
+    "employee_training_statuses": "Employee training statuses",
+    "employee_trainings": "Employees' assigned trainings",
+    "employee_user_group_links": "Employee–user group links",
+    "employees": "Employees",
+    "essence_set_members": "Essence set members",
+    "essence_sets": "Essence sets",
+    "essences": "System essences (for ACL)",
+    "hrm_scopes": "HRM access scopes",
+    "interview_feedbacks": "Interview feedback",
+    "interview_interviewers": "Interview–interviewer links",
+    "interviews": "Candidate interviews",
+    "job_categories": "Job categories",
+    "job_group_types": "Job group types",
+    "job_groups": "Job groups",
+    "job_job_category_links": "Job–job category links",
+    "job_job_group_links": "Job–job group links",
+    "job_process_role_link_department_types": (
+        "Department types of job–process role links"
+    ),
+    "job_process_role_links": "Job–process role links",
+    "job_requirement_groups": "Job requirement groups",
+    "job_requirement_items": "Job requirement items",
+    "job_user_group_links": "Job–user group links",
+    "jobs": "Jobs",
+    "langs": "Interface languages",
+    "language_levels": "Language proficiency levels",
+    "marital_statuses": "Marital statuses",
+    "menu_user_group_links": "Menu–user group links",
+    "menus": "Main menu items",
+    "msg_keys": "Message keys",
+    "msgs": "Translation messages",
+    "operation_essence_links": "Operation–essence links",
+    "operation_essence_set_links": "Operation–essence set links",
+    "operation_user_group_links": "Operation–user group links",
+    "operations": "Operations (system actions)",
+    "persons": "Persons (shared employee/candidate identity)",
+    "pipeline_statuses": "Recruitment pipeline statuses (kanban columns)",
+    "plan_category_defaults": "Default planning categories",
+    "plan_scope_defaults": "Default planning scopes",
+    "plan_scopes": "Planning scopes",
+    "plan_session_categories": "Plan session categories",
+    "plan_session_statuses": "Plan session statuses",
+    "plan_sessions": "Succession planning sessions",
+    "process_role_active_contexts": "Active process role contexts",
+    "process_role_holder_department_links": "Role holder–department links",
+    "process_role_holder_employee_links": "Role holder–employee links",
+    "process_role_holders": "Process role holders",
+    "process_roles": "Business process roles",
+    "processes": "Business processes",
+    "recruitment_dimensions": "Recruitment feedback dimensions",
+    "recruitment_task_statuses": "Recruitment task statuses",
+    "recruitment_tasks": "Recruitment tasks (vacancies)",
+    "regions": "Regions",
+    "review_dimension_criterias": "Review dimension criteria",
+    "review_dimensions": "People Review dimensions",
+    "review_level_requirements": "Competence level requirements",
+    "review_levels": "Competence levels (grades)",
+    "review_session_criterions": "Criteria bound to a review session",
+    "review_session_departments": "Review session–department links",
+    "review_session_employee_comments": "Comments on employee reviews",
+    "review_session_employee_criterion_scores": "Employee scores per criterion",
+    "review_session_employee_evaluations": "Employee evaluations in a session",
+    "review_session_employee_level_answers": "Competence level answers (facts)",
+    "review_session_employee_levels": "Proposed employee levels in a session",
+    "review_session_employees": "Employees participating in a review session",
+    "review_session_level_requirements": "Level requirements frozen per session",
+    "review_session_levels": "Review levels frozen per session",
+    "review_session_settings": "Per-session review settings",
+    "review_session_statuses": "Review session statuses",
+    "review_sessions": "People Review sessions",
+    "setting_value_types": "Setting value types",
+    "sexes": "Sexes",
+    "talent_audit": "Talent audits",
+    "talent_audit_interview": "Talent audit interviews",
+    "talent_audit_interview_job": "Jobs in talent audit interviews",
+    "talent_audit_interview_statuses": "Talent audit interview statuses",
+    "talent_audit_job": "Target jobs in talent audits",
+    "talent_audit_job_statuses": "Talent audit target job statuses",
+    "talent_audit_statuses": "Talent audit statuses",
+    "talent_periods": "Talent assessment periods",
+    "talent_status_period_link": "Talent status–period links",
+    "talent_statuses": "Talent statuses",
+    "training_categories": "Training categories",
+    "training_link_types": "Training link types",
+    "training_type_job_category_links": "Training type–job category links",
+    "training_type_job_links": "Training type–job links",
+    "training_types": "Training types",
+    "user_group_operation_essence_links": "Group permissions on essences",
+    "user_group_operation_essence_set_links": "Group permissions on essence sets",
+    "user_group_types": "User group types",
+    "user_groups": "User groups",
+    "user_settings": "Per-user setting overrides",
+}
+
 
 def _quote_ident(name: str) -> str:
     """Quote a PostgreSQL identifier safely (doubles embedded quotes)."""
@@ -55,8 +195,14 @@ class DbTableInfoService:
     explicitly where needed.
     """
 
-    def __init__(self, repository: DbTableInfoRepository) -> None:
+    def __init__(
+        self,
+        repository: DbTableInfoRepository,
+        user: Optional["EmployeeSchema"] = None,
+    ) -> None:
         self.repository = repository
+        # Current requester — auto_describe localizes to their language.
+        self.user = user
 
     # ── read ───────────────────────────────────────────────────────────────
 
@@ -154,114 +300,38 @@ class DbTableInfoService:
 
     # ── auto-describe ────────────────────────────────────────────────────
 
-    # Heuristic mapping: table_name → Russian description.
-    _DESCRIPTIONS: dict[str, str] = {
-        "langs": "Языки интерфейса",
-        "msgs": "Сообщения переводов",
-        "msg_keys": "Ключи сообщений",
-        "jobs": "Должности",
-        "employees": "Сотрудники",
-        "user_groups": "Группы пользователей",
-        "user_group_types": "Типы групп пользователей",
-        "operations": "Операции (действия в системе)",
-        "employee_statuses": "Статусы сотрудников",
-        "employee_user_group_links": "Связи сотрудник–группа пользователей",
-        "employee_current_levels": "Текущие грейды сотрудников",
-        "employee_personal_data": "Персональные данные сотрудников",
-        "job_user_group_links": "Связи должность–группа пользователей",
-        "operation_user_group_links": "Связи операция–группа пользователей",
-        "departments": "Департаменты / подразделения",
-        "department_types": "Типы департаментов",
-        "department_categories": "Категории департаментов",
-        "talent_status_period_links": "Связи статус–период талантов",
-        "talent_statuses": "Статусы талантов",
-        "talent_periods": "Периоды оценки талантов",
-        "employee_departments": "Основной департамент сотрудника",
-        "menus": "Пункты главного меню",
-        "employee_responsibility_departments": "Департаменты ответственности сотрудника",
-        "talent_audit_statuses": "Статусы аудита талантов",
-        "talent_audits": "Аудиты талантов",
-        "talent_audit_job_statuses": "Статусы целевых должностей аудита",
-        "talent_audit_jobs": "Целевые должности в аудите талантов",
-        "talent_audit_interview_statuses": "Статусы интервью аудита талантов",
-        "talent_audit_interviews": "Интервью аудита талантов",
-        "talent_audit_interview_jobs": "Должности в интервью аудита",
-        "employee_event_direction_types": "Типы направлений кадровых событий",
-        "employee_event_types": "Типы кадровых событий",
-        "employee_event_type_directions": "Связи тип–направление кадровых событий",
-        "employee_event_statuses": "Статусы кадровых событий",
-        "employee_events": "Кадровые события сотрудников",
-        "employee_event_changes": "Изменения в кадровых событиях",
-        "employee_event_change_departments": "Департаменты, изменённые в событиях",
-        "department_type_parental_links": "Родительские связи типов департаментов",
-        "department_type_job_links": "Связи тип департамента–должность",
-        "essences": "Сутности системы (для ACL)",
-        "operation_essence_links": "Связи операция–сущность",
-        "user_group_operation_essence_links": "Права групп на сущности",
-        "essence_sets": "Наборы сущностей",
-        "essence_set_members": "Члены наборов сущностей",
-        "operation_essence_set_links": "Связи операция–набор сущностей",
-        "user_group_operation_essence_set_links": "Права групп на наборы сущностей",
-        "job_group_types": "Типы групп должностей",
-        "job_groups": "Группы должностей",
-        "job_job_group_links": "Связи должность–группа должностей",
-        "job_process_role_links": "Связи должность–роль процесса",
-        "plan_session_statuses": "Статусы сессий планирования",
-        "plan_sessions": "Сессии планирования преемственности",
-        "plan_category_defaults": "Категории планирования по умолчанию",
-        "plan_session_categories": "Категории сессии планирования",
-        "plan_scope_defaults": "Области охвата планирования по умолчанию",
-        "plan_scopes": "Области охвата планирования",
-        "review_dimensions": "Измерения оценки People Review",
-        "review_dimension_criteria": "Критерии измерений оценки",
-        "review_sessions": "Сессии оценки People Review",
-        "review_session_criteria": "Критерии, привязанные к сессии оценки",
-        "review_session_levels": "Уровни оценки в сессии",
-        "review_session_level_requirements": "Требования к уровням оценки",
-        "review_session_employees": "Сотрудники, участвующие в сессии оценки",
-        "review_session_employee_evaluations": "Оценки сотрудников в сессии",
-        "review_session_employee_criterion_scores": "Баллы сотрудников по критериям",
-        "review_session_employee_comments": "Комментарии к оценкам сотрудников",
-        "review_levels": "Уровни компетенций (грейды)",
-        "review_level_requirements": "Требования к уровням компетенций",
-        "review_session_employee_levels": "Привязка сотрудников к уровням в сессии",
-        "review_session_employee_level_answers": "Ответы по уровням компетенций",
-        "language_levels": "Уровни владения языком",
-        "employee_language_profiles": "Языковые профили (уровень персоны)",
-        "employee_languages": "Конкретные языки персоны",
-        "education_degrees": "Учёные степени / уровни образования",
-        "employee_educations": "Образование сотрудников",
-        "employee_children": "Дети сотрудников",
-        "employee_photos": "Фотографии сотрудников",
-        "processes": "Бизнес-процессы",
-        "process_roles": "Роли в бизнес-процессах",
-        "process_role_holders": "Держатели ролей процессов",
-        "process_role_holder_employee_links": "Связи держатель роли–сотрудник",
-        "process_role_holder_department_links": "Связи держатель роли–департамент",
-        "process_role_active_contexts": "Активные контексты ролей процессов",
-        "setting_value_types": "Типы значений настроек",
-        "app_settings": "Настройки приложения (ключ–значение)",
-        "regions": "Регионы",
-        "department_region_links": "Связи департамент–регион",
-        "change_sessions": "Сессии аудита изменений",
-        "change_logs": "Записи лога изменений",
-        "hrm_scopes": "Области HRM-доступа",
-        "permission_manifests": "Манифесты разрешений",
-    }
+    @staticmethod
+    def _desc_msg_key(table_name: str) -> str:
+        """dbTableDesc<PascalTableName> — the msg_keys name for one table."""
+        return "dbTableDesc" + "".join(p.capitalize() for p in table_name.split("_"))
 
     async def auto_describe(self) -> int:
-        """Fill empty description_ru fields with heuristic Russian names."""
+        """Fill empty description fields with heuristic table descriptions,
+        localized to the requesting user's language via the msg_keys/msgs
+        tables (dbTableDesc* keys); TABLE_DESCRIPTIONS_EN is the fallback."""
+        from backend.api_v1.msg_pg.msg_translate import LANG_ID_ENG, translate_keys
+
         data = self.repository.load_all()
-        count = 0
-        for t in data.tables:
-            if not t.description_ru.strip():
-                desc = self._DESCRIPTIONS.get(t.table_name, "")
-                if desc:
-                    t.description_ru = desc
-                    count += 1
-        if count:
-            self.repository.save_all(data)
-        return count
+        todo = [
+            t
+            for t in data.tables
+            if not t.description_ru.strip() and t.table_name in TABLE_DESCRIPTIONS_EN
+        ]
+        if not todo:
+            return 0
+
+        keys = {
+            self._desc_msg_key(t.table_name): TABLE_DESCRIPTIONS_EN[t.table_name]
+            for t in todo
+        }
+        lang_id = self.user.lang_id if self.user else LANG_ID_ENG
+        async with db_helper.session_factory() as session:
+            resolved = await translate_keys(session, keys, lang_id)
+
+        for t in todo:
+            t.description_ru = resolved[self._desc_msg_key(t.table_name)]
+        self.repository.save_all(data)
+        return len(todo)
 
     # ── row CRUD (dev tool — direct table mutation) ──────────────────────
 

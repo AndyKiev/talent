@@ -16,13 +16,13 @@ import { fetchEmployeeEventTypes, type EmployeeEventType } from './employeeEvent
 import { useEmployeeEventTypeMutations } from './useEmployeeEventTypeMutations.ts';
 import { useEmployeeEventTypeColumns, type EditingState } from './useEmployeeEventTypeColumns.tsx';
 import { EmployeeEventTypeForm } from './EmployeeEventTypeForm.tsx';
-import { EmployeeEventTypeEditDialog, type PendingEdit } from './EmployeeEventTypeEditDialog.tsx';
-import { EmployeeEventTypeDeleteDialog } from './EmployeeEventTypeDeleteDialog.tsx';
+import { FieldEditConfirmDialog, type PendingEdit } from '../../../ui/FieldEditConfirmDialog';
 import { useDataGridLocale } from '../../../../hooks/useDataGridLocale.ts';
 import useString from '../../../../hooks/useString.ts';
 import str from '../../../../strings/str.ts';
 import cfl from '../../../../utils/helpers.ts';
 import {EMPLOYEE_EVENT_TYPE_QK} from "../../../../utils/queryKeys.ts";
+import ConfirmDeleteDialog from '../../../ui/ConfirmDeleteDialog';
 
 export function EmployeeEventTypeCrud() {
     const getString = useString({ str });
@@ -172,18 +172,20 @@ export function EmployeeEventTypeCrud() {
                 createMutation={createMutation}
             />
 
-            <EmployeeEventTypeEditDialog
+            <FieldEditConfirmDialog
                 pending={pendingEdit}
                 isPending={updateMutation.isPending}
                 onConfirm={handleConfirmEdit}
                 onCancel={handleCancelPending}
             />
 
-            <EmployeeEventTypeDeleteDialog
-                row={rowToDelete}
-                isPending={deleteMutation.isPending}
+            <ConfirmDeleteDialog
+                open={!!rowToDelete}
+                title={getString('deleteEmployeeEventType') || 'Delete Employee Event Type'}
+                message={getString('areYouSureDeleteEmployeeEventType') || `Are you sure you want to delete "${rowToDelete?.name}"? This action cannot be undone.`}
+                isDeleting={deleteMutation.isPending}
                 onConfirm={handleConfirmDelete}
-                onCancel={() => setRowToDelete(null)}
+                onClose={() => setRowToDelete(null)}
             />
 
             <Snackbar

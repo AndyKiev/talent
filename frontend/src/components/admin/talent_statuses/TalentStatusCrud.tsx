@@ -16,13 +16,13 @@ import { fetchTalentStatuses, type TalentStatus } from './talentStatusApi';
 import { useTalentStatusMutations } from './useTalentStatusMutations';
 import { useTalentStatusColumns, type EditingState } from './useTalentStatusColumns';
 import { TalentStatusForm } from './TalentStatusForm';
-import { TalentStatusEditDialog, type PendingEdit } from './TalentStatusEditDialog';
-import { TalentStatusDeleteDialog } from './TalentStatusDeleteDialog';
+import { FieldEditConfirmDialog, type PendingEdit } from '../../ui/FieldEditConfirmDialog';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import cfl from '../../../utils/helpers.ts';
 import {TALENT_STATUS_QK} from "../../../utils/queryKeys.ts";
+import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
 
 export function TalentStatusCrud() {
   const getString = useString({ str });
@@ -211,18 +211,20 @@ export function TalentStatusCrud() {
                 createMutation={createMutation}
             />
 
-            <TalentStatusEditDialog
+            <FieldEditConfirmDialog
                 pending={pendingEdit}
                 isPending={updateMutation.isPending}
                 onConfirm={handleConfirmEdit}
                 onCancel={handleCancelPending}
             />
 
-            <TalentStatusDeleteDialog
-                row={rowToDelete}
-                isPending={deleteMutation.isPending}
+            <ConfirmDeleteDialog
+                open={!!rowToDelete}
+                title={getString('deleteTalentStatus') || 'Delete Talent Status'}
+                message={getString('areYouSureDeleteTalentStatus') || `Are you sure you want to delete "${rowToDelete?.name}"? This action cannot be undone.`}
+                isDeleting={deleteMutation.isPending}
                 onConfirm={handleConfirmDelete}
-                onCancel={() => setRowToDelete(null)}
+                onClose={() => setRowToDelete(null)}
             />
 
             <Snackbar

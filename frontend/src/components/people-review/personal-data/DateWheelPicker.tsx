@@ -114,11 +114,19 @@ export default function DateWheelPicker({
     onChange,
     minYear,
     maxYear,
+    defaultBase,
+    emitDefault = true,
 }: {
     value: string | null;            // ISO 'YYYY-MM-DD' or null
     onChange: (iso: string) => void;
     minYear?: number;
     maxYear?: number;
+    /** ISO date shown when value is null. Defaults to a sensible birth-year
+     *  (hiYear − 30); event pickers pass today instead. */
+    defaultBase?: string;
+    /** Emit the default once on mount so the saved value matches the display.
+     *  Pass false when the caller manages its own default. */
+    emitDefault?: boolean;
 }) {
     const theme = useTheme();
     const today = dayjs();
@@ -126,7 +134,7 @@ export default function DateWheelPicker({
     const loYear = minYear ?? hiYear - 100;
 
     // Parse the current value, defaulting to a sensible birth-year if empty.
-    const base = value ? dayjs(value) : dayjs(`${hiYear - 30}-01-01`);
+    const base = value ? dayjs(value) : defaultBase ? dayjs(defaultBase) : dayjs(`${hiYear - 30}-01-01`);
     const year = base.year();
     const month = base.month() + 1;     // 1..12
     const day = base.date();            // 1..31
@@ -148,7 +156,7 @@ export default function DateWheelPicker({
     // Emit the default once so the saved value matches what the wheel shows
     // (otherwise an untouched picker would persist null while displaying a date).
     useEffect(() => {
-        if (!value) emit(year, month, day);
+        if (!value && emitDefault) emit(year, month, day);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [value]);
 

@@ -102,6 +102,8 @@ export const SETTING_GROUP_BY_KEY: Record<string, string> = {
     idp_min_missions: 'people_review',
     idp_max_missions: 'people_review',
     idp_allow_full_competence_list: 'people_review',
+    pr_summary_min_options: 'people_review',
+    idp_kpi_max_length: 'people_review',
     people_review_summary_full_competence_list: 'people_review',
     review_session_filter_by_department: 'people_review',
     review_session_filter_job_categories: 'people_review',
@@ -118,8 +120,14 @@ export const SETTING_GROUP_BY_KEY: Record<string, string> = {
     // ── Recruitment ──────────────────────────────────────────────────────────
     recruitment_module_enabled: 'recruitment',
     pipeline_drag_confirm: 'recruitment',
+    interview_max_interviewers: 'recruitment',
     // ── Admin ────────────────────────────────────────────────────────────────
     job_apply_category_on_create: 'admin',
+    plan_max_active_sessions: 'admin',
+    plan_max_pending_sessions: 'admin',
+    employee_photo_max_mb: 'admin',
+    employee_photo_max_dimension: 'admin',
+    employee_photo_jpeg_quality: 'admin',
     // ── General (not tied to a single menu) ──────────────────────────────────
     self_registration_enabled: 'general',
     default_menu: 'general',

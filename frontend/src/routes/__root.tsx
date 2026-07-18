@@ -21,12 +21,6 @@ export const Route = createRootRoute({
         if (access_token && isPublicPath(path)) {
             throw redirect({ to: "/employees" });
         }
-        if (access_token && isPublicPath(path)) {
-            throw redirect({ to: "/admin" });
-        }
-        if (access_token && isPublicPath(path)) {
-            throw redirect({ to: "/developer" });
-        }
     },
     component: RootLayout,
 });

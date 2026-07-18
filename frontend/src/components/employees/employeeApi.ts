@@ -1,6 +1,7 @@
 // src/components/employees/employeeApi.ts
 import { axiosInstance } from '../../api/axiosInstance';
 import { BASE_URL } from '../../utils/eNums';
+import type { PersonSex } from '../admin/persons/personApi';
 
 const BASE = `${BASE_URL}/employees`;
 
@@ -31,7 +32,7 @@ export interface EmployeePerson {
     first_name: string | null;
     last_name: string | null;
     patronymic: string | null;
-    sex: 'male' | 'female' | null;
+    sex: PersonSex | null;
     birth_date: string | null;
 }
 

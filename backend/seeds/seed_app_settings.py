@@ -57,6 +57,88 @@ APP_SETTINGS = [
         "description_key": "settingIdpAllowFullCompetenceListDesc",
     },
     {
+        # Minimum number of competences each summary select (strong / to-develop)
+        # offers — the top/bottom ranked shortlist size (plus any tied at the
+        # boundary). Read on the FE in evaluationHelpers.rankedCompetences.
+        # visible_to_regular: a group-less reviewer edits their OWN review and
+        # their client must receive this to size the selects correctly.
+        "key": "pr_summary_min_options",
+        "value": 2,
+        "value_type_key": "integer",
+        "label_key": "settingPrSummaryMinOptions",
+        "description_key": "settingPrSummaryMinOptionsDesc",
+        "visible_to_regular": True,
+    },
+    {
+        # Character cap on a development-plan mission's KPI text (people review).
+        # visible_to_regular for the same reason as pr_summary_min_options.
+        "key": "idp_kpi_max_length",
+        "value": 126,
+        "value_type_key": "integer",
+        "label_key": "settingIdpKpiMaxLength",
+        "description_key": "settingIdpKpiMaxLengthDesc",
+        "visible_to_regular": True,
+    },
+    {
+        # Max interviewers that may be attached to a single interview. Enforced on
+        # BOTH the FE (schedule dialog slices the picker) and the BE
+        # (interview_service create/update). App-only.
+        "key": "interview_max_interviewers",
+        "value": 3,
+        "value_type_key": "integer",
+        "label_key": "settingInterviewMaxInterviewers",
+        "description_key": "settingInterviewMaxInterviewersDesc",
+        "user_override_allowed": False,
+    },
+    {
+        # Max number of concurrently ACTIVE planning sessions allowed. Enforced in
+        # plan_session_service (_assert_active_capacity + the revert path). App-only.
+        "key": "plan_max_active_sessions",
+        "value": 2,
+        "value_type_key": "integer",
+        "label_key": "settingPlanMaxActiveSessions",
+        "description_key": "settingPlanMaxActiveSessionsDesc",
+        "user_override_allowed": False,
+    },
+    {
+        # Max number of PENDING planning sessions allowed at once. Enforced in
+        # plan_session_service (_assert_pending_capacity). App-only.
+        "key": "plan_max_pending_sessions",
+        "value": 1,
+        "value_type_key": "integer",
+        "label_key": "settingPlanMaxPendingSessions",
+        "description_key": "settingPlanMaxPendingSessionsDesc",
+        "user_override_allowed": False,
+    },
+    {
+        # Employee-photo upload guard: max RAW upload size in megabytes (checked
+        # before decode, a decompression-bomb guard). App-only.
+        "key": "employee_photo_max_mb",
+        "value": 8,
+        "value_type_key": "integer",
+        "label_key": "settingEmployeePhotoMaxMb",
+        "description_key": "settingEmployeePhotoMaxMbDesc",
+        "user_override_allowed": False,
+    },
+    {
+        # Employee-photo processing: longest edge (px) of the stored image. App-only.
+        "key": "employee_photo_max_dimension",
+        "value": 320,
+        "value_type_key": "integer",
+        "label_key": "settingEmployeePhotoMaxDimension",
+        "description_key": "settingEmployeePhotoMaxDimensionDesc",
+        "user_override_allowed": False,
+    },
+    {
+        # Employee-photo processing: JPEG quality (1..100) of the stored image. App-only.
+        "key": "employee_photo_jpeg_quality",
+        "value": 80,
+        "value_type_key": "integer",
+        "label_key": "settingEmployeePhotoJpegQuality",
+        "description_key": "settingEmployeePhotoJpegQualityDesc",
+        "user_override_allowed": False,
+    },
+    {
         # When ON, each review exposes a per-review switch (to the employee and
         # their oversight manager) that makes the two competence-summary selects
         # offer the FULL competence list instead of only the top/bottom ranked

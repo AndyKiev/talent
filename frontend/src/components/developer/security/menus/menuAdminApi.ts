@@ -1,6 +1,8 @@
 // src/components/developer/security/menus/menuAdminApi.ts
 import { axiosInstance } from '../../../../api/axiosInstance';
 import { BASE_URL } from '../../../../utils/eNums';
+import type { MutationResponse } from '../../../../types/mutationResponse';
+export type { MutationResponse };
 
 const BASE = `${BASE_URL}/menus`;
 
@@ -35,11 +37,6 @@ export interface MenuCreate {
 }
 
 export type MenuUpdate = Partial<MenuCreate>;
-
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
-}
 
 export const fetchMenusManage = async (): Promise<MenuAdmin[]> => {
     const res = await axiosInstance.get<MenuAdmin[]>(`${BASE}/manage`);

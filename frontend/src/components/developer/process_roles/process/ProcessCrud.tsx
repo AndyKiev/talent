@@ -17,11 +17,11 @@ import { PROCESS_QK } from '../../../../utils/queryKeys';
 import { useProcessMutations } from './useProcessMutations';
 import { useProcessColumns, type EditingState } from './useProcessColumns';
 import { ProcessForm } from './ProcessForm';
-import { ProcessEditDialog, type PendingEdit } from './ProcessEditDialog';
-import { ProcessDeleteDialog } from './ProcessDeleteDialog';
+import { FieldEditConfirmDialog, type PendingEdit } from '../../../ui/FieldEditConfirmDialog';
 import { useDataGridLocale } from '../../../../hooks/useDataGridLocale';
 import useString from '../../../../hooks/useString';
 import cfl from '../../../../utils/capitalizeFirstLetter';
+import ConfirmDeleteDialog from '../../../ui/ConfirmDeleteDialog';
 
 export function ProcessCrud() {
     const getString = useString();
@@ -186,18 +186,20 @@ export function ProcessCrud() {
                 createMutation={createMutation}
             />
 
-            <ProcessEditDialog
+            <FieldEditConfirmDialog
                 pending={pendingEdit}
                 isPending={updateMutation.isPending}
                 onConfirm={handleConfirmEdit}
                 onCancel={handleCancelPending}
             />
 
-            <ProcessDeleteDialog
-                row={rowToDelete}
-                isPending={deleteMutation.isPending}
+            <ConfirmDeleteDialog
+                open={!!rowToDelete}
+                title={getString('deleteProcess') || 'Delete Process'}
+                message={getString('areYouSureDeleteProcess', { name: rowToDelete?.name ?? '' }) || `Are you sure you want to delete "${rowToDelete?.name}"?`}
+                isDeleting={deleteMutation.isPending}
                 onConfirm={handleConfirmDelete}
-                onCancel={() => setRowToDelete(null)}
+                onClose={() => setRowToDelete(null)}
             />
 
             <Snackbar

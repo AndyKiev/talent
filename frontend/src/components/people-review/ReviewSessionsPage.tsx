@@ -7,12 +7,16 @@ import {
     Box,
     Breadcrumbs,
     Button,
+    Card,
+    CardActionArea,
+    CardContent,
     Chip,
     CircularProgress,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
+    Divider,
     FormControl,
     IconButton,
     InputLabel,
@@ -22,6 +26,8 @@ import {
     Snackbar,
     Stack,
     TextField,
+    ToggleButton,
+    ToggleButtonGroup,
     Tooltip,
     Typography,
 } from '@mui/material';
@@ -35,6 +41,10 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
 import TuneIcon from '@mui/icons-material/Tune';
+import EventIcon from '@mui/icons-material/Event';
+import ApartmentIcon from '@mui/icons-material/Apartment';
+import ViewListIcon from '@mui/icons-material/ViewList';
+import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import { SessionAnalyticsDialog } from './SessionAnalyticsDialog';
 import { SessionParamsDialog } from './SessionParamsDialog';
 import { ScopeSettings } from './ScopeSettings';
@@ -74,6 +84,13 @@ function formatDate(val: string | null | undefined): string {
     return `${d}.${m}.${y}`;
 }
 
+// One-column period, like the planning grid: "01.01.2026 — 31.12.2026".
+// Returns null when neither bound is set (so callers can omit it entirely).
+function formatPeriod(start: string | null | undefined, end: string | null | undefined): string | null {
+    if (!start && !end) return null;
+    return `${formatDate(start)} — ${formatDate(end)}`;
+}
+
 async function renameSession(id: number, name: string): Promise<MutationResponse<ReviewSession>> {
     const res = await axiosInstance.patch<MutationResponse<ReviewSession>>(
         `${BASE_URL}/review_sessions/${id}`,
@@ -83,6 +100,7 @@ async function renameSession(id: number, name: string): Promise<MutationResponse
 }
 import { useDataGridLocale } from '../../hooks/useDataGridLocale';
 import { useAuthStore } from '../../store/authStore';
+import { useReviewSessionsViewStore } from '../../store/reviewSessionsViewStore';
 import cfl from '../../utils/helpers.ts';
 
 const RS_QK = ['review_sessions'] as const;
@@ -99,6 +117,10 @@ const STATUS_LABEL_KEYS: Record<string, string> = {
     open: 'statusOpen',
     closed: 'statusClosed',
 };
+
+// Default roster order: pending → open → closed. Unknown statuses sort last.
+const STATUS_ORDER: Record<string, number> = { pending: 0, open: 1, closed: 2 };
+const statusRank = (s: string) => STATUS_ORDER[s] ?? 99;
 
 const ALL_VALUE = '__all__';
 
@@ -251,10 +273,17 @@ export function ReviewSessionsPage() {
         return map;
     }, [statuses, getString]);
 
-    const filteredRows = useMemo(
-        () => (statusFilter ? rows.filter((r) => r.status === statusFilter) : rows),
-        [rows, statusFilter],
-    );
+    // Filter by status, then default-sort pending → open → closed (stable within
+    // a status). Feeds BOTH the grid and the cards, so the toggle is
+    // presentation-only.
+    const filteredRows = useMemo(() => {
+        const base = statusFilter ? rows.filter((r) => r.status === statusFilter) : rows;
+        return [...base].sort((a, b) => statusRank(a.status) - statusRank(b.status));
+    }, [rows, statusFilter]);
+
+    // Grid ⇄ cards view mode, persisted per user (localStorage-backed zustand).
+    const view = useReviewSessionsViewStore((s) => s.view);
+    const setView = useReviewSessionsViewStore((s) => s.setView);
 
     const columns: GridColDef<ReviewSession>[] = [
         { field: 'id', headerName: getString('idColumn'), width: 60 },
@@ -305,16 +334,12 @@ export function ReviewSessionsPage() {
             valueFormatter: (value) => (value as string) || '—',
         },
         {
-            field: 'period_start',
-            headerName: getString('periodStart'),
-            width: 120,
-            valueFormatter: (value) => formatDate(value as string),
-        },
-        {
-            field: 'period_end',
-            headerName: getString('periodEnd'),
-            width: 120,
-            valueFormatter: (value) => formatDate(value as string),
+            field: 'period',
+            headerName: getString('period') || 'Period',
+            width: 200,
+            // Sort by start date; display both bounds in one cell like the planning grid.
+            valueGetter: (_value, row) => row.period_start ?? '',
+            renderCell: (params) => formatPeriod(params.row.period_start, params.row.period_end) ?? '—',
         },
         {
             field: 'employee_count',
@@ -486,6 +511,16 @@ export function ReviewSessionsPage() {
                     >
                         {getString('newSession')}
                     </Button>
+                    {/* Grid ⇄ cards toggle (persisted per user). */}
+                    <ToggleButtonGroup
+                        size="small"
+                        exclusive
+                        value={view}
+                        onChange={(_, v) => v && setView(v)}
+                    >
+                        <ToggleButton value="grid"><ViewListIcon fontSize="small" /></ToggleButton>
+                        <ToggleButton value="cards"><ViewModuleIcon fontSize="small" /></ToggleButton>
+                    </ToggleButtonGroup>
                     {/* People-review scope switcher — same top-right spot as inside a session. */}
                     <Box sx={{ ml: 'auto' }}>
                         <ScopeSettings />
@@ -502,7 +537,7 @@ export function ReviewSessionsPage() {
                     <Alert severity="error">{(error as Error).message}</Alert>
                 )}
 
-                {!isLoading && !error && (
+                {!isLoading && !error && view === 'grid' && (
                     <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', flex: 1, minHeight: 0 }}>
                         <DataGrid
                             rows={filteredRows}
@@ -529,6 +564,68 @@ export function ReviewSessionsPage() {
                             }}
                         />
                     </Paper>
+                )}
+
+                {!isLoading && !error && view === 'cards' && (
+                    // Card grid: SAME filtered+sorted rows as the DataGrid — the toggle
+                    // is presentation-only. Shows status, name, department (if any),
+                    // period (if any), employee count.
+                    <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 2, pb: 2 }}>
+                            {filteredRows.map((r) => {
+                                const period = formatPeriod(r.period_start, r.period_end);
+                                return (
+                                    <Card key={r.id} variant="outlined">
+                                        <CardActionArea
+                                            onClick={() => navigate({
+                                                to: '/people_review/$sessionId',
+                                                params: { sessionId: String(r.id) },
+                                            })}
+                                        >
+                                            <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                                                <Stack direction="row" alignItems="flex-start" spacing={1}>
+                                                    <Typography fontSize={14} fontWeight={600} sx={{ flex: 1 }}>
+                                                        {r.name}
+                                                    </Typography>
+                                                    <Chip
+                                                        label={STATUS_LABEL_KEYS[r.status] ? getString(STATUS_LABEL_KEYS[r.status]) : r.status}
+                                                        color={STATUS_COLORS[r.status] ?? 'default'}
+                                                        size="small"
+                                                        variant="outlined"
+                                                    />
+                                                </Stack>
+                                                <Divider sx={{ my: 1 }} />
+                                                <Stack spacing={0.75}>
+                                                    {r.department_name && (
+                                                        <Stack direction="row" spacing={0.75} alignItems="center">
+                                                            <ApartmentIcon sx={{ fontSize: 15, color: 'text.secondary' }} />
+                                                            <Typography fontSize={12.5} color="text.secondary" noWrap>
+                                                                {r.department_name}
+                                                            </Typography>
+                                                        </Stack>
+                                                    )}
+                                                    {period && (
+                                                        <Stack direction="row" spacing={0.75} alignItems="center">
+                                                            <EventIcon sx={{ fontSize: 15, color: 'text.secondary' }} />
+                                                            <Typography fontSize={12.5} color="text.secondary">
+                                                                {period}
+                                                            </Typography>
+                                                        </Stack>
+                                                    )}
+                                                    <Stack direction="row" spacing={0.75} alignItems="center">
+                                                        <PeopleIcon sx={{ fontSize: 15, color: 'text.secondary' }} />
+                                                        <Typography fontSize={12.5} color="text.secondary">
+                                                            {getString('employees')}: {r.employee_count}
+                                                        </Typography>
+                                                    </Stack>
+                                                </Stack>
+                                            </CardContent>
+                                        </CardActionArea>
+                                    </Card>
+                                );
+                            })}
+                        </Box>
+                    </Box>
                 )}
 
                 {/* Create Dialog */}

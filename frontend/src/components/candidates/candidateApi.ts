@@ -1,5 +1,7 @@
 import { axiosInstance } from '../../api/axiosInstance';
 import { BASE_URL } from '../../utils/eNums.ts';
+import type { MutationResponse } from '../../types/mutationResponse';
+export type { MutationResponse };
 
 const CANDIDATE_BASE = `${BASE_URL}/candidates`;
 const SOURCE_BASE = `${BASE_URL}/candidate_sources`;
@@ -59,11 +61,6 @@ export interface PipelineStatusRow {
     name: string;
     description: string | null;
     sort_order: number;
-}
-
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
 }
 
 export const fetchCandidates = async (): Promise<Candidate[]> => {

@@ -24,10 +24,10 @@ import dayjs from 'dayjs';
 import type { UseMutationResult } from '@tanstack/react-query';
 import {
     maritalWordKey,
+    PersonSex,
     type PersonCreate,
     type MutationResponse,
     type Person,
-    type PersonSex,
     type PersonMaritalStatus,
 } from './personApi';
 import { DATE_FORMAT } from '../../../utils/eNums';
@@ -38,7 +38,7 @@ const schema = z.object({
     last_name: z.string().min(1, 'fieldRequired').max(64, 'nameTooLong'),
     first_name: z.string().min(1, 'fieldRequired').max(64, 'nameTooLong'),
     patronymic: z.string().max(64, 'nameTooLong').optional().or(z.literal('')),
-    sex: z.union([z.literal('male'), z.literal('female'), z.literal('')]),
+    sex: z.union([z.enum(PersonSex), z.literal('')]),
     marital_status: z.union([z.literal('married'), z.literal('not_married'), z.literal('')]),
     birth_date: z.string().optional().or(z.literal('')),
 });
@@ -150,8 +150,8 @@ export function PersonForm({ open, onClose, createMutation }: Props) {
                                         label={cfl(getString('sex') || 'Sex')}
                                     >
                                         <MenuItem value="">—</MenuItem>
-                                        <MenuItem value="male">{getString('sexMale') || 'Male'}</MenuItem>
-                                        <MenuItem value="female">{getString('sexFemale') || 'Female'}</MenuItem>
+                                        <MenuItem value={PersonSex.Male}>{getString('sexMale') || 'Male'}</MenuItem>
+                                        <MenuItem value={PersonSex.Female}>{getString('sexFemale') || 'Female'}</MenuItem>
                                     </Select>
                                 </FormControl>
                             )}

@@ -25,7 +25,7 @@ import {
     type DepartmentTypeChild,
 } from './departmentTypeParentalLinkApi';
 import { deptTypeChildrenQK } from './useDepartmentTypeLinkMutations';
-import type { PendingEdit } from './DepartmentTypeEditDialog';
+import type { PendingEdit } from '../../ui/FieldEditConfirmDialog';
 import type { UseMutationResult } from '@tanstack/react-query';
 import type { MutationResponse } from './departmentTypeParentalLinkApi';
 import { DepartmentTypeLinkDialog } from './DepartmentTypeLinkDialog';

@@ -6,7 +6,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
 import EducationFormDialog from './EducationFormDialog';
-import ConfirmDeleteDialog from '../ConfirmDeleteDialog';
+import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
 import {
     fetchEducationDegrees,
     fetchEmployeeEducations,
@@ -156,7 +156,6 @@ export default function EducationBlock({
                 message={getString('confirmDeleteEducationMessage')}
                 itemLabel={pendingDelete?.institution}
                 isDeleting={delMut.isPending}
-                getString={getString}
                 onConfirm={() => { if (pendingDelete) delMut.mutate(pendingDelete); }}
                 onClose={() => setPendingDelete(null)}
             />

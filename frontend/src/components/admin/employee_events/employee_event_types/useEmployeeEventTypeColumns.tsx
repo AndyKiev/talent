@@ -5,16 +5,10 @@ import { Box, IconButton, Tooltip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 import type { EmployeeEventType } from './employeeEventTypeApi.ts';
-import cfl from '../../../../utils/helpers.ts';
 import type { GetStringFn } from '../../../../types/getStringFn.ts';
-import { TextEditCell } from '../../TextEditCell.tsx';
-import { ReadonlyCell } from '../../ReadonlyCell.tsx';
 import { formatToUkrDate } from '../../../../utils/dateFormatter.ts';
-
-export interface EditingState {
-    userId: number | null;
-    field: string | null;
-}
+import { makeTextEditCol, type EditingState } from '../../../../utils/columnBuilders';
+export type { EditingState };
 
 interface Params {
     getString: GetStringFn;
@@ -38,38 +32,9 @@ export function useEmployeeEventTypeColumns({
                                                 deleteIsPending,
                                             }: Params): GridColDef[] {
 
-    function textEditCol(
-        field: keyof EmployeeEventType,
-        headerKey: string,
-        width: number,
-        flex?: number,
-    ): GridColDef {
-        return {
-            field: field as string,
-            headerName: cfl(getString(headerKey)) || headerKey,
-            width: flex ? undefined : width,
-            flex,
-            renderCell: (params: GridRenderCellParams<EmployeeEventType>) => {
-                const row = params.row;
-                const isEditing = editingState.userId === row.id && editingState.field === field;
-                return isEditing ? (
-                    <TextEditCell
-                        value={String(row[field] ?? '')}
-                        onSave={(val) => onRequestSave(row, field as string, val)}
-                        onCancel={onCancelEdit}
-                        isPending={updateIsPending}
-                    />
-                ) : (
-                    <ReadonlyCell
-                        value={String(row[field] ?? '')}
-                        onEdit={(e) => onEditFieldClick(row, field as string, e)}
-                        editTitle={getString(`edit${cfl(field)}`) || `Edit ${field}`}
-                        placeholder="—"
-                    />
-                );
-            },
-        };
-    }
+    const textEditCol = makeTextEditCol<EmployeeEventType>({
+        getString, editingState, onEditFieldClick, onRequestSave, onCancelEdit, updateIsPending,
+    });
 
     return [
         textEditCol('code', 'code', 160),

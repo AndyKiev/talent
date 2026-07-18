@@ -1,16 +1,33 @@
 // src/components/admin/persons/personApi.ts
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums.ts';
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
+import { createCrudApi } from '../../../api/createCrudApi';
 
 const BASE = `${BASE_URL}/persons`;
 
-export type PersonSex = 'male' | 'female';
+/** Biological sex stored on a person. Values are the wire/persisted form. */
+export enum PersonSex {
+    Male = 'male',
+    Female = 'female',
+}
 export type PersonMaritalStatus = 'married' | 'not_married';
+
+/** Gender suffix used to inflect sex-dependent words (e.g. marital status). */
+export const sexKeySuffix = (sex: PersonSex): 'Male' | 'Female' =>
+    sex === PersonSex.Female ? 'Female' : 'Male';
+/** Message key for a sex label ('sexMale' / 'sexFemale'). */
+export const sexLabelKey = (sex: PersonSex): string =>
+    sex === PersonSex.Female ? 'sexFemale' : 'sexMale';
+/** Message key for the short sex tag ('sexMaleShort' / 'sexFemaleShort'). */
+export const sexShortLabelKey = (sex: PersonSex): string =>
+    sex === PersonSex.Female ? 'sexFemaleShort' : 'sexMaleShort';
 
 // The marital-status word is sex-dependent (заміжня/незаміжня vs одружений/
 // неодружений) — same keys people-review uses.
-export const maritalWordKey = (sex: string, marital: PersonMaritalStatus): string => {
-    const suffix = sex === 'female' ? 'Female' : 'Male';
+export const maritalWordKey = (sex: PersonSex, marital: PersonMaritalStatus): string => {
+    const suffix = sexKeySuffix(sex);
     return marital === 'married' ? `maritalMarried${suffix}` : `maritalNotMarried${suffix}`;
 };
 
@@ -70,15 +87,9 @@ export interface PersonCheckNameResponse {
     matches: PersonNameMatch[];
 }
 
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
-}
+const crud = createCrudApi<Person, PersonCreate, PersonUpdate>(BASE);
 
-export const fetchPersons = async (): Promise<Person[]> => {
-    const res = await axiosInstance.get<Person[]>(BASE);
-    return res.data ?? [];
-};
+export const fetchPersons = crud.fetchList;
 
 export const fetchPersonByEmployeeId = async (employeeId: number): Promise<Person> => {
     const res = await axiosInstance.get<Person>(`${BASE}/by_employee/${employeeId}`);
@@ -102,25 +113,8 @@ export const checkPersonName = async (
     return res.data;
 };
 
-export const createPerson = async (
-    body: PersonCreate,
-): Promise<MutationResponse<Person>> => {
-    const res = await axiosInstance.post<MutationResponse<Person>>(BASE, body);
-    return res.data;
-};
+export const createPerson = crud.create;
 
-export const updatePerson = async ({
-    id,
-    data,
-}: {
-    id: number;
-    data: PersonUpdate;
-}): Promise<MutationResponse<Person>> => {
-    const res = await axiosInstance.patch<MutationResponse<Person>>(`${BASE}/${id}`, data);
-    return res.data;
-};
+export const updatePerson = crud.update;
 
-export const deletePerson = async (id: number): Promise<MutationResponse<null>> => {
-    const res = await axiosInstance.delete<MutationResponse<null>>(`${BASE}/${id}`);
-    return res.data;
-};
+export const deletePerson = crud.remove;

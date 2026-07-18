@@ -17,10 +17,10 @@ import { PROCESS_ROLE_HOLDER_EMPLOYEE_QK } from '../../../../utils/queryKeys';
 import { useProcessRoleHolderEmployeeLinkMutations } from './useProcessRoleHolderEmployeeLinkMutations';
 import { useProcessRoleHolderEmployeeLinkColumns } from './useProcessRoleHolderEmployeeLinkColumns';
 import { ProcessRoleHolderEmployeeLinkForm } from './ProcessRoleHolderEmployeeLinkForm';
-import { ProcessRoleHolderEmployeeLinkDeleteDialog } from './ProcessRoleHolderEmployeeLinkDeleteDialog';
 import { useDataGridLocale } from '../../../../hooks/useDataGridLocale';
 import useString from '../../../../hooks/useString';
 import cfl from '../../../../utils/capitalizeFirstLetter';
+import ConfirmDeleteDialog from '../../../ui/ConfirmDeleteDialog';
 
 export function EmployeeAssignmentPanel({ holderId }: { holderId: number }) {
     const getString = useString();
@@ -60,6 +60,7 @@ export function EmployeeAssignmentPanel({ holderId }: { holderId: number }) {
 
     const handleDeleteClick = useCallback((row: ProcessRoleHolderEmployeeLink) => setRowToDelete(row), []);
     const handleConfirmDelete = useCallback(() => { if (rowToDelete) deleteMutation.mutate(rowToDelete.id); }, [rowToDelete, deleteMutation]);
+    const deleteWho = rowToDelete?.employee_name || rowToDelete?.employee_code || '';
     const columns = useProcessRoleHolderEmployeeLinkColumns({ getString, onDeleteClick: handleDeleteClick, deleteIsPending: deleteMutation.isPending });
 
     return (
@@ -117,8 +118,13 @@ export function EmployeeAssignmentPanel({ holderId }: { holderId: number }) {
             <ProcessRoleHolderEmployeeLinkForm
                 open={formOpen} onClose={() => setFormOpen(false)} defaultHolderId={holderId} createMutation={createMutation}
             />
-            <ProcessRoleHolderEmployeeLinkDeleteDialog
-                row={rowToDelete} isPending={deleteMutation.isPending} onConfirm={handleConfirmDelete} onCancel={() => setRowToDelete(null)}
+            <ConfirmDeleteDialog
+                open={!!rowToDelete}
+                title={getString('removeAssignment') || 'Remove Assignment'}
+                message={getString('areYouSureRemoveAssignment', { employee: deleteWho }) || `Remove employee "${deleteWho}" from this reviewer?`}
+                isDeleting={deleteMutation.isPending}
+                onConfirm={handleConfirmDelete}
+                onClose={() => setRowToDelete(null)}
             />
 
             <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={() => setSnackbar((p) => ({ ...p, open: false }))} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>

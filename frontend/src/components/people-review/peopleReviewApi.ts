@@ -1,5 +1,9 @@
 import { axiosInstance } from '../../api/axiosInstance';
 import { BASE_URL } from "../../utils/eNums.ts"
+import type { MutationResponse } from '../../types/mutationResponse';
+import type { CompetenceSide } from './evaluation/evaluationHelpers';
+import type { PersonSex } from '../admin/persons/personApi';
+export type { MutationResponse };
 
 // Maximum grade an evaluation score can take (must match the backend MAX_GRADE).
 export const MAX_GRADE = 4;
@@ -41,11 +45,6 @@ export interface ReviewSessionCreate {
     period_start?: string | null;
     period_end?: string | null;
     department_id?: number | null;
-}
-
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
 }
 
 // --- Review Session Employee types ---
@@ -540,7 +539,7 @@ export const bulkUpdateEvaluations = async (
 export interface EvaluationFlipCompetence {
     criterion_index: number;
     new_score: number;
-    leaving_side: 'strong' | 'develop';
+    leaving_side: CompetenceSide;
 }
 
 export const flipCompetence = async (
@@ -801,7 +800,7 @@ export const setEmployeeCurrentLevel = async (
 
 // --- Employee personal data (birth date, hire date, job-assigned date, ...) ---
 // ISO 'YYYY-MM-DD' on the wire; displayed DD.MM.YYYY.
-export type Sex = 'male' | 'female';
+export type Sex = PersonSex;
 export type MaritalStatus = 'married' | 'not_married';
 
 export interface EmployeePersonalData {
@@ -824,7 +823,6 @@ export type EmployeePersonalDataPatch = Partial<{
     sex: Sex | null;
     marital_status: MaritalStatus | null;
 }>;
-
 
 export const patchEmployeePersonalData = async (
     employeeId: number,

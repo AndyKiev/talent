@@ -6,7 +6,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import ChildCareOutlinedIcon from '@mui/icons-material/ChildCareOutlined';
 import dayjs from 'dayjs';
 import ChildFormDialog from './ChildFormDialog';
-import ConfirmDeleteDialog from '../ConfirmDeleteDialog';
+import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
 import {
     fetchEmployeeChildren,
     deleteEmployeeChild,
@@ -137,7 +137,6 @@ export default function ChildrenBlock({
                 message={getString('confirmDeleteChildMessage')}
                 itemLabel={pendingDelete ? formatDate(pendingDelete.birth_date) : undefined}
                 isDeleting={delMut.isPending}
-                getString={getString}
                 onConfirm={() => { if (pendingDelete) delMut.mutate(pendingDelete); }}
                 onClose={() => setPendingDelete(null)}
             />

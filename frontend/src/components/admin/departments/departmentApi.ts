@@ -1,6 +1,8 @@
 // src/components/admin/departments/departmentApi.ts
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums';
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
 
 const BASE = `${BASE_URL}/departments`;
 
@@ -49,11 +51,6 @@ export interface DepartmentUpdate {
     parent_id?: number | null;
     department_category_id?: number;
     department_type_id?: number;
-}
-
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
 }
 
 export interface DepartmentSubtreeGenerateResult {

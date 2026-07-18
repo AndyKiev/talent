@@ -27,6 +27,15 @@ class InterviewInterviewerNotManager(DomainError):
         super().__init__(self.fallback)
 
 
+class InterviewTooManyInterviewers(DomainError):
+    message_key = "interviewTooManyInterviewers"
+
+    def __init__(self, max_count: int) -> None:
+        self.template_vars = {"max": max_count}
+        self.fallback = f"An interview may have at most {max_count} interviewers"
+        super().__init__(self.fallback)
+
+
 class InterviewerGroupMissing(DomainError):
     message_key = "interviewerGroupMissing"
 

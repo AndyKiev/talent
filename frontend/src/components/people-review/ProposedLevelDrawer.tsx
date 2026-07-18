@@ -28,7 +28,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import useString from '../../hooks/useString';
 import { InlineEditField } from './evaluation/InlineEditField';
-import ConfirmDeleteDialog from './ConfirmDeleteDialog';
+import ConfirmDeleteDialog from '../ui/ConfirmDeleteDialog';
 import {
     fetchSessionLevels,
     fetchProposedLevel,
@@ -589,7 +589,6 @@ export function ProposedLevelDrawer({ open, onClose, rseId, currentLevelId, setS
                 open={confirmDelete}
                 message={getString('confirmDeleteProposedLevelMessage')}
                 isDeleting={deleteMut.isPending}
-                getString={getString}
                 onConfirm={() => deleteMut.mutate()}
                 onClose={() => setConfirmDelete(false)}
             />

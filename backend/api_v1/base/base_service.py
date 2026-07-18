@@ -2,7 +2,7 @@ import json
 from typing import Any, Sequence, Optional, List, Dict
 from fastapi import HTTPException
 from pydantic import BaseModel
-from sqlalchemy import Row, RowMapping, select
+from sqlalchemy import Row, RowMapping
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
@@ -14,8 +14,7 @@ from typing import TypeVar, Generic
 
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 
-from backend.api_v1.msg_key.msg_key_model import MsgKey
-from backend.api_v1.msg_pg.msg_model import Msg
+from backend.api_v1.msg_pg.msg_translate import translate_key
 
 from backend.api_v1.base.errors import (
     NotFoundError,
@@ -55,30 +54,17 @@ class BaseService(Generic[RepositoryType]):
         Resolve a message key for the current employee's language.
         Interpolates ${variable} placeholders with the supplied variables dict.
         Returns fallback when the session/employee is unavailable or key not found.
+        Delegates to msg_translate.translate_key (the shared server-side resolver).
         """
         if not self.session or not self.user:
             return fallback
-        try:
-            stmt = (
-                select(Msg.value)
-                .join(MsgKey)
-                .where(MsgKey.name == message_key, Msg.lang_id == self.user.lang_id)
-            )
-            result = await self.session.execute(stmt)
-            message_template = result.scalar_one_or_none()
-
-            if not message_template:
-                return fallback
-
-            if variables:
-                for key, value in variables.items():
-                    placeholder = f"${{{key}}}"
-                    message_template = message_template.replace(placeholder, str(value))
-
-            return message_template
-
-        except Exception:
-            return fallback
+        return await translate_key(
+            self.session,
+            message_key,
+            self.user.lang_id,
+            variables=variables,
+            fallback=fallback,
+        )
 
     async def _raise_error(
         self,

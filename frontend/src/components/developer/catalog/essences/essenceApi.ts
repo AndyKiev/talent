@@ -1,6 +1,8 @@
 // src/components/admin/essences/essenceApi.ts
-import { axiosInstance } from '../../../../api/axiosInstance.ts';
 import { BASE_URL } from '../../../../utils/eNums.ts';
+import type { MutationResponse } from '../../../../types/mutationResponse';
+export type { MutationResponse };
+import { createCrudApi } from '../../../../api/createCrudApi';
 
 const BASE = `${BASE_URL}/admin/essences`;
 
@@ -22,34 +24,12 @@ export interface EssenceUpdate {
   description?: string | null;
 }
 
-export interface MutationResponse<T> {
-  detail: string;
-  data: T;
-}
+const crud = createCrudApi<Essence, EssenceCreate, EssenceUpdate>(BASE);
 
-export const fetchEssences = async (): Promise<Essence[]> => {
-  const res = await axiosInstance.get<Essence[]>(BASE);
-  return res.data ?? [];
-};
+export const fetchEssences = crud.fetchList;
 
-export const createEssence = async (
-  body: EssenceCreate,
-): Promise<MutationResponse<Essence>> => {
-  const res = await axiosInstance.post<MutationResponse<Essence>>(BASE, body);
-  return res.data;
-};
+export const createEssence = crud.create;
 
-export const updateEssence = async ({
-  id,
-  data,
-}: {
-  id: number;
-  data: EssenceUpdate;
-}): Promise<MutationResponse<Essence>> => {
-  const res = await axiosInstance.patch<MutationResponse<Essence>>(`${BASE}/${id}`, data);
-  return res.data;
-};
+export const updateEssence = crud.update;
 
-export const deleteEssence = async (id: number): Promise<void> => {
-  await axiosInstance.delete(`${BASE}/${id}`);
-};
+export const deleteEssence = crud.remove;

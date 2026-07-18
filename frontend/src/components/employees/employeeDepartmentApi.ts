@@ -6,6 +6,8 @@
 import { axiosInstance } from '../../api/axiosInstance';
 import { BASE_URL } from '../../utils/eNums';
 import type { TopOrgUnit } from './employeeApi';
+import type { MutationResponse } from '../../types/mutationResponse';
+export type { MutationResponse };
 
 const base = (employeeId: number) => `${BASE_URL}/employees/${employeeId}/departments`;
 const respBase = (employeeId: number) =>
@@ -44,11 +46,6 @@ export interface EmployeeDepartmentCreate {
 
 export interface EmployeeResponsibilityDepartmentCreate {
     department_type_id: number;
-}
-
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
 }
 
 // ── Main department (0..1 per employee) ──────────────────────────────────────

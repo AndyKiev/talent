@@ -1,6 +1,9 @@
 // src/components/admin/jobs/jobApi.ts
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums';
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
+import { createCrudApi } from '../../../api/createCrudApi';
 
 const BASE = `${BASE_URL}/jobs`;
 // const USER_GROUPS_BASE = `${BASE_URL}/user_groups`;
@@ -58,7 +61,6 @@ export interface JobBulkUploadResult {
   skipped_count: number;
 }
 
-
 // UserGroup kept here for the existing user-group assignment dialog
 // export interface UserGroup {
 //   id: number;
@@ -69,40 +71,17 @@ export interface JobBulkUploadResult {
 //   users_qty?: { active: number; inactive: number } | null;
 // }
 
-export interface MutationResponse<T> {
-  detail: string;
-  data: T;
-}
-
 // ── Jobs ──────────────────────────────────────────────────────────────────────
 
-export const fetchJobs = async (): Promise<Job[]> => {
-  const res = await axiosInstance.get<Job[]>(BASE);
-  return res.data ?? [];
-};
+const crud = createCrudApi<Job, JobCreate, JobUpdate>(BASE);
 
-export const createJob = async (
-  body: JobCreate,
-): Promise<MutationResponse<Job>> => {
-  const res = await axiosInstance.post<MutationResponse<Job>>(BASE, body);
-  return res.data;
-};
+export const fetchJobs = crud.fetchList;
 
-export const updateJob = async ({
-  id,
-  data,
-}: {
-  id: number;
-  data: JobUpdate;
-}): Promise<MutationResponse<Job>> => {
-  const res = await axiosInstance.patch<MutationResponse<Job>>(`${BASE}/${id}`, data);
-  return res.data;
-};
+export const createJob = crud.create;
 
-export const deleteJob = async (id: number): Promise<MutationResponse<null>> => {
-  const res = await axiosInstance.delete<MutationResponse<null>>(`${BASE}/${id}`);
-  return res.data;
-};
+export const updateJob = crud.update;
+
+export const deleteJob = crud.remove;
 
 // // ── User-group assignment (existing) ─────────────────────────────────────────
 //

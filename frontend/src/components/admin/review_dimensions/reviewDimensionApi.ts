@@ -1,5 +1,8 @@
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from "../../../utils/eNums.ts"
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
+import { createCrudApi } from '../../../api/createCrudApi';
 
 const BASE = `${BASE_URL}/review_dimensions`;
 const CRITERIA_BASE = `${BASE_URL}/review_dimension_criteria`;
@@ -41,38 +44,15 @@ export interface ReviewDimensionUpdate {
     sort_order?: number;
 }
 
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
-}
+const crud = createCrudApi<ReviewDimension, ReviewDimensionCreate, ReviewDimensionUpdate>(BASE);
 
-export const fetchReviewDimensions = async (): Promise<ReviewDimension[]> => {
-    const res = await axiosInstance.get<ReviewDimension[]>(BASE);
-    return res.data ?? [];
-};
+export const fetchReviewDimensions = crud.fetchList;
 
-export const createReviewDimension = async (
-    body: ReviewDimensionCreate,
-): Promise<MutationResponse<ReviewDimension>> => {
-    const res = await axiosInstance.post<MutationResponse<ReviewDimension>>(BASE, body);
-    return res.data;
-};
+export const createReviewDimension = crud.create;
 
-export const updateReviewDimension = async ({
-    id,
-    data,
-}: {
-    id: number;
-    data: ReviewDimensionUpdate;
-}): Promise<MutationResponse<ReviewDimension>> => {
-    const res = await axiosInstance.patch<MutationResponse<ReviewDimension>>(`${BASE}/${id}`, data);
-    return res.data;
-};
+export const updateReviewDimension = crud.update;
 
-export const deleteReviewDimension = async (id: number): Promise<MutationResponse<null>> => {
-    const res = await axiosInstance.delete<MutationResponse<null>>(`${BASE}/${id}`);
-    return res.data;
-};
+export const deleteReviewDimension = crud.remove;
 
 // Criteria API
 export interface CriteriaCreate {

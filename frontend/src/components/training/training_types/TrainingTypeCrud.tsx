@@ -16,12 +16,12 @@ import { fetchTrainingTypes, type TrainingType } from './trainingTypeApi';
 import { useTrainingTypeMutations } from './useTrainingTypeMutations';
 import { useTrainingTypeColumns } from './useTrainingTypeColumns';
 import { TrainingTypeForm } from './TrainingTypeForm';
-import { TrainingTypeDeleteDialog } from './TrainingTypeDeleteDialog';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import cfl from '../../../utils/helpers.ts';
 import { TRAINING_TYPE_QK } from '../../../utils/queryKeys.ts';
+import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
 
 export function TrainingTypeCrud() {
     const getString = useString({ str });
@@ -141,11 +141,13 @@ export function TrainingTypeCrud() {
                 updateMutation={updateMutation}
             />
 
-            <TrainingTypeDeleteDialog
-                row={rowToDelete}
-                isPending={deleteMutation.isPending}
+            <ConfirmDeleteDialog
+                open={!!rowToDelete}
+                title={getString('deleteTrainingType') || 'Delete Training Type'}
+                message={getString('areYouSureDeleteTrainingType') || `Are you sure you want to delete "${rowToDelete?.name}"? This action cannot be undone.`}
+                isDeleting={deleteMutation.isPending}
                 onConfirm={handleConfirmDelete}
-                onCancel={() => setRowToDelete(null)}
+                onClose={() => setRowToDelete(null)}
             />
 
             <Snackbar

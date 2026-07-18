@@ -1,5 +1,7 @@
 import { type FC } from "react";
 import { Box, Button, Typography } from "@mui/material";
+import DarkModeRounded from "@mui/icons-material/DarkModeRounded";
+import LightModeRounded from "@mui/icons-material/LightModeRounded";
 import { useTheme } from "./ThemeContext";
 import useString from "../../hooks/useString.ts";
 import str from "../../strings/str.ts";
@@ -52,9 +54,14 @@ const ThemeSwitch: FC = () => {
                 variant="caption"
                 fontWeight={600}
                 color={t.textMuted}
-                sx={{ userSelect: "none" }}
+                sx={{ userSelect: "none", display: "flex", alignItems: "center", gap: 0.5 }}
             >
-                {isDark ? `🌙 ${getString("dark")}` : `☀️ ${getString("light")}`}
+                {isDark ? (
+                    <DarkModeRounded sx={{ fontSize: 16 }} />
+                ) : (
+                    <LightModeRounded sx={{ fontSize: 16 }} />
+                )}
+                {isDark ? getString("dark") : getString("light")}
             </Typography>
         </Button>
     );

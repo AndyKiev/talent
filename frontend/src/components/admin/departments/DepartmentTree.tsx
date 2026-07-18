@@ -30,7 +30,7 @@ import {  useDepartmentMutations } from './useDepartmentMutations';
 import { DepartmentTreeNode } from './DepartmentTreeNode';
 import { DepartmentForm } from './DepartmentForm';
 import { DepartmentDeleteDialog } from './DepartmentDeleteDialog';
-import { DepartmentEditDialog, type PendingDepartmentEdit } from './DepartmentEditDialog';
+import { FieldEditConfirmDialog } from '../../ui/FieldEditConfirmDialog';
 import { DepartmentGenerateSubtreeDialog } from './DepartmentGenerateSubtreeDialog';
 import { DepartmentRegionLinkDialog } from './DepartmentRegionLinkDialog';
 import {
@@ -47,6 +47,15 @@ import {
   DEPARTMENT_REGION_LINK_QK,
   DEPARTMENT_TYPE_CHILD_MAP_QK,
 } from "../../../utils/queryKeys.ts";
+
+export interface PendingDepartmentEdit {
+  id: number;
+  fieldLabel: string;
+  field: string;
+  rawValue: string | boolean | number;   // ← what gets sent to the API
+  newValue: string | boolean | number;   // ← display label only
+  oldValue: string | boolean | number;   // ← display label only
+}
 
 interface Props {
   selectedId?: number | null;
@@ -349,7 +358,7 @@ export function DepartmentTree({ selectedId = null }: Props) {
             createMutation={createMutation}
         />
 
-        <DepartmentEditDialog
+        <FieldEditConfirmDialog
             pending={pendingEdit}
             isPending={updateMutation.isPending}
             onConfirm={handleConfirmEdit}

@@ -15,10 +15,7 @@ import type {
   ValueFormatterParams,
 } from 'ag-grid-community';
 import Box from '@mui/material/Box';
-// import Chip from '@mui/material/Chip';
 import Typography from '@mui/material/Typography';
-// import Tooltip from '@mui/material/Tooltip';
-// import CalendarTodayIcon from '@mui/icons-material/CalendarTodayOutlined';
 import {
   type Matrix,
   type MatrixRow,
@@ -26,6 +23,8 @@ import {
   type StatusFact,
   type JobStatusFact,
 } from './planMatrixApi';
+import useString from '../../hooks/useString';
+import type { GetStringFn } from '../../types/getStringFn';
 
 // Register at module scope — covers SSR and non-split builds
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -138,17 +137,7 @@ const numFormatter = (p: ValueFormatterParams): string =>
     p.value != null ? String(p.value) : '—';
 
 // ── Column definitions ────────────────────────────────────────────────────────
-function buildColumnDefs(jobGroups: JobGroupDef[]): (ColDef | ColGroupDef)[] {
-  // const leaf = (headerName: string, field: string, isPct = false): ColDef => ({
-  //   headerName,
-  //   field,
-  //   width:          isPct ? 66 : 52,
-  //   minWidth:       isPct ? 56 : 44,
-  //   valueFormatter: isPct ? pctFormatter : numFormatter,
-  //   cellStyle:      isPct ? pctCellStyle : numCellStyle,
-  //   sortable:       true,
-  //   resizable:      true,
-  // });
+function buildColumnDefs(jobGroups: JobGroupDef[], getString: GetStringFn): (ColDef | ColGroupDef)[] {
   const leaf = (headerName: string, field: string, isPct = false): ColDef => ({
     headerName,
     field,
@@ -163,7 +152,7 @@ function buildColumnDefs(jobGroups: JobGroupDef[]): (ColDef | ColGroupDef)[] {
   const cols: (ColDef | ColGroupDef)[] = [];
 
   cols.push({
-    headerName:     'Підрозділ',
+    headerName:     getString('matrixDepartment') || 'Department',
     headerClass:    'hdr-l1',
     field:          'org_unit_key',
     width:          200,
@@ -171,9 +160,10 @@ function buildColumnDefs(jobGroups: JobGroupDef[]): (ColDef | ColGroupDef)[] {
     pinned:         'left' as const,
     resizable:      true,
     sortable:       true,
+    // Total-row labels arrive from the backend as translation KEYS.
     valueFormatter: (p: ValueFormatterParams) =>
         (p.data?._isTotal as boolean)
-            ? (p.data._label as string ?? 'Всього')
+            ? getString((p.data._label as string) ?? 'matrixTotal')
             : (p.value as string ?? ''),
     cellStyle: (p: CellClassParams): CellStyle => ({
       fontWeight: (p.data?._isTotal as boolean) ? 700 : 600,
@@ -182,62 +172,68 @@ function buildColumnDefs(jobGroups: JobGroupDef[]): (ColDef | ColGroupDef)[] {
     }),
   } as ColDef);
 
+  const tTarget   = getString('matrixTarget')       || 'target';
+  const tRealized = getString('matrixRealized')     || 'realized';
+  const tPct      = getString('matrixPctDone')      || '% done';
+  const tPa       = getString('matrixPa')           || 'Pa';
+  const tPo       = getString('matrixPo')           || 'Po';
+
   for (const jg of jobGroups) {
     const { id, key, config } = jg;
     const hasSubJobs = config.jobs.length > 0;
     const l2: (ColDef | ColGroupDef)[] = [];
 
     if (config.target_mode === 'total') {
-      const tLeaf = leaf('ціль', flatKey(id, 'target'));
+      const tLeaf = leaf(tTarget, flatKey(id, 'target'));
       l2.push(hasSubJobs
-          ? { headerName: 'ціль', headerClass: 'hdr-l2', children: [tLeaf] } as ColGroupDef
+          ? { headerName: tTarget, headerClass: 'hdr-l2', children: [tLeaf] } as ColGroupDef
           : tLeaf);
     } else {
       l2.push({
-        headerName: 'ціль', headerClass: 'hdr-l2',
+        headerName: tTarget, headerClass: 'hdr-l2',
         children: [
-          leaf('Па', flatKey(id, 'target', 'pa')),
-          leaf('По', flatKey(id, 'target', 'po')),
+          leaf(tPa, flatKey(id, 'target', 'pa')),
+          leaf(tPo, flatKey(id, 'target', 'po')),
         ],
       } as ColGroupDef);
     }
 
     if (config.fact_mode === 'by_status') {
       l2.push({
-        headerName: 'реалізовано', headerClass: 'hdr-l2',
+        headerName: tRealized, headerClass: 'hdr-l2',
         children: [
-          leaf('Па', flatKey(id, 'fact', 'pa')),
-          leaf('По', flatKey(id, 'fact', 'po')),
+          leaf(tPa, flatKey(id, 'fact', 'pa')),
+          leaf(tPo, flatKey(id, 'fact', 'po')),
         ],
       } as ColGroupDef);
     } else if (config.fact_mode === 'total') {
-      const fLeaf = leaf('реалізовано', flatKey(id, 'fact'));
+      const fLeaf = leaf(tRealized, flatKey(id, 'fact'));
       l2.push(hasSubJobs
-          ? { headerName: 'реалізовано', headerClass: 'hdr-l2', children: [fLeaf] } as ColGroupDef
+          ? { headerName: tRealized, headerClass: 'hdr-l2', children: [fLeaf] } as ColGroupDef
           : fLeaf);
     } else {
       for (const job of config.jobs) {
         l2.push({
           headerName: job.key, headerClass: 'hdr-l2',
           children: [
-            leaf('Па', flatKey(id, 'fact', job.key, 'pa')),
-            leaf('По', flatKey(id, 'fact', job.key, 'po')),
+            leaf(tPa, flatKey(id, 'fact', job.key, 'pa')),
+            leaf(tPo, flatKey(id, 'fact', job.key, 'po')),
           ],
         } as ColGroupDef);
       }
     }
 
-    l2.push(leaf('% вик.', flatKey(id, 'pct'), true));
+    l2.push(leaf(tPct, flatKey(id, 'pct'), true));
     cols.push({ headerName: key, headerClass: 'hdr-l1', children: l2 } as ColGroupDef);
   }
 
   cols.push({
-    headerName: 'Всього', headerClass: 'hdr-l1',
+    headerName: getString('matrixTotal') || 'Total', headerClass: 'hdr-l1',
     children: [
-      leaf('ціль базова',   'summary.base_target'),
-      leaf("ціль об'єкта",  'summary.object_target'),
-      leaf('реалізовано',   'summary.fact'),
-      leaf('% вик.',        'summary.pct', true),
+      leaf(getString('matrixTargetBase')   || 'base target',   'summary.base_target'),
+      leaf(getString('matrixTargetObject') || 'object target', 'summary.object_target'),
+      leaf(tRealized,                                          'summary.fact'),
+      leaf(tPct,                                               'summary.pct', true),
     ],
   } as ColGroupDef);
 
@@ -279,10 +275,11 @@ interface Props {
 
 export default function PlanMatrixGrid({ matrix }: Props) {
   const gridRef = useRef<AgGridReact>(null);
+  const getString = useString();
   const { matrix_meta, essences, grand_totals, data } = matrix;
   const jobGroups = essences.job_groups;
 
-  const columnDefs = useMemo(() => buildColumnDefs(jobGroups), [jobGroups]);
+  const columnDefs = useMemo(() => buildColumnDefs(jobGroups, getString), [jobGroups, getString]);
 
   const rowData = useMemo<FlatRow[]>(() => [
     flattenRow(grand_totals, jobGroups),
@@ -294,9 +291,6 @@ export default function PlanMatrixGrid({ matrix }: Props) {
     sortable:  true,
   }), []);
 
-  // const periodLabel =
-  //     `${matrix_meta.period.year} / ${String(matrix_meta.period.month).padStart(2, '0')}`;
-
   return (
       <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
         <style>{HEADER_CSS}</style>
@@ -305,50 +299,13 @@ export default function PlanMatrixGrid({ matrix }: Props) {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, px: 2, py: 1, background: C.h1Bg, flexShrink: 0, boxShadow: '0 2px 6px rgba(0,0,0,0.3)' }}>
           <Box sx={{ flex: 1 }}>
             <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '0.875rem', letterSpacing: '0.03em' }}>
-              Staffing Matrix
+              {getString('staffingMatrix') || 'Staffing Matrix'}
             </Typography>
             <Typography sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.7rem', mt: '1px' }}>
               {matrix_meta.description}
             </Typography>
           </Box>
-          {/*<Chip*/}
-          {/*    icon={<CalendarTodayIcon sx={{ fontSize: '0.75rem !important', color: '#fff !important' }} />}*/}
-          {/*    label={periodLabel}*/}
-          {/*    size="small"*/}
-          {/*    sx={{ background: 'rgba(255,255,255,0.15)', color: '#fff', fontWeight: 600, fontSize: '0.72rem', border: '1px solid rgba(255,255,255,0.25)' }}*/}
-          {/*/>*/}
-          {/*<Chip*/}
-          {/*    label={`${data.length} рядків`}*/}
-          {/*    size="small"*/}
-          {/*    sx={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.65)', fontSize: '0.7rem', border: '1px solid rgba(255,255,255,0.15)' }}*/}
-          {/*/>*/}
         </Box>
-
-        {/* Legend */}
-        {/*<Box sx={{ display: 'flex', alignItems: 'center', gap: 2, px: 2, py: 0.5, background: '#E8EDF2', borderBottom: `1px solid ${C.border}`, flexShrink: 0, flexWrap: 'wrap' }}>*/}
-        {/*  {([*/}
-        {/*    { bg: C.totalBg, label: "Всього по об'єктам" },*/}
-        {/*    { bg: C.pctBg,   label: '% виконання'        },*/}
-        {/*    { bg: '#EBF3FB', label: 'Рядок даних'        },*/}
-        {/*  ] as const).map((item) => (*/}
-        {/*      <Box key={item.label} sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>*/}
-        {/*        <Box sx={{ width: 10, height: 10, borderRadius: '2px', background: item.bg, border: `1px solid ${C.border}` }} />*/}
-        {/*        <Typography sx={{ fontSize: '0.68rem', color: '#555' }}>{item.label}</Typography>*/}
-        {/*      </Box>*/}
-        {/*  ))}*/}
-        {/*  <Box sx={{ ml: 'auto', display: 'flex', gap: 1.5 }}>*/}
-        {/*    {([*/}
-        {/*      { key: 'Па', tip: 'Paré — певна ймовірність утримання посади у вказаний період' },*/}
-        {/*      { key: 'По', tip: 'Potential — здатен зайняти посаду у вказаний період'         },*/}
-        {/*    ] as const).map((s) => (*/}
-        {/*        <Tooltip key={s.key} title={s.tip} arrow placement="top">*/}
-        {/*          <Typography sx={{ fontSize: '0.68rem', color: C.h2Bg, fontWeight: 700, cursor: 'help', borderBottom: `1px dashed ${C.h2Bg}` }}>*/}
-        {/*            {s.key}*/}
-        {/*          </Typography>*/}
-        {/*        </Tooltip>*/}
-        {/*    ))}*/}
-        {/*  </Box>*/}
-        {/*</Box>*/}
 
         {/* Grid */}
         <Box className="ag-theme-matrix" sx={{ width: '100%' }}>

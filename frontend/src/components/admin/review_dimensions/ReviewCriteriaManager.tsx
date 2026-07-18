@@ -27,11 +27,11 @@ import {
 } from './reviewDimensionApi';
 import { REVIEW_DIMENSION_QK } from './useReviewDimensionMutations';
 import { REVIEW_CRITERIA_QK, useReviewCriteriaMutations } from './useReviewCriteriaMutations';
-import { useArrowReorder } from './useArrowReorder';
+import { useArrowReorder } from '../../../hooks/useArrowReorder';
 import { ReviewCriteriaForm } from './ReviewCriteriaForm';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import ConfirmDialog from '../../ui/ConfirmDialog';
-import ConfirmDeleteDialog from '../../people-review/ConfirmDeleteDialog';
+import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
 
 export function ReviewCriteriaManager() {
     const getString = useString();
@@ -237,7 +237,6 @@ export function ReviewCriteriaManager() {
                 }
                 confirmColor="warning"
                 isPending={updateMutation.isPending}
-                getString={getString}
                 onConfirm={() => {
                     if (pendingToggle) {
                         updateMutation.mutate({
@@ -255,7 +254,6 @@ export function ReviewCriteriaManager() {
                 message={getString('confirmDeleteMessage')}
                 itemLabel={pendingDelete?.text}
                 isDeleting={deleteMutation.isPending}
-                getString={getString}
                 onConfirm={() => {
                     if (pendingDelete) deleteMutation.mutate(pendingDelete.id);
                     setPendingDelete(null);

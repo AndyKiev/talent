@@ -678,7 +678,9 @@ class ReviewSessionEmployeeService(BaseService):
         children = None
         if children_rows:
             ages = sorted((today.year - c.birth_date.year) for c in children_rows)
-            children = ", ".join(f"{a} р." for a in ages)
+            # Compact age suffix ("р." / "y.") resolved to the viewer's language.
+            years_suffix = await self._translate("yearsShort", fallback="y.")
+            children = ", ".join(f"{a} {years_suffix}" for a in ages)
 
         education = await self.session.scalar(
             select(EmployeeEducation)
@@ -1059,6 +1061,7 @@ class ReviewSessionEmployeeService(BaseService):
             "proposed_level": "proposedLevel",
             "talent_status_period": "talentStatusPeriod",
             "level_requirements": "levelRequirements",
+            "photo_placeholder": "tempoPhotoPlaceholder",
         }
         labels = {
             slot: await self._translate(key, fallback=key)

@@ -47,7 +47,7 @@ import {
 import { DepartmentTreePicker } from './DepartmentTreePicker';
 import { TalentTargetJobPicker } from './talent_audit/TalentTargetJobPicker';
 import { EmployeeDuplicatePersonDialog } from './EmployeeDuplicatePersonDialog';
-import { checkPersonName, type PersonNameMatch } from '../admin/persons/personApi';
+import { checkPersonName, PersonSex, type PersonNameMatch } from '../admin/persons/personApi';
 import DateWheelPicker from '../people-review/personal-data/DateWheelPicker';
 import { formatDate } from '../../utils/date';
 import type { DepartmentNode } from '../admin/departments/departmentApi';
@@ -80,7 +80,7 @@ const schema = z.object({
     last_name: z.string().min(1, 'fieldRequired').max(64, 'nameTooLong'),
     first_name: z.string().min(1, 'fieldRequired').max(64, 'nameTooLong'),
     patronymic: z.string().max(64, 'nameTooLong').optional().or(z.literal('')),
-    sex: z.union([z.literal('male'), z.literal('female'), z.literal('')]),
+    sex: z.union([z.enum(PersonSex), z.literal('')]),
     birth_date: z.string().optional().or(z.literal('')),
     email: z.string().max(100).email('invalidEmail').optional().or(z.literal('')),
     is_active: z.boolean(),
@@ -102,7 +102,7 @@ export interface EmployeeWithActivationPayload {
     first_name: string;
     last_name: string;
     patronymic?: string | null;
-    sex?: 'male' | 'female' | null;
+    sex?: PersonSex | null;
     birth_date?: string | null;
     // true = user confirmed the namesake modal (next dedupe number assigned)
     allow_duplicate?: boolean;
@@ -447,8 +447,8 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
                                             label={cfl(getString('sex') || 'Sex')}
                                         >
                                             <MenuItem value="">—</MenuItem>
-                                            <MenuItem value="male">{getString('sexMale') || 'Male'}</MenuItem>
-                                            <MenuItem value="female">{getString('sexFemale') || 'Female'}</MenuItem>
+                                            <MenuItem value={PersonSex.Male}>{getString('sexMale') || 'Male'}</MenuItem>
+                                            <MenuItem value={PersonSex.Female}>{getString('sexFemale') || 'Female'}</MenuItem>
                                         </Select>
                                     </FormControl>
                                 )}

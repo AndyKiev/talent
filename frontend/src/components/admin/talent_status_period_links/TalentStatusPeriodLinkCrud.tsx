@@ -17,16 +17,22 @@ import { fetchTalentStatusPeriodLinks, type TalentStatusPeriodLink } from './tal
 import { useTalentStatusPeriodLinkMutations } from './useTalentStatusPeriodLinkMutations';
 import { useTalentStatusPeriodLinkColumns } from './useTalentStatusPeriodLinkColumns';
 import { TalentStatusPeriodLinkForm } from './TalentStatusPeriodLinkForm';
-import {
-    TalentStatusPeriodLinkEditDialog,
-    type PendingToggle,
-} from './TalentStatusPeriodLinkEditDialog';
+import { FieldEditConfirmDialog } from '../../ui/FieldEditConfirmDialog';
 import { TalentStatusPeriodLinkDeleteDialog } from './TalentStatusPeriodLinkDeleteDialog';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import cfl from '../../../utils/helpers.ts';
 import {TSPL_QK} from "../../../utils/queryKeys.ts";
+
+/** Only the is_active switch is inline-toggleable on this grid. */
+interface PendingToggle {
+    id: number;
+    fieldLabel: string;
+    field: 'is_active';
+    newValue: boolean;
+    oldValue: boolean;
+}
 
 export function TalentStatusPeriodLinkCrud() {
     const getString = useString({ str });
@@ -169,7 +175,7 @@ export function TalentStatusPeriodLinkCrud() {
                 createMutation={createMutation}
             />
 
-            <TalentStatusPeriodLinkEditDialog
+            <FieldEditConfirmDialog
                 pending={pendingToggle}
                 isPending={updateMutation.isPending}
                 onConfirm={handleConfirmToggle}

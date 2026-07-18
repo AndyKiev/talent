@@ -23,6 +23,7 @@ import {
   Chip,
 } from '@mui/material';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 import { useQuery } from '@tanstack/react-query';
 import type { UseMutationResult } from '@tanstack/react-query';
 import {
@@ -261,8 +262,13 @@ export function DepartmentForm({ open, onClose, parentNode, createMutation }: Pr
 
             {/* Optional: Add a hint text when auto-population is active */}
             {isStoreDepartmentsCategory && (
-                <Typography variant="caption" color="info.main" sx={{ mt: -1 }}>
-                  💡 {getString('autoPopulateHint') || 'Department name will be auto-populated from the selected department type'}
+                <Typography
+                    variant="caption"
+                    color="info.main"
+                    sx={{ mt: -1, display: 'flex', alignItems: 'center', gap: 0.5 }}
+                >
+                  <LightbulbOutlinedIcon sx={{ fontSize: 16 }} />
+                  {getString('autoPopulateHint') || 'Department name will be auto-populated from the selected department type'}
                 </Typography>
             )}
 

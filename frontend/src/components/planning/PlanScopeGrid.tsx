@@ -24,12 +24,12 @@ import {
 } from './planningApi';
 import { usePlanScopeMutations } from './usePlanScopeMutations';
 import { usePlanScopeColumns, type ScopeEditingState } from './usePlanScopeColumns';
-import { PlanScopeDeleteDialog } from './PlanScopeDeleteDialog';
 import { useDataGridLocale } from '../../hooks/useDataGridLocale';
 import { PLAN_SCOPE_QK } from '../../utils/queryKeys.ts';
 import useString from '../../hooks/useString';
 import str from '../../strings/str';
 import cfl from '../../utils/helpers.ts';
+import ConfirmDeleteDialog from '../ui/ConfirmDeleteDialog';
 
 interface Props {
     session: PlanSession;
@@ -162,6 +162,11 @@ export function PlanScopeGrid({ session }: Props) {
         if (!rowToDelete) return;
         deleteMutation.mutate(rowToDelete.id);
     }, [rowToDelete, deleteMutation]);
+
+    // "<department> / <job group>" label for the delete confirmation.
+    const deleteLabel = rowToDelete
+        ? `${rowToDelete.department?.name ?? `#${rowToDelete.department_id}`} / ${rowToDelete.job_group?.name ?? `#${rowToDelete.job_group_id}`}`
+        : '';
 
     const handleCommit = useCallback(
         (row: PlanScope, newValue: string) => {
@@ -345,11 +350,13 @@ export function PlanScopeGrid({ session }: Props) {
                 </Paper>
             )}
 
-            <PlanScopeDeleteDialog
-                row={rowToDelete}
-                isPending={deleteMutation.isPending}
+            <ConfirmDeleteDialog
+                open={!!rowToDelete}
+                title={getString('deletePlanScope') || 'Delete plan row'}
+                message={getString('areYouSureDeletePlanScope', { name: deleteLabel }) || `Delete the plan row "${deleteLabel}"? If it still matches the config, a re-sync will recreate it (empty).`}
+                isDeleting={deleteMutation.isPending}
                 onConfirm={handleConfirmDelete}
-                onCancel={() => setRowToDelete(null)}
+                onClose={() => setRowToDelete(null)}
             />
 
             <Snackbar

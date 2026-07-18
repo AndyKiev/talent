@@ -16,7 +16,7 @@ import { fetchUserGroupTypes, type UserGroupType } from './userGroupTypeApi';
 import { useUserGroupTypeMutations } from './useUserGroupTypeMutations';
 import { useUserGroupTypeColumns, type EditingState } from './useUserGroupTypeColumns';
 import { UserGroupTypeForm } from './UserGroupTypeForm';
-import { UserGroupTypeEditDialog, type PendingEdit } from './UserGroupTypeEditDialog';
+import { FieldEditConfirmDialog, type PendingEdit } from '../../ui/FieldEditConfirmDialog';
 import { UserGroupTypeDeleteDialog } from './UserGroupTypeDeleteDialog';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import useString from '../../../hooks/useString';
@@ -172,7 +172,7 @@ export function UserGroupTypeCrud() {
                 createMutation={createMutation}
             />
 
-            <UserGroupTypeEditDialog
+            <FieldEditConfirmDialog
                 pending={pendingEdit}
                 isPending={updateMutation.isPending}
                 onConfirm={handleConfirmEdit}

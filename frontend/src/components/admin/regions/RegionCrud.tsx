@@ -16,13 +16,13 @@ import { fetchRegions, type Region, type MoveDirection } from './regionApi';
 import { useRegionMutations } from './useRegionMutations';
 import { useRegionColumns, type EditingState } from './useRegionColumns';
 import { RegionForm } from './RegionForm';
-import { RegionEditDialog, type PendingEdit } from './RegionEditDialog';
-import { RegionDeleteDialog } from './RegionDeleteDialog';
+import { FieldEditConfirmDialog, type PendingEdit } from '../../ui/FieldEditConfirmDialog';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import cfl from '../../../utils/helpers.ts';
 import { REGION_QK } from '../../../utils/queryKeys.ts';
+import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
 
 export function RegionCrud() {
     const getString = useString({ str });
@@ -197,18 +197,20 @@ export function RegionCrud() {
                 createMutation={createMutation}
             />
 
-            <RegionEditDialog
+            <FieldEditConfirmDialog
                 pending={pendingEdit}
                 isPending={updateMutation.isPending}
                 onConfirm={handleConfirmEdit}
                 onCancel={handleCancelPending}
             />
 
-            <RegionDeleteDialog
-                row={rowToDelete}
-                isPending={deleteMutation.isPending}
+            <ConfirmDeleteDialog
+                open={!!rowToDelete}
+                title={getString('deleteRegion') || 'Delete Region'}
+                message={getString('areYouSureDeleteRegion') || `Are you sure you want to delete "${rowToDelete?.name}"? This action cannot be undone.`}
+                isDeleting={deleteMutation.isPending}
                 onConfirm={handleConfirmDelete}
-                onCancel={() => setRowToDelete(null)}
+                onClose={() => setRowToDelete(null)}
             />
 
             <Snackbar

@@ -17,12 +17,12 @@ import { fetchPlanScopeDefaults, type PlanScopeDefault } from '../planningSetupA
 import { usePlanScopeDefaultMutations } from './usePlanScopeDefaultMutations';
 import { usePlanScopeDefaultColumns } from './usePlanScopeDefaultColumns';
 import { PlanScopeDefaultForm } from './PlanScopeDefaultForm';
-import { PlanScopeDefaultDeleteDialog } from './PlanScopeDefaultDeleteDialog';
 import { useDataGridLocale } from '../../../../hooks/useDataGridLocale';
 import { PLAN_SCOPE_DEFAULT_QK } from '../../../../utils/queryKeys.ts';
 import useString from '../../../../hooks/useString';
 import str from '../../../../strings/str';
 import cfl from '../../../../utils/helpers.ts';
+import ConfirmDeleteDialog from '../../../ui/ConfirmDeleteDialog';
 
 export function PlanScopeDefaultCrud() {
     const getString = useString({ str });
@@ -55,6 +55,13 @@ export function PlanScopeDefaultCrud() {
         if (!rowToDelete) return;
         deleteMutation.mutate(rowToDelete.id);
     }, [rowToDelete, deleteMutation]);
+
+    // "<job group> / <talent status>" label for the delete confirmation.
+    const deleteLabel = rowToDelete
+        ? `${rowToDelete.job_group?.name ?? `#${rowToDelete.job_group_id}`} / ${
+              rowToDelete.talent_status ? rowToDelete.talent_status.key : getString('combinedOption') || 'Combined (all)'
+          }`
+        : '';
 
     const columns = usePlanScopeDefaultColumns({
         getString,
@@ -118,11 +125,13 @@ export function PlanScopeDefaultCrud() {
                 createMutation={createMutation}
             />
 
-            <PlanScopeDefaultDeleteDialog
-                row={rowToDelete}
-                isPending={deleteMutation.isPending}
+            <ConfirmDeleteDialog
+                open={!!rowToDelete}
+                title={getString('removePlanScopeDefault') || 'Remove Scope Profile'}
+                message={getString('areYouSureRemovePlanScopeDefault', { name: deleteLabel }) || `Remove "${deleteLabel}" from planning defaults? Future sessions will no longer include it.`}
+                isDeleting={deleteMutation.isPending}
                 onConfirm={handleConfirmDelete}
-                onCancel={() => setRowToDelete(null)}
+                onClose={() => setRowToDelete(null)}
             />
 
             <Snackbar

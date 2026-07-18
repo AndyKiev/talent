@@ -24,7 +24,7 @@ import useString from '../../../../hooks/useString';
 import { snakeToCamel } from '../../../../utils/helpers.ts';
 import { useDataGridLocale } from '../../../../hooks/useDataGridLocale';
 import { centeredGridCellsSx } from '../../../../utils/dataGridSx';
-import ConfirmDeleteDialog from '../../../people-review/ConfirmDeleteDialog';
+import ConfirmDeleteDialog from '../../../ui/ConfirmDeleteDialog';
 import { CANDIDATE_SOURCE_QK } from '../../../../utils/queryKeys';
 import {
     fetchCandidateSources,
@@ -203,7 +203,6 @@ export function CandidateSourceCrud() {
                 message={getString('confirmDeleteMessage')}
                 itemLabel={pendingDelete ? getString(snakeToCamel(pendingDelete.key)) || pendingDelete.key : undefined}
                 isDeleting={deleteMutation.isPending}
-                getString={getString}
                 onConfirm={() => {
                     if (pendingDelete) deleteMutation.mutate(pendingDelete.id);
                     setPendingDelete(null);

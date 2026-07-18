@@ -2,6 +2,8 @@
 import { axiosInstance } from '../../api/axiosInstance';
 import { BASE_URL } from '../../utils/eNums';
 import type { SettingValue } from '../developer/settings/settingsApi';
+import type { MutationResponse } from '../../types/mutationResponse';
+export type { MutationResponse };
 
 const USER_SETTINGS_BASE = `${BASE_URL}/user_settings`;
 
@@ -21,11 +23,6 @@ export interface EffectiveUserSetting {
     has_override: boolean;
     min_value: number | null;
     max_value: number | null;
-}
-
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
 }
 
 export const fetchEffectiveUserSettings = async (): Promise<EffectiveUserSetting[]> => {

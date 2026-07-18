@@ -105,10 +105,16 @@ export function RecruitmentTaskBoard({ taskId, getString, openings, departmentId
         onMutate: async ({ id, statusKey }) => {
             await qc.cancelQueries({ queryKey: boardQK });
             const prev = qc.getQueryData<CandidateApplication[]>(boardQK);
+            // Take the optimistic sort_order from the DB stage set (the same
+            // source the columns are ordered by); the static PIPELINE_ORDER is
+            // only the fallback while the lookup loads.
+            const optimisticOrder =
+                statusRows.find((s) => s.name === statusKey)?.sort_order ??
+                PIPELINE_ORDER.indexOf(statusKey);
             qc.setQueryData<CandidateApplication[]>(boardQK, (old) =>
                 (old ?? []).map((a) =>
                     a.id === id && a.status
-                        ? { ...a, status: { ...a.status, name: statusKey, sort_order: PIPELINE_ORDER.indexOf(statusKey) } }
+                        ? { ...a, status: { ...a.status, name: statusKey, sort_order: optimisticOrder } }
                         : a,
                 ),
             );

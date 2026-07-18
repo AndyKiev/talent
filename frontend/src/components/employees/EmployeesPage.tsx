@@ -7,14 +7,17 @@ import {
     Box,
     Button,
     Alert,
+    Card,
+    CardActionArea,
+    CardContent,
+    Chip,
+    CircularProgress,
     Drawer,
     Snackbar,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
     Stack,
     TextField,
+    ToggleButton,
+    ToggleButtonGroup,
     Typography,
     Breadcrumbs,
     Tooltip,
@@ -32,6 +35,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ApartmentIcon from '@mui/icons-material/Apartment';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import EventNoteIcon from '@mui/icons-material/EventNote';
+import ViewListIcon from '@mui/icons-material/ViewList';
+import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import { Link, useNavigate } from '@tanstack/react-router';
 import AppShell from '../layout/AppShell';
 import { fetchEmployees, fetchEmployeesByDepartment, type Employee } from './employeeApi';
@@ -49,6 +54,8 @@ import { useClipboard } from '../../hooks/useClipboard';
 import { useDataGridStyles } from '../../hooks/useDataGridStyles';
 import { useDataGridLocale } from '../../hooks/useDataGridLocale';
 import { useAuthStore } from '../../store/authStore';
+import { useEmployeesViewStore } from '../../store/employeesViewStore';
+import EmployeeAvatar from '../ui/EmployeeAvatar';
 
 export function EmployeesPage() {
     const getString = useString({ str });
@@ -88,6 +95,10 @@ export function EmployeesPage() {
 
     // Mobile-only filters drawer.
     const [filtersOpen, setFiltersOpen] = useState(false);
+
+    // Grid ⇄ cards view mode, persisted per user (localStorage-backed zustand).
+    const view = useEmployeesViewStore((s) => s.view);
+    const setView = useEmployeesViewStore((s) => s.setView);
 
     const [snackbar, setSnackbar] = useState({
         open: false,
@@ -183,7 +194,9 @@ export function EmployeesPage() {
     // ── Base columns (photo first, then code/name/...) + actions column ──────
     const baseColumns = useEmployeeColumns(copyToClipboard);
 
-    const actionsColumn: GridColDef<Employee> = {
+    // Memoized: a fresh actions column (new renderCell closure) every render
+    // would make the DataGrid re-render all cells on any page state change.
+    const actionsColumn: GridColDef<Employee> = useMemo(() => ({
         field: '_actions',
         headerName: '',
         width: 180,
@@ -240,16 +253,16 @@ export function EmployeesPage() {
                 </Tooltip>
             </Box>
         ),
-    };
+    }), [getString, navigate, handleManageDepts, handleEdit, handleDelete]);
 
     // Column order: photo → actions → code → name → email → ...
     // The photo column is absent when the photos feature is off, so detect it by
     // field rather than assuming index 0 (keeps the order correct either way).
-    const photoColumn = baseColumns.find((c) => c.field === 'photo');
-    const restColumns = baseColumns.filter((c) => c.field !== 'photo');
-    const columns = [...(photoColumn ? [photoColumn] : []), ...restColumns, actionsColumn];
-
-    const ALL_VALUE = '__all__';
+    const columns = useMemo(() => {
+        const photoColumn = baseColumns.find((c) => c.field === 'photo');
+        const restColumns = baseColumns.filter((c) => c.field !== 'photo');
+        return [...(photoColumn ? [photoColumn] : []), ...restColumns, actionsColumn];
+    }, [baseColumns, actionsColumn]);
 
     // ── Toolbar pieces (shared between the desktop row and the mobile drawer) ──
     const employeeSearch = (
@@ -275,72 +288,65 @@ export function EmployeesPage() {
         />
     );
 
+    // Every filter is a searchable Autocomplete (type to narrow the options);
+    // clearing (✕) means "all". They filter the same rows both views consume.
     const filterSelects = (inDrawer: boolean) => (
         <>
             <SelectScopeDepartment value={selectedDeptId} onChange={setSelectedDeptId} />
             {subdepartmentOptions.length > 0 && (
-                <FormControl size="small" sx={inDrawer ? { width: '100%' } : { minWidth: 200 }}>
-                    <InputLabel>
-                        {cfl(getString('department') || 'Department')}
-                    </InputLabel>
-                    <Select
-                        variant="outlined"
-                        label={cfl(getString('department') || 'Department')}
-                        value={subdepartmentFilter ?? ALL_VALUE}
-                        onChange={(e) =>
-                            setSubdepartmentFilter(e.target.value === ALL_VALUE ? null : e.target.value)
-                        }
-                    >
-                        <MenuItem value={ALL_VALUE}>
-                            <em>{getString('all') || getString('allDepartments') || 'All'}</em>
-                        </MenuItem>
-                        {subdepartmentOptions.map((s) => (
-                            <MenuItem key={s} value={s}>{s}</MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
+                <Autocomplete<string>
+                    size="small"
+                    sx={inDrawer ? { width: '100%' } : { minWidth: 200 }}
+                    options={subdepartmentOptions}
+                    value={subdepartmentFilter}
+                    onChange={(_, v) => setSubdepartmentFilter(v)}
+                    noOptionsText={getString('noOptions')}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            variant="outlined"
+                            label={cfl(getString('department') || 'Department')}
+                            placeholder={getString('search') || 'Search'}
+                        />
+                    )}
+                />
             )}
             {jobOptions.length > 0 && (
-                <FormControl size="small" sx={inDrawer ? { width: '100%' } : { minWidth: 180 }}>
-                    <InputLabel>{cfl(getString('job') || 'Job')}</InputLabel>
-                    <Select
-                        variant="outlined"
-                        label={cfl(getString('job') || 'Job')}
-                        value={jobFilter ?? ALL_VALUE}
-                        onChange={(e) =>
-                            setJobFilter(e.target.value === ALL_VALUE ? null : e.target.value)
-                        }
-                    >
-                        <MenuItem value={ALL_VALUE}>
-                            <em>{getString('all') || getString('allJobs') || 'All'}</em>
-                        </MenuItem>
-                        {jobOptions.map((s) => (
-                            <MenuItem key={s} value={s}>{s}</MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
+                <Autocomplete<string>
+                    size="small"
+                    sx={inDrawer ? { width: '100%' } : { minWidth: 180 }}
+                    options={jobOptions}
+                    value={jobFilter}
+                    onChange={(_, v) => setJobFilter(v)}
+                    noOptionsText={getString('noOptions')}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            variant="outlined"
+                            label={cfl(getString('job') || 'Job')}
+                            placeholder={getString('search') || 'Search'}
+                        />
+                    )}
+                />
             )}
             {statusOptions.length > 0 && (
-                <FormControl size="small" sx={inDrawer ? { width: '100%' } : { minWidth: 160 }}>
-                    <InputLabel>
-                        {cfl(getString('employeeStatus') || 'Status')}
-                    </InputLabel>
-                    <Select
-                        variant="outlined"
-                        label={cfl(getString('employeeStatus') || 'Status')}
-                        value={statusFilter ?? ALL_VALUE}
-                        onChange={(e) =>
-                            setStatusFilter(e.target.value === ALL_VALUE ? null : e.target.value)
-                        }
-                    >
-                        <MenuItem value={ALL_VALUE}>
-                            <em>{getString('all') || getString('allStatuses') || 'All'}</em>
-                        </MenuItem>
-                        {statusOptions.map((s) => (
-                            <MenuItem key={s} value={s}>{statusLabelMap.get(s) ?? s}</MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
+                <Autocomplete<string>
+                    size="small"
+                    sx={inDrawer ? { width: '100%' } : { minWidth: 160 }}
+                    options={statusOptions}
+                    value={statusFilter}
+                    onChange={(_, v) => setStatusFilter(v)}
+                    getOptionLabel={(s) => statusLabelMap.get(s) ?? s}
+                    noOptionsText={getString('noOptions')}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            variant="outlined"
+                            label={cfl(getString('employeeStatus') || 'Status')}
+                            placeholder={getString('search') || 'Search'}
+                        />
+                    )}
+                />
             )}
         </>
     );
@@ -390,6 +396,10 @@ export function EmployeesPage() {
                                 </Badge>
                             </IconButton>
                         </Tooltip>
+                        <ToggleButtonGroup size="small" exclusive value={view} onChange={(_, v) => v && setView(v)}>
+                            <ToggleButton value="grid"><ViewListIcon fontSize="small" /></ToggleButton>
+                            <ToggleButton value="cards"><ViewModuleIcon fontSize="small" /></ToggleButton>
+                        </ToggleButtonGroup>
                         <Tooltip title={cfl(getString('addEmployee') || 'Add Employee')}>
                             <Button
                                 variant="contained"
@@ -405,6 +415,10 @@ export function EmployeesPage() {
                         {employeeSearch}
                         {employees.length > 0 && filterSelects(false)}
                         <Box sx={{ flex: 1 }} />
+                        <ToggleButtonGroup size="small" exclusive value={view} onChange={(_, v) => v && setView(v)}>
+                            <ToggleButton value="grid"><ViewListIcon fontSize="small" /></ToggleButton>
+                            <ToggleButton value="cards"><ViewModuleIcon fontSize="small" /></ToggleButton>
+                        </ToggleButtonGroup>
                         <Button
                             variant="contained"
                             startIcon={<AddIcon />}
@@ -432,26 +446,91 @@ export function EmployeesPage() {
                     </Alert>
                 )}
 
-                <Box sx={{ flex: 1, minHeight: 0 }}>
-                    <DataGrid
-                        rows={filteredEmployees}
-                        columns={columns}
-                        loading={isLoading}
-                        pageSizeOptions={[25, 50, 100]}
-                        initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
-                        disableRowSelectionOnClick
-                        onCellClick={(params) => {
-                            // Whole row opens the employee card — except the action-icons cell.
-                            if (params.field === '_actions') return;
-                            void navigate({
-                                to: '/employees/$employeeId',
-                                params: { employeeId: String(params.row.id) },
-                            });
-                        }}
-                        sx={[...(Array.isArray(dataGridSx) ? dataGridSx : [dataGridSx]), { height: '100%' }]}
-                        localeText={localeText}
-                    />
-                </Box>
+                {view === 'grid' ? (
+                    <Box sx={{ flex: 1, minHeight: 0 }}>
+                        <DataGrid
+                            rows={filteredEmployees}
+                            columns={columns}
+                            loading={isLoading}
+                            pageSizeOptions={[25, 50, 100]}
+                            initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
+                            disableRowSelectionOnClick
+                            onCellClick={(params) => {
+                                // Whole row opens the employee card — except the action-icons cell.
+                                if (params.field === '_actions') return;
+                                void navigate({
+                                    to: '/employees/$employeeId',
+                                    params: { employeeId: String(params.row.id) },
+                                });
+                            }}
+                            sx={[...(Array.isArray(dataGridSx) ? dataGridSx : [dataGridSx]), { height: '100%' }]}
+                            localeText={localeText}
+                        />
+                    </Box>
+                ) : (
+                    // Card grid: SAME filtered rows as the DataGrid — every toolbar
+                    // filter applies identically; the toggle is presentation-only.
+                    <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+                        {isLoading ? (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                                <CircularProgress />
+                            </Box>
+                        ) : (
+                            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 2, pb: 2 }}>
+                                {filteredEmployees.map((e) => {
+                                    const statusName = e.status?.name ?? '';
+                                    const statusColorMap: Record<string, 'warning' | 'success' | 'error' | 'default'> = {
+                                        pending: 'warning',
+                                        working: 'success',
+                                        dismissed: 'error',
+                                    };
+                                    return (
+                                        <Card key={e.id} variant="outlined">
+                                            <CardActionArea
+                                                onClick={() => {
+                                                    void navigate({
+                                                        to: '/employees/$employeeId',
+                                                        params: { employeeId: String(e.id) },
+                                                    });
+                                                }}
+                                            >
+                                                <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                                                    <Stack direction="row" spacing={1.5} alignItems="center">
+                                                        <EmployeeAvatar employeeId={e.id} name={e.name} scope="employeesMenu" size={40} />
+                                                        <Box sx={{ minWidth: 0, flex: 1 }}>
+                                                            <Typography fontSize={13} fontWeight={600} noWrap>
+                                                                {e.name}
+                                                            </Typography>
+                                                            <Typography fontSize={11.5} color="text.secondary" sx={{ fontFamily: 'monospace' }}>
+                                                                {e.code}
+                                                            </Typography>
+                                                        </Box>
+                                                        {statusName && (
+                                                            <Chip
+                                                                label={cfl(getString(statusName) || statusName)}
+                                                                size="small"
+                                                                color={statusColorMap[statusName] ?? 'default'}
+                                                                variant="outlined"
+                                                            />
+                                                        )}
+                                                    </Stack>
+                                                    <Stack direction="row" spacing={0.5} mt={1.25} flexWrap="wrap" useFlexGap>
+                                                        {e.main_department && (
+                                                            <Chip label={e.main_department.name} size="small" color="success" variant="outlined" />
+                                                        )}
+                                                        {e.job && (
+                                                            <Chip label={e.job.name} size="small" color="primary" variant="outlined" />
+                                                        )}
+                                                    </Stack>
+                                                </CardContent>
+                                            </CardActionArea>
+                                        </Card>
+                                    );
+                                })}
+                            </Box>
+                        )}
+                    </Box>
+                )}
             </Box>
 
             {/* Dialogs */}

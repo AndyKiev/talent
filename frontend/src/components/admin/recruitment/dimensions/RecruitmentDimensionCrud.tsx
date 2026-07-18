@@ -20,12 +20,12 @@ import useString from '../../../../hooks/useString';
 import { fetchRecruitmentDimensions, updateRecruitmentDimension, type RecruitmentDimension } from './recruitmentDimensionApi';
 import { useRecruitmentDimensionMutations } from './useRecruitmentDimensionMutations';
 import { RecruitmentDimensionForm } from './RecruitmentDimensionForm';
-import { useArrowReorder } from '../../review_dimensions/useArrowReorder';
+import { useArrowReorder } from '../../../../hooks/useArrowReorder';
 import { useDataGridLocale } from '../../../../hooks/useDataGridLocale';
 import { centeredGridCellsSx } from '../../../../utils/dataGridSx';
 import { RECRUITMENT_DIMENSION_QK } from '../../../../utils/queryKeys';
 import ConfirmDialog from '../../../ui/ConfirmDialog';
-import ConfirmDeleteDialog from '../../../people-review/ConfirmDeleteDialog';
+import ConfirmDeleteDialog from '../../../ui/ConfirmDeleteDialog';
 
 export function RecruitmentDimensionCrud() {
     const getString = useString();
@@ -190,7 +190,6 @@ export function RecruitmentDimensionCrud() {
                 }
                 confirmColor="warning"
                 isPending={updateMutation.isPending}
-                getString={getString}
                 onConfirm={() => {
                     if (pendingToggle) {
                         updateMutation.mutate({
@@ -208,7 +207,6 @@ export function RecruitmentDimensionCrud() {
                 message={getString('confirmDeleteMessage')}
                 itemLabel={pendingDelete?.name}
                 isDeleting={deleteMutation.isPending}
-                getString={getString}
                 onConfirm={() => {
                     if (pendingDelete) deleteMutation.mutate(pendingDelete.id);
                     setPendingDelete(null);

@@ -23,9 +23,9 @@ import PublicIcon from '@mui/icons-material/Public';
 
 import type { DepartmentNode, DepartmentType, DepartmentCategory } from './departmentApi';
 import type { DepartmentRegionLink } from './departmentRegionLinkApi';
+import type { PendingDepartmentEdit } from './DepartmentTree';
 import { TextEditCell } from '../TextEditCell';
 import { ReadonlyCell } from '../ReadonlyCell';
-import type { PendingDepartmentEdit } from './DepartmentEditDialog';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 

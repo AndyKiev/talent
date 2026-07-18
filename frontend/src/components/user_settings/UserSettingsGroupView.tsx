@@ -3,7 +3,7 @@
 // One user-settings GROUP, opened from a card on UserSettingsPage. Renders the
 // current user's overridable settings that map to `groupKey` exactly as the old
 // flat page did (per-setting override / reset). See settingsGroups.ts.
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
     Alert,
     Box,
@@ -68,11 +68,15 @@ function UserSettingRow({ setting, getString, onSave, onReset, saving, options }
     const isInteger = !isSelect && setting.value_type_key === 'integer';
     const [draft, setDraft] = useState<SettingValue>(setting.effective_value);
 
-    // Re-sync the local draft whenever the query refetches (e.g. after a save or
-    // an admin lowering the global cap clamps this user's value).
-    useEffect(() => {
+    // Re-sync the local draft whenever the server value actually changes (e.g.
+    // after a save or an admin lowering the global cap clamps this user's
+    // value) — adjust-during-render, no effect needed. Value-compared so a
+    // refetch returning the same value never clobbers an in-progress edit.
+    const [prevEffective, setPrevEffective] = useState<SettingValue>(setting.effective_value);
+    if (JSON.stringify(prevEffective) !== JSON.stringify(setting.effective_value)) {
+        setPrevEffective(setting.effective_value);
         setDraft(setting.effective_value);
-    }, [setting.effective_value]);
+    }
 
     const label = setting.label_key ? getString(setting.label_key) : setting.key;
     const description = setting.description_key ? getString(setting.description_key) : null;

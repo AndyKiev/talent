@@ -15,15 +15,15 @@ import { DataGrid } from '@mui/x-data-grid';
 import { fetchDepartmentCategories, updateDepartmentCategory, type DepartmentCategory } from './departmentCategoryApi';
 import { useDepartmentCategoryMutations } from './useDepartmentCategoryMutations';
 import { useDepartmentCategoryColumns, type EditingState } from './useDepartmentCategoryColumns';
-import { useArrowReorder } from '../review_dimensions/useArrowReorder';
+import { useArrowReorder } from '../../../hooks/useArrowReorder';
 import { DepartmentCategoryForm } from './DepartmentCategoryForm';
-import { DepartmentCategoryEditDialog, type PendingEdit } from './DepartmentCategoryEditDialog';
-import { DepartmentCategoryDeleteDialog } from './DepartmentCategoryDeleteDialog';
+import { FieldEditConfirmDialog, type PendingEdit } from '../../ui/FieldEditConfirmDialog';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import cfl from '../../../utils/helpers.ts';
 import {DEPARTMENT_CATEGORY_QK} from "../../../utils/queryKeys.ts";
+import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
 
 export function DepartmentCategoryCrud() {
     const getString = useString({ str });
@@ -233,18 +233,20 @@ export function DepartmentCategoryCrud() {
                 createMutation={createMutation}
             />
 
-            <DepartmentCategoryEditDialog
+            <FieldEditConfirmDialog
                 pending={pendingEdit}
                 isPending={updateMutation.isPending}
                 onConfirm={handleConfirmEdit}
                 onCancel={handleCancelPending}
             />
 
-            <DepartmentCategoryDeleteDialog
-                row={rowToDelete}
-                isPending={deleteMutation.isPending}
+            <ConfirmDeleteDialog
+                open={!!rowToDelete}
+                title={getString('deleteDepartmentCategory') || 'Delete Department Category'}
+                message={getString('areYouSureDeleteDepartmentCategory') || `Are you sure you want to delete "${rowToDelete?.name}"? This action cannot be undone.`}
+                isDeleting={deleteMutation.isPending}
                 onConfirm={handleConfirmDelete}
-                onCancel={() => setRowToDelete(null)}
+                onClose={() => setRowToDelete(null)}
             />
 
             <Snackbar

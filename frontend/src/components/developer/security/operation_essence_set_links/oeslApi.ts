@@ -1,6 +1,8 @@
 // src/components/admin/operation_essence_set_links/oeslApi.ts
 import { axiosInstance } from '../../../../api/axiosInstance.ts';
 import { BASE_URL } from '../../../../utils/eNums.ts';
+import type { MutationResponse } from '../../../../types/mutationResponse';
+export type { MutationResponse };
 
 const BASE = `${BASE_URL}/permissions_set`;
 
@@ -17,11 +19,6 @@ export interface OESL {
 export interface OESLCreate {
   operation_id: number;
   essence_ids: number[];
-}
-
-export interface MutationResponse<T> {
-  detail: string;
-  data: T;
 }
 
 export const fetchOESLs = async (): Promise<OESL[]> => {

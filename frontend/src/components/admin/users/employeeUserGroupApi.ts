@@ -1,6 +1,8 @@
 // src/components/admin/users/employeeUserGroupApi.ts
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums';
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
 
 const BASE = `${BASE_URL}/admin/employee_user_group_links`;
 
@@ -33,11 +35,6 @@ export interface EmployeeUserGroupLink {
 export interface EmployeeUserGroupLinkCreate {
     employee_id: number;
     user_group_id: number;
-}
-
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
 }
 
 // ── Calls ──────────────────────────────────────────────────────────────────

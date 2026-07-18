@@ -445,7 +445,7 @@ def scan_models(api_v1_root: str, output_file: str) -> None:
         all_models.extend(parsed)
         if parsed:
             print(
-                f"  ✓ {mf.relative_to(root.parent)} — {len(parsed)} model(s): {', '.join(m['class_name'] for m in parsed)}"
+                f"  [OK] {mf.relative_to(root.parent)} — {len(parsed)} model(s): {', '.join(m['class_name'] for m in parsed)}"
             )
         else:
             print(f"  ~ {mf.relative_to(root.parent)} — (skipped / no Base subclasses)")
@@ -470,7 +470,7 @@ def scan_models(api_v1_root: str, output_file: str) -> None:
         for m in all_models:
             f.write(format_model(m))
 
-    print(f"\n✅ model_structure.txt written → {out}  ({len(all_models)} models)")
+    print(f"\n[OK] model_structure.txt written → {out}  ({len(all_models)} models)")
 
 
 if __name__ == "__main__":

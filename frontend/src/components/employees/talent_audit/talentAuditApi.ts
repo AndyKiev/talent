@@ -1,15 +1,12 @@
 // src/components/employees/talent_audit/talentAuditApi.ts
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums';
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
 
 const BASE = `${BASE_URL}`;
 
 // ── Shared ────────────────────────────────────────────────────────────────────
-
-export interface MutationResponse<T> {
-  detail: string;
-  data: T;
-}
 
 // ── TalentAudit ───────────────────────────────────────────────────────────────
 

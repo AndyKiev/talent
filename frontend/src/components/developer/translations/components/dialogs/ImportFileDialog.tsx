@@ -20,10 +20,15 @@ import { Upload as UploadIcon, ExpandMore, ExpandLess, AttachFile } from '@mui/i
 import useString from '../../../../../hooks/useString';
 import type { ImportResult } from './ImportJsonTextDialogNew.tsx';
 
+/** Which file format the bulk-import dialog handles. */
+export enum ImportMode {
+    Json = 'json',
+    Excel = 'excel',
+}
+
 interface ImportFileDialogProps {
     open: boolean;
-    /** 'json' | 'excel' */
-    mode: 'json' | 'excel';
+    mode: ImportMode;
     isPending: boolean;
     result: ImportResult | null;
     onClose: () => void;
@@ -43,9 +48,9 @@ export const ImportFileDialog: React.FC<ImportFileDialogProps> = ({
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [errorsExpanded, setErrorsExpanded] = useState(false);
 
-    const accept = mode === 'json' ? '.json' : '.xlsx';
-    const titleKey = mode === 'json' ? 'importJsonFile' : 'importExcelFile';
-    const descKey = mode === 'json' ? 'importJsonFileDescription' : 'importExcelFileDescription';
+    const accept = mode === ImportMode.Json ? '.json' : '.xlsx';
+    const titleKey = mode === ImportMode.Json ? 'importJsonFile' : 'importExcelFile';
+    const descKey = mode === ImportMode.Json ? 'importJsonFileDescription' : 'importExcelFileDescription';
 
     const hasErrors = result && result.error_count > 0;
 

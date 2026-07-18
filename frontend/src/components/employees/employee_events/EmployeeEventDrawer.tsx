@@ -1,5 +1,5 @@
 // src/components/employees/employee_events/EmployeeEventDrawer.tsx
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     Alert,
@@ -358,8 +358,20 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
     // ── RESPONSIBILITY_DEPTS_CHANGE state ─────────────────────────────────────
     // Pick a responsibility-flagged category, then multi-select department TYPES
     // (the types of the employee's main-department children in that category).
-    const [respCategoryId, setRespCategoryId] = useState<number | ''>('');
+    const [respCategoryPick, setRespCategoryPick] = useState<number | ''>('');
     const [respTypeIds, setRespTypeIds] = useState<number[]>([]);
+
+    // When exactly one responsibility category exists, auto-select it (the
+    // dropdown then renders disabled) so the user goes straight to the types.
+    // Derived: the explicit pick wins; a sole category is the implicit default.
+    const singleRespCategoryId =
+        responsibilityCategories.length === 1 ? responsibilityCategories[0].id : null;
+    const respCategoryId: number | '' =
+        respCategoryPick !== ''
+            ? respCategoryPick
+            : addingCode === 'RESPONSIBILITY_DEPTS_CHANGE' && singleRespCategoryId != null
+                ? singleRespCategoryId
+                : '';
 
     const { data: respTypeOptions = [] } = useQuery<ResponsibilityTypeOption[]>({
         queryKey: ['responsibility-type-options', employeeId, respCategoryId],
@@ -371,20 +383,6 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
             respCategoryId !== '',
         staleTime: 5 * 60 * 1000,
     });
-
-    // When exactly one responsibility category exists, auto-select it (the
-    // dropdown then renders disabled) so the user goes straight to the types.
-    const singleRespCategoryId =
-        responsibilityCategories.length === 1 ? responsibilityCategories[0].id : null;
-    useEffect(() => {
-        if (
-            addingCode === 'RESPONSIBILITY_DEPTS_CHANGE' &&
-            singleRespCategoryId != null &&
-            respCategoryId === ''
-        ) {
-            setRespCategoryId(singleRespCategoryId);
-        }
-    }, [addingCode, singleRespCategoryId, respCategoryId]);
 
     const handleAddChange = () => {
         if (!addingDirectionId || !addingCode) return;
@@ -401,7 +399,7 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
             addChangeMutation.mutate(payload, {
                 onSuccess: () => {
                     setAddingDirectionId(null);
-                    setRespCategoryId('');
+                    setRespCategoryPick('');
                     setRespTypeIds([]);
                 },
             });
@@ -742,7 +740,7 @@ export function EmployeeEventDrawer({ event, employeeId, onClose, getString }: P
                                                 label={cfl(getString('departmentCategory') || 'Department category')}
                                                 disabled={singleRespCategoryId != null}
                                                 onChange={(e) => {
-                                                    setRespCategoryId(e.target.value as number);
+                                                    setRespCategoryPick(e.target.value as number);
                                                     setRespTypeIds([]);
                                                 }}
                                             >

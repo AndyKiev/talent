@@ -24,10 +24,7 @@ import {
     type EditingState,
 } from './useEmployeeEventDirectionTypeColumns';
 import { EmployeeEventDirectionTypeForm } from './EmployeeEventDirectionTypeForm';
-import {
-    EmployeeEventDirectionTypeEditDialog,
-    type PendingEdit,
-} from './EmployeeEventDirectionTypeEditDialog';
+import { FieldEditConfirmDialog, type PendingEdit } from '../../../ui/FieldEditConfirmDialog';
 import { EmployeeEventDirectionTypeDeleteDialog } from './EmployeeEventDirectionTypeDeleteDialog';
 import { useDataGridLocale } from '../../../../hooks/useDataGridLocale';
 import useString from '../../../../hooks/useString';
@@ -183,7 +180,7 @@ export function EmployeeEventDirectionTypeCrud() {
                 createMutation={createMutation}
             />
 
-            <EmployeeEventDirectionTypeEditDialog
+            <FieldEditConfirmDialog
                 pending={pendingEdit}
                 isPending={updateMutation.isPending}
                 onConfirm={handleConfirmEdit}

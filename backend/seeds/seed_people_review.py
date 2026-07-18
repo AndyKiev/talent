@@ -435,13 +435,13 @@ async def _seed_proposed_level(
     )
     existing = result.scalar_one_or_none()
     if existing is not None:
-        print(f"   ⏭️  proposed_level — already exists (level_id={existing.level_id}), skipping.")
+        print(f"   [SKIP] proposed_level — already exists (level_id={existing.level_id}), skipping.")
         return
 
     level = random.choice(levels)
     reqs = level_requirements.get(level.id, [])
     if not reqs:
-        print(f"   ⚠️  level «{level.name_key}» has no requirements, skipping proposed level.")
+        print(f"   [WARN] level «{level.name_key}» has no requirements, skipping proposed level.")
         return
 
     proposed = ReviewSessionEmployeeLevel(
@@ -464,7 +464,7 @@ async def _seed_proposed_level(
         )
         session.add(answer)
 
-    print(f"   🎯 proposed_level: {level.name_key} ({len(reqs)} answers)")
+    print(f"   proposed_level: {level.name_key} ({len(reqs)} answers)")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -479,23 +479,23 @@ async def _seed_feedback_fields(
 ):
     if not rse.employee_feedback:
         rse.employee_feedback = random.choice(_EMPLOYEE_FEEDBACK_BANK)
-        print(f"   🗣️  employee_feedback — filled.")
+        print(f"   employee_feedback — filled.")
 
     if not rse.manager_feedback:
         rse.manager_feedback = random.choice(_MANAGER_FEEDBACK_BANK)
-        print(f"   👔 manager_feedback — filled.")
+        print(f"   manager_feedback — filled.")
 
     if not rse.results_achievements:
         rse.results_achievements = random.choice(_RESULTS_BANK)
-        print(f"   🏆 results_achievements — filled.")
+        print(f"   results_achievements — filled.")
 
     if not rse.trainings:
         rse.trainings = random.choice(_TRAININGS_BANK)
-        print(f"   📚 trainings — filled.")
+        print(f"   trainings — filled.")
 
     if not rse.development_plan:
         rse.development_plan = _build_development_plan(dimensions)
-        print(f"   🧭 development_plan — filled.")
+        print(f"   development_plan — filled.")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -511,9 +511,9 @@ async def seed_people_review():
         )
         session_obj = result.scalar_one_or_none()
         if not session_obj:
-            print("❌ No review session found — seed aborted.")
+            print("[ERR] No review session found — seed aborted.")
             return
-        print(f"📋 Session: {session_obj.name} (id={session_obj.id})")
+        print(f"Session: {session_obj.name} (id={session_obj.id})")
 
         # ── 2. Excluded employee ────────────────────────────────────────────
         result = await session.execute(
@@ -522,7 +522,7 @@ async def seed_people_review():
         excluded_emp = result.scalar_one_or_none()
         excluded_id = excluded_emp.id if excluded_emp else None
         if excluded_emp:
-            print(f"🚫 Excluding: {excluded_emp.name} ({excluded_emp.code})")
+            print(f"[SKIP] Excluding: {excluded_emp.name} ({excluded_emp.code})")
 
         # ── 3. RSE list ─────────────────────────────────────────────────────
         result = await session.execute(
@@ -534,13 +534,13 @@ async def seed_people_review():
             )
         )
         rse_list: list[ReviewSessionEmployee] = list(result.scalars().all())
-        print(f"👥 Found {len(rse_list)} employees in session.")
+        print(f"Found {len(rse_list)} employees in session.")
 
         if excluded_id is not None:
             rse_list = [r for r in rse_list if r.employee_id != excluded_id]
-            print(f"👥 After exclusion: {len(rse_list)} employees to seed.")
+            print(f"After exclusion: {len(rse_list)} employees to seed.")
         if not rse_list:
-            print("⚠️ No employees to seed.")
+            print("[WARN] No employees to seed.")
             return
 
         # ── 4. Dimensions ───────────────────────────────────────────────────
@@ -551,9 +551,9 @@ async def seed_people_review():
         )
         dimensions: list[ReviewDimension] = list(result.scalars().all())
         if not dimensions:
-            print("❌ No active review dimensions found.")
+            print("[ERR] No active review dimensions found.")
             return
-        print(f"📐 {len(dimensions)} active dimensions loaded.")
+        print(f"{len(dimensions)} active dimensions loaded.")
         dimensions_by_id = {d.id: d for d in dimensions}
 
         # ── 5. Frozen criteria for this session (per dimension) ─────────────
@@ -565,7 +565,7 @@ async def seed_people_review():
         criteria_by_dim: dict[int, list[ReviewSessionCriterion]] = {}
         for c in result.scalars().all():
             criteria_by_dim.setdefault(c.dimension_id, []).append(c)
-        print(f"📋 {sum(len(v) for v in criteria_by_dim.values())} frozen criteria loaded "
+        print(f"{sum(len(v) for v in criteria_by_dim.values())} frozen criteria loaded "
               f"across {len(criteria_by_dim)} dimensions.")
 
         # ── 6. Levels (for proposed level) ──────────────────────────────────
@@ -585,9 +585,9 @@ async def seed_people_review():
             )
             for req in result.scalars().all():
                 level_requirements.setdefault(req.level_id, []).append(req)
-            print(f"🎚️  {len(levels)} review levels loaded.")
+            print(f"{len(levels)} review levels loaded.")
         else:
-            print("⚠️  No active review levels — proposed level will be skipped.")
+            print("[WARN] No active review levels — proposed level will be skipped.")
 
         # ── 7. Per-employee loop ────────────────────────────────────────────
         filled_evals = 0
@@ -601,7 +601,7 @@ async def seed_people_review():
             emp_label = f"{emp.name} ({emp.code})" if emp else f"RSE#{rse.id}"
             job_label = f"«{job.name}»" if job else "без посади"
             print(f"\n{'─'*60}")
-            print(f"🔹 {emp_label} — {job_label}")
+            print(f"{emp_label} — {job_label}")
             print(f"{'─'*60}")
 
             # ── 7a. Evaluations + criterion scores ──────────────────────
@@ -662,7 +662,7 @@ async def seed_people_review():
                     rse.competence_summary = summary
                     updated_rses += 1
                     s = json.loads(summary)
-                    print(f"   📊 competence_summary: {len(s.get('strong',[]))} strong, {len(s.get('develop',[]))} develop")
+                    print(f"   competence_summary: {len(s.get('strong',[]))} strong, {len(s.get('develop',[]))} develop")
 
             # ── 7c. Proposed level ──────────────────────────────────────
             if levels:
@@ -680,7 +680,7 @@ async def seed_people_review():
         criterion_total = len(list(result.scalars().all()))
 
         print(f"\n{'='*60}")
-        print(f"🎉 Done!")
+        print(f"[DONE] Done!")
         print(f"   Evaluations: {filled_evals} new + {updated_evals} updated")
         print(f"   RSE summaries: {updated_rses}")
         print(f"   Criterion scores in DB: {criterion_total}")

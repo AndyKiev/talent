@@ -1,5 +1,11 @@
+// src/components/candidates/pipelineStatus.ts
+// Candidate-application pipeline as a statusMachine config — any later stage
+// on the forward line, plus rejection as a side-exit; hired/rejected are
+// terminal. MUST mirror the backend state machine. The original named exports
+// are kept as thin views over the machine so consumers stay unchanged.
 import type { GetStringFn } from '../../types/getStringFn';
 import type { PipelineStatusKey } from './candidateApplicationApi';
+import { defineStatusMachine, type StatusChipColor } from '../../utils/statusMachine';
 
 // Kanban column order (all six stages, left → right).
 export const PIPELINE_ORDER: PipelineStatusKey[] = [
@@ -11,49 +17,43 @@ export const PIPELINE_ORDER: PipelineStatusKey[] = [
     'rejected',
 ];
 
-type ChipColor =
-    | 'default'
-    | 'primary'
-    | 'secondary'
-    | 'info'
-    | 'success'
-    | 'warning'
-    | 'error';
+export const pipelineStatusMachine = defineStatusMachine<PipelineStatusKey>({
+    transitions: {
+        applied: ['screen', 'interview', 'offer', 'hired', 'rejected'],
+        screen: ['interview', 'offer', 'hired', 'rejected'],
+        interview: ['offer', 'hired', 'rejected'],
+        offer: ['hired', 'rejected'],
+        hired: [],
+        rejected: [],
+    },
+    meta: {
+        applied: { color: 'default', labelKey: 'pipelineApplied', labelFallback: 'applied' },
+        screen: { color: 'info', labelKey: 'pipelineScreen', labelFallback: 'screen' },
+        interview: { color: 'secondary', labelKey: 'pipelineInterview', labelFallback: 'interview' },
+        offer: { color: 'warning', labelKey: 'pipelineOffer', labelFallback: 'offer' },
+        hired: { color: 'success', labelKey: 'pipelineHired', labelFallback: 'hired' },
+        rejected: { color: 'error', labelKey: 'pipelineRejected', labelFallback: 'rejected' },
+    },
+});
 
-export const PIPELINE_STATUS_COLOR: Record<PipelineStatusKey, ChipColor> = {
-    applied: 'default',
-    screen: 'info',
-    interview: 'secondary',
-    offer: 'warning',
-    hired: 'success',
-    rejected: 'error',
+export const PIPELINE_STATUS_COLOR: Record<PipelineStatusKey, StatusChipColor> = {
+    applied: pipelineStatusMachine.color('applied'),
+    screen: pipelineStatusMachine.color('screen'),
+    interview: pipelineStatusMachine.color('interview'),
+    offer: pipelineStatusMachine.color('offer'),
+    hired: pipelineStatusMachine.color('hired'),
+    rejected: pipelineStatusMachine.color('rejected'),
 };
 
-// The forward progression line (rejected is a side-exit, not on it).
-const STAGE_LINE: PipelineStatusKey[] = ['applied', 'screen', 'interview', 'offer', 'hired'];
-
-// Stages a card may legally move TO from `current` — must mirror the backend
-// state machine (any later stage on the line, plus rejection; terminal = none).
-export function nextStatuses(current: PipelineStatusKey): PipelineStatusKey[] {
-    if (current === 'hired' || current === 'rejected') return [];
-    const i = STAGE_LINE.indexOf(current);
-    const forward = i >= 0 ? STAGE_LINE.slice(i + 1) : [];
-    return [...forward, 'rejected'];
+/** Stages a card may legally move TO from `current` (terminal = none). */
+export function nextStatuses(current: PipelineStatusKey): readonly PipelineStatusKey[] {
+    return pipelineStatusMachine.nextStatuses(current);
 }
 
 export function canMove(from: PipelineStatusKey, to: PipelineStatusKey): boolean {
-    return nextStatuses(from).includes(to);
+    return pipelineStatusMachine.canMove(from, to);
 }
 
-const LABEL_KEY: Record<PipelineStatusKey, string> = {
-    applied: 'pipelineApplied',
-    screen: 'pipelineScreen',
-    interview: 'pipelineInterview',
-    offer: 'pipelineOffer',
-    hired: 'pipelineHired',
-    rejected: 'pipelineRejected',
-};
-
 export function pipelineLabel(key: PipelineStatusKey, getString: GetStringFn): string {
-    return getString(LABEL_KEY[key]) || key;
+    return pipelineStatusMachine.label(key, getString);
 }

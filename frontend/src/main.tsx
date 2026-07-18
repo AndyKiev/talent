@@ -5,9 +5,13 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { routeTree } from "./routeTree.gen";
 import { queryClient } from "./api/queryClient";
+import RouteErrorFallback from "./components/ui/RouteErrorFallback";
 import "./index.css";
 
-const router = createRouter({ routeTree });
+const router = createRouter({
+    routeTree,
+    defaultErrorComponent: RouteErrorFallback,
+});
 
 declare module "@tanstack/react-router" {
     interface Register {

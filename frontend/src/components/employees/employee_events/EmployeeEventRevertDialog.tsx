@@ -15,9 +15,7 @@ import type { GetStringFn } from '../../../types/getStringFn';
 import type { EmployeeEventFlat } from './employeeEventApi';
 import { formatToUkrDate } from '../../../utils/dateFormatter';
 import cfl from '../../../utils/helpers.ts';
-
-// Backward step machine, mirrors the backend: applied -> ready -> draft.
-const REVERT_TARGET: Record<string, string> = { applied: 'ready', ready: 'draft' };
+import { revertTargetOf } from './employeeEventStatus';
 
 interface Props {
     event: EmployeeEventFlat | null;
@@ -35,7 +33,7 @@ export function EmployeeEventRevertDialog({
     getString,
 }: Props) {
     const fromName = event?.status?.name ?? '';
-    const toName = REVERT_TARGET[fromName] ?? '';
+    const toName = revertTargetOf(fromName) ?? '';
     const fromLabel = cfl(getString(fromName) || fromName);
     const toLabel = cfl(getString(toName) || toName);
 

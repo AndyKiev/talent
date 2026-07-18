@@ -30,11 +30,11 @@ import {
     REVIEW_LEVEL_REQUIREMENT_QK,
     useReviewLevelRequirementMutations,
 } from './useReviewLevelRequirementMutations';
-import { useArrowReorder } from '../review_dimensions/useArrowReorder';
+import { useArrowReorder } from '../../../hooks/useArrowReorder';
 import { ReviewLevelRequirementForm } from './ReviewLevelRequirementForm';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import ConfirmDialog from '../../ui/ConfirmDialog';
-import ConfirmDeleteDialog from '../../people-review/ConfirmDeleteDialog';
+import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
 
 export function ReviewLevelRequirementCrud() {
     const getString = useString();
@@ -252,7 +252,6 @@ export function ReviewLevelRequirementCrud() {
                 }
                 confirmColor="warning"
                 isPending={updateMutation.isPending}
-                getString={getString}
                 onConfirm={() => {
                     if (pendingToggle) {
                         updateMutation.mutate({
@@ -270,7 +269,6 @@ export function ReviewLevelRequirementCrud() {
                 message={getString('confirmDeleteMessage')}
                 itemLabel={pendingDelete ? getString(pendingDelete.text_key) : undefined}
                 isDeleting={deleteMutation.isPending}
-                getString={getString}
                 onConfirm={() => {
                     if (pendingDelete) deleteMutation.mutate(pendingDelete.id);
                     setPendingDelete(null);

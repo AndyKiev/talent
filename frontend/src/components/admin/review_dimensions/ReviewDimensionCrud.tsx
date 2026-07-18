@@ -20,11 +20,11 @@ import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import useString from '../../../hooks/useString';
 import { fetchReviewDimensions, updateReviewDimension, type ReviewDimension } from './reviewDimensionApi';
 import { REVIEW_DIMENSION_QK, useReviewDimensionMutations } from './useReviewDimensionMutations';
-import { useArrowReorder } from './useArrowReorder';
+import { useArrowReorder } from '../../../hooks/useArrowReorder';
 import { ReviewDimensionForm } from './ReviewDimensionForm';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import ConfirmDialog from '../../ui/ConfirmDialog';
-import ConfirmDeleteDialog from '../../people-review/ConfirmDeleteDialog';
+import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
 
 export function ReviewDimensionCrud() {
     const getString = useString();
@@ -208,7 +208,6 @@ export function ReviewDimensionCrud() {
                 }
                 confirmColor="warning"
                 isPending={updateMutation.isPending}
-                getString={getString}
                 onConfirm={() => {
                     if (pendingToggle) {
                         updateMutation.mutate({
@@ -226,7 +225,6 @@ export function ReviewDimensionCrud() {
                 message={getString('confirmDeleteMessage')}
                 itemLabel={pendingDelete?.name}
                 isDeleting={deleteMutation.isPending}
-                getString={getString}
                 onConfirm={() => {
                     if (pendingDelete) deleteMutation.mutate(pendingDelete.id);
                     setPendingDelete(null);

@@ -94,9 +94,9 @@ async def seed_proposed_levels():
         )
         session_obj = result.scalar_one_or_none()
         if not session_obj:
-            print("❌ No review session found — seed aborted.")
+            print("[ERR] No review session found — seed aborted.")
             return
-        print(f"📋 Session: {session_obj.name} (id={session_obj.id})")
+        print(f"Session: {session_obj.name} (id={session_obj.id})")
 
         # ── 2. Excluded employee ────────────────────────────────────────────
         result = await session.execute(
@@ -105,7 +105,7 @@ async def seed_proposed_levels():
         excluded_emp = result.scalar_one_or_none()
         excluded_id = excluded_emp.id if excluded_emp else None
         if excluded_emp:
-            print(f"🚫 Excluding: {excluded_emp.name} ({excluded_emp.code})")
+            print(f"[SKIP] Excluding: {excluded_emp.name} ({excluded_emp.code})")
 
         # ── 3. RSE list ─────────────────────────────────────────────────────
         result = await session.execute(
@@ -114,13 +114,13 @@ async def seed_proposed_levels():
             .options(selectinload(ReviewSessionEmployee.employee))
         )
         rse_list: list[ReviewSessionEmployee] = list(result.scalars().all())
-        print(f"👥 Found {len(rse_list)} employees in session.")
+        print(f"Found {len(rse_list)} employees in session.")
 
         if excluded_id is not None:
             rse_list = [r for r in rse_list if r.employee_id != excluded_id]
-            print(f"👥 After exclusion: {len(rse_list)} employees to seed.")
+            print(f"After exclusion: {len(rse_list)} employees to seed.")
         if not rse_list:
-            print("⚠️ No employees to seed.")
+            print("[WARN] No employees to seed.")
             return
 
         # ── 4. Active review levels + requirements ──────────────────────────
@@ -131,9 +131,9 @@ async def seed_proposed_levels():
         )
         levels: list[ReviewLevel] = list(result.scalars().all())
         if not levels:
-            print("❌ No active review levels found — seed aborted.")
+            print("[ERR] No active review levels found — seed aborted.")
             return
-        print(f"🎚️  {len(levels)} active review levels.")
+        print(f"{len(levels)} active review levels.")
 
         result = await session.execute(
             select(ReviewLevelRequirement)
@@ -148,7 +148,7 @@ async def seed_proposed_levels():
             level_requirements.setdefault(req.level_id, []).append(req)
 
         total_req = sum(len(v) for v in level_requirements.values())
-        print(f"📋 {total_req} requirements across {len(level_requirements)} levels.")
+        print(f"{total_req} requirements across {len(level_requirements)} levels.")
 
         # ── 5. Per-employee loop ────────────────────────────────────────────
         created = 0
@@ -188,13 +188,13 @@ async def seed_proposed_levels():
                     )
                     session.add(answer)
                 created += 1
-                print(f"🎯 {emp_label}: filled {len(reqs)} answers (level_id={level_id})")
+                print(f"{emp_label}: filled {len(reqs)} answers (level_id={level_id})")
                 continue
 
             # No proposed level at all — create one
             eligible = [lv for lv in levels if level_requirements.get(lv.id)]
             if not eligible:
-                print(f"⚠️  {emp_label}: no levels with requirements available.")
+                print(f"[WARN] {emp_label}: no levels with requirements available.")
                 continue
 
             level = random.choice(eligible)
@@ -218,12 +218,12 @@ async def seed_proposed_levels():
                 session.add(answer)
 
             created += 1
-            print(f"🎯 {emp_label}: level={level.name_key} ({len(reqs)} answers)")
+            print(f"{emp_label}: level={level.name_key} ({len(reqs)} answers)")
 
         await session.commit()
 
         print(f"\n{'='*60}")
-        print(f"🎉 Done! {created} proposed levels seeded (created or answers filled), {skipped} already complete.")
+        print(f"[DONE] Done! {created} proposed levels seeded (created or answers filled), {skipped} already complete.")
         print(f"{'='*60}")
 
 

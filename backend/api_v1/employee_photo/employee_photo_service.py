@@ -6,7 +6,10 @@ from PIL import Image, UnidentifiedImageError
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.app_setting.app_setting_service import get_bool_setting
+from backend.api_v1.app_setting.app_setting_service import (
+    get_bool_setting,
+    get_int_setting,
+)
 from backend.api_v1.employee_photo.employee_photo_repository import (
     EmployeePhotoRepository,
 )
@@ -24,6 +27,10 @@ from backend.api_v1.employee_photo.employee_photo_messages import (
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 
+# Defaults for the photo upload/processing limits. The LIVE values come from the
+# developer settings `employee_photo_max_mb` / `employee_photo_max_dimension` /
+# `employee_photo_jpeg_quality`, read per-request in upsert_photo and passed into
+# _process_image; these constants are only the safety fallbacks.
 # Hard cap on the *raw* upload, checked before we ever decode it (a guard against
 # decompression bombs). The stored blob is far smaller after downscaling.
 MAX_RAW_BYTES = 8 * 1024 * 1024
@@ -63,15 +70,22 @@ class EmployeePhotoService(BaseService):
     async def get_photo(self, employee_id: int) -> Optional[EmployeePhoto]:
         return await self._get_by_employee(employee_id)
 
-    def _process_image(self, raw: bytes) -> Tuple[bytes, str]:
+    def _process_image(
+        self,
+        raw: bytes,
+        max_bytes: int = MAX_RAW_BYTES,
+        max_dimension: int = MAX_DIMENSION,
+        jpeg_quality: int = JPEG_QUALITY,
+    ) -> Tuple[bytes, str]:
         """Validate + downscale an upload. Returns (bytes, content_type).
 
         The stored content_type is derived from what Pillow actually decoded, not
         from the (spoofable) request — transparency keeps PNG, everything else
         becomes a compressed JPEG. Raises a domain error on a non-image or oversize.
+        The limits come from developer settings (see upsert_photo).
         """
-        if len(raw) > MAX_RAW_BYTES:
-            raise EmployeePhotoTooLarge(MAX_RAW_BYTES // (1024 * 1024))
+        if len(raw) > max_bytes:
+            raise EmployeePhotoTooLarge(max_bytes // (1024 * 1024))
         try:
             img = Image.open(io.BytesIO(raw))
             img.load()
@@ -81,14 +95,14 @@ class EmployeePhotoService(BaseService):
         has_alpha = img.mode in ("RGBA", "LA") or (
             img.mode == "P" and "transparency" in img.info
         )
-        img.thumbnail((MAX_DIMENSION, MAX_DIMENSION))
+        img.thumbnail((max_dimension, max_dimension))
         out = io.BytesIO()
         if has_alpha:
             img.convert("RGBA").save(out, format="PNG", optimize=True)
             content_type = "image/png"
         else:
             img.convert("RGB").save(
-                out, format="JPEG", quality=JPEG_QUALITY, optimize=True
+                out, format="JPEG", quality=jpeg_quality, optimize=True
             )
             content_type = "image/jpeg"
         return out.getvalue(), content_type
@@ -100,8 +114,20 @@ class EmployeePhotoService(BaseService):
             self.session, PHOTOS_ENABLED_SETTING_KEY, default=True
         ):
             raise await self._resolve_domain_error(EmployeePhotosDisabled())
+        max_mb = await get_int_setting(self.session, "employee_photo_max_mb", 8)
+        max_dimension = await get_int_setting(
+            self.session, "employee_photo_max_dimension", 320
+        )
+        jpeg_quality = await get_int_setting(
+            self.session, "employee_photo_jpeg_quality", 80
+        )
         try:
-            data, content_type = self._process_image(raw)
+            data, content_type = self._process_image(
+                raw,
+                max_bytes=max_mb * 1024 * 1024,
+                max_dimension=max_dimension,
+                jpeg_quality=jpeg_quality,
+            )
         except (EmployeePhotoInvalidType, EmployeePhotoTooLarge) as exc:
             raise await self._resolve_domain_error(exc)
 

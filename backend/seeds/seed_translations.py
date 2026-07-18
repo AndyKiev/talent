@@ -285,7 +285,7 @@ async def seed_translations():
 
         await session.commit()
 
-        print(f"✅ {new_keys} msg_keys inserted, {new_msgs} msgs inserted.")
+        print(f"[OK] {new_keys} msg_keys inserted, {new_msgs} msgs inserted.")
         if new_keys == 0 and new_msgs == 0:
             print("   All translations already present — nothing to do.")
 

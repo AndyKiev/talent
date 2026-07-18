@@ -7,6 +7,9 @@ import {
     Box,
     Breadcrumbs,
     Button,
+    Card,
+    CardActionArea,
+    CardContent,
     Chip,
     CircularProgress,
     Dialog,
@@ -25,6 +28,8 @@ import {
     Stack,
     Switch,
     TextField,
+    ToggleButton,
+    ToggleButtonGroup,
     Tooltip,
     Typography,
     useMediaQuery,
@@ -40,6 +45,8 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import ViewListIcon from '@mui/icons-material/ViewList';
+import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import { Link } from '@tanstack/react-router';
@@ -69,12 +76,8 @@ import { ReorderableList } from './ReorderableList';
 import { EmployeeAutocomplete } from '../ui/EmployeeAutocomplete';
 import EmployeeAvatar from '../ui/EmployeeAvatar';
 import BusyBackdrop from '../ui/BusyBackdrop';
-
-const RSE_STATUS_COLORS: Record<string, 'info' | 'warning' | 'success' | 'error'> = {
-    open: 'info',
-    reviewed: 'warning',
-    closed: 'success',
-};
+import { usePeopleReviewViewStore } from '../../store/peopleReviewViewStore';
+import { canTransitionRse, rseStatusColor, rseStatusLabel, sessionStatusLabel, sessionStatusColor } from './rseStatus';
 
 // Estimated PPTX build time: a fixed share (data prep + deck save) plus a
 // roughly-constant cost per employee slide. Drives the determinate progress
@@ -83,13 +86,21 @@ const RSE_STATUS_COLORS: Record<string, 'info' | 'warning' | 'success' | 'error'
 const PPTX_FIXED_MS = 2000;
 const PPTX_PER_EMPLOYEE_MS = 8000; // measured: 33-employee session ≈ 4m20s end-to-end
 
-// status value → translation key (session: pending/open/closed; employee: open/reviewed/closed)
-const STATUS_LABEL_KEYS: Record<string, string> = {
-    pending: 'statusPending',
-    open: 'statusOpen',
-    reviewed: 'statusReviewed',
-    closed: 'statusClosed',
-};
+// Scored/facts progress percentages + colors — shared by the grid's progress
+// column (labelled bars) and the cards view (bare bars).
+function progressOf(row: ReviewSessionEmployeeList) {
+    const { scored_count = 0, facts_count = 0, total_dimensions = 0 } = row;
+    const scorePct = total_dimensions > 0 ? (scored_count / total_dimensions) * 100 : 0;
+    const factsPct = total_dimensions > 0 ? (facts_count / total_dimensions) * 100 : 0;
+    const scoreFull = scored_count === total_dimensions && total_dimensions > 0;
+    const factsFull = facts_count === total_dimensions && total_dimensions > 0;
+    return {
+        scorePct,
+        factsPct,
+        scoreColor: scoreFull ? '#2E7D32' : '#1565C0',
+        factsColor: factsFull ? '#EF6C00' : '#FB8C00',
+    };
+}
 
 export function SessionEmployeesPage() {
     const { sessionId } = useParams({ strict: false }) as { sessionId: string };
@@ -132,6 +143,10 @@ export function SessionEmployeesPage() {
     // order persists server-side; the toggle resets to OFF on reload.
     const [reorderMode, setReorderMode] = useState(false);
 
+    // Grid ⇄ cards view mode, persisted per user (localStorage-backed zustand).
+    const view = usePeopleReviewViewStore((s) => s.view);
+    const setView = usePeopleReviewViewStore((s) => s.setView);
+
     // True while the session's TEMPO deck is being built server-side (can take a
     // while), so the button spins and a full-window overlay blocks other actions.
     const [presLoading, setPresLoading] = useState(false);
@@ -165,8 +180,11 @@ export function SessionEmployeesPage() {
         setPptxLoading(true);
         setPptxProgress(0);
         const estimatedMs = PPTX_FIXED_MS + rows.length * PPTX_PER_EMPLOYEE_MS;
-        const startedAt = Date.now();
+        // Read the clock inside the interval (a nested closure) rather than in the
+        // handler body — keeps the impure Date.now() out of render-analyzed scope.
+        let startedAt = 0;
         const timer = window.setInterval(() => {
+            if (startedAt === 0) startedAt = Date.now();
             setPptxProgress(Math.min(95, ((Date.now() - startedAt) / estimatedMs) * 100));
         }, 150);
         downloadTempoPptx(sid, `tempo_session_${sid}.pptx`)
@@ -242,12 +260,15 @@ export function SessionEmployeesPage() {
     const openCount = rows.filter(r => r.status === 'open').length;
 
     const selectedEmp = rows.find(r => r.employee_id === selectedEmpId) ?? null;
-    const filteredRows = useMemo(() => {
-        if (selectedEmpId != null) return rows.filter(r => r.employee_id === selectedEmpId);
-        const q = empInput.trim().toLowerCase();
-        if (!q) return rows;
-        return rows.filter(r => `${r.employee_code} ${r.employee_name}`.toLowerCase().includes(q));
-    }, [rows, selectedEmpId, empInput]);
+    // Plain computation — React Compiler auto-memoizes it. A manual useMemo here
+    // could not be preserved by the compiler (it bailed out the whole component).
+    const q = empInput.trim().toLowerCase();
+    const filteredRows =
+        selectedEmpId != null
+            ? rows.filter(r => r.employee_id === selectedEmpId)
+            : !q
+                ? rows
+                : rows.filter(r => `${r.employee_code} ${r.employee_name}`.toLowerCase().includes(q));
 
     const onError = (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' });
 
@@ -307,7 +328,12 @@ export function SessionEmployeesPage() {
         onError,
     });
 
-    const columns: GridColDef<ReviewSessionEmployeeList>[] = [
+    // Memoized: rebuilding the array (new renderCell closures) on every render
+    // makes the DataGrid re-render all cells whenever anything on the page
+    // changes. Mutation objects flip identity while pending, so the columns
+    // regenerate around a status action — rare, and still far cheaper than
+    // regenerating on every keystroke/snackbar.
+    const columns: GridColDef<ReviewSessionEmployeeList>[] = useMemo(() => [
         {
             field: 'photo',
             headerName: '',
@@ -358,7 +384,7 @@ export function SessionEmployeesPage() {
             headerName: getString('status'),
             width: 110,
             renderCell: (params) => (
-                <Chip label={getString(STATUS_LABEL_KEYS[params.row.status] ?? params.row.status)} color={RSE_STATUS_COLORS[params.row.status] ?? 'default'} size="small" variant="outlined" />
+                <Chip label={rseStatusLabel(params.row.status, getString)} color={rseStatusColor(params.row.status)} size="small" variant="outlined" />
             ),
         },
         {
@@ -368,12 +394,7 @@ export function SessionEmployeesPage() {
             sortable: false,
             renderCell: (params) => {
                 const { scored_count = 0, facts_count = 0, total_dimensions = 0 } = params.row;
-                const scorePct = total_dimensions > 0 ? (scored_count / total_dimensions) * 100 : 0;
-                const factsPct = total_dimensions > 0 ? (facts_count / total_dimensions) * 100 : 0;
-                const scoreFull = scored_count === total_dimensions && total_dimensions > 0;
-                const factsFull = facts_count === total_dimensions && total_dimensions > 0;
-                const scoreColor = scoreFull ? '#2E7D32' : '#1565C0';
-                const factsColor = factsFull ? '#EF6C00' : '#FB8C00';
+                const { scorePct, factsPct, scoreColor, factsColor } = progressOf(params.row);
                 return (
                     <Stack spacing={0.6} justifyContent="center" sx={{ height: '100%', width: '100%', py: 0.5 }}>
                         <Box>
@@ -413,7 +434,7 @@ export function SessionEmployeesPage() {
                             {getString('view')}
                         </Button>
 
-                        {row.status === 'open' && !isSessionClosed && (
+                        {row.status === 'open' && canTransitionRse('open', 'reviewed', sessionStatus) && (
                             <Tooltip title={allFilled ? getString('markAsReviewed') : getString('fillAllDimensions', { filled: row.scored_count, total: row.total_dimensions })} placement="top">
                                 <span>
                                     <Button size="small" variant="contained" color="warning"
@@ -426,7 +447,7 @@ export function SessionEmployeesPage() {
                             </Tooltip>
                         )}
 
-                        {row.status === 'reviewed' && !isSessionClosed && (
+                        {row.status === 'reviewed' && canTransitionRse('reviewed', 'closed', sessionStatus) && (
                             <>
                                 <Button size="small" variant="contained" color="success"
                                     startIcon={<LockIcon />}
@@ -445,7 +466,7 @@ export function SessionEmployeesPage() {
                             </>
                         )}
 
-                        {row.status === 'closed' && !isSessionClosed && (
+                        {row.status === 'closed' && canTransitionRse('closed', 'reviewed', sessionStatus) && (
                             <>
                                 <Tooltip title={getString('revertToReviewed')}>
                                     <Button size="small" variant="outlined" color="warning" startIcon={<ReplayIcon />}
@@ -468,7 +489,8 @@ export function SessionEmployeesPage() {
                 );
             },
         },
-    ];
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- getString/navigate/mutations cover every closure; progressOf is a module-level pure fn
+    ], [getString, navigate, sid, sessionStatus, reviewedMut, closeMut, revertMut, reopenMut]);
 
     return (
         <AppShell>
@@ -517,9 +539,9 @@ export function SessionEmployeesPage() {
                     <Stack direction="row" alignItems="center" spacing={1.5}>
                         <Typography variant="h6" fontWeight={700} color={t.text} fontSize={compact ? '0.95rem' : undefined}>{sessionName}</Typography>
                         <Chip
-                            label={getString(STATUS_LABEL_KEYS[sessionStatus] ?? sessionStatus)}
+                            label={sessionStatusLabel(sessionStatus, getString)}
                             size="small"
-                            color={sessionStatus === 'open' ? 'success' : sessionStatus === 'closed' ? 'error' : 'default'}
+                            color={sessionStatusColor(sessionStatus)}
                             variant="outlined"
                         />
                         {session?.department_name && (
@@ -721,6 +743,20 @@ export function SessionEmployeesPage() {
                                     />
                                 )}
                             />
+                            {/* Grid ⇄ cards toggle (persisted per user). */}
+                            <ToggleButtonGroup
+                                size="small"
+                                exclusive
+                                value={view}
+                                onChange={(_, v) => v && setView(v)}
+                            >
+                                <ToggleButton value="grid">
+                                    <ViewListIcon fontSize="small" />
+                                </ToggleButton>
+                                <ToggleButton value="cards">
+                                    <ViewModuleIcon fontSize="small" />
+                                </ToggleButton>
+                            </ToggleButtonGroup>
                         </Box>
                         <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
                         {reorderMode && canReorder ? (
@@ -738,14 +774,67 @@ export function SessionEmployeesPage() {
                                             </Typography>
                                             <Typography fontSize={13} sx={{ flex: 1 }}>{r.employee_name}</Typography>
                                             <Chip
-                                                label={getString(STATUS_LABEL_KEYS[r.status] ?? r.status)}
-                                                color={RSE_STATUS_COLORS[r.status] ?? 'default'}
+                                                label={rseStatusLabel(r.status, getString)}
+                                                color={rseStatusColor(r.status)}
                                                 size="small"
                                                 variant="outlined"
                                             />
                                         </Stack>
                                     )}
                                 />
+                            </Box>
+                        ) : view === 'cards' ? (
+                            // Card grid: SAME filtered rows as the DataGrid — the toggle
+                            // is presentation-only. Bare progress bars, no labels.
+                            <Box sx={{ ...(compact ? {} : { flex: 1, minHeight: 0, overflow: 'auto' }) }}>
+                                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 2, pb: 2 }}>
+                                    {filteredRows.map((r) => {
+                                        const { scorePct, factsPct, scoreColor, factsColor } = progressOf(r);
+                                        return (
+                                            <Card key={r.id} variant="outlined">
+                                                <CardActionArea
+                                                    onClick={() => navigate({
+                                                        to: '/people_review/$sessionId/employee/$employeeId',
+                                                        params: { sessionId: String(sid), employeeId: String(r.employee_id) },
+                                                    })}
+                                                >
+                                                    <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                                                        <Stack direction="row" spacing={1.5} alignItems="center">
+                                                            <EmployeeAvatar
+                                                                employeeId={r.employee_id}
+                                                                name={r.employee_name}
+                                                                scope="peopleReview"
+                                                                size={40}
+                                                            />
+                                                            <Box sx={{ minWidth: 0, flex: 1 }}>
+                                                                <Typography fontSize={13} fontWeight={600} noWrap>
+                                                                    {r.employee_name}
+                                                                </Typography>
+                                                                <Typography fontSize={11.5} color="text.secondary">
+                                                                    {r.employee_code}
+                                                                </Typography>
+                                                            </Box>
+                                                            <Chip
+                                                                label={rseStatusLabel(r.status, getString)}
+                                                                color={rseStatusColor(r.status)}
+                                                                size="small"
+                                                                variant="outlined"
+                                                            />
+                                                        </Stack>
+                                                        <Stack spacing={0.6} mt={1.25}>
+                                                            <Box sx={{ height: 5, borderRadius: 3, bgcolor: `${scoreColor}22`, width: '100%' }}>
+                                                                <Box sx={{ height: '100%', borderRadius: 3, width: `${scorePct}%`, bgcolor: scoreColor, transition: 'width 0.3s' }} />
+                                                            </Box>
+                                                            <Box sx={{ height: 5, borderRadius: 3, bgcolor: `${factsColor}22`, width: '100%' }}>
+                                                                <Box sx={{ height: '100%', borderRadius: 3, width: `${factsPct}%`, bgcolor: factsColor, transition: 'width 0.3s' }} />
+                                                            </Box>
+                                                        </Stack>
+                                                    </CardContent>
+                                                </CardActionArea>
+                                            </Card>
+                                        );
+                                    })}
+                                </Box>
                             </Box>
                         ) : (
                             <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', ...(compact ? {} : { flex: 1, minHeight: 0 }) }}>

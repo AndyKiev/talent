@@ -25,10 +25,7 @@ import {
   type EditingState,
 } from './useEmployeeEventStatusColumns';
 import { EmployeeEventStatusForm } from './EmployeeEventStatusForm';
-import {
-  EmployeeEventStatusEditDialog,
-  type PendingEdit,
-} from './EmployeeEventStatusEditDialog';
+import { FieldEditConfirmDialog, type PendingEdit } from '../../../ui/FieldEditConfirmDialog';
 import { EmployeeEventStatusDeleteDialog } from './EmployeeEventStatusDeleteDialog';
 import { useDataGridLocale } from '../../../../hooks/useDataGridLocale';
 import useString from '../../../../hooks/useString';
@@ -180,7 +177,7 @@ export function EmployeeEventStatusCrud() {
         createMutation={createMutation}
       />
 
-      <EmployeeEventStatusEditDialog
+      <FieldEditConfirmDialog
         pending={pendingEdit}
         isPending={updateMutation.isPending}
         onConfirm={handleConfirmEdit}

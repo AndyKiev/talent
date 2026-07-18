@@ -1,6 +1,8 @@
 // src/components/developer/db_tables/dbTableApi.ts
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums.ts';
+import type { MutationResponse } from '../../../types/mutationResponse';
+export type { MutationResponse };
 
 const BASE = `${BASE_URL}/developer/db_tables`;
 
@@ -60,11 +62,6 @@ export interface TableRowsResponse {
     column_meta: ColumnInfo[];
     rows: (string | number | boolean | null)[][];
     total_available: number;
-}
-
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
 }
 
 // ── API functions ───────────────────────────────────────────────────────────

@@ -9,8 +9,12 @@
 //
 // onSubmit callback replaces the mutation prop — the parent decides whether to
 // show an extra confirmation before actually firing the mutation.
+//
+// The form body lives INSIDE the Dialog, so MUI unmounts it on close and mounts
+// it fresh on each open — no reset-on-open/close effects. Cascade resets happen
+// in the select/tree handlers (event-driven), not in effects.
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod/v4';
@@ -84,16 +88,51 @@ interface Props {
     onSubmit: (payload: AddDeptJobPayload) => void;
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
+// ── Dialog shell ──────────────────────────────────────────────────────────────
 
 export function EmployeeAddDeptJobDialog({
-                                             open,
-                                             onClose,
-                                             employee,
-                                             mode,
-                                             isPending,
-                                             onSubmit,
-                                         }: Props) {
+    open,
+    onClose,
+    employee,
+    mode,
+    isPending,
+    onSubmit,
+}: Props) {
+    const getString = useString({ str });
+
+    const title =
+        mode === 'add_department'
+            ? cfl(getString('addDepartment') || 'Add Department')
+            : cfl(getString('changeJobAndDepartment') || 'Change Job & Department');
+
+    const handleClose = () => {
+        (document.activeElement as HTMLElement | null)?.blur();
+        onClose();
+    };
+
+    return (
+        <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth disableRestoreFocus>
+            <DialogTitle>{title}</DialogTitle>
+            <AddDeptJobForm
+                onClose={handleClose}
+                employee={employee}
+                mode={mode}
+                isPending={isPending}
+                onSubmit={onSubmit}
+            />
+        </Dialog>
+    );
+}
+
+// ── Form body (mounts fresh on every dialog open) ─────────────────────────────
+
+function AddDeptJobForm({
+    onClose,
+    employee,
+    mode,
+    isPending,
+    onSubmit,
+}: Omit<Props, 'open'> & { onClose: () => void }) {
     const getString = useString({ str });
     const [jobChangeWarningAcknowledged, setJobChangeWarningAcknowledged] = useState(false);
 
@@ -106,7 +145,6 @@ export function EmployeeAddDeptJobDialog({
         handleSubmit,
         control,
         formState: { errors },
-        reset,
         watch,
         setValue,
     } = useForm<FormData>({
@@ -124,30 +162,11 @@ export function EmployeeAddDeptJobDialog({
     const selectedJobId = watch('job_id');
     const isMain = watch('is_main');
 
-    // ── Ref to skip the isMain reset on first render / dialog open ─────────
-    const isMainPrev = useRef(isMain);
-
     const clearPicker = () => {
         setTopDeptId(null);
         setPickedTypeId(null);
         setPickedName('');
     };
-
-    // ── Reset form when dialog opens/closes ───────────────────────────────────
-
-    useEffect(() => {
-        if (!open) {
-            reset({
-                department_category_id: undefined as unknown as number,
-                department_id: undefined as unknown as number,
-                job_id: undefined as unknown as number,
-                is_main: true,
-            });
-            setJobChangeWarningAcknowledged(false);
-            isMainPrev.current = true;
-            clearPicker();
-        }
-    }, [open, reset]);
 
     // ── Queries ───────────────────────────────────────────────────────────────
 
@@ -174,38 +193,21 @@ export function EmployeeAddDeptJobDialog({
         staleTime: 2 * 60 * 1000,
     });
 
-    // ── Cascade resets ────────────────────────────────────────────────────────
+    // ── Cascade resets (event-driven, in the handlers below) ─────────────────
 
-    // When is_main toggles → reset category + department + job + picker
-    useEffect(() => {
-        if (isMainPrev.current !== isMain) {
-            isMainPrev.current = isMain;
-            setValue('department_category_id', undefined as unknown as number);
-            setValue('department_id', undefined as unknown as number);
-            setValue('job_id', undefined as unknown as number);
-            setJobChangeWarningAcknowledged(false);
-            clearPicker();
-        }
-    }, [isMain, setValue]);
-
-    // When category changes → reset department + job + picker
-    useEffect(() => {
+    // Category change → reset department + job + picker.
+    const handleCategoryChange = (id: number) => {
         setValue('department_id', undefined as unknown as number);
         setValue('job_id', undefined as unknown as number);
         setJobChangeWarningAcknowledged(false);
         clearPicker();
-    }, [categoryId, setValue]);
-
-    // When the picked department changes → reset job
-    useEffect(() => {
-        setValue('job_id', undefined as unknown as number);
-        setJobChangeWarningAcknowledged(false);
-    }, [departmentId, setValue]);
+        return id;
+    };
 
     // ── Auto-select job in add_department mode ────────────────────────────────
     // For is_main=false (extra departments) we skip the job check entirely —
     // the employee keeps their current job regardless of department type links.
-
+    // Reacts to the async jobs lookup arriving, so it stays an effect.
     useEffect(() => {
         if (mode === 'add_department' && employee) {
             if (!isMain) {
@@ -280,19 +282,8 @@ export function EmployeeAddDeptJobDialog({
 
     // ── Render ────────────────────────────────────────────────────────────────
 
-    const title =
-        mode === 'add_department'
-            ? cfl(getString('addDepartment') || 'Add Department')
-            : cfl(getString('changeJobAndDepartment') || 'Change Job & Department');
-
-    const handleClose = () => {
-        (document.activeElement as HTMLElement | null)?.blur();
-        onClose();
-    };
-
     return (
-        <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth disableRestoreFocus>
-            <DialogTitle>{title}</DialogTitle>
+        <>
             <DialogContent>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, mt: 1 }}>
 
@@ -348,7 +339,7 @@ export function EmployeeAddDeptJobDialog({
                                     {...field}
                                     value={field.value ?? ''}
                                     label={cfl(getString('departmentCategory') || 'Department Category')}
-                                    onChange={(e) => field.onChange(Number(e.target.value))}
+                                    onChange={(e) => field.onChange(handleCategoryChange(Number(e.target.value)))}
                                 >
                                     {categories.map((c) => (
                                         <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
@@ -532,7 +523,7 @@ export function EmployeeAddDeptJobDialog({
                 </Box>
             </DialogContent>
             <DialogActions>
-                <Button variant="outlined" onClick={handleClose} disabled={isPending}>
+                <Button variant="outlined" onClick={onClose} disabled={isPending}>
                     {getString('cancel') || 'Cancel'}
                 </Button>
                 <Button
@@ -546,6 +537,6 @@ export function EmployeeAddDeptJobDialog({
                         : getString('addDepartment') || 'Add Department'}
                 </Button>
             </DialogActions>
-        </Dialog>
+        </>
     );
 }

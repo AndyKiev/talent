@@ -1,18 +1,12 @@
 // src/components/planning/usePlanSessionColumns.tsx
 import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Box, Chip, IconButton, Tooltip } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import LockOpenIcon from '@mui/icons-material/LockOpen';
-import LockIcon from '@mui/icons-material/Lock';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import SyncIcon from '@mui/icons-material/Sync';
-import EditNoteIcon from '@mui/icons-material/EditNote';
-import AssessmentIcon from '@mui/icons-material/Assessment';
+import { Box, Chip } from '@mui/material';
 
 import type { PlanSession } from './planningApi.ts';
 import cfl from '../../utils/helpers.ts';
 import type { GetStringFn } from '../../types/getStringFn.ts';
 import { formatToUkrDate } from '../../utils/dateFormatter.ts';
+import { PlanSessionActions } from './PlanSessionActions.tsx';
 
 type StatusColor = 'default' | 'warning' | 'success';
 
@@ -101,118 +95,22 @@ export function usePlanSessionColumns({
             sortable: false,
             filterable: false,
             disableColumnMenu: true,
-            renderCell: (params: GridRenderCellParams<PlanSession>) => {
-                const key = params.row.status?.key;
-                const isPending = key === 'pending';
-                const isOpen = key === 'open';
-                const isClosed = key === 'closed';
-                return (
-                    <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', gap: 0.25 }}>
-                        {/* Edit plan values — only when open */}
-                        <Tooltip title={getString('editPlan') || 'Edit plan'}>
-                            <span>
-                                <IconButton
-                                    size="small"
-                                    color="primary"
-                                    onClick={(e) => { e.stopPropagation(); onOpenPlan(params.row); }}
-                                    disabled={!isOpen}
-                                >
-                                    <EditNoteIcon fontSize="small" />
-                                </IconButton>
-                            </span>
-                        </Tooltip>
-
-                        {/* Plan vs Fact report — always available */}
-                        <Tooltip title={getString('showPlanReport') || 'Plan vs fact report'}>
-                            <span>
-                                <IconButton
-                                    size="small"
-                                    color="secondary"
-                                    onClick={(e) => { e.stopPropagation(); onShowReport(params.row); }}
-                                >
-                                    <AssessmentIcon fontSize="small" />
-                                </IconButton>
-                            </span>
-                        </Tooltip>
-
-                        {/* Re-sync — only when open */}
-                        {isOpen && (
-                            <Tooltip title={getString('resyncPlanSession') || 'Re-sync with config'}>
-                                <span>
-                                    <IconButton
-                                        size="small"
-                                        color="info"
-                                        onClick={(e) => { e.stopPropagation(); onResync(params.row); }}
-                                        disabled={resyncIsPending}
-                                    >
-                                        <SyncIcon fontSize="small" />
-                                    </IconButton>
-                                </span>
-                            </Tooltip>
-                        )}
-
-                        {/* Open — only when pending */}
-                        {isPending && (
-                            <Tooltip title={getString('openPlanSession') || 'Open'}>
-                                <span>
-                                    <IconButton
-                                        size="small"
-                                        color="success"
-                                        onClick={(e) => { e.stopPropagation(); onOpen(params.row); }}
-                                        disabled={statusIsPending}
-                                    >
-                                        <LockOpenIcon fontSize="small" />
-                                    </IconButton>
-                                </span>
-                            </Tooltip>
-                        )}
-
-                        {/* Close — only when open */}
-                        {isOpen && (
-                            <Tooltip title={getString('closePlanSession') || 'Close'}>
-                                <span>
-                                    <IconButton
-                                        size="small"
-                                        onClick={(e) => { e.stopPropagation(); onClose(params.row); }}
-                                        disabled={statusIsPending}
-                                    >
-                                        <LockIcon fontSize="small" />
-                                    </IconButton>
-                                </span>
-                            </Tooltip>
-                        )}
-
-                        {/* Revert — only when closed */}
-                        {isClosed && (
-                            <Tooltip title={getString('revertPlanSession') || 'Revert to open'}>
-                                <span>
-                                    <IconButton
-                                        size="small"
-                                        color="warning"
-                                        onClick={(e) => { e.stopPropagation(); onRevert(params.row); }}
-                                        disabled={statusIsPending}
-                                    >
-                                        <RestartAltIcon fontSize="small" />
-                                    </IconButton>
-                                </span>
-                            </Tooltip>
-                        )}
-
-                        <Tooltip title={getString('delete') || 'Delete'}>
-                            <span>
-                                <IconButton
-                                    size="small"
-                                    color="error"
-                                    onClick={(e) => { e.stopPropagation(); onDeleteClick(params.row); }}
-                                    disabled={deleteIsPending}
-                                >
-                                    <DeleteIcon fontSize="small" />
-                                </IconButton>
-                            </span>
-                        </Tooltip>
-                    </Box>
-                );
-            },
+            renderCell: (params: GridRenderCellParams<PlanSession>) => (
+                <PlanSessionActions
+                    row={params.row}
+                    getString={getString}
+                    onOpenPlan={onOpenPlan}
+                    onShowReport={onShowReport}
+                    onOpen={onOpen}
+                    onClose={onClose}
+                    onRevert={onRevert}
+                    onResync={onResync}
+                    onDeleteClick={onDeleteClick}
+                    statusIsPending={statusIsPending}
+                    resyncIsPending={resyncIsPending}
+                    deleteIsPending={deleteIsPending}
+                />
+            ),
         },
     ];
 }

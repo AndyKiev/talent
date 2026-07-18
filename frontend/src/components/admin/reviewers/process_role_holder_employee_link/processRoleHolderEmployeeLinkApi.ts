@@ -1,6 +1,8 @@
 // src/components/admin/reviewers/process_role_holder_employee_link/processRoleHolderEmployeeLinkApi.ts
 import { axiosInstance } from '../../../../api/axiosInstance';
 import { BASE_URL } from '../../../../utils/eNums.ts';
+import type { MutationResponse } from '../../../../types/mutationResponse';
+export type { MutationResponse };
 
 const BASE = `${BASE_URL}/admin/process_role_holder_employees`;
 
@@ -18,11 +20,6 @@ export interface ProcessRoleHolderEmployeeLink {
 export interface ProcessRoleHolderEmployeeLinkCreate {
     process_role_holder_id: number;
     employee_id: number;
-}
-
-export interface MutationResponse<T> {
-    detail: string;
-    data: T;
 }
 
 export const fetchProcessRoleHolderEmployeeLinks = async (

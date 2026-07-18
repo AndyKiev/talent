@@ -18,15 +18,15 @@ import { usePlanSessionStatusMutations } from './usePlanSessionStatusMutations';
 import { usePlanSessionStatusColumns, type EditingState } from './usePlanSessionStatusColumns';
 
 
-import { PlanSessionStatusDeleteDialog } from './PlanSessionStatusDeleteDialog';
 import { useDataGridLocale } from '../../../../hooks/useDataGridLocale';
 import { PLAN_SESSION_STATUS_QK } from '../../../../utils/queryKeys.ts';
 import useString from '../../../../hooks/useString';
 import str from '../../../../strings/str';
 import cfl from '../../../../utils/helpers.ts';
 import {PlanSessionStatusForm} from "./PlanSessionStatusForm.tsx";
-import { PlanSessionStatusEditDialog } from './PlanSessionStatusEditDialog.tsx';
-import type {PendingEdit} from "../../jobs/JobEditDialog.tsx";
+import { FieldEditConfirmDialog } from '../../../ui/FieldEditConfirmDialog';
+import type { PendingEdit } from '../../../ui/FieldEditConfirmDialog';
+import ConfirmDeleteDialog from '../../../ui/ConfirmDeleteDialog';
 
 export function PlanSessionStatusCrud() {
     const getString = useString({ str });
@@ -168,18 +168,20 @@ export function PlanSessionStatusCrud() {
                 createMutation={createMutation}
             />
 
-            <PlanSessionStatusEditDialog
+            <FieldEditConfirmDialog
                 pending={pendingEdit}
                 isPending={updateMutation.isPending}
                 onConfirm={handleConfirmEdit}
                 onCancel={handleCancelPending}
             />
 
-            <PlanSessionStatusDeleteDialog
-                row={rowToDelete}
-                isPending={deleteMutation.isPending}
+            <ConfirmDeleteDialog
+                open={!!rowToDelete}
+                title={getString('deletePlanSessionStatus') || 'Delete Plan Session Status'}
+                message={getString('areYouSureDeletePlanSessionStatus', { name: rowToDelete?.name ?? '' }) || `Are you sure you want to delete "${rowToDelete?.name}"? This action cannot be undone.`}
+                isDeleting={deleteMutation.isPending}
                 onConfirm={handleConfirmDelete}
-                onCancel={() => setRowToDelete(null)}
+                onClose={() => setRowToDelete(null)}
             />
 
             <Snackbar

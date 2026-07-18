@@ -17,8 +17,7 @@ import { fetchUserGroups, type UserGroup } from './userGroupApi';
 import { useUserGroupMutations } from './useUserGroupMutations';
 import { useUserGroupColumns, type EditingState } from './useUserGroupColumns';
 
-import { UserGroupEditDialog, type PendingEdit } from './UserGroupEditDialog';
-import { UserGroupDeleteDialog } from './UserGroupDeleteDialog';
+import { FieldEditConfirmDialog, type PendingEdit } from '../../ui/FieldEditConfirmDialog';
 import { UserGroupTypeSelectDialog } from './UserGroupTypeSelectDialog';
 import { UserGroupPermissionSetsDialog } from './UserGroupPermissionSetsDialog';
 import { fetchUserGroupTypes } from '../user_group_types/userGroupTypeApi';
@@ -28,6 +27,7 @@ import str from '../../../strings/str';
 import cfl from '../../../utils/helpers.ts';
 import { UserGroupForm } from './UserGroupForm';
 import {USER_GROUP_QK, USER_GROUP_TYPE_QK} from "../../../utils/queryKeys.ts";
+import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
 
 export function UserGroupCrud() {
     const getString = useString({ str });
@@ -217,18 +217,20 @@ export function UserGroupCrud() {
                 createMutation={createMutation}
             />
 
-            <UserGroupEditDialog
+            <FieldEditConfirmDialog
                 pending={pendingEdit}
                 isPending={updateMutation.isPending}
                 onConfirm={handleConfirmEdit}
                 onCancel={handleCancelPending}
             />
 
-            <UserGroupDeleteDialog
-                row={rowToDelete}
-                isPending={deleteMutation.isPending}
+            <ConfirmDeleteDialog
+                open={!!rowToDelete}
+                title={getString('deleteUserGroup') || 'Delete Group'}
+                message={getString('areYouSureDeleteUserGroup') || `Are you sure you want to delete "${rowToDelete?.name}"? This action cannot be undone.`}
+                isDeleting={deleteMutation.isPending}
                 onConfirm={handleConfirmDelete}
-                onCancel={() => setRowToDelete(null)}
+                onClose={() => setRowToDelete(null)}
             />
 
             <UserGroupTypeSelectDialog

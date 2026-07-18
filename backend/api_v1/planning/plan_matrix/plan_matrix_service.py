@@ -62,7 +62,8 @@ class PlanMatrixService(BaseService):
             return PlanMatrix(
                 matrix_meta=meta,
                 essences=MatrixEssences(),
-                grand_totals=MatrixRow(label="Всього", summary=MatrixSummary()),
+                # Label is a translation KEY — the frontend resolves it via getString.
+                grand_totals=MatrixRow(label="matrixTotal", summary=MatrixSummary()),
                 data=[],
             )
 
@@ -265,8 +266,9 @@ class PlanMatrixService(BaseService):
                     pct=_pct(g["f_tot"], g["t_tot"]),
                 )
 
+        # Label is a translation KEY — the frontend resolves it via getString.
         grand_totals = MatrixRow(
-            label="Всього по об'єктам",
+            label="matrixTotalByObjects",
             job_groups=gt_jg,
             summary=MatrixSummary(
                 base_target=gt_base,
