@@ -1,5 +1,5 @@
 // src/components/layout/AppShell.tsx
-import { type FC, type ReactNode, useState } from "react";
+import { type FC, type ReactNode, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -28,6 +28,7 @@ import SettingsRounded from '@mui/icons-material/SettingsRounded';
 import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
 import ExpandLessRounded from '@mui/icons-material/ExpandLessRounded';
 import MenuRounded from '@mui/icons-material/MenuRounded';
+import MoreHorizRounded from '@mui/icons-material/MoreHorizRounded';
 import BoltRounded from '@mui/icons-material/BoltRounded';
 import { PeopleAltRounded, AdminPanelSettingsRounded, RateReviewRounded, SchoolRounded, PersonSearchRounded, RecentActorsRounded, ForumRounded, LogoutRounded } from "@mui/icons-material";
 import { useTheme as useAppTheme } from "../theme/ThemeContext";
@@ -82,8 +83,64 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
     const childrenOf = (parentId: number) =>
         menus.filter((m) => m.parent_id === parentId);
 
-    // Responsive: hamburger on mobile, horizontal bar on desktop
+    // Priority+ (overflow) nav: as many items as fit are shown inline, the
+    // rest go under a "…" button after them. Only when NOT EVEN ONE item fits
+    // (or on phones, `md` floor) does the bar switch to the hamburger, placed
+    // right after the "Talent" brand. Item widths come from a hidden copy of
+    // the full nav, re-measured via ResizeObserver.
     const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
+    const toolbarRef = useRef<HTMLDivElement | null>(null);
+    const brandRef = useRef<HTMLDivElement | null>(null);
+    const rightRef = useRef<HTMLDivElement | null>(null);
+    const measureRef = useRef<HTMLDivElement | null>(null);
+    const [visibleCount, setVisibleCount] = useState<number | null>(null);
+    const shownCount = visibleCount ?? topMenus.length;
+    const showHamburger = isMobile || (topMenus.length > 0 && shownCount === 0);
+    const overflowMenus = topMenus.slice(shownCount);
+
+    useLayoutEffect(() => {
+        const toolbar = toolbarRef.current;
+        const measure = measureRef.current;
+        if (!toolbar || !measure) return;
+        const GAP = 4; // Stack spacing 0.5
+        const DOTS = 44; // "…" IconButton reserve
+        const update = () => {
+            const brand = brandRef.current;
+            const right = rightRef.current;
+            if (!brand || !right) return;
+            const styles = getComputedStyle(toolbar);
+            const padding =
+                parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+            // 40px safety margin covers toolbar gaps + brand mr.
+            const available =
+                toolbar.clientWidth - padding - brand.offsetWidth - right.offsetWidth - 40;
+            const widths = Array.from(measure.children).map(
+                (el) => (el as HTMLElement).offsetWidth,
+            );
+            const total = widths.reduce((a, w, i) => a + w + (i ? GAP : 0), 0);
+            let count = widths.length;
+            if (total > available) {
+                const avail = available - DOTS;
+                let used = 0;
+                count = 0;
+                for (const w of widths) {
+                    const next = used + (count ? GAP : 0) + w;
+                    if (next > avail) break;
+                    used = next;
+                    count++;
+                }
+            }
+            setVisibleCount(count);
+        };
+        update();
+        const ro = new ResizeObserver(update);
+        ro.observe(toolbar);
+        ro.observe(measure);
+        return () => ro.disconnect();
+    }, [menus]);
+
+    // "…" overflow dropdown state
+    const [overflowAnchor, setOverflowAnchor] = useState<HTMLElement | null>(null);
 
     // Open dropdown state for items that have children.
     const [submenuAnchor, setSubmenuAnchor] = useState<{
@@ -144,6 +201,7 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
                     selected={currentPath.startsWith(child.path)}
                     onClick={() => {
                         setSubmenuAnchor(null);
+                        setOverflowAnchor(null);
                         navigate({ to: child.path as "/" });
                     }}
                 >
@@ -151,6 +209,40 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
                     <ListItemText>{cfl(getString(child.label_key))}</ListItemText>
                 </MuiMenuItem>
             ))}
+        </Menu>
+    );
+
+    // --- "…" overflow dropdown: top-level items that did not fit inline ---
+    const overflowDropdown = (
+        <Menu
+            open={overflowAnchor != null}
+            anchorEl={overflowAnchor}
+            onClose={() => setOverflowAnchor(null)}
+        >
+            {overflowMenus.map((item) => {
+                const kids = childrenOf(item.id);
+                const active =
+                    currentPath.startsWith(item.path) ||
+                    kids.some((k) => currentPath.startsWith(k.path));
+                return (
+                    <MuiMenuItem
+                        key={item.id}
+                        selected={active}
+                        onClick={(e) => {
+                            if (kids.length > 0) {
+                                setSubmenuAnchor({ parentId: item.id, anchor: e.currentTarget });
+                            } else {
+                                setOverflowAnchor(null);
+                                navigate({ to: item.path as "/" });
+                            }
+                        }}
+                    >
+                        <ListItemIcon>{menuIcon(item.icon)}</ListItemIcon>
+                        <ListItemText>{cfl(getString(item.label_key))}</ListItemText>
+                        {kids.length > 0 && <ExpandMoreRounded sx={{ fontSize: 16, ml: 1 }} />}
+                    </MuiMenuItem>
+                );
+            })}
         </Menu>
     );
 
@@ -266,9 +358,9 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
                     color: t.text,
                 }}
             >
-                <Toolbar sx={{ gap: 1, minHeight: "56px !important", px: { xs: 2, sm: 3 } }}>
+                <Toolbar ref={toolbarRef} sx={{ gap: 1, minHeight: "56px !important", px: { xs: 2, sm: 3 } }}>
                     {/* Brand */}
-                    <Stack direction="row" alignItems="center" spacing={1} mr={3}>
+                    <Stack ref={brandRef} direction="row" alignItems="center" spacing={1} mr={3}>
                         <Box
                             sx={{
                                 width: 28,
@@ -294,36 +386,62 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
                         </Typography>
                     </Stack>
 
-                    {/* Desktop: horizontal nav bar + UserMenu on the right */}
-                    {!isMobile && (
-                        <>
-                            <Stack direction="row" spacing={0.5} flexGrow={1}>
-                                {topMenus.map((item) => navBtn(item))}
-                                {desktopSubmenu}
-                                <AccessTestButton />
-                            </Stack>
-                            <Stack direction="row" alignItems="center" spacing={1.5}>
-                                <UserMenu />
-                            </Stack>
-                        </>
+                    {/* Hamburger — right after the brand, ONLY when not even
+                        one nav item fits (or on phones). */}
+                    {showHamburger && (
+                        <IconButton
+                            aria-label={cfl(getString("menu"))}
+                            onClick={() => setMobileDrawerOpen(true)}
+                            sx={{ color: t.text, borderRadius: "9px" }}
+                        >
+                            <MenuRounded />
+                        </IconButton>
                     )}
 
-                    {/* Mobile: spacer + UserMenu + hamburger */}
-                    {isMobile && (
-                        <>
-                            <Box flexGrow={1} />
-                            <AccessTestButton />
-                            <UserMenu />
-                            <IconButton
-                                aria-label={cfl(getString("menu"))}
-                                onClick={() => setMobileDrawerOpen(true)}
-                                sx={{ color: t.text, borderRadius: "9px" }}
-                            >
-                                <MenuRounded />
-                            </IconButton>
-                            {mobileDrawer}
-                        </>
+                    {/* Hidden copy of the full nav — per-item widths for the
+                        overflow computation, so nothing is ever clipped. */}
+                    <Box
+                        ref={measureRef}
+                        aria-hidden
+                        sx={{
+                            position: "absolute",
+                            visibility: "hidden",
+                            pointerEvents: "none",
+                            display: "flex",
+                            gap: 0.5,
+                            width: "max-content",
+                        }}
+                    >
+                        {topMenus.map((item) => navBtn(item))}
+                    </Box>
+
+                    {/* Nav: items that fit inline + "…" for the rest */}
+                    {!showHamburger ? (
+                        <Stack direction="row" spacing={0.5} flexGrow={1} alignItems="center">
+                            {topMenus.slice(0, shownCount).map((item) => navBtn(item))}
+                            {overflowMenus.length > 0 && (
+                                <IconButton
+                                    aria-label={cfl(getString("menu"))}
+                                    size="small"
+                                    onClick={(e) => setOverflowAnchor(e.currentTarget)}
+                                    sx={{ color: t.textMuted, borderRadius: "9px" }}
+                                >
+                                    <MoreHorizRounded />
+                                </IconButton>
+                            )}
+                        </Stack>
+                    ) : (
+                        <Box flexGrow={1} />
                     )}
+                    {desktopSubmenu}
+                    {overflowDropdown}
+
+                    {/* Right side: access-test + user chip (always fully visible) */}
+                    <Stack ref={rightRef} direction="row" alignItems="center" spacing={1}>
+                        <AccessTestButton />
+                        <UserMenu />
+                    </Stack>
+                    {mobileDrawer}
                 </Toolbar>
             </AppBar>
 

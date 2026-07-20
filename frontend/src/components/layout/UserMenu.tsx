@@ -105,7 +105,18 @@ const UserMenu: FC = () => {
                     sx={{
                         fontSize: 12,
                         fontWeight: 600,
-                        height: 28,
+                        // Full name must ALWAYS be visible: never shrink or
+                        // ellipsize — wrap onto extra lines when space is tight.
+                        flexShrink: 0,
+                        height: "auto",
+                        minHeight: 28,
+                        maxWidth: { xs: 160, sm: 280, md: "none" },
+                        "& .MuiChip-label": {
+                            whiteSpace: "normal",
+                            overflowWrap: "anywhere",
+                            textAlign: "center",
+                            py: 0.5,
+                        },
                         background: `${t.accent}14`,
                         color: t.accent,
                         border: "none",

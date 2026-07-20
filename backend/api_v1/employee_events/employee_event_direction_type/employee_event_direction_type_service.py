@@ -50,9 +50,11 @@ class EmployeeEventDirectionTypeService(BaseService):
         sort: Optional[str] = None,
     ) -> List[EmployeeEventDirectionTypeSchema]:
         if code:
-            record = await self.get_by_field(
-                "code", code, not_found_exc=EmployeeEventDirectionTypeNotFoundByCode
-            )
+            record = await self.get_by_field("code", code)
+            if not record:
+                raise await self._resolve_domain_error(
+                    EmployeeEventDirectionTypeNotFoundByCode(code)
+                )
             return [EmployeeEventDirectionTypeSchema.model_validate(record)]
         records = await self.get_all(sort_json=sort)
         return [EmployeeEventDirectionTypeSchema.model_validate(r) for r in records]
@@ -60,9 +62,10 @@ class EmployeeEventDirectionTypeService(BaseService):
     async def create_employee_event_direction_type(
         self, type_in: EmployeeEventDirectionTypeCreate
     ) -> MutationResponse[EmployeeEventDirectionTypeSchema]:
-        await self.exists_by_field(
-            "code", type_in.code, already_exists_exc=EmployeeEventDirectionTypeCodeTaken
-        )
+        if await self.get_by_field("code", type_in.code):
+            raise await self._resolve_domain_error(
+                EmployeeEventDirectionTypeCodeTaken(type_in.code)
+            )
         try:
             record = await self.create(type_in)
             schema = EmployeeEventDirectionTypeSchema.model_validate(record)

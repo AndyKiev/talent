@@ -32,7 +32,7 @@ export function ReadonlyCell({ value, onEdit, editTitle, placeholder = '—' }: 
                         className="edit-icon"
                         sx={{ padding: '2px', opacity: 0, transition: 'opacity 0.15s' }}
                     >
-                        <EditIcon sx={{ fontSize: '16px' }} />
+                        <EditIcon sx={{ fontSize: '16px' }} data-testid="EditIcon" />
                     </IconButton>
                 </Tooltip>
             )}

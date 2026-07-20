@@ -89,6 +89,7 @@ export function ReviewDimensionForm({ open, onClose, editing, nextSortOrder, cre
                         onChange={(e) => setName(e.target.value)}
                         fullWidth
                         required
+                        inputProps={{ name: 'name' }}
                     />
                     <TextField
                         label={getString('keyLabel')}
@@ -97,6 +98,7 @@ export function ReviewDimensionForm({ open, onClose, editing, nextSortOrder, cre
                         fullWidth
                         required
                         helperText={getString('reviewDimensionKeyHint')}
+                        inputProps={{ name: 'key' }}
                     />
                     <TextField
                         label={getString('descriptionCol')}
@@ -105,6 +107,7 @@ export function ReviewDimensionForm({ open, onClose, editing, nextSortOrder, cre
                         fullWidth
                         multiline
                         rows={3}
+                        inputProps={{ name: 'description' }}
                     />
                     <Stack direction="row" alignItems="flex-start" spacing={1.5}>
                         <Box

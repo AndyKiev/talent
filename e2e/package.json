@@ -1,0 +1,16 @@
+{
+  "name": "talent_e2e",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Browser E2E suite (Playwright) for the TALENT app. Requires the dev stack to be running (/start1).",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.8.0"
+  }
+}

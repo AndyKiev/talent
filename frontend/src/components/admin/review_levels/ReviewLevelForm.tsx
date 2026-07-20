@@ -129,6 +129,7 @@ function ReviewLevelFormBody({ onClose, editing, createMutation, updateMutation 
                                 onChange={(e) => setNameEng(e.target.value)}
                                 fullWidth
                                 required
+                                inputProps={{ name: 'nameEng' }}
                             />
                             <TextField
                                 label={getString('nameUkr')}
@@ -136,6 +137,7 @@ function ReviewLevelFormBody({ onClose, editing, createMutation, updateMutation 
                                 onChange={(e) => setNameUkr(e.target.value)}
                                 fullWidth
                                 required
+                                inputProps={{ name: 'nameUkr' }}
                             />
                         </>
                     )}

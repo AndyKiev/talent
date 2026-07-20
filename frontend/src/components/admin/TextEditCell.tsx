@@ -32,12 +32,12 @@ export function TextEditCell({ value: initialValue, onSave, onCancel, isPending 
             <IconButton size="small" color="success"
                         onClick={(e) => { e.stopPropagation(); onSave(value); }}
                         disabled={isPending}>
-                <CheckIcon sx={{ fontSize: '16px' }} />
+                <CheckIcon sx={{ fontSize: '16px' }} data-testid="CheckIcon" />
             </IconButton>
             <IconButton size="small" color="error"
                         onClick={(e) => { e.stopPropagation(); onCancel(); }}
                         disabled={isPending}>
-                <CloseIcon sx={{ fontSize: '16px' }} />
+                <CloseIcon sx={{ fontSize: '16px' }} data-testid="CloseIcon" />
             </IconButton>
         </Box>
     );
