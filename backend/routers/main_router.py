@@ -327,6 +327,9 @@ from backend.api_v1.interview_feedback.interview_feedback_views import (
 )
 
 # Employee development missions (employee-scoped development plan).
+from backend.api_v1.employee_mission_status.employee_mission_status_views import (
+    router as employee_mission_status_router,
+)
 from backend.api_v1.employee_mission.employee_mission_views import (
     router as employee_mission_router,
 )
@@ -481,6 +484,7 @@ router.include_router(candidate_application_router)
 router.include_router(interview_router)
 router.include_router(interview_feedback_router)
 
+router.include_router(employee_mission_status_router)
 router.include_router(employee_mission_router)
 router.include_router(employee_mission_kpi_router)
 router.include_router(employee_mission_dimension_link_router)

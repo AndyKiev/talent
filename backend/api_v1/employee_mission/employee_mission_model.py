@@ -17,6 +17,9 @@ if TYPE_CHECKING:
     from backend.api_v1.employee_mission_dimension_link.employee_mission_dimension_link_model import (
         EmployeeMissionDimensionLink,
     )
+    from backend.api_v1.employee_mission_status.employee_mission_status_model import (
+        EmployeeMissionStatus,
+    )
 
 
 class EmployeeMission(IntIdPkMixin, TimestampMixin, Base):
@@ -35,13 +38,19 @@ class EmployeeMission(IntIdPkMixin, TimestampMixin, Base):
         audit pattern: ``change_session.triggered_by_user_id`` + ``change_log``
         rows keyed on essence 'employee_mission'.
 
-    ``end_date`` is DERIVED (start_date + duration_months) but STORED, so
-    "expired" can be filtered and sorted in SQL. It is recomputed server-side on
-    every write and is never accepted from the client.
+    The PERIOD (start_date .. end_date) is the stored truth. ``end_date`` is
+    computed server-side from the start date plus a duration in months and is
+    never accepted from the client; the duration itself is NOT stored, because
+    it only ever existed to derive the end date. Display back-calculates it from
+    the two dates, so the two representations cannot drift apart.
 
-    The upper bound on ``duration_months`` is deliberately NOT a CHECK: it comes
-    from the app setting ``mission_max_duration_months`` (36), which a developer
-    may change — a baked-in constraint would make that setting a lie.
+    The upper bound on that duration is deliberately NOT a CHECK: it comes from
+    the app setting ``mission_max_duration_months`` (36), which a developer may
+    change — a baked-in constraint would make that setting a lie.
+
+    ``status_id`` is likewise derived (from the KPI percentages) but stored, so
+    "planned / in process / completed" can be filtered in SQL and recorded in the
+    change trail.
     """
 
     __tablename__ = "employee_missions"
@@ -49,7 +58,6 @@ class EmployeeMission(IntIdPkMixin, TimestampMixin, Base):
     # already prefixes them with `ck_<table>_`, so repeating the table here would
     # produce `ck_employee_missions_ck_employee_mission_...`.
     __table_args__ = (
-        CheckConstraint("duration_months > 0", name="duration_positive"),
         CheckConstraint("end_date >= start_date", name="end_after_start"),
     )
 
@@ -62,8 +70,20 @@ class EmployeeMission(IntIdPkMixin, TimestampMixin, Base):
     # What the employee is expected to do / develop.
     text: Mapped[str] = mapped_column(Text, nullable=False)
     start_date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
-    duration_months: Mapped[int] = mapped_column(Integer, nullable=False)
+    # The PERIOD is the stored truth. Duration in months used to be stored
+    # alongside it, which was redundant — months only ever existed to derive
+    # end_date on input. It is now back-calculated from the two dates for
+    # display, so the two can never drift apart.
     end_date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
+    # Derived from the KPI percentages on every write; never set by hand.
+    # RESTRICT (not CASCADE): deleting a status that missions still reference
+    # must fail loudly rather than orphan or destroy them.
+    status_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("employee_mission_statuses.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
 
     # Children. delete-orphan matches the DB-level CASCADE so ORM deletes and raw
     # SQL deletes behave identically.
@@ -83,6 +103,10 @@ class EmployeeMission(IntIdPkMixin, TimestampMixin, Base):
         lazy="selectin",
         uselist=False,
         cascade="all, delete-orphan",
+    )
+    status: Mapped["EmployeeMissionStatus"] = relationship(
+        back_populates="missions",
+        lazy="selectin",
     )
 
     @property

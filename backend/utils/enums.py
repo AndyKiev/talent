@@ -112,6 +112,7 @@ class EssenceName(str, Enum):
 
     # ── Employee development missions ────────────────────────────────────────
     EMPLOYEE_MISSION = "employee_mission"
+    EMPLOYEE_MISSION_STATUS = "employee_mission_status"
     EMPLOYEE_MISSION_KPI = "employee_mission_kpi"
     EMPLOYEE_MISSION_DIMENSION_LINK = "employee_mission_dimension_link"
     EMPLOYEE_MISSION_COMMENT = "employee_mission_comment"

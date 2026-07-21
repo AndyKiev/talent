@@ -25,6 +25,10 @@ from backend.api_v1.employee_mission.employee_mission_messages import (
     MissionEmployeeNotFound,
     MissionMaxActiveReached,
     MissionMaxKpisReached,
+    MissionNothingToRevert,
+    MissionRevertDenied,
+    MissionRevertSuccess,
+    MissionStatusNotSeeded,
 )
 from backend.api_v1.employee_mission.employee_mission_repository import (
     EmployeeMissionRepository,
@@ -42,6 +46,12 @@ from backend.api_v1.employee_mission_kpi.employee_mission_kpi_model import (
     EmployeeMissionKpi,
 )
 from backend.api_v1.employee_mission.mission_audit import MissionAudit
+from backend.api_v1.employee_mission_status.employee_mission_status_model import (
+    COMPLETED,
+    IN_PROCESS,
+    PLANNED,
+    EmployeeMissionStatus,
+)
 from backend.api_v1.review_dimension.review_dimension_model import ReviewDimension
 from backend.utils.enums import OperationVerb
 
@@ -56,6 +66,24 @@ KPI_SORT_STEP = 10
 KPI_COMPLETE_PERCENT = 100
 
 
+def compute_status_key(mission) -> str:
+    """THE status rule, in one place.
+
+    completed  - every KPI at 100%
+    in_process - at least one KPI has some progress
+    planned    - nothing started yet
+
+    Status is always derived, never edited directly. That is what makes the
+    admin/dev "revert" meaningful: it restores earlier KPI percentages, and the
+    status follows automatically instead of the two disagreeing.
+    """
+    if is_mission_accomplished(mission):
+        return COMPLETED
+    if any(kpi.percent > 0 for kpi in mission.kpis):
+        return IN_PROCESS
+    return PLANNED
+
+
 def compute_end_date(start_date: date, duration_months: int) -> date:
     """start_date + duration_months, month-arithmetic aware.
 
@@ -63,6 +91,25 @@ def compute_end_date(start_date: date, duration_months: int) -> date:
     of overflowing into March. Shared with the data-migration script.
     """
     return start_date + relativedelta(months=duration_months)
+
+
+def months_between(start_date: date, end_date: date) -> int:
+    """Whole months in a mission's period — the inverse of compute_end_date.
+
+    Duration is no longer stored, so this is how the form and the cards get the
+    number back. Uses the same month arithmetic as compute_end_date, walking up
+    from 0 so an end date that relativedelta clamped (31 Jan + 1m -> 28 Feb)
+    still round-trips to the duration that produced it.
+    """
+    if end_date <= start_date:
+        return 0
+    months = (end_date.year - start_date.year) * 12 + (
+        end_date.month - start_date.month
+    )
+    # Clamping can leave us one month over; step back until it fits.
+    while months > 0 and compute_end_date(start_date, months) > end_date:
+        months -= 1
+    return months
 
 
 def is_mission_accomplished(mission) -> bool:
@@ -159,6 +206,43 @@ class EmployeeMissionService(BaseService):
         if active >= cap:
             raise await self._resolve_domain_error(MissionMaxActiveReached(cap))
 
+    async def _status_id_for_key(self, key: str) -> int:
+        """Resolve a seeded status BY KEY, never by id — ids differ per database
+        (reseed / id-reorder), keys do not."""
+        status_id = await self.session.scalar(
+            select(EmployeeMissionStatus.id).where(EmployeeMissionStatus.key == key)
+        )
+        if status_id is None:
+            raise await self._resolve_domain_error(MissionStatusNotSeeded(key))
+        return status_id
+
+    async def apply_status(self, mission, *, log: bool = True) -> Optional[str]:
+        """Recompute the mission's status from its KPIs and persist any change.
+
+        Called after every write that can move a KPI. Returns the new key when it
+        changed (so the caller can surface it), None otherwise. The change is
+        recorded in the trail as a first-class `status` field, which is what makes
+        "when did this become completed?" answerable.
+        """
+        old_key = mission.status.key if mission.status else None
+        new_key = compute_status_key(mission)
+        if old_key == new_key:
+            return None
+        mission.status_id = await self._status_id_for_key(new_key)
+        # Drop the stale relationship so the refreshed read reflects the new row
+        # (the session is expire_on_commit=False, so it would otherwise persist).
+        mission.status = await self.session.get(
+            EmployeeMissionStatus, mission.status_id
+        )
+        if log:
+            await self.audit.log_mission(
+                mission_id=mission.id,
+                employee_id=mission.employee_id,
+                action=ChangeAction.STATUS_CHANGE,
+                changes={"status": {"old": old_key, "new": new_key}},
+            )
+        return new_key
+
     async def _assert_employee_exists(self, employee_id: int) -> None:
         """Without this the insert violates the employees FK and surfaces as a
         500. The route only proves the CALLER may write for this id, not that the
@@ -190,14 +274,22 @@ class EmployeeMissionService(BaseService):
         that would drag its whole 13-way graph per comment)."""
         author_ids = [c.author_employee_id for r in records for c in r.comments]
         minis = await fetch_employee_minis(self.session, author_ids)
+        # Which KPIs have an earlier percent in the trail — one query for the
+        # whole page rather than one per mission.
+        revertable = await self.audit.kpis_with_previous_percent(
+            [k.id for r in records for k in r.kpis]
+        )
 
         today = date.today()
         out: List[EmployeeMissionSchema] = []
         for record in records:
             schema = EmployeeMissionSchema.model_validate(record)
+            schema.duration_months = months_between(record.start_date, record.end_date)
+            schema.status_key = record.status.key if record.status else ""
             schema.is_expired = is_mission_expired(record, today)
             schema.is_accomplished = is_mission_accomplished(record)
             schema.is_active = is_mission_active(record, today)
+            schema.can_revert = any(k.id in revertable for k in record.kpis)
             link = record.dimension_link
             if link is not None:
                 schema.dimension_id = link.dimension_id
@@ -265,8 +357,9 @@ class EmployeeMissionService(BaseService):
             employee_id=employee_id,
             text=payload.text,
             start_date=payload.start_date,
-            duration_months=payload.duration_months,
             end_date=compute_end_date(payload.start_date, payload.duration_months),
+            # A new mission has no KPI progress yet, so it always starts planned.
+            status_id=await self._status_id_for_key(PLANNED),
         )
         self.session.add(mission)
         await self.session.flush()  # assign the mission PK for the children
@@ -296,7 +389,6 @@ class EmployeeMissionService(BaseService):
             changes={
                 "text": {"old": None, "new": mission.text},
                 "start_date": {"old": None, "new": str(mission.start_date)},
-                "duration_months": {"old": None, "new": mission.duration_months},
                 "end_date": {"old": None, "new": str(mission.end_date)},
                 "dimension_id": {"old": None, "new": payload.dimension_id},
             },
@@ -322,8 +414,11 @@ class EmployeeMissionService(BaseService):
             detail = await self._resolve_domain_success(EmployeeMissionUpdateSuccess())
             return MutationResponse(detail=detail, data=schema)
 
-        if "duration_months" in data:
-            await self._validate_duration(data["duration_months"])
+        # duration_months is an INPUT ONLY — it is not a column. Pull it out
+        # before the generic setattr loop so nothing tries to assign it.
+        duration = data.pop("duration_months", None)
+        if duration is not None:
+            await self._validate_duration(duration)
 
         changes: dict = {}
         for field, new_value in data.items():
@@ -333,11 +428,16 @@ class EmployeeMissionService(BaseService):
             setattr(record, field, new_value)
             changes[field] = {"old": str(old_value), "new": str(new_value)}
 
-        if "start_date" in data or "duration_months" in data:
-            old_end = record.end_date
-            record.end_date = compute_end_date(
-                record.start_date, record.duration_months
+        if "start_date" in data or duration is not None:
+            # Keep whichever duration the caller did not send: an unchanged
+            # duration must not silently reset when only the start date moves.
+            months = (
+                duration
+                if duration is not None
+                else months_between(record.start_date, record.end_date)
             )
+            old_end = record.end_date
+            record.end_date = compute_end_date(record.start_date, months)
             if old_end != record.end_date:
                 changes["end_date"] = {
                     "old": str(old_end),
@@ -356,6 +456,48 @@ class EmployeeMissionService(BaseService):
         record = await self._get_mission_or_404(mission_id)
         schema = (await self._to_schema([record]))[0]
         detail = await self._resolve_domain_success(EmployeeMissionUpdateSuccess())
+        return MutationResponse(detail=detail, data=schema)
+
+    async def revert_progress(
+        self, mission_id: int
+    ) -> MutationResponse[EmployeeMissionSchema]:
+        """Roll every KPI back to its previous recorded percentage (admin/dev).
+
+        Deliberately NOT a status edit. Status is derived from the KPIs, so the
+        only coherent way to "undo" a status is to undo the progress that caused
+        it — after which apply_status recomputes the earlier status by itself.
+        Restricted to admin/dev because it rewrites an assessment of a person.
+        """
+        record = await self._get_mission_or_404(mission_id)
+        if not self.access.is_admin_like():
+            raise await self._resolve_domain_error(MissionRevertDenied())
+
+        previous = await self.audit.previous_kpi_percents([k.id for k in record.kpis])
+        if not previous:
+            raise await self._resolve_domain_error(MissionNothingToRevert())
+
+        for kpi in record.kpis:
+            if kpi.id not in previous:
+                continue
+            old, new = kpi.percent, previous[kpi.id]
+            if old == new:
+                continue
+            kpi.percent = new
+            await self.audit.log_kpi(
+                kpi_id=kpi.id,
+                employee_id=record.employee_id,
+                action=ChangeAction.UPDATE,
+                changes={
+                    "percent": {"old": old, "new": new},
+                    "reverted": {"old": None, "new": True},
+                },
+            )
+        await self.apply_status(record)
+        await self.session.commit()
+
+        record = await self._get_mission_or_404(mission_id)
+        schema = (await self._to_schema([record]))[0]
+        detail = await self._resolve_domain_success(MissionRevertSuccess())
         return MutationResponse(detail=detail, data=schema)
 
     async def delete_mission(self, mission_id: int) -> str:

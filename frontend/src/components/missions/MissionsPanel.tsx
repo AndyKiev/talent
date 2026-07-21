@@ -93,6 +93,8 @@ export function MissionsPanel({
     const { value: maxMonths } = useIntegerSetting('mission_max_duration_months', 36);
     const { value: kpiMaxLength } = useIntegerSetting('idp_kpi_max_length', 126);
     const { value: maxKpis } = useIntegerSetting('mission_max_kpis', 2);
+    // Desktop column count for the card view; narrow screens force one.
+    const { value: cardsPerRow } = useIntegerSetting('mission_cards_per_row', 2);
 
     const perm = useMissionPermissions(employeeId);
 
@@ -291,7 +293,20 @@ export function MissionsPanel({
                 ) : (
                     <Grid container spacing={2}>
                         {missions.map((mission) => (
-                            <Grid key={mission.id} size={{ xs: 12, md: density === 'compact' ? 12 : 6 }}>
+                            <Grid
+                                key={mission.id}
+                                size={{
+                                    xs: 12,
+                                    sm: 12,
+                                    // The setting is the DESKTOP count; MUI's
+                                    // 12-col grid turns it into a width. Clamped
+                                    // 1..4 so a silly value cannot produce
+                                    // unreadable slivers.
+                                    md: Math.floor(
+                                        12 / Math.min(4, Math.max(1, cardsPerRow)),
+                                    ),
+                                }}
+                            >
                                 <MissionCard
                                     mission={mission}
                                     canManage={perm.canManage}
@@ -305,6 +320,8 @@ export function MissionsPanel({
                                     onDelete={() => setDeleting(mission)}
                                     onOpenComments={() => setCommentsMission(mission)}
                                     onOpenHistory={() => setHistoryMissionId(mission.id)}
+                                    canRevert={perm.canManage && mission.can_revert}
+                                    onRevert={() => m.revertMissionMutation.mutate(mission.id)}
                                     {...kpiHandlersFor(mission)}
                                 />
                             </Grid>

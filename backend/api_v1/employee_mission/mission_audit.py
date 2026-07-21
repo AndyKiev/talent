@@ -20,6 +20,7 @@ import datetime
 from typing import List, Optional
 
 from sqlalchemy import select
+from sqlalchemy.orm import aliased
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.audit.change_log.change_log_model import ChangeLog
@@ -27,6 +28,10 @@ from backend.api_v1.audit.change_log.change_log_schema import ChangeAction
 from backend.api_v1.audit.change_session.change_session_model import ChangeSession
 from backend.api_v1.employee.employee_minis import fetch_employee_minis
 from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.employee_mission_kpi.employee_mission_kpi_model import (
+    EmployeeMissionKpi,
+)
+from backend.api_v1.review_dimension.review_dimension_model import ReviewDimension
 from backend.api_v1.employee_mission.employee_mission_schema import (
     EmployeeMissionHistoryEntry,
 )
@@ -42,6 +47,10 @@ ESSENCE_VISION = "employee_development_vision"
 # deliberately excluded: they are visible content in their own right, not an
 # audit concern.
 HISTORY_ESSENCES = (ESSENCE_MISSION, ESSENCE_KPI)
+
+# Fields recorded for provenance but meaningless to a reader. `dimension_id` is
+# not hidden — it is REPLACED by the competence name (see _humanize).
+HIDDEN_CHANGE_FIELDS = {"migrated_from_rse_id", "reverted"}
 
 
 class MissionAudit:
@@ -141,6 +150,89 @@ class MissionAudit:
     ) -> ChangeLog:
         return await self._log(ESSENCE_VISION, vision_id, employee_id, action, changes)
 
+    async def _kpi_mission_map(self, kpi_ids: List[int]) -> dict:
+        """kpi id -> mission id, for grouping. Live rows answer directly; a KPI
+        deleted with its mission is resolved through the parent_id link its
+        delete entry carries."""
+        ids = [i for i in kpi_ids if i]
+        if not ids:
+            return {}
+        out = {
+            k: m
+            for k, m in await self.session.execute(
+                select(EmployeeMissionKpi.id, EmployeeMissionKpi.mission_id).where(
+                    EmployeeMissionKpi.id.in_(ids)
+                )
+            )
+        }
+        missing = [i for i in ids if i not in out]
+        if missing:
+            child = aliased(ChangeLog)
+            parent = aliased(ChangeLog)
+            rows = await self.session.execute(
+                select(child.entity_id, parent.entity_id)
+                .join(parent, child.parent_id == parent.id)
+                .where(
+                    child.essence_key == ESSENCE_KPI,
+                    child.entity_id.in_(missing),
+                    parent.essence_key == ESSENCE_MISSION,
+                )
+            )
+            for kpi_id, mission_id in rows:
+                out.setdefault(kpi_id, mission_id)
+        return out
+
+    @staticmethod
+    def _mission_labels(rows) -> dict:
+        """mission id -> its text, taken from the trail so a DELETED mission is
+        still named rather than showing as a bare id."""
+        labels = {}
+        for log, _ in rows:
+            if log.essence_key != ESSENCE_MISSION or not log.entity_id:
+                continue
+            pair = (log.changes or {}).get("text") or {}
+            text = pair.get("new") or pair.get("old")
+            if text and log.entity_id not in labels:
+                labels[log.entity_id] = str(text)[:80]
+        return labels
+
+    # ── previous-progress lookups (the revert feature) ───────────────────────
+
+    async def _percent_history(self, kpi_ids: List[int]):
+        """Every logged percent change for the given KPIs, newest first."""
+        if not kpi_ids:
+            return []
+        stmt = (
+            select(ChangeLog.entity_id, ChangeLog.changes)
+            .where(
+                ChangeLog.essence_key == ESSENCE_KPI,
+                ChangeLog.entity_id.in_(kpi_ids),
+                ChangeLog.changes.has_key("percent"),  # noqa: W601 - JSONB operator
+            )
+            .order_by(ChangeLog.created_at.desc(), ChangeLog.id.desc())
+        )
+        return (await self.session.execute(stmt)).all()
+
+    async def previous_kpi_percents(self, kpi_ids: List[int]) -> dict[int, int]:
+        """kpi id -> the percentage it held BEFORE its most recent change.
+
+        Reads `changes.percent.old` of the newest entry per KPI, which is exactly
+        "one step back". Entries whose old value is absent are skipped rather
+        than guessed at.
+        """
+        out: dict[int, int] = {}
+        for entity_id, changes in await self._percent_history(kpi_ids):
+            if entity_id in out:
+                continue  # newest wins; the rest are older steps
+            old = (changes or {}).get("percent", {}).get("old")
+            if isinstance(old, int):
+                out[entity_id] = old
+        return out
+
+    async def kpis_with_previous_percent(self, kpi_ids: List[int]) -> set[int]:
+        """Which KPIs have somewhere to revert to — drives the UI affordance."""
+        return set((await self.previous_kpi_percents(kpi_ids)).keys())
+
     # ── reader ───────────────────────────────────────────────────────────────
 
     async def get_employee_history(
@@ -194,19 +286,75 @@ class MissionAudit:
         )
         return await self._to_entries((await self.session.execute(stmt)).all())
 
+    async def _dimension_names(self, rows) -> dict:
+        """id -> name for every competence mentioned in these entries.
+
+        HRS and HR read this trail; a bare `dimension_id: 3 -> 5` is unreadable
+        to them. One column-only query covers the whole page.
+        """
+        ids = set()
+        for log, _ in rows:
+            pair = (log.changes or {}).get("dimension_id") or {}
+            for side in ("old", "new"):
+                if isinstance(pair.get(side), int):
+                    ids.add(pair[side])
+        if not ids:
+            return {}
+        rows_ = await self.session.execute(
+            select(ReviewDimension.id, ReviewDimension.name).where(
+                ReviewDimension.id.in_(ids)
+            )
+        )
+        return {i: n for i, n in rows_}
+
+    @staticmethod
+    def _humanize(changes: Optional[dict], dim_names: dict) -> Optional[dict]:
+        """Drop bookkeeping fields and swap competence ids for their names."""
+        if not changes:
+            return changes
+        out = {}
+        for field, pair in changes.items():
+            if field in HIDDEN_CHANGE_FIELDS:
+                continue
+            if field == "dimension_id" and isinstance(pair, dict):
+                out["competence"] = {
+                    side: (dim_names.get(pair.get(side)) if pair.get(side) else None)
+                    for side in ("old", "new")
+                }
+                continue
+            out[field] = pair
+        return out or None
+
     async def _to_entries(self, rows) -> List[EmployeeMissionHistoryEntry]:
         """Shape (ChangeLog, ChangeSession) pairs into API entries, naming the
         actor from one column-only lookup."""
         minis = await fetch_employee_minis(
             self.session, [run.triggered_by_user_id for _, run in rows]
         )
+        dim_names = await self._dimension_names(rows)
+        # A mission's own entries carry its id directly; a KPI entry inherits the
+        # mission it belonged to, so the UI can group both under one heading.
+        kpi_owner = await self._kpi_mission_map(
+            [log.entity_id for log, _ in rows if log.essence_key == ESSENCE_KPI]
+        )
+        labels = self._mission_labels(rows)
         return [
             EmployeeMissionHistoryEntry(
                 id=log.id,
                 entity_kind=log.essence_key,
                 entity_id=log.entity_id,
                 action=log.action,
-                changes=log.changes,
+                changes=self._humanize(log.changes, dim_names),
+                mission_id=(
+                    log.entity_id
+                    if log.essence_key == ESSENCE_MISSION
+                    else kpi_owner.get(log.entity_id)
+                ),
+                mission_label=labels.get(
+                    log.entity_id
+                    if log.essence_key == ESSENCE_MISSION
+                    else kpi_owner.get(log.entity_id)
+                ),
                 # No actor for system runs (the data migration) — the UI shows
                 # the task instead of a person.
                 actor_name=(

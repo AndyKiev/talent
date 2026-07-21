@@ -24,7 +24,7 @@ import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import dayjs from 'dayjs';
 import MissionDurationWheel from './MissionDurationWheel';
-import { previewEndDate } from './missionHelpers';
+import { monthsBetween, previewEndDate } from './missionHelpers';
 import type { Mission, MissionDimensionOption } from './missionApi';
 import type { GetStringFn } from '../../types/getStringFn';
 import { DATE_FORMAT } from '../../utils/eNums';
@@ -121,7 +121,10 @@ export function MissionFormDialog({
         reset({
             text: mission?.text ?? '',
             start_date: mission?.start_date ?? dayjs().format(API_DATE),
-            duration_months: mission?.duration_months ?? DEFAULT_DURATION_MONTHS,
+            duration_months: mission
+                ? monthsBetween(mission.start_date, mission.end_date) ||
+                  DEFAULT_DURATION_MONTHS
+                : DEFAULT_DURATION_MONTHS,
             dimension_id: mission?.dimension_id ?? '',
             kpis: [{ id: null, text: '' }],
         });
@@ -186,10 +189,10 @@ export function MissionFormDialog({
 
                     {!isEdit && (
                         <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                                {getString('kpis')}
-                            </Typography>
-                            <Stack spacing={1} sx={{ mt: 0.5 }}>
+                            {/* No caption: the placeholder carries the label, the
+                                same way the mission description does. Numbered
+                                only once there is more than one to tell apart. */}
+                            <Stack spacing={1}>
                                 {fields.map((row, index) => (
                                     <Stack key={row.id} direction="row" spacing={0.5}>
                                         <Controller
@@ -199,7 +202,11 @@ export function MissionFormDialog({
                                                 <TextField
                                                     {...field}
                                                     size="small"
-                                                    placeholder={getString('missionKpiPlaceholder')}
+                                                    placeholder={
+                                                        fields.length > 1
+                                                            ? `KPI_${index + 1}`
+                                                            : 'KPI'
+                                                    }
                                                     inputProps={{ maxLength: kpiMaxLength }}
                                                     multiline
                                                     minRows={3}

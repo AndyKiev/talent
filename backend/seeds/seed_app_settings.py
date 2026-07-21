@@ -120,6 +120,19 @@ APP_SETTINGS = [
         "visible_to_regular": True,
     },
     {
+        # How many mission CARDS sit on one row in the card view. Applies
+        # everywhere mission cards render (employee card tab + the people-review
+        # analysis tab). Responsive: narrow screens collapse to a single column
+        # regardless, so this is the DESKTOP column count. App-only.
+        "key": "mission_cards_per_row",
+        "value": 2,
+        "value_type_key": "integer",
+        "label_key": "settingMissionCardsPerRow",
+        "description_key": "settingMissionCardsPerRowDesc",
+        "user_override_allowed": False,
+        "visible_to_regular": True,
+    },
+    {
         # Max interviewers that may be attached to a single interview. Enforced on
         # BOTH the FE (schedule dialog slices the picker) and the BE
         # (interview_service create/update). App-only.

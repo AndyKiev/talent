@@ -39,3 +39,18 @@ export function missionProgress(kpis: { percent: number }[]): number {
     if (!kpis.length) return 0;
     return Math.round(kpis.reduce((sum, k) => sum + k.percent, 0) / kpis.length);
 }
+
+/**
+ * Whole months in a mission's period. Duration is no longer stored — the server
+ * sends it back-calculated, but computing it here too keeps the form's wheel
+ * working while the user edits dates before saving.
+ */
+export function monthsBetween(startDate: string, endDate: string): number {
+    if (!startDate || !endDate) return 0;
+    const start = dayjs(startDate);
+    let months = dayjs(endDate).diff(start, 'month');
+    // diff() truncates; a clamped end date (31 Jan + 1m -> 28 Feb) must still
+    // round-trip to the duration that produced it.
+    if (months > 0 && start.add(months, 'month').isAfter(dayjs(endDate))) months -= 1;
+    return Math.max(0, months);
+}

@@ -88,6 +88,22 @@ async def update_mission(
     return await service.update_mission(mission_id, payload)
 
 
+@router.post(
+    "/{mission_id}/revert",
+    response_model=MutationResponse[EmployeeMissionSchema],
+)
+async def revert_mission_progress(
+    mission_id: int,
+    service: Annotated[EmployeeMissionService, Depends(get_employee_mission_service)],
+):
+    """Roll every KPI back one recorded step (admin/dev only).
+
+    No route Guard: the admin-only rule lives in the service alongside the
+    roster-scoped rules, so all mission permissions read from one place.
+    """
+    return await service.revert_progress(mission_id)
+
+
 @router.delete("/{mission_id}")
 async def delete_mission(
     mission_id: int,

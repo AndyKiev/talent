@@ -40,9 +40,12 @@ export interface Mission {
     text: string;
     /** ISO 'YYYY-MM-DD'. Displayed as DD.MM.YYYY everywhere. */
     start_date: string;
-    duration_months: number;
-    /** Derived server-side from start_date + duration_months; never sent by us. */
+    /** Derived server-side; never sent by us. The PERIOD is the stored truth. */
     end_date: string;
+    /** Back-calculated from the period — not a column. */
+    duration_months: number;
+    status_id: number;
+    status_key: string;
     created_at: string;
     kpis: MissionKpi[];
     comments: MissionComment[];
@@ -54,6 +57,8 @@ export interface Mission {
     is_expired: boolean;
     is_accomplished: boolean;
     is_active: boolean;
+    /** An earlier KPI value exists in the trail, so reverting would do something. */
+    can_revert: boolean;
 }
 
 export interface MissionCreate {
@@ -78,6 +83,9 @@ export interface MissionHistoryEntry {
     changes: Record<string, { old: string | number | null; new: string | number | null }> | null;
     actor_name: string | null;
     changed_at: string;
+    /** Grouping key + label; the label survives the mission's deletion. */
+    mission_id: number | null;
+    mission_label: string | null;
 }
 
 export interface DevelopmentVision {
@@ -151,6 +159,16 @@ export async function fetchMissionHistory(missionId: number): Promise<MissionHis
  * deleted. A deleted mission has no row left to click, so its per-mission
  * history is unreachable — this is where it remains auditable.
  */
+/** Roll every KPI back one recorded step. Admin/dev only (server-enforced). */
+export async function revertMissionProgress(
+    missionId: number,
+): Promise<MutationResponse<Mission>> {
+    const res = await axiosInstance.post<MutationResponse<Mission>>(
+        `${MISSIONS}/${missionId}/revert`,
+    );
+    return res.data;
+}
+
 export async function fetchEmployeeMissionHistory(
     employeeId: number,
 ): Promise<MissionHistoryEntry[]> {

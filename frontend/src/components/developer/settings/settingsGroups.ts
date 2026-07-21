@@ -102,6 +102,7 @@ export const SETTING_GROUP_BY_KEY: Record<string, string> = {
     mission_max_duration_months: 'employees',
     mission_max_kpis: 'employees',
     mission_max_active: 'employees',
+    mission_cards_per_row: 'employees',
     // ── People review ────────────────────────────────────────────────────────
     people_review_edit_talent_status: 'people_review',
     idp_min_missions: 'people_review',

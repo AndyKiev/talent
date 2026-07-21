@@ -91,6 +91,34 @@ class EmployeeMissionKpiService(BaseService):
         if len(text) > max_length:
             raise await self._resolve_domain_error(MissionKpiTextTooLong(max_length))
 
+    async def _resync_mission_status(self, mission_id: int) -> None:
+        """Re-derive the parent mission's status after a KPI write.
+
+        Status is a function of the KPI percentages, so every path that can move
+        one has to run this or the stored status goes stale — that includes
+        creating a KPI (which can drop a completed mission back to in_process)
+        and deleting one (which can complete it).
+        """
+        from backend.api_v1.employee_mission.employee_mission_repository import (
+            EmployeeMissionRepository,
+        )
+        from backend.api_v1.employee_mission.employee_mission_service import (
+            EmployeeMissionService,
+        )
+
+        service = EmployeeMissionService(
+            repository=EmployeeMissionRepository(session=self.session),
+            user=self.user,
+            session=self.session,
+        )
+        # Share the audit run so the status change lands in the SAME change_session
+        # as the KPI edit that caused it.
+        service.audit = self.audit
+        mission = await service.repository.get_by_id(mission_id)
+        if mission is not None:
+            await self.session.refresh(mission, ["kpis"])
+            await service.apply_status(mission)
+
     # ── writes ───────────────────────────────────────────────────────────────
 
     async def create_kpi(
@@ -127,6 +155,7 @@ class EmployeeMissionKpiService(BaseService):
                 "percent": {"old": None, "new": 0},
             },
         )
+        await self._resync_mission_status(mission_id)
         await self.session.commit()
 
         schema = EmployeeMissionKpiSchema.model_validate(kpi)
@@ -164,6 +193,8 @@ class EmployeeMissionKpiService(BaseService):
                 action=ChangeAction.UPDATE,
                 changes=changes,
             )
+        if "percent" in changes:
+            await self._resync_mission_status(record.mission_id)
         await self.session.commit()
 
         schema = EmployeeMissionKpiSchema.model_validate(record)
@@ -189,6 +220,9 @@ class EmployeeMissionKpiService(BaseService):
                 "percent": {"old": record.percent, "new": None},
             },
         )
+        mission_id = record.mission_id
         await self.session.delete(record)
+        await self.session.flush()
+        await self._resync_mission_status(mission_id)
         await self.session.commit()
         return await self._resolve_domain_success(EmployeeMissionKpiDeleteSuccess())

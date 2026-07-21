@@ -114,6 +114,19 @@ class EmployeeMissionAccess:
 
     # ── public checks ────────────────────────────────────────────────────────
 
+    def is_admin_like(self) -> bool:
+        """Admin or dev (bypass). Used for the few operations that are not
+        roster-scoped at all — currently reverting a mission's progress, which
+        rewrites an assessment and so is deliberately not an oversight power."""
+        if not self.user:
+            return False
+        if getattr(self.user, "is_bypass", False):
+            return True
+        return (
+            OperationVerb.MODIFY.value,
+            frozenset({EssenceName.EMPLOYEE_MISSION.value}),
+        ) in self.user.permission_sets
+
     async def assert_can_read(self, employee_id: int) -> None:
         """Read gate for routes keyed by mission_id / comment_id.
 

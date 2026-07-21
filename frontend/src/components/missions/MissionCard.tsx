@@ -13,10 +13,24 @@ import CommentIcon from '@mui/icons-material/Comment';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import HistoryIcon from '@mui/icons-material/History';
+import UndoIcon from '@mui/icons-material/Undo';
 import type { Mission, MissionKpi } from './missionApi';
 import { formatMissionPeriod, isMissionExpired, missionProgress } from './missionHelpers';
 import { MissionKpiList } from './MissionKpiList';
 import type { GetStringFn } from '../../types/getStringFn';
+
+/** status_key -> translation key. The statuses are a DB lookup, so the KEY is
+ *  the contract and the label is translated; this is the one place they map. */
+const STATUS_LABEL_KEYS: Record<string, string> = {
+    planned: 'missionStatusPlanned',
+    in_process: 'missionStatusInProcess',
+    completed: 'missionStatusCompleted',
+};
+const STATUS_COLORS: Record<string, 'default' | 'info' | 'success'> = {
+    planned: 'default',
+    in_process: 'info',
+    completed: 'success',
+};
 
 interface Props {
     mission: Mission;
@@ -32,6 +46,9 @@ interface Props {
     onUpdateKpiText: (kpiId: number, text: string) => void;
     onDeleteKpi: (kpiId: number) => void;
     onSetKpiPercent: (kpi: MissionKpi) => void;
+    /** Admin/dev only — roll the KPIs back one step. */
+    canRevert: boolean;
+    onRevert: () => void;
 }
 
 export function MissionCard({
@@ -48,6 +65,8 @@ export function MissionCard({
     onUpdateKpiText,
     onDeleteKpi,
     onSetKpiPercent,
+    canRevert,
+    onRevert,
 }: Props) {
     // Dim anything no longer active — expired OR finished. Both free a slot
     // under mission_max_active, so both should read as background material.
@@ -67,8 +86,8 @@ export function MissionCard({
                 borderStyle: dimmed ? 'dashed' : 'solid',
             }}
         >
-            <CardContent>
-                <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ mb: 1 }}>
+            <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                <Stack direction="row" spacing={0.5} alignItems="flex-start" sx={{ mb: 0.5 }}>
                     <Box sx={{ flex: 1 }}>
                         <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
                             {mission.dimension_name && (
@@ -83,14 +102,14 @@ export function MissionCard({
                                     }}
                                 />
                             )}
-                            {mission.is_accomplished && (
-                                <Chip
-                                    size="small"
-                                    label={getString('missionAccomplished')}
-                                    variant="outlined"
-                                    color="success"
-                                />
-                            )}
+                            <Chip
+                                size="small"
+                                label={getString(
+                                    STATUS_LABEL_KEYS[mission.status_key] ?? 'missionStatus',
+                                )}
+                                variant="outlined"
+                                color={STATUS_COLORS[mission.status_key] ?? 'default'}
+                            />
                             {expired && !mission.is_accomplished && (
                                 <Chip
                                     size="small"
@@ -112,8 +131,13 @@ export function MissionCard({
                             {mission.text}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                            {getString('missionPeriod')}:{' '}
-                            {formatMissionPeriod(mission.start_date, mission.end_date)} · {progress}%
+                            {formatMissionPeriod(mission.start_date, mission.end_date)}
+                            {' · '}
+                            {getString('missionDurationShort', {
+                                n: String(mission.duration_months),
+                            })}
+                            {' · '}
+                            {progress}%
                         </Typography>
                     </Box>
 
@@ -133,6 +157,13 @@ export function MissionCard({
                             <Tooltip title={getString('missionHistory')}>
                                 <IconButton size="small" onClick={onOpenHistory}>
                                     <HistoryIcon fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                        )}
+                        {canRevert && (
+                            <Tooltip title={getString('missionRevert')}>
+                                <IconButton size="small" onClick={onRevert}>
+                                    <UndoIcon fontSize="small" />
                                 </IconButton>
                             </Tooltip>
                         )}

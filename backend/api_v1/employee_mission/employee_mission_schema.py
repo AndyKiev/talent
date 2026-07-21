@@ -72,9 +72,12 @@ class EmployeeMissionSchema(BaseModel):
     employee_id: int
     text: str
     start_date: date
-    duration_months: int
     end_date: date
     created_at: datetime
+    # Back-calculated from the period — duration is an input, not a column.
+    duration_months: int = 0
+    status_id: int
+    status_key: str = ""
 
     kpis: List[EmployeeMissionKpiSchema] = []
     comments: List[EmployeeMissionCommentSchema] = []
@@ -88,6 +91,9 @@ class EmployeeMissionSchema(BaseModel):
     is_expired: bool = False
     is_accomplished: bool = False
     is_active: bool = True
+    # True when an earlier KPI value exists in the trail, so the UI only offers
+    # "revert" when it would actually do something.
+    can_revert: bool = False
 
 
 class EmployeeMissionHistoryEntry(BaseModel):
@@ -104,3 +110,7 @@ class EmployeeMissionHistoryEntry(BaseModel):
     changes: Optional[dict] = None
     actor_name: Optional[str] = None
     changed_at: datetime
+    # Grouping key + label so the UI can group by mission without a second
+    # request; the label survives deletion because it comes from the trail.
+    mission_id: Optional[int] = None
+    mission_label: Optional[str] = None

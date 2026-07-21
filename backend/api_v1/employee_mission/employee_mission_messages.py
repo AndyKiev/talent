@@ -34,6 +34,48 @@ class MissionEmployeeNotFound(NotFoundError):
         super().__init__("Employee", "id", employee_id)
 
 
+class MissionStatusNotSeeded(DomainError):
+    """A required status row is missing. Statuses are resolved BY KEY, so this
+    means the seed never ran (or a key was renamed) — fail loudly rather than
+    write a mission with a wrong status."""
+
+    message_key = "missionStatusNotSeeded"
+
+    def __init__(self, key: str) -> None:
+        self.template_vars = {"key": key}
+        self.fallback = f"Mission status '{key}' is not seeded"
+        super().__init__(self.fallback)
+
+
+class MissionRevertDenied(DomainError):
+    """Only admin/dev may roll a mission's progress back."""
+
+    message_key = "missionRevertDenied"
+
+    def __init__(self) -> None:
+        self.template_vars = {}
+        self.fallback = "Only an administrator may revert a mission's status"
+        super().__init__(self.fallback)
+
+
+class MissionNothingToRevert(DomainError):
+    message_key = "missionNothingToRevert"
+
+    def __init__(self) -> None:
+        self.template_vars = {}
+        self.fallback = "No earlier KPI progress recorded for this mission"
+        super().__init__(self.fallback)
+
+
+class MissionRevertSuccess(DomainSuccess):
+    message_key = "missionRevertSuccess"
+
+    def __init__(self) -> None:
+        self.template_vars = {}
+        self.fallback = "Mission progress reverted"
+        DomainSuccess.__init__(self, self.fallback)
+
+
 class MissionMaxKpisReached(DomainError):
     """More KPIs than `mission_max_kpis` allows."""
 

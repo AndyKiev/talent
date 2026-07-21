@@ -31,6 +31,31 @@ function sideLabel(value: string | number | null): string {
     return value === null || value === undefined || value === '' ? '—' : String(value);
 }
 
+/** Field -> translation key for the ones worth naming; anything else shows raw. */
+const FIELD_LABEL_KEYS: Record<string, string> = {
+    text: 'missionText',
+    status: 'missionStatus',
+    competence: 'missionCompetence',
+    percent: 'kpiPercent',
+    period: 'missionPeriod',
+};
+
+/**
+ * Collapse start_date/end_date into a single `period` row.
+ *
+ * They always move together (end_date is derived from start + duration), so two
+ * separate lines said the same thing twice and pushed everything else down.
+ */
+function foldPeriod(
+    changes: Record<string, { old: string | number | null; new: string | number | null }>,
+) {
+    const { start_date: start, end_date: end, ...rest } = changes;
+    if (!start && !end) return rest;
+    const side = (which: 'old' | 'new') =>
+        [start?.[which], end?.[which]].filter(Boolean).join(' - ') || null;
+    return { period: { old: side('old'), new: side('new') }, ...rest };
+}
+
 /**
  * The mission + KPI change trail (who, when, what).
  *
@@ -81,7 +106,30 @@ export function MissionHistoryDialog({
                     </Typography>
                 )}
                 <Stack spacing={2}>
-                    {entries.map((entry) => {
+                    {Object.entries(
+                        // Group by mission so one mission's whole story reads
+                        // together instead of interleaving with the others.
+                        entries.reduce<Record<string, typeof entries>>((acc, e) => {
+                            const key = String(e.mission_id ?? 'other');
+                            (acc[key] ??= []).push(e);
+                            return acc;
+                        }, {}),
+                    ).map(([missionKey, group]) => (
+                        <Box key={missionKey}>
+                            {byEmployee && (
+                                <Typography
+                                    variant="subtitle2"
+                                    fontWeight={600}
+                                    sx={{ mb: 0.5 }}
+                                >
+                                    {group[0].mission_label ??
+                                        (missionKey === 'other'
+                                            ? getString('missionHistoryOther')
+                                            : `#${missionKey}`)}
+                                </Typography>
+                            )}
+                            <Stack spacing={1.5} sx={{ pl: byEmployee ? 1 : 0 }}>
+                    {group.map((entry) => {
                         const isDelete = entry.action === 'delete';
                         return (
                             <Box key={entry.id}>
@@ -107,19 +155,27 @@ export function MissionHistoryDialog({
                                 </Stack>
                                 {entry.changes && (
                                     <Stack sx={{ pl: 1, mt: 0.5 }}>
-                                        {Object.entries(entry.changes).map(([field, pair]) => (
-                                            <Typography key={field} variant="body2">
-                                                <Box component="span" fontWeight={600}>
-                                                    {field}
-                                                </Box>
-                                                : {sideLabel(pair.old)} → {sideLabel(pair.new)}
-                                            </Typography>
-                                        ))}
+                                        {Object.entries(foldPeriod(entry.changes)).map(
+                                            ([field, pair]) => (
+                                                <Typography key={field} variant="body2">
+                                                    <Box component="span" fontWeight={600}>
+                                                        {FIELD_LABEL_KEYS[field]
+                                                            ? getString(FIELD_LABEL_KEYS[field])
+                                                            : field}
+                                                    </Box>
+                                                    : {sideLabel(pair.old)} →{' '}
+                                                    {sideLabel(pair.new)}
+                                                </Typography>
+                                            ),
+                                        )}
                                     </Stack>
                                 )}
                             </Box>
                         );
                     })}
+                            </Stack>
+                        </Box>
+                    ))}
                 </Stack>
             </DialogContent>
             <DialogActions>

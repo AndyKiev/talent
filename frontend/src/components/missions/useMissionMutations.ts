@@ -15,6 +15,7 @@ import {
     saveDevelopmentVision,
     setMissionDimension,
     updateKpi,
+    revertMissionProgress,
     updateMission,
     updateMissionComment,
     type MissionCreate,
@@ -69,6 +70,12 @@ export function useMissionMutations({
         mutationFn: ({ missionId, body }: { missionId: number; body: MissionUpdate }) =>
             updateMission(missionId, body),
         onSuccess: (res, vars) => ok(res.detail, vars.missionId, onMissionSaved),
+        onError: fail,
+    });
+
+    const revertMissionMutation = useMutation({
+        mutationFn: (missionId: number) => revertMissionProgress(missionId),
+        onSuccess: (res) => ok(res.detail, res.data?.id),
         onError: fail,
     });
 
@@ -155,6 +162,7 @@ export function useMissionMutations({
         createMissionMutation,
         updateMissionMutation,
         deleteMissionMutation,
+        revertMissionMutation,
         createKpiMutation,
         updateKpiMutation,
         deleteKpiMutation,
