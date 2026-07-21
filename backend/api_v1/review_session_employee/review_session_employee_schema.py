@@ -31,7 +31,6 @@ class ReviewSessionEmployeeFieldsUpdate(BaseModel):
     employee_feedback: Optional[str] = None
     manager_feedback: Optional[str] = None
     results_achievements: Optional[str] = None
-    development_plan: Optional[str] = None
     trainings: Optional[str] = None
     competence_summary: Optional[str] = None
     summary_full_competence_list: Optional[bool] = None
@@ -59,7 +58,6 @@ class ReviewSessionEmployee(ReviewSessionEmployeeBase):
     employee_feedback: Optional[str] = None
     manager_feedback: Optional[str] = None
     results_achievements: Optional[str] = None
-    development_plan: Optional[str] = None
     trainings: Optional[str] = None
     competence_summary: Optional[str] = None
     summary_full_competence_list: bool = False

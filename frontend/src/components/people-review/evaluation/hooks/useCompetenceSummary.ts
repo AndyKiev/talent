@@ -6,7 +6,6 @@ import {
     CompetenceSide,
     type PendingFlip,
     type LocalEval,
-    type Mission,
     rankedCompetences,
     detectCompetenceFlip,
 } from '../evaluationHelpers';
@@ -20,7 +19,6 @@ interface Args {
     localEvals: LocalEval[];
     strongOptions: SummaryOption[];
     developOptions: SummaryOption[];
-    missions: Mission[];
     // Spine
     visibleEvals: LocalEval[];
     competenceLabel: (key: string) => string;
@@ -34,10 +32,8 @@ interface Args {
     setDevelopOptions: SummarySetter;
     setStrongDrafts: Dispatch<SetStateAction<Record<string, string>>>;
     setDevelopDrafts: Dispatch<SetStateAction<Record<string, string>>>;
-    setMissions: Dispatch<SetStateAction<Mission[]>>;
     setSummaryFullCompetenceList: Dispatch<SetStateAction<boolean>>;
     // Settings + misc
-    allowFullCompetenceList: boolean;
     summaryMinOptions: number;
     flushAutosave: () => Promise<void>;
     setActiveTab: Dispatch<SetStateAction<number>>;
@@ -47,23 +43,27 @@ interface Args {
 /**
  * Competence-summary orchestration: the strong / to-develop selects, star
  * re-ratings that flip a competence to the opposite list (confirmed atomically),
- * full-list toggle + reconcile, and the linked-comment drafts. Holds the three
+ * full-list toggle + reconcile, and the linked-comment drafts. Holds the two
  * pending-confirmation states that drive the summary dialogs.
+ *
+ * Deliberately knows NOTHING about development missions. Missions used to live
+ * in this same draft as free-text `dimension_key` strings, so changing the
+ * summary had to null out any mission pointing at a dropped competence. They are
+ * now employee-owned rows linked to review_dimensions.id, independent of any one
+ * session's summary — so a reviewer editing this summary must never silently
+ * rewrite the employee's standing development plan.
  */
 export function useCompetenceSummary({
     rid, updateEvalDraft,
-    localEvals, strongOptions, developOptions, missions,
+    localEvals, strongOptions, developOptions,
     visibleEvals, competenceLabel, isStrongPicked, isDevelopPicked, summaryFullListActive,
     setLocalEvals, setDevelopOptions, setStrongDrafts, setDevelopDrafts,
-    setMissions, setSummaryFullCompetenceList,
-    allowFullCompetenceList, summaryMinOptions, flushAutosave, setActiveTab, onError,
+    setSummaryFullCompetenceList,
+    summaryMinOptions, flushAutosave, setActiveTab, onError,
 }: Args) {
     // A star re-rating held back because it would flip a competence to the
     // opposite summary list — confirmed via a dialog, then applied atomically.
     const [pendingFlip, setPendingFlip] = useState<PendingFlip | null>(null);
-    // A direct removal of a to-develop competence that is linked to a mission —
-    // held back for confirmation because it unlinks that mission (allow-full off).
-    const [pendingDevelopRemoval, setPendingDevelopRemoval] = useState<{ key: string; name: string } | null>(null);
     // Turning the full-list switch OFF re-arms ranked selection, so any picked
     // competence that no longer fits its side is re-evaluated and held here.
     const [pendingSummaryReconcile, setPendingSummaryReconcile] =
@@ -138,9 +138,6 @@ export function useCompetenceSummary({
             developOptions: d.developOptions.filter(o => !developDrop.has(o.dimension_key)),
             strongDrafts: dropKeys(d.strongDrafts, strongDrop),
             developDrafts: dropKeys(d.developDrafts, developDrop),
-            missions: !allowFullCompetenceList
-                ? d.missions.map(m => (m.dimension_key && developDrop.has(m.dimension_key) ? { ...m, dimension_key: null } : m))
-                : d.missions,
             summaryFullCompetenceList: false,
         }));
         setPendingSummaryReconcile(null);
@@ -157,26 +154,11 @@ export function useCompetenceSummary({
         setter(prev => (prev.some(o => o.dimension_key === key) ? prev : [...prev, { dimension_key: key, comments: [] }]));
     const removeSummaryOption = (setter: SummarySetter, key: string) =>
         setter(prev => prev.filter(o => o.dimension_key !== key));
-    // Removing a to-develop competence directly also unlinks it from any mission
-    // that targeted it — but only when missions are restricted to the to-develop
-    // shortlist (allow-full off). Confirm first when a mission link would be dropped.
-    const removeDevelopOption = (key: string) => {
-        const willUnlinkMission = !allowFullCompetenceList && missions.some(m => m.dimension_key === key);
-        if (willUnlinkMission) {
-            setPendingDevelopRemoval({ key, name: competenceLabel(key) });
-            return;
-        }
-        removeSummaryOption(setDevelopOptions, key);
-    };
-
-    // Confirm a held to-develop removal: drop the competence and unlink its mission.
-    const confirmDevelopRemoval = () => {
-        if (!pendingDevelopRemoval) return;
-        const { key } = pendingDevelopRemoval;
-        removeSummaryOption(setDevelopOptions, key);
-        setMissions(prev => prev.map(m => (m.dimension_key === key ? { ...m, dimension_key: null } : m)));
-        setPendingDevelopRemoval(null);
-    };
+    // Removing a to-develop competence is now a plain removal. It used to need a
+    // confirmation dialog because it also unlinked any mission targeting that
+    // competence; missions no longer live in this draft, so there is nothing to
+    // warn about and nothing to cascade.
+    const removeDevelopOption = (key: string) => removeSummaryOption(setDevelopOptions, key);
     const addSummaryComment = (setter: SummarySetter, key: string, text: string) =>
         setter(prev => prev.map(o => (o.dimension_key === key ? { ...o, comments: [...o.comments, text.trim()] } : o)));
     const removeSummaryComment = (setter: SummarySetter, key: string, index: number) =>
@@ -226,10 +208,7 @@ export function useCompetenceSummary({
             summaryMinOptions,
         );
         if (!side) { setCriterion(evalId, index, value); return; }
-        // A competence leaving the develop list loses its mission link — warn too.
-        const missionLinked = side === CompetenceSide.Develop && !allowFullCompetenceList
-            && missions.some(m => m.dimension_key === ev.dimension_key);
-        setPendingFlip({ evalId, index, value, key: ev.dimension_key, side, name: competenceLabel(ev.dimension_key), missionLinked });
+        setPendingFlip({ evalId, index, value, key: ev.dimension_key, side, name: competenceLabel(ev.dimension_key) });
     };
 
     // Confirm the held re-rating: flush other pending edits, then persist the flip
@@ -265,11 +244,6 @@ export function useCompetenceSummary({
             developOptions: side === CompetenceSide.Develop ? d.developOptions.filter(o => o.dimension_key !== key) : d.developOptions,
             strongDrafts: side === CompetenceSide.Strong ? dropKey(d.strongDrafts) : d.strongDrafts,
             developDrafts: side === CompetenceSide.Develop ? dropKey(d.developDrafts) : d.developDrafts,
-            // Drop the link from any mission that targeted this competence for
-            // development (only when missions are restricted to the shortlist).
-            missions: side === CompetenceSide.Develop && !allowFullCompetenceList
-                ? d.missions.map(m => (m.dimension_key === key ? { ...m, dimension_key: null } : m))
-                : d.missions,
         }));
         setPendingFlip(null);
     };
@@ -280,10 +254,9 @@ export function useCompetenceSummary({
         activateCompetenceTab,
         addSummaryOption, removeSummaryOption, removeDevelopOption,
         addSummaryComment, removeSummaryComment, editSummaryComment, reorderSummaryOption,
-        handleSummaryFullListToggle, confirmSummaryReconcile, confirmDevelopRemoval,
+        handleSummaryFullListToggle, confirmSummaryReconcile,
         handleCriterionChange, confirmFlip,
         pendingFlip, setPendingFlip,
-        pendingDevelopRemoval, setPendingDevelopRemoval,
         pendingSummaryReconcile, setPendingSummaryReconcile,
     };
 }

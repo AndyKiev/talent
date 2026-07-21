@@ -116,7 +116,6 @@ export interface ReviewSessionEmployee {
     employee_feedback: string | null;
     manager_feedback: string | null;
     results_achievements: string | null;
-    development_plan: string | null;
     trainings: string | null;
     competence_summary: string | null;
     // Per-review opt-in for the full competence list in the summary selects (see
@@ -129,7 +128,6 @@ export interface RSEFieldsUpdate {
     employee_feedback?: string | null;
     manager_feedback?: string | null;
     results_achievements?: string | null;
-    development_plan?: string | null;
     trainings?: string | null;
     competence_summary?: string | null;
     summary_full_competence_list?: boolean;

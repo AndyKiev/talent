@@ -93,6 +93,7 @@ import { Route as EmployeesEmployeeIdTrainingsIndexRouteImport } from './routes/
 import { Route as EmployeesEmployeeIdTalent_auditIndexRouteImport } from './routes/employees/$employeeId/talent_audit/index'
 import { Route as EmployeesEmployeeIdSummaryIndexRouteImport } from './routes/employees/$employeeId/summary/index'
 import { Route as EmployeesEmployeeIdResponsibility_historyIndexRouteImport } from './routes/employees/$employeeId/responsibility_history/index'
+import { Route as EmployeesEmployeeIdMissionsIndexRouteImport } from './routes/employees/$employeeId/missions/index'
 import { Route as EmployeesEmployeeIdEventsIndexRouteImport } from './routes/employees/$employeeId/events/index'
 import { Route as EmployeesEmployeeIdDepartmentsIndexRouteImport } from './routes/employees/$employeeId/departments/index'
 import { Route as EmployeesEmployeeIdCareer_historyIndexRouteImport } from './routes/employees/$employeeId/career_history/index'
@@ -611,6 +612,12 @@ const EmployeesEmployeeIdResponsibility_historyIndexRoute =
   EmployeesEmployeeIdResponsibility_historyIndexRouteImport.update({
     id: '/responsibility_history/',
     path: '/responsibility_history/',
+    getParentRoute: () => EmployeesEmployeeIdRouteRoute,
+  } as any)
+const EmployeesEmployeeIdMissionsIndexRoute =
+  EmployeesEmployeeIdMissionsIndexRouteImport.update({
+    id: '/missions/',
+    path: '/missions/',
     getParentRoute: () => EmployeesEmployeeIdRouteRoute,
   } as any)
 const EmployeesEmployeeIdEventsIndexRoute =
@@ -1136,6 +1143,7 @@ export interface FileRoutesByFullPath {
   '/employees/$employeeId/career_history': typeof EmployeesEmployeeIdCareer_historyIndexRoute
   '/employees/$employeeId/departments': typeof EmployeesEmployeeIdDepartmentsIndexRoute
   '/employees/$employeeId/events': typeof EmployeesEmployeeIdEventsIndexRoute
+  '/employees/$employeeId/missions': typeof EmployeesEmployeeIdMissionsIndexRoute
   '/employees/$employeeId/responsibility_history': typeof EmployeesEmployeeIdResponsibility_historyIndexRoute
   '/employees/$employeeId/summary': typeof EmployeesEmployeeIdSummaryIndexRoute
   '/employees/$employeeId/talent_audit': typeof EmployeesEmployeeIdTalent_auditIndexRoute
@@ -1260,6 +1268,7 @@ export interface FileRoutesByTo {
   '/employees/$employeeId/career_history': typeof EmployeesEmployeeIdCareer_historyIndexRoute
   '/employees/$employeeId/departments': typeof EmployeesEmployeeIdDepartmentsIndexRoute
   '/employees/$employeeId/events': typeof EmployeesEmployeeIdEventsIndexRoute
+  '/employees/$employeeId/missions': typeof EmployeesEmployeeIdMissionsIndexRoute
   '/employees/$employeeId/responsibility_history': typeof EmployeesEmployeeIdResponsibility_historyIndexRoute
   '/employees/$employeeId/summary': typeof EmployeesEmployeeIdSummaryIndexRoute
   '/employees/$employeeId/talent_audit': typeof EmployeesEmployeeIdTalent_auditIndexRoute
@@ -1413,6 +1422,7 @@ export interface FileRoutesById {
   '/employees/$employeeId/career_history/': typeof EmployeesEmployeeIdCareer_historyIndexRoute
   '/employees/$employeeId/departments/': typeof EmployeesEmployeeIdDepartmentsIndexRoute
   '/employees/$employeeId/events/': typeof EmployeesEmployeeIdEventsIndexRoute
+  '/employees/$employeeId/missions/': typeof EmployeesEmployeeIdMissionsIndexRoute
   '/employees/$employeeId/responsibility_history/': typeof EmployeesEmployeeIdResponsibility_historyIndexRoute
   '/employees/$employeeId/summary/': typeof EmployeesEmployeeIdSummaryIndexRoute
   '/employees/$employeeId/talent_audit/': typeof EmployeesEmployeeIdTalent_auditIndexRoute
@@ -1567,6 +1577,7 @@ export interface FileRouteTypes {
     | '/employees/$employeeId/career_history'
     | '/employees/$employeeId/departments'
     | '/employees/$employeeId/events'
+    | '/employees/$employeeId/missions'
     | '/employees/$employeeId/responsibility_history'
     | '/employees/$employeeId/summary'
     | '/employees/$employeeId/talent_audit'
@@ -1691,6 +1702,7 @@ export interface FileRouteTypes {
     | '/employees/$employeeId/career_history'
     | '/employees/$employeeId/departments'
     | '/employees/$employeeId/events'
+    | '/employees/$employeeId/missions'
     | '/employees/$employeeId/responsibility_history'
     | '/employees/$employeeId/summary'
     | '/employees/$employeeId/talent_audit'
@@ -1843,6 +1855,7 @@ export interface FileRouteTypes {
     | '/employees/$employeeId/career_history/'
     | '/employees/$employeeId/departments/'
     | '/employees/$employeeId/events/'
+    | '/employees/$employeeId/missions/'
     | '/employees/$employeeId/responsibility_history/'
     | '/employees/$employeeId/summary/'
     | '/employees/$employeeId/talent_audit/'
@@ -2512,6 +2525,13 @@ declare module '@tanstack/react-router' {
       path: '/responsibility_history'
       fullPath: '/employees/$employeeId/responsibility_history'
       preLoaderRoute: typeof EmployeesEmployeeIdResponsibility_historyIndexRouteImport
+      parentRoute: typeof EmployeesEmployeeIdRouteRoute
+    }
+    '/employees/$employeeId/missions/': {
+      id: '/employees/$employeeId/missions/'
+      path: '/missions'
+      fullPath: '/employees/$employeeId/missions'
+      preLoaderRoute: typeof EmployeesEmployeeIdMissionsIndexRouteImport
       parentRoute: typeof EmployeesEmployeeIdRouteRoute
     }
     '/employees/$employeeId/events/': {
@@ -3513,6 +3533,7 @@ interface EmployeesEmployeeIdRouteRouteChildren {
   EmployeesEmployeeIdCareer_historyIndexRoute: typeof EmployeesEmployeeIdCareer_historyIndexRoute
   EmployeesEmployeeIdDepartmentsIndexRoute: typeof EmployeesEmployeeIdDepartmentsIndexRoute
   EmployeesEmployeeIdEventsIndexRoute: typeof EmployeesEmployeeIdEventsIndexRoute
+  EmployeesEmployeeIdMissionsIndexRoute: typeof EmployeesEmployeeIdMissionsIndexRoute
   EmployeesEmployeeIdResponsibility_historyIndexRoute: typeof EmployeesEmployeeIdResponsibility_historyIndexRoute
   EmployeesEmployeeIdSummaryIndexRoute: typeof EmployeesEmployeeIdSummaryIndexRoute
   EmployeesEmployeeIdTalent_auditIndexRoute: typeof EmployeesEmployeeIdTalent_auditIndexRoute
@@ -3527,6 +3548,8 @@ const EmployeesEmployeeIdRouteRouteChildren: EmployeesEmployeeIdRouteRouteChildr
     EmployeesEmployeeIdDepartmentsIndexRoute:
       EmployeesEmployeeIdDepartmentsIndexRoute,
     EmployeesEmployeeIdEventsIndexRoute: EmployeesEmployeeIdEventsIndexRoute,
+    EmployeesEmployeeIdMissionsIndexRoute:
+      EmployeesEmployeeIdMissionsIndexRoute,
     EmployeesEmployeeIdResponsibility_historyIndexRoute:
       EmployeesEmployeeIdResponsibility_historyIndexRoute,
     EmployeesEmployeeIdSummaryIndexRoute: EmployeesEmployeeIdSummaryIndexRoute,

@@ -40,6 +40,14 @@ SPEC: dict[str, list[str]] = {
     "review_dimension_criterion": ["create", "modify", "delete"],
     "review_level": ["create", "modify", "delete"],
     "review_level_requirement": ["create", "modify", "delete"],
+    # Employee development missions. Admin holds full CRUD so a mistake made by an
+    # oversight manager can be fixed; every admin write is still change_log'd.
+    "employee_mission": ["view", "create", "modify", "delete"],
+    "employee_mission_kpi": ["view", "create", "modify", "delete"],
+    "employee_mission_dimension_link": ["view", "create", "modify", "delete", "link"],
+    "employee_mission_comment": ["view", "create", "modify", "delete"],
+    "employee_development_vision": ["view", "create", "modify", "delete"],
+    "employee_mission_history": ["view"],
 }
 
 TARGET_GROUP = "admin"

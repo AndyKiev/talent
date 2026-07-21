@@ -9,7 +9,7 @@ import {
     type RSEFieldsUpdate,
     type EmployeeLanguageInput,
 } from '../peopleReviewApi';
-import { serializeFacts, serializeMissions, FOREIGN_LANGUAGES } from './evaluationHelpers';
+import { serializeFacts, FOREIGN_LANGUAGES } from './evaluationHelpers';
 import type { EvaluationDraft } from '../peopleReviewStore';
 
 // Background autosave for the evaluation draft. Replaces the manual Save button:
@@ -62,13 +62,11 @@ function buildEvalUpdates(localEvals: EvaluationDraft['localEvals']): Evaluation
 }
 
 function buildRseFields(d: EvaluationDraft): RSEFieldsUpdate {
-    const hasMissions = d.missions.some((m) => m.text.trim());
     const hasSummary = d.strongOptions.length > 0 || d.developOptions.length > 0;
     return {
         employee_feedback: d.employeeFeedback || null,
         manager_feedback: d.managerFeedback || null,
         results_achievements: serializeFacts(d.results) || null,
-        development_plan: hasMissions ? serializeMissions(d.missions) : null,
         trainings: d.trainings || null,
         competence_summary: hasSummary
             ? JSON.stringify({ strong: d.strongOptions, develop: d.developOptions })

@@ -110,3 +110,6 @@ free-claude-code/
 
 # Playwright stray output when run from repo root (real output is e2e/test-results)
 /test-results/
+
+# Local DB dumps taken before destructive migrations (never commit data).
+/backups/

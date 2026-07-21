@@ -144,6 +144,12 @@ __all__ = {
     "Interview",
     "InterviewInterviewer",
     "InterviewFeedback",
+    # Employee development missions (employee-scoped development plan)
+    "EmployeeMission",
+    "EmployeeMissionKpi",
+    "EmployeeMissionDimensionLink",
+    "EmployeeMissionComment",
+    "EmployeeDevelopmentVision",
 }
 
 from backend.api_v1.lang.lang_model import Lang
@@ -476,4 +482,21 @@ from backend.api_v1.interview_interviewer.interview_interviewer_model import (
 )
 from backend.api_v1.interview_feedback.interview_feedback_model import (
     InterviewFeedback,
+)
+
+# Employee development missions — the host (employee_missions) first, then its
+# children and the 1:1 competence link (FK into review_dimensions), then the
+# employee-level development vision.
+from backend.api_v1.employee_mission.employee_mission_model import EmployeeMission
+from backend.api_v1.employee_mission_kpi.employee_mission_kpi_model import (
+    EmployeeMissionKpi,
+)
+from backend.api_v1.employee_mission_dimension_link.employee_mission_dimension_link_model import (
+    EmployeeMissionDimensionLink,
+)
+from backend.api_v1.employee_mission_comment.employee_mission_comment_model import (
+    EmployeeMissionComment,
+)
+from backend.api_v1.employee_development_vision.employee_development_vision_model import (
+    EmployeeDevelopmentVision,
 )

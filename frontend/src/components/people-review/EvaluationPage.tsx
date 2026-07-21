@@ -65,7 +65,6 @@ import { useTempoAlbum } from './evaluation/hooks/useTempoAlbum';
 import { useEmployeeLevel } from './evaluation/hooks/useEmployeeLevel';
 import { useCompetenceSummary } from './evaluation/hooks/useCompetenceSummary';
 import { useDimensionFacts } from './evaluation/hooks/useDimensionFacts';
-import { useMissions } from './evaluation/hooks/useMissions';
 
 export function EvaluationPage() {
     const { sessionId: sessionIdParam, employeeId: employeeIdParam } = useParams({ strict: false }) as { sessionId: string; employeeId: string };
@@ -82,13 +81,10 @@ export function EvaluationPage() {
     // inside people-review. Read from the SESSION-FROZEN snapshot, not the live
     // setting — a settings change after open must not re-gate this session.
     const { enabled: canEditTalentStatus } = useFrozenBooleanSetting(sid, 'people_review_edit_talent_status');
-    // Developer settings for the individual development plan.
-    const { value: minMissions } = useIntegerSetting('idp_min_missions', 1);
-    const { value: maxMissions } = useIntegerSetting('idp_max_missions', 5);
-    // Min competences each summary select offers, and the mission-KPI char cap.
+    // Min competences each summary select offers. The development-plan settings
+    // (mission counts, KPI length, competence-list mode) are read inside
+    // MissionsPanel now, since the plan is no longer part of this page's draft.
     const { value: summaryMinOptions } = useIntegerSetting('pr_summary_min_options', 2);
-    const { value: kpiMaxLength } = useIntegerSetting('idp_kpi_max_length', 126);
-    const { enabled: allowFullCompetenceList } = useBooleanSetting('idp_allow_full_competence_list');
     // When ON, each review may switch its two competence-summary selects to the
     // full competence list. Session-frozen, same as canEditTalentStatus above.
     const { enabled: allowSummaryFullList } = useFrozenBooleanSetting(sid, 'people_review_summary_full_competence_list');
@@ -126,7 +122,7 @@ export function EvaluationPage() {
     const {
         storeDraft, draft, updateEvalDraft, hydrationReady,
         setLocalEvals, setLangSel, setEmployeeFeedback, setManagerFeedback,
-        setResults, setMissions, setTrainings,
+        setResults, setTrainings,
         setStrongOptions, setDevelopOptions, setStrongDrafts, setDevelopDrafts,
         setSummaryFullCompetenceList,
     } = useEvaluationDraft({
@@ -135,7 +131,7 @@ export function EvaluationPage() {
     });
     const {
         localEvals, langSel, employeeFeedback, managerFeedback,
-        results, missions, trainings,
+        results, trainings,
         strongOptions, developOptions, strongDrafts, developDrafts,
         summaryFullCompetenceList,
     } = draft;
@@ -326,18 +322,17 @@ export function EvaluationPage() {
         copyFactToStrong, copyImprovementToDevelop, activateCompetenceTab,
         addSummaryOption, removeSummaryOption, removeDevelopOption,
         addSummaryComment, removeSummaryComment, editSummaryComment, reorderSummaryOption,
-        handleSummaryFullListToggle, confirmSummaryReconcile, confirmDevelopRemoval,
+        handleSummaryFullListToggle, confirmSummaryReconcile,
         handleCriterionChange, confirmFlip,
         pendingFlip, setPendingFlip,
-        pendingDevelopRemoval, setPendingDevelopRemoval,
         pendingSummaryReconcile, setPendingSummaryReconcile,
     } = useCompetenceSummary({
         rid, updateEvalDraft,
-        localEvals, strongOptions, developOptions, missions,
+        localEvals, strongOptions, developOptions,
         visibleEvals, competenceLabel, isStrongPicked, isDevelopPicked, summaryFullListActive,
         setLocalEvals, setDevelopOptions, setStrongDrafts, setDevelopDrafts,
-        setMissions, setSummaryFullCompetenceList,
-        allowFullCompetenceList, summaryMinOptions, flushAutosave, setActiveTab,
+        setSummaryFullCompetenceList,
+        summaryMinOptions, flushAutosave, setActiveTab,
         onError: (message) => setSnackbar({ open: true, message, severity: 'error' }),
     });
 
@@ -353,18 +348,6 @@ export function EvaluationPage() {
         addImprovement, removeImprovement, editImprovement, reorderImprovement,
         moveFact, moveImprovement,
     } = useDimensionFacts({ setLocalEvals });
-
-    // --- Development plan (missions) ------------------------------------------
-    const {
-        newMissionText, setNewMissionText,
-        newMissionKpi, setNewMissionKpi,
-        newMissionCompetence, setNewMissionCompetence,
-        addMission, removeMission, updateMission, setMissionCompetence, updateMissionKpi,
-        developCompetenceOptions, allCompetenceOptions,
-    } = useMissions({
-        missions, setMissions, maxMissions,
-        developOptions, visibleEvals, competenceLabel, competenceColor,
-    });
 
     // Scope switched and the URL employee fell out of it — the queries hook is
     // redirecting to the first in-scope employee; show a spinner meanwhile
@@ -653,30 +636,15 @@ export function EvaluationPage() {
                                         )
                                     )}
 
-                                    {/* Development plan — the third analysis tab, right
-                                        after the competence summary it builds on. */}
-                                    {analysisTab === 2 && (
+                                    {/* Development plan — the third analysis tab. The
+                                        plan now belongs to the EMPLOYEE, not this review
+                                        record, so the section only needs the employee id;
+                                        editability, competence options and persistence
+                                        all live inside the shared MissionsPanel. */}
+                                    {analysisTab === 2 && employeeId != null && (
                                         <DevelopmentPlanSection
-                                            isEditable={showEditing}
+                                            employeeId={employeeId}
                                             getString={getString}
-                                            missions={missions}
-                                            onUpdateMission={updateMission}
-                                            onUpdateMissionKpi={updateMissionKpi}
-                                            onAddMission={addMission}
-                                            onRemoveMission={removeMission}
-                                            onSetMissionCompetence={setMissionCompetence}
-                                            newMissionText={newMissionText}
-                                            onNewMissionTextChange={setNewMissionText}
-                                            newMissionKpi={newMissionKpi}
-                                            onNewMissionKpiChange={setNewMissionKpi}
-                                            newMissionCompetence={newMissionCompetence}
-                                            onNewMissionCompetenceChange={setNewMissionCompetence}
-                                            minMissions={minMissions}
-                                            maxMissions={maxMissions}
-                                            kpiMaxLength={kpiMaxLength}
-                                            developCompetenceOptions={developCompetenceOptions}
-                                            allCompetenceOptions={allCompetenceOptions}
-                                            allowFullCompetenceList={allowFullCompetenceList}
                                         />
                                     )}
                                 </Box>
@@ -840,9 +808,6 @@ export function EvaluationPage() {
                 pendingFlip={pendingFlip}
                 setPendingFlip={setPendingFlip}
                 confirmFlip={confirmFlip}
-                pendingDevelopRemoval={pendingDevelopRemoval}
-                setPendingDevelopRemoval={setPendingDevelopRemoval}
-                confirmDevelopRemoval={confirmDevelopRemoval}
                 pendingSummaryReconcile={pendingSummaryReconcile}
                 setPendingSummaryReconcile={setPendingSummaryReconcile}
                 confirmSummaryReconcile={confirmSummaryReconcile}

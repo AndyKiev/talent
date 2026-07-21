@@ -7,13 +7,11 @@ import type {
 } from './peopleReviewApi';
 import {
     type LocalEval,
-    type Mission,
     type SummaryOption,
     competenceHint,
     competenceName,
     parseDescriptors,
     parseFacts,
-    parseMissions,
     parseSummarySide,
 } from './evaluation/evaluationHelpers';
 
@@ -28,7 +26,6 @@ export interface EvaluationDraft {
     employeeFeedback: string;
     managerFeedback: string;
     results: string[];
-    missions: Mission[];
     trainings: string;
     strongOptions: SummaryOption[];
     developOptions: SummaryOption[];
@@ -57,7 +54,6 @@ export const EMPTY_EVAL_DRAFT: EvaluationDraft = Object.freeze({
     employeeFeedback: '',
     managerFeedback: '',
     results: [],
-    missions: [],
     trainings: '',
     strongOptions: [],
     developOptions: [],
@@ -144,7 +140,6 @@ export function buildEvaluationDraft(
         employeeFeedback: rseDetail.employee_feedback ?? '',
         managerFeedback: rseDetail.manager_feedback ?? '',
         results: parseFacts(rseDetail.results_achievements),
-        missions: parseMissions(rseDetail.development_plan),
         trainings: rseDetail.trainings ?? '',
         strongOptions: parseSummarySide(summary.strong),
         developOptions: parseSummarySide(summary.develop),

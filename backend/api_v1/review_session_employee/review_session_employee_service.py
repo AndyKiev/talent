@@ -1093,8 +1093,8 @@ class ReviewSessionEmployeeService(BaseService):
             "employee_feedback": record.employee_feedback,
             "manager_feedback": record.manager_feedback,
             "training_done": training_done,
-            "idp_missions": self._development_missions(
-                record.development_plan, dim_meta
+            "idp_missions": await self._development_missions(
+                record.employee_id, dim_meta
             ),
             "strengths": self._competence_summary_text(
                 record.competence_summary, "strong"
@@ -1116,45 +1116,56 @@ class ReviewSessionEmployeeService(BaseService):
         """PEOPLE_PLANET -> PeoplePlanet (frontend competence-key convention)."""
         return "".join(part.capitalize() for part in str(key).split("_") if part)
 
-    @staticmethod
-    def _development_missions(
-        development_plan: Optional[str],
+    async def _development_missions(
+        self,
+        employee_id: int,
         dim_meta: dict[str, tuple[str, str]],
     ) -> list[dict]:
-        """development_plan is a JSON array of missions. Accepts BOTH the legacy
-        shape (plain strings) and the new shape ({text, kpi, dimension_key}). Returns
-        enriched dicts {text, kpi, dimension_key, name, color} so the album can show
-        each mission's linked competence in its own color (same as the page)."""
-        if not development_plan:
-            return []
-        import json
+        """The employee's development missions, newest first, for the TEMPO album.
 
-        try:
-            arr = json.loads(development_plan)
-        except (ValueError, TypeError):
-            arr = [development_plan]
-        if not isinstance(arr, list):
-            return []
+        Reads the employee-scoped `employee_missions` tables. It used to parse a
+        JSON blob off `review_session_employees.development_plan`; the plan now
+        belongs to the EMPLOYEE, which has one visible consequence worth knowing:
+        re-exporting an album for an OLD session shows the employee's CURRENT
+        missions, not a snapshot of what the plan looked like during that session.
+
+        The returned dict shape is deliberately UNCHANGED
+        ({text, kpi, dimension_key, name, color}) so `tempo_html`, `tempo_pdf`
+        (`_idp_block`) and `tempo_pptx` keep working untouched — that contract is
+        the clean seam of this refactor. `kpi` joins the mission's KPI texts,
+        since the album has one line for it while a mission may now carry several.
+        `dim_meta` is still keyed by dimension KEY, so the linked competence keeps
+        resolving to the same name/colour the page uses.
+        """
+        from backend.api_v1.employee_mission.employee_mission_model import (
+            EmployeeMission,
+        )
+
+        stmt = (
+            select(EmployeeMission)
+            .where(EmployeeMission.employee_id == employee_id)
+            .order_by(EmployeeMission.start_date.desc(), EmployeeMission.id.desc())
+        )
+        missions = (await self.session.execute(stmt)).scalars().all()
 
         out: list[dict] = []
-        for item in arr:
-            if isinstance(item, dict):
-                text = str(item.get("text") or "").strip()
-                kpi = str(item.get("kpi") or "").strip()
-                key = item.get("dimension_key")
-            else:
-                text = str(item or "").strip()
-                kpi = ""
-                key = None
+        for mission in missions:
+            text = (mission.text or "").strip()
             if not text:
                 continue
+            link = mission.dimension_link
+            key = link.dimension.key if link and link.dimension else None
             name, color = (None, None)
             if key:
                 name, color = dim_meta.get(str(key), (None, None))
+                # dim_meta only covers the dimensions evaluated in this review; a
+                # mission may target another one, so fall back to the row itself.
+                if name is None and link.dimension is not None:
+                    name, color = link.dimension.name, link.dimension.color
             out.append(
                 {
                     "text": text,
-                    "kpi": kpi,
+                    "kpi": "; ".join(k.text.strip() for k in mission.kpis if k.text),
                     "dimension_key": str(key) if key else None,
                     "name": name,
                     "color": color,

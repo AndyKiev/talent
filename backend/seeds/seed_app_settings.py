@@ -80,6 +80,46 @@ APP_SETTINGS = [
         "visible_to_regular": True,
     },
     {
+        # Upper bound (in months) an oversight manager may set as a development
+        # mission's duration. The mission form's duration wheel is capped to this
+        # value and employee_mission_service re-validates it. Deliberately NOT a
+        # DB CHECK constraint — a CHECK would make this setting a lie.
+        # visible_to_regular because the oversight manager filling the form is not
+        # necessarily an admin. App-only.
+        "key": "mission_max_duration_months",
+        "value": 36,
+        "value_type_key": "integer",
+        "label_key": "settingMissionMaxDurationMonths",
+        "description_key": "settingMissionMaxDurationMonthsDesc",
+        "user_override_allowed": False,
+        "visible_to_regular": True,
+    },
+    {
+        # Max KPIs a single development mission may carry. Enforced in
+        # employee_mission_service (create) and employee_mission_kpi_service
+        # (add-one); the FE hides "Add KPI" at the cap. App-only.
+        "key": "mission_max_kpis",
+        "value": 2,
+        "value_type_key": "integer",
+        "label_key": "settingMissionMaxKpis",
+        "description_key": "settingMissionMaxKpisDesc",
+        "user_override_allowed": False,
+        "visible_to_regular": True,
+    },
+    {
+        # Max ACTIVE missions an employee may have at once. "Active" excludes
+        # missions whose period has ended AND missions that are accomplished
+        # (every KPI at 100%) — so finishing or outliving a mission frees a slot
+        # without anyone deleting anything. Checked on create only. App-only.
+        "key": "mission_max_active",
+        "value": 5,
+        "value_type_key": "integer",
+        "label_key": "settingMissionMaxActive",
+        "description_key": "settingMissionMaxActiveDesc",
+        "user_override_allowed": False,
+        "visible_to_regular": True,
+    },
+    {
         # Max interviewers that may be attached to a single interview. Enforced on
         # BOTH the FE (schedule dialog slices the picker) and the BE
         # (interview_service create/update). App-only.

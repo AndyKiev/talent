@@ -20,7 +20,7 @@ const STATUS_COLOR: Record<string, 'warning' | 'success' | 'error' | 'default'> 
 };
 
 // Departments tab removed — its content now lives inside the Summary tab.
-const TAB_VALUES = ['summary', 'events', 'talent_audit', 'career_history', 'responsibility_history', 'trainings'];
+const TAB_VALUES = ['summary', 'events', 'talent_audit', 'missions', 'career_history', 'responsibility_history', 'trainings'];
 
 export function EmployeeCardLayout() {
     const { employeeId } = useParams({ from: '/employees/$employeeId' });
@@ -57,6 +57,9 @@ export function EmployeeCardLayout() {
         { label: cfl(getString('summary') || 'Summary'), value: 'summary' },
         { label: cfl(getString('events') || 'Events'), value: 'events' },
         { label: cfl(getString('talentAudit') || 'Talent Audit'), value: 'talent_audit' },
+        // Development plan (missions + KPIs) — sits next to the talent audit,
+        // which is the other forward-looking view of the same person.
+        { label: cfl(getString('missions') || 'Missions'), value: 'missions' },
         { label: cfl(getString('careerHistory') || 'Career History'), value: 'career_history' },
         { label: cfl(getString('responsibilityHistory') || 'Responsibility History'), value: 'responsibility_history' },
         ...(trainingModuleOn

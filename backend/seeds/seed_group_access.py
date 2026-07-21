@@ -59,6 +59,13 @@ HR_ESSENCES = [
 HR_VIEW_ONLY_ESSENCES = [
     "department",
     "pipeline_status",
+    # Employee development missions: HR reads the plans and the KPI change trail
+    # but never edits them — only the employee's oversight manager (or admin) may
+    # write. employee_mission_history is a dedicated read-only essence so HR does
+    # NOT need change_log, which would expose the whole system audit trail.
+    "employee_mission",
+    "employee_mission_kpi",
+    "employee_mission_history",
 ]
 HR_VERBS = ["view", "create", "modify", "delete"]
 HR_GROUPS = ["HRM", "HRS"]

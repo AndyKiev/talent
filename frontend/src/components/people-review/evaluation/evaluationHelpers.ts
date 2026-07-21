@@ -257,54 +257,6 @@ export const FOREIGN_LANGUAGES: { key: string; labelKey: 'english' | 'french' }[
     { key: 'french', labelKey: 'french' },
 ];
 
-// Individual development plan — a numbered list of missions (like results/facts),
-// stored as a JSON array. Each mission can optionally be linked to the competence
-// (by dimension_key) it is focused on developing, so the album can color it.
-export interface Mission {
-    /** Task description (the "what" of the mission). */
-    text: string;
-    /** KPI — measurable target, max 126 characters, required when adding. */
-    kpi: string;
-    // dimension_key of the linked competence-to-develop, or null when unlinked.
-    dimension_key: string | null;
-}
-
-/**
- * Parse the stored development plan into a Mission[]. Accepts BOTH the legacy
- * shape (a JSON array of plain strings) and the new shape (array of
- * `{text, dimension_key}` objects), so existing records keep working.
- */
-export function parseMissions(raw: string | null): Mission[] {
-    if (!raw) return [];
-    let parsed: unknown;
-    try {
-        parsed = JSON.parse(raw);
-    } catch {
-        return [];
-    }
-    if (!Array.isArray(parsed)) return [];
-    return parsed.map((item): Mission => {
-        if (item && typeof item === 'object' && 'text' in item) {
-            const obj = item as { text?: unknown; kpi?: unknown; dimension_key?: unknown };
-            const key = obj.dimension_key == null ? null : String(obj.dimension_key) || null;
-            return {
-                text: obj.text == null ? '' : String(obj.text),
-                kpi: obj.kpi == null ? '' : String(obj.kpi),
-                dimension_key: key,
-            };
-        }
-        return { text: item == null ? '' : String(item), kpi: '', dimension_key: null };
-    });
-}
-
-/** Serialize the mission list for storage, dropping entries with no text. */
-export function serializeMissions(missions: Mission[]): string {
-    const kept = missions
-        .map(m => ({ text: m.text.trim(), kpi: m.kpi.trim(), dimension_key: m.dimension_key }))
-        .filter(m => m.text.length > 0);
-    return JSON.stringify(kept);
-}
-
 // One picked competence in the summary, with its linked comments.
 export interface SummaryOption {
     dimension_key: string;
@@ -364,9 +316,6 @@ export interface PendingFlip {
     // The side the competence currently sits in and will be removed FROM.
     side: CompetenceSide;
     name: string;
-    // True when the competence is leaving the develop list AND is attached to a
-    // development-plan mission — that link is dropped on confirm, so warn first.
-    missionLinked: boolean;
 }
 
 /**

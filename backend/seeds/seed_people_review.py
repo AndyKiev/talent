@@ -24,7 +24,10 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from sqlalchemy import select, desc
+from datetime import date
+
+from dateutil.relativedelta import relativedelta
+from sqlalchemy import select, desc, func
 from sqlalchemy.orm import selectinload
 
 from backend.database.db_helper import db_helper
@@ -36,6 +39,13 @@ from backend.api_v1.review_session_employee_evaluation.review_session_employee_e
     ReviewSessionEmployeeEvaluation,
 )
 from backend.api_v1.review_dimension.review_dimension_model import ReviewDimension
+from backend.api_v1.employee_mission.employee_mission_model import EmployeeMission
+from backend.api_v1.employee_mission_kpi.employee_mission_kpi_model import (
+    EmployeeMissionKpi,
+)
+from backend.api_v1.employee_mission_dimension_link.employee_mission_dimension_link_model import (
+    EmployeeMissionDimensionLink,
+)
 from backend.api_v1.employee.employee_model import Employee
 from backend.api_v1.job.job_model import Job
 
@@ -363,16 +373,62 @@ def _build_competence_summary(
     return json.dumps({"strong": strong_items, "develop": develop_items}, ensure_ascii=False)
 
 
-def _build_development_plan(dimensions: list[ReviewDimension]) -> str:
-    chosen = _pick(dimensions, min(3, len(dimensions)))
-    missions = [
-        {
-            "text": f"Розвивати компетенцію «{d.name}» через участь у проєктах та навчання.",
-            "dimension_key": d.key,
-        }
-        for d in chosen
-    ]
-    return json.dumps(missions, ensure_ascii=False)
+# Generic KPI phrasings for seeded missions. Demo DATA (like the invented
+# Ukrainian names in /seed-employees), not UI text — it lands verbatim in
+# employee_mission_kpis.text and is never resolved through getString.
+_MISSION_KPI_BANK = [
+    "Пройти щонайменше два навчальні курси за напрямом.",
+    "Отримати позитивний відгук керівника за підсумками періоду.",
+    "Взяти участь щонайменше в одному крос-функціональному проєкті.",
+    "Провести не менше трьох робочих сесій із командою.",
+    "Підготувати підсумкову презентацію результатів розвитку.",
+]
+
+
+async def _seed_development_missions(
+    session,
+    employee_id: int,
+    dimensions: list[ReviewDimension],
+):
+    """Seed employee-scoped development missions (replaces the old JSON blob on
+    review_session_employees.development_plan).
+
+    Idempotent: an employee who already has missions is left alone. Each mission
+    gets at least one KPI, because the service layer enforces that invariant and
+    the demo data must not violate it.
+    """
+    existing = await session.scalar(
+        select(func.count())
+        .select_from(EmployeeMission)
+        .where(EmployeeMission.employee_id == employee_id)
+    )
+    if existing:
+        return
+
+    start = date.today().replace(day=1)
+    for d in _pick(dimensions, min(3, len(dimensions))):
+        duration = random.choice([6, 12, 18])
+        mission = EmployeeMission(
+            employee_id=employee_id,
+            text=f"Розвивати компетенцію «{d.name}» через участь у проєктах та навчання.",
+            start_date=start,
+            duration_months=duration,
+            end_date=start + relativedelta(months=duration),
+        )
+        session.add(mission)
+        await session.flush()
+        session.add(
+            EmployeeMissionKpi(
+                mission_id=mission.id,
+                text=random.choice(_MISSION_KPI_BANK),
+                percent=0,
+                sort_order=10,
+            )
+        )
+        session.add(
+            EmployeeMissionDimensionLink(mission_id=mission.id, dimension_id=d.id)
+        )
+    print("   development missions — filled.")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -493,9 +549,7 @@ async def _seed_feedback_fields(
         rse.trainings = random.choice(_TRAININGS_BANK)
         print(f"   trainings — filled.")
 
-    if not rse.development_plan:
-        rse.development_plan = _build_development_plan(dimensions)
-        print(f"   development_plan — filled.")
+    await _seed_development_missions(session, rse.employee_id, dimensions)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

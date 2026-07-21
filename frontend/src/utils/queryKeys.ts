@@ -116,3 +116,19 @@ export const INTERVIEWS_QK = (scope: string, id: number | 'mine' | 'all') =>
 export const AVAILABLE_INTERVIEWERS_QK = ['available_interviewers'] as const;
 export const INTERVIEW_FEEDBACKS_BY_CANDIDATE_QK = (candidateId: number) =>
     ['interview_feedbacks', 'candidate', candidateId] as const;
+
+// ── Employee development missions ───────────────────────────────────────────────
+export const EMPLOYEE_MISSIONS_QK = (employeeId: number) =>
+    ['employee_missions', employeeId] as const;
+export const MISSION_COMMENTS_QK = (missionId: number) =>
+    ['mission_comments', missionId] as const;
+export const MISSION_HISTORY_QK = (missionId: number) =>
+    ['mission_history', missionId] as const;
+// Whole-employee mission trail (includes deleted missions).
+export const EMPLOYEE_MISSION_HISTORY_QK = (employeeId: number) =>
+    ['employee_mission_history', employeeId] as const;
+export const DEVELOPMENT_VISION_QK = (employeeId: number) =>
+    ['development_vision', employeeId] as const;
+// Competence options for the mission form. Near-static, so both hosts (employee
+// card + people-review tab) share this one cache entry.
+export const MISSION_DIMENSION_OPTIONS_QK = ['mission_dimension_options'] as const;

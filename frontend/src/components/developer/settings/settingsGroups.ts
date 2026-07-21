@@ -97,6 +97,11 @@ export const SETTING_GROUP_BY_KEY: Record<string, string> = {
     headcount_plan_enabled: 'employees',
     // Where clicking an employee forwards (career_history / events / summary).
     employee_select_target: 'employees',
+    // Development missions live on the employee card, so they group here rather
+    // than under people review (which only embeds the same panel).
+    mission_max_duration_months: 'employees',
+    mission_max_kpis: 'employees',
+    mission_max_active: 'employees',
     // ── People review ────────────────────────────────────────────────────────
     people_review_edit_talent_status: 'people_review',
     idp_min_missions: 'people_review',

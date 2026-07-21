@@ -33,9 +33,6 @@ interface Props {
     setPendingFlip: Dispatch<SetStateAction<PendingFlip | null>>;
     confirmFlip: () => void;
     // Direct removal of a mission-linked to-develop competence.
-    pendingDevelopRemoval: { key: string; name: string } | null;
-    setPendingDevelopRemoval: Dispatch<SetStateAction<{ key: string; name: string } | null>>;
-    confirmDevelopRemoval: () => void;
     // Leaving full-list mode with misplaced picks.
     pendingSummaryReconcile: { key: string; name: string; side: CompetenceSide }[] | null;
     setPendingSummaryReconcile: Dispatch<SetStateAction<{ key: string; name: string; side: CompetenceSide }[] | null>>;
@@ -52,7 +49,6 @@ export function EvaluationConfirmDialogs({
     getString,
     pendingMove, setPendingMove, moveFact, moveImprovement, setActiveTab,
     pendingFlip, setPendingFlip, confirmFlip,
-    pendingDevelopRemoval, setPendingDevelopRemoval, confirmDevelopRemoval,
     pendingSummaryReconcile, setPendingSummaryReconcile, confirmSummaryReconcile,
 }: Props) {
     const { t } = useTheme();
@@ -107,11 +103,6 @@ export function EvaluationConfirmDialogs({
                     <DialogContentText>
                         {pendingFlip && getString(competenceSideFlipKey(pendingFlip.side), { competence: pendingFlip.name })}
                     </DialogContentText>
-                    {pendingFlip?.missionLinked && (
-                        <DialogContentText sx={{ mt: 1.5, color: 'warning.main' }}>
-                            {getString('flipCompetenceMissionWarning', { competence: pendingFlip?.name ?? '' })}
-                        </DialogContentText>
-                    )}
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setPendingFlip(null)} sx={{ textTransform: 'none' }}>
@@ -124,30 +115,6 @@ export function EvaluationConfirmDialogs({
                         sx={{ textTransform: 'none' }}
                     >
                         {getString('flipCompetenceConfirm')}
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
-            {/* Confirm a direct removal of a to-develop competence that is linked to a
-                mission — the link is dropped on confirm (allow-full off only). */}
-            <Dialog open={pendingDevelopRemoval != null} onClose={() => setPendingDevelopRemoval(null)} maxWidth="xs" fullWidth>
-                <DialogTitle>{getString('removeDevelopCompetenceTitle')}</DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        {getString('flipCompetenceMissionWarning', { competence: pendingDevelopRemoval?.name ?? '' })}
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setPendingDevelopRemoval(null)} sx={{ textTransform: 'none' }}>
-                        {getString('cancel')}
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color="error"
-                        onClick={confirmDevelopRemoval}
-                        sx={{ textTransform: 'none' }}
-                    >
-                        {getString('delete')}
                     </Button>
                 </DialogActions>
             </Dialog>

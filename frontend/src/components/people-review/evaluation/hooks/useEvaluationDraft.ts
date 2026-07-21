@@ -55,7 +55,6 @@ export function useEvaluationDraft({
     const setEmployeeFeedback = makeSetter('employeeFeedback');
     const setManagerFeedback = makeSetter('managerFeedback');
     const setResults = makeSetter('results');
-    const setMissions = makeSetter('missions');
     const setTrainings = makeSetter('trainings');
     const setStrongOptions = makeSetter('strongOptions');
     const setDevelopOptions = makeSetter('developOptions');
@@ -92,7 +91,7 @@ export function useEvaluationDraft({
     return {
         storeDraft, draft, updateEvalDraft, hydrationReady,
         setLocalEvals, setLangSel, setEmployeeFeedback, setManagerFeedback,
-        setResults, setMissions, setTrainings,
+        setResults, setTrainings,
         setStrongOptions, setDevelopOptions, setStrongDrafts, setDevelopDrafts,
         setSummaryFullCompetenceList,
     };

@@ -34,7 +34,21 @@ class ReviewSessionEmployee(IntIdPkMixin, TimestampMixin, Base):
     manager_feedback: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     # Numbered list serialized like evaluation facts ("1. ...\n2. ...").
     results_achievements: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    # Individual development plan — JSON array of mission strings (count flexible).
+    # DEPRECATED — pending removal, DO NOT READ OR WRITE.
+    #
+    # The individual development plan (a JSON array of missions) moved to the
+    # employee-scoped `employee_missions` tables, because a development plan
+    # belongs to the person, not to one review session. No application code
+    # references this column any more; the ONLY remaining reader is
+    # `backend/scripts/migrate_development_plans.py`, which reads it via raw SQL.
+    #
+    # It is still mapped ON PURPOSE so that `alembic revision --autogenerate`
+    # does NOT emit the DROP in the same revision that CREATES the mission
+    # tables. That ordering matters: the data-move script has to run BETWEEN the
+    # two, and a single combined revision would destroy every existing plan on
+    # any database where the script had not been run yet. Delete this attribute
+    # only after the move has been applied everywhere, then autogenerate the
+    # drop as its own revision.
     development_plan: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     # Required trainings, courses, internships, etc. (free text).
     trainings: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

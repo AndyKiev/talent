@@ -110,6 +110,17 @@ class EssenceName(str, Enum):
     REVIEW_SESSION = "review_session"
     REVIEW_SESSION_STATUS = "review_session_status"
 
+    # ── Employee development missions ────────────────────────────────────────
+    EMPLOYEE_MISSION = "employee_mission"
+    EMPLOYEE_MISSION_KPI = "employee_mission_kpi"
+    EMPLOYEE_MISSION_DIMENSION_LINK = "employee_mission_dimension_link"
+    EMPLOYEE_MISSION_COMMENT = "employee_mission_comment"
+    EMPLOYEE_DEVELOPMENT_VISION = "employee_development_vision"
+    # Read-only view of the mission/KPI change trail (HRM, HRS, admin, dev).
+    # Deliberately its own essence so HR does not need CHANGE_LOG, which would
+    # expose the entire system audit trail.
+    EMPLOYEE_MISSION_HISTORY = "employee_mission_history"
+
     # ── Training ─────────────────────────────────────────────────────────────
     TRAINING_LINK_TYPE = "training_link_type"
     TRAINING_CATEGORY = "training_category"
