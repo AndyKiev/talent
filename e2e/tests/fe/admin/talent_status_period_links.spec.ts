@@ -1,8 +1,8 @@
-import { apiUrl, newApiContext } from "../../helpers/apiClient";
-import { expect, test } from "../../helpers/cleanupTracker";
-import { waitForGridLoaded } from "../../helpers/dataGrid";
-import { confirmDialog, dialog } from "../../helpers/dialogs";
-import { uniqueKey, uniqueName } from "../../helpers/uniqueName";
+﻿import { apiUrl, newApiContext } from "../../../helpers/apiClient";
+import { expect, test } from "../../../helpers/cleanupTracker";
+import { waitForGridLoaded } from "../../../helpers/dataGrid";
+import { confirmDialog, dialog } from "../../../helpers/dialogs";
+import { uniqueKey, uniqueName } from "../../../helpers/uniqueName";
 
 const PATH = "/talent_status_period_links";
 const STATUS_PATH = "/admin/talent_statuses";
@@ -15,7 +15,7 @@ test("page smoke: grid renders", async ({ page }) => {
   await expect(page.locator('[role="row"]').first()).toBeVisible();
 });
 
-test("create, edit, delete a status–period link", async ({ page, cleanup }) => {
+test("create, edit, delete a statusвЂ“period link", async ({ page, cleanup }) => {
   const api = await newApiContext();
 
   // Pre-create a status and a period so the form selects have options.
@@ -45,7 +45,7 @@ test("create, edit, delete a status–period link", async ({ page, cleanup }) =>
     await expect(dlg).toBeVisible();
 
     // Select order in the form DOM: PERIOD first, STATUS second. Option
-    // labels are composite ("name — description" / "key — name"), so match
+    // labels are composite ("name вЂ” description" / "key вЂ” name"), so match
     // by substring (getByRole's default), never exact.
     const selects = dlg.locator('[role="combobox"]');
     await selects.first().click();
@@ -56,7 +56,7 @@ test("create, edit, delete a status–period link", async ({ page, cleanup }) =>
 
     await confirmDialog(page);
 
-    // Resolve the id via API — links list has no ?name= filter, filter
+    // Resolve the id via API вЂ” links list has no ?name= filter, filter
     // client-side over the full listing
     const listing = await api.get(apiUrl(PATH));
     expect(listing.status()).toBe(200);
@@ -79,7 +79,7 @@ test("create, edit, delete a status–period link", async ({ page, cleanup }) =>
     expect(linkJson.talent_status_id).toBe(statusId);
     expect(linkJson.talent_period_id).toBe(periodId);
 
-    // UPDATE via API (toggle is_active) — the link grid may not have inline editing
+    // UPDATE via API (toggle is_active) вЂ” the link grid may not have inline editing
     const updated = await api.patch(apiUrl(`${PATH}/${linkId}`), {
       data: { is_active: false },
     });

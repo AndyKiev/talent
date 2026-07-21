@@ -1,17 +1,17 @@
-import { apiUrl, newApiContext } from "../../helpers/apiClient";
-import { expect, test } from "../../helpers/cleanupTracker";
+﻿import { apiUrl, newApiContext } from "../../../helpers/apiClient";
+import { expect, test } from "../../../helpers/cleanupTracker";
 import {
   clickRowDelete,
-  findRowAcrossPages,
+  rowByCellText,
   startCellEdit,
   submitCellEdit,
   waitForGridLoaded,
-} from "../../helpers/dataGrid";
-import { confirmDialog, dialog, fillFormDialog } from "../../helpers/dialogs";
-import { uniqueName } from "../../helpers/uniqueName";
+} from "../../../helpers/dataGrid";
+import { confirmDialog, dialog, fillFormDialog } from "../../../helpers/dialogs";
+import { uniqueName } from "../../../helpers/uniqueName";
 
-const PATH = "/admin/employee_events/employee_event_statuses";
-const ROUTE = "/admin/employee_events/employee_event_statuses";
+const PATH = "/admin/user_group_types";
+const ROUTE = "/admin/user_groups_group/user_group_types";
 
 test("page smoke: grid renders", async ({ page }) => {
   await page.goto(ROUTE);
@@ -19,8 +19,8 @@ test("page smoke: grid renders", async ({ page }) => {
   await expect(page.locator('[role="row"]').first()).toBeVisible();
 });
 
-test("create, edit, delete an employee event status", async ({ page, cleanup }) => {
-  const name = uniqueName("ees", 32); // max 32 chars
+test("create, edit, delete a user group type", async ({ page, cleanup }) => {
+  const name = uniqueName("user_grp_type");
   const api = await newApiContext();
   try {
     await page.goto(ROUTE);
@@ -40,7 +40,7 @@ test("create, edit, delete an employee event status", async ({ page, cleanup }) 
     const id = (created as { id: number }).id;
     cleanup.track({ path: PATH, id });
 
-    const row = await findRowAcrossPages(page, "name", name);
+    const row = rowByCellText(page, "name", name);
     await expect(row).toBeVisible();
 
     await startCellEdit(row, "description");

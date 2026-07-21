@@ -1,17 +1,17 @@
-import { apiUrl, newApiContext } from "../../helpers/apiClient";
-import { expect, test } from "../../helpers/cleanupTracker";
+﻿import { apiUrl, newApiContext } from "../../../helpers/apiClient";
+import { expect, test } from "../../../helpers/cleanupTracker";
 import {
   clickRowDelete,
-  rowByCellText,
+  findRowAcrossPages,
   startCellEdit,
   submitCellEdit,
   waitForGridLoaded,
-} from "../../helpers/dataGrid";
-import { confirmDialog, dialog, fillFormDialog } from "../../helpers/dialogs";
-import { uniqueKey, uniqueName } from "../../helpers/uniqueName";
+} from "../../../helpers/dataGrid";
+import { confirmDialog, dialog, fillFormDialog } from "../../../helpers/dialogs";
+import { uniqueName } from "../../../helpers/uniqueName";
 
-const PATH = "/admin/talent_statuses";
-const ROUTE = "/admin/talent/statuses";
+const PATH = "/admin/department_types";
+const ROUTE = "/admin/department_types";
 
 test("page smoke: grid renders", async ({ page }) => {
   await page.goto(ROUTE);
@@ -19,11 +19,8 @@ test("page smoke: grid renders", async ({ page }) => {
   await expect(page.locator('[role="row"]').first()).toBeVisible();
 });
 
-test("create, edit, delete a talent status", async ({ page, cleanup }) => {
-  // Talent essences have SHORT limits: name max 32, key max 8 (schema +
-  // form maxLength, which truncates silently and breaks the ?name= lookup).
-  const name = uniqueName("ts", 32);
-  const key = uniqueKey(8);
+test("create, edit, delete a department type", async ({ page, cleanup }) => {
+  const name = uniqueName("dept_type");
   const api = await newApiContext();
   try {
     await page.goto(ROUTE);
@@ -32,7 +29,7 @@ test("create, edit, delete a talent status", async ({ page, cleanup }) => {
     // CREATE via the Add-button form dialog
     await page.locator('button:has(svg[data-testid="AddIcon"])').click();
     await expect(dialog(page)).toBeVisible();
-    await fillFormDialog(page, { key, name, description: "E2E pilot record" });
+    await fillFormDialog(page, { name, description: "E2E pilot record" });
     await confirmDialog(page);
 
     // Resolve the id via API (source of truth) and register for cleanup
@@ -45,9 +42,9 @@ test("create, edit, delete a talent status", async ({ page, cleanup }) => {
     const id = (created as { id: number }).id;
     cleanup.track({ path: PATH, id });
 
-    // Row visible in the grid
-    const row = rowByCellText(page, "name", name);
-    await expect(row).toBeVisible();
+    // Row visible in the grid - the types table exceeds one page (10 rows),
+    // so walk the pagination until the new row shows up
+    const row = await findRowAcrossPages(page, "name", name);
 
     // EDIT the description inline (pencil -> value -> check -> confirm dialog)
     await startCellEdit(row, "description");

@@ -1,17 +1,18 @@
-import { apiUrl, newApiContext } from "../../helpers/apiClient";
-import { expect, test } from "../../helpers/cleanupTracker";
+﻿import { apiUrl, newApiContext } from "../../../helpers/apiClient";
+import { expect, test } from "../../../helpers/cleanupTracker";
 import {
   clickRowDelete,
   rowByCellText,
   startCellEdit,
   submitCellEdit,
   waitForGridLoaded,
-} from "../../helpers/dataGrid";
-import { confirmDialog, dialog, fillFormDialog } from "../../helpers/dialogs";
-import { uniqueName } from "../../helpers/uniqueName";
+} from "../../../helpers/dataGrid";
+import { confirmDialog, dialog, fillFormDialog } from "../../../helpers/dialogs";
+import { uniqueName } from "../../../helpers/uniqueName";
 
-const PATH = "/admin/talent_periods";
-const ROUTE = "/admin/talent/periods";
+const PATH = "/job_groups";
+const TYPE_PATH = "/job_group_types";
+const ROUTE = "/admin/jobs_group/job_groups";
 
 test("page smoke: grid renders", async ({ page }) => {
   await page.goto(ROUTE);
@@ -19,23 +20,40 @@ test("page smoke: grid renders", async ({ page }) => {
   await expect(page.locator('[role="row"]').first()).toBeVisible();
 });
 
-test("create, edit, delete a talent period", async ({ page, cleanup }) => {
-  // Talent essences have SHORT limits: name max 32 (schema + form maxLength,
-  // which truncates silently and breaks the ?name= lookup).
-  const name = uniqueName("tp", 32);
+test("create, edit, delete a job group", async ({ page, cleanup }) => {
+  const name = uniqueName("job_group");
+  const key = uniqueName("jg_key").slice(0, 64);
   const api = await newApiContext();
+
+  // Pre-create a job_group_type so the Select has an option
+  const typeName = uniqueName("jgt_for_group");
+  const typeResp = await api.post(apiUrl(TYPE_PATH), {
+    data: { name: typeName, key: uniqueName("jgt_key").slice(0, 32) },
+  });
+  expect(typeResp.status()).toBe(201);
+  const typeId = (await typeResp.json()).data.id;
+
   try {
     await page.goto(ROUTE);
     await waitForGridLoaded(page);
 
     // CREATE via the Add-button form dialog
     await page.locator('button:has(svg[data-testid="AddIcon"])').click();
-    await expect(dialog(page)).toBeVisible();
-    await fillFormDialog(page, { name, description: "E2E pilot record", qty_months: "12" });
+    const dlg = dialog(page);
+    await expect(dlg).toBeVisible();
+
+    // Fill text fields
+    await fillFormDialog(page, { name, key, description: "E2E pilot record" });
+
+    // Pick first Group Type from the Select
+    await dlg.locator('[role="combobox"]').click();
+    await page.getByRole("option").first().click();
+
     await confirmDialog(page);
 
-    // Resolve the id via API (source of truth) and register for cleanup
-    const listing = await api.get(apiUrl(PATH), { params: { name } });
+    // Resolve the id via API вЂ” job_groups list has no ?name= filter, filter
+    // client-side over the full listing
+    const listing = await api.get(apiUrl(PATH));
     expect(listing.status()).toBe(200);
     const created = ((await listing.json()) as Array<{ id: number; name: string }>).find(
       (row) => row.name === name,
@@ -68,6 +86,7 @@ test("create, edit, delete a talent period", async ({ page, cleanup }) => {
     expect(afterDelete.status()).toBe(404);
     cleanup.untrack(id);
   } finally {
+    await api.delete(apiUrl(`${TYPE_PATH}/${typeId}`));
     await api.dispose();
   }
 });

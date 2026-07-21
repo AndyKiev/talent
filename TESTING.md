@@ -40,13 +40,26 @@ Running (identical on both OS):
 
 ```bash
 cd e2e                           # ALWAYS from e2e/ - running from repo root breaks (version clash)
-npx playwright test              # green "ok" / red "x" per test in terminal
+npx playwright test              # EVERYTHING: frontend specs + the backend bridge (see below)
+npx playwright test fe           # frontend/browser specs ONLY (tests/fe/**)
+npx playwright test be           # backend pytest suite ONLY, run as a single bridged test
 npx playwright test --headed     # watch the browser do it (Linux: needs a display; on a headless server use: xvfb-run npx playwright test --headed)
 npx playwright show-report       # html report: green/red list, click red -> trace, screenshots, steps
-npx playwright test tests/admin/department_categories.spec.ts   # one module only
+npx playwright test tests/fe/admin/department_categories.spec.ts   # one module only
 ```
 
+`fe` and `be` work because Playwright's positional CLI args are file-path
+substring filters (a documented Playwright feature, not a project selector) —
+`e2e/tests/fe/` holds every browser spec, `e2e/tests/be/backend_api.spec.ts`
+is a thin bridge that shells out to the real pytest suite (stdio inherited,
+so pytest's own dots/F output prints live) and turns its pass/fail into one
+Playwright test result. Real assertions still live in `backend/tests/` —
+`be` is a convenience door into the same suite, not a second copy.
+npm equivalents: `npm run test:fe` / `npm run test:be` (from `e2e/`).
+
 ## API tests (pytest) — identical on both OS
+
+Run directly (bypasses the `be` bridge, same suite, per-test pass/fail):
 
 ```bash
 cd backend

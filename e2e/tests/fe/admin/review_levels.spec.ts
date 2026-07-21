@@ -1,8 +1,8 @@
-import { apiUrl, newApiContext } from "../../helpers/apiClient";
-import { expect, test } from "../../helpers/cleanupTracker";
-import { rowByCellText, waitForGridLoaded } from "../../helpers/dataGrid";
-import { confirmDialog, dialog, fillFormDialog } from "../../helpers/dialogs";
-import { uniqueName } from "../../helpers/uniqueName";
+﻿import { apiUrl, newApiContext } from "../../../helpers/apiClient";
+import { expect, test } from "../../../helpers/cleanupTracker";
+import { rowByCellText, waitForGridLoaded } from "../../../helpers/dataGrid";
+import { confirmDialog, dialog, fillFormDialog } from "../../../helpers/dialogs";
+import { uniqueName } from "../../../helpers/uniqueName";
 
 const PATH = "/review_levels";
 const ROUTE = "/admin/people_review/review_setup/levels/list";
@@ -28,9 +28,9 @@ test("create, edit, delete a review level", async ({ page, cleanup }) => {
     await fillFormDialog(page, { nameEng, nameUkr });
     await confirmDialog(page);
 
-    // Resolve via API — review_levels list has no ?name= filter, filter client-side.
+    // Resolve via API вЂ” review_levels list has no ?name= filter, filter client-side.
     // name_key = slugifyKey("reviewLevelName_", nameEng): lowercased, split on
-    // non-alphanumerics, camelCased — underscores DISAPPEAR. Compare the
+    // non-alphanumerics, camelCased вЂ” underscores DISAPPEAR. Compare the
     // NORMALIZED (alnum-only lowercase) forms instead of raw substrings.
     const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
     const listing = await api.get(apiUrl(PATH));
@@ -59,7 +59,7 @@ test("create, edit, delete a review level", async ({ page, cleanup }) => {
     const afterJson = (await afterEdit.json()) as { description_key: string };
     expect(afterJson.description_key).toBeTruthy();
 
-    // DELETE via UI — DeleteIcon in the actions column
+    // DELETE via UI вЂ” DeleteIcon in the actions column
     await row.locator('button:has(svg[data-testid="DeleteIcon"])').click();
     await confirmDialog(page);
     await expect(row).toBeHidden();

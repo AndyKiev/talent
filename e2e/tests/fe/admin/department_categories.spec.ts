@@ -1,14 +1,14 @@
-import { apiUrl, newApiContext } from "../../helpers/apiClient";
-import { expect, test } from "../../helpers/cleanupTracker";
+﻿import { apiUrl, newApiContext } from "../../../helpers/apiClient";
+import { expect, test } from "../../../helpers/cleanupTracker";
 import {
   clickRowDelete,
   rowByCellText,
   startCellEdit,
   submitCellEdit,
   waitForGridLoaded,
-} from "../../helpers/dataGrid";
-import { confirmDialog, dialog, fillFormDialog } from "../../helpers/dialogs";
-import { uniqueName } from "../../helpers/uniqueName";
+} from "../../../helpers/dataGrid";
+import { confirmDialog, dialog, fillFormDialog } from "../../../helpers/dialogs";
+import { uniqueName } from "../../../helpers/uniqueName";
 
 // Pilot module: the canonical admin CRUD slice. This spec is THE template
 // for covering the other admin essences - copy it, swap PATH/route/fields.

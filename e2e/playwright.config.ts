@@ -36,11 +36,19 @@ export default defineConfig({
     },
     {
       name: "chromium",
+      testDir: "./tests/fe",
       use: {
         ...devices["Desktop Chrome"],
         storageState: ADMIN_STORAGE_STATE,
       },
       dependencies: ["setup"],
+    },
+    {
+      // Bridges the pytest API suite into "npx playwright test be" - no
+      // browser needed (the wrapper test never touches page/browser
+      // fixtures), so no dependency on "setup".
+      name: "be",
+      testDir: "./tests/be",
     },
   ],
 });
