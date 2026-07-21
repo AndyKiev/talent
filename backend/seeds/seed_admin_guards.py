@@ -12,21 +12,19 @@
 #
 # Re-runnable: every step is get-or-create, so running twice adds nothing.
 #
+# Lookups go through AccessGraph (see backend/seeds/access_graph.py), which
+# preloads the whole graph with column-only selects. Entity selects here are
+# pathological: the access tables form a cycle of lazy="selectin" relationships,
+# so loading one row drags in admin's entire grant neighbourhood.
+#
 import asyncio
 
 from sqlalchemy import select
+
 from backend.database.db_helper import db_helper
-from backend.api_v1.essence.essence_model import Essence
-from backend.api_v1.essence_set.essence_set_model import EssenceSet
-from backend.api_v1.essence_set.essence_set_member_model import EssenceSetMember
 from backend.api_v1.operation.operation_model import Operation
-from backend.api_v1.operation_essence_set_link.operation_essence_set_link_model import (
-    OperationEssenceSetLink,
-)
-from backend.api_v1.table_relationship_links.user_group_operation_essence_set_link_model import (
-    UserGroupOperationEssenceSetLink,
-)
 from backend.api_v1.user_group.user_group_model import UserGroup
+from backend.seeds.access_graph import AccessGraph
 
 # essence name -> verbs to grant
 SPEC: dict[str, list[str]] = {
@@ -53,88 +51,31 @@ SPEC: dict[str, list[str]] = {
 TARGET_GROUP = "admin"
 
 
-async def _get_or_create_essence(s, name: str) -> Essence:
-    e = (
-        await s.execute(select(Essence).where(Essence.name == name))
-    ).scalar_one_or_none()
-    if not e:
-        e = Essence(name=name, description=name)
-        s.add(e)
-        await s.flush()
-        print(f"  + essence {name} (id={e.id})")
-    return e
-
-
-async def _get_or_create_single_set(s, essence: Essence) -> EssenceSet:
-    fp = str(essence.id)
-    es = (
-        await s.execute(select(EssenceSet).where(EssenceSet.fingerprint == fp))
-    ).scalar_one_or_none()
-    if not es:
-        es = EssenceSet(fingerprint=fp)
-        s.add(es)
-        await s.flush()
-        s.add(EssenceSetMember(essence_set_id=es.id, essence_id=essence.id))
-        await s.flush()
-        print(f"  + essence_set {fp} for {essence.name}")
-    return es
-
-
-async def _get_or_create_oesl(
-    s, op: Operation, es: EssenceSet
-) -> OperationEssenceSetLink:
-    oesl = (
-        await s.execute(
-            select(OperationEssenceSetLink).where(
-                OperationEssenceSetLink.operation_id == op.id,
-                OperationEssenceSetLink.essence_set_id == es.id,
-            )
-        )
-    ).scalar_one_or_none()
-    if not oesl:
-        oesl = OperationEssenceSetLink(operation_id=op.id, essence_set_id=es.id)
-        s.add(oesl)
-        await s.flush()
-    return oesl
-
-
 async def main():
     async with db_helper.session_factory() as s:
-        group = (
-            await s.execute(select(UserGroup).where(UserGroup.name == TARGET_GROUP))
+        # Column selects, not entity selects — see AccessGraph.
+        group_id = (
+            await s.execute(select(UserGroup.id).where(UserGroup.name == TARGET_GROUP))
         ).scalar_one_or_none()
-        if not group:
+        if not group_id:
             raise SystemExit(f"user group {TARGET_GROUP!r} not found")
 
-        ops = {o.name: o for o in (await s.execute(select(Operation))).scalars().all()}
+        ops = {n: i for n, i in (await s.execute(select(Operation.name, Operation.id)))}
+        acc = AccessGraph(s)
+        await acc.load()
 
         granted = 0
         for essence_name, verbs in SPEC.items():
-            essence = await _get_or_create_essence(s, essence_name)
-            es = await _get_or_create_single_set(s, essence)
+            essence_id = await acc.essence_id(essence_name)
+            set_id = await acc.set_id([essence_id])
             for verb in verbs:
-                op = ops.get(verb)
-                if not op:
+                op_id = ops.get(verb)
+                if not op_id:
                     raise SystemExit(
                         f"operation {verb!r} missing from operations table"
                     )
-                oesl = await _get_or_create_oesl(s, op, es)
-                existing = (
-                    await s.execute(
-                        select(UserGroupOperationEssenceSetLink).where(
-                            UserGroupOperationEssenceSetLink.user_group_id == group.id,
-                            UserGroupOperationEssenceSetLink.operation_essence_set_link_id
-                            == oesl.id,
-                        )
-                    )
-                ).scalar_one_or_none()
-                if not existing:
-                    s.add(
-                        UserGroupOperationEssenceSetLink(
-                            user_group_id=group.id,
-                            operation_essence_set_link_id=oesl.id,
-                        )
-                    )
+                oesl_id = await acc.oesl_id(op_id, set_id)
+                if acc.grant(group_id, oesl_id):
                     granted += 1
                     print(f"  grant {TARGET_GROUP}: ({verb}, {{{essence_name}}})")
         await s.commit()

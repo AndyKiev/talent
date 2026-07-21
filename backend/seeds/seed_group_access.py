@@ -16,20 +16,12 @@ import asyncio
 from sqlalchemy import select
 from backend.main import app
 from backend.database.db_helper import db_helper
-from backend.api_v1.essence.essence_model import Essence
-from backend.api_v1.essence_set.essence_set_model import EssenceSet
-from backend.api_v1.essence_set.essence_set_member_model import EssenceSetMember
 from backend.api_v1.operation.operation_model import Operation
-from backend.api_v1.operation_essence_set_link.operation_essence_set_link_model import (
-    OperationEssenceSetLink,
-)
-from backend.api_v1.table_relationship_links.user_group_operation_essence_set_link_model import (
-    UserGroupOperationEssenceSetLink,
-)
 from backend.api_v1.user_group.user_group_model import UserGroup
 from backend.api_v1.permission_manifest.permission_manifest_service import (
     PermissionManifestService,
 )
+from backend.seeds.access_graph import AccessGraph
 
 # HRM/HRS get these essences (single-essence sets) with full CRUD.
 HR_ESSENCES = [
@@ -81,126 +73,59 @@ INTERVIEWER_GRANTS: dict[str, list[str]] = {
 }
 
 
-async def _essence_id(s, cache, name):
-    if name in cache:
-        return cache[name]
-    e = (
-        await s.execute(select(Essence).where(Essence.name == name))
-    ).scalar_one_or_none()
-    if not e:
-        e = Essence(name=name, description=name)
-        s.add(e)
-        await s.flush()
-    cache[name] = e.id
-    return e.id
-
-
-async def _get_or_create_set(s, essence_ids):
-    ids = sorted(essence_ids)
-    fp = "-".join(str(i) for i in ids)
-    es = (
-        await s.execute(select(EssenceSet).where(EssenceSet.fingerprint == fp))
-    ).scalar_one_or_none()
-    if not es:
-        es = EssenceSet(fingerprint=fp)
-        s.add(es)
-        await s.flush()
-        for eid in ids:
-            s.add(EssenceSetMember(essence_set_id=es.id, essence_id=eid))
-        await s.flush()
-    return es
-
-
-async def _get_or_create_oesl(s, op_id, set_id):
-    oesl = (
-        await s.execute(
-            select(OperationEssenceSetLink).where(
-                OperationEssenceSetLink.operation_id == op_id,
-                OperationEssenceSetLink.essence_set_id == set_id,
-            )
-        )
-    ).scalar_one_or_none()
-    if not oesl:
-        oesl = OperationEssenceSetLink(operation_id=op_id, essence_set_id=set_id)
-        s.add(oesl)
-        await s.flush()
-    return oesl
-
-
-async def _grant(s, group_id, oesl_id):
-    existing = (
-        await s.execute(
-            select(UserGroupOperationEssenceSetLink).where(
-                UserGroupOperationEssenceSetLink.user_group_id == group_id,
-                UserGroupOperationEssenceSetLink.operation_essence_set_link_id == oesl_id,
-            )
-        )
-    ).scalar_one_or_none()
-    if not existing:
-        s.add(
-            UserGroupOperationEssenceSetLink(
-                user_group_id=group_id,
-                operation_essence_set_link_id=oesl_id,
-            )
-        )
-        return 1
-    return 0
-
-
 async def main():
     async with db_helper.session_factory() as s:
-        groups = {g.name: g for g in (await s.execute(select(UserGroup))).scalars().all()}
-        ops = {o.name: o for o in (await s.execute(select(Operation))).scalars().all()}
-        ecache: dict[str, int] = {}
+        # Column selects, not entity selects — see AccessGraph.
+        groups = {n: i for n, i in (await s.execute(select(UserGroup.name, UserGroup.id)))}
+        ops = {n: i for n, i in (await s.execute(select(Operation.name, Operation.id)))}
+        acc = AccessGraph(s)
+        await acc.load()
 
         # ── admin: full access to every guarded permission ────────────────────
         manifest = await PermissionManifestService(s).build(app)
-        admin = groups["admin"]
+        admin_id = groups["admin"]
         admin_added = 0
         for perm in manifest["permissions"]:
-            op = ops.get(perm["operation"])
-            if not op:
+            op_id = ops.get(perm["operation"])
+            if not op_id:
                 raise SystemExit(f"operation {perm['operation']!r} missing")
-            eids = [await _essence_id(s, ecache, n) for n in perm["essences"]]
-            es = await _get_or_create_set(s, eids)
-            oesl = await _get_or_create_oesl(s, op.id, es.id)
-            admin_added += await _grant(s, admin.id, oesl.id)
+            eids = [await acc.essence_id(n) for n in perm["essences"]]
+            set_id = await acc.set_id(eids)
+            oesl_id = await acc.oesl_id(op_id, set_id)
+            admin_added += acc.grant(admin_id, oesl_id)
         print(f"admin: +{admin_added} grants (now full access, {len(manifest['permissions'])} perms)")
 
         # ── HRM/HRS: review-setup + language essences, full CRUD ──────────────
         for gname in HR_GROUPS:
-            g = groups.get(gname)
-            if not g:
+            group_id = groups.get(gname)
+            if not group_id:
                 print(f"  (group {gname} not found, skipped)")
                 continue
             added = 0
             for ename in HR_ESSENCES:
-                eid = await _essence_id(s, ecache, ename)
-                es = await _get_or_create_set(s, [eid])
+                set_id = await acc.set_id([await acc.essence_id(ename)])
                 for verb in HR_VERBS:
-                    oesl = await _get_or_create_oesl(s, ops[verb].id, es.id)
-                    added += await _grant(s, g.id, oesl.id)
+                    oesl_id = await acc.oesl_id(ops[verb], set_id)
+                    added += acc.grant(group_id, oesl_id)
             # View-only reference essences (no create/modify/delete).
             for ename in HR_VIEW_ONLY_ESSENCES:
-                eid = await _essence_id(s, ecache, ename)
-                es = await _get_or_create_set(s, [eid])
-                oesl = await _get_or_create_oesl(s, ops["view"].id, es.id)
-                added += await _grant(s, g.id, oesl.id)
+                set_id = await acc.set_id([await acc.essence_id(ename)])
+                oesl_id = await acc.oesl_id(ops["view"], set_id)
+                added += acc.grant(group_id, oesl_id)
             print(f"{gname}: +{added} grants (review-setup + language, CRUD)")
 
         # ── Interviewer: read interviews/candidates, write feedback ───────────
-        interviewer = next(
-            (g for name, g in groups.items() if name and name.lower() == "interviewer"),
+        interviewer_id = next(
+            (i for name, i in groups.items() if name and name.lower() == "interviewer"),
             None,
         )
-        if interviewer:
+        if interviewer_id:
             added = 0
             for ename, verbs in INTERVIEWER_GRANTS.items():
-                eid = await _essence_id(s, ecache, ename)
-                es = await _get_or_create_set(s, [eid])
+                set_id = await acc.set_id([await acc.essence_id(ename)])
                 for verb in verbs:
-                    oesl = await _get_or_create_oesl(s, ops[verb].id, es.id)
-                    added += await _grant(s, interviewer.id, oesl.id)
+                    oesl_id = await acc.oesl_id(ops[verb], set_id)
+                    added += acc.grant(interviewer_id, oesl_id)
             print(f"Interviewer: +{added} grants (interviews view + feedback)")
         else:
             print("  (group Interviewer not found, skipped — run the Phase B migration)")
