@@ -288,7 +288,7 @@ def _idp_block(title, missions, width_chars, kpi_label=None):
     return _Block(body, header_lines=_heading_lines(title, ACCENT))
 
 
-def _competence_summary_block(title, items, width_chars):
+def _summary_block(title, items, width_chars):
     """Strong / to-develop summary: each picked competence as a bold, DB-colored
     name followed by its comments as bullets (mirrors the HTML album). Named even
     when it has no comments, so a picked competence is never invisible."""
@@ -643,12 +643,8 @@ def _page1_columns(data: dict) -> list[list[_Block]]:
             _idp_block(L.get("idp"), g("idp_missions") or [], c, L.get("kpi")),
         ],
         [
-            _competence_summary_block(
-                L.get("strengths"), g("strengths_items") or [], c
-            ),
-            _competence_summary_block(
-                L.get("development"), g("development_items") or [], c
-            ),
+            _summary_block(L.get("strengths"), g("strengths_items") or [], c),
+            _summary_block(L.get("development"), g("development_items") or [], c),
         ],
         [
             _titled_block(L.get("training"), g("training_done"), c, INK),

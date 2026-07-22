@@ -4,15 +4,18 @@ import type {
     Evaluation,
     ReviewSessionEmployee,
     EmployeeLanguageProfile,
+    RseDimensionType,
+    RseFeedbackItem,
 } from './peopleReviewApi';
 import {
     type LocalEval,
-    type SummaryOption,
+    type DimensionOption,
+    DimensionSide,
     competenceHint,
     competenceName,
     parseDescriptors,
     parseFacts,
-    parseSummarySide,
+    dimensionOptionsForType,
 } from './evaluation/evaluationHelpers';
 
 // ---------------------------------------------------------------------------
@@ -26,9 +29,8 @@ export interface EvaluationDraft {
     employeeFeedback: string;
     managerFeedback: string;
     results: string[];
-    trainings: string;
-    strongOptions: SummaryOption[];
-    developOptions: SummaryOption[];
+    strongOptions: DimensionOption[];
+    developOptions: DimensionOption[];
     strongDrafts: Record<string, string>;
     developDrafts: Record<string, string>;
     // Persisted per-review switch: when true (and the global setting allows it)
@@ -54,7 +56,6 @@ export const EMPTY_EVAL_DRAFT: EvaluationDraft = Object.freeze({
     employeeFeedback: '',
     managerFeedback: '',
     results: [],
-    trainings: '',
     strongOptions: [],
     developOptions: [],
     strongDrafts: Object.freeze({}) as Record<string, string>,
@@ -119,30 +120,45 @@ function buildLocalEvals(evaluations: Evaluation[], getString: GetStringFn): Loc
     });
 }
 
+/** The two seeded feedback-type keys. Code contract: each voice has its own
+ *  editability rule, so the frontend must be able to tell them apart. */
+export const RSE_FEEDBACK_EMPLOYEE = 'employee';
+export const RSE_FEEDBACK_MANAGER = 'manager';
+
+/** Text of one voice, or '' when that voice has no row. */
+const feedbackText = (items: RseFeedbackItem[] | undefined, key: string): string =>
+    items?.find(f => f.review_session_employee_feedback_type_key === key)?.text ?? '';
+
 /** Build an editable evaluation draft from the loaded server data. */
 export function buildEvaluationDraft(
     rseDetail: ReviewSessionEmployee,
     evaluations: Evaluation[],
     langProfile: EmployeeLanguageProfile | undefined,
     getString: GetStringFn,
+    dimensionTypes: RseDimensionType[],
 ): EvaluationDraft {
     const langSel: Record<string, number | null> = { english: null, french: null };
     if (langProfile) {
         for (const l of langProfile.languages) langSel[l.language] = l.level_id;
     }
-    let summary: { strong?: unknown; develop?: unknown } = {};
-    if (rseDetail.competence_summary) {
-        try { summary = JSON.parse(rseDetail.competence_summary); } catch { summary = {}; }
-    }
+    // The summary arrives as ONE flat, already-ordered list; each item names its
+    // side by id. Split it by matching the type rows BY KEY — no JSON.parse, and
+    // no hardcoded id.
+    const items = rseDetail.dimensions ?? [];
+    const typeId = (key: DimensionSide) => dimensionTypes.find(t => t.key === key)?.id;
     return {
         localEvals: buildLocalEvals(evaluations, getString),
         langSel,
-        employeeFeedback: rseDetail.employee_feedback ?? '',
-        managerFeedback: rseDetail.manager_feedback ?? '',
-        results: parseFacts(rseDetail.results_achievements),
-        trainings: rseDetail.trainings ?? '',
-        strongOptions: parseSummarySide(summary.strong),
-        developOptions: parseSummarySide(summary.develop),
+        // Feedback is rows keyed by a TYPE now. The draft keeps the two boxes
+        // the UI actually renders, matched BY KEY — a voice with no row is
+        // simply an empty box.
+        employeeFeedback: feedbackText(rseDetail.feedbacks, RSE_FEEDBACK_EMPLOYEE),
+        managerFeedback: feedbackText(rseDetail.feedbacks, RSE_FEEDBACK_MANAGER),
+        // Rows now — the draft keeps just the texts, since the write path
+        // replaces the whole list and derives sort_order from the array order.
+        results: (rseDetail.results ?? []).map(r => r.text),
+        strongOptions: dimensionOptionsForType(items, typeId(DimensionSide.Strong)),
+        developOptions: dimensionOptionsForType(items, typeId(DimensionSide.Develop)),
         strongDrafts: {},
         developDrafts: {},
         summaryFullCompetenceList: rseDetail.summary_full_competence_list ?? false,

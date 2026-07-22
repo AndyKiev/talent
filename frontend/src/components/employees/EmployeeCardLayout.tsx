@@ -11,7 +11,6 @@ import { ResponsiveTabs } from "../ui/ResponsiveTabs.tsx";
 import type { TabItem } from "../ui/ResponsiveTabs.tsx";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import cfl from "../../utils/helpers.ts";
-import { useBooleanSetting } from "../../hooks/useAppSetting";
 
 const STATUS_COLOR: Record<string, 'warning' | 'success' | 'error' | 'default'> = {
     pending: 'warning',
@@ -34,14 +33,11 @@ export function EmployeeCardLayout() {
         staleTime: 5 * 60 * 1000,
     });
 
-    // Training module master flag: OFF drops the trainings tab entirely.
-    const { enabled: trainingModuleOn } = useBooleanSetting('training_module_enabled');
 
     // Derive active tab from the current path segment.
     const pathname = useRouterState({ select: (s) => s.location.pathname });
     const seg = pathname.split(`/employees/${id}/`)[1]?.split('/')[0] ?? 'summary';
-    const activeTab =
-        TAB_VALUES.includes(seg) && (seg !== 'trainings' || trainingModuleOn) ? seg : 'summary';
+    const activeTab = TAB_VALUES.includes(seg) ? seg : 'summary';
 
     const goTo = (tab: string) => {
         navigate({
@@ -62,10 +58,10 @@ export function EmployeeCardLayout() {
         { label: cfl(getString('missions') || 'Missions'), value: 'missions' },
         { label: cfl(getString('careerHistory') || 'Career History'), value: 'career_history' },
         { label: cfl(getString('responsibilityHistory') || 'Responsibility History'), value: 'responsibility_history' },
-        ...(trainingModuleOn
-            ? [{ label: cfl(getString('trainings') || 'Trainings'), value: 'trainings' }]
-            : []),
-    ], [getString, trainingModuleOn]);
+        // Always present: with the module ON it holds assigned + recommended
+        // trainings, with it OFF just the recommended ones.
+        { label: cfl(getString('trainings') || 'Trainings'), value: 'trainings' },
+    ], [getString]);
 
     return (
         <AppShell>

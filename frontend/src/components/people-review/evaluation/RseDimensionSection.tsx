@@ -18,17 +18,26 @@ import EditIcon from '@mui/icons-material/Edit';
 import DoneIcon from '@mui/icons-material/Done';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import type { GetStringFn } from '../../../types/getStringFn';
-import type { SummaryOption } from './evaluationHelpers';
+import type { DimensionOption } from './evaluationHelpers';
 import { InlineEditField } from './InlineEditField';
 
-export function CompetenceSummarySection({
+/**
+ * One side of the dimensions singled out for this employee in this review —
+ * the strong list or the to-develop list. Both sides render this same component;
+ * `title` and `accent` are what differ.
+ *
+ * Keyed on `dimension_key` throughout (React keys, the picker, the per-card edit
+ * state). The `dimension_id` each option also carries is only for the write
+ * path, so nothing here needs it.
+ */
+export function RseDimensionSection({
     title, accent, options, candidates, nameOf, colorOf, isEditable, getString,
     drafts, onDraftChange, onAddOption, onRemoveOption, onAddComment, onRemoveComment,
-    onEditComment, onReorderOption, onSelectCompetence,
+    onEditComment, onReorderOption, onSelectDimension,
 }: {
     title: string;
     accent: string;
-    options: SummaryOption[];
+    options: DimensionOption[];
     candidates: { key: string; name: string }[];
     nameOf: (key: string) => string;
     colorOf: (key: string) => string;
@@ -42,12 +51,12 @@ export function CompetenceSummarySection({
     onRemoveComment: (key: string, index: number) => void;
     onEditComment: (key: string, index: number, text: string) => void;
     onReorderOption: (fromIndex: number, toIndex: number) => void;
-    onSelectCompetence: (key: string) => void;
+    onSelectDimension: (key: string) => void;
 }) {
     const [pick, setPick] = useState('');
-    // Which comment row (competence key + index) is being edited inline; null when none.
+    // Which comment row (dimension key + index) is being edited inline; null when none.
     const [editing, setEditing] = useState<{ key: string; index: number } | null>(null);
-    // Only ONE competence card may be open for editing at a time — its comment
+    // Only ONE dimension card may be open for editing at a time — its comment
     // input box (and per-comment controls) show only while it is the active one.
     const [editKey, setEditKey] = useState<string | null>(null);
     // Section-level edit toggle: the whole box is read-only until the user opts in
@@ -101,7 +110,7 @@ export function CompetenceSummarySection({
                             labelId={`add-${title}-label`}
                             label={getString('selectCompetence')}
                             value={pick}
-                            onChange={e => { setPick(e.target.value); onSelectCompetence(e.target.value); }}
+                            onChange={e => { setPick(e.target.value); onSelectDimension(e.target.value); }}
                         >
                             {candidates.map(c => (
                                 <MenuItem key={c.key} value={c.key}>{c.name}</MenuItem>

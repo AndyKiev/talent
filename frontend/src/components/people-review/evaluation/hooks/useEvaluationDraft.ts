@@ -1,6 +1,11 @@
 import { useEffect, type Dispatch, type SetStateAction } from 'react';
 import type { GetStringFn } from '../../../../types/getStringFn';
-import type { Evaluation, ReviewSessionEmployee, EmployeeLanguageProfile } from '../../peopleReviewApi';
+import type {
+    Evaluation,
+    ReviewSessionEmployee,
+    EmployeeLanguageProfile,
+    RseDimensionType,
+} from '../../peopleReviewApi';
 import {
     usePeopleReviewStore,
     buildEvaluationDraft,
@@ -19,6 +24,9 @@ interface Args {
     langLoading: boolean;
     viewOnly: boolean;
     getString: GetStringFn;
+    /** The summary's sides — needed to split the flat summary list into the two
+     *  draft slices. Hydration waits for them (see hydrationReady). */
+    dimensionTypes: RseDimensionType[];
 }
 
 /**
@@ -31,7 +39,7 @@ interface Args {
  */
 export function useEvaluationDraft({
     rid, rseDetail, rseLoading, evaluations, evalLoading,
-    employeeId, langProfile, langLoading, viewOnly, getString,
+    employeeId, langProfile, langLoading, viewOnly, getString, dimensionTypes,
 }: Args) {
     const storeDraft = usePeopleReviewStore((s) => s.evalDrafts[rid]);
     const hydrateEvalDraft = usePeopleReviewStore((s) => s.hydrateEvalDraft);
@@ -55,7 +63,6 @@ export function useEvaluationDraft({
     const setEmployeeFeedback = makeSetter('employeeFeedback');
     const setManagerFeedback = makeSetter('managerFeedback');
     const setResults = makeSetter('results');
-    const setTrainings = makeSetter('trainings');
     const setStrongOptions = makeSetter('strongOptions');
     const setDevelopOptions = makeSetter('developOptions');
     const setStrongDrafts = makeSetter('strongDrafts');
@@ -66,8 +73,11 @@ export function useEvaluationDraft({
     // not isFetching: prefetched/cached data renders the full page instantly while
     // any 30s-stale background refresh completes silently (a switch to a warmed
     // sibling must not blank the lower tabs until the refetch settles).
+    // dimensionTypes is part of the gate: without the side rows the summary list
+    // cannot be split into its two draft slices, and hydrating early would show
+    // an empty summary that autosave could then persist over the real one.
     const hydrationReady =
-        !!rseDetail && !rseLoading && !evalLoading &&
+        !!rseDetail && !rseLoading && !evalLoading && dimensionTypes.length > 0 &&
         (!employeeId || (langProfile !== undefined && !langLoading));
 
     // Editable path: skipped when a draft already exists, so in-progress edits survive
@@ -75,8 +85,8 @@ export function useEvaluationDraft({
     useEffect(() => {
         if (viewOnly) return; // view-only re-hydration is handled separately below
         if (!hydrationReady || !rseDetail || storeDraft) return;
-        hydrateEvalDraft(rid, buildEvaluationDraft(rseDetail, evaluations, langProfile, getString));
-    }, [viewOnly, hydrationReady, storeDraft, rid, rseDetail, evaluations, langProfile, getString, hydrateEvalDraft]);
+        hydrateEvalDraft(rid, buildEvaluationDraft(rseDetail, evaluations, langProfile, getString, dimensionTypes));
+    }, [viewOnly, hydrationReady, storeDraft, rid, rseDetail, evaluations, langProfile, getString, dimensionTypes, hydrateEvalDraft]);
 
     // Supervision (view-only) is a passive watch with NO local edits, so we keep the
     // draft in lock-step with the polled server data: re-hydrate whenever it changes.
@@ -85,13 +95,13 @@ export function useEvaluationDraft({
     // no-op refetches, so this only fires on a real change, not on every render.
     useEffect(() => {
         if (!viewOnly || !hydrationReady || !rseDetail) return;
-        hydrateEvalDraft(rid, buildEvaluationDraft(rseDetail, evaluations, langProfile, getString));
-    }, [viewOnly, hydrationReady, rid, rseDetail, evaluations, langProfile, getString, hydrateEvalDraft]);
+        hydrateEvalDraft(rid, buildEvaluationDraft(rseDetail, evaluations, langProfile, getString, dimensionTypes));
+    }, [viewOnly, hydrationReady, rid, rseDetail, evaluations, langProfile, getString, dimensionTypes, hydrateEvalDraft]);
 
     return {
         storeDraft, draft, updateEvalDraft, hydrationReady,
         setLocalEvals, setLangSel, setEmployeeFeedback, setManagerFeedback,
-        setResults, setTrainings,
+        setResults,
         setStrongOptions, setDevelopOptions, setStrongDrafts, setDevelopDrafts,
         setSummaryFullCompetenceList,
     };

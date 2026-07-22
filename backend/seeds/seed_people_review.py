@@ -6,7 +6,7 @@ review session (except UKR7101004).
 For each employee it:
   1. Evaluations: score + mean_score + facts + improvement per dimension
   2. Criterion scores: per-descriptor star ratings (what the frontend renders!)
-  3. Competence summary: strong/develop JSON on the RSE row
+  3. Competence summary: strong/develop rows in review_session_employee_dimensions
   4. Proposed level: pick a random level, create answers with facts per requirement
   5. Employee & manager feedback, results, trainings, development plan
 
@@ -15,8 +15,8 @@ Run:
 """
 
 import asyncio
-import json
 import random
+import re
 import sys
 from pathlib import Path
 
@@ -39,6 +39,35 @@ from backend.api_v1.review_session_employee_evaluation.review_session_employee_e
     ReviewSessionEmployeeEvaluation,
 )
 from backend.api_v1.review_dimension.review_dimension_model import ReviewDimension
+from backend.api_v1.review_session_employee_dimension_type.review_session_employee_dimension_type_model import (
+    DEVELOP,
+    STRONG,
+    ReviewSessionEmployeeDimensionType,
+)
+from backend.api_v1.review_session_employee_dimension.review_session_employee_dimension_model import (
+    ReviewSessionEmployeeDimension,
+)
+from backend.api_v1.review_session_employee_dimension_comment.review_session_employee_dimension_comment_model import (
+    ReviewSessionEmployeeDimensionComment,
+)
+from backend.api_v1.review_session_employee_result.review_session_employee_result_model import (
+    ReviewSessionEmployeeResult,
+)
+from backend.api_v1.review_session_employee_feedback.review_session_employee_feedback_model import (
+    ReviewSessionEmployeeFeedback,
+)
+from backend.api_v1.review_session_employee_feedback_type.review_session_employee_feedback_type_model import (
+    EMPLOYEE as FEEDBACK_EMPLOYEE,
+    MANAGER as FEEDBACK_MANAGER,
+    ReviewSessionEmployeeFeedbackType,
+)
+from backend.api_v1.employee_recommended_training.employee_recommended_training_model import (
+    EmployeeRecommendedTraining,
+)
+from backend.api_v1.employee_recommended_training_status.employee_recommended_training_status_model import (
+    RECOMMENDED,
+    EmployeeRecommendedTrainingStatus,
+)
 from backend.api_v1.employee_mission.employee_mission_model import EmployeeMission
 from backend.api_v1.employee_mission_kpi.employee_mission_kpi_model import (
     EmployeeMissionKpi,
@@ -68,6 +97,9 @@ from backend.api_v1.review_session_employee_level.review_session_employee_level_
 from backend.api_v1.review_session_employee_level_answer.review_session_employee_level_answer_model import (
     ReviewSessionEmployeeLevelAnswer,
 )
+
+# Numbering prefix inside the demo banks ("1. ", "2) ", "- ", "• ").
+_BANK_PREFIX = re.compile(r"^\s*(?:\d+[.)]|[-•*])\s*")
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Ukrainian text banks
@@ -303,9 +335,17 @@ _LEVEL_FACTS: list[str] = [
 # ═══════════════════════════════════════════════════════════════════════════════
 
 _TEXT_THEME_KEYS = [
-    "professional_knowledge", "work_quality", "communication",
-    "initiative", "teamwork", "leadership", "result_orientation",
-    "customer_focus", "analytical_skills", "stress_resistance", "learning",
+    "professional_knowledge",
+    "work_quality",
+    "communication",
+    "initiative",
+    "teamwork",
+    "leadership",
+    "result_orientation",
+    "customer_focus",
+    "analytical_skills",
+    "stress_resistance",
+    "learning",
 ]
 
 
@@ -330,7 +370,9 @@ def _build_facts(dim: ReviewDimension, job: Job | None) -> str:
     pool = _FACT_BANK.get(theme, _FACT_BANK["_default"])
     chosen = _pick(pool, random.randint(2, 4))
     if job and random.random() < 0.3:
-        chosen.append(f"У ролі «{job.name}» продемонстрував(ла) високий рівень компетенції.")
+        chosen.append(
+            f"У ролі «{job.name}» продемонстрував(ла) високий рівень компетенції."
+        )
     return "\n".join(f"{i}. {line}" for i, line in enumerate(chosen, 1))
 
 
@@ -341,36 +383,73 @@ def _build_improvement(dim: ReviewDimension) -> str:
     return "\n".join(f"{i}. {line}" for i, line in enumerate(chosen, 1))
 
 
-def _build_competence_summary(
+async def _seed_dimensions(
+    session,
+    rse: ReviewSessionEmployee,
     evaluations: list[ReviewSessionEmployeeEvaluation],
     dimensions_by_id: dict[int, ReviewDimension],
-) -> str | None:
+    types_by_key: dict[str, ReviewSessionEmployeeDimensionType],
+) -> tuple[int, int]:
+    """Seed the two top-scored competences as strong and the two lowest as
+    to-develop, with their facts as comment rows.
+
+    Writes `review_session_employee_dimensions` + `review_session_employee_dimension_comments`
+    (it used to build a JSON string onto the RSE). Returns (strong, develop)
+    counts. Idempotent per RSE: an RSE that already has summary rows is skipped.
+    """
     if not evaluations:
-        return None
+        return (0, 0)
+
+    already = await session.scalar(
+        select(ReviewSessionEmployeeDimension.id)
+        .where(ReviewSessionEmployeeDimension.review_session_employee_id == rse.id)
+        .limit(1)
+    )
+    if already:
+        return (0, 0)
 
     def _score(e: ReviewSessionEmployeeEvaluation) -> float:
         return e.mean_score if e.mean_score is not None else float(e.score or 0)
 
     sorted_evals = sorted(evaluations, key=_score, reverse=True)
-    strong_ids = sorted_evals[:2]
-    develop_ids = sorted_evals[-2:] if len(sorted_evals) >= 4 else sorted_evals[2:]
+    picks = {
+        STRONG: sorted_evals[:2],
+        DEVELOP: sorted_evals[-2:] if len(sorted_evals) >= 4 else sorted_evals[2:],
+    }
 
-    def _item(e: ReviewSessionEmployeeEvaluation) -> dict | None:
-        dim = dimensions_by_id.get(e.dimension_id)
-        if dim is None:
-            return None
+    def _comments(
+        e: ReviewSessionEmployeeEvaluation, dim: ReviewDimension
+    ) -> list[str]:
         facts_text = e.facts or ""
-        comments = [line.strip() for line in facts_text.split("\n") if line.strip()]
-        comments = [c.split(". ", 1)[1] if ". " in c[:4] else c for c in comments]
-        if not comments:
-            comments = [dim.name]
-        return {"dimension_key": dim.key, "comments": comments}
+        lines = [line.strip() for line in facts_text.split("\n") if line.strip()]
+        lines = [c.split(". ", 1)[1] if ". " in c[:4] else c for c in lines]
+        return lines or [dim.name]
 
-    strong_items = [item for e in strong_ids if (item := _item(e))]
-    develop_items = [item for e in develop_ids if (item := _item(e))]
-    if not strong_items and not develop_items:
-        return None
-    return json.dumps({"strong": strong_items, "develop": develop_items}, ensure_ascii=False)
+    counts: dict[str, int] = {STRONG: 0, DEVELOP: 0}
+    for type_key, evals in picks.items():
+        summary_type = types_by_key.get(type_key)
+        if summary_type is None:
+            continue
+        sort_order = 0
+        for e in evals:
+            dim = dimensions_by_id.get(e.dimension_id)
+            if dim is None:
+                continue
+            row = ReviewSessionEmployeeDimension(
+                review_session_employee_id=rse.id,
+                review_session_employee_dimension_type_id=summary_type.id,
+                dimension_id=dim.id,
+                sort_order=sort_order,
+            )
+            row.comments = [
+                ReviewSessionEmployeeDimensionComment(text=text, sort_order=i)
+                for i, text in enumerate(_comments(e, dim))
+            ]
+            session.add(row)
+            sort_order += 1
+            counts[type_key] += 1
+
+    return (counts[STRONG], counts[DEVELOP])
 
 
 # Generic KPI phrasings for seeded missions. Demo DATA (like the invented
@@ -383,6 +462,53 @@ _MISSION_KPI_BANK = [
     "Провести не менше трьох робочих сесій із командою.",
     "Підготувати підсумкову презентацію результатів розвитку.",
 ]
+
+
+def _bank_lines(raw: str) -> list[str]:
+    """Split one numbered bank string into its individual items.
+
+    The banks were written when these fields were a single text blob, so their
+    entries still carry "1. " / "2. " prefixes. The number is the row position
+    now, so it is stripped here rather than stored.
+    """
+    out = []
+    for line in (raw or "").split("\n"):
+        cleaned = _BANK_PREFIX.sub("", line).strip()
+        if cleaned:
+            out.append(cleaned)
+    return out
+
+
+async def _seed_recommended_trainings(session, employee_id: int) -> None:
+    """Seed the employee's recommended trainings once (idempotent per person).
+
+    Employee-scoped, so an employee reviewed in several sessions still ends up
+    with ONE list — which is the point of the move off the review record.
+    """
+    existing = await session.scalar(
+        select(func.count())
+        .select_from(EmployeeRecommendedTraining)
+        .where(EmployeeRecommendedTraining.employee_id == employee_id)
+    )
+    if existing:
+        return
+    status_id = await session.scalar(
+        select(EmployeeRecommendedTrainingStatus.id).where(
+            EmployeeRecommendedTrainingStatus.key == RECOMMENDED
+        )
+    )
+    if status_id is None:
+        return
+    for idx, line in enumerate(_bank_lines(random.choice(_TRAININGS_BANK))):
+        session.add(
+            EmployeeRecommendedTraining(
+                employee_id=employee_id,
+                employee_recommended_training_status_id=status_id,
+                description=line,
+                is_active=True,
+                sort_order=idx,
+            )
+        )
 
 
 async def _seed_development_missions(
@@ -450,7 +576,8 @@ async def _seed_criterion_scores(
     # Check if scores already exist for this evaluation
     result = await session.execute(
         select(ReviewSessionEmployeeCriterionScore).where(
-            ReviewSessionEmployeeCriterionScore.review_session_employee_evaluation_id == evaluation.id
+            ReviewSessionEmployeeCriterionScore.review_session_employee_evaluation_id
+            == evaluation.id
         )
     )
     existing = list(result.scalars().all())
@@ -491,13 +618,17 @@ async def _seed_proposed_level(
     )
     existing = result.scalar_one_or_none()
     if existing is not None:
-        print(f"   [SKIP] proposed_level — already exists (level_id={existing.level_id}), skipping.")
+        print(
+            f"   [SKIP] proposed_level — already exists (level_id={existing.level_id}), skipping."
+        )
         return
 
     level = random.choice(levels)
     reqs = level_requirements.get(level.id, [])
     if not reqs:
-        print(f"   [WARN] level «{level.name_key}» has no requirements, skipping proposed level.")
+        print(
+            f"   [WARN] level «{level.name_key}» has no requirements, skipping proposed level."
+        )
         return
 
     proposed = ReviewSessionEmployeeLevel(
@@ -533,21 +664,53 @@ async def _seed_feedback_fields(
     rse: ReviewSessionEmployee,
     dimensions: list[ReviewDimension],
 ):
-    if not rse.employee_feedback:
-        rse.employee_feedback = random.choice(_EMPLOYEE_FEEDBACK_BANK)
-        print(f"   employee_feedback — filled.")
+    # Feedback is ROWS now, one per voice, keyed by feedback type.
+    existing_feedback = await session.scalar(
+        select(func.count())
+        .select_from(ReviewSessionEmployeeFeedback)
+        .where(ReviewSessionEmployeeFeedback.review_session_employee_id == rse.id)
+    )
+    if not existing_feedback:
+        types = {
+            t.key: t.id
+            for t in (
+                await session.execute(select(ReviewSessionEmployeeFeedbackType))
+            ).scalars()
+        }
+        for key, bank in (
+            (FEEDBACK_EMPLOYEE, _EMPLOYEE_FEEDBACK_BANK),
+            (FEEDBACK_MANAGER, _MANAGER_FEEDBACK_BANK),
+        ):
+            type_id = types.get(key)
+            if type_id is None:
+                continue
+            session.add(
+                ReviewSessionEmployeeFeedback(
+                    review_session_employee_id=rse.id,
+                    review_session_employee_feedback_type_id=type_id,
+                    text=random.choice(bank),
+                )
+            )
+        print("   feedback — filled.")
 
-    if not rse.manager_feedback:
-        rse.manager_feedback = random.choice(_MANAGER_FEEDBACK_BANK)
-        print(f"   manager_feedback — filled.")
+    # Results are ROWS now (review-scoped), one per line of the picked bank text.
+    existing_results = await session.scalar(
+        select(func.count())
+        .select_from(ReviewSessionEmployeeResult)
+        .where(ReviewSessionEmployeeResult.review_session_employee_id == rse.id)
+    )
+    if not existing_results:
+        for idx, line in enumerate(_bank_lines(random.choice(_RESULTS_BANK))):
+            session.add(
+                ReviewSessionEmployeeResult(
+                    review_session_employee_id=rse.id, text=line, sort_order=idx
+                )
+            )
+        print("   results — filled.")
 
-    if not rse.results_achievements:
-        rse.results_achievements = random.choice(_RESULTS_BANK)
-        print(f"   results_achievements — filled.")
-
-    if not rse.trainings:
-        rse.trainings = random.choice(_TRAININGS_BANK)
-        print(f"   trainings — filled.")
+    # Recommended trainings are EMPLOYEE-scoped, so they are seeded once per
+    # person rather than per review.
+    await _seed_recommended_trainings(session, rse.employee_id)
 
     await _seed_development_missions(session, rse.employee_id, dimensions)
 
@@ -610,6 +773,16 @@ async def seed_people_review():
         print(f"{len(dimensions)} active dimensions loaded.")
         dimensions_by_id = {d.id: d for d in dimensions}
 
+        # Summary sides (strong / develop). Resolved BY KEY — ids move on reseed.
+        result = await session.execute(select(ReviewSessionEmployeeDimensionType))
+        summary_types_by_key = {t.key: t for t in result.scalars().all()}
+        if not {STRONG, DEVELOP} <= set(summary_types_by_key):
+            print(
+                "[ERR] review_session_employee_dimension_types is missing 'strong'/'develop'. "
+                "Run seeds/seed_review_session_employee_dimension_types.py first."
+            )
+            return
+
         # ── 5. Frozen criteria for this session (per dimension) ─────────────
         result = await session.execute(
             select(ReviewSessionCriterion)
@@ -619,8 +792,10 @@ async def seed_people_review():
         criteria_by_dim: dict[int, list[ReviewSessionCriterion]] = {}
         for c in result.scalars().all():
             criteria_by_dim.setdefault(c.dimension_id, []).append(c)
-        print(f"{sum(len(v) for v in criteria_by_dim.values())} frozen criteria loaded "
-              f"across {len(criteria_by_dim)} dimensions.")
+        print(
+            f"{sum(len(v) for v in criteria_by_dim.values())} frozen criteria loaded "
+            f"across {len(criteria_by_dim)} dimensions."
+        )
 
         # ── 6. Levels (for proposed level) ──────────────────────────────────
         result = await session.execute(
@@ -711,12 +886,15 @@ async def seed_people_review():
 
             # ── 7b. Competence summary ──────────────────────────────────
             if touched_evals:
-                summary = _build_competence_summary(touched_evals, dimensions_by_id)
-                if summary:
-                    rse.competence_summary = summary
+                strong_n, develop_n = await _seed_dimensions(
+                    session, rse, touched_evals, dimensions_by_id, summary_types_by_key
+                )
+                if strong_n or develop_n:
                     updated_rses += 1
-                    s = json.loads(summary)
-                    print(f"   competence_summary: {len(s.get('strong',[]))} strong, {len(s.get('develop',[]))} develop")
+                    print(
+                        f"   competence summary: {strong_n} strong, "
+                        f"{develop_n} develop"
+                    )
 
             # ── 7c. Proposed level ──────────────────────────────────────
             if levels:
@@ -728,9 +906,7 @@ async def seed_people_review():
         await session.commit()
 
         # Count total criterion scores created
-        result = await session.execute(
-            select(ReviewSessionEmployeeCriterionScore)
-        )
+        result = await session.execute(select(ReviewSessionEmployeeCriterionScore))
         criterion_total = len(list(result.scalars().all()))
 
         print(f"\n{'='*60}")

@@ -3,7 +3,7 @@ import type { GetStringFn } from '../../../../types/getStringFn';
 import {
     fetchTempoPngUrl,
     downloadTempoPdf,
-    openTempoHtml,
+    fetchTempoHtmlUrl,
 } from '../../peopleReviewApi';
 import type { ReviewSessionEmployee } from '../../peopleReviewApi';
 
@@ -26,6 +26,9 @@ export function useTempoAlbum({ rid, rseDetail, getString, onError }: Args) {
     const [pdfLoading, setPdfLoading] = useState(false);
     const [pdfError, setPdfError] = useState<string | null>(null);
     const [busyLabel, setBusyLabel] = useState<string | null>(null);
+    // A finished album the popup blocker would not let us open automatically —
+    // held so the user can open it with a fresh click instead of rebuilding.
+    const [readyHtmlUrl, setReadyHtmlUrl] = useState<string | null>(null);
 
     const openTempoPdf = async () => {
         setPdfOpen(true);
@@ -71,24 +74,28 @@ export function useTempoAlbum({ rid, rseDetail, getString, onError }: Args) {
     };
 
     // Open the interactive HTML sheet (single page, in-page links) in a new tab.
-    // The tab is opened synchronously on the click so the browser doesn't block it
-    // after the build (see openHtmlBlob in peopleReviewApi).
+    //
+    // BUILD FIRST, switch after. The previous version opened a blank tab up front
+    // (the popup-blocker-safe trick) and filled it when the build finished, which
+    // dumped the user on an empty white page for the many seconds the server
+    // takes. Now the wait happens HERE, behind the busy overlay on the page they
+    // are already reading, and the tab appears only once the document exists.
+    //
+    // The trade-off is that `window.open` after an await is outside the click
+    // gesture, so a blocker may refuse it. That is why the URL is kept in
+    // `readyHtmlUrl`: the UI then offers one more click, which IS a gesture and
+    // always works. Nothing is lost either way — the build is already done.
     const openTempoHtmlView = async () => {
-        const win = window.open('', '_blank');
-        if (!win) {
-            onError(getString('popupBlocked'));
-            return;
-        }
-        const building = getString('tempoPresentationBuilding');
-        win.document.write(
-            `<!doctype html><meta charset="utf-8"><title>TEMPO</title>` +
-            `<body style="margin:0;display:flex;align-items:center;justify-content:center;` +
-            `height:100vh;font-family:'Segoe UI',Arial,sans-serif;color:#1b2a4a;background:#f7f6f2">` +
-            `<div style="font-size:18px;font-weight:600">${building}</div></body>`,
-        );
-        setBusyLabel(building);
+        setBusyLabel(getString('tempoPresentationBuilding'));
         try {
-            await openTempoHtml(rid, win);
+            const url = await fetchTempoHtmlUrl(rid);
+            const win = window.open(url, '_blank');
+            if (win) {
+                // Revoke only after the new tab has had time to load it.
+                setTimeout(() => URL.revokeObjectURL(url), 60_000);
+            } else {
+                setReadyHtmlUrl(url);
+            }
         } catch (err) {
             onError((err as Error).message);
         } finally {
@@ -96,8 +103,23 @@ export function useTempoAlbum({ rid, rseDetail, getString, onError }: Args) {
         }
     };
 
+    /** Second-chance open for a build the popup blocker refused. */
+    const openReadyHtml = () => {
+        if (!readyHtmlUrl) return;
+        window.open(readyHtmlUrl, '_blank');
+        const url = readyHtmlUrl;
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+        setReadyHtmlUrl(null);
+    };
+
+    const dismissReadyHtml = () => {
+        if (readyHtmlUrl) URL.revokeObjectURL(readyHtmlUrl);
+        setReadyHtmlUrl(null);
+    };
+
     return {
         pdfOpen, pdfUrl, pdfLoading, pdfError, busyLabel,
         openTempoPdf, closeTempoPdf, downloadTempo, openTempoHtmlView,
+        readyHtmlUrl, openReadyHtml, dismissReadyHtml,
     };
 }

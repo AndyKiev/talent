@@ -10,6 +10,9 @@ from backend.api_v1.review_session_employee.review_session_employee_schema impor
     ReviewSessionEmployeeFieldsUpdate,
     ReviewSessionEmployeeCreate,
     ReviewSessionEmployeeReorder,
+    RseDimensionsUpdate,
+    RseResultsUpdate,
+    RseFeedbacksUpdate,
 )
 from backend.api_v1.review_session_employee.review_session_employee_dependencies import (
     get_review_session_employee_service,
@@ -210,6 +213,58 @@ async def update_rse_fields(
     ],
 ):
     return await service.update_fields(rse_id, payload)
+
+
+@router.put("/{rse_id}/dimensions", response_model=RSESchema)
+async def set_rse_dimensions(
+    rse_id: int,
+    payload: RseDimensionsUpdate,
+    service: Annotated[
+        ReviewSessionEmployeeService,
+        Depends(get_review_session_employee_service),
+    ],
+):
+    """Replace the review's strong / to-develop competence summary.
+
+    Its own endpoint rather than a field on PATCH /fields, because it is a set of
+    rows: the payload is the full desired state and the service swaps the rows in
+    one transaction. Scoping and editability are enforced in the service (there
+    is no `{employee_id}` here to hang a route guard on)."""
+    return await service.set_rse_dimensions(rse_id, payload)
+
+
+@router.put("/{rse_id}/results", response_model=RSESchema)
+async def set_rse_results(
+    rse_id: int,
+    payload: RseResultsUpdate,
+    service: Annotated[
+        ReviewSessionEmployeeService,
+        Depends(get_review_session_employee_service),
+    ],
+):
+    """Replace the review's results / achievements list.
+
+    Its own endpoint for the same reason as the dimensions: it is a set of rows,
+    so the payload is the full desired state and the service swaps them in one
+    transaction. Scoping and editability are enforced in the service."""
+    return await service.set_rse_results(rse_id, payload)
+
+
+@router.put("/{rse_id}/feedbacks", response_model=RSESchema)
+async def set_rse_feedbacks(
+    rse_id: int,
+    payload: RseFeedbacksUpdate,
+    service: Annotated[
+        ReviewSessionEmployeeService,
+        Depends(get_review_session_employee_service),
+    ],
+):
+    """Replace the review's feedback (employee / manager voices).
+
+    Its own endpoint for the same reason as the results and dimensions: it is a
+    set of rows keyed by a lookup, not two text fields. Scoping and editability
+    are enforced in the service."""
+    return await service.set_rse_feedbacks(rse_id, payload)
 
 
 @router.post(

@@ -35,6 +35,20 @@ export const PROCESS_ROLE_HOLDER_EMPLOYEE_QK = ['process_role_holder_employees']
 export const PROCESS_ROLE_HOLDER_DEPARTMENT_QK = ['process_role_holder_departments'] as const;
 export const PEOPLE_REVIEW_MY_SCOPES_QK = ['people_review_my_scopes'] as const;
 export const PEOPLE_REVIEW_MY_LATEST_QK = ['people_review_my_latest'] as const;
+// Recommended trainings — employee-scoped. The list key includes the
+// include-inactive flag so the two variants cache separately; the 2-element
+// prefix invalidates BOTH after a write, so toggling the eye never shows a
+// stale set.
+export const RECOMMENDED_TRAINING_STATUSES_QK = ['recommended_training_statuses'] as const;
+export const RECOMMENDED_TRAININGS_QK = (employeeId: number, includeInactive?: boolean) =>
+    (includeInactive === undefined
+        ? (['recommended_trainings', employeeId] as const)
+        : (['recommended_trainings', employeeId, includeInactive] as const));
+
+// The competence summary's sides (strong / to-develop) — a seeded lookup.
+export const RSE_DIMENSION_TYPES_QK = ['review_session_employee_dimension_types'] as const;
+// The review record's feedback voices (employee / manager) — a seeded lookup.
+export const RSE_FEEDBACK_TYPES_QK = ['review_session_employee_feedback_types'] as const;
 export const SESSION_DEPARTMENTS_QK = (sessionId: number) => ['session_departments', sessionId] as const;
 export const PEOPLE_REVIEW_SESSION_AVAILABILITY_QK = (sessionId: number) =>
     ['people_review_session_availability', sessionId] as const;

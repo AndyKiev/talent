@@ -1,24 +1,25 @@
 import { useState, type Dispatch, type SetStateAction } from 'react';
-import { flipCompetence } from '../../peopleReviewApi';
+import { flipCompetence, type RseDimensionType } from '../../peopleReviewApi';
+import type { GetStringFn } from '../../../../types/getStringFn';
 import type { EvaluationDraft } from '../../peopleReviewStore';
 import {
-    type SummaryOption,
-    CompetenceSide,
+    type DimensionOption,
+    DimensionSide,
     type PendingFlip,
     type LocalEval,
     rankedCompetences,
     detectCompetenceFlip,
 } from '../evaluationHelpers';
 
-type SummarySetter = Dispatch<SetStateAction<SummaryOption[]>>;
+type OptionSetter = Dispatch<SetStateAction<DimensionOption[]>>;
 
 interface Args {
     rid: number;
     updateEvalDraft: (rid: number, updater: (d: EvaluationDraft) => EvaluationDraft) => void;
     // Draft slices
     localEvals: LocalEval[];
-    strongOptions: SummaryOption[];
-    developOptions: SummaryOption[];
+    strongOptions: DimensionOption[];
+    developOptions: DimensionOption[];
     // Spine
     visibleEvals: LocalEval[];
     competenceLabel: (key: string) => string;
@@ -29,37 +30,45 @@ interface Args {
     // via the generic `(setter, ...)` handlers, so only the develop-side setter
     // (used by removeDevelopOption / confirmDevelopRemoval) is needed here.
     setLocalEvals: Dispatch<SetStateAction<LocalEval[]>>;
-    setDevelopOptions: SummarySetter;
+    setDevelopOptions: OptionSetter;
     setStrongDrafts: Dispatch<SetStateAction<Record<string, string>>>;
     setDevelopDrafts: Dispatch<SetStateAction<Record<string, string>>>;
     setSummaryFullCompetenceList: Dispatch<SetStateAction<boolean>>;
     // Settings + misc
     summaryMinOptions: number;
+    /** The sides from the DB lookup — resolves a side to its id. */
+    dimensionTypes: RseDimensionType[];
+    getString: GetStringFn;
     flushAutosave: () => Promise<void>;
     setActiveTab: Dispatch<SetStateAction<number>>;
     onError: (message: string) => void;
 }
 
 /**
- * Competence-summary orchestration: the strong / to-develop selects, star
- * re-ratings that flip a competence to the opposite list (confirmed atomically),
- * full-list toggle + reconcile, and the linked-comment drafts. Holds the two
- * pending-confirmation states that drive the summary dialogs.
+ * Orchestrates the dimensions singled out for this employee in this review —
+ * the strong / to-develop selects, star re-ratings that flip a dimension to the
+ * opposite side (confirmed atomically), the full-list toggle + reconcile, and
+ * the linked-comment drafts. Holds the two pending-confirmation states that
+ * drive the dialogs.
+ *
+ * The draft slices stay keyed on `dimension_key` while the server stores
+ * `dimension_id`; each picked option carries both, so the ranking/flip rules
+ * here need no lookup and the write path still sends real ids.
  *
  * Deliberately knows NOTHING about development missions. Missions used to live
- * in this same draft as free-text `dimension_key` strings, so changing the
- * summary had to null out any mission pointing at a dropped competence. They are
- * now employee-owned rows linked to review_dimensions.id, independent of any one
- * session's summary — so a reviewer editing this summary must never silently
- * rewrite the employee's standing development plan.
+ * in this same draft as free-text `dimension_key` strings, so changing a side
+ * had to null out any mission pointing at a dropped dimension. They are now
+ * employee-owned rows linked to review_dimensions.id, independent of any one
+ * session — so a reviewer editing this must never silently rewrite the
+ * employee's standing development plan.
  */
-export function useCompetenceSummary({
+export function useRseDimensions({
     rid, updateEvalDraft,
     localEvals, strongOptions, developOptions,
     visibleEvals, competenceLabel, isStrongPicked, isDevelopPicked, summaryFullListActive,
     setLocalEvals, setDevelopOptions, setStrongDrafts, setDevelopDrafts,
     setSummaryFullCompetenceList,
-    summaryMinOptions, flushAutosave, setActiveTab, onError,
+    summaryMinOptions, dimensionTypes, getString, flushAutosave, setActiveTab, onError,
 }: Args) {
     // A star re-rating held back because it would flip a competence to the
     // opposite summary list — confirmed via a dialog, then applied atomically.
@@ -67,7 +76,7 @@ export function useCompetenceSummary({
     // Turning the full-list switch OFF re-arms ranked selection, so any picked
     // competence that no longer fits its side is re-evaluated and held here.
     const [pendingSummaryReconcile, setPendingSummaryReconcile] =
-        useState<{ key: string; name: string; side: CompetenceSide }[] | null>(null);
+        useState<{ key: string; name: string; side: DimensionSide }[] | null>(null);
 
     // Push a line into the comment-input draft of one summary side. Facts prove
     // STRONG competences, so they copy only into the strong summary; the directions
@@ -88,18 +97,18 @@ export function useCompetenceSummary({
 
     // Picked competences that no longer belong in their summary side by the current
     // scores (used when leaving full-list mode).
-    const computeMisplacedSummary = (): { key: string; name: string; side: CompetenceSide }[] => {
+    const computeMisplacedSummary = (): { key: string; name: string; side: DimensionSide }[] => {
         const strongKeys = new Set(rankedCompetences(visibleEvals, 'desc', summaryMinOptions).map(e => e.dimension_key));
         const developKeys = new Set(rankedCompetences(visibleEvals, 'asc', summaryMinOptions).map(e => e.dimension_key));
-        const out: { key: string; name: string; side: CompetenceSide }[] = [];
+        const out: { key: string; name: string; side: DimensionSide }[] = [];
         for (const o of strongOptions) {
             if (developKeys.has(o.dimension_key) && !strongKeys.has(o.dimension_key)) {
-                out.push({ key: o.dimension_key, name: competenceLabel(o.dimension_key), side: CompetenceSide.Strong });
+                out.push({ key: o.dimension_key, name: competenceLabel(o.dimension_key), side: DimensionSide.Strong });
             }
         }
         for (const o of developOptions) {
             if (strongKeys.has(o.dimension_key) && !developKeys.has(o.dimension_key)) {
-                out.push({ key: o.dimension_key, name: competenceLabel(o.dimension_key), side: CompetenceSide.Develop });
+                out.push({ key: o.dimension_key, name: competenceLabel(o.dimension_key), side: DimensionSide.Develop });
             }
         }
         return out;
@@ -119,8 +128,8 @@ export function useCompetenceSummary({
     // switch off — all in one draft update so the summary is never partial.
     const confirmSummaryReconcile = () => {
         if (!pendingSummaryReconcile) return;
-        const strongDrop = new Set(pendingSummaryReconcile.filter(m => m.side === CompetenceSide.Strong).map(m => m.key));
-        const developDrop = new Set(pendingSummaryReconcile.filter(m => m.side === CompetenceSide.Develop).map(m => m.key));
+        const strongDrop = new Set(pendingSummaryReconcile.filter(m => m.side === DimensionSide.Strong).map(m => m.key));
+        const developDrop = new Set(pendingSummaryReconcile.filter(m => m.side === DimensionSide.Develop).map(m => m.key));
         const dropKeys = (rec: Record<string, string>, keys: Set<string>) => {
             const next = { ...rec };
             for (const k of keys) delete next[k];
@@ -150,24 +159,38 @@ export function useCompetenceSummary({
     };
 
     // --- Competence summary helpers (shared by both sections) ---
-    const addSummaryOption = (setter: SummarySetter, key: string) =>
-        setter(prev => (prev.some(o => o.dimension_key === key) ? prev : [...prev, { dimension_key: key, comments: [] }]));
-    const removeSummaryOption = (setter: SummarySetter, key: string) =>
+    // A picked option carries the dimension id (what the server stores) alongside
+    // its key and display name — all taken from the evaluation row the candidate
+    // was built from, so a freshly added competence looks identical to a loaded one.
+    const addDimensionOption = (setter: OptionSetter, key: string) =>
+        setter(prev => {
+            if (prev.some(o => o.dimension_key === key)) return prev;
+            const ev = visibleEvals.find(e => e.dimension_key === key);
+            if (!ev) return prev;
+            return [...prev, {
+                dimension_id: ev.dimension_id,
+                dimension_key: key,
+                dimension_name: competenceLabel(key),
+                dimension_color: ev.dimension_color,
+                comments: [],
+            }];
+        });
+    const removeDimensionOption = (setter: OptionSetter, key: string) =>
         setter(prev => prev.filter(o => o.dimension_key !== key));
     // Removing a to-develop competence is now a plain removal. It used to need a
     // confirmation dialog because it also unlinked any mission targeting that
     // competence; missions no longer live in this draft, so there is nothing to
     // warn about and nothing to cascade.
-    const removeDevelopOption = (key: string) => removeSummaryOption(setDevelopOptions, key);
-    const addSummaryComment = (setter: SummarySetter, key: string, text: string) =>
+    const removeDevelopOption = (key: string) => removeDimensionOption(setDevelopOptions, key);
+    const addDimensionComment = (setter: OptionSetter, key: string, text: string) =>
         setter(prev => prev.map(o => (o.dimension_key === key ? { ...o, comments: [...o.comments, text.trim()] } : o)));
-    const removeSummaryComment = (setter: SummarySetter, key: string, index: number) =>
+    const removeDimensionComment = (setter: OptionSetter, key: string, index: number) =>
         setter(prev => prev.map(o => (o.dimension_key === key ? { ...o, comments: o.comments.filter((_, i) => i !== index) } : o)));
-    const editSummaryComment = (setter: SummarySetter, key: string, index: number, text: string) =>
+    const editDimensionComment = (setter: OptionSetter, key: string, index: number, text: string) =>
         setter(prev => prev.map(o => (o.dimension_key === key ? { ...o, comments: o.comments.map((c, i) => (i === index ? text.trim() : c)) } : o)));
     // Reorder a whole competence card within its summary list (drop it *before* the
     // target row). The array order IS the persisted order.
-    const reorderSummaryOption = (setter: SummarySetter, from: number, toRow: number) => {
+    const reorderDimensionOption = (setter: OptionSetter, from: number, toRow: number) => {
         const to = from < toRow ? toRow - 1 : toRow;
         if (from === to) return;
         setter(prev => {
@@ -217,9 +240,16 @@ export function useCompetenceSummary({
     const confirmFlip = async () => {
         if (!pendingFlip) return;
         const { evalId, index, value, key, side } = pendingFlip;
+        // The side travels as the id of its review_session_employee_dimension_types row, looked
+        // up by key — the server deletes exactly that row of the summary.
+        const leavingTypeId = dimensionTypes.find(t => t.key === side)?.id;
+        if (leavingTypeId == null) {
+            onError(getString('dimensionTypesUnavailable'));
+            return;
+        }
         await flushAutosave();
         try {
-            await flipCompetence(evalId, { criterion_index: index, new_score: value, leaving_side: side });
+            await flipCompetence(evalId, { criterion_index: index, new_score: value, leaving_type_id: leavingTypeId });
         } catch (err) {
             onError((err as Error).message);
             return;
@@ -235,15 +265,15 @@ export function useCompetenceSummary({
                     ? {
                         ...e,
                         criterionScores: { ...e.criterionScores, [index]: value },
-                        facts: side === CompetenceSide.Strong ? [] : e.facts,
-                        improvements: side === CompetenceSide.Develop ? [] : e.improvements,
+                        facts: side === DimensionSide.Strong ? [] : e.facts,
+                        improvements: side === DimensionSide.Develop ? [] : e.improvements,
                     }
                     : e,
             ),
-            strongOptions: side === CompetenceSide.Strong ? d.strongOptions.filter(o => o.dimension_key !== key) : d.strongOptions,
-            developOptions: side === CompetenceSide.Develop ? d.developOptions.filter(o => o.dimension_key !== key) : d.developOptions,
-            strongDrafts: side === CompetenceSide.Strong ? dropKey(d.strongDrafts) : d.strongDrafts,
-            developDrafts: side === CompetenceSide.Develop ? dropKey(d.developDrafts) : d.developDrafts,
+            strongOptions: side === DimensionSide.Strong ? d.strongOptions.filter(o => o.dimension_key !== key) : d.strongOptions,
+            developOptions: side === DimensionSide.Develop ? d.developOptions.filter(o => o.dimension_key !== key) : d.developOptions,
+            strongDrafts: side === DimensionSide.Strong ? dropKey(d.strongDrafts) : d.strongDrafts,
+            developDrafts: side === DimensionSide.Develop ? dropKey(d.developDrafts) : d.developDrafts,
         }));
         setPendingFlip(null);
     };
@@ -252,8 +282,8 @@ export function useCompetenceSummary({
         strongCandidates, developCandidates,
         copyFactToStrong, copyImprovementToDevelop,
         activateCompetenceTab,
-        addSummaryOption, removeSummaryOption, removeDevelopOption,
-        addSummaryComment, removeSummaryComment, editSummaryComment, reorderSummaryOption,
+        addDimensionOption, removeDimensionOption, removeDevelopOption,
+        addDimensionComment, removeDimensionComment, editDimensionComment, reorderDimensionOption,
         handleSummaryFullListToggle, confirmSummaryReconcile,
         handleCriterionChange, confirmFlip,
         pendingFlip, setPendingFlip,

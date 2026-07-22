@@ -1,0 +1,50 @@
+from typing import Annotated, List
+
+from fastapi import APIRouter, Depends
+from fastapi.security import HTTPBearer
+from pydantic import BaseModel, ConfigDict
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from backend.api_v1.review_session_employee_status.review_session_employee_status_model import (
+    ReviewSessionEmployeeStatus,
+)
+from backend.database.db_helper import db_helper
+
+router = APIRouter(
+    prefix="/review_session_employee_statuses",
+    tags=["Review Session Employee Statuses"],
+    dependencies=[Depends(HTTPBearer(auto_error=False))],
+)
+
+
+class ReviewSessionEmployeeStatusSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    key: str
+    name: str
+    description: str = ""
+    sort_order: int = 0
+
+
+@router.get("", response_model=List[ReviewSessionEmployeeStatusSchema])
+async def list_rows(
+    session: Annotated[AsyncSession, Depends(db_helper.session_getter)],
+):
+    """Read-only: the seeded rows in display order.
+
+    Open to any authenticated user — the people-review page needs these ids and
+    labels, and neither the reviewee nor their manager is necessarily an admin.
+    There is deliberately no create/update/delete: the KEYS are a code contract
+    (they drive the transition table / the two feedback boxes), so an editable
+    row could silently break the rules that resolve by key.
+    """
+    rows = (
+        await session.execute(
+            select(ReviewSessionEmployeeStatus).order_by(
+                ReviewSessionEmployeeStatus.sort_order,
+                ReviewSessionEmployeeStatus.id,
+            )
+        )
+    ).scalars()
+    return list(rows)

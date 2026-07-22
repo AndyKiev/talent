@@ -128,6 +128,11 @@ class EssenceName(str, Enum):
     EMPLOYEE_TRAINING_STATUS = "employee_training_status"
     TRAINING_TYPE = "training_type"
     EMPLOYEE_TRAINING = "employee_training"
+    # Recommended trainings — free-text development advice on the EMPLOYEE. A
+    # separate essence from the training module above on purpose: it stays
+    # visible and editable when that module is switched off.
+    EMPLOYEE_RECOMMENDED_TRAINING = "employee_recommended_training"
+    EMPLOYEE_RECOMMENDED_TRAINING_STATUS = "employee_recommended_training_status"
 
     # ── Developer tools ──────────────────────────────────────────────────────
     DB_TABLE = "db_table"

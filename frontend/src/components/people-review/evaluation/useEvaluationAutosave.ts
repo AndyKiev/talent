@@ -3,14 +3,31 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
     bulkUpdateEvaluations,
     saveRSEFields,
+    saveRseDimensions,
+    saveRseResults,
+    saveRseFeedbacks,
     saveEmployeeLanguageProfile,
     type EvaluationBulkUpdate,
     type CriterionScore,
     type RSEFieldsUpdate,
     type EmployeeLanguageInput,
+    type RseDimensionType,
+    type RseDimensionInput,
+    type RseResultInput,
+    type RseFeedbackInput,
+    type RseFeedbackType,
 } from '../peopleReviewApi';
-import { serializeFacts, FOREIGN_LANGUAGES } from './evaluationHelpers';
-import type { EvaluationDraft } from '../peopleReviewStore';
+import {
+    serializeFacts,
+    FOREIGN_LANGUAGES,
+    DimensionSide,
+    type DimensionOption,
+} from './evaluationHelpers';
+import {
+    RSE_FEEDBACK_EMPLOYEE,
+    RSE_FEEDBACK_MANAGER,
+    type EvaluationDraft,
+} from '../peopleReviewStore';
 
 // Background autosave for the evaluation draft. Replaces the manual Save button:
 // every editable change (competence scores/facts/improvements, RSE text fields,
@@ -36,6 +53,15 @@ interface PendingSnapshot {
     evals: EvaluationBulkUpdate[] | null;
     rseFields: RSEFieldsUpdate | null;
     langs: EmployeeLanguageInput[] | null;
+    // Null unless the feedback itself changed — an unrelated edit must not
+    // rewrite those rows.
+    feedbacks: RseFeedbackInput[] | null;
+    // Null unless the results list itself changed — an unrelated edit must not
+    // issue a PUT that deletes and reinserts those rows.
+    results: RseResultInput[] | null;
+    // Null unless the singled-out dimensions themselves changed — an unrelated
+    // edit must not issue a PUT that deletes and reinserts those rows.
+    dimensions: RseDimensionInput[] | null;
 }
 
 interface Baseline {
@@ -43,6 +69,9 @@ interface Baseline {
     evals: string;
     rseFields: string;
     langs: string;
+    feedbacks: string;
+    results: string;
+    dimensions: string;
 }
 
 function buildEvalUpdates(localEvals: EvaluationDraft['localEvals']): EvaluationBulkUpdate[] {
@@ -62,17 +91,63 @@ function buildEvalUpdates(localEvals: EvaluationDraft['localEvals']): Evaluation
 }
 
 function buildRseFields(d: EvaluationDraft): RSEFieldsUpdate {
-    const hasSummary = d.strongOptions.length > 0 || d.developOptions.length > 0;
     return {
-        employee_feedback: d.employeeFeedback || null,
-        manager_feedback: d.managerFeedback || null,
-        results_achievements: serializeFacts(d.results) || null,
-        trainings: d.trainings || null,
-        competence_summary: hasSummary
-            ? JSON.stringify({ strong: d.strongOptions, develop: d.developOptions })
-            : null,
         summary_full_competence_list: d.summaryFullCompetenceList,
     };
+}
+
+/**
+ * The singled-out dimensions as the flat, type-driven payload the PUT expects. Both
+ * sides in one list, each item carrying the id of its side — so the request body
+ * never names a side, and the array order becomes the stored sort_order.
+ *
+ * Returns null while the type lookup hasn't loaded: without those ids there is
+ * nothing meaningful to send, and skipping keeps the baseline undirty so the
+ * save fires as soon as they arrive.
+ */
+function buildDimensionItems(
+    d: EvaluationDraft,
+    dimensionTypes: RseDimensionType[],
+): RseDimensionInput[] | null {
+    const idOf = (key: DimensionSide) => dimensionTypes.find(t => t.key === key)?.id;
+    const strongId = idOf(DimensionSide.Strong);
+    const developId = idOf(DimensionSide.Develop);
+    if (strongId == null || developId == null) return null;
+    const side = (typeId: number, options: DimensionOption[]) =>
+        options.map(o => ({
+            review_session_employee_dimension_type_id: typeId,
+            dimension_id: o.dimension_id,
+            comments: o.comments,
+        }));
+    return [...side(strongId, d.strongOptions), ...side(developId, d.developOptions)];
+}
+
+/**
+ * The two feedback boxes as the PUT's payload, each carrying its VOICE id.
+ * Blank text is still sent — the server reads that as "delete this voice's row",
+ * which is how clearing a box works now that absence is the empty state.
+ *
+ * Returns null until the type lookup has loaded: without those ids there is
+ * nothing meaningful to send, and skipping keeps the baseline undirty so the
+ * save fires as soon as they arrive.
+ */
+function buildFeedbackItems(
+    d: EvaluationDraft,
+    feedbackTypes: RseFeedbackType[],
+): RseFeedbackInput[] | null {
+    const idOf = (key: string) => feedbackTypes.find(t => t.key === key)?.id;
+    const employeeId = idOf(RSE_FEEDBACK_EMPLOYEE);
+    const managerId = idOf(RSE_FEEDBACK_MANAGER);
+    if (employeeId == null || managerId == null) return null;
+    return [
+        { review_session_employee_feedback_type_id: employeeId, text: d.employeeFeedback },
+        { review_session_employee_feedback_type_id: managerId, text: d.managerFeedback },
+    ];
+}
+
+/** The results as the PUT's payload: text only, position from the array order. */
+function buildResultItems(d: EvaluationDraft): RseResultInput[] {
+    return d.results.filter(t => t.trim()).map(text => ({ text }));
 }
 
 function buildLangs(d: EvaluationDraft): EmployeeLanguageInput[] {
@@ -86,6 +161,10 @@ interface Params {
     /** editable && !viewOnly && draft hydrated — autosave is inert when false. */
     enabled: boolean;
     draft: EvaluationDraft;
+    /** The sides, from the DB lookup — supplies each item's type id. */
+    dimensionTypes: RseDimensionType[];
+    /** The feedback voices, from the DB lookup — supplies each box's type id. */
+    feedbackTypes: RseFeedbackType[];
     onError: (message: string) => void;
 }
 
@@ -96,7 +175,7 @@ interface Result {
 }
 
 export function useEvaluationAutosave({
-    rid, employeeId, sessionId, enabled, draft, onError,
+    rid, employeeId, sessionId, enabled, draft, dimensionTypes, feedbackTypes, onError,
 }: Params): Result {
     const qc = useQueryClient();
     const [status, setStatus] = useState<AutosaveStatus>('idle');
@@ -116,6 +195,8 @@ export function useEvaluationAutosave({
     const draftRef = useRef(draft);
     const onErrorRef = useRef(onError);
     const sessionIdRef = useRef(sessionId);
+    const dimensionTypesRef = useRef(dimensionTypes);
+    const feedbackTypesRef = useRef(feedbackTypes);
     // Self-reference handle for the retry/follow-up timers scheduled INSIDE
     // runSave (a direct `runSave` reference there is a use-before-declaration).
     const runSaveRef = useRef<(() => Promise<void>) | null>(null);
@@ -123,6 +204,8 @@ export function useEvaluationAutosave({
         draftRef.current = draft;
         onErrorRef.current = onError;
         sessionIdRef.current = sessionId;
+        dimensionTypesRef.current = dimensionTypes;
+        feedbackTypesRef.current = feedbackTypes;
     });
 
     const clearTimer = () => {
@@ -143,6 +226,9 @@ export function useEvaluationAutosave({
             const tasks: Promise<unknown>[] = [];
             if (pend.evals) tasks.push(bulkUpdateEvaluations(pend.evals));
             if (pend.rseFields) tasks.push(saveRSEFields(pend.rid, pend.rseFields));
+            if (pend.feedbacks) tasks.push(saveRseFeedbacks(pend.rid, pend.feedbacks));
+            if (pend.results) tasks.push(saveRseResults(pend.rid, pend.results));
+            if (pend.dimensions) tasks.push(saveRseDimensions(pend.rid, pend.dimensions));
             if (pend.langs && pend.employeeId != null) {
                 tasks.push(saveEmployeeLanguageProfile(pend.employeeId, pend.langs));
             }
@@ -152,6 +238,9 @@ export function useEvaluationAutosave({
                 if (baselineRef.current && baselineRef.current.rid === pend.rid) {
                     if (pend.evals) baselineRef.current.evals = JSON.stringify(pend.evals);
                     if (pend.rseFields) baselineRef.current.rseFields = JSON.stringify(pend.rseFields);
+                    if (pend.feedbacks) baselineRef.current.feedbacks = JSON.stringify(pend.feedbacks);
+                    if (pend.results) baselineRef.current.results = JSON.stringify(pend.results);
+                    if (pend.dimensions) baselineRef.current.dimensions = JSON.stringify(pend.dimensions);
                     if (pend.langs) baselineRef.current.langs = JSON.stringify(pend.langs);
                 }
                 if (sessionIdRef.current) {
@@ -193,16 +282,25 @@ export function useEvaluationAutosave({
         const evals = buildEvalUpdates(draft.localEvals);
         const rseFields = buildRseFields(draft);
         const langs = buildLangs(draft);
+        const feedbacks = buildFeedbackItems(draft, feedbackTypes);
+        const results = buildResultItems(draft);
+        const dimensions = buildDimensionItems(draft, dimensionTypes);
         const evalsStr = JSON.stringify(evals);
         const rseStr = JSON.stringify(rseFields);
         const langStr = JSON.stringify(langs);
+        const feedbacksStr = JSON.stringify(feedbacks);
+        const resultsStr = JSON.stringify(results);
+        const dimensionsStr = JSON.stringify(dimensions);
 
         const evalsDirty = evalsStr !== base.evals;
         const rseDirty = rseStr !== base.rseFields;
         const langDirty = employeeId != null && langStr !== base.langs;
-        if (!evalsDirty && !rseDirty && !langDirty) return;
+        const feedbacksDirty = feedbacks != null && feedbacksStr !== base.feedbacks;
+        const resultsDirty = resultsStr !== base.results;
+        const dimensionsDirty = dimensions != null && dimensionsStr !== base.dimensions;
+        if (!evalsDirty && !rseDirty && !langDirty && !feedbacksDirty && !resultsDirty && !dimensionsDirty) return;
 
-        const sig = `${evalsStr}|${rseStr}|${langStr}`;
+        const sig = `${evalsStr}|${rseStr}|${langStr}|${feedbacksStr}|${resultsStr}|${dimensionsStr}`;
         if (sig === lastSigRef.current) return; // identical dirty state already queued
         lastSigRef.current = sig;
 
@@ -213,11 +311,14 @@ export function useEvaluationAutosave({
             evals: evalsDirty ? evals : prev?.evals ?? null,
             rseFields: rseDirty ? rseFields : prev?.rseFields ?? null,
             langs: langDirty ? langs : prev?.langs ?? null,
+            feedbacks: feedbacksDirty ? feedbacks : prev?.feedbacks ?? null,
+            results: resultsDirty ? results : prev?.results ?? null,
+            dimensions: dimensionsDirty ? dimensions : prev?.dimensions ?? null,
         };
         setStatus('saving');
         clearTimer();
         timerRef.current = setTimeout(() => { void runSave(); }, DEBOUNCE_MS);
-    }, [enabled, rid, employeeId, draft, runSave]);
+    }, [enabled, rid, employeeId, draft, dimensionTypes, feedbackTypes, runSave]);
 
     // Seed the visible status whenever the record or editability changes —
     // adjust-during-render; the baseline itself is re-established in the effect
@@ -242,6 +343,9 @@ export function useEvaluationAutosave({
             evals: JSON.stringify(buildEvalUpdates(d.localEvals)),
             rseFields: JSON.stringify(buildRseFields(d)),
             langs: JSON.stringify(buildLangs(d)),
+            feedbacks: JSON.stringify(buildFeedbackItems(d, feedbackTypesRef.current)),
+            results: JSON.stringify(buildResultItems(d)),
+            dimensions: JSON.stringify(buildDimensionItems(d, dimensionTypesRef.current)),
         };
         lastSigRef.current = null;
         return () => {
@@ -253,6 +357,9 @@ export function useEvaluationAutosave({
             // Fire-and-forget against captured ids — we are leaving this record.
             if (pend.evals) void bulkUpdateEvaluations(pend.evals).catch(() => {});
             if (pend.rseFields) void saveRSEFields(pend.rid, pend.rseFields).catch(() => {});
+            if (pend.feedbacks) void saveRseFeedbacks(pend.rid, pend.feedbacks).catch(() => {});
+            if (pend.results) void saveRseResults(pend.rid, pend.results).catch(() => {});
+            if (pend.dimensions) void saveRseDimensions(pend.rid, pend.dimensions).catch(() => {});
             if (pend.langs && pend.employeeId != null) {
                 void saveEmployeeLanguageProfile(pend.employeeId, pend.langs).catch(() => {});
             }

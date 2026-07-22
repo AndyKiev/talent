@@ -11,11 +11,13 @@ import {
 import { ResponsiveTabs, type TabItem } from '../../ui/ResponsiveTabs';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import EditIcon from '@mui/icons-material/Edit';
 import DoneIcon from '@mui/icons-material/Done';
 import type { GetStringFn } from '../../../types/getStringFn';
 import { useTheme } from '../../theme/ThemeContext';
 import { EmployeeTrainingsPanel } from '../../employees/trainings/EmployeeTrainingsPanel';
+import { RecommendedTrainingsPanel } from '../../employees/trainings/RecommendedTrainingsPanel';
 import { useBooleanSetting } from '../../../hooks/useAppSetting';
 
 /** Title row with an on-demand edit / done pencil (shown only when editable). */
@@ -92,11 +94,11 @@ interface Props {
     onNewResultTextChange: (value: string) => void;
     onAddResult: (text: string) => void;
     onRemoveResult: (index: number) => void;
+    /** Drag-reorder: move `from` to sit BEFORE the row currently at `toRow`. */
+    onReorderResult: (from: number, toRow: number) => void;
     // Trainings — real assign+status list (shared with the Employees tab) plus
     // the pre-existing free-text notes field, stacked below it.
     employeeId: number | undefined;
-    trainings: string;
-    onTrainingsChange: (value: string) => void;
 }
 
 /** The personal-info / job-info / feedback / results / trainings tab strip.
@@ -106,8 +108,8 @@ export function EmployeeDataTabs({
     personalInfo, jobInfo,
     employeeFeedback, onEmployeeFeedbackChange, employeeFeedbackEditable,
     managerFeedback, onManagerFeedbackChange, managerFeedbackEditable,
-    results, newResultText, onNewResultTextChange, onAddResult, onRemoveResult,
-    employeeId, trainings, onTrainingsChange,
+    results, newResultText, onNewResultTextChange, onAddResult, onRemoveResult, onReorderResult,
+    employeeId,
 }: Props) {
     const { t } = useTheme();
     // Training module master flag: OFF hides the assign+status panel, while the
@@ -120,6 +122,10 @@ export function EmployeeDataTabs({
     // Which sections are currently in edit mode (inputs revealed). Read-only by
     // default — same on-demand pattern as the competence summary / dimension lists.
     const [editSections, setEditSections] = useState<Record<string, boolean>>({});
+    // Drag-to-reorder state for the results list: the row being dragged and the
+    // row it would be dropped before.
+    const [resultDragIndex, setResultDragIndex] = useState<number | null>(null);
+    const [resultDragOverIndex, setResultDragOverIndex] = useState<number | null>(null);
     const toggle = (key: string) => setEditSections(p => ({ ...p, [key]: !p[key] }));
 
     const tabSx = { textTransform: 'none', fontWeight: 600, fontSize: 12 } as const;
@@ -189,8 +195,42 @@ export function EmployeeDataTabs({
                                         direction="row"
                                         alignItems="flex-start"
                                         spacing={0.5}
-                                        sx={{ mb: 0.5, py: 0.5, px: 0.75, borderRadius: '6px', '&:hover': { bgcolor: t.accent + '10' } }}
+                                        // Drop BEFORE the hovered row; the number column
+                                        // renumbers itself from the array index.
+                                        onDragOver={(e) => {
+                                            if (resultDragIndex == null || resultDragIndex === idx) return;
+                                            e.preventDefault();
+                                            if (resultDragOverIndex !== idx) setResultDragOverIndex(idx);
+                                        }}
+                                        onDragLeave={() => { if (resultDragOverIndex === idx) setResultDragOverIndex(null); }}
+                                        onDrop={(e) => {
+                                            e.preventDefault();
+                                            if (resultDragIndex != null && resultDragIndex !== idx) onReorderResult(resultDragIndex, idx);
+                                            setResultDragIndex(null);
+                                            setResultDragOverIndex(null);
+                                        }}
+                                        sx={{
+                                            mb: 0.5, py: 0.5, px: 0.75, borderRadius: '6px',
+                                            '&:hover': { bgcolor: t.accent + '10' },
+                                            opacity: resultDragIndex === idx ? 0.4 : 1,
+                                            borderTop: resultDragOverIndex === idx ? `2px solid ${t.accent}` : undefined,
+                                        }}
                                     >
+                                        {editing && (
+                                            <Tooltip title={getString('dragToReorder')}>
+                                                <Box
+                                                    draggable
+                                                    onDragStart={(e) => {
+                                                        e.dataTransfer.effectAllowed = 'move';
+                                                        setResultDragIndex(idx);
+                                                    }}
+                                                    onDragEnd={() => { setResultDragIndex(null); setResultDragOverIndex(null); }}
+                                                    sx={{ display: 'flex', alignItems: 'center', cursor: 'grab', color: t.accent, pt: '2px', '&:active': { cursor: 'grabbing' } }}
+                                                >
+                                                    <DragIndicatorIcon sx={{ fontSize: 15 }} />
+                                                </Box>
+                                            </Tooltip>
+                                        )}
                                         <Typography fontSize={12} fontWeight={700} color={t.accent} sx={{ minWidth: 22, pt: '2px' }}>
                                             {idx + 1}.
                                         </Typography>
@@ -264,15 +304,15 @@ export function EmployeeDataTabs({
                             </Box>
                         )}
 
-                        <Typography fontSize={12} fontWeight={600} color={t.textSecondary} sx={{ mb: 0.5 }}>
-                            {getString('trainingNotes')}
-                        </Typography>
-                        {trainingsEditing ? (
-                            <TextField value={trainings} onChange={e => onTrainingsChange(e.target.value)} fullWidth multiline minRows={5} />
-                        ) : (
-                            <Typography fontSize={13} sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: trainings ? t.text : t.textMuted }}>
-                                {trainings || '—'}
-                            </Typography>
+                        {/* The free-text notes became employee-scoped rows. Rendered
+                            through the SAME panel as the employee card, so the two
+                            views cannot drift, and NOT gated on the training module —
+                            these survive it being switched off. */}
+                        {employeeId && (
+                            <RecommendedTrainingsPanel
+                                employeeId={employeeId}
+                                isEditable={trainingsEditing}
+                            />
                         )}
                     </Box>
                     );

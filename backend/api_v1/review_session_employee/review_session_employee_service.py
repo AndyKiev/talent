@@ -15,6 +15,38 @@ from backend.api_v1.review_session_employee.review_session_employee_schema impor
     ReviewSessionEmployee as RSESchema,
     ReviewSessionEmployeeList as RSEListSchema,
     ReviewSessionEmployeeFieldsUpdate,
+    RseDimensionsUpdate,
+    RseDimensionItem,
+    RseResultsUpdate,
+    RseResultItem,
+    RseFeedbacksUpdate,
+    RseFeedbackItem,
+)
+from backend.api_v1.review_session_employee_status.review_session_employee_status_model import (
+    OPEN as RSE_OPEN,
+    ReviewSessionEmployeeStatus,
+)
+from backend.api_v1.review_session_employee_feedback_type.review_session_employee_feedback_type_model import (
+    EMPLOYEE as FEEDBACK_EMPLOYEE,
+    MANAGER as FEEDBACK_MANAGER,
+    ReviewSessionEmployeeFeedbackType,
+)
+from backend.api_v1.review_session_employee_feedback.review_session_employee_feedback_model import (
+    ReviewSessionEmployeeFeedback,
+)
+from backend.api_v1.review_session_employee_result.review_session_employee_result_model import (
+    ReviewSessionEmployeeResult,
+)
+from backend.api_v1.review_session_employee_dimension_type.review_session_employee_dimension_type_model import (
+    DEVELOP,
+    STRONG,
+    ReviewSessionEmployeeDimensionType,
+)
+from backend.api_v1.review_session_employee_dimension.review_session_employee_dimension_model import (
+    ReviewSessionEmployeeDimension,
+)
+from backend.api_v1.review_session_employee_dimension_comment.review_session_employee_dimension_comment_model import (
+    ReviewSessionEmployeeDimensionComment,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.employee.employee_model import Employee
@@ -25,6 +57,15 @@ from backend.api_v1.review_session.review_session_repository import (
 from backend.api_v1.review_session.review_session_model import ReviewSession
 from backend.api_v1.review_session.review_session_messages import ReviewSessionNotFound
 from backend.api_v1.review_dimension.review_dimension_model import ReviewDimension
+from backend.api_v1.review_dimension.review_dimension_messages import (
+    ReviewDimensionNotFound,
+)
+from backend.api_v1.review_session_employee_dimension_type.review_session_employee_dimension_type_messages import (
+    ReviewSessionEmployeeDimensionTypeNotFound,
+)
+from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_messages import (
+    EvaluationNotEditable,
+)
 from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_model import (
     ReviewSessionEmployeeEvaluation,
 )
@@ -37,6 +78,8 @@ from backend.api_v1.review_session_employee.review_session_employee_messages imp
     ReviewSessionReorderNotAllowed,
     ProposedLevelRequiredForReview,
     ProposedLevelDetailsIncomplete,
+    ReviewSessionEmployeeStatusKeyNotFound,
+    ReviewSessionEmployeeFeedbackTypeNotFound,
 )
 from backend.api_v1.review_session_employee.review_session_employee_messages import (
     ReviewSessionEmployeeStatusChangeSuccess,
@@ -117,8 +160,147 @@ class ReviewSessionEmployeeService(BaseService):
             raise await self._resolve_domain_error(exc)
         return result
 
-    def _to_schema(self, record) -> RSESchema:
+    async def _load_rse_dimensions(self, rse_id: int) -> List[RseDimensionItem]:
+        """The review's picked competences, both sides, in display order.
+
+        The relationship is lazy="noload" (roster N+1), so every path that
+        returns a populated RSESchema calls this explicitly. Ordering is
+        (side sort_order, item sort_order) so a consumer can group by type id
+        and get the sections in the lookup's own order.
+
+        Names are resolved with the SAME rule the frontend uses for the
+        competence tabs — message key `competence` + PascalCase dimension key,
+        falling back to the dimension row's own name — so the summary heading and
+        the tab heading below it can never disagree.
+        """
+        stmt = (
+            select(ReviewSessionEmployeeDimension)
+            .join(ReviewSessionEmployeeDimension.dimension_type)
+            .where(ReviewSessionEmployeeDimension.review_session_employee_id == rse_id)
+            .order_by(
+                ReviewSessionEmployeeDimensionType.sort_order,
+                ReviewSessionEmployeeDimension.sort_order,
+                ReviewSessionEmployeeDimension.id,
+            )
+        )
+        rows = (await self.session.execute(stmt)).scalars().all()
+
+        out: List[RseDimensionItem] = []
+        for row in rows:
+            dim = row.dimension
+            raw_name = dim.name if dim else ""
+            name = (
+                await self._translate(
+                    f"competence{self._pascal_dim_key(dim.key)}", fallback=raw_name
+                )
+                if dim and dim.key
+                else raw_name
+            )
+            out.append(
+                RseDimensionItem(
+                    review_session_employee_dimension_type_id=row.review_session_employee_dimension_type_id,
+                    review_session_employee_dimension_type_key=row.dimension_type.key,
+                    dimension_id=row.dimension_id,
+                    dimension_key=dim.key if dim else "",
+                    dimension_name=name,
+                    dimension_color=(dim.color if dim else None) or "#1565C0",
+                    sort_order=row.sort_order,
+                    comments=[c.text for c in row.comments],
+                )
+            )
+        return out
+
+    async def _status_id(self, key: str) -> int:
+        """Resolve a lifecycle status BY KEY.
+
+        Every write goes through here rather than storing a string, so a typo is
+        a hard failure at the write instead of an unreadable row. Resolved by key
+        (not id) so reseeding the lookup cannot silently repoint records.
+        """
+        status_id = await self.session.scalar(
+            select(ReviewSessionEmployeeStatus.id).where(
+                ReviewSessionEmployeeStatus.key == key
+            )
+        )
+        if status_id is None:
+            raise await self._resolve_domain_error(
+                ReviewSessionEmployeeStatusKeyNotFound(key)
+            )
+        return status_id
+
+    async def _load_rse_feedbacks(self, rse_id: int) -> List[RseFeedbackItem]:
+        """This review's feedback rows, one per voice, in lookup order.
+
+        Replaces the `employee_feedback` / `manager_feedback` columns. A voice
+        with nothing written simply has NO row — absence is the empty state, so
+        there is no nullable column and no empty string to distinguish from it.
+        """
+        stmt = (
+            select(ReviewSessionEmployeeFeedback)
+            .join(ReviewSessionEmployeeFeedback.feedback_type)
+            .where(ReviewSessionEmployeeFeedback.review_session_employee_id == rse_id)
+            .order_by(
+                ReviewSessionEmployeeFeedbackType.sort_order,
+                ReviewSessionEmployeeFeedback.id,
+            )
+        )
+        rows = (await self.session.execute(stmt)).scalars().all()
+        return [
+            RseFeedbackItem(
+                review_session_employee_feedback_type_id=(
+                    r.review_session_employee_feedback_type_id
+                ),
+                review_session_employee_feedback_type_key=r.feedback_type.key,
+                text=r.text,
+            )
+            for r in rows
+        ]
+
+    async def _load_rse_results(self, rse_id: int) -> List[RseResultItem]:
+        """This review's results / achievements, in display order.
+
+        Replaces splitting a numbered "1. ...\\n2. ..." blob: the position is a
+        column now, so inserting or deleting a line renumbers nothing.
+        """
+        stmt = (
+            select(ReviewSessionEmployeeResult)
+            .where(ReviewSessionEmployeeResult.review_session_employee_id == rse_id)
+            .order_by(
+                ReviewSessionEmployeeResult.sort_order,
+                ReviewSessionEmployeeResult.id,
+            )
+        )
+        rows = (await self.session.execute(stmt)).scalars().all()
+        return [
+            RseResultItem(id=r.id, text=r.text, sort_order=r.sort_order) for r in rows
+        ]
+
+    async def _detail_schema(self, record, rse_id: int) -> RSESchema:
+        """The full detail schema: the record plus the row-backed lists that its
+        relationships deliberately do NOT load (see the noload note on the model).
+        Every path returning a populated RSESchema goes through here, so a new
+        row-backed list is added in one place rather than at eight call sites."""
+        return self._to_schema(
+            record,
+            await self._load_rse_dimensions(rse_id),
+            await self._load_rse_results(rse_id),
+            await self._load_rse_feedbacks(rse_id),
+        )
+
+    def _to_schema(
+        self,
+        record,
+        dimensions: Optional[List[RseDimensionItem]] = None,
+        results: Optional[List[RseResultItem]] = None,
+        feedbacks: Optional[List[RseFeedbackItem]] = None,
+    ) -> RSESchema:
+        # The row-backed lists are passed in PRE-LOADED because this method is
+        # SYNCHRONOUS and both relationships are noload — it must never query.
+        # Callers use _detail_schema, which fetches them first.
         schema = RSESchema.model_validate(record)
+        schema.dimensions = dimensions or []
+        schema.results = results or []
+        schema.feedbacks = feedbacks or []
         emp = record.employee
         if emp:
             schema.employee_name = emp.name
@@ -313,7 +495,7 @@ class ReviewSessionEmployeeService(BaseService):
         # — keeps employee columns + job.name + main department.name + light
         # evaluations + session, so the detail resolves in a handful of queries.
         record = await self.repository.get_detail_by_id(row.id)
-        return self._to_schema(record)
+        return await self._detail_schema(record, row.id)
 
     async def get_session_employees(
         self,
@@ -423,7 +605,11 @@ class ReviewSessionEmployeeService(BaseService):
                 ReviewSessionEmployeeAlreadyInSession(employee.name)
             )
 
-        rse = RSEModel(session_id=session_id, employee_id=employee_id, status="open")
+        rse = RSEModel(
+            session_id=session_id,
+            employee_id=employee_id,
+            review_session_employee_status_id=await self._status_id(RSE_OPEN),
+        )
         self.session.add(rse)
         await self.session.flush()
 
@@ -635,6 +821,55 @@ class ReviewSessionEmployeeService(BaseService):
                     fallback=status.key.replace("_", " "),
                 )
             lines.append(f"• {name} — {label}" if label else f"• {name}")
+        return lines
+
+    async def _tempo_recommended_training_lines(
+        self, employee_id: Optional[int]
+    ) -> list[str]:
+        """The employee's ACTIVE recommended trainings as '• text — status' lines.
+
+        Deliberately NOT gated on the training-module switch: these rows are the
+        replacement for the old free-text notes on the review, and they survive
+        the module being disabled — that independence is the whole reason they
+        are their own essence with their own status lookup.
+
+        Inactive rows are skipped: marking one inactive is how a stale
+        recommendation is retired without deleting the record.
+        """
+        if employee_id is None:
+            return []
+        from backend.api_v1.employee_recommended_training.employee_recommended_training_model import (
+            EmployeeRecommendedTraining,
+        )
+
+        rows = (
+            await self.session.scalars(
+                select(EmployeeRecommendedTraining)
+                .where(
+                    EmployeeRecommendedTraining.employee_id == employee_id,
+                    EmployeeRecommendedTraining.is_active.is_(True),
+                )
+                .order_by(
+                    EmployeeRecommendedTraining.sort_order,
+                    EmployeeRecommendedTraining.id,
+                )
+            )
+        ).all()
+
+        lines: list[str] = []
+        for r in rows:
+            text_value = (r.description or "").strip()
+            if not text_value:
+                continue
+            label = None
+            if r.status:
+                # Same key convention as everywhere else
+                # (recommendedTrainingStatusInProcess).
+                label = await self._translate(
+                    f"recommendedTrainingStatus{self._pascal_dim_key(r.status.key)}",
+                    fallback=r.status.key.replace("_", " "),
+                )
+            lines.append(f"• {text_value} — {label}" if label else f"• {text_value}")
         return lines
 
     async def _tempo_data(self, rse_id: int, photo_enabled: bool = True) -> dict:
@@ -1005,35 +1240,58 @@ class ReviewSessionEmployeeService(BaseService):
         # Structured strong / to-develop competence summaries for the HTML album:
         # each item carries the competence NAME + its DB color + its comments, so
         # the renderer can show the named, colored heading (the flat *_text values
-        # below stay as-is for the PDF). competence_summary JSON:
-        # {"strong":[{"dimension_key","comments":[...]}], "develop":[...]}.
-        def _summary_items(bucket: str) -> list[dict]:
-            if not record.competence_summary:
-                return []
-            import json as _json
+        # below stay as-is for the PDF).
+        #
+        # Reads the `review_session_employee_dimensions` rows (it used to parse the
+        # competence_summary JSON blob). The returned dict shape is deliberately
+        # UNCHANGED ({name, color, comments}), which is why tempo_html / tempo_pdf
+        # / tempo_pptx needed no edit — the same seam the missions refactor used.
+        # `dim_meta` still wins for a competence evaluated in THIS review, so the
+        # album's summary heading matches its bar chart; a competence outside the
+        # review falls back to the row's own resolved name/colour.
+        summary_rows = await self._load_rse_dimensions(record.id)
+        result_rows = await self._load_rse_results(record.id)
+        feedback_by_key = {
+            f.review_session_employee_feedback_type_key: f.text
+            for f in await self._load_rse_feedbacks(record.id)
+        }
 
-            try:
-                obj = _json.loads(record.competence_summary)
-            except (ValueError, TypeError):
-                return []
+        def _summary_items(type_key: str) -> list[dict]:
             out = []
-            for it in obj.get(bucket) or []:
-                key = it.get("dimension_key")
-                name, color = dim_meta.get(key, (key, "#1565C0"))
-                comments = [
-                    str(c) for c in (it.get("comments") or []) if str(c).strip()
-                ]
-                out.append({"name": name, "color": color, "comments": comments})
+            for item in summary_rows:
+                if item.review_session_employee_dimension_type_key != type_key:
+                    continue
+                name, color = dim_meta.get(
+                    item.dimension_key, (item.dimension_name, item.dimension_color)
+                )
+                out.append(
+                    {
+                        "name": name,
+                        "color": color,
+                        "comments": [c for c in item.comments if c.strip()],
+                    }
+                )
             return out
 
-        strengths_items = _summary_items("strong")
-        development_items = _summary_items("develop")
+        strengths_items = _summary_items(STRONG)
+        development_items = _summary_items(DEVELOP)
 
         # Training section body: assigned trainings (gated by the training-module
-        # master switch) above the free-text required-trainings notes.
+        # master switch) above the employee's RECOMMENDED trainings.
+        #
+        # The recommendations are employee-scoped now, so — exactly like the
+        # development missions — re-exporting an album for an OLD session shows
+        # the employee's CURRENT list, not a snapshot of what was recommended
+        # back then. Only ACTIVE ones render: an inactive row is one the employee
+        # or their manager marked as no longer relevant.
         training_lines = await self._tempo_training_lines(emp_id)
+        recommended_lines = await self._tempo_recommended_training_lines(emp_id)
         training_done = (
-            "\n\n".join(p for p in ("\n".join(training_lines), record.trainings) if p)
+            "\n\n".join(
+                p
+                for p in ("\n".join(training_lines), "\n".join(recommended_lines))
+                if p
+            )
             or None
         )
 
@@ -1088,20 +1346,19 @@ class ReviewSessionEmployeeService(BaseService):
             "level_sense": level_sense,
             "has_level_registration": registration is not None,
             "level_requirements": level_requirements,
-            "results_achievements": record.results_achievements,
+            "results_achievements": self._rse_results_text(result_rows),
             "not_achieved": None,
-            "employee_feedback": record.employee_feedback,
-            "manager_feedback": record.manager_feedback,
+            # Dict keys unchanged (tempo_html / tempo_pdf / tempo_pptx read them),
+            # but the values now come from the feedback ROWS instead of two
+            # columns — the same seam every other move in this refactor used.
+            "employee_feedback": feedback_by_key.get(FEEDBACK_EMPLOYEE),
+            "manager_feedback": feedback_by_key.get(FEEDBACK_MANAGER),
             "training_done": training_done,
             "idp_missions": await self._development_missions(
                 record.employee_id, dim_meta
             ),
-            "strengths": self._competence_summary_text(
-                record.competence_summary, "strong"
-            ),
-            "development_directions": self._competence_summary_text(
-                record.competence_summary, "develop"
-            ),
+            "strengths": self._rse_dimensions_text(summary_rows, STRONG),
+            "development_directions": self._rse_dimensions_text(summary_rows, DEVELOP),
             # Named + colored variants for the HTML album.
             "strengths_items": strengths_items,
             "development_items": development_items,
@@ -1174,26 +1431,33 @@ class ReviewSessionEmployeeService(BaseService):
         return out
 
     @staticmethod
-    def _competence_summary_text(
-        competence_summary: Optional[str], bucket: str
-    ) -> Optional[str]:
-        """competence_summary is JSON {"strong":[...], "develop":[...]}, each item
-        {"dimension_key":..., "comments":[...]}. Flatten one bucket to text."""
-        if not competence_summary:
-            return None
-        import json
+    def _rse_results_text(rows: List[RseResultItem]) -> Optional[str]:
+        """The results list as the numbered text the album has always rendered.
 
-        try:
-            obj = json.loads(competence_summary)
-        except (ValueError, TypeError):
-            return None
-        items = obj.get(bucket) or []
-        lines = []
-        for it in items:
-            comments = it.get("comments") or []
-            for c in comments:
-                if str(c).strip():
-                    lines.append(f"• {c}")
+        Output shape is unchanged from when this was a stored column (a numbered
+        line per result, or None when empty), so tempo_html / tempo_pdf /
+        tempo_pptx need no edit — the numbering is just derived from position now
+        instead of being stored inside the text.
+        """
+        lines = [f"{i + 1}. {r.text}" for i, r in enumerate(rows) if r.text.strip()]
+        return "\n".join(lines) if lines else None
+
+    @staticmethod
+    def _rse_dimensions_text(
+        summary_rows: List[RseDimensionItem], type_key: str
+    ) -> Optional[str]:
+        """Flatten one side of the summary to the bulleted text the PDF renders.
+
+        Output shape is unchanged from when this parsed the JSON blob ("• line"
+        per comment, or None when the side is empty), so tempo_pdf needs no edit.
+        """
+        lines = [
+            f"• {c}"
+            for item in summary_rows
+            if item.review_session_employee_dimension_type_key == type_key
+            for c in item.comments
+            if c.strip()
+        ]
         return "\n".join(lines) if lines else None
 
     async def get_my_reviews(
@@ -1253,7 +1517,7 @@ class ReviewSessionEmployeeService(BaseService):
             raise await self._resolve_domain_error(
                 ReviewSessionEmployeeNotFound(rse_id)
             )
-        return self._to_schema(record)
+        return await self._detail_schema(record, rse_id)
 
     async def update_fields(
         self, rse_id: int, payload: ReviewSessionEmployeeFieldsUpdate
@@ -1263,7 +1527,237 @@ class ReviewSessionEmployeeService(BaseService):
             setattr(record, field, value)
         await self.session.commit()
         await self.session.refresh(record)
-        return self._to_schema(record)
+        return await self._detail_schema(record, rse_id)
+
+    async def _assert_rse_writable(self, rse_id: int):
+        """Resolve a review record for WRITING, or raise.
+
+        Two separate checks, both needed on every row-backed write endpoint —
+        neither has an `{employee_id}` in its path for a route guard to scope on:
+
+        - visibility: an out-of-scope record must not be writable by walking
+          sequential ids, and it raises NotFound (not 403) so the reply does not
+          confirm the record exists;
+        - editability: a reviewed/closed record, or one in a closed session, is
+          frozen. Same message the evaluation write path raises, since this is
+          the same editable surface to the user.
+        """
+        record = await self.get_by_id(rse_id)
+        visible = await self._visible_employee_ids()
+        if record.employee_id not in visible:
+            raise await self._resolve_domain_error(
+                ReviewSessionEmployeeNotFound(rse_id)
+            )
+        if record.status != "open" or (
+            record.session and record.session.status != "open"
+        ):
+            raise await self._resolve_domain_error(EvaluationNotEditable())
+        return record
+
+    async def set_rse_dimensions(
+        self, rse_id: int, payload: RseDimensionsUpdate
+    ) -> RSESchema:
+        """Replace this review's competence summary with the payload's desired state.
+
+        Delete-then-insert in ONE transaction rather than a reconciling upsert:
+        nothing keys on these row ids (the frontend keys on the dimension) and,
+        unlike missions, the summary has no audit trail — so there is no consumer
+        for row identity. The frontend only calls this when the summary itself is
+        dirty, so an unrelated edit never touches these rows. Revisit this if a
+        summary history is ever added.
+
+        `sort_order` is each item's index WITHIN ITS TYPE, from the payload order.
+        """
+        record = await self._assert_rse_writable(rse_id)
+
+        known_type_ids = {
+            t
+            for (t,) in await self.session.execute(
+                select(ReviewSessionEmployeeDimensionType.id)
+            )
+        }
+        known_dim_ids = {
+            d for (d,) in await self.session.execute(select(ReviewDimension.id))
+        }
+        for item in payload.items:
+            if item.review_session_employee_dimension_type_id not in known_type_ids:
+                raise await self._resolve_domain_error(
+                    ReviewSessionEmployeeDimensionTypeNotFound(
+                        item.review_session_employee_dimension_type_id
+                    )
+                )
+            if item.dimension_id not in known_dim_ids:
+                raise await self._resolve_domain_error(
+                    ReviewDimensionNotFound(item.dimension_id)
+                )
+
+        try:
+            existing = (
+                (
+                    await self.session.execute(
+                        select(ReviewSessionEmployeeDimension).where(
+                            ReviewSessionEmployeeDimension.review_session_employee_id
+                            == rse_id
+                        )
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            for row in existing:
+                await self.session.delete(row)
+            # Flush the deletes before inserting, so replacing a competence that
+            # is still in the payload cannot trip the (rse, type, dimension)
+            # unique constraint.
+            await self.session.flush()
+
+            per_type_index: dict[int, int] = {}
+            for item in payload.items:
+                idx = per_type_index.get(
+                    item.review_session_employee_dimension_type_id, 0
+                )
+                per_type_index[item.review_session_employee_dimension_type_id] = idx + 1
+                row = ReviewSessionEmployeeDimension(
+                    review_session_employee_id=rse_id,
+                    review_session_employee_dimension_type_id=item.review_session_employee_dimension_type_id,
+                    dimension_id=item.dimension_id,
+                    sort_order=idx,
+                )
+                row.comments = [
+                    ReviewSessionEmployeeDimensionComment(
+                        text=text.strip(), sort_order=i
+                    )
+                    for i, text in enumerate(
+                        c for c in item.comments if c and c.strip()
+                    )
+                ]
+                self.session.add(row)
+
+            await self.session.commit()
+        except Exception:
+            await self.session.rollback()
+            raise
+
+        return await self._detail_schema(record, rse_id)
+
+    async def set_rse_results(
+        self, rse_id: int, payload: RseResultsUpdate
+    ) -> RSESchema:
+        """Replace this review's results / achievements with the desired state.
+
+        Delete-then-insert in one transaction, same reasoning as the dimensions:
+        nothing keys on these row ids, there is no audit trail on them, and the
+        frontend only calls this when the list itself is dirty. `sort_order` is
+        the payload index, so it always matches the "1., 2., 3." the reader sees.
+
+        Blank entries are dropped rather than stored — the old text column could
+        not distinguish an empty line from a missing one.
+        """
+        record = await self._assert_rse_writable(rse_id)
+
+        try:
+            existing = (
+                (
+                    await self.session.execute(
+                        select(ReviewSessionEmployeeResult).where(
+                            ReviewSessionEmployeeResult.review_session_employee_id
+                            == rse_id
+                        )
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            for row in existing:
+                await self.session.delete(row)
+            await self.session.flush()
+
+            for idx, item in enumerate(
+                i for i in payload.items if i.text and i.text.strip()
+            ):
+                self.session.add(
+                    ReviewSessionEmployeeResult(
+                        review_session_employee_id=rse_id,
+                        text=item.text.strip(),
+                        sort_order=idx,
+                    )
+                )
+
+            await self.session.commit()
+        except Exception:
+            await self.session.rollback()
+            raise
+
+        return await self._detail_schema(record, rse_id)
+
+    async def set_rse_feedbacks(
+        self, rse_id: int, payload: RseFeedbacksUpdate
+    ) -> RSESchema:
+        """Replace this review's feedback with the payload's desired state.
+
+        Upsert per voice rather than delete-then-insert: the pair
+        (review, feedback type) is UNIQUE, and a blank text DELETES that voice's
+        row so an emptied box leaves no trace instead of an empty string.
+
+        Note this endpoint does NOT decide who may write which voice — the whole
+        record is already gated by `_assert_rse_writable`, and the per-voice
+        editability (an employee writing their own box, a manager theirs) is a
+        frontend affordance exactly as it was when these were two columns.
+        """
+        record = await self._assert_rse_writable(rse_id)
+
+        known_type_ids = {
+            t
+            for (t,) in await self.session.execute(
+                select(ReviewSessionEmployeeFeedbackType.id)
+            )
+        }
+        for item in payload.items:
+            if item.review_session_employee_feedback_type_id not in known_type_ids:
+                raise await self._resolve_domain_error(
+                    ReviewSessionEmployeeFeedbackTypeNotFound(
+                        item.review_session_employee_feedback_type_id
+                    )
+                )
+
+        try:
+            existing = {
+                r.review_session_employee_feedback_type_id: r
+                for r in (
+                    await self.session.execute(
+                        select(ReviewSessionEmployeeFeedback).where(
+                            ReviewSessionEmployeeFeedback.review_session_employee_id
+                            == rse_id
+                        )
+                    )
+                )
+                .scalars()
+                .all()
+            }
+            for item in payload.items:
+                text_value = (item.text or "").strip()
+                row = existing.get(item.review_session_employee_feedback_type_id)
+                if not text_value:
+                    if row is not None:
+                        await self.session.delete(row)
+                elif row is not None:
+                    row.text = text_value
+                else:
+                    self.session.add(
+                        ReviewSessionEmployeeFeedback(
+                            review_session_employee_id=rse_id,
+                            review_session_employee_feedback_type_id=(
+                                item.review_session_employee_feedback_type_id
+                            ),
+                            text=text_value,
+                        )
+                    )
+            await self.session.commit()
+        except Exception:
+            await self.session.rollback()
+            raise
+
+        return await self._detail_schema(record, rse_id)
 
     async def _status_label(self, status_value: str) -> str:
         """Localized label for a raw RSE status value (falls back to the raw value)."""
@@ -1353,11 +1847,11 @@ class ReviewSessionEmployeeService(BaseService):
         if record.status == "open" and target_status == "reviewed":
             await self._validate_level_for_review(record)
 
-        record.status = target_status
+        record.review_session_employee_status_id = await self._status_id(target_status)
         await self.session.commit()
         await self.session.refresh(record)
 
-        schema = self._to_schema(record)
+        schema = await self._detail_schema(record, rse_id)
         emp_name = record.employee.name if record.employee else str(rse_id)
         detail = await self._resolve_domain_success(
             ReviewSessionEmployeeStatusChangeSuccess(
@@ -1373,11 +1867,11 @@ class ReviewSessionEmployeeService(BaseService):
             exc = ReviewSessionEmployeeStatusError(record.status, "open")
             raise await self._resolve_domain_error(exc)
 
-        record.status = "open"
+        record.review_session_employee_status_id = await self._status_id(RSE_OPEN)
         await self.session.commit()
         await self.session.refresh(record)
 
-        schema = self._to_schema(record)
+        schema = await self._detail_schema(record, rse_id)
         emp_name = record.employee.name if record.employee else str(rse_id)
         detail = await self._resolve_domain_success(
             ReviewSessionEmployeeStatusChangeSuccess(
@@ -1393,11 +1887,11 @@ class ReviewSessionEmployeeService(BaseService):
             exc = ReviewSessionEmployeeStatusError(record.status, "revert")
             raise await self._resolve_domain_error(exc)
 
-        record.status = target
+        record.review_session_employee_status_id = await self._status_id(target)
         await self.session.commit()
         await self.session.refresh(record)
 
-        schema = self._to_schema(record)
+        schema = await self._detail_schema(record, rse_id)
         emp_name = record.employee.name if record.employee else str(rse_id)
         detail = await self._resolve_domain_success(
             ReviewSessionEmployeeStatusChangeSuccess(

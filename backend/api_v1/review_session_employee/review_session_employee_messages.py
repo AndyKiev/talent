@@ -11,6 +11,30 @@ class ReviewSessionEmployeeNotFound(NotFoundError):
         super().__init__("ReviewSessionEmployee", "id", rse_id)
 
 
+class ReviewSessionEmployeeStatusKeyNotFound(NotFoundError):
+    """The seeded lifecycle status is missing — a setup error, not a user error:
+    no review record can be created or moved without it."""
+
+    message_key = "reviewSessionEmployeeStatusKeyNotFound"
+
+    def __init__(self, key: str) -> None:
+        self.template_vars = {"key": key}
+        self.fallback = (
+            f"Review record status '{key}' is missing — run the seed that "
+            f"creates the review-record statuses"
+        )
+        super().__init__("ReviewSessionEmployeeStatus", "key", key)
+
+
+class ReviewSessionEmployeeFeedbackTypeNotFound(NotFoundError):
+    message_key = "reviewSessionEmployeeFeedbackTypeNotFound"
+
+    def __init__(self, type_id: int) -> None:
+        self.template_vars = {"typeId": type_id}
+        self.fallback = f"Feedback type with ID {type_id} not found"
+        super().__init__("ReviewSessionEmployeeFeedbackType", "id", type_id)
+
+
 class ReviewSessionEmployeeStatusError(DomainError):
     message_key = "reviewSessionEmployeeStatusError"
 

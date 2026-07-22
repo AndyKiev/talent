@@ -49,13 +49,23 @@ class ReviewDimensionInvalidColor(DomainError):
 
 
 class ReviewDimensionDeleteError(DeleteError):
+    """Raised when the FK refuses the delete because the competence is still in
+    use — a review summary (`review_session_employee_dimensions`) or a development
+    mission points at it.
+
+    The message names DEACTIVATION on purpose. Those references are content: a
+    summary records what a reviewer said about a person, so erasing it to tidy
+    the competence catalogue would destroy history. Deactivating stops the
+    competence being offered while every existing review keeps it."""
+
     message_key = "reviewDimensionDeleteError"
 
     def __init__(self, name: str) -> None:
         self.template_vars = {"name": name}
         self.fallback = (
-            f"Review dimension '{name}' cannot be deleted "
-            f"because it is referenced by other records"
+            f"Competence '{name}' cannot be deleted because it is used in review "
+            f"summaries or development plans. Deactivate it instead — it will "
+            f"stop being offered while existing reviews keep it."
         )
         DomainError.__init__(self, self.fallback)
 

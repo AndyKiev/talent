@@ -47,6 +47,11 @@ SPEC: dict[str, list[str]] = {
     "employee_mission_comment": ["view", "create", "modify", "delete"],
     "employee_development_vision": ["view", "create", "modify", "delete"],
     "employee_mission_history": ["view"],
+    # Recommended trainings. Admin holds full CRUD for the same reason as the
+    # missions above: an oversight manager's or employee's mistake must be
+    # fixable. The status lookup is seeded, so admin only needs to read it.
+    "employee_recommended_training": ["view", "create", "modify", "delete"],
+    "employee_recommended_training_status": ["view"],
 }
 
 TARGET_GROUP = "admin"

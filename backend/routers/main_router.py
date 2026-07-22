@@ -326,6 +326,26 @@ from backend.api_v1.interview_feedback.interview_feedback_views import (
     router as interview_feedback_router,
 )
 
+# Competence summary — the strong / to-develop side lookup (read-only).
+from backend.api_v1.review_session_employee_dimension_type.review_session_employee_dimension_type_views import (
+    router as review_session_employee_dimension_type_router,
+)
+
+# Review-record lookups: the lifecycle status and the feedback voices. Read-only
+# (their keys are a code contract), so no admin CRUD router.
+from backend.api_v1.review_session_employee_status.review_session_employee_status_views import (
+    router as review_session_employee_status_router,
+)
+from backend.api_v1.review_session_employee_feedback_type.review_session_employee_feedback_type_views import (
+    router as review_session_employee_feedback_type_router,
+)
+
+# Recommended trainings — employee-scoped development advice, independent of the
+# training module (works with it switched off).
+from backend.api_v1.employee_recommended_training.employee_recommended_training_views import (
+    router as employee_recommended_training_router,
+)
+
 # Employee development missions (employee-scoped development plan).
 from backend.api_v1.employee_mission_status.employee_mission_status_views import (
     router as employee_mission_status_router,
@@ -385,7 +405,9 @@ router.include_router(employee_event_type_router)
 router.include_router(employee_event_direction_type_router)
 router.include_router(employee_event_router, prefix="/employees")
 router.include_router(employee_event_change_router, prefix="/employees")
-router.include_router(employee_event_type_direction_router, prefix="/employee_event_types")
+router.include_router(
+    employee_event_type_direction_router, prefix="/employee_event_types"
+)
 router.include_router(notifications_router)
 router.include_router(review_dimension_router)
 router.include_router(review_dimension_criteria_router)
@@ -483,6 +505,13 @@ router.include_router(candidate_note_router)
 router.include_router(candidate_application_router)
 router.include_router(interview_router)
 router.include_router(interview_feedback_router)
+
+router.include_router(review_session_employee_dimension_type_router)
+
+router.include_router(review_session_employee_status_router)
+router.include_router(review_session_employee_feedback_type_router)
+
+router.include_router(employee_recommended_training_router)
 
 router.include_router(employee_mission_status_router)
 router.include_router(employee_mission_router)

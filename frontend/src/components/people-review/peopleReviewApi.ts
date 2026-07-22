@@ -1,7 +1,6 @@
 import { axiosInstance } from '../../api/axiosInstance';
 import { BASE_URL } from "../../utils/eNums.ts"
 import type { MutationResponse } from '../../types/mutationResponse';
-import type { CompetenceSide } from './evaluation/evaluationHelpers';
 import type { PersonSex } from '../admin/persons/personApi';
 export type { MutationResponse };
 
@@ -52,6 +51,9 @@ export interface ReviewSessionEmployeeList {
     id: number;
     session_id: number;
     employee_id: number;
+    // Both, mirroring ReviewSession: the id is stored, the key is what the
+    // status machine in rseStatus.ts speaks.
+    review_session_employee_status_id: number;
     status: string;
     employee_name: string;
     employee_code: string;
@@ -93,10 +95,95 @@ export interface Evaluation {
     dimension_sort_order: number;
 }
 
+/**
+ * One of the summary's sides — a row of `review_session_employee_dimension_types`. Two rows are
+ * seeded ('strong' / 'develop'); resolve by KEY, never by id, since ids move on
+ * a reseed.
+ */
+export interface RseDimensionType {
+    id: number;
+    key: string;
+    description: string;
+    sort_order: number;
+}
+
+/**
+ * One competence picked into one side of a review's competence summary.
+ *
+ * Flat and type-driven: the side travels as `review_session_employee_dimension_type_id`, so the
+ * payload shape does not bake in the two current sides. `dimension_name` /
+ * `dimension_color` are resolved server-side in the caller's language.
+ */
+export interface RseDimensionItem {
+    review_session_employee_dimension_type_id: number;
+    review_session_employee_dimension_type_key: string;
+    dimension_id: number;
+    dimension_key: string;
+    dimension_name: string;
+    dimension_color: string;
+    sort_order: number;
+    comments: string[];
+}
+
+/** One voice's feedback on a review. Flat and type-driven like the dimensions:
+ *  the voice is `review_session_employee_feedback_type_key` ('employee' /
+ *  'manager'), so a third voice needs no schema change. A voice with nothing
+ *  written has NO item — absence is the empty state. */
+export interface RseFeedbackItem {
+    review_session_employee_feedback_type_id: number;
+    review_session_employee_feedback_type_key: string;
+    text: string;
+}
+
+/** Write-side item. Blank `text` DELETES that voice's row. */
+export interface RseFeedbackInput {
+    review_session_employee_feedback_type_id: number;
+    text: string;
+}
+
+/** A row of `review_session_employee_feedback_types`. Seeded; resolve by KEY. */
+export interface RseFeedbackType {
+    id: number;
+    key: string;
+    name: string;
+    description: string;
+    sort_order: number;
+}
+
+/** A row of `review_session_employee_statuses` (open / reviewed / closed). */
+export interface RseStatusRow {
+    id: number;
+    key: string;
+    name: string;
+    description: string;
+    sort_order: number;
+}
+
+/** One result / achievement of a review. The displayed "1." "2." is `sort_order`,
+ *  never part of `text` — the old column baked the numbering into the string. */
+export interface RseResultItem {
+    id: number;
+    text: string;
+    sort_order: number;
+}
+
+/** Write-side item: position comes from the array order. */
+export interface RseResultInput {
+    text: string;
+}
+
+/** Write-side item: ids + content only; name/colour are derived server-side. */
+export interface RseDimensionInput {
+    review_session_employee_dimension_type_id: number;
+    dimension_id: number;
+    comments: string[];
+}
+
 export interface ReviewSessionEmployee {
     id: number;
     session_id: number;
     employee_id: number;
+    review_session_employee_status_id: number;
     status: string;
     employee_name: string;
     employee_code: string;
@@ -113,11 +200,11 @@ export interface ReviewSessionEmployee {
     marital_status: MaritalStatus | null;
     job_name: string | null;
     main_department_name: string | null;
-    employee_feedback: string | null;
-    manager_feedback: string | null;
-    results_achievements: string | null;
-    trainings: string | null;
-    competence_summary: string | null;
+    feedbacks: RseFeedbackItem[];
+    results: RseResultItem[];
+    // NOTE: no `trainings` here. Recommended trainings are EMPLOYEE-scoped and
+    // come from /employee_recommended_trainings — see recommendedTrainingApi.ts.
+    dimensions: RseDimensionItem[];
     // Per-review opt-in for the full competence list in the summary selects (see
     // the backend column). Only honoured when the global setting allows it.
     summary_full_competence_list: boolean;
@@ -125,11 +212,12 @@ export interface ReviewSessionEmployee {
 }
 
 export interface RSEFieldsUpdate {
-    employee_feedback?: string | null;
-    manager_feedback?: string | null;
-    results_achievements?: string | null;
-    trainings?: string | null;
-    competence_summary?: string | null;
+    // No feedback here: it became rows, saved through PUT /{rse_id}/feedbacks.
+    // No results / trainings here: results are saved through their own
+    // PUT /{rse_id}/results, and recommended trainings live on their own
+    // employee-scoped endpoints.
+    // No dimensions here: it is a set of rows, saved through its own
+    // PUT /{rse_id}/dimensions (see saveRseDimensions below).
     summary_full_competence_list?: boolean;
 }
 
@@ -419,6 +507,27 @@ export const openTempoPresentation = (sessionId: number, win: Window): Promise<v
     openHtmlBlob(`${RSE_BASE}/tempo_presentation?session_id=${sessionId}`, win);
 
 /**
+ * Fetch a server-rendered HTML artifact as a blob URL WITHOUT opening a tab.
+ *
+ * The openHtmlBlob variants above open a blank tab first (to survive the popup
+ * blocker) and fill it when the build finishes, which means the user is thrown
+ * onto an empty page for the many seconds the server takes. These let the caller
+ * keep them on the current page behind a progress overlay and only switch once
+ * the document actually exists.
+ */
+const fetchHtmlBlobUrl = async (url: string): Promise<string> => {
+    // No timeout: building server-side can far exceed the global 30s.
+    const res = await axiosInstance.get<Blob>(url, { responseType: 'blob', timeout: 0 });
+    return URL.createObjectURL(new Blob([res.data], { type: 'text/html' }));
+};
+
+export const fetchTempoHtmlUrl = (rseId: number): Promise<string> =>
+    fetchHtmlBlobUrl(`${RSE_BASE}/${rseId}/tempo_html`);
+
+export const fetchTempoPresentationUrl = (sessionId: number): Promise<string> =>
+    fetchHtmlBlobUrl(`${RSE_BASE}/tempo_presentation?session_id=${sessionId}`);
+
+/**
  * Download the whole session's TEMPO deck as a PowerPoint file. The deck is
  * built server-side (can take many seconds — the caller shows a spinner), then
  * the blob triggers a browser download via a temporary anchor, exactly like
@@ -480,6 +589,66 @@ export const saveRSEFields = async (
     return res.data;
 };
 
+// The summary's two sides, from the DB lookup. Fetched (not hardcoded) so the
+// ids sent back with each picked competence come from data.
+export const fetchRseDimensionTypes = async (): Promise<RseDimensionType[]> => {
+    const res = await axiosInstance.get<RseDimensionType[]>(`${BASE_URL}/review_session_employee_dimension_types`);
+    return res.data;
+};
+
+// The review-record lifecycle statuses and the feedback voices — seeded lookups,
+// fetched so ids come from data rather than literals.
+export const fetchRseStatuses = async (): Promise<RseStatusRow[]> => {
+    const res = await axiosInstance.get<RseStatusRow[]>(`${BASE_URL}/review_session_employee_statuses`);
+    return res.data ?? [];
+};
+
+export const fetchRseFeedbackTypes = async (): Promise<RseFeedbackType[]> => {
+    const res = await axiosInstance.get<RseFeedbackType[]>(`${BASE_URL}/review_session_employee_feedback_types`);
+    return res.data ?? [];
+};
+
+// Replace the review's feedback (employee / manager voices) with the full
+// desired state. Blank text removes that voice's row.
+export const saveRseFeedbacks = async (
+    rseId: number,
+    items: RseFeedbackInput[],
+): Promise<ReviewSessionEmployee> => {
+    const res = await axiosInstance.put<ReviewSessionEmployee>(
+        `${RSE_BASE}/${rseId}/feedbacks`,
+        { items },
+    );
+    return res.data;
+};
+
+// Replace the review's results / achievements with the full desired state. Its
+// own endpoint because they are rows now; the server swaps them in one
+// transaction and derives sort_order from the array order.
+export const saveRseResults = async (
+    rseId: number,
+    items: RseResultInput[],
+): Promise<ReviewSessionEmployee> => {
+    const res = await axiosInstance.put<ReviewSessionEmployee>(
+        `${RSE_BASE}/${rseId}/results`,
+        { items },
+    );
+    return res.data;
+};
+
+// Replace the review's competence summary with the full desired state. Its own
+// endpoint because it is a set of rows, not a field: the server swaps them in
+// one transaction. Called only when the summary itself changed.
+export const saveRseDimensions = async (
+    rseId: number,
+    items: RseDimensionInput[],
+): Promise<ReviewSessionEmployee> => {
+    const res = await axiosInstance.put<ReviewSessionEmployee>(
+        `${RSE_BASE}/${rseId}/dimensions`,
+        { items },
+    );
+    return res.data;
+};
+
 export const markReviewed = async (rseId: number): Promise<MutationResponse<ReviewSessionEmployee>> => {
     const res = await axiosInstance.post<MutationResponse<ReviewSessionEmployee>>(
         `${RSE_BASE}/${rseId}/reviewed`,
@@ -533,11 +702,12 @@ export const bulkUpdateEvaluations = async (
 // Atomically re-rate a competence so it moves to the opposite summary list:
 // in ONE backend transaction the descriptor score is set, the leaving side's dim
 // column (facts for "strong", improvement for "develop") is cleared, and the
-// competence is stripped from the RSE competence_summary. Rolls back on failure.
+// competence's summary row is DELETED (its comments cascade). Rolls back on failure.
+// `leaving_type_id` is a review_session_employee_dimension_types id — the side is data, not a literal.
 export interface EvaluationFlipCompetence {
     criterion_index: number;
     new_score: number;
-    leaving_side: CompetenceSide;
+    leaving_type_id: number;
 }
 
 export const flipCompetence = async (

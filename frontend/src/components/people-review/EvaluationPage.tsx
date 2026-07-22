@@ -37,15 +37,15 @@ import { defaultLangShortName } from '../../utils/eNums';
 import { useTheme } from '../theme/ThemeContext';
 import {
     getDimColor,
-    pickSummaryAccent,
+    pickSideAccent,
     competenceName,
     evalFilled,
     formatYearsMonths,
-    CompetenceSide,
+    DimensionSide,
 } from './evaluation/evaluationHelpers';
 import { isRseEditable } from './rseStatus';
 import { DimensionChart } from './evaluation/DimensionChart';
-import { CompetenceSummarySection } from './evaluation/CompetenceSummarySection';
+import { RseDimensionSection } from './evaluation/RseDimensionSection';
 import { PersonalInfoPanel } from './evaluation/PersonalInfoPanel';
 import { JobInfoPanel } from './evaluation/JobInfoPanel';
 import { TalentStatusPeriodPanel } from './evaluation/TalentStatusPeriodPanel';
@@ -63,7 +63,7 @@ import { useEvaluationQueries } from './evaluation/hooks/useEvaluationQueries';
 import { useEvaluationDraft } from './evaluation/hooks/useEvaluationDraft';
 import { useTempoAlbum } from './evaluation/hooks/useTempoAlbum';
 import { useEmployeeLevel } from './evaluation/hooks/useEmployeeLevel';
-import { useCompetenceSummary } from './evaluation/hooks/useCompetenceSummary';
+import { useRseDimensions } from './evaluation/hooks/useRseDimensions';
 import { useDimensionFacts } from './evaluation/hooks/useDimensionFacts';
 
 export function EvaluationPage() {
@@ -103,6 +103,7 @@ export function EvaluationPage() {
         rseDetail, rseLoading, rid, sessionId,
         siblings, evaluations, evalLoading,
         langLevels, employeeId, langProfile, langLoading,
+        dimensionTypes, dimensionTypesUnavailable, feedbackTypes,
         comments, allLevels, sessionLevels, proposedLevel,
         refreshPersonData, refreshing, realignTargetId,
     } = useEvaluationQueries(sid, eid);
@@ -122,16 +123,16 @@ export function EvaluationPage() {
     const {
         storeDraft, draft, updateEvalDraft, hydrationReady,
         setLocalEvals, setLangSel, setEmployeeFeedback, setManagerFeedback,
-        setResults, setTrainings,
+        setResults,
         setStrongOptions, setDevelopOptions, setStrongDrafts, setDevelopDrafts,
         setSummaryFullCompetenceList,
     } = useEvaluationDraft({
         rid, rseDetail, rseLoading, evaluations, evalLoading,
-        employeeId, langProfile, langLoading, viewOnly, getString,
+        employeeId, langProfile, langLoading, viewOnly, getString, dimensionTypes,
     });
     const {
         localEvals, langSel, employeeFeedback, managerFeedback,
-        results, trainings,
+        results,
         strongOptions, developOptions, strongDrafts, developDrafts,
         summaryFullCompetenceList,
     } = draft;
@@ -140,6 +141,7 @@ export function EvaluationPage() {
     const {
         pdfOpen, pdfUrl, pdfLoading, pdfError, busyLabel,
         openTempoPdf, closeTempoPdf, downloadTempo, openTempoHtmlView,
+        readyHtmlUrl, openReadyHtml, dismissReadyHtml,
     } = useTempoAlbum({
         rid, rseDetail, getString,
         onError: (message) => setSnackbar({ open: true, message, severity: 'error' }),
@@ -180,6 +182,19 @@ export function EvaluationPage() {
     };
     const removeResult = (index: number) => {
         setResults(prev => prev.filter((_, i) => i !== index));
+    };
+    // Drop the dragged result BEFORE the target row. The array order IS the
+    // persisted order — autosave sends the list and the server rewrites
+    // sort_order from the index — so the visible "1., 2., 3." renumbers itself.
+    const reorderResult = (from: number, toRow: number) => {
+        const to = from < toRow ? toRow - 1 : toRow;
+        if (from === to) return;
+        setResults(prev => {
+            const next = [...prev];
+            const [moved] = next.splice(from, 1);
+            next.splice(to, 0, moved);
+            return next;
+        });
     };
 
     const reviewedMut = useMutation({
@@ -270,6 +285,8 @@ export function EvaluationPage() {
         sessionId,
         enabled: isEditable && !viewOnly && hydrationReady && !!storeDraft,
         draft,
+        dimensionTypes,
+        feedbackTypes,
         onError: (message) => setSnackbar({ open: true, message, severity: 'error' }),
     });
 
@@ -290,7 +307,13 @@ export function EvaluationPage() {
             ? (!proposedLevel ? getString('proposeLevelFirst') : getString('fillLevelDetails'))
             : getString('markAsReviewed');
 
+    // Prefer the name the SERVER resolved for a picked competence (it applies the
+    // same competence<PascalKey> rule in the user's language), so the summary card
+    // and the tab below it can never disagree. Candidates are built from the
+    // evaluation rows, which have no server-resolved name — hence the fallback.
     const competenceLabel = (key: string) => {
+        const picked = [...strongOptions, ...developOptions].find(o => o.dimension_key === key);
+        if (picked?.dimension_name) return picked.dimension_name;
         const ev = localEvals.find(e => e.dimension_key === key);
         return competenceName(getString, key, ev?.dimension_name ?? key);
     };
@@ -305,8 +328,8 @@ export function EvaluationPage() {
     // Header accents for the two summary boxes: dynamic so they never reuse a
     // competence's own color, while keeping the strong=good / develop=alert mood.
     const usedCompetenceColors = visibleEvals.map(e => competenceColor(e.dimension_key));
-    const strongAccent = pickSummaryAccent(CompetenceSide.Strong, usedCompetenceColors);
-    const developAccent = pickSummaryAccent(CompetenceSide.Develop, usedCompetenceColors);
+    const strongAccent = pickSideAccent(DimensionSide.Strong, usedCompetenceColors);
+    const developAccent = pickSideAccent(DimensionSide.Develop, usedCompetenceColors);
 
     // A competence is "picked" if it appears in the matching summary section.
     const isStrongPicked = (key: string) => strongOptions.some(o => o.dimension_key === key);
@@ -320,19 +343,19 @@ export function EvaluationPage() {
     const {
         strongCandidates, developCandidates,
         copyFactToStrong, copyImprovementToDevelop, activateCompetenceTab,
-        addSummaryOption, removeSummaryOption, removeDevelopOption,
-        addSummaryComment, removeSummaryComment, editSummaryComment, reorderSummaryOption,
+        addDimensionOption, removeDimensionOption, removeDevelopOption,
+        addDimensionComment, removeDimensionComment, editDimensionComment, reorderDimensionOption,
         handleSummaryFullListToggle, confirmSummaryReconcile,
         handleCriterionChange, confirmFlip,
         pendingFlip, setPendingFlip,
         pendingSummaryReconcile, setPendingSummaryReconcile,
-    } = useCompetenceSummary({
+    } = useRseDimensions({
         rid, updateEvalDraft,
         localEvals, strongOptions, developOptions,
         visibleEvals, competenceLabel, isStrongPicked, isDevelopPicked, summaryFullListActive,
         setLocalEvals, setDevelopOptions, setStrongDrafts, setDevelopDrafts,
         setSummaryFullCompetenceList,
-        summaryMinOptions, flushAutosave, setActiveTab,
+        summaryMinOptions, dimensionTypes, getString, flushAutosave, setActiveTab,
         onError: (message) => setSnackbar({ open: true, message, severity: 'error' }),
     });
 
@@ -356,6 +379,22 @@ export function EvaluationPage() {
         return (
             <AppShell>
                 <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}><CircularProgress /></Box>
+            </AppShell>
+        );
+    }
+
+    // The summary's side rows are missing, so the evaluation draft cannot be
+    // built and the page would render silently empty. Almost always a database
+    // that never had seeds/seed_review_session_employee_dimension_types.py run against it —
+    // say so rather than showing a blank review.
+    if (dimensionTypesUnavailable) {
+        return (
+            <AppShell>
+                <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 900, mx: 'auto', width: '100%' }}>
+                    <Alert severity="error" sx={{ borderRadius: '10px' }}>
+                        {getString('dimensionTypesUnavailable')}
+                    </Alert>
+                </Box>
             </AppShell>
         );
     }
@@ -537,9 +576,9 @@ export function EvaluationPage() {
                             onNewResultTextChange={setNewResultText}
                             onAddResult={addResult}
                             onRemoveResult={removeResult}
+                            onReorderResult={reorderResult}
                             employeeId={employeeId}
-                            trainings={trainings}
-                            onTrainingsChange={setTrainings}
+
                         />
 
                         {/* Scores overview + competence summary tabs */}
@@ -589,7 +628,7 @@ export function EvaluationPage() {
                                                 </Box>
                                             )}
                                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-                                                <CompetenceSummarySection
+                                                <RseDimensionSection
                                                     title={getString('strongCompetences')}
                                                     accent={strongAccent}
                                                     options={strongOptions}
@@ -600,15 +639,15 @@ export function EvaluationPage() {
                                                     getString={getString}
                                                     drafts={strongDrafts}
                                                     onDraftChange={(key, value) => setStrongDrafts(prev => ({ ...prev, [key]: value }))}
-                                                    onAddOption={key => addSummaryOption(setStrongOptions, key)}
-                                                    onRemoveOption={key => removeSummaryOption(setStrongOptions, key)}
-                                                    onAddComment={(key, text) => addSummaryComment(setStrongOptions, key, text)}
-                                                    onRemoveComment={(key, idx) => removeSummaryComment(setStrongOptions, key, idx)}
-                                                    onEditComment={(key, idx, text) => editSummaryComment(setStrongOptions, key, idx, text)}
-                                                    onReorderOption={(from, to) => reorderSummaryOption(setStrongOptions, from, to)}
-                                                    onSelectCompetence={activateCompetenceTab}
+                                                    onAddOption={key => addDimensionOption(setStrongOptions, key)}
+                                                    onRemoveOption={key => removeDimensionOption(setStrongOptions, key)}
+                                                    onAddComment={(key, text) => addDimensionComment(setStrongOptions, key, text)}
+                                                    onRemoveComment={(key, idx) => removeDimensionComment(setStrongOptions, key, idx)}
+                                                    onEditComment={(key, idx, text) => editDimensionComment(setStrongOptions, key, idx, text)}
+                                                    onReorderOption={(from, to) => reorderDimensionOption(setStrongOptions, from, to)}
+                                                    onSelectDimension={activateCompetenceTab}
                                                 />
-                                                <CompetenceSummarySection
+                                                <RseDimensionSection
                                                     title={getString('competencesToDevelop')}
                                                     accent={developAccent}
                                                     options={developOptions}
@@ -619,13 +658,13 @@ export function EvaluationPage() {
                                                     getString={getString}
                                                     drafts={developDrafts}
                                                     onDraftChange={(key, value) => setDevelopDrafts(prev => ({ ...prev, [key]: value }))}
-                                                    onAddOption={key => addSummaryOption(setDevelopOptions, key)}
+                                                    onAddOption={key => addDimensionOption(setDevelopOptions, key)}
                                                     onRemoveOption={removeDevelopOption}
-                                                    onAddComment={(key, text) => addSummaryComment(setDevelopOptions, key, text)}
-                                                    onRemoveComment={(key, idx) => removeSummaryComment(setDevelopOptions, key, idx)}
-                                                    onEditComment={(key, idx, text) => editSummaryComment(setDevelopOptions, key, idx, text)}
-                                                    onReorderOption={(from, to) => reorderSummaryOption(setDevelopOptions, from, to)}
-                                                    onSelectCompetence={activateCompetenceTab}
+                                                    onAddComment={(key, text) => addDimensionComment(setDevelopOptions, key, text)}
+                                                    onRemoveComment={(key, idx) => removeDimensionComment(setDevelopOptions, key, idx)}
+                                                    onEditComment={(key, idx, text) => editDimensionComment(setDevelopOptions, key, idx, text)}
+                                                    onReorderOption={(from, to) => reorderDimensionOption(setDevelopOptions, from, to)}
+                                                    onSelectDimension={activateCompetenceTab}
                                                 />
                                             </Box>
                                           </>
@@ -794,6 +833,25 @@ export function EvaluationPage() {
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
                 <Alert severity={snackbar.severity} onClose={() => setSnackbar(p => ({ ...p, open: false }))} sx={{ width: '100%' }}>
                     {snackbar.message}
+                </Alert>
+            </Snackbar>
+
+            {/* The album finished but the popup blocker refused the automatic tab
+                (the build outlived the click gesture). One more click opens it —
+                no rebuild, the document is already in memory. */}
+            <Snackbar open={!!readyHtmlUrl} onClose={dismissReadyHtml}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+                <Alert
+                    severity="info"
+                    onClose={dismissReadyHtml}
+                    sx={{ width: '100%' }}
+                    action={
+                        <Button color="inherit" size="small" onClick={openReadyHtml}>
+                            {getString('open')}
+                        </Button>
+                    }
+                >
+                    {getString('tempoAlbumReady')}
                 </Alert>
             </Snackbar>
 

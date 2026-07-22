@@ -1,12 +1,20 @@
 import dayjs from 'dayjs';
 import type { GetStringFn } from '../../../types/getStringFn';
+import type { RseDimensionItem } from '../peopleReviewApi';
 
 /**
- * The summary list a competence is picked into. Values ('strong'/'develop') are
- * the wire/persisted form — they match the `competence_summary` JSON keys and the
- * API `leaving_side`, so a string enum keeps serialization identical.
+ * Which side a dimension is singled out on for this employee: a strength, or
+ * something to develop.
+ *
+ * NOT the wire format — the API carries a
+ * `review_session_employee_dimension_type_id` from the
+ * `review_session_employee_dimension_types` table, and these values are the KEYS
+ * of those rows, used only to look the ids up. The enum survives as a local
+ * discriminator because the behaviour of a side genuinely is code: strong ranks
+ * dimensions descending, develop ascending, and each side has its own heading
+ * and accent. That is also why a third row could be stored but not ranked.
  */
-export enum CompetenceSide {
+export enum DimensionSide {
     Strong = 'strong',
     Develop = 'develop',
 }
@@ -19,13 +27,13 @@ export enum DragItemKind {
 
 // Enum → translation-key maps: the ONE place these domain concepts are mapped to
 // message keys (callers resolve via getString instead of inline string ternaries).
-const COMPETENCE_SIDE_LABEL_KEYS: Record<CompetenceSide, string> = {
-    [CompetenceSide.Strong]: 'strongCompetences',
-    [CompetenceSide.Develop]: 'competencesToDevelop',
+const DIMENSION_SIDE_LABEL_KEYS: Record<DimensionSide, string> = {
+    [DimensionSide.Strong]: 'strongCompetences',
+    [DimensionSide.Develop]: 'competencesToDevelop',
 };
-const COMPETENCE_SIDE_FLIP_KEYS: Record<CompetenceSide, string> = {
-    [CompetenceSide.Strong]: 'flipCompetenceFromStrong',
-    [CompetenceSide.Develop]: 'flipCompetenceFromDevelop',
+const DIMENSION_SIDE_FLIP_KEYS: Record<DimensionSide, string> = {
+    [DimensionSide.Strong]: 'flipCompetenceFromStrong',
+    [DimensionSide.Develop]: 'flipCompetenceFromDevelop',
 };
 const DRAG_ITEM_TITLE_KEYS: Record<DragItemKind, string> = {
     [DragItemKind.Fact]: 'moveFactTitle',
@@ -36,12 +44,12 @@ const DRAG_ITEM_CONFIRM_KEYS: Record<DragItemKind, string> = {
     [DragItemKind.Improvement]: 'moveImprovementConfirm',
 };
 
-/** Translation key for a summary side's header label. */
-export const competenceSideLabelKey = (side: CompetenceSide): string =>
-    COMPETENCE_SIDE_LABEL_KEYS[side];
-/** Translation key for the confirm text shown when a competence flips OUT of `side`. */
-export const competenceSideFlipKey = (side: CompetenceSide): string =>
-    COMPETENCE_SIDE_FLIP_KEYS[side];
+/** Translation key for a side's header label. */
+export const dimensionSideLabelKey = (side: DimensionSide): string =>
+    DIMENSION_SIDE_LABEL_KEYS[side];
+/** Translation key for the confirm text shown when a dimension flips OUT of `side`. */
+export const dimensionSideFlipKey = (side: DimensionSide): string =>
+    DIMENSION_SIDE_FLIP_KEYS[side];
 /** Translation key for the "move item" dialog title, by dragged-item kind. */
 export const dragItemTitleKey = (kind: DragItemKind): string =>
     DRAG_ITEM_TITLE_KEYS[kind];
@@ -123,8 +131,8 @@ function colorDistance(a: [number, number, number], b: [number, number, number])
  * competence color is farthest away (maximize the minimum distance). This avoids
  * "different hex but same-looking hue" collisions, while staying in the family.
  */
-export function pickSummaryAccent(family: CompetenceSide, usedColors: Iterable<string>): string {
-    const palette = family === CompetenceSide.Strong ? STRONG_ACCENTS : DEVELOP_ACCENTS;
+export function pickSideAccent(family: DimensionSide, usedColors: Iterable<string>): string {
+    const palette = family === DimensionSide.Strong ? STRONG_ACCENTS : DEVELOP_ACCENTS;
     const used = [...usedColors]
         .map(hexToRgb)
         .filter((c): c is [number, number, number] => c !== null);
@@ -258,8 +266,17 @@ export const FOREIGN_LANGUAGES: { key: string; labelKey: 'english' | 'french' }[
 ];
 
 // One picked competence in the summary, with its linked comments.
-export interface SummaryOption {
+//
+// `dimension_id` is what goes back to the server (the DB stores a real FK into
+// review_dimensions). `dimension_key` stays because every draft rule below —
+// rankedCompetences, detectCompetenceFlip, the picked-checks, the React keys —
+// is keyed on it. `dimension_name`/`dimension_color` arrive RESOLVED from the
+// backend in the user's language.
+export interface DimensionOption {
+    dimension_id: number;
     dimension_key: string;
+    dimension_name: string;
+    dimension_color: string;
     comments: string[];
 }
 
@@ -270,19 +287,29 @@ export interface SummaryOption {
  */
 const SUMMARY_MIN_OPTIONS = 2;
 
-/** Parse a stored {strong, develop} summary array for one side. */
-export function parseSummarySide(raw: unknown): SummaryOption[] {
-    if (!Array.isArray(raw)) return [];
-    const out: SummaryOption[] = [];
-    for (const item of raw) {
-        if (item && typeof item === 'object' && 'dimension_key' in item) {
-            const key = String((item as { dimension_key: unknown }).dimension_key ?? '');
-            const rawComments = (item as { comments?: unknown }).comments;
-            const comments = Array.isArray(rawComments) ? rawComments.map(c => String(c ?? '')) : [];
-            if (key) out.push({ dimension_key: key, comments });
-        }
-    }
-    return out;
+/**
+ * Split the backend's FLAT summary list into the options of one side.
+ *
+ * The API returns one array whose items each carry their
+ * `review_session_employee_dimension_type_id` — there are no `strong:` / `develop:` fields on
+ * the wire, so a new side would need no schema change. `typeId` comes from the
+ * review_session_employee_dimension_types row matched BY KEY, never from a hardcoded id.
+ * Already ordered by the server; the array order is the displayed order.
+ */
+export function dimensionOptionsForType(
+    items: RseDimensionItem[],
+    typeId: number | undefined,
+): DimensionOption[] {
+    if (typeId == null) return [];
+    return items
+        .filter(i => i.review_session_employee_dimension_type_id === typeId)
+        .map(i => ({
+            dimension_id: i.dimension_id,
+            dimension_key: i.dimension_key,
+            dimension_name: i.dimension_name,
+            dimension_color: i.dimension_color,
+            comments: [...i.comments],
+        }));
 }
 
 /**
@@ -314,7 +341,7 @@ export interface PendingFlip {
     value: number;
     key: string;
     // The side the competence currently sits in and will be removed FROM.
-    side: CompetenceSide;
+    side: DimensionSide;
     name: string;
 }
 
@@ -335,10 +362,10 @@ export function detectCompetenceFlip(
     isStrongPicked: boolean,
     isDevelopPicked: boolean,
     minOptions: number = SUMMARY_MIN_OPTIONS,
-): CompetenceSide | null {
+): DimensionSide | null {
     const strongKeys = new Set(rankedCompetences(evals, 'desc', minOptions).map(e => e.dimension_key));
     const developKeys = new Set(rankedCompetences(evals, 'asc', minOptions).map(e => e.dimension_key));
-    if (isStrongPicked && developKeys.has(key) && !strongKeys.has(key)) return CompetenceSide.Strong;
-    if (isDevelopPicked && strongKeys.has(key) && !developKeys.has(key)) return CompetenceSide.Develop;
+    if (isStrongPicked && developKeys.has(key) && !strongKeys.has(key)) return DimensionSide.Strong;
+    if (isDevelopPicked && strongKeys.has(key) && !developKeys.has(key)) return DimensionSide.Develop;
     return null;
 }

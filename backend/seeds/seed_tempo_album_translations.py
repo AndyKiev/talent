@@ -27,6 +27,9 @@ from backend.api_v1.msg_pg.msg_model import Msg
 # (name, eng_value, ukr_value)
 TRANSLATIONS: list[tuple[str, str, str]] = [
     ("tempoPhotoPlaceholder", "PHOTO", "ФОТО"),
+    # Shown when the HTML album finished building but the popup blocker refused
+    # the automatic tab — the snackbar offers one more click to open it.
+    ("tempoAlbumReady", "The album is ready.", "Альбом готовий."),
     ("yearsShort", "y.", "р."),
 ]
 

@@ -11,10 +11,10 @@ import {
 } from '@mui/material';
 import type { GetStringFn } from '../../../types/getStringFn';
 import { useTheme } from '../../theme/ThemeContext';
-import type { PendingMove, PendingFlip, CompetenceSide } from './evaluationHelpers';
+import type { PendingMove, PendingFlip, DimensionSide } from './evaluationHelpers';
 import {
-    competenceSideLabelKey,
-    competenceSideFlipKey,
+    dimensionSideLabelKey,
+    dimensionSideFlipKey,
     dragItemTitleKey,
     dragItemConfirmKey,
     DragItemKind,
@@ -34,8 +34,8 @@ interface Props {
     confirmFlip: () => void;
     // Direct removal of a mission-linked to-develop competence.
     // Leaving full-list mode with misplaced picks.
-    pendingSummaryReconcile: { key: string; name: string; side: CompetenceSide }[] | null;
-    setPendingSummaryReconcile: Dispatch<SetStateAction<{ key: string; name: string; side: CompetenceSide }[] | null>>;
+    pendingSummaryReconcile: { key: string; name: string; side: DimensionSide }[] | null;
+    setPendingSummaryReconcile: Dispatch<SetStateAction<{ key: string; name: string; side: DimensionSide }[] | null>>;
     confirmSummaryReconcile: () => void;
 }
 
@@ -101,7 +101,7 @@ export function EvaluationConfirmDialogs({
                 <DialogTitle>{getString('flipCompetenceTitle')}</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        {pendingFlip && getString(competenceSideFlipKey(pendingFlip.side), { competence: pendingFlip.name })}
+                        {pendingFlip && getString(dimensionSideFlipKey(pendingFlip.side), { competence: pendingFlip.name })}
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
@@ -129,7 +129,7 @@ export function EvaluationConfirmDialogs({
                     <Stack spacing={0.5} sx={{ mt: 1 }}>
                         {pendingSummaryReconcile?.map((m) => (
                             <Typography key={`${m.side}-${m.key}`} fontSize={13} fontWeight={600} sx={{ wordBreak: 'break-word' }}>
-                                • {m.name} — {getString(competenceSideLabelKey(m.side))}
+                                • {m.name} — {getString(dimensionSideLabelKey(m.side))}
                             </Typography>
                         ))}
                     </Stack>

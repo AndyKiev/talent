@@ -12,8 +12,14 @@ import {
     fetchSessionLevels,
     fetchProposedLevel,
     fetchReviewComments,
+    fetchRseDimensionTypes,
+    fetchRseFeedbackTypes,
 } from '../../peopleReviewApi';
-import { PEOPLE_REVIEW_MY_SCOPES_QK } from '../../../../utils/queryKeys';
+import {
+    PEOPLE_REVIEW_MY_SCOPES_QK,
+    RSE_DIMENSION_TYPES_QK,
+    RSE_FEEDBACK_TYPES_QK,
+} from '../../../../utils/queryKeys';
 import { useSiblingPrefetch } from '../../useSiblingPrefetch';
 
 /**
@@ -90,6 +96,34 @@ export function useEvaluationQueries(sid: number, eid: number) {
     const { data: langLevels = [] } = useQuery({
         queryKey: ['language_levels'],
         queryFn: fetchLanguageLevels,
+        staleTime: 5 * 60_000,
+    });
+
+    // --- Competence summary sides (strong / to-develop) ---
+    // A tiny seeded lookup: fetched so the ids sent back with each picked
+    // competence come from data rather than from a literal in this file.
+    const {
+        data: dimensionTypes = [],
+        isError: dimensionTypesError,
+        isSuccess: dimensionTypesLoaded,
+    } = useQuery({
+        queryKey: RSE_DIMENSION_TYPES_QK,
+        queryFn: fetchRseDimensionTypes,
+        staleTime: 5 * 60_000,
+    });
+    // The draft cannot hydrate without these rows (the summary list is split by
+    // type id), so a failed or UNSEEDED lookup would otherwise leave the page
+    // silently blank forever. Surface it instead: an empty table here means the
+    // review_session_employee_dimension_types seed was never run.
+    const dimensionTypesUnavailable =
+        dimensionTypesError || (dimensionTypesLoaded && dimensionTypes.length === 0);
+
+    // --- Feedback voices (employee / manager) ---
+    // Same reasoning as the sides above: fetched so the ids sent with each
+    // feedback box come from data, not from a literal.
+    const { data: feedbackTypes = [] } = useQuery({
+        queryKey: RSE_FEEDBACK_TYPES_QK,
+        queryFn: fetchRseFeedbackTypes,
         staleTime: 5 * 60_000,
     });
     const { data: langProfile, isLoading: langLoading } = useQuery({
@@ -180,6 +214,7 @@ export function useEvaluationQueries(sid: number, eid: number) {
         siblings, siblingsFetching,
         evaluations, evalLoading,
         langLevels, employeeId, langProfile, langLoading,
+        dimensionTypes, dimensionTypesUnavailable, feedbackTypes,
         comments, allLevels, sessionLevels, proposedLevel,
         refreshPersonData, refreshing, realignTargetId,
     };

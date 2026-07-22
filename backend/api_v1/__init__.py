@@ -151,6 +151,18 @@ __all__ = {
     "EmployeeMissionDimensionLink",
     "EmployeeMissionComment",
     "EmployeeDevelopmentVision",
+    # Competence summary (normalized replacement for the RSE JSON column)
+    "ReviewSessionEmployeeDimensionType",
+    "ReviewSessionEmployeeDimension",
+    "ReviewSessionEmployeeDimensionComment",
+    # Review results + employee-scoped recommended trainings
+    "ReviewSessionEmployeeResult",
+    "EmployeeRecommendedTrainingStatus",
+    "EmployeeRecommendedTraining",
+    # RSE lifecycle status + feedback (normalized off the RSE columns)
+    "ReviewSessionEmployeeStatus",
+    "ReviewSessionEmployeeFeedbackType",
+    "ReviewSessionEmployeeFeedback",
 }
 
 from backend.api_v1.lang.lang_model import Lang
@@ -503,4 +515,41 @@ from backend.api_v1.employee_mission_comment.employee_mission_comment_model impo
 )
 from backend.api_v1.employee_development_vision.employee_development_vision_model import (
     EmployeeDevelopmentVision,
+)
+
+# Competence summary — the side lookup first (FK target), then the per-review
+# picked competence (FKs into review_session_employees, review_session_employee_dimension_types
+# and review_dimensions), then its comment rows.
+from backend.api_v1.review_session_employee_dimension_type.review_session_employee_dimension_type_model import (
+    ReviewSessionEmployeeDimensionType,
+)
+from backend.api_v1.review_session_employee_dimension.review_session_employee_dimension_model import (
+    ReviewSessionEmployeeDimension,
+)
+from backend.api_v1.review_session_employee_dimension_comment.review_session_employee_dimension_comment_model import (
+    ReviewSessionEmployeeDimensionComment,
+)
+
+# Review results (1:N off the review record) and the employee-scoped recommended
+# trainings — status lookup first, since the trainings FK into it.
+from backend.api_v1.review_session_employee_result.review_session_employee_result_model import (
+    ReviewSessionEmployeeResult,
+)
+from backend.api_v1.employee_recommended_training_status.employee_recommended_training_status_model import (
+    EmployeeRecommendedTrainingStatus,
+)
+from backend.api_v1.employee_recommended_training.employee_recommended_training_model import (
+    EmployeeRecommendedTraining,
+)
+
+# RSE lifecycle status + feedback. The two lookups come first (FK targets), then
+# the feedback rows. The status lookup MUST precede review_session_employees.
+from backend.api_v1.review_session_employee_status.review_session_employee_status_model import (
+    ReviewSessionEmployeeStatus,
+)
+from backend.api_v1.review_session_employee_feedback_type.review_session_employee_feedback_type_model import (
+    ReviewSessionEmployeeFeedbackType,
+)
+from backend.api_v1.review_session_employee_feedback.review_session_employee_feedback_model import (
+    ReviewSessionEmployeeFeedback,
 )
