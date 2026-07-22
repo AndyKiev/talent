@@ -37,7 +37,7 @@ alike:
 | table | purpose | key columns / rules |
 |---|---|---|
 | `review_session_employee_statuses` | lookup | `key` (unique: open/reviewed/closed), `name`, `description`, `sort_order` |
-| `review_session_employee_dimension_types` | lookup | `key` (unique: strong/develop), `name`, `description`, `sort_order` |
+| `review_session_employee_dimension_types` | lookup | `key` (unique: strong/develop), `description`, `sort_order` |
 | `review_session_employee_dimensions` | one dimension singled out for one employee in one review | `review_session_employee_id` CASCADE, `review_session_employee_dimension_type_id` RESTRICT, `dimension_id` **RESTRICT**, `sort_order`; UNIQUE on the **triple** |
 | `review_session_employee_dimension_comments` | notes under a singled-out dimension | `review_session_employee_dimension_id` CASCADE, `text`, `sort_order` |
 | `review_session_employee_results` | one result / achievement | `review_session_employee_id` CASCADE, `text`, `sort_order` |
