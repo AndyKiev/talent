@@ -37,7 +37,8 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate, useSearch } from '@tanstack/react-router';
+import type { EmployeesSearch } from '../../routes/employees/index';
 import AppShell from '../layout/AppShell';
 import { fetchEmployees, fetchEmployeesByDepartment, type Employee } from './employeeApi';
 import { useEmployeeColumns } from './useEmployeeColumns';
@@ -56,6 +57,10 @@ import { useDataGridLocale } from '../../hooks/useDataGridLocale';
 import { useAuthStore } from '../../store/authStore';
 import { useEmployeesViewStore } from '../../store/employeesViewStore';
 import EmployeeAvatar from '../ui/EmployeeAvatar';
+
+// Label of one option in the employee filter — also what the input shows while
+// an employee is selected.
+const empLabel = (e: Employee) => `${e.code} — ${e.name}`;
 
 export function EmployeesPage() {
     const getString = useString({ str });
@@ -80,18 +85,32 @@ export function EmployeesPage() {
     const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
     const [employeeForDepts, setEmployeeForDepts] = useState<Employee | null>(null);
 
-    // Selected department in the filter Select (null = all visible to the user).
-    const [selectedDeptId, setSelectedDeptId] = useState<number | null>(null);
+    // ── Filter state lives in the URL (?dept&subdept&job&status&emp&q) ────────
+    // Every filter is a search param, so Back/Forward walk the filter history
+    // (e.g. picking a department with no employees → Back returns to the full
+    // list) and a reload/bookmark restores exactly the same view.
+    const search = useSearch({ from: '/employees/' });
+    // Picking a filter PUSHES a history entry — that is what makes Back undo it.
+    // Free-text typing replaces instead, or history fills up per keystroke.
+    const setSearch = (patch: Partial<EmployeesSearch>, replace = false) =>
+        navigate({ to: '/employees', search: { ...search, ...patch }, replace });
+
+    // Selected department in the filter Select (undefined = all visible to the user).
+    const selectedDeptId = search.dept ?? null;
+    const setSelectedDeptId = (id: number | null) => setSearch({ dept: id ?? undefined });
 
     // ── Client-side column filters (like SelectScopeDepartment, atop each column) ──
-    const [statusFilter, setStatusFilter] = useState<string | null>(null);
-    const [subdepartmentFilter, setSubdepartmentFilter] = useState<string | null>(null);
-    const [jobFilter, setJobFilter] = useState<string | null>(null);
+    const statusFilter = search.status ?? null;
+    const setStatusFilter = (v: string | null) => setSearch({ status: v ?? undefined });
+    const subdepartmentFilter = search.subdept ?? null;
+    const setSubdepartmentFilter = (v: string | null) => setSearch({ subdept: v ?? undefined });
+    const jobFilter = search.job ?? null;
+    const setJobFilter = (v: string | null) => setSearch({ job: v ?? undefined });
 
     // Employee search (first control, like the people-review session filter):
     // type to narrow by code/name, or pick one employee by id from the dropdown.
-    const [selectedEmpId, setSelectedEmpId] = useState<number | null>(null);
-    const [empInput, setEmpInput] = useState('');
+    const selectedEmpId = search.emp ?? null;
+    const empInput = search.q ?? '';
 
     // Mobile-only filters drawer.
     const [filtersOpen, setFiltersOpen] = useState(false);
@@ -271,10 +290,17 @@ export function EmployeesPage() {
             sx={{ width: isCompact ? undefined : 280, flex: isCompact ? 1 : undefined, minWidth: 160 }}
             options={employees}
             value={selectedEmp}
-            onChange={(_, opt) => setSelectedEmpId(opt?.id ?? null)}
-            inputValue={empInput}
-            onInputChange={(_, val) => setEmpInput(val)}
-            getOptionLabel={(e) => `${e.code} — ${e.name}`}
+            // Picking one employee replaces the free-text filter (and pushes a
+            // history entry); the text is restored if you press Back.
+            onChange={(_, opt) => setSearch({ emp: opt?.id ?? undefined, q: undefined })}
+            // While an employee is picked the box shows that option's label; it
+            // is never written to the URL, so only what you typed persists.
+            inputValue={selectedEmp ? empLabel(selectedEmp) : empInput}
+            onInputChange={(_, val, reason) => {
+                if (reason !== 'input') return;
+                setSearch({ q: val.trim() === '' ? undefined : val }, true);
+            }}
+            getOptionLabel={empLabel}
             isOptionEqualToValue={(o, v) => o.id === v.id}
             noOptionsText={getString('noOptions')}
             renderInput={(params) => (
@@ -292,7 +318,9 @@ export function EmployeesPage() {
     // clearing (✕) means "all". They filter the same rows both views consume.
     const filterSelects = (inDrawer: boolean) => (
         <>
-            <SelectScopeDepartment value={selectedDeptId} onChange={setSelectedDeptId} />
+            {/* Always rendered: picking a department with no employees must not
+                hide the very control needed to pick another one. */}
+            <SelectScopeDepartment value={selectedDeptId} onChange={setSelectedDeptId} alwaysShow />
             {subdepartmentOptions.length > 0 && (
                 <Autocomplete<string>
                     size="small"
@@ -413,7 +441,7 @@ export function EmployeesPage() {
                 ) : (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                         {employeeSearch}
-                        {employees.length > 0 && filterSelects(false)}
+                        {filterSelects(false)}
                         <Box sx={{ flex: 1 }} />
                         <ToggleButtonGroup size="small" exclusive value={view} onChange={(_, v) => v && setView(v)}>
                             <ToggleButton value="grid"><ViewListIcon fontSize="small" /></ToggleButton>

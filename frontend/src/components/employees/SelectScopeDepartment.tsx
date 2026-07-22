@@ -44,7 +44,10 @@ export function SelectScopeDepartment({
         );
     }
 
-    // Show the picker only when there is a real choice to make.
+    // Nothing in scope at all — nothing to pick from.
+    if (departments.length === 0) return null;
+    // Otherwise show the picker only when there is a real choice to make,
+    // unless the caller wants it permanently on screen (alwaysShow).
     if (!alwaysShow && departments.length < 2) return null;
 
     const selected = departments.find((d) => d.id === value) ?? null;
