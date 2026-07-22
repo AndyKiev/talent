@@ -216,19 +216,24 @@ frontend/src/components/missions/
 
 1. `5481033843c6` — create the five mission tables.
 2. `backend/scripts/migrate_development_plans.py` — the data move, run **between**
-   the two revisions. Takes the last review record per employee with a non-empty
-   plan, resolves `dimension_key` → id case-insensitively (JSON stored
-   `people_planet`, the table stores `PEOPLE_PLANET`), generates KPI text for
+   revisions 1 and 4. Took the last review record per employee with a non-empty
+   plan, resolved `dimension_key` → id case-insensitively (JSON stored
+   `people_planet`, the table stores `PEOPLE_PLANET`), generated KPI text for
    missions that predate the field. Idempotent, `--dry-run` first.
    Result: 73 employees, 218 missions, 0 unresolved competences.
+   **The script is deleted** — with the source column gone it could only fail.
+   Its logic is recoverable from git history if another environment ever needs it.
 3. `dafe3b95ca2f` — statuses + `status_id` (seeded, backfilled, *then* tightened
    to NOT NULL) and `drop duration_months`. Downgrade recomputes the duration
    rather than losing it.
+4. `dad9f48f41b7` — **drops `review_session_employees.development_plan`**.
 
-`review_session_employees.development_plan` is still **mapped but deprecated** —
-kept so `--autogenerate` cannot drop it in the same revision that creates these
-tables (the data move has to run in between). Delete the attribute only once the
-move has been applied everywhere, then autogenerate the drop on its own.
+The drop was deliberately kept out of revision 1: had one revision both created
+these tables and dropped the column, the data move would have had nowhere to run
+and every existing plan would have been destroyed on any database still holding
+one. Verified before applying — 73 employees with a plan, 73 with missions — and
+a `pg_dump -t review_session_employees` taken first, since `downgrade()` restores
+the column empty and cannot restore the content.
 
 ## 10. Consequences worth knowing
 
