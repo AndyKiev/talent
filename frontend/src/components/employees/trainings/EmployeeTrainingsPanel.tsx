@@ -10,11 +10,17 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
+    Card,
+    CardActionArea,
+    CardContent,
+    Chip,
     FormControlLabel,
     IconButton,
     Snackbar,
     Stack,
     Switch,
+    ToggleButton,
+    ToggleButtonGroup,
     Tooltip,
     Typography,
 } from '@mui/material';
@@ -24,6 +30,8 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import SchoolIcon from '@mui/icons-material/School';
+import ViewListIcon from '@mui/icons-material/ViewList';
+import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import {
     fetchEmployeeTrainings,
     createEmployeeTraining,
@@ -38,6 +46,10 @@ import { EmployeeTrainingStatusDialog } from './EmployeeTrainingStatusDialog';
 import type { GetStringFn } from '../../../types/getStringFn';
 import { useDataGridStyles } from '../../../hooks/useDataGridStyles';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
+import { useUserGridColumns } from '../../../hooks/useUserGridColumns';
+import { UserGridTable } from '../../../utils/userGridTables';
+import { useEmployeeTrainingsViewStore } from '../../../store/employeeTrainingsViewStore';
+import { centeredGridCellsSx } from '../../../utils/dataGridSx';
 import { formatToUkrDate } from '../../../utils/dateFormatter';
 import cfl, { snakeToCamel } from '../../../utils/helpers.ts';
 import {
@@ -58,6 +70,17 @@ interface Props {
      * on the original full-size, app-styled, self-titled layout.
      */
     compact?: boolean;
+}
+
+/**
+ * Translated label for a training status key. Shared by the grid column and the
+ * card view so the two presentations can never drift.
+ */
+function trainingStatusLabel(rawKey: string | null | undefined, getString: GetStringFn) {
+    const key = rawKey ?? '';
+    const statusKey = `trainingStatus${cfl(snakeToCamel(key))}`;
+    const translated = getString(statusKey);
+    return translated === statusKey ? cfl(key) : cfl(translated);
 }
 
 /**
@@ -93,6 +116,12 @@ export function EmployeeTrainingsPanel({ employeeId, isEditable, getString, comp
             color: 'text.secondary',
         },
     } as const;
+
+    // Presentation preference (grid or cards), persisted per browser. The
+    // compact People-Review embedding always stays on the dense grid.
+    const view = useEmployeeTrainingsViewStore((s) => s.view);
+    const setView = useEmployeeTrainingsViewStore((s) => s.setView);
+    const showCards = !compact && view === 'cards';
 
     const [showAll, setShowAll] = useState(false);
     const [assignOpen, setAssignOpen] = useState(false);
@@ -177,12 +206,7 @@ export function EmployeeTrainingsPanel({ employeeId, isEditable, getString, comp
             field: 'training_status_key',
             headerName: getString('status') || 'Status',
             width: 140,
-            valueGetter: (_value, row) => {
-                const rawKey = row.training_status_key ?? '';
-                const statusKey = `trainingStatus${cfl(snakeToCamel(rawKey))}`;
-                const translated = getString(statusKey);
-                return translated === statusKey ? cfl(rawKey) : cfl(translated);
-            },
+            valueGetter: (_value, row) => trainingStatusLabel(row.training_status_key, getString),
         },
         {
             field: 'created_at',
@@ -217,6 +241,12 @@ export function EmployeeTrainingsPanel({ employeeId, isEditable, getString, comp
             : []),
     ];
 
+    // Per-user column visibility belongs to the employee-card grid only. The
+    // compact People-Review embedding shares this component but flips its
+    // columns with the edit pencil (`_actions` appears/disappears), which would
+    // keep pruning the stored overrides under the same table key.
+    const userGridColumns = useUserGridColumns(UserGridTable.EMPLOYEE_TRAININGS, columns, !compact);
+
     return (
         <Box>
             {!compact && (
@@ -224,8 +254,22 @@ export function EmployeeTrainingsPanel({ employeeId, isEditable, getString, comp
                     <Typography variant="subtitle1" fontWeight={600}>
                         {getString('trainings') || 'Trainings'}
                     </Typography>
-                    {isEditable && (
-                        <Stack direction="row" alignItems="center" gap={2}>
+                    <Stack direction="row" alignItems="center" gap={2} flexWrap="wrap">
+                        <ToggleButtonGroup
+                            size="small"
+                            exclusive
+                            value={view}
+                            onChange={(_, v) => v && setView(v)}
+                        >
+                            <ToggleButton value="grid">
+                                <ViewListIcon fontSize="small" />
+                            </ToggleButton>
+                            <ToggleButton value="cards">
+                                <ViewModuleIcon fontSize="small" />
+                            </ToggleButton>
+                        </ToggleButtonGroup>
+                        {isEditable && (
+                            <>
                             <FormControlLabel
                                 control={
                                     <Switch
@@ -244,8 +288,9 @@ export function EmployeeTrainingsPanel({ employeeId, isEditable, getString, comp
                             >
                                 {getString('assignTraining') || 'Assign Training'}
                             </Button>
-                        </Stack>
-                    )}
+                            </>
+                        )}
+                    </Stack>
                 </Stack>
             )}
 
@@ -295,6 +340,63 @@ export function EmployeeTrainingsPanel({ employeeId, isEditable, getString, comp
                         </Typography>
                     </Box>
                 )
+            ) : showCards ? (
+                <Box
+                    sx={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                        gap: 2,
+                    }}
+                >
+                    {assigned.map((t) => {
+                        const body = (
+                            <CardContent>
+                                <Stack direction="row" alignItems="flex-start" spacing={1}>
+                                    <Typography variant="subtitle1" fontWeight={600} sx={{ flex: 1 }}>
+                                        {t.training_type_name}
+                                    </Typography>
+                                    <Chip
+                                        size="small"
+                                        label={trainingStatusLabel(t.training_status_key, getString)}
+                                    />
+                                </Stack>
+                                <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    sx={{ mt: 0.5, display: 'block' }}
+                                >
+                                    {getString('createdAt') || 'Assigned'}: {formatToUkrDate(t.created_at)}
+                                </Typography>
+                            </CardContent>
+                        );
+                        return (
+                            <Card key={t.id} variant="outlined">
+                                {/* Same primary action as the grid's double-click: change
+                                    the status. The icon row stays OUTSIDE the action area
+                                    (a button may not nest inside a button). */}
+                                {isEditable ? (
+                                    <CardActionArea onClick={() => setStatusTarget(t)}>{body}</CardActionArea>
+                                ) : (
+                                    body
+                                )}
+                                {isEditable && (
+                                    <Stack direction="row" gap={0.5} sx={{ px: 2, pb: 1.5 }}>
+                                        <Tooltip title={getString('changeStatus') || 'Change status'}>
+                                            <IconButton size="small" onClick={() => setStatusTarget(t)}>
+                                                <EditIcon fontSize="small" />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title={getString('unassign') || 'Unassign'}>
+                                            <IconButton size="small" color="error" onClick={() => setDeleteTarget(t)}>
+                                                <DeleteIcon fontSize="small" />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </Stack>
+                                )}
+                            </Card>
+                        );
+                    })}
+                </Box>
             ) : (
                 <DataGrid
                     rows={assigned}
@@ -304,8 +406,12 @@ export function EmployeeTrainingsPanel({ employeeId, isEditable, getString, comp
                     disableRowSelectionOnClick
                     rowHeight={compact ? 28 : undefined}
                     columnHeaderHeight={compact ? 32 : undefined}
-                    sx={compact ? compactGridSx : dataGridSx}
+                    sx={compact ? compactGridSx : { ...centeredGridCellsSx, ...dataGridSx }}
                     localeText={localeText}
+                    onRowDoubleClick={
+                        isEditable ? (params) => setStatusTarget(params.row as EmployeeTraining) : undefined
+                    }
+                    {...(compact ? {} : userGridColumns)}
                 />
             )}
 

@@ -14,6 +14,7 @@
 export const UserGridTable = {
     JOBS: 'jobs',
     RECRUITMENT_TASKS: 'recruitment_tasks',
+    EMPLOYEE_TRAININGS: 'employee_trainings',
 } as const;
 
 export type UserGridTable = (typeof UserGridTable)[keyof typeof UserGridTable];
@@ -29,4 +30,5 @@ export interface UserGridTableConfig {
 export const USER_GRID_TABLES: UserGridTableConfig[] = [
     { key: UserGridTable.JOBS, labelKey: 'jobs' },
     { key: UserGridTable.RECRUITMENT_TASKS, labelKey: 'recruitmentTasks' },
+    { key: UserGridTable.EMPLOYEE_TRAININGS, labelKey: 'employeeTrainings' },
 ];

@@ -23,6 +23,12 @@ interface UserGridColumnsBinding {
 export function useUserGridColumns(
     table: UserGridTable,
     columns: GridColDef[],
+    /**
+     * Set to false when a SHARED grid component renders a variant that must not
+     * own the table's stored config (e.g. an embedding with a different column
+     * set). The hook then neither publishes columns nor binds the model.
+     */
+    enabled = true,
 ): UserGridColumnsBinding {
     // Undefined until the user first customizes this table — stable reference,
     // so uninitialized tables never re-render the grid.
@@ -43,28 +49,30 @@ export function useUserGridColumns(
         [knownColumns],
     );
     useEffect(() => {
+        if (!enabled) return;
         syncKnownColumns(table, knownColumns);
         // knownColumns is derived from `signature`; depending on the signature
         // keeps this effect from firing on every render.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [table, signature, syncKnownColumns]);
+    }, [table, signature, syncKnownColumns, enabled]);
 
     const columnVisibilityModel = useMemo<GridColumnVisibilityModel>(() => {
-        if (!tableColumns) return {};
+        if (!enabled || !tableColumns) return {};
         const model: GridColumnVisibilityModel = {};
         for (const [field, cfg] of Object.entries(tableColumns)) {
             model[field] = cfg.visible;
         }
         return model;
-    }, [tableColumns]);
+    }, [tableColumns, enabled]);
 
     const fields = useMemo(() => columns.map((c) => c.field), [columns]);
 
     const onColumnVisibilityModelChange = useCallback(
         (model: GridColumnVisibilityModel) => {
+            if (!enabled) return;
             applyVisibilityModel(table, model, fields);
         },
-        [table, fields, applyVisibilityModel],
+        [table, fields, applyVisibilityModel, enabled],
     );
 
     return { columnVisibilityModel, onColumnVisibilityModelChange };
