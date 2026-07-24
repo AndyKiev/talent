@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Talent">
+  <title>Talent</title>
+  <rect width="64" height="64" rx="15" fill="#16213A"/>
+
+  <!-- org tree lines: forms the letter T -->
+  <g stroke="#5A6B8C" stroke-width="2.4" stroke-linecap="round" fill="none">
+    <path d="M32 26 V37"/>
+    <path d="M17 37 H47"/>
+    <path d="M17 37 V44"/>
+    <path d="M47 37 V44"/>
+  </g>
+
+  <!-- leaf nodes -->
+  <circle cx="17" cy="47" r="4.2" fill="#E8B33C"/>
+  <circle cx="47" cy="47" r="4.2" fill="#E8B33C"/>
+
+  <!-- root node: the talent -->
+  <circle cx="32" cy="19" r="8.5" fill="#2FBFA8"/>
+  <circle cx="32" cy="19" r="8.5" fill="none" stroke="#16213A" stroke-width="2.5"/>
+</svg>

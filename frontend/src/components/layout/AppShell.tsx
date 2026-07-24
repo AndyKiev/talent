@@ -29,7 +29,6 @@ import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
 import ExpandLessRounded from '@mui/icons-material/ExpandLessRounded';
 import MenuRounded from '@mui/icons-material/MenuRounded';
 import MoreHorizRounded from '@mui/icons-material/MoreHorizRounded';
-import BoltRounded from '@mui/icons-material/BoltRounded';
 import { PeopleAltRounded, AdminPanelSettingsRounded, RateReviewRounded, SchoolRounded, PersonSearchRounded, RecentActorsRounded, ForumRounded, LogoutRounded } from "@mui/icons-material";
 import { useTheme as useAppTheme } from '../theme/useTheme';
 import { useAuthStore } from "../../store/authStore";
@@ -362,19 +361,15 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
                     {/* Brand */}
                     <Stack ref={brandRef} direction="row" alignItems="center" spacing={1} mr={3}>
                         <Box
+                            component="img"
+                            src="/talent_icon.svg"
+                            alt="Talent"
                             sx={{
                                 width: 28,
                                 height: 28,
-                                borderRadius: "8px",
-                                background: `linear-gradient(135deg, ${t.accent}, #2d5eed)`,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
                                 flexShrink: 0,
                             }}
-                        >
-                            <BoltRounded sx={{ fontSize: 18, color: "#fff" }} />
-                        </Box>
+                        />
                         <Typography
                             fontWeight={700}
                             fontSize={15}
