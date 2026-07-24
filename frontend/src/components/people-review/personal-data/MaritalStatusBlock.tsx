@@ -16,7 +16,7 @@ import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlin
 import { patchEmployeePersonalData, type MaritalStatus } from '../peopleReviewApi';
 import { PersonSex, sexKeySuffix, sexShortLabelKey } from '../../admin/persons/personApi';
 import type { GetStringFn } from '../../../types/getStringFn';
-import { useTheme } from '../../theme/ThemeContext';
+import { useTheme } from '../../theme/useTheme';
 import { FactItem } from '../evaluation/FactItem';
 
 // The marital-status word is sex-dependent (заміжня/незаміжня vs одружений/неодружений).

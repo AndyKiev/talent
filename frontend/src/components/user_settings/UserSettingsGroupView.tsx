@@ -28,7 +28,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import AppShell from '../layout/AppShell';
 import { PageContainer } from '../layout/PageContainer';
-import { useTheme } from '../theme/ThemeContext';
+import { useTheme } from '../theme/useTheme';
 import useString from '../../hooks/useString';
 import { USER_SETTINGS_EFFECTIVE_QK, EFFECTIVE_SETTINGS_QK } from '../../utils/queryKeys';
 import type { SettingValue } from '../developer/settings/settingsApi';

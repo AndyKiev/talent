@@ -3,7 +3,7 @@ import { Box, Paper, Typography, Chip } from '@mui/material';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import FolderIcon from '@mui/icons-material/Folder';
 import { useNavigate } from '@tanstack/react-router';
-import { useTheme } from '../theme/ThemeContext';
+import { useTheme } from '../theme/useTheme';
 import type { CardEssenceConfig } from '../../types/essence';
 import cfl from "../../utils/helpers.ts";
 

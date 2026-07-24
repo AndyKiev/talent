@@ -15,7 +15,7 @@ import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import EditIcon from '@mui/icons-material/Edit';
 import DoneIcon from '@mui/icons-material/Done';
 import type { GetStringFn } from '../../../types/getStringFn';
-import { useTheme } from '../../theme/ThemeContext';
+import { useTheme } from '../../theme/useTheme';
 import { EmployeeTrainingsPanel } from '../../employees/trainings/EmployeeTrainingsPanel';
 import { RecommendedTrainingsPanel } from '../../employees/trainings/RecommendedTrainingsPanel';
 import { useBooleanSetting } from '../../../hooks/useAppSetting';
@@ -129,6 +129,7 @@ export function EmployeeDataTabs({
     const toggle = (key: string) => setEditSections(p => ({ ...p, [key]: !p[key] }));
 
     const tabSx = { textTransform: 'none', fontWeight: 600, fontSize: 12 } as const;
+    
     const TAB_ITEMS: TabItem[] = useMemo(() => [
         { label: getString('personalInfo'),      value: '0', sx: tabSx },
         { label: getString('jobInfo'),            value: '1', sx: tabSx },
@@ -136,7 +137,7 @@ export function EmployeeDataTabs({
         { label: getString('managerFeedback'),    value: '3', sx: tabSx },
         { label: getString('resultsAchievements'),value: '4', sx: tabSx },
         { label: getString('trainings'),          value: '5', sx: tabSx },
-    ], [getString]);
+    ], [getString, tabSx]);
 
     return (
         <Box sx={{ mb: 3, border: `1px solid ${t.borderLight}`, borderRadius: '12px', overflow: 'hidden', background: t.cardBg }}>

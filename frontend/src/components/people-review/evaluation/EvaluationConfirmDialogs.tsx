@@ -10,7 +10,7 @@ import {
     Typography,
 } from '@mui/material';
 import type { GetStringFn } from '../../../types/getStringFn';
-import { useTheme } from '../../theme/ThemeContext';
+import { useTheme } from '../../theme/useTheme';
 import type { PendingMove, PendingFlip, DimensionSide } from './evaluationHelpers';
 import {
     dimensionSideLabelKey,

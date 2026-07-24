@@ -20,7 +20,7 @@ import BoltRounded from "@mui/icons-material/BoltRounded";
 import { useAuthStore } from "../../store/authStore.ts";
 import { authApi } from "../../api/authApi.ts";
 import { AUTH_REGISTER_CONFIG_QK } from "../../utils/queryKeys.ts";
-import { useTheme } from "../theme/ThemeContext.tsx";
+import { useTheme } from '../theme/useTheme';
 import ThemeSwitch from "../theme/ThemeSwitch.tsx";
 import useString from "../../hooks/useString.ts";
 import str from "../../strings/str.ts";

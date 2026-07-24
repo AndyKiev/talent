@@ -11,7 +11,7 @@ import WorkspacePremiumOutlinedIcon from '@mui/icons-material/WorkspacePremiumOu
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useTheme } from '../../theme/ThemeContext';
+import { useTheme } from '../../theme/useTheme';
 import type { GetStringFn } from '../../../types/getStringFn';
 import {
     fetchTalentAuditByEmployee,

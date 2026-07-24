@@ -31,7 +31,7 @@ import MenuRounded from '@mui/icons-material/MenuRounded';
 import MoreHorizRounded from '@mui/icons-material/MoreHorizRounded';
 import BoltRounded from '@mui/icons-material/BoltRounded';
 import { PeopleAltRounded, AdminPanelSettingsRounded, RateReviewRounded, SchoolRounded, PersonSearchRounded, RecentActorsRounded, ForumRounded, LogoutRounded } from "@mui/icons-material";
-import { useTheme as useAppTheme } from "../theme/ThemeContext";
+import { useTheme as useAppTheme } from '../theme/useTheme';
 import { useAuthStore } from "../../store/authStore";
 import UserMenu from "./UserMenu";
 import AccessTestButton from "./AccessTestButton";

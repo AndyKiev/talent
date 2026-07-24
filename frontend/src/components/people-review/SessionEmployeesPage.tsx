@@ -68,7 +68,7 @@ import {
 } from './peopleReviewApi';
 import { PEOPLE_REVIEW_MY_SCOPES_QK, SESSION_DEPARTMENTS_QK } from '../../utils/queryKeys';
 import { useDataGridLocale } from '../../hooks/useDataGridLocale';
-import { useTheme } from '../theme/ThemeContext';
+import { useTheme } from '../theme/useTheme';
 import useString from '../../hooks/useString';
 import { useClipboard } from '../../hooks/useClipboard';
 import { ScopeSettings } from './ScopeSettings';

@@ -17,7 +17,7 @@ import { axiosInstance } from '../../api/axiosInstance';
 import { BASE_URL } from '../../utils/eNums';
 import { MAX_GRADE } from './peopleReviewApi';
 import { getDimColor } from './evaluation/evaluationHelpers';
-import { useTheme } from '../theme/ThemeContext';
+import { useTheme } from '../theme/useTheme';
 import useString from '../../hooks/useString';
 
 // ── Types ────────────────────────────────────────────────────────────────────

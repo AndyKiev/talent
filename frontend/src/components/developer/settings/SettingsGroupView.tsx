@@ -4,7 +4,7 @@
 // mapped to `groupKey` exactly as the flat page used to (rows, nested child
 // accordions, Add / Delete / Visibility / training-off dialogs) — only the set
 // of rows is filtered by group. See settingsGroups.ts for the grouping map.
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
     Accordion,
     AccordionDetails,
@@ -44,7 +44,7 @@ import { Link } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import AppShell from '../../layout/AppShell';
 import { PageContainer } from '../../layout/PageContainer';
-import { useTheme } from '../../theme/ThemeContext';
+import { useTheme } from '../../theme/useTheme';
 import useString from '../../../hooks/useString';
 import cfl from '../../../utils/capitalizeFirstLetter';
 import { APP_SETTINGS_QK, SETTING_VALUE_TYPES_QK, APP_SETTING_BY_KEY_QK, EFFECTIVE_SETTINGS_QK, JOB_CATEGORY_QK, MENUS_ALL_QK, MENUS_MY_QK } from '../../../utils/queryKeys';
@@ -403,21 +403,20 @@ interface VisDialogProps {
     groups: UserGroup[];
     onClose: () => void;
     onSave: (id: number, data: AppSettingUpdate) => void;
-    saving: boolean;
+    saving: boolean; 
     getString: GetStringFn;
 }
 
 function SettingVisibilityDialog({ open, setting, groups, onClose, onSave, saving, getString }: VisDialogProps) {
-    const [mode, setMode] = useState<MenuVisibilityMode>('all_groups');
-    const [groupIds, setGroupIds] = useState<number[]>([]);
-    const [userOverridable, setUserOverridable] = useState(false);
-
-    useEffect(() => {
-        if (!setting) return;
-        setMode(deriveMode(setting));
-        setGroupIds(setting.group_ids);
-        setUserOverridable(setting.user_overridable);
-    }, [setting]);
+    const [mode, setMode] = useState<MenuVisibilityMode>(() =>
+        setting ? deriveMode(setting) : 'all_groups',
+    );
+    const [groupIds, setGroupIds] = useState<number[]>(() =>
+        setting ? setting.group_ids : [],
+    );
+    const [userOverridable, setUserOverridable] = useState<boolean>(() =>
+        setting ? setting.user_overridable : false,
+    );
 
     const handleSave = () => {
         if (!setting) return;

@@ -1,5 +1,5 @@
 // src/components/admin/AdminPage.tsx
-import { useTheme } from '../theme/ThemeContext';
+import { useTheme } from '../theme/useTheme';
 import AppShell from '../layout/AppShell';
 import { Box, Typography, Stack } from '@mui/material';
 import { AdminPanelSettingsRounded } from '@mui/icons-material';

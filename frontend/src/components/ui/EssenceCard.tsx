@@ -2,7 +2,7 @@
 import { Box, Paper, Typography } from '@mui/material';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import { useNavigate } from '@tanstack/react-router';
-import { useTheme } from '../theme/ThemeContext';
+import { useTheme } from '../theme/useTheme';
 import type { CardEssenceConfig } from '../../types/essence';
 
 interface EssenceCardProps {

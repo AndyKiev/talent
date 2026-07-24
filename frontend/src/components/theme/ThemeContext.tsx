@@ -1,39 +1,38 @@
-import {
-    createContext,
-    useContext,
-    useState,
-    useMemo,
-    type FC,
-    type ReactNode,
-} from "react";
+import { useState, useMemo, type FC, type ReactNode } from "react";
 import {
     createTheme,
     ThemeProvider as MuiThemeProvider,
     CssBaseline,
 } from "@mui/material";
-// Register the MuiDataGrid slots on the MUI theme `components` type so the
-// global header styleOverrides below typecheck.
 import type {} from "@mui/x-data-grid/themeAugmentation";
-import { themes, type Theme as AppTheme } from "./themes"; // ← Alias your custom Theme
+import {
+    themes,
+    THEME_KEYS,
+    THEME_FAMILIES,
+    DEFAULT_THEME,
+    type ThemeKey,
+} from "./themes";
+import { ThemeContext } from "./useTheme";
 
-interface ThemeContextValue {
-    mode: "light" | "dark";
-    toggle: () => void;
-    t: AppTheme; // ← Use the aliased type
+const STORAGE_KEY = "talent.theme";
+
+function readStored(): ThemeKey {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored && (THEME_KEYS as string[]).includes(stored)
+        ? (stored as ThemeKey)
+        : DEFAULT_THEME;
 }
 
-const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
-
-export const useTheme = (): ThemeContextValue => {
-    const ctx = useContext(ThemeContext);
-    if (!ctx) throw new Error("useTheme must be used within ThemeProvider");
-    return ctx;
-};
-
 export const ThemeProvider: FC<{ children: ReactNode }> = ({ children }) => {
-    const [mode, setMode] = useState<"light" | "dark">("dark");
-    const toggle = () => setMode((m) => (m === "light" ? "dark" : "light"));
-    const t = themes[mode];
+    const [themeKey, setThemeKeyState] = useState<ThemeKey>(readStored);
+    const t = themes[themeKey] ?? themes[DEFAULT_THEME];
+    const mode: "light" | "dark" = t.isDark ? "dark" : "light";
+
+    const setThemeKey = (key: ThemeKey) => {
+        setThemeKeyState(key);
+        localStorage.setItem(STORAGE_KEY, key);
+    };
+    const toggle = () => setThemeKey(THEME_FAMILIES[themeKey]);
 
     const muiTheme = useMemo(
         () =>
@@ -41,113 +40,48 @@ export const ThemeProvider: FC<{ children: ReactNode }> = ({ children }) => {
                 palette: {
                     mode,
                     primary: { main: t.accent },
-                    background: {
-                        default: mode === "light" ? "#f4f7fb" : "#0f1318",
-                        paper: t.cardBg,
-                    },
-                    text: {
-                        primary: t.text,
-                        secondary: t.textMuted,
-                        disabled: t.disabledText,
-                    },
+                    background: { default: t.appBg, paper: t.cardBg },
+                    text: { primary: t.text, secondary: t.textMuted, disabled: t.disabledText },
                     divider: t.border,
                 },
-                typography: {
-                    fontFamily: "'DM Sans', 'Segoe UI', sans-serif",
-                },
+                typography: { fontFamily: "'DM Sans', 'Segoe UI', sans-serif" },
                 shape: { borderRadius: 10 },
                 components: {
-                    MuiPaper: {
-                        styleOverrides: {
-                            root: { backgroundImage: "none" },
-                        },
-                    },
-                    // GLOBAL: while an Autocomplete popup is open, MUI's default
-                    // Home/End handler hijacks the keys (and, ignoring modifiers,
-                    // Ctrl+Home/End and Shift+Home/End too) to jump the option
-                    // highlight — so the user can't move/select within the text
-                    // they typed. Off everywhere: those keys stay native caret
-                    // keys; option navigation keeps ↑/↓/PageUp/PageDown.
-                    MuiAutocomplete: {
-                        defaultProps: { handleHomeEndKeys: false },
-                    },
-                    MuiButton: {
-                        styleOverrides: {
-                            root: { textTransform: "none", fontWeight: 600 },
-                        },
-                    },
-                    MuiTab: {
-                        styleOverrides: {
-                            root: { textTransform: "none", fontWeight: 500, minHeight: 48 },
-                        },
-                    },
+                    MuiPaper: { styleOverrides: { root: { backgroundImage: "none" } } },
+                    MuiAutocomplete: { defaultProps: { handleHomeEndKeys: false } },
+                    MuiButton: { styleOverrides: { root: { textTransform: "none", fontWeight: 600 } } },
+                    MuiTab: { styleOverrides: { root: { textTransform: "none", fontWeight: 500, minHeight: 48 } } },
                     MuiOutlinedInput: {
                         styleOverrides: {
                             root: {
                                 backgroundColor: t.inputBg,
-                                "& .MuiOutlinedInput-notchedOutline": {
-                                    borderColor: t.border,
-                                },
-                                "&:hover .MuiOutlinedInput-notchedOutline": {
-                                    borderColor: t.accent,
-                                },
+                                "& .MuiOutlinedInput-notchedOutline": { borderColor: t.border },
+                                "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: t.accent },
                             },
                         },
                     },
-                    MuiSelect: {
-                        styleOverrides: {
-                            select: { paddingTop: "9px", paddingBottom: "9px" },
-                        },
-                    },
-                    // Select/Menu options: wrap long labels (e.g. job names) instead
-                    // of overflowing the popup — menu papers clip horizontal overflow,
-                    // so on phones unwrapped options are unreadable. Desktop popups
-                    // still size to one line when they fit; wrapping only kicks in
-                    // when the viewport constrains the paper.
-                    MuiMenuItem: {
-                        styleOverrides: {
-                            root: {
-                                whiteSpace: "normal",
-                                wordBreak: "break-word",
-                            },
-                        },
-                    },
-                    // Global DataGrid HEADER style so every grid in every menu shares
-                    // the same column-header look as the employees grid (the one that
-                    // used useDataGridStyles). Header slots ONLY — cell/row layout is
-                    // intentionally left to each grid.
+                    MuiSelect: { styleOverrides: { select: { paddingTop: "9px", paddingBottom: "9px" } } },
+                    MuiMenuItem: { styleOverrides: { root: { whiteSpace: "normal", wordBreak: "break-word" } } },
                     MuiDataGrid: {
-                        // Global header height (default 56) — slimmer headers across
-                        // every grid in the app; per-grid columnHeaderHeight still wins.
                         defaultProps: { columnHeaderHeight: 44 },
                         styleOverrides: {
                             columnHeader: ({ theme }) => ({
                                 backgroundColor: theme.palette.primary.light,
                                 color: mode === "dark" ? "#000" : "#fff",
                             }),
-                            columnHeaderTitle: {
-                                fontWeight: "bold",
-                                color: mode === "dark" ? "#000" : "#fff",
-                            },
-                            iconButtonContainer: {
-                                "& button": { color: mode === "dark" ? "#000" : "#fff" },
-                            },
-                            menuIcon: {
-                                "& button": { color: mode === "dark" ? "#000" : "#fff" },
-                            },
-                            sortIcon: {
-                                color: mode === "dark" ? "#fff" : "#000",
-                                opacity: 0.9,
-                            },
+                            columnHeaderTitle: { fontWeight: "bold", color: mode === "dark" ? "#000" : "#fff" },
+                            iconButtonContainer: { "& button": { color: mode === "dark" ? "#000" : "#fff" } },
+                            menuIcon: { "& button": { color: mode === "dark" ? "#000" : "#fff" } },
+                            sortIcon: { color: mode === "dark" ? "#fff" : "#000", opacity: 0.9 },
                         },
                     },
                 },
             }),
-        [mode, t]
+        [mode, t],
     );
 
     return (
-        <ThemeContext.Provider value={{ mode, toggle, t }}>
+        <ThemeContext.Provider value={{ t, themeKey, setThemeKey, availableThemes: THEME_KEYS, mode, toggle }}>
             <MuiThemeProvider theme={muiTheme}>
                 <CssBaseline />
                 {children}

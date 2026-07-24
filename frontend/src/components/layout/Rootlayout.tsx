@@ -3,7 +3,7 @@ import { Outlet } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { Box, CircularProgress } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
-import { ThemeProvider } from "../theme/ThemeContext";
+import { ThemeProvider } from '../theme/ThemeContext';
 import { useAuthStore } from "../../store/authStore";
 
 import { useLoadTranslations } from "../../hooks/useLoadTranslations";

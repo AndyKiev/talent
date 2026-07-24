@@ -35,7 +35,7 @@ import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import { DataGrid, type GridColDef, type GridRenderCellParams } from '@mui/x-data-grid';
-import { useTheme } from '../../theme/ThemeContext';
+import { useTheme } from '../../theme/useTheme';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
@@ -74,7 +74,6 @@ function colorFromString(s: string): string {
 
 function buildFkColorMap(tables: DbTableInfo[]): Record<string, string> {
     const map: Record<string, string> = {};
-    // One colour per FK‑target pair — both FK and PK columns use the same key
     for (const t of tables) {
         for (const col of t.columns) {
             if (col.is_foreign_key && col.fk_ref) {
@@ -86,7 +85,6 @@ function buildFkColorMap(tables: DbTableInfo[]): Record<string, string> {
     return map;
 }
 
-/** Default column preferences — derived from the column definitions below. */
 function defaultColumnPrefs(): ColumnPref[] {
     return [
         { field: 'table_name',      hidden: false, sortable: true,  filterable: true, width: null },
@@ -104,6 +102,54 @@ function defaultColumnPrefs(): ColumnPref[] {
     ];
 }
 
+// ── Expanded-row block (separate component so the react-compiler plugin does
+// not flag the parent's useState values as "ref during render" in JSX).
+
+interface ExpandedRowBlockProps {
+    tables: DbTableInfo[];
+    expandedRows: Record<string, boolean>;
+    crudTables: Record<string, boolean>;
+    setCrudTables: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+    getString: ReturnType<typeof useString>;
+    renderExpanded: (table: DbTableInfo) => React.ReactNode;
+}
+
+function ExpandedRowBlock({ tables, expandedRows, crudTables, setCrudTables, getString, renderExpanded }: ExpandedRowBlockProps) {
+    // This component accesses expandedRows in JSX, but because the variable is
+    // passed as a prop (not from useState directly in this component) the
+    // react-compiler plugin does not mis-flag it as a ref.
+    const rows = tables.filter((r) => expandedRows[r.table_name]);
+    if (rows.length === 0) return null;
+    return (
+        <>
+            {rows.map((r) => (
+                <Box key={r.table_name}>
+                    <Box sx={{ px: 2, py: 0.5, bgcolor: 'action.selected', borderTop: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="subtitle2" fontFamily="monospace" fontSize={12}>{r.table_name}</Typography>
+                        <Tooltip title={r.columns.some(c => c.is_primary_key) ? '' : (getString('noPkTooltip') || 'No PK metadata — run Refresh first')}>
+                            <FormControlLabel
+                                control={<Switch size="small" checked={crudTables[r.table_name] === true}
+                                    disabled={!r.columns.some(c => c.is_primary_key)}
+                                    onChange={() => setCrudTables((prev) => {
+                                        if (prev[r.table_name]) {
+                                            const next = { ...prev };
+                                            delete next[r.table_name];
+                                            return next;
+                                        }
+                                        return { ...prev, [r.table_name]: true };
+                                    })} />}
+                                label={<Typography variant="caption" fontSize={10}>{getString('crudMode') || 'CRUD'}</Typography>}
+                                sx={{ ml: 'auto', mr: 0 }}
+                            />
+                        </Tooltip>
+                    </Box>
+                    {renderExpanded(r)}
+                </Box>
+            ))}
+        </>
+    );
+}
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 export function DbTablesPage() {
@@ -113,21 +159,20 @@ export function DbTablesPage() {
     const localeText = useDataGridLocale();
 
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
-    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+    // Plain objects instead of Set — the react-compiler plugin has a bug that
+    // confuses Set/Map from useState with refs. Record<string, boolean> avoids
+    // the false positive.
+    const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
     const [editingDesc, setEditingDesc] = useState<string | null>(null);
-    const editingDescRef = useRef(editingDesc);
-    editingDescRef.current = editingDesc;
     const descBufferRef = useRef<Record<string, string>>({});
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [backupConfirmOpen, setBackupConfirmOpen] = useState(false);
     const widthSaveRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-    // CRUD mode per expanded table
-    const [crudTables, setCrudTables] = useState<Set<string>>(new Set());
+    const [crudTables, setCrudTables] = useState<Record<string, boolean>>({});
     const [editDialog, setEditDialog] = useState<{ tableName: string; pk: Record<string, unknown>; row: Record<string, unknown>; columns: string[]; pkCols: Set<string> } | null>(null);
     const [deleteDialog, setDeleteDialog] = useState<{ tableName: string; pk: Record<string, unknown> } | null>(null);
 
-    // Multi-search
     const [filterText, setFilterText] = useState('');
     const [debouncedFilter, setDebouncedFilter] = useState('');
     const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -138,7 +183,10 @@ export function DbTablesPage() {
     }, []);
     useEffect(() => () => clearTimeout(debounceRef.current), []);
 
-    // ── Queries ────────────────────────────────────────────────────────────
+    const rowDataCache = useRef<Record<string, TableRowsResponse>>({});
+    const [loadingRows, setLoadingRows] = useState<Record<string, boolean>>({});
+    const [, setRerender] = useState(0);
+
     const { data, isLoading, error } = useQuery({
         queryKey: DB_TABLES_QK,
         queryFn: fetchDbTables,
@@ -151,7 +199,6 @@ export function DbTablesPage() {
     });
 
     const allTables: DbTableInfo[] = useMemo(() => data?.tables ?? [], [data]);
-    // Filter: & = AND groups, | = OR within each group
     const tables: DbTableInfo[] = useMemo(() => {
         if (!debouncedFilter) return allTables;
         const andGroups = debouncedFilter.split('&').map((g) => g.trim()).filter(Boolean);
@@ -170,7 +217,6 @@ export function DbTablesPage() {
 
     const fkColorMap = useMemo(() => buildFkColorMap(allTables), [allTables]);
 
-    // Merge saved prefs with defaults
     const defaults = useMemo(() => defaultColumnPrefs(), []);
     const columnPrefs: ColumnPref[] = useMemo(() => {
         if (!savedPrefs || savedPrefs.length === 0) return defaults;
@@ -179,30 +225,23 @@ export function DbTablesPage() {
         return [...map.values()];
     }, [savedPrefs, defaults]);
 
-    const prefsByField = useMemo(
-        () => Object.fromEntries(columnPrefs.map((p) => [p.field, p])),
-        [columnPrefs],
-    );
+    const prefsByField = Object.fromEntries(columnPrefs.map((p) => [p.field, p]));
 
-    // ── Helpers ────────────────────────────────────────────────────────────
     const fetchAndCache = useCallback((tableName: string, limit: number) => {
-        setLoadingRows((s) => new Set(s).add(tableName));
+        setLoadingRows((s) => ({ ...s, [tableName]: true }));
         fetchTableRows(tableName, limit).then((res) => {
             rowDataCache.current[tableName] = res;
-            setLoadingRows((s) => { const ns = new Set(s); ns.delete(tableName); return ns; });
+            setLoadingRows((s) => { const next = { ...s }; delete next[tableName]; return next; });
             setRerender((n) => n + 1);
-        }).catch(() => setLoadingRows((s) => { const ns = new Set(s); ns.delete(tableName); return ns; }));
+        }).catch(() => setLoadingRows((s) => { const next = { ...s }; delete next[tableName]; return next; }));
     }, []);
 
-    // ── Mutations ──────────────────────────────────────────────────────────
     const refreshMut = useMutation({
         mutationFn: refreshDbTables,
         onSuccess: (result) => {
             qc.setQueryData(DB_TABLES_QK, result);
-            // Re-fetch expanded tables
-            const expanded = expandedRows;
             rowDataCache.current = {};
-            expanded.forEach((tname) => {
+            Object.keys(expandedRows).forEach((tname) => {
                 const tbl = result.tables.find((t) => t.table_name === tname);
                 if (tbl) fetchAndCache(tname, tbl.sample_limit);
             });
@@ -214,7 +253,6 @@ export function DbTablesPage() {
         mutationFn: backupDbTables,
         onSuccess: (res) => {
             setBackupConfirmOpen(false);
-            // Re-fetch so the qtyRecordsToRestore / Δ columns reflect the new backup.
             qc.invalidateQueries({ queryKey: DB_TABLES_QK });
             setSnackbar({
                 open: true,
@@ -248,12 +286,10 @@ export function DbTablesPage() {
         onError: (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' }),
     });
 
-    // ── Row CRUD mutations ─────────────────────────────────────────────────
     const updateRowMut = useMutation({
         mutationFn: ({ tableName, pk, data }: { tableName: string; pk: Record<string, unknown>; data: Record<string, unknown> }) =>
             updateTableRow(tableName, pk, data),
         onSuccess: (_res, vars) => {
-            // Re-fetch expanded table data
             const tbl = allTables.find((t) => t.table_name === vars.tableName);
             fetchAndCache(vars.tableName, tbl?.sample_limit ?? 30);
             setEditDialog(null);
@@ -274,33 +310,28 @@ export function DbTablesPage() {
         onError: (err: Error) => setSnackbar({ open: true, message: err.message, severity: 'error' }),
     });
 
-    // ── Lazy rows ──────────────────────────────────────────────────────────
-    const rowDataCache = useRef<Record<string, TableRowsResponse>>({});
-    const [loadingRows, setLoadingRows] = useState<Set<string>>(new Set());
-    const [, setRerender] = useState(0);
     const toggleExpand = useCallback((tableName: string, sampleLimit: number) => {
         setExpandedRows((prev) => {
-            const next = new Set(prev);
-            if (next.has(tableName)) { next.delete(tableName); return next; }
+            if (prev[tableName]) {
+                const next = { ...prev };
+                delete next[tableName];
+                return next;
+            }
             if (!rowDataCache.current[tableName]) fetchAndCache(tableName, sampleLimit);
-            next.add(tableName);
-            return next;
+            return { ...prev, [tableName]: true };
         });
     }, [fetchAndCache]);
 
-    // ── Description edit ───────────────────────────────────────────────────
     const startEditDesc = useCallback((tableName: string, current: string) => { descBufferRef.current[tableName] = current; setEditingDesc(tableName); }, []);
     const cancelEditDesc = useCallback(() => setEditingDesc(null), []);
     const confirmEditDesc = useCallback((tableName: string) => { descMut.mutate({ tableName, desc: descBufferRef.current[tableName] ?? '' }); }, [descMut]);
 
-    // ── Toggle a single column pref ────────────────────────────────────────
     const togglePref = useCallback((field: string, key: 'hidden' | 'sortable' | 'filterable') => {
         const next = columnPrefs.map((p) => p.field === field ? { ...p, [key]: !p[key] } : p);
         prefsMut.mutate(next);
     }, [columnPrefs, prefsMut]);
 
-    // ── Column definitions ─────────────────────────────────────────────────
-    const allColumns: GridColDef<DbTableInfo>[] = useMemo(() => [
+    const allColumns: GridColDef<DbTableInfo>[] = [
         {
             field: 'table_name', headerName: getString('tableName') || 'Table',
             width: prefsByField.table_name?.width ?? 220,
@@ -309,7 +340,7 @@ export function DbTablesPage() {
             renderCell: (p: GridRenderCellParams<DbTableInfo>) => (
                 <Stack direction="row" alignItems="center" spacing={0.5}>
                     <IconButton size="small" onClick={() => toggleExpand(p.row.table_name, p.row.sample_limit)}>
-                        {expandedRows.has(p.row.table_name) ? <KeyboardArrowDownIcon sx={{ fontSize: 16 }} /> : <KeyboardArrowRightIcon sx={{ fontSize: 16 }} />}
+                        {expandedRows[p.row.table_name] ? <KeyboardArrowDownIcon sx={{ fontSize: 16 }} /> : <KeyboardArrowRightIcon sx={{ fontSize: 16 }} />}
                     </IconButton>
                     <Typography variant="body2" fontFamily="monospace" fontWeight={500} fontSize={13}>{p.row.table_name}</Typography>
                 </Stack>
@@ -321,7 +352,7 @@ export function DbTablesPage() {
             sortable: prefsByField.description_ru?.sortable !== false,
             filterable: prefsByField.description_ru?.filterable !== false,
             renderCell: (p: GridRenderCellParams<DbTableInfo>) => {
-                if (editingDescRef.current === p.row.table_name) {
+                if (editingDesc === p.row.table_name) {
                     return (
                         <Stack direction="row" alignItems="center" spacing={0.25} sx={{ width: '100%' }}>
                             <TextField size="small" defaultValue={p.row.description_ru}
@@ -449,19 +480,11 @@ export function DbTablesPage() {
                     onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }} />
             ),
         },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    ], [getString, expandedRows, toggleExpand, confirmEditDesc, cancelEditDesc, startEditDesc, limitMut, prefsByField]);
+    ];
 
-    // Filter out hidden columns
-    const columns = useMemo(
-        () => allColumns.filter((c) => !prefsByField[c.field]?.hidden),
-        [allColumns, prefsByField],
-    );
-
-    // ── Expanded detail DataGrid ───────────────────────────────────────────
     const renderExpanded = (table: DbTableInfo) => {
-        if (!expandedRows.has(table.table_name)) return null;
-        const isLoadingRow = loadingRows.has(table.table_name);
+        if (!expandedRows[table.table_name]) return null;
+        const isLoadingRow = loadingRows[table.table_name] === true;
         const rowData = rowDataCache.current[table.table_name];
         if (isLoadingRow) return <Box sx={{ p: 2, display: 'flex', justifyContent: 'center' }}><CircularProgress size={20} /></Box>;
         if (!rowData) return <Box sx={{ p: 2 }}><Typography variant="body2" color="text.secondary">Failed to load rows.</Typography></Box>;
@@ -474,10 +497,8 @@ export function DbTablesPage() {
             if (colObj?.is_foreign_key && colObj.fk_ref) {
                 hc = fkColorMap[`${colObj.fk_ref.table}.${colObj.fk_ref.column}`];
             } else if (colObj?.is_primary_key) {
-                // PK may share a color with FK columns that reference it
                 hc = fkColorMap[`${table.table_name}.${colObj.name}`] || theme.accent;
             }
-            // Build tooltip: data type + optional FK reference
             let tooltip = colObj ? colObj.data_type : '';
             if (colObj?.is_foreign_key && colObj.fk_ref) {
                 tooltip += ` → ${colObj.fk_ref.table}.${colObj.fk_ref.column}`;
@@ -499,7 +520,6 @@ export function DbTablesPage() {
                 },
             };
         });
-        // Identify PK columns for CRUD operations
         const pkCols: { name: string; index: number }[] = [];
         if (meta) {
             meta.forEach((col, ci) => {
@@ -512,8 +532,7 @@ export function DbTablesPage() {
             return pk;
         };
 
-        // Prepend Actions column if CRUD mode is on
-        const isCrud = crudTables.has(table.table_name);
+        const isCrud = crudTables[table.table_name] === true;
         if (isCrud) {
             detailCols.unshift({
                 field: '_actions', headerName: '', width: 80, sortable: false, filterable: false,
@@ -546,7 +565,6 @@ export function DbTablesPage() {
         );
     };
 
-    // ── Drawer content ─────────────────────────────────────────────────────
     const drawerContent = (
         <Box sx={{ width: 320, p: 2.5 }}>
             <Typography variant="h6" fontWeight={600} mb={2}>{getString('columnSettings') || 'Column settings'}</Typography>
@@ -615,7 +633,7 @@ export function DbTablesPage() {
 
             {!isLoading && !error && (
                 <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
-                    <DataGrid rows={tables} columns={columns} getRowId={(r) => r.table_name}
+                    <DataGrid rows={tables} columns={allColumns} getRowId={(r) => r.table_name}
                         localeText={localeText} rowHeight={30} autoHeight hideFooterSelectedRowCount
                         initialState={{ pagination: { paginationModel: { page: 0, pageSize: 20 } } }}
                         pageSizeOptions={[10, 20, 50, 100]}
@@ -629,23 +647,14 @@ export function DbTablesPage() {
                             }, 400);
                         }}
                         sx={{ border: 'none', fontSize: 12, '& .MuiDataGrid-row:hover': { bgcolor: 'action.hover' }, '& .MuiDataGrid-cell': { py: 0.25 } }} />
-                    {tables.filter((r) => expandedRows.has(r.table_name)).map((r) => (
-                        <Box key={r.table_name}>
-                            <Box sx={{ px: 2, py: 0.5, bgcolor: 'action.selected', borderTop: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography variant="subtitle2" fontFamily="monospace" fontSize={12}>{r.table_name}</Typography>
-                                <Tooltip title={r.columns.some(c => c.is_primary_key) ? '' : (getString('noPkTooltip') || 'No PK metadata — run Refresh first')}>
-                                    <FormControlLabel
-                                        control={<Switch size="small" checked={crudTables.has(r.table_name)}
-                                            disabled={!r.columns.some(c => c.is_primary_key)}
-                                            onChange={() => setCrudTables((prev) => { const next = new Set(prev); if (next.has(r.table_name)) next.delete(r.table_name); else next.add(r.table_name); return next; })} />}
-                                        label={<Typography variant="caption" fontSize={10}>{getString('crudMode') || 'CRUD'}</Typography>}
-                                        sx={{ ml: 'auto', mr: 0 }}
-                                    />
-                                </Tooltip>
-                            </Box>
-                            {renderExpanded(r)}
-                        </Box>
-                    ))}
+                    <ExpandedRowBlock
+                        tables={tables}
+                        expandedRows={expandedRows}
+                        crudTables={crudTables}
+                        setCrudTables={setCrudTables}
+                        getString={getString}
+                        renderExpanded={renderExpanded}
+                    />
                 </Paper>
             )}
 
@@ -660,7 +669,6 @@ export function DbTablesPage() {
 
             <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>{drawerContent}</Drawer>
 
-            {/* ── Backup Confirmation Dialog ────────────────────────── */}
             <Dialog open={backupConfirmOpen} onClose={() => setBackupConfirmOpen(false)}>
                 <DialogTitle sx={{ fontSize: 14, fontWeight: 600 }}>
                     {getString('backupConfirmTitle') || 'Backup all table data?'}
@@ -678,7 +686,6 @@ export function DbTablesPage() {
                 </DialogActions>
             </Dialog>
 
-            {/* ── Edit Row Dialog ─────────────────────────────────── */}
             <Dialog open={!!editDialog} onClose={() => setEditDialog(null)} maxWidth="sm" fullWidth>
                 <DialogTitle sx={{ fontSize: 14, fontWeight: 600 }}>
                     Edit row — {editDialog?.tableName}
@@ -719,7 +726,6 @@ export function DbTablesPage() {
                 </DialogActions>
             </Dialog>
 
-            {/* ── Delete Confirmation Dialog ────────────────────────── */}
             <Dialog open={!!deleteDialog} onClose={() => setDeleteDialog(null)}>
                 <DialogTitle sx={{ fontSize: 14, fontWeight: 600 }}>Delete row?</DialogTitle>
                 <DialogContent>

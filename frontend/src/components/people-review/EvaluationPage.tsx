@@ -34,7 +34,7 @@ import useString from '../../hooks/useString';
 import { str } from '../../strings/str';
 import { useAuthStore } from '../../store/authStore';
 import { defaultLangShortName } from '../../utils/eNums';
-import { useTheme } from '../theme/ThemeContext';
+import { useTheme } from '../theme/useTheme';
 import {
     getDimColor,
     pickSideAccent,

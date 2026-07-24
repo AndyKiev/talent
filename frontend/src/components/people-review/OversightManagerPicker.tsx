@@ -28,7 +28,7 @@ import {
     OVERSIGHT_MANAGER_OPTIONS_QK,
     MY_OVERSIGHT_MANAGER_QK,
 } from '../../utils/queryKeys';
-import { useTheme } from '../theme/ThemeContext';
+import { useTheme } from '../theme/useTheme';
 import type { GetStringFn } from '../../types/getStringFn';
 
 interface Props {

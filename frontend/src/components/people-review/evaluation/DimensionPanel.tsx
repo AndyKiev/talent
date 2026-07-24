@@ -18,7 +18,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DoneIcon from '@mui/icons-material/Done';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import type { GetStringFn } from '../../../types/getStringFn';
-import { useTheme } from '../../theme/ThemeContext';
+import { useTheme } from '../../theme/useTheme';
 import { InlineEditField } from './InlineEditField';
 import { MAX_GRADE } from '../peopleReviewApi';
 import {

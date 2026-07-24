@@ -15,7 +15,7 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import LanguageOutlinedIcon from '@mui/icons-material/LanguageOutlined';
 import type { GetStringFn } from '../../../types/getStringFn';
-import { useTheme } from '../../theme/ThemeContext';
+import { useTheme } from '../../theme/useTheme';
 import { formatDate } from '../../../utils/date';
 import type { LanguageLevel, Sex, MaritalStatus } from '../peopleReviewApi';
 import { FOREIGN_LANGUAGES } from './evaluationHelpers';

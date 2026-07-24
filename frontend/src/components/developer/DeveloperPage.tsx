@@ -1,7 +1,7 @@
 // src/components/developer/DeveloperPage.tsx
 import { Box, Typography, Stack } from '@mui/material';
 import AppShell from '../layout/AppShell';
-import { useTheme } from '../theme/ThemeContext';
+import { useTheme } from '../theme/useTheme';
 import CodeIcon from '@mui/icons-material/Code';
 import { EssenceCard } from '../ui/EssenceCard';
 import { GroupEssenceCard } from '../ui/GroupEssenceCard';

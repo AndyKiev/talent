@@ -20,7 +20,7 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import type { GetStringFn } from '../../../types/getStringFn';
-import { useTheme } from '../../theme/ThemeContext';
+import { useTheme } from '../../theme/useTheme';
 import { formatDate } from '../../../utils/date';
 import type { ReviewLevelLite, ProposedLevelStatus } from '../peopleReviewApi';
 import { FactItem } from './FactItem';

@@ -22,7 +22,7 @@ import {
 } from "@mui/material";
 import EditRounded from "@mui/icons-material/EditRounded";
 import { LogoutRounded } from "@mui/icons-material";
-import { useTheme } from "../theme/ThemeContext";
+import { useTheme } from '../theme/useTheme';
 import ThemeSwitch from "../theme/ThemeSwitch";
 import { useAuthStore } from "../../store/authStore";
 import { authApi, type MyLangUpdateResponse } from "../../api/authApi";

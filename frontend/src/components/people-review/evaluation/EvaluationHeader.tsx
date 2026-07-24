@@ -25,7 +25,7 @@ import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import type { GetStringFn } from '../../../types/getStringFn';
-import { useTheme } from '../../theme/ThemeContext';
+import { useTheme } from '../../theme/useTheme';
 import type { ReviewSessionEmployee, ReviewSessionEmployeeList } from '../peopleReviewApi';
 import { RSE_STATUS_HEX, rseStatusLabel } from '../rseStatus';
 import type { AutosaveStatus } from './useEvaluationAutosave';
