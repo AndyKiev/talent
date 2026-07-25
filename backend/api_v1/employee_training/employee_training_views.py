@@ -1,29 +1,31 @@
-from fastapi import APIRouter, Depends, status
-from fastapi.security import HTTPBearer
-from typing import Annotated, List
+from typing import Annotated
 
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee_training.employee_training_dependencies import (
+    employee_training_by_id,
+    get_employee_training_service,
+)
 from backend.api_v1.employee_training.employee_training_model import (
     EmployeeTraining as EmployeeTrainingModel,
 )
 from backend.api_v1.employee_training.employee_training_schema import (
     EmployeeTraining as EmployeeTrainingSchema,
+)
+from backend.api_v1.employee_training.employee_training_schema import (
     EmployeeTrainingCreate,
     EmployeeTrainingUpdate,
     TrainingStateRow,
 )
-from backend.api_v1.employee_training.employee_training_dependencies import (
-    get_employee_training_service,
-    employee_training_by_id,
-)
 from backend.api_v1.employee_training.employee_training_service import (
     EmployeeTrainingService,
 )
-from backend.auth.guards import Guard
 from backend.api_v1.review_session_employee.people_review_access import (
     PeopleReviewScopedGuard,
 )
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.auth.guards import Guard
+from backend.utils.enums import EssenceName, OperationVerb
+from fastapi import APIRouter, Depends, status
+from fastapi.security import HTTPBearer
 
 router = APIRouter(
     prefix="/employee_trainings",
@@ -34,7 +36,7 @@ router = APIRouter(
 
 @router.get(
     "/employee/{employee_id}",
-    response_model=List[EmployeeTrainingSchema],
+    response_model=list[EmployeeTrainingSchema],
     # Admin VIEW grant OR the employee is within the caller's people-review
     # scope (self / supervised) — so a self-reviewer sees their own trainings
     # on the evaluation page without a blanket "view all trainings" grant.
@@ -51,7 +53,7 @@ async def get_employee_trainings(
 
 @router.get(
     "/state",
-    response_model=List[TrainingStateRow],
+    response_model=list[TrainingStateRow],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE_TRAINING)],
 )
 async def get_training_state(

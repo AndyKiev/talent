@@ -7,12 +7,12 @@ from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 
 if TYPE_CHECKING:
-    from backend.api_v1.review_session_employee_dimension_type.review_session_employee_dimension_type_model import (
-        ReviewSessionEmployeeDimensionType,
-    )
     from backend.api_v1.review_dimension.review_dimension_model import ReviewDimension
     from backend.api_v1.review_session_employee_dimension_comment.review_session_employee_dimension_comment_model import (
         ReviewSessionEmployeeDimensionComment,
+    )
+    from backend.api_v1.review_session_employee_dimension_type.review_session_employee_dimension_type_model import (
+        ReviewSessionEmployeeDimensionType,
     )
 
 

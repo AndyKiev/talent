@@ -1,30 +1,30 @@
-from typing import Optional, List, Sequence
+from collections.abc import Sequence
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api_v1.base.base_service import BaseService
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.user_group.user_group_model import UserGroup
+from backend.api_v1.access_test_context.access_test_context_messages import (
+    AccessTestInvalidGroups,
+    AccessTestNotAllowed,
+)
 from backend.api_v1.access_test_context.access_test_context_repository import (
     AccessTestContextRepository,
 )
 from backend.api_v1.access_test_context.access_test_context_schema import (
-    AccessTestState,
-    AccessTestGroupOption,
     AccessTestContextSet,
+    AccessTestGroupOption,
+    AccessTestState,
 )
-from backend.api_v1.access_test_context.access_test_context_messages import (
-    AccessTestNotAllowed,
-    AccessTestInvalidGroups,
-)
+from backend.api_v1.base.base_service import BaseService
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.user_group.user_group_model import UserGroup
 
 
 class AccessTestContextService(BaseService):
     def __init__(
         self,
         repository: AccessTestContextRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 

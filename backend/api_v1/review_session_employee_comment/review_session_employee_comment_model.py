@@ -1,8 +1,8 @@
-from typing import TYPE_CHECKING, Optional
 from datetime import datetime
+from typing import TYPE_CHECKING
 
+from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Text, ForeignKey, DateTime
 from sqlalchemy.sql import func
 
 from backend.api_v1.base.base_model import Base
@@ -48,7 +48,7 @@ class ReviewSessionEmployeeComment(IntIdPkMixin, TimestampMixin, Base):
     )
     body: Mapped[str] = mapped_column(Text, nullable=False)
     # Stamped on edit so the UI can flag an edited note (TimestampMixin gives created_at only).
-    updated_at: Mapped[Optional[datetime]] = mapped_column(
+    updated_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), onupdate=func.now(), nullable=True
     )
 

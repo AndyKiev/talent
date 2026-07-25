@@ -1,31 +1,28 @@
 import io
-from typing import Optional, Tuple
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from PIL import Image, UnidentifiedImageError
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api_v1.base.base_service import BaseService
-from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.app_setting.app_setting_service import (
     get_bool_setting,
     get_int_setting,
 )
+from backend.api_v1.base.base_service import BaseService
+from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.employee_photo.employee_photo_messages import (
+    EmployeePhotoDeleteSuccess,
+    EmployeePhotoInvalidType,
+    EmployeePhotoNotFound,
+    EmployeePhotoSaveSuccess,
+    EmployeePhotosDisabled,
+    EmployeePhotoTooLarge,
+)
+from backend.api_v1.employee_photo.employee_photo_model import EmployeePhoto
 from backend.api_v1.employee_photo.employee_photo_repository import (
     EmployeePhotoRepository,
 )
-from backend.api_v1.employee_photo.employee_photo_model import EmployeePhoto
 from backend.api_v1.employee_photo.employee_photo_schema import EmployeePhotoMeta
-from backend.api_v1.employee_photo.employee_photo_messages import (
-    EmployeePhotoNotFound,
-    EmployeePhotoInvalidType,
-    EmployeePhotoTooLarge,
-    EmployeePhotosDisabled,
-)
-from backend.api_v1.employee_photo.employee_photo_messages import (
-    EmployeePhotoSaveSuccess,
-    EmployeePhotoDeleteSuccess,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
 
 # Defaults for the photo upload/processing limits. The LIVE values come from the
 # developer settings `employee_photo_max_mb` / `employee_photo_max_dimension` /
@@ -59,15 +56,15 @@ class EmployeePhotoService(BaseService):
     def __init__(
         self,
         repository: EmployeePhotoRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
-    async def _get_by_employee(self, employee_id: int) -> Optional[EmployeePhoto]:
+    async def _get_by_employee(self, employee_id: int) -> EmployeePhoto | None:
         return await self.repository.get_by_field("employee_id", employee_id)
 
-    async def get_photo(self, employee_id: int) -> Optional[EmployeePhoto]:
+    async def get_photo(self, employee_id: int) -> EmployeePhoto | None:
         return await self._get_by_employee(employee_id)
 
     def _process_image(
@@ -76,7 +73,7 @@ class EmployeePhotoService(BaseService):
         max_bytes: int = MAX_RAW_BYTES,
         max_dimension: int = MAX_DIMENSION,
         jpeg_quality: int = JPEG_QUALITY,
-    ) -> Tuple[bytes, str]:
+    ) -> tuple[bytes, str]:
         """Validate + downscale an upload. Returns (bytes, content_type).
 
         The stored content_type is derived from what Pillow actually decoded, not

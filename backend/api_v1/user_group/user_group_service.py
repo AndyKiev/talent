@@ -1,24 +1,24 @@
-from typing import List, Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.user_group.user_group_messages import (
+    UserGroupCreateSuccess,
+    UserGroupDeleteError,
+    UserGroupDeleteSuccess,
+    UserGroupNameTaken,
+    UserGroupNotFound,
+    UserGroupUpdateSuccess,
+)
 from backend.api_v1.user_group.user_group_repository import UserGroupRepository
 from backend.api_v1.user_group.user_group_schema import (
     UserGroup as UserGroupSchema,
+)
+from backend.api_v1.user_group.user_group_schema import (
     UserGroupCreate,
     UserGroupUpdate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.user_group.user_group_messages import (
-    UserGroupNameTaken,
-    UserGroupNotFound,
-    UserGroupDeleteError,
-)
-from backend.api_v1.user_group.user_group_messages import (
-    UserGroupDeleteSuccess,
-    UserGroupCreateSuccess,
-    UserGroupUpdateSuccess,
 )
 
 
@@ -26,8 +26,8 @@ class UserGroupService(BaseService):
     def __init__(
         self,
         repository: UserGroupRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
         self.current_user = user
@@ -58,8 +58,8 @@ class UserGroupService(BaseService):
     # ------------------------------------------------------------------
 
     async def get_user_groups(
-        self, user_group_type_id: Optional[int] = None
-    ) -> List[UserGroupSchema]:
+        self, user_group_type_id: int | None = None
+    ) -> list[UserGroupSchema]:
         """
         Return all user groups with user counts.
         Protected groups are only visible to users who themselves belong
@@ -93,7 +93,7 @@ class UserGroupService(BaseService):
             raise UserGroupNotFound(group_id=user_group_id)
         return await self._user_group_to_schema(user_group)
 
-    async def get_user_group_by_name(self, name: str) -> Optional[UserGroupSchema]:
+    async def get_user_group_by_name(self, name: str) -> UserGroupSchema | None:
         """Get user group by name."""
         user_group = await self.repository.get_user_group_by_name(name)
         if user_group:

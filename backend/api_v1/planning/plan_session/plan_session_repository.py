@@ -1,14 +1,14 @@
 from datetime import date
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 
 from backend.api_v1.base.base_repository import BaseRepository
 from backend.api_v1.planning.plan_session.plan_session_model import PlanSession
-from backend.api_v1.planning.plan_session_status.plan_session_status_model import (
-    PlanSessionStatus,
-)
 from backend.api_v1.planning.plan_session_category.plan_session_category_model import (
     PlanSessionCategory,
+)
+from backend.api_v1.planning.plan_session_status.plan_session_status_model import (
+    PlanSessionStatus,
 )
 
 

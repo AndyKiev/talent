@@ -1,4 +1,4 @@
-from typing import Annotated, List, Optional
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
@@ -10,15 +10,16 @@ from backend.api_v1.talent_audit_job.talent_audit_job_dependencies import (
 )
 from backend.api_v1.talent_audit_job.talent_audit_job_schema import (
     TalentAuditJob as TalentAuditJobSchema,
+)
+from backend.api_v1.talent_audit_job.talent_audit_job_schema import (
     TalentAuditJobCreate,
     TalentAuditJobUpdate,
 )
 from backend.api_v1.talent_audit_job.talent_audit_job_service import (
     TalentAuditJobService,
 )
-
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/talent_audit_jobs",
@@ -29,12 +30,12 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[TalentAuditJobSchema],
+    response_model=list[TalentAuditJobSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT_JOB)],
 )
 async def get_talent_audit_jobs(
     service: Annotated[TalentAuditJobService, Depends(get_talent_audit_job_service)],
-    sort: Optional[str] = Query(
+    sort: str | None = Query(
         None,
         description='JSON for sorting: {"field": "asc|desc"} or [{"field1": "asc"}, "field2"]',
     ),
@@ -45,7 +46,7 @@ async def get_talent_audit_jobs(
 # Static path before dynamic
 @router.get(
     "/by_talent_audit/{talent_audit_id}",
-    response_model=List[TalentAuditJobSchema],
+    response_model=list[TalentAuditJobSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT_JOB)],
 )
 async def get_talent_audit_jobs_by_audit(

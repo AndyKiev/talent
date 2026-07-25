@@ -1,37 +1,37 @@
-from typing import TYPE_CHECKING, List
-from sqlalchemy.orm import mapped_column, Mapped, relationship
-from sqlalchemy import String, Boolean, ForeignKey
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Boolean, ForeignKey, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin, TimestampMixin
 
-
 if TYPE_CHECKING:
-    from backend.api_v1.table_relationship_links.employee_user_group_link_model import (
-        EmployeeUserGroupLink,
+    from backend.api_v1.employee_department.employee_department_model import (
+        EmployeeDepartment,
+    )
+    from backend.api_v1.employee_events.employee_event.employee_event_model import (
+        EmployeeEvent,
+    )
+    from backend.api_v1.employee_origin.employee_origin_model import EmployeeOrigin
+    from backend.api_v1.employee_responsibility_department.employee_responsibility_department_model import (
+        EmployeeResponsibilityDepartment,
     )
     from backend.api_v1.employee_status.employee_status_model import EmployeeStatus
     from backend.api_v1.job.job_model import Job
 
     # from backend.api_v1.message.message_model import Lang
     from backend.api_v1.lang.lang_model import Lang
-
-    from backend.api_v1.employee_department.employee_department_model import (
-        EmployeeDepartment,
-    )
-    from backend.api_v1.employee_responsibility_department.employee_responsibility_department_model import (
-        EmployeeResponsibilityDepartment,
-    )
-    from backend.api_v1.employee_events.employee_event.employee_event_model import (
-        EmployeeEvent,
-    )
+    from backend.api_v1.person.person_model import Person
     from backend.api_v1.table_relationship_links.employee_current_level_model import (
         EmployeeCurrentLevel,
     )
     from backend.api_v1.table_relationship_links.employee_personal_data_model import (
         EmployeePersonalData,
     )
-    from backend.api_v1.person.person_model import Person
-    from backend.api_v1.employee_origin.employee_origin_model import EmployeeOrigin
+    from backend.api_v1.table_relationship_links.employee_user_group_link_model import (
+        EmployeeUserGroupLink,
+    )
 
 
 class Employee(IntIdPkMixin, TimestampMixin, Base):
@@ -72,13 +72,13 @@ class Employee(IntIdPkMixin, TimestampMixin, Base):
     lang: Mapped["Lang"] = relationship(back_populates="employees", lazy="selectin")
 
     # MAIN department link (0..1 rows — uq on employee_id).
-    departments: Mapped[List["EmployeeDepartment"]] = relationship(
+    departments: Mapped[list["EmployeeDepartment"]] = relationship(
         back_populates="employee",
         lazy="selectin",
     )
 
     # Departments of responsibility (0..N rows, separate table).
-    responsibility_departments: Mapped[List["EmployeeResponsibilityDepartment"]] = (
+    responsibility_departments: Mapped[list["EmployeeResponsibilityDepartment"]] = (
         relationship(
             lazy="selectin",
         )

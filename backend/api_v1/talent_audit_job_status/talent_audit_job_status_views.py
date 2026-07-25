@@ -1,4 +1,4 @@
-from typing import Annotated, List, Optional
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
@@ -10,6 +10,8 @@ from backend.api_v1.talent_audit_job_status.talent_audit_job_status_dependencies
 )
 from backend.api_v1.talent_audit_job_status.talent_audit_job_status_schema import (
     TalentAuditJobStatus as TalentAuditJobStatusSchema,
+)
+from backend.api_v1.talent_audit_job_status.talent_audit_job_status_schema import (
     TalentAuditJobStatusCreate,
     TalentAuditJobStatusUpdate,
 )
@@ -17,7 +19,7 @@ from backend.api_v1.talent_audit_job_status.talent_audit_job_status_service impo
     TalentAuditJobStatusService,
 )
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/talent_audit_job_statuses",
@@ -28,15 +30,15 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[TalentAuditJobStatusSchema],
+    response_model=list[TalentAuditJobStatusSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT_JOB_STATUS)],
 )
 async def get_talent_audit_job_statuses(
     service: Annotated[
         TalentAuditJobStatusService, Depends(get_talent_audit_job_status_service)
     ],
-    name: Optional[str] = None,
-    sort: Optional[str] = Query(
+    name: str | None = None,
+    sort: str | None = Query(
         None,
         description='JSON for sorting: {"field": "asc|desc"} or [{"field1": "asc"}, "field2"]',
     ),

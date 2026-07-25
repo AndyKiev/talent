@@ -1,18 +1,19 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, status
-from typing import Annotated, List, Optional
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.interview.interview_schema import (
-    InterviewSchema,
-    InterviewCreate,
-    InterviewUpdate,
-    InterviewEmployeeMini,
-)
 from backend.api_v1.interview.interview_dependencies import get_interview_service
+from backend.api_v1.interview.interview_schema import (
+    InterviewCreate,
+    InterviewEmployeeMini,
+    InterviewSchema,
+    InterviewUpdate,
+)
 from backend.api_v1.interview.interview_service import InterviewService
-from backend.auth.jwt_auth import get_current_active_auth_user
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/interviews",
@@ -23,13 +24,13 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[InterviewSchema],
+    response_model=list[InterviewSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.INTERVIEW)],
 )
 async def get_interviews(
     service: Annotated[InterviewService, Depends(get_interview_service)],
-    application_id: Optional[int] = None,
-    candidate_id: Optional[int] = None,
+    application_id: int | None = None,
+    candidate_id: int | None = None,
     mine: bool = False,
 ):
     return await service.get_interviews(
@@ -39,7 +40,7 @@ async def get_interviews(
 
 @router.get(
     "/available_interviewers",
-    response_model=List[InterviewEmployeeMini],
+    response_model=list[InterviewEmployeeMini],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.INTERVIEW)],
 )
 async def get_available_interviewers(

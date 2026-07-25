@@ -1,4 +1,3 @@
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,20 +7,20 @@ from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.job.job_model import Job
 from backend.api_v1.job_category.job_category_model import JobCategory
+from backend.api_v1.job_job_category_link.job_job_category_link_messages import (
+    JobCategoryLinkClearAllSuccess,
+    JobCategoryLinkSetSuccess,
+    JobCategoryNotFoundForLink,
+    JobNotFoundForCategoryLink,
+)
 from backend.api_v1.job_job_category_link.job_job_category_link_repository import (
     JobJobCategoryLinkRepository,
 )
 from backend.api_v1.job_job_category_link.job_job_category_link_schema import (
-    JobJobCategoryLink as JobJobCategoryLinkSchema,
     JobJobCategoryClearAllResult,
 )
-from backend.api_v1.job_job_category_link.job_job_category_link_messages import (
-    JobNotFoundForCategoryLink,
-    JobCategoryNotFoundForLink,
-)
-from backend.api_v1.job_job_category_link.job_job_category_link_messages import (
-    JobCategoryLinkSetSuccess,
-    JobCategoryLinkClearAllSuccess,
+from backend.api_v1.job_job_category_link.job_job_category_link_schema import (
+    JobJobCategoryLink as JobJobCategoryLinkSchema,
 )
 
 
@@ -29,8 +28,8 @@ class JobJobCategoryLinkService(BaseService):
     def __init__(
         self,
         repository: JobJobCategoryLinkRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -58,7 +57,7 @@ class JobJobCategoryLinkService(BaseService):
             )
         return category
 
-    async def get_for_job(self, job_id: int) -> Optional[JobJobCategoryLinkSchema]:
+    async def get_for_job(self, job_id: int) -> JobJobCategoryLinkSchema | None:
         link = await self.repository.get_for_job(job_id)
         return self._to_schema(link) if link else None
 

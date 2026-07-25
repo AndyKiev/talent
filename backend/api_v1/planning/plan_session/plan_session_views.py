@@ -1,21 +1,24 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.planning.plan_session.plan_session_schema import (
-    PlanSession as PlanSessionSchema,
-    PlanSessionCreate,
-    PlanSessionUpdate,
-    PlanSessionResyncRequest,
-)
 from backend.api_v1.planning.plan_session.plan_session_dependencies import (
     get_plan_session_service,
     plan_session_by_id,
 )
+from backend.api_v1.planning.plan_session.plan_session_schema import (
+    PlanSession as PlanSessionSchema,
+)
+from backend.api_v1.planning.plan_session.plan_session_schema import (
+    PlanSessionCreate,
+    PlanSessionResyncRequest,
+    PlanSessionUpdate,
+)
 from backend.api_v1.planning.plan_session.plan_session_service import PlanSessionService
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/admin/plan_sessions",
@@ -26,7 +29,7 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[PlanSessionSchema],
+    response_model=list[PlanSessionSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.PLAN_SESSION)],
 )
 async def get_plan_sessions(

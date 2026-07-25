@@ -21,13 +21,13 @@ import asyncio
 
 from sqlalchemy import select
 
-from backend.database.db_helper import db_helper
-from backend.api_v1.user_group_type.user_group_type_model import UserGroupType
-from backend.api_v1.user_group.user_group_model import UserGroup
 from backend.api_v1.employee.employee_model import Employee
 from backend.api_v1.table_relationship_links.employee_user_group_link_model import (
     EmployeeUserGroupLink,
 )
+from backend.api_v1.user_group.user_group_model import UserGroup
+from backend.api_v1.user_group_type.user_group_type_model import UserGroupType
+from backend.database.db_helper import db_helper
 
 
 async def seed_dev_bypass():
@@ -45,13 +45,12 @@ async def seed_dev_bypass():
             session.add(ugt)
             await session.flush()
             print("Created UserGroupType: authorisation (is_authorisation=True)")
+        elif not ugt.is_authorisation:
+            ugt.is_authorisation = True
+            session.add(ugt)
+            print("Set is_authorisation=True on existing type")
         else:
-            if not ugt.is_authorisation:
-                ugt.is_authorisation = True
-                session.add(ugt)
-                print("Set is_authorisation=True on existing type")
-            else:
-                print("UserGroupType 'authorisation' already exists")
+            print("UserGroupType 'authorisation' already exists")
 
         # 2) Ensure "dev" user group exists under "authorisation"
         stmt = select(UserGroup).where(UserGroup.name == "dev")

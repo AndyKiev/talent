@@ -1,39 +1,35 @@
 # backend/api_v1/menu/menu_service.py
-from typing import Optional, List
 
+from backend.api_v1.app_setting.app_setting_service import (
+    HEADCOUNT_PLAN_ENABLED_KEY,
+    RECRUITMENT_MODULE_ENABLED_KEY,
+    TRAINING_MODULE_ENABLED_KEY,
+    get_bool_setting,
+)
+from backend.api_v1.base.base_service import BaseService
+from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.menu.menu_messages import (
+    MenuCreateSuccess,
+    MenuDeleteError,
+    MenuDeleteSuccess,
+    MenuGroupsNotFound,
+    MenuKeyTaken,
+    MenuNotFound,
+    MenuParentInvalid,
+    MenuUpdateSuccess,
+)
+from backend.api_v1.menu.menu_repository import MenuRepository
+from backend.api_v1.menu.menu_schema import (
+    MenuAdminSchema,
+    MenuCreate,
+    MenuSchema,
+    MenuUpdate,
+)
+from backend.api_v1.user_group.user_group_model import UserGroup
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from backend.api_v1.base.base_service import BaseService
-from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.menu.menu_repository import MenuRepository
-from backend.api_v1.menu.menu_schema import (
-    MenuSchema,
-    MenuAdminSchema,
-    MenuCreate,
-    MenuUpdate,
-)
-from backend.api_v1.menu.menu_messages import (
-    MenuNotFound,
-    MenuKeyTaken,
-    MenuGroupsNotFound,
-    MenuParentInvalid,
-    MenuDeleteError,
-)
-from backend.api_v1.menu.menu_messages import (
-    MenuCreateSuccess,
-    MenuUpdateSuccess,
-    MenuDeleteSuccess,
-)
-from backend.api_v1.user_group.user_group_model import UserGroup
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.app_setting.app_setting_service import (
-    get_bool_setting,
-    TRAINING_MODULE_ENABLED_KEY,
-    RECRUITMENT_MODULE_ENABLED_KEY,
-    HEADCOUNT_PLAN_ENABLED_KEY,
-)
 
 
 class MenuService(BaseService):
@@ -41,12 +37,12 @@ class MenuService(BaseService):
     def __init__(
         self,
         repository: MenuRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
-    async def get_all_menus(self) -> List[MenuSchema]:
+    async def get_all_menus(self) -> list[MenuSchema]:
         """Every active menu item — used by the developer default-menu select."""
         records = await self.repository.get_active_ordered()
         return [MenuSchema.model_validate(r) for r in records]
@@ -59,12 +55,12 @@ class MenuService(BaseService):
         schema.group_ids = menu.allowed_group_ids
         return schema
 
-    async def get_menus_admin(self) -> List[MenuAdminSchema]:
+    async def get_menus_admin(self) -> list[MenuAdminSchema]:
         """Every menu item (active + inactive) with full visibility config."""
         records = await self.repository.get_all_ordered()
         return [self._to_admin_schema(m) for m in records]
 
-    async def _validate_groups(self, group_ids: List[int]) -> None:
+    async def _validate_groups(self, group_ids: list[int]) -> None:
         if not group_ids:
             return
         found = set(
@@ -81,7 +77,7 @@ class MenuService(BaseService):
             raise await self._resolve_domain_error(MenuGroupsNotFound(missing))
 
     async def _validate_parent(
-        self, parent_id: Optional[int], self_id: Optional[int] = None
+        self, parent_id: int | None, self_id: int | None = None
     ) -> None:
         """Parent must exist, not be the item itself, and be top-level (one
         level of nesting only)."""
@@ -157,7 +153,7 @@ class MenuService(BaseService):
             delete_success_exc=MenuDeleteSuccess,
         )
 
-    async def get_my_menus(self) -> List[MenuSchema]:
+    async def get_my_menus(self) -> list[MenuSchema]:
         """The current user's visible menu items (flat; FE nests by parent_id).
 
         Visibility per item (matched by group **id**, never name):

@@ -1,37 +1,35 @@
 # backend/api_v1/planning/plan_report/plan_report_service.py
 from __future__ import annotations
 
-from typing import Optional, Dict, Set, Tuple
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
+from backend.api_v1.department.department_repository import DepartmentRepository
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-
 from backend.api_v1.planning.plan_report.plan_report_repository import (
     PlanReportRepository,
 )
 from backend.api_v1.planning.plan_report.plan_report_schema import (
     PlanReport as PlanReportSchema,
+)
+from backend.api_v1.planning.plan_report.plan_report_schema import (
     PlanReportRow,
 )
 from backend.api_v1.planning.plan_scope.plan_scope_schema import (
     PlanScope as PlanScopeSchema,
 )
-from backend.api_v1.department.department_repository import DepartmentRepository
 from backend.api_v1.region.region_schema import RegionSlim
 
-
 # Bucket key: (plan_department_id, job_group_id, talent_status_id)
-FactKey = Tuple[int, int, int]
+FactKey = tuple[int, int, int]
 
 
 class PlanReportService(BaseService):
     def __init__(
         self,
         repository: PlanReportRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
         # Sibling repo shares the same AsyncSession.
@@ -46,7 +44,7 @@ class PlanReportService(BaseService):
         org_index = await self.department_repo.get_org_unit_index()
 
         # The set of plan-row department instances we must match against.
-        plan_dept_ids: Set[int] = {s.department_id for s in scopes}
+        plan_dept_ids: set[int] = {s.department_id for s in scopes}
 
         # Compute fact counts keyed by (plan_dept, job_group, talent_status_id).
         per_status_counts = self.compute_fact_counts(
@@ -87,9 +85,9 @@ class PlanReportService(BaseService):
     def compute_fact_counts(
         cls,
         fact_rows,
-        plan_dept_ids: Set[int],
-        org_index: Dict[int, tuple],
-    ) -> Dict[FactKey, int]:
+        plan_dept_ids: set[int],
+        org_index: dict[int, tuple],
+    ) -> dict[FactKey, int]:
         """Bucket audit facts into counts keyed by
         (plan_department_id, job_group_id, talent_status_id).
 
@@ -102,14 +100,14 @@ class PlanReportService(BaseService):
         Shared by the plan report and the plan matrix so both use one source
         of truth.
         """
-        min_qty: Dict[int, int] = {}
+        min_qty: dict[int, int] = {}
         for fr in fact_rows:
             cur = min_qty.get(fr.employee_id)
             if cur is None or fr.qty_months < cur:
                 min_qty[fr.employee_id] = fr.qty_months
 
-        emp_main_dept: Dict[int, int] = {}
-        emp_pairs: Dict[int, Set[Tuple[int, int]]] = {}
+        emp_main_dept: dict[int, int] = {}
+        emp_pairs: dict[int, set[tuple[int, int]]] = {}
         for fr in fact_rows:
             if fr.qty_months != min_qty[fr.employee_id]:
                 continue
@@ -121,7 +119,7 @@ class PlanReportService(BaseService):
                     (fr.job_group_id, fr.talent_status_id)
                 )
 
-        per_status_counts: Dict[FactKey, int] = {}
+        per_status_counts: dict[FactKey, int] = {}
         for employee_id, pairs in emp_pairs.items():
             main_dept_id = emp_main_dept[employee_id]
             matching = cls._matching_plan_depts(main_dept_id, plan_dept_ids, org_index)
@@ -136,18 +134,18 @@ class PlanReportService(BaseService):
     @staticmethod
     def _matching_plan_depts(
         main_department_id: int,
-        plan_dept_ids: Set[int],
-        org_index: Dict[int, tuple],
-    ) -> Set[int]:
+        plan_dept_ids: set[int],
+        org_index: dict[int, tuple],
+    ) -> set[int]:
         """Walk UP from the employee's main department; collect every plan
         department that is ancestor-or-self along the chain.
 
         `org_index` maps dept id -> (parent_id, name, category_key).
         Cycle-safe via `seen`.
         """
-        hits: Set[int] = set()
-        seen: Set[int] = set()
-        current: Optional[int] = main_department_id
+        hits: set[int] = set()
+        seen: set[int] = set()
+        current: int | None = main_department_id
         while current is not None and current in org_index and current not in seen:
             seen.add(current)
             if current in plan_dept_ids:
@@ -159,7 +157,7 @@ class PlanReportService(BaseService):
     @staticmethod
     def _fact_for_scope(
         scope,
-        per_status_counts: Dict[FactKey, int],
+        per_status_counts: dict[FactKey, int],
     ) -> int:
         """Combined scope (talent_status_id IS NULL) => sum over all statuses
         for that (department, job_group). Per-status scope => that status only.

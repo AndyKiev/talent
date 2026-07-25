@@ -1,17 +1,17 @@
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, Boolean, Integer, UniqueConstraint
 from typing import TYPE_CHECKING
+
+from sqlalchemy import Boolean, ForeignKey, Integer, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin
 
-
 if TYPE_CHECKING:
-    from backend.api_v1.employee_events.employee_event_type.employee_event_type_model import (
-        EmployeeEventType,
-    )
     from backend.api_v1.employee_events.employee_event_direction_type.employee_event_direction_type_model import (
         EmployeeEventDirectionType,
+    )
+    from backend.api_v1.employee_events.employee_event_type.employee_event_type_model import (
+        EmployeeEventType,
     )
 
 

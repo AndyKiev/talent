@@ -1,14 +1,14 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
+from backend.api_v1.process_roles.process.process_repository import ProcessRepository
 from backend.api_v1.process_roles.process.process_schema import (
     Process as ProcessSchema,
 )
-from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
-from backend.database.db_helper import db_helper
-from backend.api_v1.process_roles.process.process_repository import ProcessRepository
 from backend.api_v1.process_roles.process.process_service import ProcessService
 from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.database.db_helper import db_helper
 
 
 async def get_process_service(

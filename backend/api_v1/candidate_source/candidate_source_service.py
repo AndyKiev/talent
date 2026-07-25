@@ -1,35 +1,36 @@
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.candidate_source.candidate_source_messages import (
+    CandidateSourceCreateSuccess,
+    CandidateSourceDeleteError,
+    CandidateSourceDeleteSuccess,
+    CandidateSourceKeyTaken,
+    CandidateSourceNotFound,
+    CandidateSourceUpdateSuccess,
+)
 from backend.api_v1.candidate_source.candidate_source_repository import (
     CandidateSourceRepository,
 )
 from backend.api_v1.candidate_source.candidate_source_schema import (
     CandidateSource as CandidateSourceSchema,
+)
+from backend.api_v1.candidate_source.candidate_source_schema import (
     CandidateSourceCreate,
     CandidateSourceUpdate,
 )
-from backend.api_v1.candidate_source.candidate_source_messages import (
-    CandidateSourceNotFound,
-    CandidateSourceKeyTaken,
-    CandidateSourceDeleteError,
-    CandidateSourceCreateSuccess,
-    CandidateSourceUpdateSuccess,
-    CandidateSourceDeleteSuccess,
-)
+from backend.api_v1.employee.employee_schema import EmployeeSchema
 
 
 class CandidateSourceService(BaseService):
     def __init__(
         self,
         repository: CandidateSourceRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -40,8 +41,8 @@ class CandidateSourceService(BaseService):
         return result
 
     async def get_candidate_sources(
-        self, sort: Optional[str] = None
-    ) -> List[CandidateSourceSchema]:
+        self, sort: str | None = None
+    ) -> list[CandidateSourceSchema]:
         if sort:
             records = await self.get_all(sort_json=sort)
         else:

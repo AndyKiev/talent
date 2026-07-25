@@ -45,7 +45,7 @@ from fastapi import Depends, params
 from backend.auth.jwt_auth import has_access_set
 
 if TYPE_CHECKING:
-    from backend.utils.enums import OperationVerb, EssenceName
+    from backend.utils.enums import EssenceName, OperationVerb
 
 
 def Guard(

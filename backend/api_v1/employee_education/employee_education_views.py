@@ -1,15 +1,18 @@
-from fastapi import APIRouter, Depends, status, Query
-from typing import Annotated, List
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee_education.employee_education_dependencies import (
+    employee_education_by_id,
+    get_employee_education_service,
+)
 from backend.api_v1.employee_education.employee_education_schema import (
     EmployeeEducation as EmployeeEducationSchema,
+)
+from backend.api_v1.employee_education.employee_education_schema import (
     EmployeeEducationCreate,
     EmployeeEducationUpdate,
-)
-from backend.api_v1.employee_education.employee_education_dependencies import (
-    get_employee_education_service,
-    employee_education_by_id,
 )
 from backend.api_v1.employee_education.employee_education_service import (
     EmployeeEducationService,
@@ -23,7 +26,7 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[EmployeeEducationSchema])
+@router.get("", response_model=list[EmployeeEducationSchema])
 async def get_employee_educations(
     service: Annotated[
         EmployeeEducationService, Depends(get_employee_education_service)

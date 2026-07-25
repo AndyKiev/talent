@@ -1,4 +1,4 @@
-from backend.api_v1.base.errors import NotFoundError, DomainError
+from backend.api_v1.base.errors import DomainError, NotFoundError
 
 
 class EssenceSetNotFound(NotFoundError):

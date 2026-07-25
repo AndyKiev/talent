@@ -29,7 +29,6 @@
 #
 # Lazy-imports the RSE service inside the methods so the auth <-> routers import
 # graph stays acyclic (same trick as people_review_access.py).
-from typing import Optional
 
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -44,8 +43,8 @@ class EmployeeMissionAccess:
 
     def __init__(
         self,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ) -> None:
         self.user = user
         self.session = session
@@ -95,11 +94,11 @@ class EmployeeMissionAccess:
         if employee_id == self.user.id:
             return False
 
-        from backend.api_v1.review_session_employee.review_session_employee_service import (
-            ReviewSessionEmployeeService,
-        )
         from backend.api_v1.review_session_employee.review_session_employee_repository import (
             ReviewSessionEmployeeRepository,
+        )
+        from backend.api_v1.review_session_employee.review_session_employee_service import (
+            ReviewSessionEmployeeService,
         )
 
         service = ReviewSessionEmployeeService(
@@ -149,11 +148,11 @@ class EmployeeMissionAccess:
         ) in self.user.permission_sets:
             return
 
-        from backend.api_v1.review_session_employee.review_session_employee_service import (
-            ReviewSessionEmployeeService,
-        )
         from backend.api_v1.review_session_employee.review_session_employee_repository import (
             ReviewSessionEmployeeRepository,
+        )
+        from backend.api_v1.review_session_employee.review_session_employee_service import (
+            ReviewSessionEmployeeService,
         )
 
         service = ReviewSessionEmployeeService(

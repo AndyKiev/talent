@@ -1,8 +1,10 @@
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Boolean, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Text, Boolean
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin, TimestampMixin
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from backend.api_v1.job_group.job_group_model import JobGroup

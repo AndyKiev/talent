@@ -1,24 +1,24 @@
+
 from pydantic import BaseModel, ConfigDict
-from typing import Optional, List
 
 
 class ActiveContextUpdate(BaseModel):
     """PUT body — set the current user's active mode (role) + department.
     process_role_id = null means 'no mode on' (sees only self)."""
 
-    process_role_id: Optional[int] = None
-    department_id: Optional[int] = None
+    process_role_id: int | None = None
+    department_id: int | None = None
 
 
 class ActiveContextRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    process_role_id: Optional[int] = None
-    department_id: Optional[int] = None
+    process_role_id: int | None = None
+    department_id: int | None = None
 
 
 class MyRole(BaseModel):
     process_role_id: int
-    key: Optional[str] = None
+    key: str | None = None
     name: str
     link_target: str
 
@@ -36,7 +36,7 @@ class SessionScopeAvailability(BaseModel):
     employee in the session."""
 
     self_in_session: bool
-    oversight_role_ids_with_members: List[int] = []
+    oversight_role_ids_with_members: list[int] = []
 
 
 class MyScopes(BaseModel):
@@ -44,6 +44,6 @@ class MyScopes(BaseModel):
     user holds, the departments they supervise (per dept-target role), and the
     persisted active context."""
 
-    roles: List[MyRole] = []
-    departments: List[MyDepartment] = []
+    roles: list[MyRole] = []
+    departments: list[MyDepartment] = []
     active: ActiveContextRead = ActiveContextRead()

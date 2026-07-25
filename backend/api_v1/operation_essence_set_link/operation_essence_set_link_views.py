@@ -14,28 +14,28 @@
 #   - group permission list    -> VIEW   {user_group}
 #   - apply_matrix (bulk grant)-> ASSIGN {user_group}
 #
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, Request, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, List
 from pydantic import BaseModel
 
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.operation_essence_set_link.operation_essence_set_link_dependencies import (
+    get_operation_essence_set_link_service,
+)
 from backend.api_v1.operation_essence_set_link.operation_essence_set_link_schema import (
-    OperationEssenceSetLinkSchema,
     OperationEssenceSetLinkCreate,
+    OperationEssenceSetLinkSchema,
     PermissionMatrixApplyRequest,
     PermissionMatrixApplyResult,
     PermissionSyncResult,
-)
-from backend.api_v1.operation_essence_set_link.operation_essence_set_link_dependencies import (
-    get_operation_essence_set_link_service,
 )
 from backend.api_v1.operation_essence_set_link.operation_essence_set_link_service import (
     OperationEssenceSetLinkService,
 )
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
-
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/permissions_set",
@@ -47,7 +47,7 @@ router = APIRouter(
 class SetGroupPermissionSetsRequest(BaseModel):
     """Full-replace payload: the exact list of OESL ids the group should hold."""
 
-    operation_essence_set_link_ids: List[int]
+    operation_essence_set_link_ids: list[int]
 
 
 # -- Permission CRUD -----------------------------------------------------------
@@ -55,7 +55,7 @@ class SetGroupPermissionSetsRequest(BaseModel):
 
 @router.get(
     "",
-    response_model=List[OperationEssenceSetLinkSchema],
+    response_model=list[OperationEssenceSetLinkSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.OPERATION)],
 )
 async def get_permissions(
@@ -136,7 +136,7 @@ async def sync_permissions_from_routes(
 
 @router.get(
     "/user_groups/{user_group_id}",
-    response_model=List[OperationEssenceSetLinkSchema],
+    response_model=list[OperationEssenceSetLinkSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.USER_GROUP)],
 )
 async def get_group_permission_sets(

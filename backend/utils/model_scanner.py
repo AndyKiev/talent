@@ -34,8 +34,6 @@ import ast
 import re
 import sys
 from pathlib import Path
-from typing import Optional
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -50,7 +48,7 @@ def _unparse(node) -> str:
         return "<expr>"
 
 
-def _extract_tablename(class_body: list) -> Optional[str]:
+def _extract_tablename(class_body: list) -> str | None:
     """Return explicit __tablename__ value if present."""
     for node in class_body:
         if isinstance(node, ast.Assign):
@@ -146,7 +144,7 @@ def _parse_mapped_column(call_node: ast.Call) -> dict:
     return info
 
 
-def _find_mapped_column_call(annotation_node, value_node) -> Optional[dict]:
+def _find_mapped_column_call(annotation_node, value_node) -> dict | None:
     """
     Given an AnnAssign's annotation and value, find and parse mapped_column().
     Returns column info dict or None if not a column.
@@ -182,7 +180,7 @@ def _extract_mapped_type(annotation) -> str:
     return s
 
 
-def _is_relationship(value_node) -> Optional[dict]:
+def _is_relationship(value_node) -> dict | None:
     """
     If value_node contains a relationship() call, return its metadata dict.
     """
@@ -467,8 +465,7 @@ def scan_models(api_v1_root: str, output_file: str) -> None:
 
     with open(out, "w", encoding="utf-8") as f:
         f.write(header)
-        for m in all_models:
-            f.write(format_model(m))
+        f.writelines(format_model(m) for m in all_models)
 
     print(f"\n[OK] model_structure.txt written → {out}  ({len(all_models)} models)")
 

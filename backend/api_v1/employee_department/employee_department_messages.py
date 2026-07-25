@@ -1,13 +1,13 @@
-from typing import Optional
+
 from backend.api_v1.base.errors import (
-    NotFoundError,
-    DomainError,
     DeleteError,
+    DomainError,
+    NotFoundError,
 )
 from backend.api_v1.base.success import (
-    DomainSuccess,
-    DeleteSuccess,
     CreateSuccess,
+    DeleteSuccess,
+    DomainSuccess,
     UpdateSuccess,
 )
 
@@ -39,7 +39,7 @@ class EmployeeDepartmentMainAlreadyExistsError(DomainError):
     message_key = "employeeDepartmentMainAlreadyExists"
 
     def __init__(
-        self, employee_id: int, existing_main_id: Optional[int] = None
+        self, employee_id: int, existing_main_id: int | None = None
     ) -> None:
         self.template_vars = {
             "employeeId": employee_id,

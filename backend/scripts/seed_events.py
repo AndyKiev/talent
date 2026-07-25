@@ -44,23 +44,22 @@ sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-from sqlalchemy import text  # noqa: E402
-
-from backend.database.db_helper import db_helper  # noqa: E402
-from backend.api_v1.employee.employee_repository import EmployeeRepository  # noqa: E402
-from backend.api_v1.employee.employee_service import EmployeeService  # noqa: E402
-from backend.api_v1.employee_events.employee_event.employee_event_repository import (  # noqa: E402
+from backend.api_v1.employee.employee_repository import EmployeeRepository
+from backend.api_v1.employee.employee_service import EmployeeService
+from backend.api_v1.employee_events.employee_event.employee_event_repository import (
     EmployeeEventRepository,
 )
-from backend.api_v1.employee_events.employee_event.employee_event_service import (  # noqa: E402
-    EmployeeEventService,
-)
-from backend.api_v1.employee_events.employee_event.employee_event_schema import (  # noqa: E402
+from backend.api_v1.employee_events.employee_event.employee_event_schema import (
     EmployeeEventCreate,
 )
-from backend.api_v1.employee_events.employee_event_change.employee_event_change_schema import (  # noqa: E402
+from backend.api_v1.employee_events.employee_event.employee_event_service import (
+    EmployeeEventService,
+)
+from backend.api_v1.employee_events.employee_event_change.employee_event_change_schema import (
     EmployeeEventChangeCreate,
 )
+from backend.database.db_helper import db_helper
+from sqlalchemy import text
 
 ADMIN_CODE = "UKR7101004"
 SEED = 42

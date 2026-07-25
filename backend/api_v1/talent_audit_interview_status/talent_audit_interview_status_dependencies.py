@@ -1,8 +1,6 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.auth.jwt_auth import get_current_active_auth_user
-from backend.database.db_helper import db_helper
 from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
 from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_repository import (
     TalentAuditInterviewStatusRepository,
@@ -13,6 +11,8 @@ from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_
 from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_service import (
     TalentAuditInterviewStatusService,
 )
+from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.database.db_helper import db_helper
 
 
 async def get_talent_audit_interview_status_service(

@@ -1,29 +1,28 @@
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.talent_audit_status.talent_audit_status_messages import (
+    TalentAuditStatusCreateSuccess,
+    TalentAuditStatusDeleteError,
+    TalentAuditStatusDeleteSuccess,
+    TalentAuditStatusNameTaken,
+    TalentAuditStatusNotFound,
+    TalentAuditStatusNotFoundByName,
+    TalentAuditStatusUpdateSuccess,
+)
 from backend.api_v1.talent_audit_status.talent_audit_status_repository import (
     TalentAuditStatusRepository,
 )
 from backend.api_v1.talent_audit_status.talent_audit_status_schema import (
     TalentAuditStatus as TalentAuditStatusSchema,
+)
+from backend.api_v1.talent_audit_status.talent_audit_status_schema import (
     TalentAuditStatusCreate,
     TalentAuditStatusUpdate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.talent_audit_status.talent_audit_status_messages import (
-    TalentAuditStatusNotFound,
-    TalentAuditStatusNotFoundByName,
-    TalentAuditStatusNameTaken,
-    TalentAuditStatusDeleteError,
-)
-from backend.api_v1.talent_audit_status.talent_audit_status_messages import (
-    TalentAuditStatusDeleteSuccess,
-    TalentAuditStatusCreateSuccess,
-    TalentAuditStatusUpdateSuccess,
 )
 
 
@@ -31,8 +30,8 @@ class TalentAuditStatusService(BaseService):
     def __init__(
         self,
         repository: TalentAuditStatusRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -44,9 +43,9 @@ class TalentAuditStatusService(BaseService):
 
     async def get_talent_audit_statuses(
         self,
-        name: Optional[str] = None,
-        sort: Optional[str] = None,
-    ) -> List[TalentAuditStatusSchema]:
+        name: str | None = None,
+        sort: str | None = None,
+    ) -> list[TalentAuditStatusSchema]:
         if name:
             record = await self.get_by_name(
                 name, not_found_exc=TalentAuditStatusNotFoundByName

@@ -1,5 +1,5 @@
+
 from pydantic import BaseModel
-from typing import List, Optional
 
 
 class SessionLevelRequirementSchema(BaseModel):
@@ -19,7 +19,7 @@ class SessionLevelSchema(BaseModel):
 
     id: int
     name_key: str
-    description_key: Optional[str] = None
+    description_key: str | None = None
     sort_order: int
     is_active: bool = True
-    requirements: List[SessionLevelRequirementSchema] = []
+    requirements: list[SessionLevelRequirementSchema] = []

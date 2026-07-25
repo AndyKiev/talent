@@ -1,4 +1,3 @@
-from typing import List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,7 +10,6 @@ from backend.api_v1.employee_recommended_training.employee_recommended_training_
 )
 from backend.api_v1.employee_recommended_training.employee_recommended_training_messages import (
     RecommendedTrainingCreateSuccess,
-    RecommendedTrainingDeleteSuccess,
     RecommendedTrainingNotFound,
     RecommendedTrainingStatusKeyNotFound,
     RecommendedTrainingStatusNotFound,
@@ -26,6 +24,8 @@ from backend.api_v1.employee_recommended_training.employee_recommended_training_
 )
 from backend.api_v1.employee_recommended_training.employee_recommended_training_schema import (
     EmployeeRecommendedTraining as RecommendedTrainingSchema,
+)
+from backend.api_v1.employee_recommended_training.employee_recommended_training_schema import (
     EmployeeRecommendedTrainingCreate,
     EmployeeRecommendedTrainingList,
     EmployeeRecommendedTrainingPermissions,
@@ -50,8 +50,8 @@ class EmployeeRecommendedTrainingService(BaseService):
     def __init__(
         self,
         repository: EmployeeRecommendedTrainingRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ) -> None:
         super().__init__(repository, user=user, session=session)
         self.access = EmployeeRecommendedTrainingAccess(user=user, session=session)
@@ -217,7 +217,7 @@ class EmployeeRecommendedTrainingService(BaseService):
         await self.session.commit()
 
     async def reorder_for_employee(
-        self, employee_id: int, ordered_ids: List[int]
+        self, employee_id: int, ordered_ids: list[int]
     ) -> MutationResponse[None]:
         """Renumber sort_order 0,1,2… from the given order. Ids that do not
         belong to this employee are ignored rather than trusted."""

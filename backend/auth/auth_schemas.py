@@ -1,4 +1,5 @@
-from typing import Annotated, List, Optional
+from typing import Annotated
+
 from pydantic import BaseModel
 
 
@@ -7,7 +8,7 @@ class LDAPUser(BaseModel):
 
     user_ukr: str
     full_name: str
-    group: List[str]
+    group: list[str]
     exp: Annotated[int, None] = None
     iat: Annotated[int, None] = None
 
@@ -17,9 +18,9 @@ class TokenUser(BaseModel):
 
     sub: str  # This will be the employee's code from your database
     username: str  # This will be the employee's name from your database
-    user_ukr: Optional[str] = None
-    groups: Optional[List[str]] = None
-    operations: Optional[List[str]] = None
+    user_ukr: str | None = None
+    groups: list[str] | None = None
+    operations: list[str] | None = None
 
 
 class AuthResponse(BaseModel):

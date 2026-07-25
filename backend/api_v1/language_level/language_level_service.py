@@ -1,4 +1,3 @@
-from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,6 +11,6 @@ class LanguageLevelService(BaseService):
     def __init__(
         self,
         repository: LanguageLevelRepository,
-        session: Optional[AsyncSession] = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, session=session)

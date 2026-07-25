@@ -1,78 +1,74 @@
-from typing import Optional, List
-from dataclasses import dataclass
 from collections.abc import Callable
+from dataclasses import dataclass
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from backend.api_v1.app_setting.app_setting_service import get_int_setting
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.app_setting.app_setting_service import get_int_setting
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.utils.enums import (
-    PlanSessionStatusKey,
-    PLAN_SESSION_ACTIVE_STATUS_KEYS,
-)
-
 from backend.api_v1.department.department_model import Department
 from backend.api_v1.department_category.department_category_model import (
     DepartmentCategory,
 )
-from backend.api_v1.job.job_model import Job
-from backend.api_v1.job_job_group_link.job_job_group_link_model import JobJobGroupLink
 from backend.api_v1.department_type_job_link.department_type_job_link_model import (
     DepartmentTypeJobLink,
 )
-
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.job.job_model import Job
+from backend.api_v1.job_job_group_link.job_job_group_link_model import JobJobGroupLink
+from backend.api_v1.planning.plan_category_default.plan_category_default_repository import (
+    PlanCategoryDefaultRepository,
+)
+from backend.api_v1.planning.plan_scope.plan_scope_model import PlanScope
+from backend.api_v1.planning.plan_scope_default.plan_scope_default_repository import (
+    PlanScopeDefaultRepository,
+)
+from backend.api_v1.planning.plan_session.plan_session_messages import (
+    PlanSessionActiveLimit,
+    PlanSessionCategoryOverlap,
+    PlanSessionCloseSuccess,
+    PlanSessionCreateSuccess,
+    PlanSessionDeleteError,
+    PlanSessionDeleteSuccess,
+    PlanSessionInvalidRange,
+    PlanSessionNameTaken,
+    PlanSessionNoMatchingScopes,
+    PlanSessionNotClosed,
+    PlanSessionNotFound,
+    PlanSessionOpenSuccess,
+    PlanSessionPendingExists,
+    PlanSessionResyncNotOpen,
+    PlanSessionResyncSuccess,
+    PlanSessionRevertBlocked,
+    PlanSessionRevertSuccess,
+    PlanSessionUpdateSuccess,
+)
 from backend.api_v1.planning.plan_session.plan_session_repository import (
     PlanSessionRepository,
 )
 from backend.api_v1.planning.plan_session.plan_session_schema import (
     PlanSession as PlanSessionSchema,
+)
+from backend.api_v1.planning.plan_session.plan_session_schema import (
     PlanSessionCreate,
     PlanSessionUpdate,
-)
-from backend.api_v1.planning.plan_session.plan_session_messages import (
-    PlanSessionNotFound,
-    PlanSessionNameTaken,
-    PlanSessionCategoryOverlap,
-    PlanSessionInvalidRange,
-    PlanSessionPendingExists,
-    PlanSessionActiveLimit,
-    PlanSessionRevertBlocked,
-    PlanSessionNotClosed,
-    PlanSessionDeleteError,
-    PlanSessionNoMatchingScopes,
-    PlanSessionResyncNotOpen,
-)
-from backend.api_v1.planning.plan_session.plan_session_messages import (
-    PlanSessionCreateSuccess,
-    PlanSessionUpdateSuccess,
-    PlanSessionDeleteSuccess,
-    PlanSessionOpenSuccess,
-    PlanSessionCloseSuccess,
-    PlanSessionRevertSuccess,
-    PlanSessionResyncSuccess,
-)
-
-from backend.api_v1.planning.plan_session_status.plan_session_status_repository import (
-    PlanSessionStatusRepository,
-)
-from backend.api_v1.planning.plan_session_status.plan_session_status_messages import (
-    PlanSessionStatusNotFoundByKey,
-)
-from backend.api_v1.planning.plan_category_default.plan_category_default_repository import (
-    PlanCategoryDefaultRepository,
-)
-from backend.api_v1.planning.plan_scope_default.plan_scope_default_repository import (
-    PlanScopeDefaultRepository,
 )
 from backend.api_v1.planning.plan_session_category.plan_session_category_model import (
     PlanSessionCategory,
 )
-from backend.api_v1.planning.plan_scope.plan_scope_model import PlanScope
+from backend.api_v1.planning.plan_session_status.plan_session_status_messages import (
+    PlanSessionStatusNotFoundByKey,
+)
+from backend.api_v1.planning.plan_session_status.plan_session_status_repository import (
+    PlanSessionStatusRepository,
+)
+from backend.utils.enums import (
+    PLAN_SESSION_ACTIVE_STATUS_KEYS,
+    PlanSessionStatusKey,
+)
 
 
 @dataclass
@@ -92,8 +88,8 @@ class PlanSessionService(BaseService):
     def __init__(
         self,
         repository: PlanSessionRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
         # Sibling repositories sharing the same AsyncSession
@@ -110,7 +106,7 @@ class PlanSessionService(BaseService):
             raise await self._resolve_domain_error(PlanSessionNotFound(id))
         return result
 
-    async def get_plan_sessions(self) -> List[PlanSessionSchema]:
+    async def get_plan_sessions(self) -> list[PlanSessionSchema]:
         records = await self.repository.get_all_ordered()
         return [PlanSessionSchema.model_validate(r) for r in records]
 

@@ -1,4 +1,3 @@
-from typing import List, Optional
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,23 +6,23 @@ from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.talent_audit_job_status.talent_audit_job_status_messages import (
+    TalentAuditJobStatusCreateSuccess,
     TalentAuditJobStatusDeleteError,
+    TalentAuditJobStatusDeleteSuccess,
     TalentAuditJobStatusNameTaken,
     TalentAuditJobStatusNotFound,
     TalentAuditJobStatusNotFoundByName,
+    TalentAuditJobStatusUpdateSuccess,
 )
 from backend.api_v1.talent_audit_job_status.talent_audit_job_status_repository import (
     TalentAuditJobStatusRepository,
 )
 from backend.api_v1.talent_audit_job_status.talent_audit_job_status_schema import (
     TalentAuditJobStatus as TalentAuditJobStatusSchema,
+)
+from backend.api_v1.talent_audit_job_status.talent_audit_job_status_schema import (
     TalentAuditJobStatusCreate,
     TalentAuditJobStatusUpdate,
-)
-from backend.api_v1.talent_audit_job_status.talent_audit_job_status_messages import (
-    TalentAuditJobStatusCreateSuccess,
-    TalentAuditJobStatusDeleteSuccess,
-    TalentAuditJobStatusUpdateSuccess,
 )
 
 
@@ -31,8 +30,8 @@ class TalentAuditJobStatusService(BaseService):
     def __init__(
         self,
         repository: TalentAuditJobStatusRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -46,9 +45,9 @@ class TalentAuditJobStatusService(BaseService):
 
     async def get_talent_audit_job_statuses(
         self,
-        name: Optional[str] = None,
-        sort: Optional[str] = None,
-    ) -> List[TalentAuditJobStatusSchema]:
+        name: str | None = None,
+        sort: str | None = None,
+    ) -> list[TalentAuditJobStatusSchema]:
         if name:
             record = await self.get_by_name(
                 name, not_found_exc=TalentAuditJobStatusNotFoundByName

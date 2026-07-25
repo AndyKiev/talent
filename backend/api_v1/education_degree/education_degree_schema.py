@@ -1,5 +1,5 @@
+
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional
 
 
 class EducationDegreeBase(BaseModel):

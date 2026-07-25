@@ -1,22 +1,22 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.hrm_scope.hrm_scope_schema import (
-    HrmScopeSchema,
-    HrmScopeCreate,
-    HrmScopeUpdate,
-    HrmEmployeeRow,
-)
 from backend.api_v1.hrm_scope.hrm_scope_dependencies import (
     get_hrm_scope_service,
     hrm_scope_by_id,
 )
+from backend.api_v1.hrm_scope.hrm_scope_schema import (
+    HrmEmployeeRow,
+    HrmScopeCreate,
+    HrmScopeSchema,
+    HrmScopeUpdate,
+)
 from backend.api_v1.hrm_scope.hrm_scope_service import HrmScopeService
-
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/admin/hrm_scopes",
@@ -30,7 +30,7 @@ router = APIRouter(
 
 @router.get(
     "/hrm_employees",
-    response_model=List[HrmEmployeeRow],
+    response_model=list[HrmEmployeeRow],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.HRM_SCOPE)],
 )
 async def get_hrm_employees(
@@ -42,7 +42,7 @@ async def get_hrm_employees(
 
 @router.get(
     "/by_employee/{employee_id}",
-    response_model=List[HrmScopeSchema],
+    response_model=list[HrmScopeSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.HRM_SCOPE)],
 )
 async def get_scopes_by_employee(

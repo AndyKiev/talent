@@ -1,18 +1,18 @@
 from fastapi import Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.database.db_helper import db_helper
 from backend.api_v1.department_type_job_link.department_type_job_link_repository import (
     DepartmentTypeJobLinkRepository,
-)
-from backend.api_v1.department_type_job_link.department_type_job_link_service import (
-    DepartmentTypeJobLinkService,
 )
 from backend.api_v1.department_type_job_link.department_type_job_link_schema import (
     DepartmentTypeJobLink as DepartmentTypeJobLinkSchema,
 )
+from backend.api_v1.department_type_job_link.department_type_job_link_service import (
+    DepartmentTypeJobLinkService,
+)
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.database.db_helper import db_helper
 
 
 def get_department_type_job_link_repository(

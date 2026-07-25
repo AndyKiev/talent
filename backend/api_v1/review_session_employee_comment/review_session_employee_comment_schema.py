@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -14,8 +13,8 @@ class ReviewCommentCreate(BaseModel):
 class ReviewCommentUpdate(BaseModel):
     """Owner-only edit: change the text and/or flip the visibility scope."""
 
-    body: Optional[str] = None
-    visibility: Optional[str] = None
+    body: str | None = None
+    visibility: str | None = None
 
 
 class ReviewCommentSchema(BaseModel):
@@ -30,5 +29,5 @@ class ReviewCommentSchema(BaseModel):
     # 'private' | 'to_subject' | 'to_oversight' | 'public'.
     visibility: str
     body: str
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None

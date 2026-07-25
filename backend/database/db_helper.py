@@ -1,14 +1,15 @@
 # db_helper.py
-from typing import AsyncGenerator, Any, Generator
-import asyncio
-from sqlalchemy.ext.asyncio import (
-    create_async_engine,
-    AsyncEngine,
-    async_sessionmaker,
-    AsyncSession,
-)
+from collections.abc import AsyncGenerator
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+from sqlalchemy.orm import scoped_session, sessionmaker
+
 from backend.config import settings
 
 

@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, Date, Index
 from datetime import date
 from typing import TYPE_CHECKING
+
+from sqlalchemy import Date, ForeignKey, Index
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 
 if TYPE_CHECKING:
-    from backend.api_v1.employee.employee_model import Employee
     from backend.api_v1.department.department_model import Department
+    from backend.api_v1.employee.employee_model import Employee
     from backend.api_v1.table_relationship_links.employee_user_group_link_model import (
         EmployeeUserGroupLink,
     )
@@ -70,11 +71,11 @@ class HrmScope(IntIdPkMixin, TimestampMixin, Base):
     end_date: Mapped[date] = mapped_column(Date, nullable=False)
 
     # -- Relationships --------------------------------------------------------
-    employee_user_group_link: Mapped["EmployeeUserGroupLink"] = relationship(
+    employee_user_group_link: Mapped[EmployeeUserGroupLink] = relationship(
         lazy="selectin",
     )
-    employee: Mapped["Employee"] = relationship(lazy="selectin")
-    department: Mapped["Department"] = relationship(lazy="selectin")
+    employee: Mapped[Employee] = relationship(lazy="selectin")
+    department: Mapped[Department] = relationship(lazy="selectin")
 
     def __repr__(self) -> str:
         return (

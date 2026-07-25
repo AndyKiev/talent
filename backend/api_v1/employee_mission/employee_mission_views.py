@@ -1,4 +1,4 @@
-from typing import Annotated, List
+from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPBearer
@@ -31,7 +31,7 @@ router = APIRouter(
 
 @router.get(
     "/employee/{employee_id}",
-    response_model=List[EmployeeMissionSchema],
+    response_model=list[EmployeeMissionSchema],
     dependencies=[
         PeopleReviewScopedGuard(OperationVerb.VIEW, EssenceName.EMPLOYEE_MISSION)
     ],
@@ -46,7 +46,7 @@ async def get_missions_for_employee(
 
 @router.get(
     "/employee/{employee_id}/history",
-    response_model=List[EmployeeMissionHistoryEntry],
+    response_model=list[EmployeeMissionHistoryEntry],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE_MISSION_HISTORY)],
 )
 async def get_employee_mission_history(
@@ -114,7 +114,7 @@ async def delete_mission(
 
 @router.get(
     "/{mission_id}/history",
-    response_model=List[EmployeeMissionHistoryEntry],
+    response_model=list[EmployeeMissionHistoryEntry],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE_MISSION_HISTORY)],
 )
 async def get_mission_history(

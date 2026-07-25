@@ -1,11 +1,11 @@
 from sqlalchemy import select
 
 from backend.api_v1.base.base_repository import BaseRepository
-from backend.api_v1.planning.plan_scope.plan_scope_model import PlanScope
 from backend.api_v1.department.department_model import Department
 from backend.api_v1.department_region_link.department_region_link_model import (
     DepartmentRegionLink,
 )
+from backend.api_v1.planning.plan_scope.plan_scope_model import PlanScope
 from backend.api_v1.region.region_model import Region
 
 

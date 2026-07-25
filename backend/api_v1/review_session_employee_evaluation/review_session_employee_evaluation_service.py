@@ -1,28 +1,19 @@
-from typing import Optional, List
 
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import raiseload
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_repository import (
-    ReviewSessionEmployeeEvaluationRepository,
-)
-from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_schema import (
-    Evaluation as EvaluationSchema,
-    EvaluationUpdate,
-    EvaluationBulkUpdate,
-    EvaluationFlipCompetence,
-)
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_messages import (
-    EvaluationNotFound,
-    EvaluationNotEditable,
+from backend.api_v1.review_session_criterion.review_session_criterion_model import (
+    ReviewSessionCriterion,
 )
-from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_messages import (
-    EvaluationSaveSuccess,
+from backend.api_v1.review_session_criterion.review_session_criterion_schema import (
+    FrozenCriterionSchema,
 )
-from backend.api_v1.review_session_employee_criterion_score.review_session_employee_criterion_score_model import (
-    ReviewSessionEmployeeCriterionScore,
+from backend.api_v1.review_session_employee.review_session_employee_model import (
+    ReviewSessionEmployee,
 )
 from backend.api_v1.review_session_employee.review_session_employee_repository import (
     ReviewSessionEmployeeRepository,
@@ -30,35 +21,43 @@ from backend.api_v1.review_session_employee.review_session_employee_repository i
 from backend.api_v1.review_session_employee.review_session_employee_service import (
     ReviewSessionEmployeeService,
 )
-from backend.api_v1.review_session_employee.review_session_employee_model import (
-    ReviewSessionEmployee,
+from backend.api_v1.review_session_employee_criterion_score.review_session_employee_criterion_score_model import (
+    ReviewSessionEmployeeCriterionScore,
 )
-from backend.api_v1.review_session_criterion.review_session_criterion_model import (
-    ReviewSessionCriterion,
+from backend.api_v1.review_session_employee_dimension.review_session_employee_dimension_model import (
+    ReviewSessionEmployeeDimension,
 )
-from backend.api_v1.review_session_criterion.review_session_criterion_schema import (
-    FrozenCriterionSchema,
+from backend.api_v1.review_session_employee_dimension_type.review_session_employee_dimension_type_messages import (
+    ReviewSessionEmployeeDimensionTypeNotFound,
 )
 from backend.api_v1.review_session_employee_dimension_type.review_session_employee_dimension_type_model import (
     STRONG,
     ReviewSessionEmployeeDimensionType,
 )
-from backend.api_v1.review_session_employee_dimension_type.review_session_employee_dimension_type_messages import (
-    ReviewSessionEmployeeDimensionTypeNotFound,
+from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_messages import (
+    EvaluationNotEditable,
+    EvaluationNotFound,
+    EvaluationSaveSuccess,
 )
-from backend.api_v1.review_session_employee_dimension.review_session_employee_dimension_model import (
-    ReviewSessionEmployeeDimension,
+from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_repository import (
+    ReviewSessionEmployeeEvaluationRepository,
 )
-from sqlalchemy import delete, select
-from sqlalchemy.orm import raiseload
+from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_schema import (
+    Evaluation as EvaluationSchema,
+)
+from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_schema import (
+    EvaluationBulkUpdate,
+    EvaluationFlipCompetence,
+    EvaluationUpdate,
+)
 
 
 class ReviewSessionEmployeeEvaluationService(BaseService):
     def __init__(
         self,
         repository: ReviewSessionEmployeeEvaluationRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -93,7 +92,7 @@ class ReviewSessionEmployeeEvaluationService(BaseService):
     async def get_evaluations(
         self,
         review_session_employee_id: int,
-    ) -> List[EvaluationSchema]:
+    ) -> list[EvaluationSchema]:
         await self._assert_rse_visible(review_session_employee_id)
         records = await self.repository.list_by_rse(review_session_employee_id)
         frozen_by_dim = await self._frozen_criteria_by_dimension(
@@ -108,7 +107,7 @@ class ReviewSessionEmployeeEvaluationService(BaseService):
 
     async def _frozen_criteria_by_dimension(
         self, review_session_employee_id: int
-    ) -> dict[int, List[FrozenCriterionSchema]]:
+    ) -> dict[int, list[FrozenCriterionSchema]]:
         """The session's frozen criteria (this RSE's session), grouped by
         dimension and ordered for display. Empty when the session predates the
         freeze — the frontend then falls back to parsing the live hint."""
@@ -138,7 +137,7 @@ class ReviewSessionEmployeeEvaluationService(BaseService):
             .scalars()
             .all()
         )
-        grouped: dict[int, List[FrozenCriterionSchema]] = {}
+        grouped: dict[int, list[FrozenCriterionSchema]] = {}
         for row in rows:
             grouped.setdefault(row.dimension_id, []).append(
                 FrozenCriterionSchema.model_validate(row)
@@ -162,8 +161,8 @@ class ReviewSessionEmployeeEvaluationService(BaseService):
         return MutationResponse(detail=detail, data=schema)
 
     async def bulk_update(
-        self, updates: List[EvaluationBulkUpdate]
-    ) -> MutationResponse[List[EvaluationSchema]]:
+        self, updates: list[EvaluationBulkUpdate]
+    ) -> MutationResponse[list[EvaluationSchema]]:
         results = []
         for upd in updates:
             orm_record = await self.get_by_id(upd.id)

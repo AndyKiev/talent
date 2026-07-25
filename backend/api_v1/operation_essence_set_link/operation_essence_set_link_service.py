@@ -1,41 +1,37 @@
 # backend/api_v1/operation_essence_set_link/operation_essence_set_link_service.py
-from typing import List, Optional
 
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.operation_essence_set_link.operation_essence_set_link_repository import (
-    OperationEssenceSetLinkRepository,
+from backend.api_v1.essence.essence_model import Essence
+from backend.api_v1.essence_set.essence_set_service import EssenceSetService
+from backend.api_v1.operation.operation_model import Operation
+from backend.api_v1.operation_essence_set_link.operation_essence_set_link_messages import (
+    OperationEssenceSetLinkCreateSuccess,
+    OperationEssenceSetLinkDeleteSuccess,
+    OperationEssenceSetLinkDuplicate,
+    OperationEssenceSetLinkNotFound,
 )
 from backend.api_v1.operation_essence_set_link.operation_essence_set_link_model import (
     OperationEssenceSetLink,
 )
+from backend.api_v1.operation_essence_set_link.operation_essence_set_link_repository import (
+    OperationEssenceSetLinkRepository,
+)
 from backend.api_v1.operation_essence_set_link.operation_essence_set_link_schema import (
-    OperationEssenceSetLinkSchema,
     OperationEssenceSetLinkCreate,
+    OperationEssenceSetLinkSchema,
     PermissionMatrixApplyRequest,
     PermissionMatrixApplyResult,
     PermissionMatrixGroupDiff,
     PermissionSyncResult,
     PermissionSyncSkip,
 )
-from backend.api_v1.operation_essence_set_link.operation_essence_set_link_messages import (
-    OperationEssenceSetLinkNotFound,
-    OperationEssenceSetLinkDuplicate,
-)
-from backend.api_v1.operation_essence_set_link.operation_essence_set_link_messages import (
-    OperationEssenceSetLinkCreateSuccess,
-    OperationEssenceSetLinkDeleteSuccess,
-)
-from backend.api_v1.essence_set.essence_set_service import EssenceSetService
 from backend.api_v1.table_relationship_links.user_group_operation_essence_set_link_model import (
     UserGroupOperationEssenceSetLink,
 )
-from sqlalchemy import select, delete, func
-
-from backend.api_v1.operation.operation_model import Operation
-from backend.api_v1.essence.essence_model import Essence
 
 
 class OperationEssenceSetLinkService(BaseService):
@@ -51,7 +47,7 @@ class OperationEssenceSetLinkService(BaseService):
         self,
         repository: OperationEssenceSetLinkRepository,
         essence_set_service: EssenceSetService,
-        session: Optional[AsyncSession] = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, session=session)
         self.essence_set_service = essence_set_service
@@ -84,7 +80,7 @@ class OperationEssenceSetLinkService(BaseService):
 
     # -- Read -------------------------------------------------------------------
 
-    async def get_all(self) -> List[OperationEssenceSetLinkSchema]:
+    async def get_all(self) -> list[OperationEssenceSetLinkSchema]:
         links = await self.repository.get_all_links()
         return [self._to_schema(link) for link in links]
 
@@ -146,7 +142,7 @@ class OperationEssenceSetLinkService(BaseService):
 
     async def get_for_user_group(
         self, user_group_id: int
-    ) -> List[OperationEssenceSetLinkSchema]:
+    ) -> list[OperationEssenceSetLinkSchema]:
         """All set-grain permissions currently granted to a user group."""
         stmt = (
             select(OperationEssenceSetLink)
@@ -203,7 +199,7 @@ class OperationEssenceSetLinkService(BaseService):
         await self.session.commit()
 
     async def set_group_permissions(
-        self, user_group_id: int, oesl_ids: List[int]
+        self, user_group_id: int, oesl_ids: list[int]
     ) -> None:
         """
         Full replace: set exactly these OESL ids as the group's set-grain
@@ -248,7 +244,7 @@ class OperationEssenceSetLinkService(BaseService):
         all_links = await self.repository.get_all_links()
         valid_ids = {link.id for link in all_links}
 
-        diffs: List[PermissionMatrixGroupDiff] = []
+        diffs: list[PermissionMatrixGroupDiff] = []
         total_added = total_removed = total_unknown = 0
 
         for grp in request.groups:
@@ -320,13 +316,13 @@ class OperationEssenceSetLinkService(BaseService):
                 stack.extend(getattr(dep, "dependencies", []))
         return seen
 
-    async def _resolve_operation_id(self, name: str) -> Optional[int]:
+    async def _resolve_operation_id(self, name: str) -> int | None:
         result = await self.session.execute(
             select(Operation.id).where(func.lower(Operation.name) == name.lower())
         )
         return result.scalar_one_or_none()
 
-    async def _resolve_essence_id(self, name: str) -> Optional[int]:
+    async def _resolve_essence_id(self, name: str) -> int | None:
         result = await self.session.execute(
             select(Essence.id).where(func.lower(Essence.name) == name.lower())
         )
@@ -344,7 +340,7 @@ class OperationEssenceSetLinkService(BaseService):
         """
         required = self._extract_required_permissions(app)
         created = existing = 0
-        skipped: List[PermissionSyncSkip] = []
+        skipped: list[PermissionSyncSkip] = []
 
         for op_name, essence_names in sorted(required):
             op_id = await self._resolve_operation_id(op_name)
@@ -358,8 +354,8 @@ class OperationEssenceSetLinkService(BaseService):
                 )
                 continue
 
-            essence_ids: List[int] = []
-            missing: List[str] = []
+            essence_ids: list[int] = []
+            missing: list[str] = []
             for en in essence_names:
                 eid = await self._resolve_essence_id(en)
                 if eid is None:

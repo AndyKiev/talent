@@ -1,8 +1,6 @@
 # scripts/generate_keys.py
-import os
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-import base64
 
 
 def generate_keys():
@@ -36,8 +34,8 @@ def generate_keys():
         f.write(pem_public)
 
     print("Keys generated successfully:")
-    print(f"- private_key.pem")
-    print(f"- public_key.pem")
+    print("- private_key.pem")
+    print("- public_key.pem")
 
 
 if __name__ == "__main__":

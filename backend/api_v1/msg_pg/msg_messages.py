@@ -1,4 +1,4 @@
-from backend.api_v1.base.errors import NotFoundError, AlreadyExistsError
+from backend.api_v1.base.errors import AlreadyExistsError, NotFoundError
 
 
 class MsgNotFound(NotFoundError):

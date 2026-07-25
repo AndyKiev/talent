@@ -1,6 +1,5 @@
-from typing import Optional, List, Tuple
 
-from sqlalchemy import select, func, and_
+from sqlalchemy import func, select
 
 from backend.api_v1.base.base_repository import BaseRepository
 from backend.api_v1.department_type.department_type_model import DepartmentType
@@ -18,8 +17,8 @@ class DepartmentTypeRepository(BaseRepository):
 
     async def get_with_link_stats(
         self,
-        is_active: Optional[bool] = None,
-    ) -> List[Tuple[DepartmentType, List[str], int]]:
+        is_active: bool | None = None,
+    ) -> list[tuple[DepartmentType, list[str], int]]:
         """
         Return (DepartmentType, parent_names, job_count) tuples.
 

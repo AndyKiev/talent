@@ -1,25 +1,24 @@
-from typing import Optional, List
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.employee.employee_minis import fetch_employee_minis
 from backend.api_v1.candidate_application.candidate_application_model import (
     CandidateApplication,
+)
+from backend.api_v1.employee.employee_minis import fetch_employee_minis
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.interview.interview_messages import (
+    InterviewFeedbackCreateSuccess,
+    InterviewNotFound,
 )
 from backend.api_v1.interview.interview_model import Interview
 from backend.api_v1.interview.interview_repository import InterviewRepository
 from backend.api_v1.interview.interview_schema import (
-    InterviewFeedbackSchema,
-    InterviewFeedbackCreate,
     InterviewEmployeeMini,
-)
-from backend.api_v1.interview.interview_messages import (
-    InterviewNotFound,
-    InterviewFeedbackCreateSuccess,
+    InterviewFeedbackCreate,
+    InterviewFeedbackSchema,
 )
 from backend.api_v1.interview_feedback.interview_feedback_model import InterviewFeedback
 from backend.api_v1.interview_feedback.interview_feedback_repository import (
@@ -31,15 +30,15 @@ class InterviewFeedbackService(BaseService):
     def __init__(
         self,
         repository: InterviewFeedbackRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
         self.interview_repository = InterviewRepository(session=session)
 
     async def _enrich_many(
-        self, schemas: List[InterviewFeedbackSchema]
-    ) -> List[InterviewFeedbackSchema]:
+        self, schemas: list[InterviewFeedbackSchema]
+    ) -> list[InterviewFeedbackSchema]:
         emp_minis = await fetch_employee_minis(
             self.repository.session, (s.author_id for s in schemas)
         )
@@ -51,9 +50,9 @@ class InterviewFeedbackService(BaseService):
 
     async def get_feedbacks(
         self,
-        interview_id: Optional[int] = None,
-        candidate_id: Optional[int] = None,
-    ) -> List[InterviewFeedbackSchema]:
+        interview_id: int | None = None,
+        candidate_id: int | None = None,
+    ) -> list[InterviewFeedbackSchema]:
         session = self.repository.session
         stmt = select(InterviewFeedback).order_by(InterviewFeedback.created_at.desc())
         if interview_id is not None:

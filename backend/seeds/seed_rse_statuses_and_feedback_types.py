@@ -13,8 +13,8 @@
 # Idempotent: existing keys are left alone.
 #
 import asyncio
-from pathlib import Path
 import sys
+from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(_REPO_ROOT) not in sys.path:
@@ -22,18 +22,18 @@ if str(_REPO_ROOT) not in sys.path:
 
 from sqlalchemy import select
 
-from backend.database.db_helper import db_helper
+from backend.api_v1.review_session_employee_feedback_type.review_session_employee_feedback_type_model import (
+    EMPLOYEE,
+    MANAGER,
+    ReviewSessionEmployeeFeedbackType,
+)
 from backend.api_v1.review_session_employee_status.review_session_employee_status_model import (
     CLOSED,
     OPEN,
     REVIEWED,
     ReviewSessionEmployeeStatus,
 )
-from backend.api_v1.review_session_employee_feedback_type.review_session_employee_feedback_type_model import (
-    EMPLOYEE,
-    MANAGER,
-    ReviewSessionEmployeeFeedbackType,
-)
+from backend.database.db_helper import db_helper
 
 # (key, name, description, sort_order)
 STATUSES = [

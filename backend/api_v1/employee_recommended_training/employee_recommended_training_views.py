@@ -1,7 +1,9 @@
-from typing import Annotated, List
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee_recommended_training.employee_recommended_training_dependencies import (
@@ -9,6 +11,8 @@ from backend.api_v1.employee_recommended_training.employee_recommended_training_
 )
 from backend.api_v1.employee_recommended_training.employee_recommended_training_schema import (
     EmployeeRecommendedTraining as RecommendedTrainingSchema,
+)
+from backend.api_v1.employee_recommended_training.employee_recommended_training_schema import (
     EmployeeRecommendedTrainingCreate,
     EmployeeRecommendedTrainingList,
     EmployeeRecommendedTrainingReorder,
@@ -27,9 +31,6 @@ from backend.api_v1.review_session_employee.people_review_access import (
 from backend.database.db_helper import db_helper
 from backend.utils.enums import EssenceName, OperationVerb
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 router = APIRouter(
     prefix="/employee_recommended_trainings",
     tags=["Employee Recommended Trainings"],
@@ -37,7 +38,7 @@ router = APIRouter(
 )
 
 
-@router.get("/statuses", response_model=List[RecommendedTrainingStatusSchema])
+@router.get("/statuses", response_model=list[RecommendedTrainingStatusSchema])
 async def get_recommended_training_statuses(
     session: AsyncSession = Depends(db_helper.session_getter),
 ):

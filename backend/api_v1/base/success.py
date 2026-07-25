@@ -1,4 +1,3 @@
-from backend.api_v1.base.errors import DomainError
 
 
 class DomainSuccess(Exception):

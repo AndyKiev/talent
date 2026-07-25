@@ -1,11 +1,11 @@
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class EmployeeTrainingStatusBase(BaseModel):
     key: str = Field(..., max_length=32)
-    description: Optional[str] = Field(None, max_length=256)
+    description: str | None = Field(None, max_length=256)
 
 
 class EmployeeTrainingStatusCreate(EmployeeTrainingStatusBase):
@@ -13,9 +13,9 @@ class EmployeeTrainingStatusCreate(EmployeeTrainingStatusBase):
 
 
 class EmployeeTrainingStatusUpdate(BaseModel):
-    key: Optional[str] = Field(None, max_length=32)
-    description: Optional[str] = Field(None, max_length=256)
-    sort_order: Optional[int] = None
+    key: str | None = Field(None, max_length=32)
+    description: str | None = Field(None, max_length=256)
+    sort_order: int | None = None
 
 
 class EmployeeTrainingStatus(EmployeeTrainingStatusBase):

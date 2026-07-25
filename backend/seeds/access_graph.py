@@ -20,8 +20,8 @@
 from sqlalchemy import select
 
 from backend.api_v1.essence.essence_model import Essence
-from backend.api_v1.essence_set.essence_set_model import EssenceSet
 from backend.api_v1.essence_set.essence_set_member_model import EssenceSetMember
+from backend.api_v1.essence_set.essence_set_model import EssenceSet
 from backend.api_v1.operation_essence_set_link.operation_essence_set_link_model import (
     OperationEssenceSetLink,
 )

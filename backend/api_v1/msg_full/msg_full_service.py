@@ -1,5 +1,4 @@
 import json
-from typing import List, Optional
 
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -27,13 +26,13 @@ class MsgFullService(BaseService):
     def __init__(
         self,
         repository: MsgFullRepository,
-        session: Optional[AsyncSession] = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, session=session)
 
     # ── Read ───────────────────────────────────────────────────────────────
 
-    async def get_full_messages(self) -> List[FullMsgRead]:
+    async def get_full_messages(self) -> list[FullMsgRead]:
         msg_keys = await self.repository.get_all()
         return [self._to_schema(mk) for mk in msg_keys]
 
@@ -51,7 +50,7 @@ class MsgFullService(BaseService):
 
     # ── Write ──────────────────────────────────────────────────────────────
 
-    async def create_full_messages(self, data_in: List[FullMsgCreate]) -> None:
+    async def create_full_messages(self, data_in: list[FullMsgCreate]) -> None:
         """
         Upsert MsgKey by name, then insert child Msg rows.
         Rolls back and re-raises on any failure.

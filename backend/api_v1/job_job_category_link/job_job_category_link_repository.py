@@ -1,6 +1,5 @@
-from typing import Optional
 
-from sqlalchemy import select, delete, func
+from sqlalchemy import delete, func, select
 
 from backend.api_v1.base.base_repository import BaseRepository
 from backend.api_v1.job_job_category_link.job_job_category_link_model import (
@@ -11,7 +10,7 @@ from backend.api_v1.job_job_category_link.job_job_category_link_model import (
 class JobJobCategoryLinkRepository(BaseRepository):
     model = JobJobCategoryLink
 
-    async def get_for_job(self, job_id: int) -> Optional[JobJobCategoryLink]:
+    async def get_for_job(self, job_id: int) -> JobJobCategoryLink | None:
         stmt = select(JobJobCategoryLink).where(JobJobCategoryLink.job_id == job_id)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()

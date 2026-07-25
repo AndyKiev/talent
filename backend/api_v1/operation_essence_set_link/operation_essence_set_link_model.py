@@ -13,14 +13,16 @@
 # table stays the source of truth until cutover; this is its set-grain sibling.
 #
 from typing import TYPE_CHECKING
-from sqlalchemy import Integer, ForeignKey, UniqueConstraint
+
+from sqlalchemy import ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
 
 if TYPE_CHECKING:
-    from backend.api_v1.operation.operation_model import Operation
     from backend.api_v1.essence_set.essence_set_model import EssenceSet
+    from backend.api_v1.operation.operation_model import Operation
     from backend.api_v1.table_relationship_links.user_group_operation_essence_set_link_model import (
         UserGroupOperationEssenceSetLink,
     )

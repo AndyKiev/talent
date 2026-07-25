@@ -1,4 +1,3 @@
-from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,8 +33,8 @@ class EmployeeDevelopmentVisionService(BaseService):
     def __init__(
         self,
         repository: EmployeeDevelopmentVisionRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ) -> None:
         super().__init__(repository, user=user, session=session)
         self.access = EmployeeMissionAccess(user=user, session=session)
@@ -43,7 +42,7 @@ class EmployeeDevelopmentVisionService(BaseService):
 
     async def get_for_employee(
         self, employee_id: int
-    ) -> Optional[EmployeeDevelopmentVisionSchema]:
+    ) -> EmployeeDevelopmentVisionSchema | None:
         """None when the employee has not written one yet — the UI shows an empty
         card rather than a 404."""
         record = await self.repository.get_for_employee(employee_id)

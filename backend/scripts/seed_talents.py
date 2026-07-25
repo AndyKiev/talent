@@ -44,27 +44,26 @@ sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-from sqlalchemy import text  # noqa: E402
-
-from backend.database.db_helper import db_helper  # noqa: E402
-from backend.api_v1.employee.employee_repository import EmployeeRepository  # noqa: E402
-from backend.api_v1.employee.employee_service import EmployeeService  # noqa: E402
-from backend.api_v1.talent_audit.talent_audit_repository import (  # noqa: E402
+from backend.api_v1.employee.employee_repository import EmployeeRepository
+from backend.api_v1.employee.employee_service import EmployeeService
+from backend.api_v1.talent_audit.talent_audit_repository import (
     TalentAuditRepository,
 )
-from backend.api_v1.talent_audit.talent_audit_service import (  # noqa: E402
+from backend.api_v1.talent_audit.talent_audit_schema import TalentAuditCreate
+from backend.api_v1.talent_audit.talent_audit_service import (
     TalentAuditService,
 )
-from backend.api_v1.talent_audit.talent_audit_schema import TalentAuditCreate  # noqa: E402
-from backend.api_v1.talent_audit_job.talent_audit_job_repository import (  # noqa: E402
+from backend.api_v1.talent_audit_job.talent_audit_job_repository import (
     TalentAuditJobRepository,
 )
-from backend.api_v1.talent_audit_job.talent_audit_job_service import (  # noqa: E402
-    TalentAuditJobService,
-)
-from backend.api_v1.talent_audit_job.talent_audit_job_schema import (  # noqa: E402
+from backend.api_v1.talent_audit_job.talent_audit_job_schema import (
     TalentAuditJobCreate,
 )
+from backend.api_v1.talent_audit_job.talent_audit_job_service import (
+    TalentAuditJobService,
+)
+from backend.database.db_helper import db_helper
+from sqlalchemy import text
 
 ADMIN_CODE = "UKR7101004"
 SEED = 42

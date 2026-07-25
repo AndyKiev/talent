@@ -24,27 +24,27 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from sqlalchemy import select, desc
+from sqlalchemy import desc, select
 
-from backend.database.db_helper import db_helper
+from backend.api_v1.education_degree.education_degree_model import EducationDegree
+from backend.api_v1.employee.employee_model import Employee
+from backend.api_v1.employee_child.employee_child_model import EmployeeChild
+from backend.api_v1.employee_education.employee_education_model import EmployeeEducation
+from backend.api_v1.employee_language.employee_language_model import EmployeeLanguage
+from backend.api_v1.employee_language_profile.employee_language_profile_model import (
+    EmployeeLanguageProfile,
+)
+from backend.api_v1.language_level.language_level_model import LanguageLevel
+from backend.api_v1.marital_status.marital_status_model import MARITAL_STATUS_ID_BY_NAME
 from backend.api_v1.review_session.review_session_model import ReviewSession
 from backend.api_v1.review_session_employee.review_session_employee_model import (
     ReviewSessionEmployee,
 )
-from backend.api_v1.employee.employee_model import Employee
+from backend.api_v1.sex.sex_model import SEX_ID_BY_NAME
 from backend.api_v1.table_relationship_links.employee_personal_data_model import (
     EmployeePersonalData,
 )
-from backend.api_v1.employee_education.employee_education_model import EmployeeEducation
-from backend.api_v1.education_degree.education_degree_model import EducationDegree
-from backend.api_v1.employee_language_profile.employee_language_profile_model import (
-    EmployeeLanguageProfile,
-)
-from backend.api_v1.employee_language.employee_language_model import EmployeeLanguage
-from backend.api_v1.language_level.language_level_model import LanguageLevel
-from backend.api_v1.employee_child.employee_child_model import EmployeeChild
-from backend.api_v1.sex.sex_model import SEX_ID_BY_NAME
-from backend.api_v1.marital_status.marital_status_model import MARITAL_STATUS_ID_BY_NAME
+from backend.database.db_helper import db_helper
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Data banks
@@ -151,7 +151,7 @@ async def _seed_personal_data(session, emp: Employee):
         select(EmployeePersonalData).where(EmployeePersonalData.employee_id == emp.id)
     )
     if result.scalar_one_or_none() is not None:
-        print(f"   [SKIP] personal_data — already exists, skipping.")
+        print("   [SKIP] personal_data — already exists, skipping.")
         return
 
     sex = random.choice(["male", "female"])
@@ -188,7 +188,7 @@ async def _seed_education(session, emp: Employee, degree_map: dict[str, int]):
         select(EmployeeEducation).where(EmployeeEducation.employee_id == emp.id)
     )
     if list(result.scalars().all()):
-        print(f"   [SKIP] education — already exists, skipping.")
+        print("   [SKIP] education — already exists, skipping.")
         return
 
     uni = random.choice(_INSTITUTIONS)
@@ -236,7 +236,7 @@ async def _seed_languages(session, emp: Employee, level_by_code: dict[str, int])
     existing_profile = result.scalar_one_or_none()
 
     if existing_profile is not None and existing_profile.languages:
-        print(f"   [SKIP] languages — already exist, skipping.")
+        print("   [SKIP] languages — already exist, skipping.")
         return
 
     if existing_profile is None:
@@ -274,7 +274,7 @@ async def _seed_children(session, emp: Employee):
         select(EmployeeChild).where(EmployeeChild.person_id == emp.person_id)
     )
     if list(result.scalars().all()):
-        print(f"   [SKIP] children — already exist, skipping.")
+        print("   [SKIP] children — already exist, skipping.")
         return
 
     count = random.choices([0, 1, 2], weights=[30, 40, 30])[0]

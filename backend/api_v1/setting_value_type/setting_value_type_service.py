@@ -1,4 +1,3 @@
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,23 +5,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.setting_value_type.setting_value_type_messages import (
+    SettingValueTypeCreateSuccess,
+    SettingValueTypeDeleteError,
+    SettingValueTypeDeleteSuccess,
+    SettingValueTypeKeyTaken,
+    SettingValueTypeNotFound,
+    SettingValueTypeUpdateSuccess,
+)
 from backend.api_v1.setting_value_type.setting_value_type_repository import (
     SettingValueTypeRepository,
 )
 from backend.api_v1.setting_value_type.setting_value_type_schema import (
     SettingValueType as SettingValueTypeSchema,
+)
+from backend.api_v1.setting_value_type.setting_value_type_schema import (
     SettingValueTypeCreate,
     SettingValueTypeUpdate,
-)
-from backend.api_v1.setting_value_type.setting_value_type_messages import (
-    SettingValueTypeNotFound,
-    SettingValueTypeKeyTaken,
-    SettingValueTypeDeleteError,
-)
-from backend.api_v1.setting_value_type.setting_value_type_messages import (
-    SettingValueTypeDeleteSuccess,
-    SettingValueTypeCreateSuccess,
-    SettingValueTypeUpdateSuccess,
 )
 
 
@@ -30,8 +29,8 @@ class SettingValueTypeService(BaseService):
     def __init__(
         self,
         repository: SettingValueTypeRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -42,8 +41,8 @@ class SettingValueTypeService(BaseService):
         return result
 
     async def get_setting_value_types(
-        self, sort: Optional[str] = None
-    ) -> List[SettingValueTypeSchema]:
+        self, sort: str | None = None
+    ) -> list[SettingValueTypeSchema]:
         records = await self.get_all(sort_json=sort)
         return [SettingValueTypeSchema.model_validate(r) for r in records]
 

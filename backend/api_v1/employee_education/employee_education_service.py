@@ -1,26 +1,25 @@
-from typing import Optional, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.employee_education.employee_education_messages import (
+    EmployeeEducationCreateSuccess,
+    EmployeeEducationDeleteError,
+    EmployeeEducationDeleteSuccess,
+    EmployeeEducationNotFound,
+    EmployeeEducationUpdateSuccess,
+)
 from backend.api_v1.employee_education.employee_education_repository import (
     EmployeeEducationRepository,
 )
 from backend.api_v1.employee_education.employee_education_schema import (
     EmployeeEducation as EmployeeEducationSchema,
+)
+from backend.api_v1.employee_education.employee_education_schema import (
     EmployeeEducationCreate,
     EmployeeEducationUpdate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.employee_education.employee_education_messages import (
-    EmployeeEducationNotFound,
-    EmployeeEducationDeleteError,
-)
-from backend.api_v1.employee_education.employee_education_messages import (
-    EmployeeEducationDeleteSuccess,
-    EmployeeEducationCreateSuccess,
-    EmployeeEducationUpdateSuccess,
 )
 
 
@@ -28,8 +27,8 @@ class EmployeeEducationService(BaseService):
     def __init__(
         self,
         repository: EmployeeEducationRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -40,7 +39,7 @@ class EmployeeEducationService(BaseService):
             raise await self._resolve_domain_error(exc)
         return result
 
-    async def list_by_employee(self, employee_id: int) -> List[EmployeeEducationSchema]:
+    async def list_by_employee(self, employee_id: int) -> list[EmployeeEducationSchema]:
         records = await self.get_all(
             params={"employee_id": employee_id},
             sort_json='{"graduation_year": "desc"}',

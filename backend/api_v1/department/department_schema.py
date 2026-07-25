@@ -1,22 +1,22 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional, List
 from datetime import datetime
 
+from pydantic import BaseModel, ConfigDict, Field
+
+from backend.api_v1.department.department_org_units import TopOrgUnit
 from backend.api_v1.department_category.department_category_schema import (
     DepartmentCategory as DepartmentCategorySchema,
 )
 from backend.api_v1.department_type.department_type_schema import (
     DepartmentType as DepartmentTypeSchema,
 )
-from backend.api_v1.department.department_org_units import TopOrgUnit
 
 
 class DepartmentBase(BaseModel):
     name: str = Field(..., max_length=128)
     is_active: bool = True
-    parent_id: Optional[int] = None
+    parent_id: int | None = None
     department_category_id: int
     department_type_id: int
 
@@ -26,11 +26,11 @@ class DepartmentCreate(DepartmentBase):
 
 
 class DepartmentUpdate(BaseModel):
-    name: Optional[str] = Field(None, max_length=128)
-    is_active: Optional[bool] = None
-    parent_id: Optional[int] = None
-    department_category_id: Optional[int] = None
-    department_type_id: Optional[int] = None
+    name: str | None = Field(None, max_length=128)
+    is_active: bool | None = None
+    parent_id: int | None = None
+    department_category_id: int | None = None
+    department_type_id: int | None = None
 
 
 class Department(DepartmentBase):
@@ -46,9 +46,9 @@ class Department(DepartmentBase):
 
     id: int
     created_at: datetime
-    department_category: Optional[DepartmentCategorySchema] = None
-    department_type: Optional[DepartmentTypeSchema] = None
-    children: List["Department"] = []
+    department_category: DepartmentCategorySchema | None = None
+    department_type: DepartmentTypeSchema | None = None
+    children: list[Department] = []
 
 
 # Required to resolve the forward reference to self
@@ -65,8 +65,8 @@ class DepartmentFlat(DepartmentBase):
 
     id: int
     created_at: datetime
-    department_category: Optional[DepartmentCategorySchema] = None
-    department_type: Optional[DepartmentTypeSchema] = None
+    department_category: DepartmentCategorySchema | None = None
+    department_type: DepartmentTypeSchema | None = None
 
 
 class DepartmentSubtreeGenerateResult(BaseModel):
@@ -79,7 +79,7 @@ class DepartmentSubtreeGenerateResult(BaseModel):
     detail: str
     root_id: int
     created_count: int = 0
-    created: List[DepartmentFlat] = []
+    created: list[DepartmentFlat] = []
 
 
 class DepartmentTopResolution(BaseModel):
@@ -88,4 +88,4 @@ class DepartmentTopResolution(BaseModel):
     employee job-history view to show main (top) + subordinate department."""
 
     department_id: int
-    top: Optional[TopOrgUnit] = None
+    top: TopOrgUnit | None = None

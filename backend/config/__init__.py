@@ -1,7 +1,7 @@
 __all__ = [
+    "Logger",
     "Settings",
     "settings",
-    "Logger",
 ]
 
 # Use relative import

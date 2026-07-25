@@ -1,4 +1,3 @@
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,21 +5,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.planning.plan_category_default.plan_category_default_messages import (
+    PlanCategoryDefaultCreateSuccess,
+    PlanCategoryDefaultDeleteError,
+    PlanCategoryDefaultDeleteSuccess,
+    PlanCategoryDefaultExists,
+    PlanCategoryDefaultNotFound,
+)
 from backend.api_v1.planning.plan_category_default.plan_category_default_repository import (
     PlanCategoryDefaultRepository,
 )
 from backend.api_v1.planning.plan_category_default.plan_category_default_schema import (
     PlanCategoryDefault as PlanCategoryDefaultSchema,
+)
+from backend.api_v1.planning.plan_category_default.plan_category_default_schema import (
     PlanCategoryDefaultCreate,
-)
-from backend.api_v1.planning.plan_category_default.plan_category_default_messages import (
-    PlanCategoryDefaultNotFound,
-    PlanCategoryDefaultExists,
-    PlanCategoryDefaultDeleteError,
-)
-from backend.api_v1.planning.plan_category_default.plan_category_default_messages import (
-    PlanCategoryDefaultCreateSuccess,
-    PlanCategoryDefaultDeleteSuccess,
 )
 
 
@@ -28,8 +27,8 @@ class PlanCategoryDefaultService(BaseService):
     def __init__(
         self,
         repository: PlanCategoryDefaultRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -39,7 +38,7 @@ class PlanCategoryDefaultService(BaseService):
             raise await self._resolve_domain_error(PlanCategoryDefaultNotFound(id))
         return result
 
-    async def get_plan_category_defaults(self) -> List[PlanCategoryDefaultSchema]:
+    async def get_plan_category_defaults(self) -> list[PlanCategoryDefaultSchema]:
         records = await self.get_all(sort="id")
         return [PlanCategoryDefaultSchema.model_validate(r) for r in records]
 

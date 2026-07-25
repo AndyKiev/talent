@@ -1,25 +1,24 @@
-from typing import Optional, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_messages import EmployeeNotFound
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.employee_child.employee_child_messages import (
+    EmployeeChildCreateSuccess,
+    EmployeeChildDeleteError,
+    EmployeeChildDeleteSuccess,
+    EmployeeChildNotFound,
+)
 from backend.api_v1.employee_child.employee_child_repository import (
     EmployeeChildRepository,
 )
 from backend.api_v1.employee_child.employee_child_schema import (
     EmployeeChild as EmployeeChildSchema,
+)
+from backend.api_v1.employee_child.employee_child_schema import (
     EmployeeChildCreate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.employee_child.employee_child_messages import (
-    EmployeeChildNotFound,
-    EmployeeChildDeleteError,
-)
-from backend.api_v1.employee.employee_messages import EmployeeNotFound
-from backend.api_v1.employee_child.employee_child_messages import (
-    EmployeeChildDeleteSuccess,
-    EmployeeChildCreateSuccess,
 )
 
 
@@ -27,8 +26,8 @@ class EmployeeChildService(BaseService):
     def __init__(
         self,
         repository: EmployeeChildRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -42,6 +41,7 @@ class EmployeeChildService(BaseService):
     async def _person_id_for_employee(self, employee_id: int) -> int:
         """Children belong to the PERSON; the HTTP API still speaks employee_id."""
         from sqlalchemy import select
+
         from backend.api_v1.employee.employee_model import Employee
 
         person_id = await self.repository.session.scalar(
@@ -51,7 +51,7 @@ class EmployeeChildService(BaseService):
             raise await self._resolve_domain_error(EmployeeNotFound(employee_id))
         return person_id
 
-    async def list_by_employee(self, employee_id: int) -> List[EmployeeChildSchema]:
+    async def list_by_employee(self, employee_id: int) -> list[EmployeeChildSchema]:
         person_id = await self._person_id_for_employee(employee_id)
         records = await self.get_all(
             params={"person_id": person_id},

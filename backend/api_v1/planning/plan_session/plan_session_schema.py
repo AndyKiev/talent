@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
-from typing import Optional, List
 from datetime import date, datetime
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from backend.api_v1.planning.plan_session_status.plan_session_status_schema import (
     PlanSessionStatus as PlanSessionStatusSchema,
@@ -11,12 +11,12 @@ from backend.api_v1.planning.plan_session_status.plan_session_status_schema impo
 
 class PlanSessionBase(BaseModel):
     name: str = Field(..., max_length=64)
-    description: Optional[str] = Field(None, max_length=256)
+    description: str | None = Field(None, max_length=256)
     start_date: date
     end_date: date
 
     @model_validator(mode="after")
-    def _check_dates(self) -> "PlanSessionBase":
+    def _check_dates(self) -> PlanSessionBase:
         if self.end_date < self.start_date:
             raise ValueError("end_date must be on or after start_date")
         return self
@@ -32,20 +32,20 @@ class PlanSessionCreate(PlanSessionBase):
     or omitted, the service falls back to plan_category_defaults.
     """
 
-    department_category_ids: Optional[List[int]] = None
+    department_category_ids: list[int] | None = None
 
 
 class PlanSessionResyncRequest(BaseModel):
     """Optional category ids to ADD to the session before reconciling."""
 
-    add_category_ids: Optional[List[int]] = None
+    add_category_ids: list[int] | None = None
 
 
 class PlanSessionUpdate(BaseModel):
-    name: Optional[str] = Field(None, max_length=64)
-    description: Optional[str] = Field(None, max_length=256)
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
+    name: str | None = Field(None, max_length=64)
+    description: str | None = Field(None, max_length=256)
+    start_date: date | None = None
+    end_date: date | None = None
 
 
 class PlanSession(PlanSessionBase):
@@ -54,4 +54,4 @@ class PlanSession(PlanSessionBase):
     plan_session_status_id: int
     is_active: bool
     created_at: datetime
-    status: Optional[PlanSessionStatusSchema] = None
+    status: PlanSessionStatusSchema | None = None

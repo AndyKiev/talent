@@ -1,6 +1,6 @@
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, Field
 
 from backend.utils.enums import MoveDirection
 
@@ -17,9 +17,9 @@ class RegionCreate(RegionBase):
 
 
 class RegionUpdate(BaseModel):
-    name: Optional[str] = Field(None, max_length=128)
-    key: Optional[str] = Field(None, max_length=64)
-    is_active: Optional[bool] = None
+    name: str | None = Field(None, max_length=128)
+    key: str | None = Field(None, max_length=64)
+    is_active: bool | None = None
 
 
 class RegionMove(BaseModel):

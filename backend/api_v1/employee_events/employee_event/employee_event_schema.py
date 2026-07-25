@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional, List
 from datetime import date, datetime
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class EmployeeEventBase(BaseModel):
     event_type_id: int
     status_id: int
     effective_date: date
-    description: Optional[str] = Field(None, max_length=512)
+    description: str | None = Field(None, max_length=512)
 
 
 class EmployeeEventCreate(EmployeeEventBase):
@@ -20,7 +20,7 @@ class EmployeeEventCreate(EmployeeEventBase):
     by the service from the authenticated HRM session.
     """
 
-    changes: List["EmployeeEventChangeCreate"] = []
+    changes: list[EmployeeEventChangeCreate] = []
 
 
 class EmployeeEventUpdate(BaseModel):
@@ -31,9 +31,9 @@ class EmployeeEventUpdate(BaseModel):
     Changes are managed via their own nested endpoints.
     """
 
-    status_id: Optional[int] = None
-    effective_date: Optional[date] = None
-    description: Optional[str] = Field(None, max_length=512)
+    status_id: int | None = None
+    effective_date: date | None = None
+    description: str | None = Field(None, max_length=512)
 
 
 class EmployeeEventSchema(EmployeeEventBase):
@@ -42,9 +42,9 @@ class EmployeeEventSchema(EmployeeEventBase):
     employee_id: int
     created_by: int
     created_at: datetime
-    event_type: Optional["EmployeeEventType"] = None
-    status: Optional["EmployeeEventStatusSchema"] = None
-    changes: List["EmployeeEventChangeSchema"] = []
+    event_type: EmployeeEventType | None = None
+    status: EmployeeEventStatusSchema | None = None
+    changes: list[EmployeeEventChangeSchema] = []
 
 
 class EmployeeEventFlat(EmployeeEventBase):
@@ -58,21 +58,21 @@ class EmployeeEventFlat(EmployeeEventBase):
     employee_id: int
     created_by: int
     created_at: datetime
-    event_type: Optional["EmployeeEventType"] = None
-    status: Optional["EmployeeEventStatusSchema"] = None
+    event_type: EmployeeEventType | None = None
+    status: EmployeeEventStatusSchema | None = None
 
 
 # ── Late imports — outside TYPE_CHECKING so model_rebuild can resolve them ─────
 
-from backend.api_v1.employee_events.employee_event_type.employee_event_type_schema import (  # noqa: E402
-    EmployeeEventType,
+from backend.api_v1.employee_events.employee_event_change.employee_event_change_schema import (  # noqa: E402
+    EmployeeEventChangeCreate,
+    EmployeeEventChangeSchema,
 )
 from backend.api_v1.employee_events.employee_event_status.employee_event_status_schema import (  # noqa: E402
     EmployeeEventStatusSchema,
 )
-from backend.api_v1.employee_events.employee_event_change.employee_event_change_schema import (  # noqa: E402
-    EmployeeEventChangeSchema,
-    EmployeeEventChangeCreate,
+from backend.api_v1.employee_events.employee_event_type.employee_event_type_schema import (  # noqa: E402
+    EmployeeEventType,
 )
 
 EmployeeEventCreate.model_rebuild()

@@ -1,26 +1,28 @@
 # backend/api_v1/employee_user_group_link/employee_user_group_link_views.py
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee_user_group_link.employee_user_group_link_dependencies import (
+    employee_user_group_link_by_composite_key,
+    employee_user_group_link_by_id,
+    get_employee_user_group_link_service,
+)
 from backend.api_v1.employee_user_group_link.employee_user_group_link_schema import (
     EmployeeUserGroupLink as EmployeeUserGroupLinkSchema,
+)
+from backend.api_v1.employee_user_group_link.employee_user_group_link_schema import (
     EmployeeUserGroupLinkCreate,
     EmployeeWithGroups,
     GroupOfType,
 )
-from backend.api_v1.employee_user_group_link.employee_user_group_link_dependencies import (
-    get_employee_user_group_link_service,
-    employee_user_group_link_by_id,
-    employee_user_group_link_by_composite_key,
-)
 from backend.api_v1.employee_user_group_link.employee_user_group_link_service import (
     EmployeeUserGroupLinkService,
 )
-
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/admin/employee_user_group_links",
@@ -34,7 +36,7 @@ router = APIRouter(
 
 @router.get(
     "/employees_with_groups",
-    response_model=List[EmployeeWithGroups],
+    response_model=list[EmployeeWithGroups],
     dependencies=[
         Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE, EssenceName.USER_GROUP)
     ],
@@ -50,7 +52,7 @@ async def get_employees_with_groups(
 
 @router.get(
     "/by_employee/{employee_id}",
-    response_model=List[GroupOfType],
+    response_model=list[GroupOfType],
     dependencies=[
         Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE, EssenceName.USER_GROUP)
     ],

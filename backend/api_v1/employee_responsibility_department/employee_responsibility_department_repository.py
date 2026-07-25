@@ -1,11 +1,10 @@
-from typing import Sequence
-
-from sqlalchemy import select, delete
+from collections.abc import Sequence
 
 from backend.api_v1.base.base_repository import BaseRepository
 from backend.api_v1.employee_responsibility_department.employee_responsibility_department_model import (
     EmployeeResponsibilityDepartment,
 )
+from sqlalchemy import delete, select
 
 
 class EmployeeResponsibilityDepartmentRepository(BaseRepository):

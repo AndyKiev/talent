@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(_REPO_ROOT) not in sys.path:
@@ -9,13 +9,12 @@ import asyncio
 
 from sqlalchemy import select
 
-from backend.database.db_helper import db_helper
 from backend.api_v1.job.job_model import Job
 from backend.api_v1.job_category.job_category_model import JobCategory
 from backend.api_v1.job_job_category_link.job_job_category_link_model import (
     JobJobCategoryLink,
 )
-
+from backend.database.db_helper import db_helper
 
 # Categories — `key` is snake_case; the UI label is getString(snakeToCamel(key)).
 JOB_CATEGORIES = [

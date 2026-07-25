@@ -1,35 +1,14 @@
-from typing import Optional, List, Tuple
 
 from sqlalchemy import select
-from sqlalchemy.orm import raiseload
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import raiseload
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.employee.employee_model import Employee
-from backend.api_v1.review_session_employee_comment.review_session_employee_comment_repository import (
-    ReviewSessionEmployeeCommentRepository,
-)
-from backend.api_v1.review_session_employee_comment.review_session_employee_comment_model import (
-    ReviewSessionEmployeeComment as CommentModel,
-)
-from backend.api_v1.review_session_employee_comment.review_session_employee_comment_schema import (
-    ReviewCommentSchema,
-    ReviewCommentCreate,
-    ReviewCommentUpdate,
-)
-from backend.api_v1.review_session_employee_comment.review_session_employee_comment_messages import (
-    ReviewCommentNotFound,
-    ReviewCommentReviewNotOpen,
-    ReviewCommentRoleRequired,
-    ReviewCommentNotOwner,
-    ReviewCommentInvalid,
-)
-from backend.api_v1.review_session_employee_comment.review_session_employee_comment_messages import (
-    ReviewCommentCreateSuccess,
-    ReviewCommentUpdateSuccess,
-    ReviewCommentDeleteSuccess,
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.review_session_employee.review_session_employee_messages import (
+    ReviewSessionEmployeeNotFound,
 )
 from backend.api_v1.review_session_employee.review_session_employee_model import (
     ReviewSessionEmployee as RSEModel,
@@ -40,8 +19,26 @@ from backend.api_v1.review_session_employee.review_session_employee_repository i
 from backend.api_v1.review_session_employee.review_session_employee_service import (
     ReviewSessionEmployeeService,
 )
-from backend.api_v1.review_session_employee.review_session_employee_messages import (
-    ReviewSessionEmployeeNotFound,
+from backend.api_v1.review_session_employee_comment.review_session_employee_comment_messages import (
+    ReviewCommentCreateSuccess,
+    ReviewCommentDeleteSuccess,
+    ReviewCommentInvalid,
+    ReviewCommentNotFound,
+    ReviewCommentNotOwner,
+    ReviewCommentReviewNotOpen,
+    ReviewCommentRoleRequired,
+    ReviewCommentUpdateSuccess,
+)
+from backend.api_v1.review_session_employee_comment.review_session_employee_comment_model import (
+    ReviewSessionEmployeeComment as CommentModel,
+)
+from backend.api_v1.review_session_employee_comment.review_session_employee_comment_repository import (
+    ReviewSessionEmployeeCommentRepository,
+)
+from backend.api_v1.review_session_employee_comment.review_session_employee_comment_schema import (
+    ReviewCommentCreate,
+    ReviewCommentSchema,
+    ReviewCommentUpdate,
 )
 
 # Which visibility scopes each author role may pick. Three tiers per role:
@@ -61,8 +58,8 @@ class ReviewSessionEmployeeCommentService(BaseService):
     def __init__(
         self,
         repository: ReviewSessionEmployeeCommentRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -92,14 +89,14 @@ class ReviewSessionEmployeeCommentService(BaseService):
         if rse.status != "open" or session_status != "open":
             raise await self._resolve_domain_error(ReviewCommentReviewNotOpen())
 
-    def _validated_visibility(self, value: Optional[str], author_role: str) -> str:
+    def _validated_visibility(self, value: str | None, author_role: str) -> str:
         v = value or "private"
         if v not in VISIBILITY_BY_ROLE.get(author_role, {"private", "public"}):
             raise ReviewCommentInvalid()
         return v
 
     def _to_schema(
-        self, c: CommentModel, author_name: Optional[str] = None
+        self, c: CommentModel, author_name: str | None = None
     ) -> ReviewCommentSchema:
         # author_name passed in (list path) avoids touching c.author, whose
         # lazy="selectin" would drag the author's whole Employee graph. The single
@@ -112,7 +109,7 @@ class ReviewSessionEmployeeCommentService(BaseService):
         return schema
 
     # ---- viewer classification -------------------------------------------------
-    async def _viewer_flags(self, employee_id: int) -> Tuple[bool, bool, bool]:
+    async def _viewer_flags(self, employee_id: int) -> tuple[bool, bool, bool]:
         """(is_subject, is_oversighter, is_supervisor) for the current user vs this
         employee. Oversighter/supervisor are decided by the viewer's ACTIVE mode AND
         the employee being inside that mode's expanded scope, so a stale/foreign
@@ -134,7 +131,7 @@ class ReviewSessionEmployeeCommentService(BaseService):
     def _can_see(
         self,
         c: CommentModel,
-        me: Optional[int],
+        me: int | None,
         is_subject: bool,
         is_oversighter: bool,
         is_supervisor: bool,
@@ -167,7 +164,7 @@ class ReviewSessionEmployeeCommentService(BaseService):
         )
         return {row[0]: row[1] for row in rows.all()}
 
-    async def list_comments(self, rse_id: int) -> List[ReviewCommentSchema]:
+    async def list_comments(self, rse_id: int) -> list[ReviewCommentSchema]:
         # Guard visibility (out-of-scope -> 404), then load ONLY the reviewee id —
         # not the RSE entity (whose selectin employee/evaluations cost ~112 queries).
         # list needs just employee_id (viewer classification) + the comment rows.

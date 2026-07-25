@@ -23,18 +23,17 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
-from sqlalchemy import select, delete, update
-
-from backend.database.db_helper import db_helper
-from backend.api_v1.job.job_model import Job
-from backend.api_v1.employee.employee_model import Employee
 from backend.api_v1.department_type_job_link.department_type_job_link_model import (
     DepartmentTypeJobLink,
 )
+from backend.api_v1.employee.employee_model import Employee
+from backend.api_v1.job.job_model import Job
 from backend.api_v1.job_job_group_link.job_job_group_link_model import JobJobGroupLink
 from backend.api_v1.table_relationship_links.job_user_group_link_model import (
     JobUserGroupLink,
 )
+from backend.database.db_helper import db_helper
+from sqlalchemy import delete, select, update
 
 SAVED_KEYS_PATH = Path(__file__).resolve().parent / "saved_keys.json"
 

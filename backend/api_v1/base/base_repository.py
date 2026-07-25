@@ -1,17 +1,18 @@
 import asyncio
+from collections.abc import Sequence
 from enum import Enum
-from typing import Annotated, Any, Sequence, TypeVar, Optional, Union, Dict, List
+from typing import Annotated, Any, TypeVar, Union
 
 from sqlalchemy import (
     Row,
     RowMapping,
-    and_,
-    delete,
-    select,
-    func,
-    asc,
-    desc,
     UnaryExpression,
+    and_,
+    asc,
+    delete,
+    desc,
+    func,
+    select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,8 +29,8 @@ class SortDirection(str, Enum):
 # Define type for sort specification
 SortSpec = Union[
     str,  # Single field name, default ascending
-    Dict[str, SortDirection],  # Field -> direction mapping
-    List[Union[str, Dict[str, SortDirection]]],  # Multiple fields
+    dict[str, SortDirection],  # Field -> direction mapping
+    list[str | dict[str, SortDirection]],  # Multiple fields
     None,
 ]
 
@@ -55,7 +56,7 @@ class BaseRepository:
         value: Any,
         case_insensitive: bool = False,
         is_unique: bool = True,
-    ) -> Optional[ModelType]:
+    ) -> ModelType | None:
         """
         Get a record by field value
 
@@ -94,9 +95,9 @@ class BaseRepository:
         self,
         field_name: str,
         value: Any,
-        exclude_ids: List[int],
+        exclude_ids: list[int],
         case_insensitive: bool = False,
-    ) -> Optional[ModelType]:
+    ) -> ModelType | None:
         """Like get_by_field, but excludes rows whose id is in exclude_ids."""
         if not hasattr(self.model, field_name):
             raise AttributeError(
@@ -121,7 +122,7 @@ class BaseRepository:
         field_name: str,
         value: Any,
         case_insensitive: bool = False,
-    ) -> Optional[int]:
+    ) -> int | None:
         """
         Return the `id` of the single row where field_name == value, else None.
 
@@ -197,7 +198,7 @@ class BaseRepository:
         await self.session.execute(del_obj)
         await self.session.commit()
 
-    def _parse_sort_spec(self, sort: SortSpec) -> List[UnaryExpression]:
+    def _parse_sort_spec(self, sort: SortSpec) -> list[UnaryExpression]:
         """
         Parse sort specification into SQLAlchemy order_by expressions.
 
@@ -213,7 +214,7 @@ class BaseRepository:
         """
         if sort is None:
             # Default: order by id ascending
-            return [asc(getattr(self.model, "id"))]
+            return [asc(self.model.id)]
 
         order_by_clauses = []
 

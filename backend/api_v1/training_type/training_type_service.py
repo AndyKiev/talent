@@ -1,37 +1,35 @@
-from typing import Optional, List
-
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.employee.employee_repository import EmployeeRepository
 from backend.api_v1.employee.employee_messages import EmployeeNotFound
+from backend.api_v1.employee.employee_repository import EmployeeRepository
+from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.talent_audit.talent_audit_repository import TalentAuditRepository
+from backend.api_v1.training_type.training_type_messages import (
+    TrainingTypeCreateSuccess,
+    TrainingTypeDeleteError,
+    TrainingTypeDeleteSuccess,
+    TrainingTypeKeyTaken,
+    TrainingTypeNameTaken,
+    TrainingTypeNotFound,
+    TrainingTypeUpdateSuccess,
+)
 from backend.api_v1.training_type.training_type_repository import TrainingTypeRepository
 from backend.api_v1.training_type.training_type_schema import (
     TrainingType as TrainingTypeSchema,
+)
+from backend.api_v1.training_type.training_type_schema import (
     TrainingTypeCreate,
     TrainingTypeUpdate,
-)
-from backend.api_v1.training_type.training_type_messages import (
-    TrainingTypeNotFound,
-    TrainingTypeNameTaken,
-    TrainingTypeKeyTaken,
-    TrainingTypeDeleteError,
-)
-from backend.api_v1.training_type.training_type_messages import (
-    TrainingTypeCreateSuccess,
-    TrainingTypeUpdateSuccess,
-    TrainingTypeDeleteSuccess,
-)
-from backend.api_v1.training_type_job_link.training_type_job_link_repository import (
-    TrainingTypeJobLinkRepository,
 )
 from backend.api_v1.training_type_job_category_link.training_type_job_category_link_repository import (
     TrainingTypeJobCategoryLinkRepository,
 )
+from backend.api_v1.training_type_job_link.training_type_job_link_repository import (
+    TrainingTypeJobLinkRepository,
+)
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # Seeded, code-referenced keys — see training_link_type seed script.
 BY_JOB_CATEGORY_KEY = "by_job_category"
@@ -60,8 +58,8 @@ class TrainingTypeService(BaseService):
     def __init__(
         self,
         repository: TrainingTypeRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -71,11 +69,11 @@ class TrainingTypeService(BaseService):
             raise await self._resolve_domain_error(TrainingTypeNotFound(id))
         return result
 
-    async def get_training_types(self) -> List[TrainingTypeSchema]:
+    async def get_training_types(self) -> list[TrainingTypeSchema]:
         records = await self.get_all(sort=["name"])
         return [_to_enriched_schema(r) for r in records]
 
-    async def get_eligible_for_employee(self, employee_id: int) -> List[TrainingTypeSchema]:
+    async def get_eligible_for_employee(self, employee_id: int) -> list[TrainingTypeSchema]:
         """
         Filter view only — never a write constraint (see employee_training,
         which accepts any training_type_id). A training type is eligible when:
@@ -132,7 +130,7 @@ class TrainingTypeService(BaseService):
         return [_to_enriched_schema(r) for r in eligible]
 
     async def _check_unique(
-        self, name: Optional[str], key: Optional[str], exclude_id: Optional[int] = None
+        self, name: str | None, key: str | None, exclude_id: int | None = None
     ) -> None:
         if name:
             existing = await self.repository.get_by_field("name", name)
@@ -144,7 +142,7 @@ class TrainingTypeService(BaseService):
                 raise await self._resolve_domain_error(TrainingTypeKeyTaken(key))
 
     async def _set_links(
-        self, training_type_id: int, job_category_ids: List[int], job_ids: List[int]
+        self, training_type_id: int, job_category_ids: list[int], job_ids: list[int]
     ) -> None:
         job_category_link_repo = TrainingTypeJobCategoryLinkRepository(
             session=self.session

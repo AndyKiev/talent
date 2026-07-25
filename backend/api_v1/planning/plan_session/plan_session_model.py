@@ -1,18 +1,20 @@
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, Date, ForeignKey
 from datetime import date
-from backend.api_v1.base.base_model import Base
-from backend.api_v1.base.models.utils.mixins import IntIdPkMixin, TimestampMixin
 from typing import TYPE_CHECKING
 
+from sqlalchemy import Date, ForeignKey, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from backend.api_v1.base.base_model import Base
+from backend.api_v1.base.models.utils.mixins import IntIdPkMixin, TimestampMixin
+
 if TYPE_CHECKING:
-    from backend.api_v1.planning.plan_session_status.plan_session_status_model import (
-        PlanSessionStatus,
-    )
+    from backend.api_v1.planning.plan_scope.plan_scope_model import PlanScope
     from backend.api_v1.planning.plan_session_category.plan_session_category_model import (
         PlanSessionCategory,
     )
-    from backend.api_v1.planning.plan_scope.plan_scope_model import PlanScope
+    from backend.api_v1.planning.plan_session_status.plan_session_status_model import (
+        PlanSessionStatus,
+    )
 
 
 class PlanSession(IntIdPkMixin, TimestampMixin, Base):

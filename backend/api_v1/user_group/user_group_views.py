@@ -1,16 +1,18 @@
-from fastapi import APIRouter, Depends, status, Query
-from typing import List, Optional, Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.user_group.user_group_service import UserGroupService
+from backend.api_v1.user_group.user_group_dependencies import get_user_group_service
 from backend.api_v1.user_group.user_group_schema import (
     UserGroup as UserGroupSchema,
+)
+from backend.api_v1.user_group.user_group_schema import (
     UserGroupCreate,
     UserGroupUpdate,
 )
-from backend.api_v1.user_group.user_group_dependencies import get_user_group_service
+from backend.api_v1.user_group.user_group_service import UserGroupService
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(prefix="/admin/user_groups", tags=["User Groups"])
 
@@ -39,12 +41,12 @@ async def user_group_by_name(
 
 @router.get(
     "",
-    response_model=List[UserGroupSchema],
+    response_model=list[UserGroupSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.USER_GROUP)],
 )
 async def get_user_groups(
     service: UserGroupService = Depends(get_user_group_service),
-    user_group_type_id: Optional[int] = Query(
+    user_group_type_id: int | None = Query(
         None, description="Filter groups by employee group type ID"
     ),
 ):

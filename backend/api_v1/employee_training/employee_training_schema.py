@@ -1,6 +1,6 @@
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
 
 
 class EmployeeTrainingBase(BaseModel):
@@ -14,15 +14,15 @@ class EmployeeTrainingCreate(EmployeeTrainingBase):
 
 
 class EmployeeTrainingUpdate(BaseModel):
-    training_status_id: Optional[int] = None
+    training_status_id: int | None = None
 
 
 class EmployeeTraining(EmployeeTrainingBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
     created_at: datetime
-    training_type_name: Optional[str] = None
-    training_status_key: Optional[str] = None
+    training_type_name: str | None = None
+    training_status_key: str | None = None
 
 
 class TrainingStateRow(BaseModel):
@@ -40,15 +40,15 @@ class TrainingStateRow(BaseModel):
     employee_id: int
     employee_name: str
     employee_code: str
-    main_department_id: Optional[int] = None
-    main_department_name: Optional[str] = None
+    main_department_id: int | None = None
+    main_department_name: str | None = None
     # Category sort_order of the RESOLVED top unit (store/directorate/board) —
     # used to order the main-department filter Select by category.
     main_department_category_sort_order: int = 0
-    direct_department_name: Optional[str] = None
-    job_name: Optional[str] = None
-    department_category_key: Optional[str] = None
-    department_category_name: Optional[str] = None
+    direct_department_name: str | None = None
+    job_name: str | None = None
+    department_category_key: str | None = None
+    department_category_name: str | None = None
     department_category_sort_order: int = 0
-    department_type_name: Optional[str] = None
+    department_type_name: str | None = None
     status_key: str

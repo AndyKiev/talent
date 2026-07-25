@@ -1,29 +1,28 @@
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.user_group_type.user_group_type_messages import (
+    UserGroupTypeCreateSuccess,
+    UserGroupTypeDeleteError,
+    UserGroupTypeDeleteSuccess,
+    UserGroupTypeNameTaken,
+    UserGroupTypeNotFound,
+    UserGroupTypeNotFoundByName,
+    UserGroupTypeUpdateSuccess,
+)
 from backend.api_v1.user_group_type.user_group_type_repository import (
     UserGroupTypeRepository,
 )
 from backend.api_v1.user_group_type.user_group_type_schema import (
     UserGroupType as UserGroupTypeSchema,
+)
+from backend.api_v1.user_group_type.user_group_type_schema import (
     UserGroupTypeCreate,
     UserGroupTypeUpdate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.user_group_type.user_group_type_messages import (
-    UserGroupTypeNotFound,
-    UserGroupTypeNameTaken,
-    UserGroupTypeDeleteError,
-    UserGroupTypeNotFoundByName,
-)
-from backend.api_v1.user_group_type.user_group_type_messages import (
-    UserGroupTypeDeleteSuccess,
-    UserGroupTypeCreateSuccess,
-    UserGroupTypeUpdateSuccess,
 )
 
 
@@ -31,8 +30,8 @@ class UserGroupTypeService(BaseService):
     def __init__(
         self,
         repository: UserGroupTypeRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -45,9 +44,9 @@ class UserGroupTypeService(BaseService):
 
     async def get_user_group_types(
         self,
-        name: Optional[str] = None,
-        sort: Optional[str] = None,
-    ) -> List[UserGroupTypeSchema]:
+        name: str | None = None,
+        sort: str | None = None,
+    ) -> list[UserGroupTypeSchema]:
         if name:
             record = await self.get_by_name(
                 name, not_found_exc=UserGroupTypeNotFoundByName

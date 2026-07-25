@@ -1,14 +1,14 @@
-from typing import Annotated, List
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 
 from backend.api_v1.msg_pg.msg_dependencies import get_msg_service, msg_by_id
 from backend.api_v1.msg_pg.msg_model import Msg as MsgModel
-from backend.api_v1.msg_pg.msg_schema import Msg as MsgSchema, MsgCreate, MsgUpdate
+from backend.api_v1.msg_pg.msg_schema import Msg as MsgSchema
+from backend.api_v1.msg_pg.msg_schema import MsgCreate, MsgUpdate
 from backend.api_v1.msg_pg.msg_service import MsgService
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
-
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/msgs",
@@ -16,7 +16,7 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[MsgSchema])
+@router.get("", response_model=list[MsgSchema])
 async def get_msgs(
     service: Annotated[MsgService, Depends(get_msg_service)],
 ):

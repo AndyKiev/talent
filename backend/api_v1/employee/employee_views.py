@@ -1,19 +1,20 @@
-from fastapi import APIRouter, Depends, status, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, List, Optional
 from pydantic import BaseModel
 
-from backend.api_v1.employee.employee_schema import (
-    EmployeeSchema,
-    EmployeeCreate,
-    EmployeeUpdate,
-    EmployeePersonalDataUpdate,
-    EmployeeWithActivationCreate,
-)
 from backend.api_v1.employee.employee_dependencies import (
-    get_employee_service,
-    employee_by_id,
     employee_by_code,
+    employee_by_id,
+    get_employee_service,
+)
+from backend.api_v1.employee.employee_schema import (
+    EmployeeCreate,
+    EmployeePersonalDataUpdate,
+    EmployeeSchema,
+    EmployeeUpdate,
+    EmployeeWithActivationCreate,
 )
 from backend.api_v1.employee.employee_service import EmployeeService, SyncUserResult
 from backend.api_v1.employee_events.employee_event.employee_event_dependencies import (
@@ -23,10 +24,10 @@ from backend.api_v1.employee_events.employee_event.employee_event_service import
     EmployeeEventService,
 )
 from backend.api_v1.person.person_dependencies import get_person_service
-from backend.api_v1.person.person_service import PersonService
 from backend.api_v1.person.person_schema import PersonCreate
+from backend.api_v1.person.person_service import PersonService
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 from backend.utils.person_names import build_employee_name, normalize_name_part
 
 router = APIRouter(
@@ -42,13 +43,13 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[EmployeeSchema],
+    response_model=list[EmployeeSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE)],
 )
 async def get_employees(
     service: Annotated[EmployeeService, Depends(get_employee_service)],
-    job_id: Optional[int] = Query(None, description="Filter users by job ID"),
-    department_id: Optional[int] = Query(
+    job_id: int | None = Query(None, description="Filter users by job ID"),
+    department_id: int | None = Query(
         None,
         description="Filter users whose main department is in this department's subtree",
     ),
@@ -60,7 +61,7 @@ async def get_employees(
 
 @router.get(
     "/by_job/{job_id}",
-    response_model=List[EmployeeSchema],
+    response_model=list[EmployeeSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE)],
 )
 async def get_users_by_job_id_legacy(
@@ -94,7 +95,7 @@ class ResponsibilityTypeOption(BaseModel):
 
 @router.get(
     "/{employee_id}/responsibility_type_options",
-    response_model=List[ResponsibilityTypeOption],
+    response_model=list[ResponsibilityTypeOption],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE)],
 )
 async def get_responsibility_type_options(
@@ -312,7 +313,7 @@ async def delete_user(
 
 @router.get(
     "/{user_id}/groups",
-    response_model=List[str],
+    response_model=list[str],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE)],
 )
 async def get_user_groups(user: EmployeeSchema = Depends(employee_by_id)):
@@ -321,7 +322,7 @@ async def get_user_groups(user: EmployeeSchema = Depends(employee_by_id)):
 
 @router.get(
     "/code/{user_code}/groups",
-    response_model=List[str],
+    response_model=list[str],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE)],
 )
 async def get_user_groups_by_code(user: EmployeeSchema = Depends(employee_by_code)):
@@ -359,7 +360,7 @@ async def remove_user_from_group(
 
 
 class UserGroupsUpdate(BaseModel):
-    group_ids: List[int]
+    group_ids: list[int]
 
 
 @router.put(

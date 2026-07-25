@@ -1,4 +1,3 @@
-from typing import List, Optional
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,21 +7,21 @@ from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.talent_audit.talent_audit_messages import (
     TalentAuditAlreadyExists,
+    TalentAuditCreateSuccess,
     TalentAuditDeleteError,
+    TalentAuditDeleteSuccess,
     TalentAuditNotFound,
+    TalentAuditTalentPlusDisableSuccess,
+    TalentAuditTalentPlusEnableSuccess,
+    TalentAuditUpdateSuccess,
 )
 from backend.api_v1.talent_audit.talent_audit_repository import TalentAuditRepository
 from backend.api_v1.talent_audit.talent_audit_schema import (
     TalentAudit as TalentAuditSchema,
+)
+from backend.api_v1.talent_audit.talent_audit_schema import (
     TalentAuditCreate,
     TalentAuditUpdate,
-)
-from backend.api_v1.talent_audit.talent_audit_messages import (
-    TalentAuditCreateSuccess,
-    TalentAuditDeleteSuccess,
-    TalentAuditTalentPlusDisableSuccess,
-    TalentAuditTalentPlusEnableSuccess,
-    TalentAuditUpdateSuccess,
 )
 
 
@@ -30,8 +29,8 @@ class TalentAuditService(BaseService):
     def __init__(
         self,
         repository: TalentAuditRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -52,8 +51,8 @@ class TalentAuditService(BaseService):
         return TalentAuditSchema.model_validate(record)
 
     async def get_talent_audits(
-        self, sort: Optional[str] = None
-    ) -> List[TalentAuditSchema]:
+        self, sort: str | None = None
+    ) -> list[TalentAuditSchema]:
         records = await self.get_all(sort_json=sort)
         return [TalentAuditSchema.model_validate(r) for r in records]
 

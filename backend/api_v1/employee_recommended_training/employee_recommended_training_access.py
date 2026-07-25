@@ -29,7 +29,6 @@
 #
 # Lazy-imports the RSE service inside the methods so the auth <-> routers import
 # graph stays acyclic (same trick as employee_mission_access.py).
-from typing import Optional
 
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -46,8 +45,8 @@ class EmployeeRecommendedTrainingAccess:
 
     def __init__(
         self,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ) -> None:
         self.user = user
         self.session = session
@@ -77,11 +76,11 @@ class EmployeeRecommendedTrainingAccess:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
 
     def _rse_service(self):
-        from backend.api_v1.review_session_employee.review_session_employee_service import (
-            ReviewSessionEmployeeService,
-        )
         from backend.api_v1.review_session_employee.review_session_employee_repository import (
             ReviewSessionEmployeeRepository,
+        )
+        from backend.api_v1.review_session_employee.review_session_employee_service import (
+            ReviewSessionEmployeeService,
         )
 
         return ReviewSessionEmployeeService(

@@ -1,4 +1,3 @@
-from typing import List, Optional
 
 from sqlalchemy import select
 
@@ -14,7 +13,7 @@ class DepartmentTypeJobLinkRepository(BaseRepository):
 
     async def get_by_composite_key(
         self, department_type_id: int, job_id: int
-    ) -> Optional[DepartmentTypeJobLink]:
+    ) -> DepartmentTypeJobLink | None:
         """Fetch a single link by its unique (department_type_id, job_id) pair."""
         return (
             await self.session.execute(
@@ -28,8 +27,8 @@ class DepartmentTypeJobLinkRepository(BaseRepository):
     async def get_jobs_by_department_type(
         self,
         department_type_id: int,
-        is_active: Optional[bool] = None,
-    ) -> List[tuple]:
+        is_active: bool | None = None,
+    ) -> list[tuple]:
         """
         Return (Job, link_id, link_is_active) tuples for a given department type.
         When is_active=True, filters both link.is_active and job.is_active.

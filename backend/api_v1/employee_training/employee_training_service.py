@@ -1,39 +1,36 @@
-from typing import Optional, List
-
-from sqlalchemy import text
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.department.department_org_units import resolve_top_org_unit
+from backend.api_v1.department.department_repository import DepartmentRepository
+from backend.api_v1.employee.employee_repository import EmployeeRepository
 from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.employee_training.employee_training_messages import (
+    EmployeeTrainingAlreadyAssigned,
+    EmployeeTrainingCreateSuccess,
+    EmployeeTrainingDeleteError,
+    EmployeeTrainingDeleteSuccess,
+    EmployeeTrainingNotFound,
+    EmployeeTrainingUpdateSuccess,
+)
 from backend.api_v1.employee_training.employee_training_repository import (
     EmployeeTrainingRepository,
 )
 from backend.api_v1.employee_training.employee_training_schema import (
     EmployeeTraining as EmployeeTrainingSchema,
+)
+from backend.api_v1.employee_training.employee_training_schema import (
     EmployeeTrainingCreate,
     EmployeeTrainingUpdate,
     TrainingStateRow,
 )
-from backend.api_v1.employee.employee_repository import EmployeeRepository
-from backend.api_v1.department.department_repository import DepartmentRepository
-from backend.api_v1.department.department_org_units import resolve_top_org_unit
+from backend.api_v1.training_type.training_type_messages import TrainingTypeNotFound
 from backend.api_v1.training_type.training_type_repository import (
     TrainingTypeRepository,
 )
-from backend.api_v1.training_type.training_type_messages import TrainingTypeNotFound
-from backend.api_v1.employee_training.employee_training_messages import (
-    EmployeeTrainingNotFound,
-    EmployeeTrainingAlreadyAssigned,
-    EmployeeTrainingDeleteError,
-)
-from backend.api_v1.employee_training.employee_training_messages import (
-    EmployeeTrainingCreateSuccess,
-    EmployeeTrainingUpdateSuccess,
-    EmployeeTrainingDeleteSuccess,
-)
-
+from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # Link-type keys (mirror TrainingTypeService) + the synthetic state for an
 # eligible employee who has no assignment row yet.
@@ -58,8 +55,8 @@ class EmployeeTrainingService(BaseService):
     def __init__(
         self,
         repository: EmployeeTrainingRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -69,13 +66,13 @@ class EmployeeTrainingService(BaseService):
             raise await self._resolve_domain_error(EmployeeTrainingNotFound(id))
         return result
 
-    async def get_for_employee(self, employee_id: int) -> List[EmployeeTrainingSchema]:
+    async def get_for_employee(self, employee_id: int) -> list[EmployeeTrainingSchema]:
         records = await self.repository.get_for_employee(employee_id)
         return [_to_enriched_schema(r) for r in records]
 
     async def get_training_state(
         self, training_type_id: int
-    ) -> List[TrainingStateRow]:
+    ) -> list[TrainingStateRow]:
         """
         Read-only report: every active employee "supposed to pass" the given
         training type, plus their current status (or synthetic ``not_planned``).
@@ -139,7 +136,7 @@ class EmployeeTrainingService(BaseService):
                 return emp.job_id is not None and emp.job_id in linked_job_ids
             return False
 
-        rows: List[TrainingStateRow] = []
+        rows: list[TrainingStateRow] = []
         for emp in employees:
             if not emp.is_active:
                 continue

@@ -1,11 +1,12 @@
+from typing import Any
+
 from pydantic import BaseModel, ConfigDict
-from typing import Any, Optional
 
 
 class UserSettingBase(BaseModel):
     employee_id: int
     app_setting_id: int
-    value: Optional[Any] = None
+    value: Any | None = None
 
 
 class UserSettingCreate(UserSettingBase):
@@ -14,7 +15,7 @@ class UserSettingCreate(UserSettingBase):
 
 class UserSettingUpdate(BaseModel):
     # The only thing a user edits is their personal value.
-    value: Optional[Any] = None
+    value: Any | None = None
 
 
 class UserSetting(UserSettingBase):
@@ -34,14 +35,14 @@ class EffectiveUserSetting(BaseModel):
     range for integer settings (min always 1, max = the global cap)."""
 
     key: str
-    label_key: Optional[str] = None
-    description_key: Optional[str] = None
-    value_type_key: Optional[str] = None
+    label_key: str | None = None
+    description_key: str | None = None
+    value_type_key: str | None = None
     # Option-set name for select-driven settings (e.g. 'menus' for default_menu).
-    options_source: Optional[str] = None
-    global_value: Optional[Any] = None
-    user_value: Optional[Any] = None
-    effective_value: Optional[Any] = None
+    options_source: str | None = None
+    global_value: Any | None = None
+    user_value: Any | None = None
+    effective_value: Any | None = None
     has_override: bool = False
-    min_value: Optional[int] = None
-    max_value: Optional[int] = None
+    min_value: int | None = None
+    max_value: int | None = None

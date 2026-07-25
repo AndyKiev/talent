@@ -1,10 +1,10 @@
+
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional
 
 
 class EmployeeEventStatusBase(BaseModel):
     name: str = Field(..., max_length=32)
-    description: Optional[str] = Field(None)
+    description: str | None = Field(None)
 
 
 class EmployeeEventStatusCreate(EmployeeEventStatusBase):
@@ -12,8 +12,8 @@ class EmployeeEventStatusCreate(EmployeeEventStatusBase):
 
 
 class EmployeeEventStatusUpdate(BaseModel):
-    name: Optional[str] = Field(None, max_length=32)
-    description: Optional[str] = Field(None)
+    name: str | None = Field(None, max_length=32)
+    description: str | None = Field(None)
 
 
 class EmployeeEventStatusSchema(EmployeeEventStatusBase):

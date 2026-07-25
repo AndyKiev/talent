@@ -1,20 +1,23 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.planning.plan_category_default.plan_category_default_schema import (
-    PlanCategoryDefault as PlanCategoryDefaultSchema,
-    PlanCategoryDefaultCreate,
-)
 from backend.api_v1.planning.plan_category_default.plan_category_default_dependencies import (
     get_plan_category_default_service,
+)
+from backend.api_v1.planning.plan_category_default.plan_category_default_schema import (
+    PlanCategoryDefault as PlanCategoryDefaultSchema,
+)
+from backend.api_v1.planning.plan_category_default.plan_category_default_schema import (
+    PlanCategoryDefaultCreate,
 )
 from backend.api_v1.planning.plan_category_default.plan_category_default_service import (
     PlanCategoryDefaultService,
 )
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/admin/plan_category_defaults",
@@ -25,7 +28,7 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[PlanCategoryDefaultSchema],
+    response_model=list[PlanCategoryDefaultSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.PLAN_CATEGORY_DEFAULT)],
 )
 async def get_plan_category_defaults(

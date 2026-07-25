@@ -22,13 +22,12 @@ from __future__ import annotations
 
 import datetime as dt
 from io import BytesIO
-from typing import Optional
 
 import matplotlib
 
 matplotlib.use("Agg")
-from matplotlib.figure import Figure
 from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.figure import Figure
 from matplotlib.patches import FancyBboxPatch, Rectangle
 
 INK = "#1b2a4a"
@@ -157,7 +156,7 @@ class _Line:
     of these. `keep_with_next` marks a title line that must not be left dangling
     at the foot of a column (it stays with the body line that follows it)."""
 
-    __slots__ = ("text", "size", "color", "weight", "indent", "ls", "keep_with_next")
+    __slots__ = ("color", "indent", "keep_with_next", "ls", "size", "text", "weight")
 
     def __init__(
         self,
@@ -808,6 +807,6 @@ def render_tempo_png(data: dict, dpi: int = 150) -> bytes:
     return out.getvalue()
 
 
-def _join(a, b, sep) -> Optional[str]:
+def _join(a, b, sep) -> str | None:
     parts = [str(x) for x in (a, b) if x not in (None, "")]
     return sep.join(parts) if parts else None

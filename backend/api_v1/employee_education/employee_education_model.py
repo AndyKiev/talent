@@ -1,6 +1,7 @@
-from typing import Optional
-from sqlalchemy import String, Integer, ForeignKey
+
+from sqlalchemy import ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 
@@ -15,8 +16,8 @@ class EmployeeEducation(IntIdPkMixin, TimestampMixin, Base):
 
     employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id"), nullable=False)
     institution: Mapped[str] = mapped_column(String(256), nullable=False)
-    degree_id: Mapped[Optional[int]] = mapped_column(
+    degree_id: Mapped[int | None] = mapped_column(
         ForeignKey("education_degrees.id"), nullable=True
     )
-    speciality: Mapped[Optional[str]] = mapped_column(String(256), nullable=True)
-    graduation_year: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    speciality: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    graduation_year: Mapped[int | None] = mapped_column(Integer, nullable=True)

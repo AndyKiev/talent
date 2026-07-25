@@ -1,4 +1,4 @@
-from typing import Annotated, List
+from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPBearer
@@ -9,6 +9,8 @@ from backend.api_v1.employee_mission_status.employee_mission_status_dependencies
 )
 from backend.api_v1.employee_mission_status.employee_mission_status_schema import (
     EmployeeMissionStatus as StatusSchema,
+)
+from backend.api_v1.employee_mission_status.employee_mission_status_schema import (
     EmployeeMissionStatusCreate,
     EmployeeMissionStatusUpdate,
 )
@@ -25,7 +27,7 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[StatusSchema])
+@router.get("", response_model=list[StatusSchema])
 async def get_statuses(
     service: Annotated[
         EmployeeMissionStatusService, Depends(get_employee_mission_status_service)

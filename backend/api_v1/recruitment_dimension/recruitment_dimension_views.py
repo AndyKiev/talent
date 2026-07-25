@@ -1,22 +1,25 @@
-from fastapi import APIRouter, Depends, status, Query
-from typing import Annotated, Optional, List
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.recruitment_dimension.recruitment_dimension_schema import (
-    RecruitmentDimension as RecruitmentDimensionSchema,
-    RecruitmentDimensionCreate,
-    RecruitmentDimensionUpdate,
-)
 from backend.api_v1.recruitment_dimension.recruitment_dimension_dependencies import (
     get_recruitment_dimension_service,
     recruitment_dimension_by_id,
 )
+from backend.api_v1.recruitment_dimension.recruitment_dimension_schema import (
+    RecruitmentDimension as RecruitmentDimensionSchema,
+)
+from backend.api_v1.recruitment_dimension.recruitment_dimension_schema import (
+    RecruitmentDimensionCreate,
+    RecruitmentDimensionUpdate,
+)
 from backend.api_v1.recruitment_dimension.recruitment_dimension_service import (
     RecruitmentDimensionService,
 )
-from backend.auth.jwt_auth import get_current_active_auth_user
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/recruitment_dimensions",
@@ -25,14 +28,14 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[RecruitmentDimensionSchema])
+@router.get("", response_model=list[RecruitmentDimensionSchema])
 async def get_recruitment_dimensions(
     service: Annotated[
         RecruitmentDimensionService, Depends(get_recruitment_dimension_service)
     ],
-    name: Optional[str] = None,
-    is_active: Optional[bool] = None,
-    sort: Optional[str] = Query(None),
+    name: str | None = None,
+    is_active: bool | None = None,
+    sort: str | None = Query(None),
 ):
     return await service.get_recruitment_dimensions(
         name=name, is_active=is_active, sort=sort

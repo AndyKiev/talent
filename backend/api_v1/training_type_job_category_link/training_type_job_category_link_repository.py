@@ -1,12 +1,11 @@
-from typing import Sequence
-
-from sqlalchemy import select, delete
+from collections.abc import Sequence
 
 from backend.api_v1.base.base_repository import BaseRepository
+from backend.api_v1.job_category.job_category_model import JobCategory
 from backend.api_v1.training_type_job_category_link.training_type_job_category_link_model import (
     TrainingTypeJobCategoryLink,
 )
-from backend.api_v1.job_category.job_category_model import JobCategory
+from sqlalchemy import delete, select
 
 
 class TrainingTypeJobCategoryLinkRepository(BaseRepository):

@@ -1,38 +1,36 @@
-from typing import Optional, List
-
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.training_category.training_category_messages import (
+    TrainingCategoryCreateSuccess,
+    TrainingCategoryDeleteError,
+    TrainingCategoryDeleteSuccess,
+    TrainingCategoryKeyTaken,
+    TrainingCategoryNameTaken,
+    TrainingCategoryNotFound,
+    TrainingCategoryUpdateSuccess,
+)
 from backend.api_v1.training_category.training_category_repository import (
     TrainingCategoryRepository,
 )
 from backend.api_v1.training_category.training_category_schema import (
     TrainingCategory as TrainingCategorySchema,
+)
+from backend.api_v1.training_category.training_category_schema import (
     TrainingCategoryCreate,
     TrainingCategoryUpdate,
 )
-from backend.api_v1.training_category.training_category_messages import (
-    TrainingCategoryNotFound,
-    TrainingCategoryNameTaken,
-    TrainingCategoryKeyTaken,
-    TrainingCategoryDeleteError,
-)
-from backend.api_v1.training_category.training_category_messages import (
-    TrainingCategoryCreateSuccess,
-    TrainingCategoryUpdateSuccess,
-    TrainingCategoryDeleteSuccess,
-)
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class TrainingCategoryService(BaseService):
     def __init__(
         self,
         repository: TrainingCategoryRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -42,12 +40,12 @@ class TrainingCategoryService(BaseService):
             raise await self._resolve_domain_error(TrainingCategoryNotFound(id))
         return result
 
-    async def get_training_categories(self) -> List[TrainingCategorySchema]:
+    async def get_training_categories(self) -> list[TrainingCategorySchema]:
         records = await self.get_all(sort=["name"])
         return [TrainingCategorySchema.model_validate(r) for r in records]
 
     async def _check_unique(
-        self, name: Optional[str], key: Optional[str], exclude_id: Optional[int] = None
+        self, name: str | None, key: str | None, exclude_id: int | None = None
     ) -> None:
         if name:
             existing = await self.repository.get_by_field("name", name)

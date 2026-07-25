@@ -1,6 +1,6 @@
 from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict
-from typing import List, Optional
 
 from backend.api_v1.candidate_application.candidate_application_state_machine import (
     PipelineStatusKey,
@@ -12,7 +12,7 @@ class ApplicationCandidateMini(BaseModel):
     id: int
     first_name: str
     last_name: str
-    email: Optional[str] = None
+    email: str | None = None
 
 
 class ApplicationJobMini(BaseModel):
@@ -25,7 +25,7 @@ class ApplicationTaskMini(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     job_id: int
-    job: Optional[ApplicationJobMini] = None
+    job: ApplicationJobMini | None = None
 
 
 class ApplicationStatusMini(BaseModel):
@@ -39,7 +39,7 @@ class ApplicationCreatorMini(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     name: str
-    code: Optional[str] = None
+    code: str | None = None
 
 
 class ApplicationHistoryMini(BaseModel):
@@ -48,9 +48,9 @@ class ApplicationHistoryMini(BaseModel):
     status_id: int
     changed_by: int
     changed_at: datetime
-    status: Optional[ApplicationStatusMini] = None
+    status: ApplicationStatusMini | None = None
     # Filled by the service via a column lookup (model relationship is noload).
-    changer: Optional[ApplicationCreatorMini] = None
+    changer: ApplicationCreatorMini | None = None
 
 
 class CandidateApplicationCreate(BaseModel):
@@ -72,7 +72,7 @@ class CandidateApplicationSchema(BaseModel):
     created_at: datetime
     # candidate / recruitment_task / changers are filled by the service via
     # cheap column queries (the model relationships are lazy="noload").
-    candidate: Optional[ApplicationCandidateMini] = None
-    recruitment_task: Optional[ApplicationTaskMini] = None
-    status: Optional[ApplicationStatusMini] = None
-    status_history: List[ApplicationHistoryMini] = []
+    candidate: ApplicationCandidateMini | None = None
+    recruitment_task: ApplicationTaskMini | None = None
+    status: ApplicationStatusMini | None = None
+    status_history: list[ApplicationHistoryMini] = []

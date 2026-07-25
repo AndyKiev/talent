@@ -1,21 +1,25 @@
-from fastapi import APIRouter, Depends, status, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, Optional, List
+
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.department_type_parental_links.department_type_parental_link_schema import (
-    DepartmentTypeParentalLink as DepartmentTypeParentalLinkSchema,
-    DepartmentTypeParentalLinkCreate,
-    DepartmentTypeParentalLinkUpdate,
-)
 from backend.api_v1.department_type_parental_links.department_type_parental_link_dependencies import (
     get_department_type_parental_link_service,
     get_link_by_id,
+)
+from backend.api_v1.department_type_parental_links.department_type_parental_link_schema import (
+    DepartmentTypeParentalLink as DepartmentTypeParentalLinkSchema,
+)
+from backend.api_v1.department_type_parental_links.department_type_parental_link_schema import (
+    DepartmentTypeParentalLinkCreate,
+    DepartmentTypeParentalLinkUpdate,
 )
 from backend.api_v1.department_type_parental_links.department_type_parental_link_service import (
     DepartmentTypeParentalLinkService,
 )
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/admin/department_type_parental_links",
@@ -26,7 +30,7 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[DepartmentTypeParentalLinkSchema],
+    response_model=list[DepartmentTypeParentalLinkSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT_TYPE)],
 )
 async def get_links(
@@ -34,10 +38,10 @@ async def get_links(
         DepartmentTypeParentalLinkService,
         Depends(get_department_type_parental_link_service),
     ],
-    child_id: Optional[int] = None,
-    parent_id: Optional[int] = None,
-    is_active: Optional[bool] = None,
-    sort: Optional[str] = Query(None, description='JSON: {"field": "asc|desc"}'),
+    child_id: int | None = None,
+    parent_id: int | None = None,
+    is_active: bool | None = None,
+    sort: str | None = Query(None, description='JSON: {"field": "asc|desc"}'),
 ):
     return await service.get_links(
         child_id=child_id, parent_id=parent_id, is_active=is_active, sort=sort
@@ -47,7 +51,7 @@ async def get_links(
 # NOTE: declared before "/{link_id}" so the literal segment isn't parsed as an id.
 @router.get(
     "/child_map",
-    response_model=dict[int, List[int]],
+    response_model=dict[int, list[int]],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT_TYPE)],
 )
 async def get_child_map(

@@ -1,16 +1,18 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Boolean, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Boolean, ForeignKey
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
-from typing import Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from backend.api_v1.department_type.department_type_model import DepartmentType
     from backend.api_v1.department_category.department_category_model import (
         DepartmentCategory,
     )
+    from backend.api_v1.department_type.department_type_model import DepartmentType
 
 
 class Department(IntIdPkMixin, TimestampMixin, Base):
@@ -19,7 +21,7 @@ class Department(IntIdPkMixin, TimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     # Self-referential FK — NULL for root departments
-    parent_id: Mapped[Optional[int]] = mapped_column(
+    parent_id: Mapped[int | None] = mapped_column(
         ForeignKey("departments.id", ondelete="RESTRICT"),
         nullable=True,
         index=True,
@@ -37,14 +39,14 @@ class Department(IntIdPkMixin, TimestampMixin, Base):
     # Self-referential relationships
     # `lazy="selectin"` on `children` makes SQLAlchemy recursively load the
     # full subtree in O(depth) round-trips — acceptable for ≤7 levels.
-    parent: Mapped[Optional["Department"]] = relationship(
+    parent: Mapped[Department | None] = relationship(
         "Department",
         back_populates="children",
         remote_side="Department.id",  # scalar side = parent
         lazy="selectin",
         foreign_keys="[Department.parent_id]",
     )
-    children: Mapped[list["Department"]] = relationship(
+    children: Mapped[list[Department]] = relationship(
         "Department",
         back_populates="parent",
         lazy="selectin",
@@ -52,11 +54,11 @@ class Department(IntIdPkMixin, TimestampMixin, Base):
     )
 
     # FK relationships
-    department_category: Mapped["DepartmentCategory"] = relationship(
+    department_category: Mapped[DepartmentCategory] = relationship(
         back_populates="departments",
         lazy="selectin",
     )
-    department_type: Mapped["DepartmentType"] = relationship(
+    department_type: Mapped[DepartmentType] = relationship(
         back_populates="departments",
         lazy="selectin",
     )

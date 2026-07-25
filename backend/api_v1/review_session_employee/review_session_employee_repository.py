@@ -1,15 +1,15 @@
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload, joinedload, raiseload
+from sqlalchemy.orm import joinedload, raiseload, selectinload
 
 from backend.api_v1.base.base_repository import BaseRepository
-from backend.api_v1.review_session_employee.review_session_employee_model import (
-    ReviewSessionEmployee,
-)
 from backend.api_v1.employee.employee_model import Employee
 from backend.api_v1.employee_department.employee_department_model import (
     EmployeeDepartment,
 )
 from backend.api_v1.review_session.review_session_model import ReviewSession
+from backend.api_v1.review_session_employee.review_session_employee_model import (
+    ReviewSessionEmployee,
+)
 
 
 class ReviewSessionEmployeeRepository(BaseRepository):

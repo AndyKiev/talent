@@ -1,5 +1,5 @@
 # backend/api_v1/operation_essence_set_link/operation_essence_set_link_schema.py
-from typing import List, Optional
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -7,8 +7,8 @@ class EssenceSetSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     fingerprint: str
-    essence_ids: List[int] = []
-    essence_names: List[str] = []
+    essence_ids: list[int] = []
+    essence_names: list[str] = []
 
 
 class OperationEssenceSetLinkSchema(BaseModel):
@@ -20,9 +20,9 @@ class OperationEssenceSetLinkSchema(BaseModel):
     operation_name: str
     essence_set_id: int
     fingerprint: str
-    essence_names: List[str] = []
+    essence_names: list[str] = []
     # Names of user groups that hold this permission (for the admin grid)
-    user_group_names: List[str] = []
+    user_group_names: list[str] = []
 
 
 class OperationEssenceSetLinkCreate(BaseModel):
@@ -34,7 +34,7 @@ class OperationEssenceSetLinkCreate(BaseModel):
     """
 
     operation_id: int
-    essence_ids: List[int] = Field(..., min_length=1)
+    essence_ids: list[int] = Field(..., min_length=1)
 
 
 # ---------------------------------------------------------------------------
@@ -50,31 +50,31 @@ class PermissionMatrixGroupGrants(BaseModel):
     """One group's full desired set of permission ids."""
 
     user_group_id: int
-    user_group_name: Optional[str] = None
-    operation_essence_set_link_ids: List[int] = []
+    user_group_name: str | None = None
+    operation_essence_set_link_ids: list[int] = []
 
 
 class PermissionMatrixApplyRequest(BaseModel):
     """The uploaded matrix file: full desired state for each listed group."""
 
-    groups: List[PermissionMatrixGroupGrants] = []
+    groups: list[PermissionMatrixGroupGrants] = []
 
 
 class PermissionMatrixGroupDiff(BaseModel):
     """Per-group result of an apply (or dry-run preview)."""
 
     user_group_id: int
-    user_group_name: Optional[str] = None
-    added: List[int] = []  # ids that would be / were granted
-    removed: List[int] = []  # ids that would be / were revoked
+    user_group_name: str | None = None
+    added: list[int] = []  # ids that would be / were granted
+    removed: list[int] = []  # ids that would be / were revoked
     unchanged: int = 0  # count of ids already correct
-    unknown_ids: List[int] = []  # payload ids not present in DB (skipped)
+    unknown_ids: list[int] = []  # payload ids not present in DB (skipped)
     applied: bool = False  # True when actually committed
 
 
 class PermissionMatrixApplyResult(BaseModel):
     dry_run: bool
-    groups: List[PermissionMatrixGroupDiff] = []
+    groups: list[PermissionMatrixGroupDiff] = []
     total_added: int = 0
     total_removed: int = 0
     total_unknown: int = 0
@@ -91,7 +91,7 @@ class PermissionSyncSkip(BaseModel):
     """A guard permission that could not be materialised (missing seed data)."""
 
     operation: str
-    essences: List[str] = []
+    essences: list[str] = []
     reason: str
 
 
@@ -99,4 +99,4 @@ class PermissionSyncResult(BaseModel):
     total_required: int = 0  # distinct (operation, essence-set) found in guards
     created: int = 0  # new permissions_set rows written
     existing: int = 0  # already present
-    skipped: List[PermissionSyncSkip] = []  # operation/essence not seeded yet
+    skipped: list[PermissionSyncSkip] = []  # operation/essence not seeded yet

@@ -1,11 +1,11 @@
+
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
 
 
 class ReviewSessionCriterionBase(BaseModel):
     session_id: int
     dimension_id: int
-    source_criteria_id: Optional[int] = None
+    source_criteria_id: int | None = None
     text: str
     sort_order: int = 0
 

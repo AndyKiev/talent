@@ -1,19 +1,20 @@
-from fastapi import APIRouter, Depends
 from typing import Annotated
 
+from fastapi import APIRouter, Depends
+
+from backend.api_v1.process_roles.oversight_assignment.oversight_assignment_dependencies import (
+    get_oversight_assignment_service,
+)
 from backend.api_v1.process_roles.oversight_assignment.oversight_assignment_schema import (
     OversightAssignmentReport,
     OversightAssignmentRunRequest,
 )
-from backend.api_v1.process_roles.oversight_assignment.oversight_assignment_dependencies import (
-    get_oversight_assignment_service,
-)
 from backend.api_v1.process_roles.oversight_assignment.oversight_assignment_service import (
     OversightAssignmentService,
 )
-from backend.auth.jwt_auth import get_current_active_auth_user
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.utils.enums import EssenceName, OperationVerb
 
 # Admin batch tool: auto-assign the oversight manager to the employees of a
 # department subtree (writes process_role_holder_employee_links — same guard

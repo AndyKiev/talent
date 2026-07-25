@@ -1,14 +1,14 @@
 from sqlalchemy import select
 
 from backend.api_v1.base.base_repository import BaseRepository
-from backend.api_v1.process_roles.process_role_holder_department_link.process_role_holder_department_link_model import (
-    ProcessRoleHolderDepartmentLink,
-)
+from backend.api_v1.process_roles.process.process_model import Process
+from backend.api_v1.process_roles.process_role.process_role_model import ProcessRole
 from backend.api_v1.process_roles.process_role_holder.process_role_holder_model import (
     ProcessRoleHolder,
 )
-from backend.api_v1.process_roles.process_role.process_role_model import ProcessRole
-from backend.api_v1.process_roles.process.process_model import Process
+from backend.api_v1.process_roles.process_role_holder_department_link.process_role_holder_department_link_model import (
+    ProcessRoleHolderDepartmentLink,
+)
 
 
 class ProcessRoleHolderDepartmentLinkRepository(BaseRepository):

@@ -1,19 +1,21 @@
-from typing import TYPE_CHECKING, List
+import datetime
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Date, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, String, Text, Date
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
-import datetime
 
 if TYPE_CHECKING:
+    from backend.api_v1.review_session_department.review_session_department_model import (
+        ReviewSessionDepartment,
+    )
     from backend.api_v1.review_session_employee.review_session_employee_model import (
         ReviewSessionEmployee,
     )
     from backend.api_v1.review_session_status.review_session_status_model import (
         ReviewSessionStatus,
-    )
-    from backend.api_v1.review_session_department.review_session_department_model import (
-        ReviewSessionDepartment,
     )
 
 
@@ -35,11 +37,11 @@ class ReviewSession(IntIdPkMixin, TimestampMixin, Base):
         """Backward-compatible accessor that returns the status key string."""
         return self.status_rel.key if self.status_rel else "pending"
 
-    employees: Mapped[List["ReviewSessionEmployee"]] = relationship(
+    employees: Mapped[list["ReviewSessionEmployee"]] = relationship(
         back_populates="session",
         lazy="selectin",
     )
-    departments: Mapped[List["ReviewSessionDepartment"]] = relationship(
+    departments: Mapped[list["ReviewSessionDepartment"]] = relationship(
         back_populates="session",
         lazy="selectin",
         viewonly=True,

@@ -1,18 +1,18 @@
 # backend/api_v1/planning/plan_report/plan_report_views.py
-from fastapi import APIRouter, Depends
-from fastapi.security import HTTPBearer
 from typing import Annotated
 
-from backend.api_v1.planning.plan_report.plan_report_schema import (
-    PlanReport as PlanReportSchema,
-)
+from fastapi import APIRouter, Depends
+from fastapi.security import HTTPBearer
+
 from backend.api_v1.planning.plan_report.plan_report_dependencies import (
     get_plan_report_service,
 )
+from backend.api_v1.planning.plan_report.plan_report_schema import (
+    PlanReport as PlanReportSchema,
+)
 from backend.api_v1.planning.plan_report.plan_report_service import PlanReportService
-
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/admin/plan_reports",

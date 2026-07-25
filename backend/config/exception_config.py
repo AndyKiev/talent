@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 
 from backend.config.exception_descriptions import (
+    ClientExceptionDescription,
     GeneralExceptionDescription,
     ServerExceptionDescription,
-    ClientExceptionDescription,
 )
 
 

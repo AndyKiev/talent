@@ -1,32 +1,32 @@
 from datetime import date
-from typing import Optional, List, Any
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api_v1.base.base_service import BaseService
-from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.app_setting.app_setting_messages import (
+    AppSettingCreateSuccess,
+    AppSettingDeleteError,
+    AppSettingDeleteSuccess,
+    AppSettingKeyTaken,
+    AppSettingNotFound,
+    AppSettingNotFoundByKey,
+    AppSettingUpdateSuccess,
+    AppSettingValueBelowMin,
+    AppSettingValueTypeMismatch,
+)
 from backend.api_v1.app_setting.app_setting_repository import AppSettingRepository
 from backend.api_v1.app_setting.app_setting_schema import (
     AppSetting as AppSettingSchema,
+)
+from backend.api_v1.app_setting.app_setting_schema import (
     AppSettingCreate,
     AppSettingUpdate,
 )
-from backend.api_v1.app_setting.app_setting_messages import (
-    AppSettingNotFound,
-    AppSettingNotFoundByKey,
-    AppSettingKeyTaken,
-    AppSettingValueTypeMismatch,
-    AppSettingValueBelowMin,
-    AppSettingDeleteError,
-)
-from backend.api_v1.app_setting.app_setting_messages import (
-    AppSettingDeleteSuccess,
-    AppSettingCreateSuccess,
-    AppSettingUpdateSuccess,
-)
+from backend.api_v1.base.base_service import BaseService
+from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.setting_value_type.setting_value_type_model import SettingValueType
 
 # Training-module feature flag (master) + its delete-on-disable child. The
@@ -54,7 +54,7 @@ RECRUITMENT_MODULE_ENABLED_KEY = "recruitment_module_enabled"
 PIPELINE_DRAG_CONFIRM_KEY = "pipeline_drag_confirm"
 
 
-def cast_value(value: Any, type_key: Optional[str]) -> Any:
+def cast_value(value: Any, type_key: str | None) -> Any:
     """
     Read a setting's stored JSON value as its declared type. The JSON value is
     usually already the right Python type; this normalises loosely-stored
@@ -126,8 +126,8 @@ async def get_int_setting(session: AsyncSession, key: str, default: int = 0) -> 
 
 
 async def get_list_setting(
-    session: AsyncSession, key: str, default: Optional[List] = None
-) -> List:
+    session: AsyncSession, key: str, default: list | None = None
+) -> list:
     """Read a JSON-list app setting by key from server-side business logic.
 
     Returns ``default`` (or ``[]``) when the row is missing or its value is not a
@@ -166,7 +166,7 @@ async def get_effective_bool_setting(
     if row is None:
         return default
     seen: set[int] = set()
-    cur: Optional[AppSettingModel] = row
+    cur: AppSettingModel | None = row
     while cur is not None and cur.id not in seen:
         seen.add(cur.id)
         type_key = await session.scalar(
@@ -183,7 +183,7 @@ async def get_effective_bool_setting(
 async def get_user_bool_setting(
     session: AsyncSession,
     key: str,
-    employee_id: Optional[int] = None,
+    employee_id: int | None = None,
     default: bool = False,
 ) -> bool:
     """Boolean setting resolved for ONE user: their user_settings override when
@@ -223,8 +223,8 @@ class AppSettingService(BaseService):
     def __init__(
         self,
         repository: AppSettingRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -232,7 +232,7 @@ class AppSettingService(BaseService):
     # Helpers
     # ------------------------------------------------------------------
 
-    async def _value_type_key(self, value_type_id: int) -> Optional[str]:
+    async def _value_type_key(self, value_type_id: int) -> str | None:
         record = await self.session.get(SettingValueType, value_type_id)
         return record.key if record else None
 
@@ -273,8 +273,8 @@ class AppSettingService(BaseService):
         return result
 
     async def get_app_settings(
-        self, sort: Optional[str] = None
-    ) -> List[AppSettingSchema]:
+        self, sort: str | None = None
+    ) -> list[AppSettingSchema]:
         records = await self.get_all(sort_json=sort)
         return [AppSettingSchema.from_orm_with_groups(r) for r in records]
 
@@ -313,7 +313,7 @@ class AppSettingService(BaseService):
         except IntegrityError:
             raise await self._resolve_domain_error(AppSettingKeyTaken(setting_in.key))
 
-    async def _validate_setting_groups(self, group_ids: List[int]) -> None:
+    async def _validate_setting_groups(self, group_ids: list[int]) -> None:
         """Raise if any group_id doesn't exist."""
         if not group_ids:
             return
@@ -447,7 +447,7 @@ class AppSettingService(BaseService):
         if changed:
             await self.session.commit()
 
-    async def get_effective_for_user(self) -> List[AppSettingSchema]:
+    async def get_effective_for_user(self) -> list[AppSettingSchema]:
         """All settings visible to the current user, with `value` resolved
         per-user (override clamped to [1, global] for integers) when the
         setting is overridable and the user has one, else the global value.
@@ -477,7 +477,7 @@ class AppSettingService(BaseService):
                 )
             ).all()
             overrides = {r.app_setting_id: r.value for r in rows}
-        result: List[AppSettingSchema] = []
+        result: list[AppSettingSchema] = []
         for r in records:
             if not setting_visible(r):
                 continue

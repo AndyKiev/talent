@@ -22,13 +22,12 @@ sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-from sqlalchemy import select  # noqa: E402
-
-from backend.database.db_helper import db_helper  # noqa: E402
-from backend.api_v1.review_level.review_level_model import ReviewLevel  # noqa: E402
-from backend.api_v1.review_level_requirement.review_level_requirement_model import (  # noqa: E402
+from backend.api_v1.review_level.review_level_model import ReviewLevel
+from backend.api_v1.review_level_requirement.review_level_requirement_model import (
     ReviewLevelRequirement,
 )
+from backend.database.db_helper import db_helper
+from sqlalchemy import select
 
 SEED_FILE = Path(__file__).with_name("levels_seed.json")
 

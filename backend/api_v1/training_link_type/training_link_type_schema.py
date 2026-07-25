@@ -1,11 +1,11 @@
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TrainingLinkTypeBase(BaseModel):
     key: str = Field(..., max_length=32)
-    description: Optional[str] = Field(None, max_length=256)
+    description: str | None = Field(None, max_length=256)
 
 
 class TrainingLinkTypeCreate(TrainingLinkTypeBase):
@@ -13,8 +13,8 @@ class TrainingLinkTypeCreate(TrainingLinkTypeBase):
 
 
 class TrainingLinkTypeUpdate(BaseModel):
-    key: Optional[str] = Field(None, max_length=32)
-    description: Optional[str] = Field(None, max_length=256)
+    key: str | None = Field(None, max_length=32)
+    description: str | None = Field(None, max_length=256)
 
 
 class TrainingLinkType(TrainingLinkTypeBase):

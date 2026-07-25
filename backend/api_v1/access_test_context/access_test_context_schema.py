@@ -1,5 +1,5 @@
+
 from pydantic import BaseModel, Field
-from typing import List
 
 
 class AccessTestGroupOption(BaseModel):
@@ -13,12 +13,12 @@ class AccessTestState(BaseModel):
     """Current test-as state for the requesting user + the groups they may pick."""
 
     active: bool = False
-    group_ids: List[int] = []
-    group_names: List[str] = []
-    available_groups: List[AccessTestGroupOption] = []
+    group_ids: list[int] = []
+    group_names: list[str] = []
+    available_groups: list[AccessTestGroupOption] = []
 
 
 class AccessTestContextSet(BaseModel):
     """PUT body — enter/update test-as mode for the current user."""
 
-    group_ids: List[int] = Field(..., min_length=1)
+    group_ids: list[int] = Field(..., min_length=1)

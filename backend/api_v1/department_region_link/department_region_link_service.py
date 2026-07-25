@@ -1,32 +1,31 @@
-from typing import List, Optional
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.department.department_repository import DepartmentRepository
+from backend.api_v1.department_region_link.department_region_link_messages import (
+    DepartmentRegionCategoryNotAllowed,
+    DepartmentRegionLinkAlreadyExists,
+    DepartmentRegionLinkCreateSuccess,
+    DepartmentRegionLinkDeleteError,
+    DepartmentRegionLinkDeleteSuccess,
+    DepartmentRegionLinkNotFound,
+    DepartmentRegionLinkNotFoundByDepartment,
+    DepartmentRegionLinkUpdateSuccess,
+)
 from backend.api_v1.department_region_link.department_region_link_repository import (
     DepartmentRegionLinkRepository,
 )
 from backend.api_v1.department_region_link.department_region_link_schema import (
     DepartmentRegionLink as DepartmentRegionLinkSchema,
+)
+from backend.api_v1.department_region_link.department_region_link_schema import (
     DepartmentRegionLinkCreate,
     DepartmentRegionLinkUpdate,
 )
-from backend.api_v1.department.department_repository import DepartmentRepository
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.department_region_link.department_region_link_messages import (
-    DepartmentRegionLinkNotFound,
-    DepartmentRegionLinkNotFoundByDepartment,
-    DepartmentRegionLinkAlreadyExists,
-    DepartmentRegionLinkDeleteError,
-    DepartmentRegionCategoryNotAllowed,
-)
-from backend.api_v1.department_region_link.department_region_link_messages import (
-    DepartmentRegionLinkDeleteSuccess,
-    DepartmentRegionLinkCreateSuccess,
-    DepartmentRegionLinkUpdateSuccess,
-)
 
 # Only departments whose category KEY is one of these may be assigned a region.
 # NOTE: matched against DepartmentCategory.key (English), case-insensitively,
@@ -43,8 +42,8 @@ class DepartmentRegionLinkService(BaseService):
     def __init__(
         self,
         repository: DepartmentRegionLinkRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
         # Used only to read the department's category for the eligibility guard.
@@ -84,11 +83,11 @@ class DepartmentRegionLinkService(BaseService):
 
     async def get_links(
         self,
-        department_id: Optional[int] = None,
-        region_id: Optional[int] = None,
-        is_active: Optional[bool] = None,
-        sort: Optional[str] = None,
-    ) -> List[DepartmentRegionLinkSchema]:
+        department_id: int | None = None,
+        region_id: int | None = None,
+        is_active: bool | None = None,
+        sort: str | None = None,
+    ) -> list[DepartmentRegionLinkSchema]:
         filters = {}
         if department_id is not None:
             filters["department_id"] = department_id

@@ -1,13 +1,13 @@
 from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
 
 
 class CandidateNoteAuthorMini(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     name: str
-    code: Optional[str] = None
+    code: str | None = None
 
 
 class CandidateNoteCreate(BaseModel):
@@ -22,4 +22,4 @@ class CandidateNoteSchema(BaseModel):
     author_id: int
     body: str
     created_at: datetime
-    author: Optional[CandidateNoteAuthorMini] = None
+    author: CandidateNoteAuthorMini | None = None

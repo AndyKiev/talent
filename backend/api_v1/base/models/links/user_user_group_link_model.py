@@ -1,12 +1,13 @@
 from typing import TYPE_CHECKING
-from sqlalchemy.orm import mapped_column, Mapped, relationship
-from sqlalchemy import UniqueConstraint, ForeignKey
+
 from backend.api_v1.base.base_model import Base
 from backend.database.mixins import IntIdPkMixin, TimestampMixin
+from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
-    from backend.api_v1.user_group.user_group_model import UserGroup
     from backend.api_v1.user.user_model import User
+    from backend.api_v1.user_group.user_group_model import UserGroup
 
 
 class UserUserGroupLink(IntIdPkMixin, TimestampMixin, Base):

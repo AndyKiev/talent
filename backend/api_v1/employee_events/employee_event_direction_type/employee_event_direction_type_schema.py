@@ -1,5 +1,5 @@
+
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional
 
 
 class EmployeeEventDirectionTypeBase(BaseModel):
@@ -12,7 +12,7 @@ class EmployeeEventDirectionTypeCreate(EmployeeEventDirectionTypeBase):
 
 
 class EmployeeEventDirectionTypeUpdate(BaseModel):
-    name: Optional[str] = Field(None, max_length=128)
+    name: str | None = Field(None, max_length=128)
 
 
 class EmployeeEventDirectionType(EmployeeEventDirectionTypeBase):

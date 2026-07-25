@@ -1,20 +1,23 @@
-from fastapi import APIRouter, Depends, status, Query
-from typing import Annotated, Optional, List
+from typing import Annotated
 
-from backend.api_v1.base.mutation_response import MutationResponse
+from fastapi import APIRouter, Depends, Query, status
+
+from backend.api_v1.app_setting.app_setting_dependencies import (
+    app_setting_by_id,
+    get_app_setting_service,
+)
 from backend.api_v1.app_setting.app_setting_schema import (
     AppSetting as AppSettingSchema,
+)
+from backend.api_v1.app_setting.app_setting_schema import (
     AppSettingCreate,
     AppSettingUpdate,
 )
-from backend.api_v1.app_setting.app_setting_dependencies import (
-    get_app_setting_service,
-    app_setting_by_id,
-)
 from backend.api_v1.app_setting.app_setting_service import AppSettingService
-from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.api_v1.base.mutation_response import MutationResponse
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/app_settings",
@@ -23,10 +26,10 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[AppSettingSchema])
+@router.get("", response_model=list[AppSettingSchema])
 async def get_app_settings(
     service: Annotated[AppSettingService, Depends(get_app_setting_service)],
-    sort: Optional[str] = Query(
+    sort: str | None = Query(
         None,
         description='JSON for sorting: {"field": "asc|desc"} or [{"field1": "asc"}, "field2"]',
     ),
@@ -46,7 +49,7 @@ async def get_app_setting_by_key(
 # Per-user resolved settings: same shape as GET "", but each value is the
 # effective value for the current user (override if overridable & present &
 # clamped, else the global value). Consumer hooks read from here.
-@router.get("/effective_for_me", response_model=List[AppSettingSchema])
+@router.get("/effective_for_me", response_model=list[AppSettingSchema])
 async def get_app_settings_effective_for_me(
     service: Annotated[AppSettingService, Depends(get_app_setting_service)],
 ):

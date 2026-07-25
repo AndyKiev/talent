@@ -1,6 +1,6 @@
 import json
 
-from sqlalchemy import TypeDecorator, CLOB
+from sqlalchemy import CLOB, TypeDecorator
 
 
 class JSONEncodedDict(TypeDecorator):

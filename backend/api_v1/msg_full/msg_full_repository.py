@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from sqlalchemy import desc, select
 from sqlalchemy.orm import selectinload
@@ -26,7 +26,7 @@ class MsgFullRepository(BaseRepository):
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
-    async def get_by_id_full(self, msg_key_id: int) -> Optional[MsgKey]:
+    async def get_by_id_full(self, msg_key_id: int) -> MsgKey | None:
         stmt = (
             select(MsgKey)
             .where(MsgKey.id == msg_key_id)

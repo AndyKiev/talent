@@ -1,22 +1,25 @@
-from fastapi import APIRouter, Depends, status, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, Optional, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.planning.plan_session_status.plan_session_status_schema import (
-    PlanSessionStatus as PlanSessionStatusSchema,
-    PlanSessionStatusCreate,
-    PlanSessionStatusUpdate,
-)
 from backend.api_v1.planning.plan_session_status.plan_session_status_dependencies import (
     get_plan_session_status_service,
     plan_session_status_by_id,
+)
+from backend.api_v1.planning.plan_session_status.plan_session_status_schema import (
+    PlanSessionStatus as PlanSessionStatusSchema,
+)
+from backend.api_v1.planning.plan_session_status.plan_session_status_schema import (
+    PlanSessionStatusCreate,
+    PlanSessionStatusUpdate,
 )
 from backend.api_v1.planning.plan_session_status.plan_session_status_service import (
     PlanSessionStatusService,
 )
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/admin/plan_session_statuses",
@@ -27,14 +30,14 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[PlanSessionStatusSchema],
+    response_model=list[PlanSessionStatusSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.PLAN_SESSION_STATUS)],
 )
 async def get_plan_session_statuses(
     service: Annotated[
         PlanSessionStatusService, Depends(get_plan_session_status_service)
     ],
-    sort: Optional[str] = Query(None, description='JSON: {"field": "asc|desc"}'),
+    sort: str | None = Query(None, description='JSON: {"field": "asc|desc"}'),
 ):
     return await service.get_plan_session_statuses(sort=sort)
 

@@ -33,16 +33,15 @@ sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-from sqlalchemy import select  # noqa: E402
-
-from backend.database.db_helper import db_helper  # noqa: E402
-from backend.api_v1.app_setting.app_setting_model import AppSetting  # noqa: E402
-from backend.api_v1.setting_value_type.setting_value_type_model import (  # noqa: E402
+from backend.api_v1.app_setting.app_setting_model import AppSetting
+from backend.api_v1.employee.employee_model import Employee
+from backend.api_v1.msg_key.msg_key_model import MsgKey
+from backend.api_v1.msg_pg.msg_model import Msg
+from backend.api_v1.setting_value_type.setting_value_type_model import (
     SettingValueType,
 )
-from backend.api_v1.msg_key.msg_key_model import MsgKey  # noqa: E402
-from backend.api_v1.msg_pg.msg_model import Msg  # noqa: E402
-from backend.api_v1.employee.employee_model import Employee  # noqa: E402
+from backend.database.db_helper import db_helper
+from sqlalchemy import select
 
 ADMIN_CODE = "UKR7101004"
 LANG_UKR = 3

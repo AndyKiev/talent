@@ -1,9 +1,9 @@
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from sqlalchemy import select
 
-from backend.api_v1.base.base_repository import BaseRepository
 from backend.api_v1.audit.change_log.change_log_model import ChangeLog
+from backend.api_v1.base.base_repository import BaseRepository
 
 
 class ChangeLogRepository(BaseRepository):
@@ -11,11 +11,11 @@ class ChangeLogRepository(BaseRepository):
 
     async def get_filtered(
         self,
-        change_session_id: Optional[int] = None,
-        essence_key: Optional[str] = None,
-        entity_id: Optional[int] = None,
-        parent_id: Optional[int] = None,
-        action: Optional[str] = None,
+        change_session_id: int | None = None,
+        essence_key: str | None = None,
+        entity_id: int | None = None,
+        parent_id: int | None = None,
+        action: str | None = None,
     ) -> Sequence[ChangeLog]:
         """
         Flexible read used for history views and reversal lookups:

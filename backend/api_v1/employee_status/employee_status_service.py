@@ -1,29 +1,28 @@
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.employee_status.employee_status_messages import (
+    EmployeeStatusCreateSuccess,
+    EmployeeStatusDeleteError,
+    EmployeeStatusDeleteSuccess,
+    EmployeeStatusNameTaken,
+    EmployeeStatusNotFound,
+    EmployeeStatusNotFoundByName,
+    EmployeeStatusUpdateSuccess,
+)
 from backend.api_v1.employee_status.employee_status_repository import (
     EmployeeStatusRepository,
 )
 from backend.api_v1.employee_status.employee_status_schema import (
     EmployeeStatus as EmployeeStatusSchema,
+)
+from backend.api_v1.employee_status.employee_status_schema import (
     EmployeeStatusCreate,
     EmployeeStatusUpdate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.employee_status.employee_status_messages import (
-    EmployeeStatusNotFound,
-    EmployeeStatusNameTaken,
-    EmployeeStatusDeleteError,
-    EmployeeStatusNotFoundByName,
-)
-from backend.api_v1.employee_status.employee_status_messages import (
-    EmployeeStatusDeleteSuccess,
-    EmployeeStatusCreateSuccess,
-    EmployeeStatusUpdateSuccess,
 )
 
 
@@ -31,8 +30,8 @@ class EmployeeStatusService(BaseService):
     def __init__(
         self,
         repository: EmployeeStatusRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -45,9 +44,9 @@ class EmployeeStatusService(BaseService):
 
     async def get_employee_statuses(
         self,
-        name: Optional[str] = None,
-        sort: Optional[str] = None,
-    ) -> List[EmployeeStatusSchema]:
+        name: str | None = None,
+        sort: str | None = None,
+    ) -> list[EmployeeStatusSchema]:
         if name:
             record = await self.get_by_name(
                 name, not_found_exc=EmployeeStatusNotFoundByName

@@ -12,8 +12,8 @@ When the headcount_plan_enabled setting is OFF, MenuService.get_my_menus drops
 BOTH children and 'employees' behaves exactly as before. Idempotent.
 """
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(_REPO_ROOT) not in sys.path:
@@ -23,12 +23,12 @@ import asyncio
 
 from sqlalchemy import func, select
 
-from backend.database.db_helper import db_helper
 from backend.api_v1.menu.menu_model import Menu
 from backend.api_v1.table_relationship_links.menu_user_group_link_model import (
     MenuUserGroupLink,
 )
 from backend.api_v1.user_group.user_group_model import UserGroup
+from backend.database.db_helper import db_helper
 
 HEADCOUNT_GROUP_NAMES = ("dev", "admin", "hrs", "hrm")
 

@@ -1,23 +1,25 @@
-from fastapi import APIRouter, Depends, status, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, Optional, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee_events.employee_event_direction_type.employee_event_direction_type_dependencies import (
+    employee_event_direction_type_by_id,
+    get_employee_event_direction_type_service,
+)
 from backend.api_v1.employee_events.employee_event_direction_type.employee_event_direction_type_schema import (
     EmployeeEventDirectionType as EmployeeEventDirectionTypeSchema,
+)
+from backend.api_v1.employee_events.employee_event_direction_type.employee_event_direction_type_schema import (
     EmployeeEventDirectionTypeCreate,
     EmployeeEventDirectionTypeUpdate,
-)
-from backend.api_v1.employee_events.employee_event_direction_type.employee_event_direction_type_dependencies import (
-    get_employee_event_direction_type_service,
-    employee_event_direction_type_by_id,
 )
 from backend.api_v1.employee_events.employee_event_direction_type.employee_event_direction_type_service import (
     EmployeeEventDirectionTypeService,
 )
-
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/admin/employee_events/employee_event_direction_types",
@@ -28,7 +30,7 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[EmployeeEventDirectionTypeSchema],
+    response_model=list[EmployeeEventDirectionTypeSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE_EVENT_DIRECTION_TYPE)],
 )
 async def get_employee_event_direction_types(
@@ -36,8 +38,8 @@ async def get_employee_event_direction_types(
         EmployeeEventDirectionTypeService,
         Depends(get_employee_event_direction_type_service),
     ],
-    code: Optional[str] = None,
-    sort: Optional[str] = Query(
+    code: str | None = None,
+    sort: str | None = Query(
         None,
         description='JSON for sorting: {"field": "asc|desc"} or [{"field1": "asc"}, "field2"]',
     ),

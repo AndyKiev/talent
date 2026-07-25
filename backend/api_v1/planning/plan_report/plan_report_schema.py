@@ -2,16 +2,15 @@
 from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
-from typing import Optional, List
 
 from backend.api_v1.department.department_schema import (
     DepartmentFlat as DepartmentFlatSchema,
 )
 from backend.api_v1.job_group.job_group_schema import JobGroup as JobGroupSchema
+from backend.api_v1.region.region_schema import RegionSlim
 from backend.api_v1.talent_status.talent_status_schema import (
     TalentStatus as TalentStatusSchema,
 )
-from backend.api_v1.region.region_schema import RegionSlim
 
 
 class PlanReportRow(BaseModel):
@@ -30,17 +29,17 @@ class PlanReportRow(BaseModel):
     plan_scope_id: int
     department_id: int
     job_group_id: int
-    talent_status_id: Optional[int] = None
+    talent_status_id: int | None = None
 
     plan: int
     fact: int
 
-    department: Optional[DepartmentFlatSchema] = None
-    job_group: Optional[JobGroupSchema] = None
-    talent_status: Optional[TalentStatusSchema] = None
-    region: Optional[RegionSlim] = None
+    department: DepartmentFlatSchema | None = None
+    job_group: JobGroupSchema | None = None
+    talent_status: TalentStatusSchema | None = None
+    region: RegionSlim | None = None
 
 
 class PlanReport(BaseModel):
     plan_session_id: int
-    rows: List[PlanReportRow]
+    rows: list[PlanReportRow]

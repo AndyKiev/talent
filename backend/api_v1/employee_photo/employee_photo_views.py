@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends, File, Response, UploadFile
 from typing import Annotated
 
+from fastapi import APIRouter, Depends, File, Response, UploadFile
+
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.employee_photo.employee_photo_schema import EmployeePhotoMeta
 from backend.api_v1.employee_photo.employee_photo_dependencies import (
     get_employee_photo_service,
 )
+from backend.api_v1.employee_photo.employee_photo_schema import EmployeePhotoMeta
 from backend.api_v1.employee_photo.employee_photo_service import EmployeePhotoService
 from backend.auth.jwt_auth import get_current_active_auth_user
 

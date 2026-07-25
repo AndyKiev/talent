@@ -1,13 +1,16 @@
-from fastapi import APIRouter, Depends, status, Query
-from typing import Annotated, List
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.employee_child.employee_child_schema import (
-    EmployeeChild as EmployeeChildSchema,
-    EmployeeChildCreate,
-)
 from backend.api_v1.employee_child.employee_child_dependencies import (
     get_employee_child_service,
+)
+from backend.api_v1.employee_child.employee_child_schema import (
+    EmployeeChild as EmployeeChildSchema,
+)
+from backend.api_v1.employee_child.employee_child_schema import (
+    EmployeeChildCreate,
 )
 from backend.api_v1.employee_child.employee_child_service import (
     EmployeeChildService,
@@ -21,7 +24,7 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[EmployeeChildSchema])
+@router.get("", response_model=list[EmployeeChildSchema])
 async def get_employee_children(
     service: Annotated[EmployeeChildService, Depends(get_employee_child_service)],
     employee_id: int = Query(..., description="List children for this employee"),

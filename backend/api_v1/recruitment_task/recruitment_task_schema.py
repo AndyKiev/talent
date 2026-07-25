@@ -1,11 +1,11 @@
-from datetime import datetime, date
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional
+from datetime import date, datetime
 
+from pydantic import BaseModel, ConfigDict, Field
+
+from backend.api_v1.department.department_org_units import TopOrgUnit
 from backend.api_v1.recruitment_task.recruitment_task_state_machine import (
     RecruitmentTaskStatusKey,
 )
-from backend.api_v1.department.department_org_units import TopOrgUnit
 
 
 class RecruitmentTaskJobMini(BaseModel):
@@ -32,7 +32,7 @@ class RecruitmentTaskCreatorMini(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     name: str
-    code: Optional[str] = None
+    code: str | None = None
 
 
 class RecruitmentTaskDepartmentMini(BaseModel):
@@ -43,11 +43,11 @@ class RecruitmentTaskDepartmentMini(BaseModel):
 
 class RecruitmentTaskBase(BaseModel):
     job_id: int
-    requirement_group_id: Optional[int] = None
-    department_id: Optional[int] = None
+    requirement_group_id: int | None = None
+    department_id: int | None = None
     openings: int = Field(1, ge=1)
-    comment: Optional[str] = None
-    target_deadline: Optional[date] = None
+    comment: str | None = None
+    target_deadline: date | None = None
 
 
 class RecruitmentTaskCreate(RecruitmentTaskBase):
@@ -55,11 +55,11 @@ class RecruitmentTaskCreate(RecruitmentTaskBase):
 
 
 class RecruitmentTaskUpdate(BaseModel):
-    requirement_group_id: Optional[int] = None
-    department_id: Optional[int] = None
-    openings: Optional[int] = Field(None, ge=1)
-    comment: Optional[str] = None
-    target_deadline: Optional[date] = None
+    requirement_group_id: int | None = None
+    department_id: int | None = None
+    openings: int | None = Field(None, ge=1)
+    comment: str | None = None
+    target_deadline: date | None = None
 
 
 class RecruitmentTaskStatusChange(BaseModel):
@@ -72,13 +72,13 @@ class RecruitmentTaskSchema(RecruitmentTaskBase):
     status_id: int
     created_by: int
     created_at: datetime
-    in_process_at: Optional[datetime] = None
-    closed_at: Optional[datetime] = None
-    job: Optional[RecruitmentTaskJobMini] = None
-    status: Optional[RecruitmentTaskStatusMini] = None
-    requirement_group: Optional[RecruitmentTaskGroupMini] = None
-    creator: Optional[RecruitmentTaskCreatorMini] = None
-    department: Optional[RecruitmentTaskDepartmentMini] = None
+    in_process_at: datetime | None = None
+    closed_at: datetime | None = None
+    job: RecruitmentTaskJobMini | None = None
+    status: RecruitmentTaskStatusMini | None = None
+    requirement_group: RecruitmentTaskGroupMini | None = None
+    creator: RecruitmentTaskCreatorMini | None = None
+    department: RecruitmentTaskDepartmentMini | None = None
     # Derived (not an ORM column): the exact department's top-level org unit
     # (store / directorate / board), resolved in the service.
-    top_org_unit: Optional[TopOrgUnit] = None
+    top_org_unit: TopOrgUnit | None = None

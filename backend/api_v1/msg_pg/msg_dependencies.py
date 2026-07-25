@@ -1,10 +1,10 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.database.db_helper import db_helper
 from backend.api_v1.msg_pg.msg_model import Msg
 from backend.api_v1.msg_pg.msg_repository import MsgRepository
 from backend.api_v1.msg_pg.msg_service import MsgService
+from backend.database.db_helper import db_helper
 
 
 async def get_msg_service(

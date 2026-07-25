@@ -21,16 +21,15 @@ Usage (run from project root or backend/):
     python utils/msg_key_backend_audit.py --backend-root /home/andry/Projects/talent/backend
 """
 
+import argparse
 import ast
 import asyncio
-import argparse
 import json
 import sys
 from collections import defaultdict
+from datetime import datetime
 from pathlib import Path
 from typing import NamedTuple
-from datetime import datetime
-
 
 # ---------------------------------------------------------------------------
 # Data types
@@ -130,7 +129,7 @@ def _extract_message_keys_from_file(path):
         source = path.read_text(encoding="utf-8")
         tree = ast.parse(source, filename=str(path))
     except SyntaxError as exc:
-        print("  [WARN] SyntaxError in {}: {}".format(path, exc), file=sys.stderr)
+        print(f"  [WARN] SyntaxError in {path}: {exc}", file=sys.stderr)
         return []
 
     found = []
@@ -175,7 +174,7 @@ def scan_code_keys(api_v1_root):
     targets = sorted(api_v1_root.rglob("*_messages.py"))
     if not targets:
         print(
-            "[WARN] No *_messages.py files found under {}".format(api_v1_root),
+            f"[WARN] No *_messages.py files found under {api_v1_root}",
             file=sys.stderr,
         )
     all_keys = []
@@ -191,6 +190,7 @@ def scan_code_keys(api_v1_root):
 
 async def fetch_db_keys(backend_root):
     from sqlalchemy import text
+
     from backend.database.db_helper import db_helper  # type: ignore
 
     async with db_helper.engine.connect() as conn:
@@ -234,7 +234,7 @@ def build_translation_prompt(missing_keys):
     lines.append("# Translation Prompt — Missing Message Keys")
     lines.append("")
     lines.append("Generated: {}".format(datetime.now().strftime("%Y-%m-%d %H:%M")))
-    lines.append("Missing keys: {}".format(len(missing_keys)))
+    lines.append(f"Missing keys: {len(missing_keys)}")
     lines.append("")
     lines.append("---")
     lines.append("")
@@ -277,7 +277,7 @@ def build_translation_prompt(missing_keys):
     lines.append("")
 
     for fk in missing_keys:
-        lines.append("### `{}`".format(fk.key))
+        lines.append(f"### `{fk.key}`")
         if fk.template_vars:
             lines.append(
                 "- **Variables:** {}".format(
@@ -293,7 +293,7 @@ def build_translation_prompt(missing_keys):
                 converted_fallback = converted_fallback.replace(
                     "{" + var + "}", "${" + var + "}"
                 )
-            lines.append("- **English fallback:** {}".format(converted_fallback))
+            lines.append(f"- **English fallback:** {converted_fallback}")
         lines.append("")
 
     lines.append("---")
@@ -306,14 +306,12 @@ def build_translation_prompt(missing_keys):
     example_lines = []
     for fk in missing_keys:
         # Build the eng value with ${varName} placeholders
-        eng_val = fk.fallback if fk.fallback else ""
+        eng_val = fk.fallback or ""
         for var in fk.template_vars:
             eng_val = eng_val.replace("{" + var + "}", "${" + var + "}")
 
         example_lines.append(
-            '  "{}": {{\n    "ukr": "<Ukrainian translation>",\n    "eng": "{}"\n  }}'.format(
-                fk.key, eng_val
-            )
+            f'  "{fk.key}": {{\n    "ukr": "<Ukrainian translation>",\n    "eng": "{eng_val}"\n  }}'
         )
     lines.append(",\n".join(example_lines))
     lines.append("}")
@@ -357,9 +355,7 @@ def report(code_keys, db_keys, backend_root, emit_json_stub, script_dir):
 
     # -- keys found in code --------------------------------------------------
     print(
-        "\n[CODE]  {} declaration(s) across {} file(s):\n".format(
-            len(code_keys), len({fk.file for fk in code_keys})
-        )
+        f"\n[CODE]  {len(code_keys)} declaration(s) across {len({fk.file for fk in code_keys})} file(s):\n"
     )
 
     by_file = defaultdict(list)
@@ -367,14 +363,14 @@ def report(code_keys, db_keys, backend_root, emit_json_stub, script_dir):
         by_file[fk.file].append(fk)
 
     for path, entries in sorted(by_file.items(), key=lambda kv: str(kv[0])):
-        print("  {}".format(_relative(path, backend_root)))
+        print(f"  {_relative(path, backend_root)}")
         for e in entries:
             vars_str = (
                 ", ".join("${" + v + "}" for v in e.template_vars)
                 if e.template_vars
                 else "-"
             )
-            print('    {:<45}  "{}"   [{}]'.format(e.class_name, e.key, vars_str))
+            print(f'    {e.class_name:<45}  "{e.key}"   [{vars_str}]')
 
     # -- DB comparison -------------------------------------------------------
     if db_keys is None:
@@ -382,7 +378,7 @@ def report(code_keys, db_keys, backend_root, emit_json_stub, script_dir):
         # Still compute missing vs all code keys so we can write the prompt
         missing_found = sorted(code_keys, key=lambda x: x.key)
     else:
-        print("\n[DB]   {} key(s) currently in msg_keys table.".format(len(db_keys)))
+        print(f"\n[DB]   {len(db_keys)} key(s) currently in msg_keys table.")
         missing_found = [by_key[k] for k in sorted(unique_code_keys - db_keys)]
 
     if db_keys is not None and not missing_found:
@@ -392,9 +388,7 @@ def report(code_keys, db_keys, backend_root, emit_json_stub, script_dir):
     # -- missing (code -> DB) ------------------------------------------------
     if db_keys is not None:
         print(
-            "\n  {} key(s) in CODE but MISSING from database:\n".format(
-                len(missing_found)
-            )
+            f"\n  {len(missing_found)} key(s) in CODE but MISSING from database:\n"
         )
         for fk in missing_found:
             vars_str = (
@@ -402,13 +396,11 @@ def report(code_keys, db_keys, backend_root, emit_json_stub, script_dir):
                 if fk.template_vars
                 else "  (no variables)"
             )
-            print('    "{}"{}'.format(fk.key, vars_str))
+            print(f'    "{fk.key}"{vars_str}')
             if fk.fallback:
-                print("         fallback : {}".format(fk.fallback))
+                print(f"         fallback : {fk.fallback}")
             print(
-                "         class    : {}  ({})".format(
-                    fk.class_name, _relative(fk.file, backend_root)
-                )
+                f"         class    : {fk.class_name}  ({_relative(fk.file, backend_root)})"
             )
 
     # -- JSON stub (optional console output) ---------------------------------
@@ -424,7 +416,7 @@ def report(code_keys, db_keys, backend_root, emit_json_stub, script_dir):
     if missing_found:
         prompt_path = write_prompt_file(missing_found, script_dir)
         print("\n  Translation prompt written to:")
-        print("  {}\n".format(prompt_path))
+        print(f"  {prompt_path}\n")
 
     return len(missing_found)
 
@@ -438,7 +430,7 @@ def _resolve_backend_root(arg):
     if arg:
         p = Path(arg).resolve()
         if not p.is_dir():
-            raise SystemExit("[ERROR] --backend-root does not exist: {}".format(p))
+            raise SystemExit(f"[ERROR] --backend-root does not exist: {p}")
         return p
 
     cwd = Path.cwd()
@@ -459,7 +451,7 @@ def _resolve_backend_root(arg):
 async def _async_main(backend_root, skip_db, emit_json_stub):
     api_v1_root = backend_root / "api_v1"
     if not api_v1_root.is_dir():
-        raise SystemExit("[ERROR] api_v1/ not found under {}".format(backend_root))
+        raise SystemExit(f"[ERROR] api_v1/ not found under {backend_root}")
 
     if str(backend_root.parent) not in sys.path:
         sys.path.insert(0, str(backend_root.parent))
@@ -467,7 +459,7 @@ async def _async_main(backend_root, skip_db, emit_json_stub):
     # The prompt file always lands next to this script
     script_dir = Path(__file__).resolve().parent
 
-    print("Scanning: {}".format(api_v1_root))
+    print(f"Scanning: {api_v1_root}")
     code_keys = scan_code_keys(api_v1_root)
 
     db_keys = None
@@ -476,7 +468,7 @@ async def _async_main(backend_root, skip_db, emit_json_stub):
         try:
             db_keys = await fetch_db_keys(backend_root)
         except Exception as exc:
-            print("[ERROR] DB query failed: {}".format(exc), file=sys.stderr)
+            print(f"[ERROR] DB query failed: {exc}", file=sys.stderr)
             print(
                 "        Re-run with --no-db to see only the code scan.",
                 file=sys.stderr,

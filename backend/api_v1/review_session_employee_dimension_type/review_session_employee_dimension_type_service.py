@@ -1,9 +1,9 @@
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
+from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.review_session_employee_dimension_type.review_session_employee_dimension_type_messages import (
     ReviewSessionEmployeeDimensionTypeKeyNotFound,
     ReviewSessionEmployeeDimensionTypeNotFound,
@@ -14,7 +14,6 @@ from backend.api_v1.review_session_employee_dimension_type.review_session_employ
 from backend.api_v1.review_session_employee_dimension_type.review_session_employee_dimension_type_repository import (
     ReviewSessionEmployeeDimensionTypeRepository,
 )
-from backend.api_v1.employee.employee_schema import EmployeeSchema
 
 
 class ReviewSessionEmployeeDimensionTypeService(BaseService):
@@ -31,8 +30,8 @@ class ReviewSessionEmployeeDimensionTypeService(BaseService):
     def __init__(
         self,
         repository: ReviewSessionEmployeeDimensionTypeRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ) -> None:
         super().__init__(repository, user=user, session=session)
 

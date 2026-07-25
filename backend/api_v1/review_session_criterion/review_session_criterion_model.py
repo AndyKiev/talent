@@ -1,12 +1,13 @@
-from typing import TYPE_CHECKING, Optional
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import Text, Integer, ForeignKey
+from typing import TYPE_CHECKING
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
+from sqlalchemy import ForeignKey, Integer, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
-    from backend.api_v1.review_session.review_session_model import ReviewSession
     from backend.api_v1.review_dimension.review_dimension_model import ReviewDimension
+    from backend.api_v1.review_session.review_session_model import ReviewSession
 
 
 class ReviewSessionCriterion(IntIdPkMixin, TimestampMixin, Base):
@@ -29,7 +30,7 @@ class ReviewSessionCriterion(IntIdPkMixin, TimestampMixin, Base):
     # backfill or the source criterion was later deleted. ON DELETE SET NULL so an
     # admin can still delete a criterion that's already frozen into a session — the
     # text copy survives, only the back-link is cleared (the whole point of freezing).
-    source_criteria_id: Mapped[Optional[int]] = mapped_column(
+    source_criteria_id: Mapped[int | None] = mapped_column(
         ForeignKey("review_dimension_criterias.id", ondelete="SET NULL"),
         nullable=True,
     )

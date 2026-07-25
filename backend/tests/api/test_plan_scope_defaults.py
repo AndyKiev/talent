@@ -1,6 +1,6 @@
 import httpx
 
-from backend.tests.helpers.unique_name import unique_name, unique_key
+from backend.tests.helpers.unique_name import unique_key, unique_name
 
 PATH = "/admin/plan_scope_defaults"
 JG_PATH = "/job_groups"

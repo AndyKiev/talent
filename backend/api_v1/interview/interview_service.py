@@ -1,23 +1,14 @@
-from typing import Optional, List
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.api_v1.app_setting.app_setting_service import get_int_setting
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.employee.employee_model import Employee
-from backend.api_v1.employee.employee_minis import fetch_employee_minis
-from backend.api_v1.job.job_model import Job
-from backend.api_v1.job_job_category_link.job_job_category_link_model import (
-    JobJobCategoryLink,
-)
-from backend.api_v1.job_category.job_category_model import JobCategory
-from backend.api_v1.user_group.user_group_model import UserGroup
-from backend.api_v1.table_relationship_links.employee_user_group_link_model import (
-    EmployeeUserGroupLink,
-)
 from backend.api_v1.candidate.candidate_model import Candidate
+from backend.api_v1.candidate_application.candidate_application_messages import (
+    CandidateApplicationNotFound,
+)
 from backend.api_v1.candidate_application.candidate_application_model import (
     CandidateApplication,
 )
@@ -31,42 +22,50 @@ from backend.api_v1.candidate_application.candidate_application_state_machine im
     PipelineStatusKey,
     can_transition,
 )
-from backend.api_v1.candidate_application.candidate_application_messages import (
-    CandidateApplicationNotFound,
+from backend.api_v1.employee.employee_minis import fetch_employee_minis
+from backend.api_v1.employee.employee_model import Employee
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.interview.interview_messages import (
+    InterviewCreateSuccess,
+    InterviewDeleteError,
+    InterviewDeleteSuccess,
+    InterviewerGroupMissing,
+    InterviewInterviewerNotManager,
+    InterviewNotFound,
+    InterviewTooManyInterviewers,
+    InterviewUpdateSuccess,
 )
-from backend.api_v1.recruitment_task.recruitment_task_model import RecruitmentTask
 from backend.api_v1.interview.interview_model import Interview
+from backend.api_v1.interview.interview_repository import InterviewRepository
+from backend.api_v1.interview.interview_schema import (
+    InterviewCandidateMini,
+    InterviewCreate,
+    InterviewEmployeeMini,
+    InterviewJobMini,
+    InterviewSchema,
+    InterviewUpdate,
+)
 from backend.api_v1.interview_interviewer.interview_interviewer_model import (
     InterviewInterviewer,
 )
-from backend.api_v1.interview.interview_repository import InterviewRepository
-from backend.api_v1.interview.interview_schema import (
-    InterviewSchema,
-    InterviewCreate,
-    InterviewUpdate,
-    InterviewEmployeeMini,
-    InterviewCandidateMini,
-    InterviewJobMini,
+from backend.api_v1.job.job_model import Job
+from backend.api_v1.job_category.job_category_model import JobCategory
+from backend.api_v1.job_job_category_link.job_job_category_link_model import (
+    JobJobCategoryLink,
 )
-from backend.api_v1.interview.interview_messages import (
-    InterviewNotFound,
-    InterviewInterviewerNotManager,
-    InterviewTooManyInterviewers,
-    InterviewerGroupMissing,
-    InterviewDeleteError,
-    InterviewDeleteSuccess,
-    InterviewCreateSuccess,
-    InterviewUpdateSuccess,
+from backend.api_v1.recruitment_task.recruitment_task_model import RecruitmentTask
+from backend.api_v1.table_relationship_links.employee_user_group_link_model import (
+    EmployeeUserGroupLink,
 )
-from backend.api_v1.app_setting.app_setting_service import get_int_setting
+from backend.api_v1.user_group.user_group_model import UserGroup
 
 
 class InterviewService(BaseService):
     def __init__(
         self,
         repository: InterviewRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
         self.application_repository = CandidateApplicationRepository(session=session)
@@ -79,7 +78,7 @@ class InterviewService(BaseService):
 
     # ── Validation / side-effects ─────────────────────────────────────────────
 
-    async def _validate_managers(self, employee_ids: List[int]) -> None:
+    async def _validate_managers(self, employee_ids: list[int]) -> None:
         """Every interviewer must hold a job linked to the `manager` category, and
         the count may not exceed the `interview_max_interviewers` setting."""
         session = self.repository.session
@@ -115,7 +114,7 @@ class InterviewService(BaseService):
                 InterviewInterviewerNotManager(names)
             )
 
-    async def _add_to_interviewer_group(self, employee_ids: List[int]) -> None:
+    async def _add_to_interviewer_group(self, employee_ids: list[int]) -> None:
         """Idempotently add the interviewers to the `Interviewer` access group."""
         session = self.repository.session
         group_id = (
@@ -145,7 +144,7 @@ class InterviewService(BaseService):
 
     # ── Enrichment (noload relationships → minis via column queries) ──────────
 
-    async def _enrich_many(self, schemas: List[InterviewSchema]) -> List[InterviewSchema]:
+    async def _enrich_many(self, schemas: list[InterviewSchema]) -> list[InterviewSchema]:
         if not schemas:
             return schemas
         session = self.repository.session
@@ -213,10 +212,10 @@ class InterviewService(BaseService):
 
     async def get_interviews(
         self,
-        application_id: Optional[int] = None,
-        candidate_id: Optional[int] = None,
+        application_id: int | None = None,
+        candidate_id: int | None = None,
         mine: bool = False,
-    ) -> List[InterviewSchema]:
+    ) -> list[InterviewSchema]:
         session = self.repository.session
         stmt = select(Interview).order_by(Interview.scheduled_at.desc()).distinct()
         if application_id is not None:
@@ -240,7 +239,7 @@ class InterviewService(BaseService):
         record = await self.get_by_id(interview_id)
         return await self._enrich(InterviewSchema.model_validate(record))
 
-    async def get_available_interviewers(self) -> List[InterviewEmployeeMini]:
+    async def get_available_interviewers(self) -> list[InterviewEmployeeMini]:
         """Active employees holding a manager-category job (for the FE picker)."""
         session = self.repository.session
         rows = (

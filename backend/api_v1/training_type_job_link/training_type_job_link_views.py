@@ -1,21 +1,23 @@
-from fastapi import APIRouter, Depends
-from fastapi.security import HTTPBearer
-from typing import Annotated, List
+from typing import Annotated
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.training_type_job_link.training_type_job_link_schema import (
-    TrainingTypeJobLink as TrainingTypeJobLinkSchema,
-    TrainingTypeJobLinkBulkSet,
-    TrainingTypeJobLinkBulkSetForJob,
-)
 from backend.api_v1.training_type_job_link.training_type_job_link_dependencies import (
     get_training_type_job_link_service,
+)
+from backend.api_v1.training_type_job_link.training_type_job_link_schema import (
+    TrainingTypeJobLink as TrainingTypeJobLinkSchema,
+)
+from backend.api_v1.training_type_job_link.training_type_job_link_schema import (
+    TrainingTypeJobLinkBulkSet,
+    TrainingTypeJobLinkBulkSetForJob,
 )
 from backend.api_v1.training_type_job_link.training_type_job_link_service import (
     TrainingTypeJobLinkService,
 )
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
+from fastapi import APIRouter, Depends
+from fastapi.security import HTTPBearer
 
 router = APIRouter(
     prefix="/training_type_job_links",
@@ -26,7 +28,7 @@ router = APIRouter(
 
 @router.get(
     "/training_type/{training_type_id}",
-    response_model=List[TrainingTypeJobLinkSchema],
+    response_model=list[TrainingTypeJobLinkSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.TRAINING_TYPE)],
 )
 async def get_links_for_training_type(
@@ -41,7 +43,7 @@ async def get_links_for_training_type(
 
 @router.get(
     "/job/{job_id}",
-    response_model=List[TrainingTypeJobLinkSchema],
+    response_model=list[TrainingTypeJobLinkSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.JOB)],
 )
 async def get_links_for_job(
@@ -56,7 +58,7 @@ async def get_links_for_job(
 
 @router.put(
     "/training_type/{training_type_id}",
-    response_model=MutationResponse[List[TrainingTypeJobLinkSchema]],
+    response_model=MutationResponse[list[TrainingTypeJobLinkSchema]],
     dependencies=[Guard(OperationVerb.LINK, EssenceName.TRAINING_TYPE)],
 )
 async def set_links(
@@ -72,7 +74,7 @@ async def set_links(
 
 @router.put(
     "/job/{job_id}",
-    response_model=MutationResponse[List[TrainingTypeJobLinkSchema]],
+    response_model=MutationResponse[list[TrainingTypeJobLinkSchema]],
     dependencies=[Guard(OperationVerb.LINK, EssenceName.JOB)],
 )
 async def set_links_for_job(

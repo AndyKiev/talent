@@ -1,25 +1,24 @@
 from pathlib import Path
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from backend.config.api_prefix import ApiPrefix
 from backend.config.auth_jwt import AuthJWT
 from backend.config.cors_config import CORSConfig
 from backend.config.database import TalentDatabaseConfig
-from backend.config.exception_config import ExceptionDescription
-
-from backend.config.ldap import LdapConfig
-from backend.config.log_config import LogConfig
-from backend.config.run_config import RunConfig
-from backend.config.ssh_tunnel import SshTunnelConfig
-from backend.config.redis_client import RedisClient
 from backend.config.email_param_config import (
-    LocalSmtpConfig,
-    SenderMailConfig,
     LoaderErrorMailConfig,
+    LocalSmtpConfig,
     LogMailConfig,
     # ReceiverMailConfig,
+    SenderMailConfig,
 )
+from backend.config.exception_config import ExceptionDescription
+from backend.config.ldap import LdapConfig
+from backend.config.log_config import LogConfig
+from backend.config.redis_client import RedisClient
+from backend.config.run_config import RunConfig
+from backend.config.ssh_tunnel import SshTunnelConfig
 
 # BACKEND_DIR = Path(__file__).resolve().parents[1]
 BASE_DIR = Path(__file__).resolve().parents[2]

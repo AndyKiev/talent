@@ -1,13 +1,15 @@
 # backend/api_v1/models/operation_user_group_link_model.py
 from typing import TYPE_CHECKING
-from sqlalchemy.orm import mapped_column, Mapped, relationship
+
 from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
 
 if TYPE_CHECKING:
-    from backend.api_v1.user_group.user_group_model import UserGroup
     from backend.api_v1.operation.operation_model import Operation
+    from backend.api_v1.user_group.user_group_model import UserGroup
 
 
 class OperationUserGroupLink(IntIdPkMixin, Base):

@@ -14,16 +14,18 @@
 # transition; this one is populated by the backfill and by all new writes.
 #
 from typing import TYPE_CHECKING
-from sqlalchemy import Integer, ForeignKey, UniqueConstraint
+
+from sqlalchemy import ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
 
 if TYPE_CHECKING:
-    from backend.api_v1.user_group.user_group_model import UserGroup
     from backend.api_v1.operation_essence_set_link.operation_essence_set_link_model import (
         OperationEssenceSetLink,
     )
+    from backend.api_v1.user_group.user_group_model import UserGroup
 
 
 class UserGroupOperationEssenceSetLink(IntIdPkMixin, Base):

@@ -1,27 +1,25 @@
-from typing import Optional, List
 
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.review_dimension_criteria.review_dimension_criteria_messages import (
+    ReviewDimensionCriteriaCreateSuccess,
+    ReviewDimensionCriteriaDeleteError,
+    ReviewDimensionCriteriaDeleteSuccess,
+    ReviewDimensionCriteriaNotFound,
+    ReviewDimensionCriteriaUpdateSuccess,
+)
 from backend.api_v1.review_dimension_criteria.review_dimension_criteria_repository import (
     ReviewDimensionCriteriaRepository,
 )
 from backend.api_v1.review_dimension_criteria.review_dimension_criteria_schema import (
     ReviewDimensionCriteria as ReviewDimensionCriteriaSchema,
+)
+from backend.api_v1.review_dimension_criteria.review_dimension_criteria_schema import (
     ReviewDimensionCriteriaCreate,
     ReviewDimensionCriteriaUpdate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.review_dimension_criteria.review_dimension_criteria_messages import (
-    ReviewDimensionCriteriaNotFound,
-    ReviewDimensionCriteriaDeleteError,
-)
-from backend.api_v1.review_dimension_criteria.review_dimension_criteria_messages import (
-    ReviewDimensionCriteriaDeleteSuccess,
-    ReviewDimensionCriteriaCreateSuccess,
-    ReviewDimensionCriteriaUpdateSuccess,
 )
 
 
@@ -29,8 +27,8 @@ class ReviewDimensionCriteriaService(BaseService):
     def __init__(
         self,
         repository: ReviewDimensionCriteriaRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -43,9 +41,9 @@ class ReviewDimensionCriteriaService(BaseService):
 
     async def get_criteria(
         self,
-        dimension_id: Optional[int] = None,
-        sort: Optional[str] = None,
-    ) -> List[ReviewDimensionCriteriaSchema]:
+        dimension_id: int | None = None,
+        sort: str | None = None,
+    ) -> list[ReviewDimensionCriteriaSchema]:
         filters = {}
         if dimension_id is not None:
             filters["dimension_id"] = dimension_id

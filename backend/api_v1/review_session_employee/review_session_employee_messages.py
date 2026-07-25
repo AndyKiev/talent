@@ -1,4 +1,4 @@
-from backend.api_v1.base.errors import NotFoundError, DomainError, AlreadyExistsError
+from backend.api_v1.base.errors import AlreadyExistsError, DomainError, NotFoundError
 from backend.api_v1.base.success import DomainSuccess
 
 

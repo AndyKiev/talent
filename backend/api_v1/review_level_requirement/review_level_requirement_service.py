@@ -1,26 +1,25 @@
-from typing import Optional, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.review_level_requirement.review_level_requirement_messages import (
+    ReviewLevelRequirementCreateSuccess,
+    ReviewLevelRequirementDeleteError,
+    ReviewLevelRequirementDeleteSuccess,
+    ReviewLevelRequirementNotFound,
+    ReviewLevelRequirementUpdateSuccess,
+)
 from backend.api_v1.review_level_requirement.review_level_requirement_repository import (
     ReviewLevelRequirementRepository,
 )
 from backend.api_v1.review_level_requirement.review_level_requirement_schema import (
     ReviewLevelRequirement as ReviewLevelRequirementSchema,
+)
+from backend.api_v1.review_level_requirement.review_level_requirement_schema import (
     ReviewLevelRequirementCreate,
     ReviewLevelRequirementUpdate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.review_level_requirement.review_level_requirement_messages import (
-    ReviewLevelRequirementNotFound,
-    ReviewLevelRequirementDeleteError,
-)
-from backend.api_v1.review_level_requirement.review_level_requirement_messages import (
-    ReviewLevelRequirementDeleteSuccess,
-    ReviewLevelRequirementCreateSuccess,
-    ReviewLevelRequirementUpdateSuccess,
 )
 
 
@@ -28,8 +27,8 @@ class ReviewLevelRequirementService(BaseService):
     def __init__(
         self,
         repository: ReviewLevelRequirementRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -42,10 +41,10 @@ class ReviewLevelRequirementService(BaseService):
 
     async def get_requirements(
         self,
-        level_id: Optional[int] = None,
-        is_active: Optional[bool] = None,
-        sort: Optional[str] = None,
-    ) -> List[ReviewLevelRequirementSchema]:
+        level_id: int | None = None,
+        is_active: bool | None = None,
+        sort: str | None = None,
+    ) -> list[ReviewLevelRequirementSchema]:
         filters = {}
         if level_id is not None:
             filters["level_id"] = level_id

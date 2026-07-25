@@ -1,20 +1,21 @@
-from fastapi import APIRouter, Depends, status
-
 # from fastapi import APIRouter, Depends, status, Query
 # from fastapi.security import HTTPBearer
-from typing import Annotated, Optional, List
+from typing import Annotated
 
-# from pydantic import BaseModel
-from backend.api_v1.lang.lang_model import Lang as LangModel
+from fastapi import APIRouter, Depends, status
+
 from backend.api_v1.base.errors import NotFoundError
 from backend.api_v1.lang.lang_dependencies import get_lang_service, lang_by_id
 
+# from pydantic import BaseModel
+from backend.api_v1.lang.lang_model import Lang as LangModel
+
 # from backend.api_v1.lang.lang_messages import LangNotFoundByName
-from backend.api_v1.lang.lang_schema import Lang as LangSchema, LangCreate, LangUpdate
+from backend.api_v1.lang.lang_schema import Lang as LangSchema
+from backend.api_v1.lang.lang_schema import LangCreate, LangUpdate
 from backend.api_v1.lang.lang_service import LangService
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
-
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/langs",
@@ -23,10 +24,10 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[LangSchema])
+@router.get("", response_model=list[LangSchema])
 async def get_langs(
     service: Annotated[LangService, Depends(get_lang_service)],
-    name: Optional[str] = None,
+    name: str | None = None,
 ):
     if name:
         # lang = await service.get_by_name(name, not_found_exc=LangNotFoundByName)
@@ -37,7 +38,6 @@ async def get_langs(
     return [LangSchema.model_validate(l) for l in langs]
 
 
-#
 @router.get("/{lang_id}", response_model=LangSchema)
 async def get_lang(job: LangSchema = Depends(lang_by_id)):
     return job

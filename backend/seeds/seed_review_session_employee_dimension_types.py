@@ -12,8 +12,8 @@
 # Idempotent: existing keys are left alone.
 #
 import asyncio
-from pathlib import Path
 import sys
+from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(_REPO_ROOT) not in sys.path:
@@ -21,12 +21,12 @@ if str(_REPO_ROOT) not in sys.path:
 
 from sqlalchemy import select
 
-from backend.database.db_helper import db_helper
 from backend.api_v1.review_session_employee_dimension_type.review_session_employee_dimension_type_model import (
     DEVELOP,
     STRONG,
     ReviewSessionEmployeeDimensionType,
 )
+from backend.database.db_helper import db_helper
 
 TYPES = [
     (STRONG, "Competences the employee is strong in", 10),

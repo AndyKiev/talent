@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -8,12 +8,12 @@ from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
 
 if TYPE_CHECKING:
-    from backend.api_v1.candidate_source.candidate_source_model import CandidateSource
-    from backend.api_v1.candidate_phone.candidate_phone_model import CandidatePhone
-    from backend.api_v1.candidate_note.candidate_note_model import CandidateNote
     from backend.api_v1.candidate_application.candidate_application_model import (
         CandidateApplication,
     )
+    from backend.api_v1.candidate_note.candidate_note_model import CandidateNote
+    from backend.api_v1.candidate_phone.candidate_phone_model import CandidatePhone
+    from backend.api_v1.candidate_source.candidate_source_model import CandidateSource
 
 
 class Candidate(IntIdPkMixin, Base):
@@ -21,9 +21,9 @@ class Candidate(IntIdPkMixin, Base):
 
     first_name: Mapped[str] = mapped_column(String(128), nullable=False)
     last_name: Mapped[str] = mapped_column(String(128), nullable=False)
-    email: Mapped[Optional[str]] = mapped_column(String(128), unique=True, nullable=True)
+    email: Mapped[str | None] = mapped_column(String(128), unique=True, nullable=True)
     # Where the candidate came from (optional — set on the create form).
-    source_id: Mapped[Optional[int]] = mapped_column(
+    source_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("candidate_sources.id", ondelete="RESTRICT"), nullable=True
     )
     created_by: Mapped[int] = mapped_column(
@@ -38,19 +38,19 @@ class Candidate(IntIdPkMixin, Base):
     # drags its whole selectin graph (events, departments, person, …) and made
     # the candidates list take seconds. `created_by` (the id) is enough.
     source: Mapped[Optional["CandidateSource"]] = relationship(lazy="selectin")
-    phones: Mapped[List["CandidatePhone"]] = relationship(
+    phones: Mapped[list["CandidatePhone"]] = relationship(
         back_populates="candidate",
         lazy="selectin",
         cascade="all, delete-orphan",
         order_by="CandidatePhone.sort_order",
     )
-    notes: Mapped[List["CandidateNote"]] = relationship(
+    notes: Mapped[list["CandidateNote"]] = relationship(
         back_populates="candidate",
         lazy="selectin",
         cascade="all, delete-orphan",
         order_by="CandidateNote.created_at",
     )
-    applications: Mapped[List["CandidateApplication"]] = relationship(
+    applications: Mapped[list["CandidateApplication"]] = relationship(
         back_populates="candidate",
         lazy="selectin",
         cascade="all, delete-orphan",

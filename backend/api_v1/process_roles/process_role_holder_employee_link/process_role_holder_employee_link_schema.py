@@ -1,6 +1,6 @@
-from pydantic import BaseModel, ConfigDict
-from typing import Optional, List
 from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
 
 
 class ProcessRoleHolderEmployeeLinkBase(BaseModel):
@@ -18,9 +18,9 @@ class ProcessRoleHolderEmployeeLink(ProcessRoleHolderEmployeeLinkBase):
     id: int
     process_role_id: int
     created_at: datetime
-    employee_code: Optional[str] = None
-    employee_name: Optional[str] = None
-    order_position: Optional[int] = None
+    employee_code: str | None = None
+    employee_name: str | None = None
+    order_position: int | None = None
 
 
 class ProcessRoleHolderEmployeeReorder(BaseModel):
@@ -28,4 +28,4 @@ class ProcessRoleHolderEmployeeReorder(BaseModel):
     order. Positions are reassigned server-side as 10, 20, 30 …"""
 
     process_role_holder_id: int
-    ordered_ids: List[int]
+    ordered_ids: list[int]

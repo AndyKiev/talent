@@ -1,4 +1,3 @@
-from typing import Optional
 
 from sqlalchemy import delete, select
 
@@ -13,7 +12,7 @@ class EmployeeMissionDimensionLinkRepository(BaseRepository):
 
     async def get_for_mission(
         self, mission_id: int
-    ) -> Optional[EmployeeMissionDimensionLink]:
+    ) -> EmployeeMissionDimensionLink | None:
         stmt = select(EmployeeMissionDimensionLink).where(
             EmployeeMissionDimensionLink.mission_id == mission_id
         )

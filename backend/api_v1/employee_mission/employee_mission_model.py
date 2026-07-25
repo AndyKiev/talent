@@ -1,5 +1,5 @@
 import datetime
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import CheckConstraint, Date, ForeignKey, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -8,14 +8,14 @@ from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 
 if TYPE_CHECKING:
-    from backend.api_v1.employee_mission_kpi.employee_mission_kpi_model import (
-        EmployeeMissionKpi,
-    )
     from backend.api_v1.employee_mission_comment.employee_mission_comment_model import (
         EmployeeMissionComment,
     )
     from backend.api_v1.employee_mission_dimension_link.employee_mission_dimension_link_model import (
         EmployeeMissionDimensionLink,
+    )
+    from backend.api_v1.employee_mission_kpi.employee_mission_kpi_model import (
+        EmployeeMissionKpi,
     )
     from backend.api_v1.employee_mission_status.employee_mission_status_model import (
         EmployeeMissionStatus,
@@ -87,13 +87,13 @@ class EmployeeMission(IntIdPkMixin, TimestampMixin, Base):
 
     # Children. delete-orphan matches the DB-level CASCADE so ORM deletes and raw
     # SQL deletes behave identically.
-    kpis: Mapped[List["EmployeeMissionKpi"]] = relationship(
+    kpis: Mapped[list["EmployeeMissionKpi"]] = relationship(
         back_populates="mission",
         lazy="selectin",
         cascade="all, delete-orphan",
         order_by="EmployeeMissionKpi.sort_order, EmployeeMissionKpi.id",
     )
-    comments: Mapped[List["EmployeeMissionComment"]] = relationship(
+    comments: Mapped[list["EmployeeMissionComment"]] = relationship(
         back_populates="mission",
         lazy="selectin",
         cascade="all, delete-orphan",
@@ -110,7 +110,7 @@ class EmployeeMission(IntIdPkMixin, TimestampMixin, Base):
     )
 
     @property
-    def dimension_id(self) -> Optional[int]:
+    def dimension_id(self) -> int | None:
         """The linked competence id, or None when the mission has no competence."""
         return self.dimension_link.dimension_id if self.dimension_link else None
 

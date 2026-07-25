@@ -1,5 +1,5 @@
+
 from pydantic import BaseModel
-from typing import Optional
 
 
 class OversightManagerOption(BaseModel):
@@ -9,10 +9,10 @@ class OversightManagerOption(BaseModel):
 
     process_role_holder_id: int
     holder_employee_id: int
-    holder_code: Optional[str] = None
-    holder_name: Optional[str] = None
+    holder_code: str | None = None
+    holder_name: str | None = None
     # Disambiguates when more than one oversight role exists (realistically one).
-    role_name: Optional[str] = None
+    role_name: str | None = None
 
 
 class MyOversightManager(BaseModel):
@@ -21,8 +21,8 @@ class MyOversightManager(BaseModel):
     link_id: int
     process_role_holder_id: int
     holder_employee_id: int
-    holder_code: Optional[str] = None
-    holder_name: Optional[str] = None
+    holder_code: str | None = None
+    holder_name: str | None = None
 
 
 class SetOversightManager(BaseModel):

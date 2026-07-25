@@ -1,53 +1,61 @@
 # backend/api_v1/employee_events/employee_event/employee_event_service.py
 import datetime
-from typing import Optional, List
 
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.api_v1.app_setting.app_setting_repository import AppSettingRepository
+from backend.api_v1.audit.change_log.change_log_repository import ChangeLogRepository
+from backend.api_v1.audit.change_log.change_log_schema import ChangeAction
+from backend.api_v1.audit.change_log.change_log_service import ChangeLogService
+from backend.api_v1.audit.change_session.change_session_repository import (
+    ChangeSessionRepository,
+)
+from backend.api_v1.audit.change_session.change_session_schema import (
+    ChangeRunStatus,
+    ChangeSource,
+)
+from backend.api_v1.audit.change_session.change_session_service import (
+    ChangeSessionService,
+)
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_repository import EmployeeRepository
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.employee_department.employee_department_repository import (
+    EmployeeDepartmentRepository,
+)
+from backend.api_v1.employee_events.employee_event.employee_event_messages import (
+    EmployeeEventActivationExists,
+    EmployeeEventActivationRequired,
+    EmployeeEventAlreadyApplied,
+    EmployeeEventApplySuccess,
+    EmployeeEventCreateSuccess,
+    EmployeeEventDateTaken,
+    EmployeeEventDeleteError,
+    EmployeeEventDeleteSuccess,
+    EmployeeEventInvalidStatusTransition,
+    EmployeeEventJobNotAlignedWithTalent,
+    EmployeeEventNotDraft,
+    EmployeeEventNotFound,
+    EmployeeEventNotLatest,
+    EmployeeEventOpenEventExists,
+    EmployeeEventUpdateSuccess,
+)
 from backend.api_v1.employee_events.employee_event.employee_event_repository import (
     EmployeeEventRepository,
 )
 from backend.api_v1.employee_events.employee_event.employee_event_schema import (
-    EmployeeEventSchema,
-    EmployeeEventFlat,
     EmployeeEventCreate,
+    EmployeeEventSchema,
     EmployeeEventUpdate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.employee_events.employee_event.employee_event_messages import (
-    EmployeeEventNotFound,
-    EmployeeEventDeleteError,
-    EmployeeEventAlreadyApplied,
-    EmployeeEventNotDraft,
-)
-from backend.api_v1.employee_events.employee_event.employee_event_messages import (
-    EmployeeEventDeleteSuccess,
-    EmployeeEventCreateSuccess,
-    EmployeeEventUpdateSuccess,
-    EmployeeEventApplySuccess,
-)
-from backend.api_v1.employee_events.employee_event_status.employee_event_status_service import (
-    EmployeeEventStatusService,
 )
 from backend.api_v1.employee_events.employee_event_change.employee_event_change_repository import (
     EmployeeEventChangeRepository,
 )
 from backend.api_v1.employee_events.employee_event_change_department.employee_event_change_department_repository import (
     EmployeeEventChangeDepartmentRepository,
-)
-from backend.api_v1.employee.employee_repository import EmployeeRepository
-from backend.api_v1.employee_department.employee_department_repository import (
-    EmployeeDepartmentRepository,
-)
-from backend.api_v1.employee_responsibility_department.employee_responsibility_department_repository import (
-    EmployeeResponsibilityDepartmentRepository,
-)
-from backend.api_v1.employee_status.employee_status_repository import (
-    EmployeeStatusRepository,
 )
 from backend.api_v1.employee_events.employee_event_direction_type.employee_event_direction_type_repository import (
     EmployeeEventDirectionTypeRepository,
@@ -59,39 +67,22 @@ from backend.api_v1.employee_events.employee_event_type.employee_event_type_repo
     EmployeeEventTypeRepository,
 )
 from backend.api_v1.employee_events.employee_status_transitions import (
-    resolve_status_transition,
     ACTIVATION_TARGET,
     InvalidStatusTransition,
+    resolve_status_transition,
 )
-from backend.api_v1.employee_events.employee_event.employee_event_messages import (
-    EmployeeEventInvalidStatusTransition,
-    EmployeeEventOpenEventExists,
-    EmployeeEventActivationExists,
-    EmployeeEventActivationRequired,
-    EmployeeEventDateTaken,
-    EmployeeEventNotLatest,
-    EmployeeEventJobNotAlignedWithTalent,
+from backend.api_v1.employee_responsibility_department.employee_responsibility_department_repository import (
+    EmployeeResponsibilityDepartmentRepository,
 )
-from backend.api_v1.app_setting.app_setting_repository import AppSettingRepository
-from backend.api_v1.talent_audit_job.talent_audit_job_service import (
-    TalentAuditJobService,
+from backend.api_v1.employee_status.employee_status_repository import (
+    EmployeeStatusRepository,
 )
 from backend.api_v1.talent_audit_job.talent_audit_job_repository import (
     TalentAuditJobRepository,
 )
-from backend.api_v1.audit.change_session.change_session_service import (
-    ChangeSessionService,
+from backend.api_v1.talent_audit_job.talent_audit_job_service import (
+    TalentAuditJobService,
 )
-from backend.api_v1.audit.change_session.change_session_repository import (
-    ChangeSessionRepository,
-)
-from backend.api_v1.audit.change_session.change_session_schema import (
-    ChangeSource,
-    ChangeRunStatus,
-)
-from backend.api_v1.audit.change_log.change_log_service import ChangeLogService
-from backend.api_v1.audit.change_log.change_log_repository import ChangeLogRepository
-from backend.api_v1.audit.change_log.change_log_schema import ChangeAction
 
 
 class EmployeeEventService(BaseService):
@@ -107,8 +98,8 @@ class EmployeeEventService(BaseService):
     def __init__(
         self,
         repository: EmployeeEventRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
         self._employee_repo = EmployeeRepository(session=session)
@@ -487,8 +478,8 @@ class EmployeeEventService(BaseService):
     async def get_employee_events(
         self,
         employee_id: int,
-        sort: Optional[str] = None,
-    ) -> List[EmployeeEventSchema]:
+        sort: str | None = None,
+    ) -> list[EmployeeEventSchema]:
         # Full schema (changes included): every relationship is selectin-loaded
         # on the model, so the list costs no extra queries and the events grid
         # can show the affected job / departments per row.
@@ -582,12 +573,11 @@ class EmployeeEventService(BaseService):
                 raise await self._resolve_domain_error(
                     EmployeeEventActivationExists(employee_id)
                 )
-        else:
-            # (2) activation must come first
-            if not existing:
-                raise await self._resolve_domain_error(
-                    EmployeeEventActivationRequired(employee_id)
-                )
+        # (2) activation must come first
+        elif not existing:
+            raise await self._resolve_domain_error(
+                EmployeeEventActivationRequired(employee_id)
+            )
 
         # (3) effective_date must be unique per employee
         if effective_date is not None and any(
@@ -843,7 +833,7 @@ class EmployeeEventService(BaseService):
         )
         return MutationResponse(detail=detail, data=schema)
 
-    async def _extract_job_change_job_id(self, event_id: int) -> Optional[int]:
+    async def _extract_job_change_job_id(self, event_id: int) -> int | None:
         """
         Return the new_job_id of this event's JOB_CHANGE change row, or None if
         the event has no job change. Re-fetches fresh so changes + direction_type
@@ -891,7 +881,7 @@ class EmployeeEventService(BaseService):
         self,
         event_id: int,
         applied_status_id: int,
-        change_session_id: Optional[int] = None,
+        change_session_id: int | None = None,
     ) -> MutationResponse[EmployeeEventSchema]:
         """
         Transitions the event from `draft` to `applied` by updating `status_id`,
@@ -1006,8 +996,8 @@ class EmployeeEventService(BaseService):
 
     async def apply_due_events(
         self,
-        on_or_before: Optional[datetime.date] = None,
-        change_session_id: Optional[int] = None,
+        on_or_before: datetime.date | None = None,
+        change_session_id: int | None = None,
     ) -> dict:
         """
         Scheduler entry point. Auto-applies every `ready` event whose
@@ -1340,7 +1330,7 @@ class EmployeeEventService(BaseService):
             )
 
     async def _reproject_employee_projection(
-        self, employee_id: int, exclude_event_id: Optional[int] = None
+        self, employee_id: int, exclude_event_id: int | None = None
     ) -> None:
         """
         Recompute and write back the employee's live projection — job_id, the
@@ -1365,8 +1355,8 @@ class EmployeeEventService(BaseService):
             key=lambda e: (e.effective_date, e.id),
         )
 
-        final_job_id: Optional[int] = None
-        final_main_dept_id: Optional[int] = None
+        final_job_id: int | None = None
+        final_main_dept_id: int | None = None
         final_resp_dept_ids: set[int] = set()
 
         for ev in events:

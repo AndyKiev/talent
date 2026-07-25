@@ -1,5 +1,4 @@
 # backend/api_v1/employee_user_group_link/employee_user_group_link_service.py
-from typing import List, Optional
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,25 +6,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.employee_user_group_link.employee_user_group_link_messages import (
+    EmployeeEmailRequiredForGroup,
+    EmployeeUserGroupLinkAlreadyExists,
+    EmployeeUserGroupLinkCreateSuccess,
+    EmployeeUserGroupLinkDeleteError,
+    EmployeeUserGroupLinkDeleteSuccess,
+    EmployeeUserGroupLinkNotFound,
+    EmployeeUserGroupLinkNotFoundByCompositeKey,
+)
 from backend.api_v1.employee_user_group_link.employee_user_group_link_repository import (
     EmployeeUserGroupLinkRepository,
 )
 from backend.api_v1.employee_user_group_link.employee_user_group_link_schema import (
     EmployeeUserGroupLink as EmployeeUserGroupLinkSchema,
+)
+from backend.api_v1.employee_user_group_link.employee_user_group_link_schema import (
     EmployeeUserGroupLinkCreate,
     EmployeeWithGroups,
     GroupOfType,
-)
-from backend.api_v1.employee_user_group_link.employee_user_group_link_messages import (
-    EmployeeUserGroupLinkNotFound,
-    EmployeeUserGroupLinkAlreadyExists,
-    EmployeeUserGroupLinkDeleteError,
-    EmployeeUserGroupLinkNotFoundByCompositeKey,
-    EmployeeEmailRequiredForGroup,
-)
-from backend.api_v1.employee_user_group_link.employee_user_group_link_messages import (
-    EmployeeUserGroupLinkCreateSuccess,
-    EmployeeUserGroupLinkDeleteSuccess,
 )
 
 
@@ -33,8 +32,8 @@ class EmployeeUserGroupLinkService(BaseService):
     def __init__(
         self,
         repository: EmployeeUserGroupLinkRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -60,15 +59,15 @@ class EmployeeUserGroupLinkService(BaseService):
             )
         return EmployeeUserGroupLinkSchema.model_validate(result)
 
-    async def get_employee_groups(self, employee_id: int) -> List[GroupOfType]:
+    async def get_employee_groups(self, employee_id: int) -> list[GroupOfType]:
         """Groups attached to one employee, flattened with their type for the UI."""
         links = await self.repository.get_by_employee(employee_id)
         return [self._to_group_of_type(link) for link in links]
 
-    async def get_employees_with_groups(self) -> List[EmployeeWithGroups]:
+    async def get_employees_with_groups(self) -> list[EmployeeWithGroups]:
         """Build the Users grid payload: employee + email + groups-by-type."""
         employees = await self.repository.get_employees_with_groups()
-        rows: List[EmployeeWithGroups] = []
+        rows: list[EmployeeWithGroups] = []
         for emp in employees:
             groups = [
                 self._to_group_of_type(link)
@@ -161,7 +160,8 @@ class EmployeeUserGroupLinkService(BaseService):
         reconfirm. Currently only HRM scopes cascade off a link row.
         Returns: {"group_name": str, "hrm_scope_count": int}
         """
-        from sqlalchemy import select, func
+        from sqlalchemy import func, select
+
         from backend.api_v1.hrm_scope.hrm_scope_model import HrmScope
 
         record = await self.get_by_id(link_id)

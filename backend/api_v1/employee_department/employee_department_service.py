@@ -1,36 +1,33 @@
 # backend/api_v1/employee_department/employee_department_service.py
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.department.department_org_units import (
+    DepartmentIndex,
+    resolve_top_org_unit,
+)
+
+# Top-level org-unit derivation (board / directorate / store).
+from backend.api_v1.department.department_repository import DepartmentRepository
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.employee_department.employee_department_messages import (
+    EmployeeDepartmentDeleteError,
+    EmployeeDepartmentMainAlreadyExistsError,
+    EmployeeOrgUnitDepartmentCreateSuccess,
+    EmployeeOrgUnitDepartmentDeleteSuccess,
+    EmployeeOrgUnitDepartmentNotFound,
+    EmployeeOrgUnitDepartmentUpdateSuccess,
+)
 from backend.api_v1.employee_department.employee_department_repository import (
     EmployeeDepartmentRepository,
 )
 from backend.api_v1.employee_department.employee_department_schema import (
-    EmployeeDepartmentSchema,
     EmployeeDepartmentCreate,
+    EmployeeDepartmentSchema,
     EmployeeDepartmentUpdate,
-)
-from backend.api_v1.employee_department.employee_department_messages import (
-    EmployeeOrgUnitDepartmentNotFound,
-    EmployeeDepartmentMainAlreadyExistsError,
-    EmployeeDepartmentDeleteError,
-)
-from backend.api_v1.employee_department.employee_department_messages import (
-    EmployeeOrgUnitDepartmentCreateSuccess,
-    EmployeeOrgUnitDepartmentUpdateSuccess,
-    EmployeeOrgUnitDepartmentDeleteSuccess,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-
-# Top-level org-unit derivation (board / directorate / store).
-from backend.api_v1.department.department_repository import DepartmentRepository
-from backend.api_v1.department.department_org_units import (
-    resolve_top_org_unit,
-    DepartmentIndex,
 )
 
 
@@ -44,8 +41,8 @@ class EmployeeDepartmentService(BaseService):
     def __init__(
         self,
         repository: EmployeeDepartmentRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -81,7 +78,7 @@ class EmployeeDepartmentService(BaseService):
         org_index = await self._get_org_index()
         return self._to_schema(record, org_index)
 
-    async def get_by_employee(self, employee_id: int) -> List[EmployeeDepartmentSchema]:
+    async def get_by_employee(self, employee_id: int) -> list[EmployeeDepartmentSchema]:
         records = await self.repository.get_by_employee(employee_id)
         org_index = await self._get_org_index()
         return [self._to_schema(r, org_index) for r in records]

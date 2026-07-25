@@ -1,37 +1,36 @@
-from typing import List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.job_process_role_link.job_process_role_link_repository import (
-    JobProcessRoleLinkRepository,
-)
-from backend.api_v1.job_process_role_link.job_process_role_link_model import (
-    JobProcessRoleLink,
-)
-from backend.api_v1.job_process_role_link.job_process_role_link_schema import (
-    JobProcessRoleLink as JobProcessRoleLinkSchema,
-    JobProcessRoleLinkCreate,
-    SetLinkDepartmentTypes,
-)
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.job.job_model import Job
 from backend.api_v1.job_process_role_link.job_process_role_link_department_type_model import (
     JobProcessRoleLinkDepartmentType,
 )
 from backend.api_v1.job_process_role_link.job_process_role_link_messages import (
-    JobProcessRoleLinkNotFound,
+    DepartmentTypeNotFoundForLink,
     JobAlreadyLinkedToProcessRole,
     JobNotFoundForProcessRoleLink,
-    ProcessRoleNotFoundForLink,
-    DepartmentTypeNotFoundForLink,
-)
-from backend.api_v1.job_process_role_link.job_process_role_link_messages import (
     JobProcessRoleLinkCreateSuccess,
     JobProcessRoleLinkDeleteSuccess,
     JobProcessRoleLinkDepartmentTypesSetSuccess,
+    JobProcessRoleLinkNotFound,
+    ProcessRoleNotFoundForLink,
 )
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.job.job_model import Job
+from backend.api_v1.job_process_role_link.job_process_role_link_model import (
+    JobProcessRoleLink,
+)
+from backend.api_v1.job_process_role_link.job_process_role_link_repository import (
+    JobProcessRoleLinkRepository,
+)
+from backend.api_v1.job_process_role_link.job_process_role_link_schema import (
+    JobProcessRoleLink as JobProcessRoleLinkSchema,
+)
+from backend.api_v1.job_process_role_link.job_process_role_link_schema import (
+    JobProcessRoleLinkCreate,
+    SetLinkDepartmentTypes,
+)
 from backend.api_v1.process_roles.process_role.process_role_model import ProcessRole
 
 
@@ -39,8 +38,8 @@ class JobProcessRoleLinkService(BaseService):
     def __init__(
         self,
         repository: JobProcessRoleLinkRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -90,6 +89,7 @@ class JobProcessRoleLinkService(BaseService):
     async def _validate_department_type_ids(self, ids: list[int]) -> list[int]:
         """Deduplicated ids, each verified to exist."""
         from sqlalchemy import select
+
         from backend.api_v1.department_type.department_type_model import DepartmentType
 
         unique_ids = list(dict.fromkeys(ids))
@@ -115,7 +115,7 @@ class JobProcessRoleLinkService(BaseService):
 
     async def get_links_for_job(
         self, job_id: int
-    ) -> List[JobProcessRoleLinkSchema]:
+    ) -> list[JobProcessRoleLinkSchema]:
         links = await self.repository.get_links_for_job(job_id)
         return [self._to_schema(lnk) for lnk in links]
 

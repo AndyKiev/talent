@@ -1,5 +1,4 @@
 from datetime import date, datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -24,9 +23,9 @@ class DepartmentJobTarget(DepartmentJobTargetBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
     created_at: datetime
-    created_by: Optional[int] = None
+    created_by: int | None = None
     # Resolved from the author relationship in the service.
-    created_by_name: Optional[str] = None
+    created_by_name: str | None = None
 
 
 class FactEmployee(BaseModel):
@@ -81,10 +80,10 @@ class OrganigramNode(BaseModel):
 
     department_id: int
     department_name: str
-    department_type_id: Optional[int] = None
-    department_type_name: Optional[str] = None
+    department_type_id: int | None = None
+    department_type_name: str | None = None
     # Category `key` (e.g. 'store_departments') — drives the FE layout
     # (store departments stack vertically instead of fanning out).
-    department_category_key: Optional[str] = None
+    department_category_key: str | None = None
     jobs: list[OrganigramJob]
     children: list["OrganigramNode"]

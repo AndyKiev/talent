@@ -1,11 +1,10 @@
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
-from sqlalchemy import select, delete
+from sqlalchemy import delete, select
 
 from backend.api_v1.base.base_repository import BaseRepository
-from backend.api_v1.job_job_group_link.job_job_group_link_model import JobJobGroupLink
 from backend.api_v1.job_group.job_group_model import JobGroup
-from backend.api_v1.job_group_type.job_group_type_model import JobGroupType
+from backend.api_v1.job_job_group_link.job_job_group_link_model import JobJobGroupLink
 
 
 class JobJobGroupLinkRepository(BaseRepository):
@@ -13,7 +12,7 @@ class JobJobGroupLinkRepository(BaseRepository):
 
     async def get_link(
         self, job_id: int, job_group_id: int
-    ) -> Optional[JobJobGroupLink]:
+    ) -> JobJobGroupLink | None:
         stmt = select(JobJobGroupLink).where(
             JobJobGroupLink.job_id == job_id,
             JobJobGroupLink.job_group_id == job_group_id,
@@ -28,7 +27,7 @@ class JobJobGroupLinkRepository(BaseRepository):
 
     async def get_existing_link_for_type(
         self, job_id: int, job_group_type_id: int
-    ) -> Optional[JobJobGroupLink]:
+    ) -> JobJobGroupLink | None:
         """
         Return any existing link for this job that belongs to the given
         job_group_type. Used to enforce the allow_multiple=False constraint.

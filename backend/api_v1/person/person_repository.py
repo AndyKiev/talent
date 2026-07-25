@@ -1,6 +1,6 @@
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 
 from backend.api_v1.base.base_repository import BaseRepository
 from backend.api_v1.person.person_model import Person
@@ -32,7 +32,7 @@ class PersonRepository(BaseRepository):
         )
         return (await self.session.execute(stmt)).scalar_one()
 
-    async def get_by_employee_id(self, employee_id: int) -> Optional[Person]:
+    async def get_by_employee_id(self, employee_id: int) -> Person | None:
         from backend.api_v1.employee.employee_model import Employee
 
         stmt = (
@@ -42,7 +42,7 @@ class PersonRepository(BaseRepository):
         )
         return await self.session.scalar(stmt)
 
-    async def get_by_employee_code(self, code: str) -> Optional[Person]:
+    async def get_by_employee_code(self, code: str) -> Person | None:
         from backend.api_v1.employee.employee_model import Employee
 
         stmt = (

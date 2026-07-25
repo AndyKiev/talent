@@ -1,8 +1,10 @@
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Boolean, CheckConstraint, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Boolean, ForeignKey, UniqueConstraint, CheckConstraint
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from backend.api_v1.process_roles.process.process_model import Process

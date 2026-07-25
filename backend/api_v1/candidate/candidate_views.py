@@ -1,20 +1,21 @@
-from fastapi import APIRouter, Depends, status, Query
-from typing import Annotated, Optional, List
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.candidate.candidate_dependencies import (
+    candidate_by_id,
+    get_candidate_service,
+)
 from backend.api_v1.candidate.candidate_schema import (
-    CandidateSchema,
     CandidateCreate,
+    CandidateSchema,
     CandidateUpdate,
 )
-from backend.api_v1.candidate.candidate_dependencies import (
-    get_candidate_service,
-    candidate_by_id,
-)
 from backend.api_v1.candidate.candidate_service import CandidateService
-from backend.auth.jwt_auth import get_current_active_auth_user
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/candidates",
@@ -25,12 +26,12 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[CandidateSchema],
+    response_model=list[CandidateSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.CANDIDATE)],
 )
 async def get_candidates(
     service: Annotated[CandidateService, Depends(get_candidate_service)],
-    sort: Optional[str] = Query(None),
+    sort: str | None = Query(None),
 ):
     return await service.get_candidates(sort=sort)
 

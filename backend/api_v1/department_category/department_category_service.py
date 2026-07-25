@@ -1,38 +1,37 @@
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.department_category.department_category_messages import (
+    DepartmentCategoryCreateSuccess,
+    DepartmentCategoryDeleteError,
+    DepartmentCategoryDeleteSuccess,
+    DepartmentCategoryNameTaken,
+    DepartmentCategoryNotFound,
+    DepartmentCategoryNotFoundByName,
+    DepartmentCategoryUpdateSuccess,
+)
 from backend.api_v1.department_category.department_category_repository import (
     DepartmentCategoryRepository,
 )
 from backend.api_v1.department_category.department_category_schema import (
     DepartmentCategory as DepartmentCategorySchema,
+)
+from backend.api_v1.department_category.department_category_schema import (
     DepartmentCategoryCreate,
     DepartmentCategoryUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.department_category.department_category_messages import (
-    DepartmentCategoryNotFound,
-    DepartmentCategoryNameTaken,
-    DepartmentCategoryDeleteError,
-    DepartmentCategoryNotFoundByName,
-)
-from backend.api_v1.department_category.department_category_messages import (
-    DepartmentCategoryDeleteSuccess,
-    DepartmentCategoryCreateSuccess,
-    DepartmentCategoryUpdateSuccess,
-)
 
 
 class DepartmentCategoryService(BaseService):
     def __init__(
         self,
         repository: DepartmentCategoryRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -44,12 +43,12 @@ class DepartmentCategoryService(BaseService):
 
     async def get_department_categories(
         self,
-        name: Optional[str] = None,
-        is_active: Optional[bool] = None,
-        is_main: Optional[bool] = None,
-        is_responsibility: Optional[bool] = None,
-        sort: Optional[str] = None,
-    ) -> List[DepartmentCategorySchema]:
+        name: str | None = None,
+        is_active: bool | None = None,
+        is_main: bool | None = None,
+        is_responsibility: bool | None = None,
+        sort: str | None = None,
+    ) -> list[DepartmentCategorySchema]:
         if name:
             record = await self.get_by_name(
                 name, not_found_exc=DepartmentCategoryNotFoundByName

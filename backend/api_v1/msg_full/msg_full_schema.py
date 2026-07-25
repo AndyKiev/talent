@@ -1,4 +1,4 @@
-from typing import Optional, List
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -18,21 +18,21 @@ class MsgItem(BaseModel):
 
 class MsgItemRead(BaseModel):
     value: str
-    lang_data: Optional[LangRead] = None
+    lang_data: LangRead | None = None
 
 
 class FullMsgCreate(BaseModel):
     name: str = Field(..., examples=["someMessageKey"])
-    msg: Optional[List[MsgItem]] = None
+    msg: list[MsgItem] | None = None
 
 
 class FullMsgUpdate(BaseModel):
-    name: Optional[str] = Field(None, examples=["someMessageKey"])
-    msg: Optional[List[MsgItem]] = None
+    name: str | None = Field(None, examples=["someMessageKey"])
+    msg: list[MsgItem] | None = None
 
 
 class FullMsgRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     name: str
-    msg: Optional[List[MsgItemRead]] = None
+    msg: list[MsgItemRead] | None = None

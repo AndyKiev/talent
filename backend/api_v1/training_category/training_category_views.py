@@ -1,22 +1,24 @@
-from fastapi import APIRouter, Depends, status
-from fastapi.security import HTTPBearer
-from typing import Annotated, List
+from typing import Annotated
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.training_category.training_category_schema import (
-    TrainingCategory as TrainingCategorySchema,
-    TrainingCategoryCreate,
-    TrainingCategoryUpdate,
-)
 from backend.api_v1.training_category.training_category_dependencies import (
     get_training_category_service,
     training_category_by_id,
+)
+from backend.api_v1.training_category.training_category_schema import (
+    TrainingCategory as TrainingCategorySchema,
+)
+from backend.api_v1.training_category.training_category_schema import (
+    TrainingCategoryCreate,
+    TrainingCategoryUpdate,
 )
 from backend.api_v1.training_category.training_category_service import (
     TrainingCategoryService,
 )
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
+from fastapi import APIRouter, Depends, status
+from fastapi.security import HTTPBearer
 
 router = APIRouter(
     prefix="/training_categories",
@@ -27,7 +29,7 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[TrainingCategorySchema],
+    response_model=list[TrainingCategorySchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.TRAINING_CATEGORY)],
 )
 async def get_training_categories(

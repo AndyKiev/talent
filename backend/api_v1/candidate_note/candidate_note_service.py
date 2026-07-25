@@ -1,32 +1,31 @@
-from typing import Optional, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.candidate_note.candidate_note_messages import (
+    CandidateNoteCreateSuccess,
+    CandidateNoteNotFound,
+)
+from backend.api_v1.candidate_note.candidate_note_model import CandidateNote
 from backend.api_v1.candidate_note.candidate_note_repository import (
     CandidateNoteRepository,
 )
-from backend.api_v1.candidate_note.candidate_note_model import CandidateNote
 from backend.api_v1.candidate_note.candidate_note_schema import (
-    CandidateNoteSchema,
-    CandidateNoteCreate,
     CandidateNoteAuthorMini,
+    CandidateNoteCreate,
+    CandidateNoteSchema,
 )
 from backend.api_v1.employee.employee_minis import fetch_employee_minis
-from backend.api_v1.candidate_note.candidate_note_messages import (
-    CandidateNoteNotFound,
-    CandidateNoteCreateSuccess,
-)
+from backend.api_v1.employee.employee_schema import EmployeeSchema
 
 
 class CandidateNoteService(BaseService):
     def __init__(
         self,
         repository: CandidateNoteRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -37,8 +36,8 @@ class CandidateNoteService(BaseService):
         return result
 
     async def _enrich_many(
-        self, schemas: List[CandidateNoteSchema]
-    ) -> List[CandidateNoteSchema]:
+        self, schemas: list[CandidateNoteSchema]
+    ) -> list[CandidateNoteSchema]:
         """Fill the author minis via a column query (author is lazy="noload")."""
         emp_minis = await fetch_employee_minis(
             self.repository.session, (s.author_id for s in schemas)
@@ -50,8 +49,8 @@ class CandidateNoteService(BaseService):
         return schemas
 
     async def get_candidate_notes(
-        self, candidate_id: Optional[int] = None
-    ) -> List[CandidateNoteSchema]:
+        self, candidate_id: int | None = None
+    ) -> list[CandidateNoteSchema]:
         filters = {}
         if candidate_id is not None:
             filters["candidate_id"] = candidate_id

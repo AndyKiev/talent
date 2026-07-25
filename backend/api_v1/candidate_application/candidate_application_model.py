@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     DateTime,
@@ -14,12 +14,12 @@ from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
 
 if TYPE_CHECKING:
-    from backend.api_v1.candidate.candidate_model import Candidate
-    from backend.api_v1.recruitment_task.recruitment_task_model import RecruitmentTask
-    from backend.api_v1.pipeline_status.pipeline_status_model import PipelineStatus
     from backend.api_v1.application_status_history.application_status_history_model import (
         ApplicationStatusHistory,
     )
+    from backend.api_v1.candidate.candidate_model import Candidate
+    from backend.api_v1.pipeline_status.pipeline_status_model import PipelineStatus
+    from backend.api_v1.recruitment_task.recruitment_task_model import RecruitmentTask
 
 
 class CandidateApplication(IntIdPkMixin, Base):
@@ -67,7 +67,7 @@ class CandidateApplication(IntIdPkMixin, Base):
     status: Mapped["PipelineStatus"] = relationship(
         back_populates="applications", lazy="selectin"
     )
-    status_history: Mapped[List["ApplicationStatusHistory"]] = relationship(
+    status_history: Mapped[list["ApplicationStatusHistory"]] = relationship(
         back_populates="application",
         lazy="selectin",
         cascade="all, delete-orphan",

@@ -1,7 +1,7 @@
 import httpx
 
 from backend.tests.helpers.crud_lifecycle import run_crud_lifecycle
-from backend.tests.helpers.unique_name import unique_name, unique_key
+from backend.tests.helpers.unique_name import unique_key, unique_name
 
 PATH = "/admin/employee_events/employee_event_types"
 

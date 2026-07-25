@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,17 +8,26 @@ from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.department.department_messages import DepartmentNotFound
 from backend.api_v1.department.department_model import Department
 from backend.api_v1.department.department_repository import DepartmentRepository
-from backend.api_v1.job_process_role_link.job_process_role_link_department_type_model import (
-    JobProcessRoleLinkDepartmentType,
-)
 from backend.api_v1.employee.employee_model import Employee
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.employee_department.employee_department_model import (
     EmployeeDepartment,
 )
 from backend.api_v1.job.job_model import Job
+from backend.api_v1.job_process_role_link.job_process_role_link_department_type_model import (
+    JobProcessRoleLinkDepartmentType,
+)
 from backend.api_v1.job_process_role_link.job_process_role_link_model import (
     JobProcessRoleLink,
+)
+from backend.api_v1.process_roles.oversight_assignment.oversight_assignment_messages import (
+    OversightAssignmentNoOpenSession,
+    OversightAssignmentRunSuccess,
+)
+from backend.api_v1.process_roles.oversight_assignment.oversight_assignment_schema import (
+    OversightAssignmentReport,
+    OversightAssignmentResultRow,
+    OversightAssignmentRunRequest,
 )
 from backend.api_v1.process_roles.oversight_manager.oversight_manager_messages import (
     OversightRoleNotConfigured,
@@ -48,15 +56,6 @@ from backend.api_v1.review_session_employee.review_session_employee_model import
 from backend.api_v1.review_session_status.review_session_status_model import (
     ReviewSessionStatus,
 )
-from backend.api_v1.process_roles.oversight_assignment.oversight_assignment_messages import (
-    OversightAssignmentNoOpenSession,
-    OversightAssignmentRunSuccess,
-)
-from backend.api_v1.process_roles.oversight_assignment.oversight_assignment_schema import (
-    OversightAssignmentReport,
-    OversightAssignmentResultRow,
-    OversightAssignmentRunRequest,
-)
 
 MAX_LEVELS_UP_SETTING_KEY = "oversight_assign_max_levels_up"
 
@@ -64,8 +63,8 @@ MAX_LEVELS_UP_SETTING_KEY = "oversight_assign_max_levels_up"
 @dataclass
 class _Candidate:
     id: int
-    code: Optional[str]
-    name: Optional[str]
+    code: str | None
+    name: str | None
 
 
 @dataclass
@@ -95,8 +94,8 @@ class OversightAssignmentService(BaseService):
     def __init__(
         self,
         repository: ProcessRoleHolderEmployeeLinkRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -320,7 +319,7 @@ class OversightAssignmentService(BaseService):
 
     async def _pick_review_session(
         self, dept_repo: DepartmentRepository, subtree_ids: set[int]
-    ) -> tuple[Optional[tuple[int, str]], bool]:
+    ) -> tuple[tuple[int, str] | None, bool]:
         """Latest OPEN session whose linked departments intersect the selected
         subtree (either direction: session linked to an ancestor or to a child
         of the selection). Falls back to the latest open session of all."""
@@ -397,7 +396,7 @@ class OversightAssignmentService(BaseService):
         fixed (from the SUBORDINATE's dept type); levels only widen WHERE the
         holder may sit."""
         trace: list[_SearchLevel] = []
-        dept_id: Optional[int] = main_dept_id
+        dept_id: int | None = main_dept_id
         for _ in range(max_levels_up + 1):
             if dept_id is None:
                 break
@@ -431,7 +430,7 @@ class OversightAssignmentService(BaseService):
     @staticmethod
     def _resolve_candidate(
         trace: list[_SearchLevel], employee_id: int
-    ) -> tuple[Optional[_Candidate], Optional[int], Optional[str], list[str]]:
+    ) -> tuple[_Candidate | None, int | None, str | None, list[str]]:
         """Walk the levels: the first one holding a non-self candidate decides.
         Returns (candidate, levels_up, failure_reason_key, conflict_names)."""
         saw_self_only = False
@@ -472,7 +471,7 @@ class OversightAssignmentService(BaseService):
         return holder
 
     @staticmethod
-    def _holder_name(link: ProcessRoleHolderEmployeeLink) -> Optional[str]:
+    def _holder_name(link: ProcessRoleHolderEmployeeLink) -> str | None:
         holder = link.holder
         if holder is None:
             return None

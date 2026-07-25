@@ -15,7 +15,6 @@ all text (labels included) arrives translated in the dicts, no DB access here.
 from __future__ import annotations
 
 import io
-from typing import Optional
 
 from pptx import Presentation
 from pptx.dml.color import RGBColor
@@ -38,7 +37,7 @@ _SLIDE_W = Inches(13.333)
 _SLIDE_H = Inches(7.5)
 
 
-def _rgb(color: Optional[str]) -> RGBColor:
+def _rgb(color: str | None) -> RGBColor:
     """'#1565C0' (DB dimension color) -> RGBColor; ink on anything malformed."""
     try:
         return RGBColor.from_string(str(color).lstrip("#"))
@@ -55,7 +54,7 @@ def _fmt_value(v) -> str:
         return "—"
 
 
-def _fill(shape, color: RGBColor, line: Optional[RGBColor] = None):
+def _fill(shape, color: RGBColor, line: RGBColor | None = None):
     shape.fill.solid()
     shape.fill.fore_color.rgb = color
     if line is None:

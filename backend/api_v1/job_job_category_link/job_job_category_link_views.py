@@ -1,21 +1,24 @@
-from fastapi import APIRouter, Depends
-from fastapi.security import HTTPBearer
 from typing import Annotated, Optional
 
+from fastapi import APIRouter, Depends
+from fastapi.security import HTTPBearer
+
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.job_job_category_link.job_job_category_link_schema import (
-    JobJobCategoryLink as JobJobCategoryLinkSchema,
-    JobJobCategoryLinkSet,
-    JobJobCategoryClearAllResult,
-)
 from backend.api_v1.job_job_category_link.job_job_category_link_dependencies import (
     get_job_job_category_link_service,
+)
+from backend.api_v1.job_job_category_link.job_job_category_link_schema import (
+    JobJobCategoryClearAllResult,
+    JobJobCategoryLinkSet,
+)
+from backend.api_v1.job_job_category_link.job_job_category_link_schema import (
+    JobJobCategoryLink as JobJobCategoryLinkSchema,
 )
 from backend.api_v1.job_job_category_link.job_job_category_link_service import (
     JobJobCategoryLinkService,
 )
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/job_job_category_links",

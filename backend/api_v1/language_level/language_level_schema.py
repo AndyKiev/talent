@@ -1,5 +1,5 @@
+
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional
 
 
 class LanguageLevelBase(BaseModel):
@@ -14,10 +14,10 @@ class LanguageLevelCreate(LanguageLevelBase):
 
 
 class LanguageLevelUpdate(BaseModel):
-    code: Optional[str] = Field(None, max_length=8)
-    label: Optional[str] = Field(None, max_length=64)
-    hint: Optional[str] = None
-    sort_order: Optional[int] = None
+    code: str | None = Field(None, max_length=8)
+    label: str | None = Field(None, max_length=64)
+    hint: str | None = None
+    sort_order: int | None = None
 
 
 class LanguageLevel(LanguageLevelBase):

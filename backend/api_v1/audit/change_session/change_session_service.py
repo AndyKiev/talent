@@ -1,10 +1,7 @@
 import datetime
-from typing import List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api_v1.base.base_service import BaseService
-from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.audit.change_session.change_session_messages import (
     ChangeSessionNotFound,
 )
@@ -12,10 +9,12 @@ from backend.api_v1.audit.change_session.change_session_repository import (
     ChangeSessionRepository,
 )
 from backend.api_v1.audit.change_session.change_session_schema import (
+    ChangeRunStatus,
     ChangeSessionSchema,
     ChangeSource,
-    ChangeRunStatus,
 )
+from backend.api_v1.base.base_service import BaseService
+from backend.api_v1.employee.employee_schema import EmployeeSchema
 
 
 class ChangeSessionService(BaseService):
@@ -34,8 +33,8 @@ class ChangeSessionService(BaseService):
     def __init__(
         self,
         repository: ChangeSessionRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -49,10 +48,10 @@ class ChangeSessionService(BaseService):
 
     async def get_change_sessions(
         self,
-        source: Optional[str] = None,
-        status: Optional[str] = None,
-        limit: Optional[int] = None,
-    ) -> List[ChangeSessionSchema]:
+        source: str | None = None,
+        status: str | None = None,
+        limit: int | None = None,
+    ) -> list[ChangeSessionSchema]:
         """
         Audit runs, newest first (by started_at, then id). Optional equality
         filters on `source` ('manual' | 'system') and `status`
@@ -75,10 +74,10 @@ class ChangeSessionService(BaseService):
     async def start_session(
         self,
         source: ChangeSource,
-        triggered_by_user_id: Optional[int] = None,
-        task_name: Optional[str] = None,
-        summary: Optional[dict] = None,
-        employee_id: Optional[int] = None,
+        triggered_by_user_id: int | None = None,
+        task_name: str | None = None,
+        summary: dict | None = None,
+        employee_id: int | None = None,
         commit: bool = False,
     ):
         """
@@ -107,13 +106,13 @@ class ChangeSessionService(BaseService):
         self,
         session_id: int,
         status: ChangeRunStatus,
-        summary: Optional[dict] = None,
+        summary: dict | None = None,
         commit: bool = True,
     ):
         """Close a run with an outcome (and optional aggregate summary)."""
         record = await self.get_by_id(session_id)
         record.status = status.value if isinstance(status, ChangeRunStatus) else status
-        record.finished_at = datetime.datetime.now(datetime.timezone.utc)
+        record.finished_at = datetime.datetime.now(datetime.UTC)
         if summary is not None:
             record.summary = summary
         if commit:

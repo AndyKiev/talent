@@ -27,39 +27,16 @@ if str(_REPO_ROOT) not in sys.path:
 from datetime import date
 
 from dateutil.relativedelta import relativedelta
-from sqlalchemy import select, desc, func
+from sqlalchemy import desc, func, select
 from sqlalchemy.orm import selectinload
 
-from backend.database.db_helper import db_helper
-from backend.api_v1.review_session.review_session_model import ReviewSession
-from backend.api_v1.review_session_employee.review_session_employee_model import (
-    ReviewSessionEmployee,
+from backend.api_v1.employee.employee_model import Employee
+from backend.api_v1.employee_mission.employee_mission_model import EmployeeMission
+from backend.api_v1.employee_mission_dimension_link.employee_mission_dimension_link_model import (
+    EmployeeMissionDimensionLink,
 )
-from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_model import (
-    ReviewSessionEmployeeEvaluation,
-)
-from backend.api_v1.review_dimension.review_dimension_model import ReviewDimension
-from backend.api_v1.review_session_employee_dimension_type.review_session_employee_dimension_type_model import (
-    DEVELOP,
-    STRONG,
-    ReviewSessionEmployeeDimensionType,
-)
-from backend.api_v1.review_session_employee_dimension.review_session_employee_dimension_model import (
-    ReviewSessionEmployeeDimension,
-)
-from backend.api_v1.review_session_employee_dimension_comment.review_session_employee_dimension_comment_model import (
-    ReviewSessionEmployeeDimensionComment,
-)
-from backend.api_v1.review_session_employee_result.review_session_employee_result_model import (
-    ReviewSessionEmployeeResult,
-)
-from backend.api_v1.review_session_employee_feedback.review_session_employee_feedback_model import (
-    ReviewSessionEmployeeFeedback,
-)
-from backend.api_v1.review_session_employee_feedback_type.review_session_employee_feedback_type_model import (
-    EMPLOYEE as FEEDBACK_EMPLOYEE,
-    MANAGER as FEEDBACK_MANAGER,
-    ReviewSessionEmployeeFeedbackType,
+from backend.api_v1.employee_mission_kpi.employee_mission_kpi_model import (
+    EmployeeMissionKpi,
 )
 from backend.api_v1.employee_recommended_training.employee_recommended_training_model import (
     EmployeeRecommendedTraining,
@@ -68,28 +45,51 @@ from backend.api_v1.employee_recommended_training_status.employee_recommended_tr
     RECOMMENDED,
     EmployeeRecommendedTrainingStatus,
 )
-from backend.api_v1.employee_mission.employee_mission_model import EmployeeMission
-from backend.api_v1.employee_mission_kpi.employee_mission_kpi_model import (
-    EmployeeMissionKpi,
-)
-from backend.api_v1.employee_mission_dimension_link.employee_mission_dimension_link_model import (
-    EmployeeMissionDimensionLink,
-)
-from backend.api_v1.employee.employee_model import Employee
 from backend.api_v1.job.job_model import Job
-
-# ── Criterion scores (star ratings per descriptor) ──────────────────────────
-from backend.api_v1.review_session_criterion.review_session_criterion_model import (
-    ReviewSessionCriterion,
-)
-from backend.api_v1.review_session_employee_criterion_score.review_session_employee_criterion_score_model import (
-    ReviewSessionEmployeeCriterionScore,
-)
+from backend.api_v1.review_dimension.review_dimension_model import ReviewDimension
 
 # ── Proposed level & answers ────────────────────────────────────────────────
 from backend.api_v1.review_level.review_level_model import ReviewLevel
 from backend.api_v1.review_level_requirement.review_level_requirement_model import (
     ReviewLevelRequirement,
+)
+from backend.api_v1.review_session.review_session_model import ReviewSession
+
+# ── Criterion scores (star ratings per descriptor) ──────────────────────────
+from backend.api_v1.review_session_criterion.review_session_criterion_model import (
+    ReviewSessionCriterion,
+)
+from backend.api_v1.review_session_employee.review_session_employee_model import (
+    ReviewSessionEmployee,
+)
+from backend.api_v1.review_session_employee_criterion_score.review_session_employee_criterion_score_model import (
+    ReviewSessionEmployeeCriterionScore,
+)
+from backend.api_v1.review_session_employee_dimension.review_session_employee_dimension_model import (
+    ReviewSessionEmployeeDimension,
+)
+from backend.api_v1.review_session_employee_dimension_comment.review_session_employee_dimension_comment_model import (
+    ReviewSessionEmployeeDimensionComment,
+)
+from backend.api_v1.review_session_employee_dimension_type.review_session_employee_dimension_type_model import (
+    DEVELOP,
+    STRONG,
+    ReviewSessionEmployeeDimensionType,
+)
+from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_model import (
+    ReviewSessionEmployeeEvaluation,
+)
+from backend.api_v1.review_session_employee_feedback.review_session_employee_feedback_model import (
+    ReviewSessionEmployeeFeedback,
+)
+from backend.api_v1.review_session_employee_feedback_type.review_session_employee_feedback_type_model import (
+    EMPLOYEE as FEEDBACK_EMPLOYEE,
+)
+from backend.api_v1.review_session_employee_feedback_type.review_session_employee_feedback_type_model import (
+    MANAGER as FEEDBACK_MANAGER,
+)
+from backend.api_v1.review_session_employee_feedback_type.review_session_employee_feedback_type_model import (
+    ReviewSessionEmployeeFeedbackType,
 )
 from backend.api_v1.review_session_employee_level.review_session_employee_level_model import (
     ReviewSessionEmployeeLevel,
@@ -97,6 +97,10 @@ from backend.api_v1.review_session_employee_level.review_session_employee_level_
 from backend.api_v1.review_session_employee_level_answer.review_session_employee_level_answer_model import (
     ReviewSessionEmployeeLevelAnswer,
 )
+from backend.api_v1.review_session_employee_result.review_session_employee_result_model import (
+    ReviewSessionEmployeeResult,
+)
+from backend.database.db_helper import db_helper
 
 # Numbering prefix inside the demo banks ("1. ", "2) ", "- ", "• ").
 _BANK_PREFIX = re.compile(r"^\s*(?:\d+[.)]|[-•*])\s*")
@@ -835,7 +839,7 @@ async def seed_people_review():
 
             # ── 7a. Evaluations + criterion scores ──────────────────────
             existing_evals: list[ReviewSessionEmployeeEvaluation] = (
-                rse.evaluations if rse.evaluations else []
+                rse.evaluations or []
             )
             existing_by_dim = {e.dimension_id: e for e in existing_evals}
             touched_evals: list[ReviewSessionEmployeeEvaluation] = []
@@ -910,7 +914,7 @@ async def seed_people_review():
         criterion_total = len(list(result.scalars().all()))
 
         print(f"\n{'='*60}")
-        print(f"[DONE] Done!")
+        print("[DONE] Done!")
         print(f"   Evaluations: {filled_evals} new + {updated_evals} updated")
         print(f"   RSE summaries: {updated_rses}")
         print(f"   Criterion scores in DB: {criterion_total}")

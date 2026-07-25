@@ -1,11 +1,11 @@
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional, List
 
-from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_constants import (
-    MAX_GRADE,
-)
+from pydantic import BaseModel, ConfigDict, Field
+
 from backend.api_v1.review_session_criterion.review_session_criterion_schema import (
     FrozenCriterionSchema,
+)
+from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_constants import (
+    MAX_GRADE,
 )
 
 
@@ -26,25 +26,25 @@ class EvaluationBase(BaseModel):
 
 
 class EvaluationUpdate(BaseModel):
-    score: Optional[int] = Field(None, ge=0, le=MAX_GRADE)
-    facts: Optional[str] = None
-    improvement: Optional[str] = None
+    score: int | None = Field(None, ge=0, le=MAX_GRADE)
+    facts: str | None = None
+    improvement: str | None = None
 
 
 class Evaluation(EvaluationBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
-    score: Optional[int] = None
-    mean_score: Optional[float] = None
-    facts: Optional[str] = None
-    improvement: Optional[str] = None
-    criterion_scores: List[CriterionScoreSchema] = []
+    score: int | None = None
+    mean_score: float | None = None
+    facts: str | None = None
+    improvement: str | None = None
+    criterion_scores: list[CriterionScoreSchema] = []
     # Frozen behaviour descriptors for this evaluation's dimension, in display
     # order. Populated on the list read; `criterion_index` indexes into this.
-    criteria: List[FrozenCriterionSchema] = []
+    criteria: list[FrozenCriterionSchema] = []
     dimension_name: str = ""
     dimension_key: str = ""
-    dimension_description: Optional[str] = None
+    dimension_description: str | None = None
     dimension_is_active: bool = True
     dimension_color: str = "#1565C0"
     dimension_sort_order: int = 0
@@ -52,11 +52,11 @@ class Evaluation(EvaluationBase):
 
 class EvaluationBulkUpdate(BaseModel):
     id: int
-    facts: Optional[str] = None
-    improvement: Optional[str] = None
+    facts: str | None = None
+    improvement: str | None = None
     # Per-descriptor (hint bullet) star ratings. When provided, the server
     # replaces the stored set and recomputes mean_score (+ legacy rounded score).
-    criterion_scores: Optional[List[CriterionScoreInput]] = None
+    criterion_scores: list[CriterionScoreInput] | None = None
 
 
 class EvaluationFlipCompetence(BaseModel):

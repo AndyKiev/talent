@@ -1,30 +1,29 @@
-from typing import List, Tuple
 
-from sqlalchemy import select, delete
+from sqlalchemy import delete, select
 from sqlalchemy.orm import selectinload
 
 from backend.api_v1.base.base_repository import BaseRepository
-from backend.api_v1.job.job_model import Job
-from backend.api_v1.user_group.user_group_model import UserGroup
-from backend.api_v1.table_relationship_links.job_user_group_link_model import (
-    JobUserGroupLink,
-)
 from backend.api_v1.department_type_job_link.department_type_job_link_model import (
     DepartmentTypeJobLink,
 )
 from backend.api_v1.job.job_messages import (
-    JobNotFound,
-    JobAlreadyInGroup,
-    JobNotInGroup,
     GroupNotFound,
     GroupsNotFound,
+    JobAlreadyInGroup,
+    JobNotFound,
+    JobNotInGroup,
 )
+from backend.api_v1.job.job_model import Job
+from backend.api_v1.table_relationship_links.job_user_group_link_model import (
+    JobUserGroupLink,
+)
+from backend.api_v1.user_group.user_group_model import UserGroup
 
 
 class JobRepository(BaseRepository):
     model = Job
 
-    async def get_all_with_dept_type_links(self) -> List[Job]:
+    async def get_all_with_dept_type_links(self) -> list[Job]:
         """
         Like get_all, but eager-loads the department-type links (and each
         link's department_type) so Job.department_type_links is populated.
@@ -44,7 +43,7 @@ class JobRepository(BaseRepository):
 
     async def _get_job_and_group(
         self, job_id: int, group_id: int
-    ) -> Tuple[Job, UserGroup]:
+    ) -> tuple[Job, UserGroup]:
         """Get job and group by IDs, raise appropriate errors if not found"""
         job = await self.get_by_id(job_id)
         if not job:
@@ -93,7 +92,7 @@ class JobRepository(BaseRepository):
         await self.session.commit()
         return await self.get_by_id(job_id)
 
-    async def set_groups(self, job_id: int, user_group_ids: List[int]) -> Job:
+    async def set_groups(self, job_id: int, user_group_ids: list[int]) -> Job:
         """Replace all group table_relationship_links for a job"""
         if not await self.get_by_id(job_id):
             raise JobNotFound(job_id)

@@ -17,14 +17,13 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
-from sqlalchemy import select, delete
-
-from backend.database.db_helper import db_helper
-from backend.api_v1.job.job_model import Job
 from backend.api_v1.department_type_job_link.department_type_job_link_model import (
     DepartmentTypeJobLink,
 )
+from backend.api_v1.job.job_model import Job
 from backend.api_v1.job_job_group_link.job_job_group_link_model import JobJobGroupLink
+from backend.database.db_helper import db_helper
+from sqlalchemy import delete, select
 
 
 async def main(dry_run: bool = False):

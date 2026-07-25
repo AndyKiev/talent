@@ -1,14 +1,15 @@
 # backend/api_v1/essence/essence_dependencies.py
-from fastapi import Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Annotated
 
-from backend.api_v1.essence.essence_repository import EssenceRepository
-from backend.api_v1.essence.essence_service import EssenceService
-from backend.api_v1.essence.essence_schema import EssenceSchema
-from backend.database.db_helper import db_helper
-from backend.auth.jwt_auth import get_current_active_auth_user
+from fastapi import Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
+from backend.api_v1.essence.essence_repository import EssenceRepository
+from backend.api_v1.essence.essence_schema import EssenceSchema
+from backend.api_v1.essence.essence_service import EssenceService
+from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.database.db_helper import db_helper
 
 
 async def get_essence_service(

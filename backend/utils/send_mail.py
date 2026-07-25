@@ -1,8 +1,8 @@
-from typing import Union, IO, TYPE_CHECKING
 import asyncio
-from email.message import EmailMessage
 import mimetypes
+from email.message import EmailMessage
 from pathlib import Path
+from typing import IO
 
 import aiosmtplib
 from pydantic import EmailStr
@@ -15,7 +15,7 @@ async def send_email(
     receivers: str,
     subject: str,
     body: str,
-    attachment: Union[bytes, str, Path, IO[bytes], None] = None,
+    attachment: bytes | str | Path | IO[bytes] | None = None,
     filename: str = None,
     mime_type: str = None,
     msg_id: str = None,

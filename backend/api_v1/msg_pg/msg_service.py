@@ -1,4 +1,3 @@
-from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,6 +9,6 @@ class MsgService(BaseService):
     def __init__(
         self,
         repository: MsgRepository,
-        session: Optional[AsyncSession] = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, session=session)

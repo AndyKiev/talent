@@ -27,9 +27,8 @@ sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-from sqlalchemy import text  # noqa: E402
-
-from backend.database.db_helper import db_helper  # noqa: E402
+from backend.database.db_helper import db_helper
+from sqlalchemy import text
 
 # old positional key -> new meaning-based key (derived from the EN text).
 RENAMES: dict[str, str] = {
@@ -102,7 +101,7 @@ async def main() -> None:
             for table, col in KEY_COLUMNS:
                 res = await session.execute(
                     text(
-                        f"update {table} set {col} = :new where {col} = :old"  # noqa: S608 (fixed identifiers)
+                        f"update {table} set {col} = :new where {col} = :old"
                     ),
                     {"new": new, "old": old},
                 )

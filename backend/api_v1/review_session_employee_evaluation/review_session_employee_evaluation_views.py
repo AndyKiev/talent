@@ -1,15 +1,18 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, Query
-from typing import Annotated, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_schema import (
-    Evaluation as EvaluationSchema,
-    EvaluationUpdate,
-    EvaluationBulkUpdate,
-    EvaluationFlipCompetence,
-)
 from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_dependencies import (
     get_evaluation_service,
+)
+from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_schema import (
+    Evaluation as EvaluationSchema,
+)
+from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_schema import (
+    EvaluationBulkUpdate,
+    EvaluationFlipCompetence,
+    EvaluationUpdate,
 )
 from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_service import (
     ReviewSessionEmployeeEvaluationService,
@@ -23,7 +26,7 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[EvaluationSchema])
+@router.get("", response_model=list[EvaluationSchema])
 async def get_evaluations(
     service: Annotated[
         ReviewSessionEmployeeEvaluationService,
@@ -53,10 +56,10 @@ async def update_evaluation(
 
 @router.put(
     "/bulk",
-    response_model=MutationResponse[List[EvaluationSchema]],
+    response_model=MutationResponse[list[EvaluationSchema]],
 )
 async def bulk_update_evaluations(
-    updates: List[EvaluationBulkUpdate],
+    updates: list[EvaluationBulkUpdate],
     service: Annotated[
         ReviewSessionEmployeeEvaluationService,
         Depends(get_evaluation_service),

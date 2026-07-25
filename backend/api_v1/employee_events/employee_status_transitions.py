@@ -26,10 +26,8 @@ call this same function — no behavioural drift between them.
 """
 
 from dataclasses import dataclass, field
-from typing import List
 
-from backend.utils.state_machine import StateMachine, InvalidTransitionError
-
+from backend.utils.state_machine import InvalidTransitionError, StateMachine
 
 # ── Canonical status names (kept as constants to avoid magic strings) ──────────
 STATUS_WORKING = "working"
@@ -46,7 +44,7 @@ class StatusTransitionCtx:
     """Context passed through the SM — currently just an audit trail."""
 
     employee_id: int | None = None
-    audit: List[str] = field(default_factory=list)
+    audit: list[str] = field(default_factory=list)
 
 
 # State = status name (str); Event = target status name (str); Ctx = StatusTransitionCtx

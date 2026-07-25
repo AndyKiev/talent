@@ -1,4 +1,4 @@
-from typing import Annotated, List
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 
@@ -23,7 +23,7 @@ router = APIRouter(
 
 @router.get(
     "/by_interview/{talent_audit_interview_id}",
-    response_model=List[TalentAuditInterviewJobSchema],
+    response_model=list[TalentAuditInterviewJobSchema],
 )
 async def get_by_interview(
     talent_audit_interview_id: int,

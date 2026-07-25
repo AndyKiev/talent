@@ -1,22 +1,25 @@
-from fastapi import APIRouter, Depends, status, Query
-from typing import Annotated, Optional, List
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.review_dimension_criteria.review_dimension_criteria_schema import (
-    ReviewDimensionCriteria as ReviewDimensionCriteriaSchema,
-    ReviewDimensionCriteriaCreate,
-    ReviewDimensionCriteriaUpdate,
-)
 from backend.api_v1.review_dimension_criteria.review_dimension_criteria_dependencies import (
     get_review_dimension_criteria_service,
     review_dimension_criteria_by_id,
 )
+from backend.api_v1.review_dimension_criteria.review_dimension_criteria_schema import (
+    ReviewDimensionCriteria as ReviewDimensionCriteriaSchema,
+)
+from backend.api_v1.review_dimension_criteria.review_dimension_criteria_schema import (
+    ReviewDimensionCriteriaCreate,
+    ReviewDimensionCriteriaUpdate,
+)
 from backend.api_v1.review_dimension_criteria.review_dimension_criteria_service import (
     ReviewDimensionCriteriaService,
 )
-from backend.auth.jwt_auth import get_current_active_auth_user
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/review_dimension_criteria",
@@ -25,14 +28,14 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[ReviewDimensionCriteriaSchema])
+@router.get("", response_model=list[ReviewDimensionCriteriaSchema])
 async def get_review_dimension_criteria(
     service: Annotated[
         ReviewDimensionCriteriaService,
         Depends(get_review_dimension_criteria_service),
     ],
-    dimension_id: Optional[int] = None,
-    sort: Optional[str] = Query(None),
+    dimension_id: int | None = None,
+    sort: str | None = Query(None),
 ):
     return await service.get_criteria(dimension_id=dimension_id, sort=sort)
 

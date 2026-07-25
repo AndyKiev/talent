@@ -1,65 +1,63 @@
-from datetime import datetime, timezone
-from typing import Optional, List
+from datetime import UTC, datetime
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from backend.api_v1.candidate_application.candidate_application_model import (
-    CandidateApplication,
-)
-from backend.api_v1.pipeline_status.pipeline_status_model import PipelineStatus
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.recruitment_task.recruitment_task_repository import (
-    RecruitmentTaskRepository,
+from backend.api_v1.candidate_application.candidate_application_model import (
+    CandidateApplication,
 )
-from backend.api_v1.recruitment_task.recruitment_task_schema import (
-    RecruitmentTaskSchema,
-    RecruitmentTaskCreate,
-    RecruitmentTaskUpdate,
-    RecruitmentTaskCreatorMini,
-    RecruitmentTaskDepartmentMini,
-    RecruitmentTaskGroupMini,
-    RecruitmentTaskJobMini,
+from backend.api_v1.department.department_org_units import (
+    DepartmentIndex,
+    resolve_top_org_unit,
 )
+from backend.api_v1.department.department_repository import DepartmentRepository
 from backend.api_v1.employee.employee_minis import fetch_employee_minis
+from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.job.job_model import Job
+from backend.api_v1.job_requirement_group.job_requirement_group_messages import (
+    JobRequirementGroupNotFound,
+    JobRequirementGroupWrongJob,
+)
 from backend.api_v1.job_requirement_group.job_requirement_group_model import (
     JobRequirementGroup,
-)
-from backend.api_v1.recruitment_task.recruitment_task_state_machine import (
-    RecruitmentTaskStatusKey,
-    CLOSED_STATUS_KEYS,
-    can_transition,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.department.department_repository import DepartmentRepository
-from backend.api_v1.department.department_org_units import (
-    resolve_top_org_unit,
-    DepartmentIndex,
 )
 from backend.api_v1.job_requirement_group.job_requirement_group_repository import (
     JobRequirementGroupRepository,
 )
-from backend.api_v1.recruitment_task_status.recruitment_task_status_repository import (
-    RecruitmentTaskStatusRepository,
-)
+from backend.api_v1.pipeline_status.pipeline_status_model import PipelineStatus
 from backend.api_v1.recruitment_task.recruitment_task_messages import (
-    RecruitmentTaskNotFound,
-    RecruitmentTaskInvalidTransition,
-    RecruitmentTaskRequirementGroupRequired,
-    RecruitmentTaskFulfillNeedsCandidate,
     RecruitmentTaskClosed,
+    RecruitmentTaskCreateSuccess,
     RecruitmentTaskDeleteError,
     RecruitmentTaskDeleteSuccess,
-    RecruitmentTaskCreateSuccess,
-    RecruitmentTaskUpdateSuccess,
+    RecruitmentTaskFulfillNeedsCandidate,
+    RecruitmentTaskInvalidTransition,
+    RecruitmentTaskNotFound,
+    RecruitmentTaskRequirementGroupRequired,
     RecruitmentTaskStatusChangeSuccess,
+    RecruitmentTaskUpdateSuccess,
 )
-from backend.api_v1.job_requirement_group.job_requirement_group_messages import (
-    JobRequirementGroupNotFound,
-    JobRequirementGroupWrongJob,
+from backend.api_v1.recruitment_task.recruitment_task_repository import (
+    RecruitmentTaskRepository,
+)
+from backend.api_v1.recruitment_task.recruitment_task_schema import (
+    RecruitmentTaskCreate,
+    RecruitmentTaskCreatorMini,
+    RecruitmentTaskDepartmentMini,
+    RecruitmentTaskGroupMini,
+    RecruitmentTaskJobMini,
+    RecruitmentTaskSchema,
+    RecruitmentTaskUpdate,
+)
+from backend.api_v1.recruitment_task.recruitment_task_state_machine import (
+    CLOSED_STATUS_KEYS,
+    RecruitmentTaskStatusKey,
+    can_transition,
+)
+from backend.api_v1.recruitment_task_status.recruitment_task_status_repository import (
+    RecruitmentTaskStatusRepository,
 )
 
 
@@ -67,8 +65,8 @@ class RecruitmentTaskService(BaseService):
     def __init__(
         self,
         repository: RecruitmentTaskRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
         # Sibling repos share the same session so everything commits atomically.
@@ -106,8 +104,8 @@ class RecruitmentTaskService(BaseService):
         return await dept_repo.get_org_unit_index()
 
     async def _enrich_many(
-        self, schemas: List[RecruitmentTaskSchema]
-    ) -> List[RecruitmentTaskSchema]:
+        self, schemas: list[RecruitmentTaskSchema]
+    ) -> list[RecruitmentTaskSchema]:
         """Fill the display minis (creator / department / top_org_unit /
         requirement_group) via cheap batched COLUMN queries — the corresponding
         model relationships are lazy="noload" to avoid dragging heavy graphs."""
@@ -187,10 +185,10 @@ class RecruitmentTaskService(BaseService):
 
     async def get_recruitment_tasks(
         self,
-        status_id: Optional[int] = None,
-        job_id: Optional[int] = None,
-        sort: Optional[str] = None,
-    ) -> List[RecruitmentTaskSchema]:
+        status_id: int | None = None,
+        job_id: int | None = None,
+        sort: str | None = None,
+    ) -> list[RecruitmentTaskSchema]:
         filters = {}
         if status_id is not None:
             filters["status_id"] = status_id
@@ -287,7 +285,7 @@ class RecruitmentTaskService(BaseService):
         # nested status is correct even though the session keeps instances live
         # across commit (expire_on_commit=False).
         orm_record.status = target_status
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         # Stamp / clear the transition timestamps — transitions are reversible, so
         # reopening a closed task clears closed_at, and reverting to created clears
         # both stamps.

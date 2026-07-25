@@ -1,18 +1,18 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.database.db_helper import db_helper
-from backend.auth.jwt_auth import get_current_active_auth_user
 from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
 from backend.api_v1.employee_events.employee_event.employee_event_repository import (
     EmployeeEventRepository,
 )
-from backend.api_v1.employee_events.employee_event.employee_event_service import (
-    EmployeeEventService,
-)
 from backend.api_v1.employee_events.employee_event.employee_event_schema import (
     EmployeeEventSchema,
 )
+from backend.api_v1.employee_events.employee_event.employee_event_service import (
+    EmployeeEventService,
+)
+from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.database.db_helper import db_helper
 
 
 async def get_employee_event_service(

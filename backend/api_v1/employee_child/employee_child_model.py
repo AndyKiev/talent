@@ -1,6 +1,8 @@
 from datetime import date
-from sqlalchemy import ForeignKey, Date
+
+from sqlalchemy import Date, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 

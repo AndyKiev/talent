@@ -18,7 +18,6 @@ matplotlib sheet can't do.
 from __future__ import annotations
 
 import base64
-from typing import Optional
 
 import jinja2
 
@@ -140,7 +139,7 @@ def _prep(data: dict) -> dict:
     }
 
 
-def _join(a, b, sep) -> Optional[str]:
+def _join(a, b, sep) -> str | None:
     parts = [str(x) for x in (a, b) if x not in (None, "")]
     return sep.join(parts) if parts else None
 

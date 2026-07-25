@@ -1,4 +1,3 @@
-from typing import List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -6,6 +5,7 @@ from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_messages import (
     TalentAuditInterviewJobDeleteError,
+    TalentAuditInterviewJobDeleteSuccess,
     TalentAuditInterviewJobNotFound,
 )
 from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_repository import (
@@ -14,17 +14,14 @@ from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_reposi
 from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_schema import (
     TalentAuditInterviewJob as TalentAuditInterviewJobSchema,
 )
-from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_messages import (
-    TalentAuditInterviewJobDeleteSuccess,
-)
 
 
 class TalentAuditInterviewJobService(BaseService):
     def __init__(
         self,
         repository: TalentAuditInterviewJobRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -38,7 +35,7 @@ class TalentAuditInterviewJobService(BaseService):
 
     async def get_by_interview_id(
         self, interview_id: int
-    ) -> List[TalentAuditInterviewJobSchema]:
+    ) -> list[TalentAuditInterviewJobSchema]:
         records = await self.repository.get_all(
             filters={"talent_audit_interview_id": interview_id}
         )

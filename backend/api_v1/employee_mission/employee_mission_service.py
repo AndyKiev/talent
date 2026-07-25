@@ -1,5 +1,4 @@
 from datetime import date
-from typing import List, Optional
 
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import select
@@ -39,13 +38,13 @@ from backend.api_v1.employee_mission.employee_mission_schema import (
     EmployeeMissionSchema,
     EmployeeMissionUpdate,
 )
+from backend.api_v1.employee_mission.mission_audit import MissionAudit
 from backend.api_v1.employee_mission_dimension_link.employee_mission_dimension_link_model import (
     EmployeeMissionDimensionLink,
 )
 from backend.api_v1.employee_mission_kpi.employee_mission_kpi_model import (
     EmployeeMissionKpi,
 )
-from backend.api_v1.employee_mission.mission_audit import MissionAudit
 from backend.api_v1.employee_mission_status.employee_mission_status_model import (
     COMPLETED,
     IN_PROCESS,
@@ -121,13 +120,13 @@ def is_mission_accomplished(mission) -> bool:
     return all(kpi.percent >= KPI_COMPLETE_PERCENT for kpi in mission.kpis)
 
 
-def is_mission_expired(mission, today: Optional[date] = None) -> bool:
+def is_mission_expired(mission, today: date | None = None) -> bool:
     """The mission's period has ended. Day granularity, so a mission ending today
     is still running for the whole of today."""
     return mission.end_date < (today or date.today())
 
 
-def is_mission_active(mission, today: Optional[date] = None) -> bool:
+def is_mission_active(mission, today: date | None = None) -> bool:
     """THE definition of an active mission — the single place it is decided.
 
     Active = the period has not ended AND the work is not finished. Both exits
@@ -158,8 +157,8 @@ class EmployeeMissionService(BaseService):
     def __init__(
         self,
         repository: EmployeeMissionRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ) -> None:
         super().__init__(repository, user=user, session=session)
         self.access = EmployeeMissionAccess(user=user, session=session)
@@ -216,7 +215,7 @@ class EmployeeMissionService(BaseService):
             raise await self._resolve_domain_error(MissionStatusNotSeeded(key))
         return status_id
 
-    async def apply_status(self, mission, *, log: bool = True) -> Optional[str]:
+    async def apply_status(self, mission, *, log: bool = True) -> str | None:
         """Recompute the mission's status from its KPIs and persist any change.
 
         Called after every write that can move a KPI. Returns the new key when it
@@ -268,7 +267,7 @@ class EmployeeMissionService(BaseService):
             raise await self._resolve_domain_error(EmployeeMissionNotFound(mission_id))
         return record
 
-    async def _to_schema(self, records: List) -> List[EmployeeMissionSchema]:
+    async def _to_schema(self, records: list) -> list[EmployeeMissionSchema]:
         """Serialize missions, flattening the competence link and naming comment
         authors from a single column-only lookup (never a selectin on Employee —
         that would drag its whole 13-way graph per comment)."""
@@ -281,7 +280,7 @@ class EmployeeMissionService(BaseService):
         )
 
         today = date.today()
-        out: List[EmployeeMissionSchema] = []
+        out: list[EmployeeMissionSchema] = []
         for record in records:
             schema = EmployeeMissionSchema.model_validate(record)
             schema.duration_months = months_between(record.start_date, record.end_date)
@@ -306,7 +305,7 @@ class EmployeeMissionService(BaseService):
 
     async def get_missions_for_employee(
         self, employee_id: int
-    ) -> List[EmployeeMissionSchema]:
+    ) -> list[EmployeeMissionSchema]:
         """Newest first. Route-level PeopleReviewScopedGuard already established
         that the caller may see this employee."""
         records = await self.repository.get_for_employee(employee_id)
@@ -314,7 +313,7 @@ class EmployeeMissionService(BaseService):
 
     async def get_mission_history(
         self, mission_id: int
-    ) -> List[EmployeeMissionHistoryEntry]:
+    ) -> list[EmployeeMissionHistoryEntry]:
         """The mission's own change trail plus that of every KPI under it,
         newest first. Guarded by EMPLOYEE_MISSION_HISTORY so HRM/HRS can read it
         without CHANGE_LOG, which would expose the entire system audit trail."""
@@ -324,7 +323,7 @@ class EmployeeMissionService(BaseService):
 
     async def get_employee_history(
         self, employee_id: int
-    ) -> List[EmployeeMissionHistoryEntry]:
+    ) -> list[EmployeeMissionHistoryEntry]:
         """Every mission/KPI change for this employee, DELETED missions included.
 
         The per-mission history is unreachable once a mission is removed (its row

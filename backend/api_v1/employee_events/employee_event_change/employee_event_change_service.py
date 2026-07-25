@@ -1,32 +1,29 @@
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.employee_events.employee_event.employee_event_repository import (
+    EmployeeEventRepository,
+)
+from backend.api_v1.employee_events.employee_event_change.employee_event_change_messages import (
+    EmployeeEventChangeCreateSuccess,
+    EmployeeEventChangeDeleteError,
+    EmployeeEventChangeDeleteSuccess,
+    EmployeeEventChangeDirectionDuplicate,
+    EmployeeEventChangeEventNotDraft,
+    EmployeeEventChangeNotFound,
+    EmployeeEventChangeUpdateSuccess,
+)
 from backend.api_v1.employee_events.employee_event_change.employee_event_change_repository import (
     EmployeeEventChangeRepository,
 )
 from backend.api_v1.employee_events.employee_event_change.employee_event_change_schema import (
-    EmployeeEventChangeSchema,
     EmployeeEventChangeCreate,
+    EmployeeEventChangeSchema,
     EmployeeEventChangeUpdate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.employee_events.employee_event_change.employee_event_change_messages import (
-    EmployeeEventChangeNotFound,
-    EmployeeEventChangeDeleteError,
-    EmployeeEventChangeEventNotDraft,
-    EmployeeEventChangeDirectionDuplicate,
-)
-from backend.api_v1.employee_events.employee_event_change.employee_event_change_messages import (
-    EmployeeEventChangeDeleteSuccess,
-    EmployeeEventChangeCreateSuccess,
-    EmployeeEventChangeUpdateSuccess,
-)
-from backend.api_v1.employee_events.employee_event.employee_event_repository import (
-    EmployeeEventRepository,
 )
 from backend.api_v1.employee_events.employee_event_change_department.employee_event_change_department_repository import (
     EmployeeEventChangeDepartmentRepository,
@@ -43,8 +40,8 @@ class EmployeeEventChangeService(BaseService):
     def __init__(
         self,
         repository: EmployeeEventChangeRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
         self._event_repo = EmployeeEventRepository(session=session)
@@ -118,8 +115,8 @@ class EmployeeEventChangeService(BaseService):
     async def get_event_changes(
         self,
         event_id: int,
-        sort: Optional[str] = None,
-    ) -> List[EmployeeEventChangeSchema]:
+        sort: str | None = None,
+    ) -> list[EmployeeEventChangeSchema]:
         records = await self.repository.get_all(
             filters={"event_id": event_id},
             sort=sort,

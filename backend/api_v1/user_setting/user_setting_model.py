@@ -1,6 +1,8 @@
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
+
+from sqlalchemy import JSON, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, JSON, UniqueConstraint
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin, TimestampMixin
 
@@ -37,7 +39,7 @@ class UserSetting(IntIdPkMixin, TimestampMixin, Base):
         nullable=False,
         index=True,
     )
-    value: Mapped[Optional[Any]] = mapped_column(JSON, nullable=True)
+    value: Mapped[Any | None] = mapped_column(JSON, nullable=True)
 
     app_setting: Mapped["AppSetting"] = relationship(lazy="selectin")
 

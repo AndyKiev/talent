@@ -36,22 +36,21 @@ sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-from sqlalchemy import select  # noqa: E402
-
-from backend.database.db_helper import db_helper  # noqa: E402
-from backend.api_v1.review_session.review_session_model import ReviewSession  # noqa: E402
-from backend.api_v1.review_dimension.review_dimension_model import (  # noqa: E402
+from backend.api_v1.review_dimension.review_dimension_model import (
     ReviewDimension,
 )
-from backend.api_v1.review_session_employee.review_session_employee_model import (  # noqa: E402
-    ReviewSessionEmployee,
-)
-from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_model import (  # noqa: E402
-    ReviewSessionEmployeeEvaluation,
-)
-from backend.api_v1.review_session_criterion.review_session_criterion_model import (  # noqa: E402
+from backend.api_v1.review_session.review_session_model import ReviewSession
+from backend.api_v1.review_session_criterion.review_session_criterion_model import (
     ReviewSessionCriterion,
 )
+from backend.api_v1.review_session_employee.review_session_employee_model import (
+    ReviewSessionEmployee,
+)
+from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_model import (
+    ReviewSessionEmployeeEvaluation,
+)
+from backend.database.db_helper import db_helper
+from sqlalchemy import select
 
 _BULLET = re.compile(r"^\s*[•\-*]\s*")
 _NUMBER = re.compile(r"^\s*\d+[.)]\s*")

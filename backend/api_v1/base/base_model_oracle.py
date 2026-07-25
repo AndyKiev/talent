@@ -4,8 +4,8 @@ from sqlalchemy.orm import (
     declared_attr,
 )
 
-from backend.config import settings
 from backend.api_v1.base.models.utils import camel_case_to_snake_case
+from backend.config import settings
 
 
 class Base(DeclarativeBase):

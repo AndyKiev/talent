@@ -3,8 +3,8 @@
 No SQLAlchemy model — data lives in a JSON file on disk.
 """
 
+
 from pydantic import BaseModel, Field
-from typing import Optional
 
 
 class FkRef(BaseModel):
@@ -22,8 +22,8 @@ class ColumnInfo(BaseModel):
     nullable: bool = True
     is_primary_key: bool = False
     is_foreign_key: bool = False
-    fk_ref: Optional[FkRef] = None
-    max_length: Optional[int] = None
+    fk_ref: FkRef | None = None
+    max_length: int | None = None
 
 
 class TableStats(BaseModel):
@@ -53,9 +53,9 @@ class DbTableInfo(BaseModel):
 class DbTableInfoUpdate(BaseModel):
     """Fields that the frontend can update directly."""
 
-    description_ru: Optional[str] = None
-    sort_order: Optional[int] = None
-    sample_limit: Optional[int] = None
+    description_ru: str | None = None
+    sort_order: int | None = None
+    sample_limit: int | None = None
 
 
 class TableRowsResponse(BaseModel):
@@ -80,7 +80,7 @@ class ColumnPref(BaseModel):
     hidden: bool = False
     sortable: bool = True
     filterable: bool = True
-    width: Optional[int] = None  # pixel width; None = auto
+    width: int | None = None  # pixel width; None = auto
 
 
 class ColumnPrefsUpdate(BaseModel):

@@ -1,7 +1,7 @@
 # backend/api_v1/employee_user_group_link/employee_user_group_link_schema.py
-from pydantic import BaseModel, ConfigDict
-from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
 
 from backend.api_v1.user_group.user_group_schema import UserGroup as UserGroupSchema
 
@@ -19,7 +19,7 @@ class EmployeeUserGroupLink(EmployeeUserGroupLinkBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
     created_at: datetime
-    user_group: Optional[UserGroupSchema] = None
+    user_group: UserGroupSchema | None = None
 
 
 class GroupOfType(BaseModel):
@@ -30,7 +30,7 @@ class GroupOfType(BaseModel):
     group_id: int
     group_name: str
     user_group_type_id: int
-    user_group_type_name: Optional[str] = None
+    user_group_type_name: str | None = None
 
 
 class EmployeeWithGroups(BaseModel):
@@ -43,6 +43,6 @@ class EmployeeWithGroups(BaseModel):
     id: int
     code: str
     name: str
-    email: Optional[str] = None
-    job_name: Optional[str] = None
+    email: str | None = None
+    job_name: str | None = None
     groups: list[GroupOfType] = []

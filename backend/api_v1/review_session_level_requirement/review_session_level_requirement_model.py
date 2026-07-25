@@ -1,8 +1,9 @@
-from typing import TYPE_CHECKING, Optional
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, ForeignKey
+from typing import TYPE_CHECKING
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
+from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
     from backend.api_v1.review_session_level.review_session_level_model import (
@@ -26,7 +27,7 @@ class ReviewSessionLevelRequirement(IntIdPkMixin, TimestampMixin, Base):
     # Live requirement this was copied from; ON DELETE SET NULL so a frozen
     # requirement whose source is later deleted keeps its text copy (the back-link
     # used to map employee answers is cleared).
-    source_requirement_id: Mapped[Optional[int]] = mapped_column(
+    source_requirement_id: Mapped[int | None] = mapped_column(
         ForeignKey("review_level_requirements.id", ondelete="SET NULL"),
         nullable=True,
     )

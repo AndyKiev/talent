@@ -1,8 +1,8 @@
 __all__ = [
-    "db_helper",
     "DatabaseHelper",
+    "db_helper",
     # Основні класи
 ]
 
 
-from backend.database.db_helper import db_helper, DatabaseHelper
+from backend.database.db_helper import DatabaseHelper, db_helper

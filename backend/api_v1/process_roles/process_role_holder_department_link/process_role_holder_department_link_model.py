@@ -1,15 +1,18 @@
 from __future__ import annotations
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, ForeignKeyConstraint
-from backend.api_v1.base.base_model import Base
-from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
+
 from typing import TYPE_CHECKING
 
+from sqlalchemy import ForeignKey, ForeignKeyConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from backend.api_v1.base.base_model import Base
+from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
+
 if TYPE_CHECKING:
+    from backend.api_v1.department.department_model import Department
     from backend.api_v1.process_roles.process_role_holder.process_role_holder_model import (
         ProcessRoleHolder,
     )
-    from backend.api_v1.department.department_model import Department
 
 
 class ProcessRoleHolderDepartmentLink(IntIdPkMixin, TimestampMixin, Base):
@@ -41,7 +44,7 @@ class ProcessRoleHolderDepartmentLink(IntIdPkMixin, TimestampMixin, Base):
         index=True,
     )
 
-    holder: Mapped["ProcessRoleHolder"] = relationship(
+    holder: Mapped[ProcessRoleHolder] = relationship(
         "ProcessRoleHolder",
         primaryjoin=(
             "ProcessRoleHolderDepartmentLink.process_role_holder_id "
@@ -51,7 +54,7 @@ class ProcessRoleHolderDepartmentLink(IntIdPkMixin, TimestampMixin, Base):
         back_populates="department_links",
         lazy="selectin",
     )
-    department: Mapped["Department"] = relationship(
+    department: Mapped[Department] = relationship(
         "Department",
         foreign_keys="[ProcessRoleHolderDepartmentLink.department_id]",
         lazy="selectin",

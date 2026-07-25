@@ -1,11 +1,11 @@
-from typing import Optional, Sequence, List
+from collections.abc import Sequence
 
-from sqlalchemy import select, delete
+from sqlalchemy import delete, select
 
-from backend.api_v1.base.base_repository import BaseRepository
 from backend.api_v1.access_test_context.access_test_context_model import (
     AccessTestContext,
 )
+from backend.api_v1.base.base_repository import BaseRepository
 from backend.api_v1.user_group.user_group_model import UserGroup
 from backend.api_v1.user_group_type.user_group_type_model import UserGroupType
 
@@ -13,7 +13,7 @@ from backend.api_v1.user_group_type.user_group_type_model import UserGroupType
 class AccessTestContextRepository(BaseRepository):
     model = AccessTestContext
 
-    async def get_for_employee(self, employee_id: int) -> Optional[AccessTestContext]:
+    async def get_for_employee(self, employee_id: int) -> AccessTestContext | None:
         stmt = select(self.model).where(self.model.employee_id == employee_id)
         return await self.session.scalar(stmt)
 
@@ -33,14 +33,14 @@ class AccessTestContextRepository(BaseRepository):
         result = await self.session.scalars(stmt)
         return result.all()
 
-    async def get_groups_by_ids(self, group_ids: List[int]) -> Sequence[UserGroup]:
+    async def get_groups_by_ids(self, group_ids: list[int]) -> Sequence[UserGroup]:
         if not group_ids:
             return []
         stmt = select(UserGroup).where(UserGroup.id.in_(group_ids))
         result = await self.session.scalars(stmt)
         return result.all()
 
-    async def upsert(self, employee_id: int, group_ids: List[int]) -> AccessTestContext:
+    async def upsert(self, employee_id: int, group_ids: list[int]) -> AccessTestContext:
         record = await self.get_for_employee(employee_id)
         if record is None:
             record = AccessTestContext(employee_id=employee_id, group_ids=group_ids)

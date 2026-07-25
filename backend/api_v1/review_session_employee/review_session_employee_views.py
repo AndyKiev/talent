@@ -1,26 +1,31 @@
-from fastapi import APIRouter, Depends, status, Query, Response
+from typing import Annotated, Optional
+
+from fastapi import APIRouter, Depends, Query, Response, status
 from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBearer
-from typing import Annotated, Optional, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.review_session_employee.review_session_employee_schema import (
-    ReviewSessionEmployee as RSESchema,
-    ReviewSessionEmployeeList as RSEListSchema,
-    ReviewSessionEmployeeFieldsUpdate,
-    ReviewSessionEmployeeCreate,
-    ReviewSessionEmployeeReorder,
-    RseDimensionsUpdate,
-    RseResultsUpdate,
-    RseFeedbacksUpdate,
-)
+from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
 from backend.api_v1.review_session_employee.review_session_employee_dependencies import (
     get_review_session_employee_service,
+)
+from backend.api_v1.review_session_employee.review_session_employee_schema import (
+    ReviewSessionEmployee as RSESchema,
+)
+from backend.api_v1.review_session_employee.review_session_employee_schema import (
+    ReviewSessionEmployeeCreate,
+    ReviewSessionEmployeeFieldsUpdate,
+    ReviewSessionEmployeeReorder,
+    RseDimensionsUpdate,
+    RseFeedbacksUpdate,
+    RseResultsUpdate,
+)
+from backend.api_v1.review_session_employee.review_session_employee_schema import (
+    ReviewSessionEmployeeList as RSEListSchema,
 )
 from backend.api_v1.review_session_employee.review_session_employee_service import (
     ReviewSessionEmployeeService,
 )
-from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
 from backend.auth.jwt_auth import get_current_active_auth_user
 
 router = APIRouter(
@@ -30,15 +35,15 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[RSEListSchema])
+@router.get("", response_model=list[RSEListSchema])
 async def get_review_session_employees(
     service: Annotated[
         ReviewSessionEmployeeService,
         Depends(get_review_session_employee_service),
     ],
     session_id: int = Query(...),
-    status_filter: Optional[str] = Query(None, alias="status"),
-    sort: Optional[str] = Query(None),
+    status_filter: str | None = Query(None, alias="status"),
+    sort: str | None = Query(None),
 ):
     return await service.get_session_employees(
         session_id=session_id, status=status_filter, sort=sort
@@ -73,7 +78,7 @@ async def reorder_session_employees(
     return await service.set_queue_order(payload.session_id, payload.ordered_ids)
 
 
-@router.get("/my", response_model=List[RSEListSchema])
+@router.get("/my", response_model=list[RSEListSchema])
 async def get_my_reviews(
     service: Annotated[
         ReviewSessionEmployeeService,

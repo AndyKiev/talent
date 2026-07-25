@@ -1,8 +1,9 @@
-from typing import TYPE_CHECKING, Any, Optional
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, ForeignKey, JSON, UniqueConstraint
+from typing import TYPE_CHECKING, Any
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
+from sqlalchemy import JSON, ForeignKey, String, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
     from backend.api_v1.review_session.review_session_model import ReviewSession
@@ -33,6 +34,6 @@ class ReviewSessionSetting(IntIdPkMixin, TimestampMixin, Base):
         ForeignKey("review_sessions.id"), nullable=False, index=True
     )
     key: Mapped[str] = mapped_column(String(64), nullable=False)
-    value: Mapped[Optional[Any]] = mapped_column(JSON, nullable=True)
+    value: Mapped[Any | None] = mapped_column(JSON, nullable=True)
 
     session: Mapped["ReviewSession"] = relationship(lazy="selectin")

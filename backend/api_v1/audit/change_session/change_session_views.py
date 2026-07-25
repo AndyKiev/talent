@@ -1,27 +1,27 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, Query
 from fastapi.security import HTTPBearer
-from typing import Annotated, List, Optional
 
+from backend.api_v1.audit.change_log.change_log_dependencies import (
+    get_change_log_service,
+)
+from backend.api_v1.audit.change_log.change_log_schema import ChangeLogSchema
+from backend.api_v1.audit.change_log.change_log_service import ChangeLogService
+from backend.api_v1.audit.change_session.change_session_dependencies import (
+    change_session_by_id,
+    get_change_session_service,
+)
 from backend.api_v1.audit.change_session.change_session_schema import (
+    ChangeRunStatus,
     ChangeSessionSchema,
     ChangeSource,
-    ChangeRunStatus,
-)
-from backend.api_v1.audit.change_session.change_session_dependencies import (
-    get_change_session_service,
-    change_session_by_id,
 )
 from backend.api_v1.audit.change_session.change_session_service import (
     ChangeSessionService,
 )
-from backend.api_v1.audit.change_log.change_log_schema import ChangeLogSchema
-from backend.api_v1.audit.change_log.change_log_dependencies import (
-    get_change_log_service,
-)
-from backend.api_v1.audit.change_log.change_log_service import ChangeLogService
-
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 # -- Audit read API: change sessions (runs) ------------------------------------
 # Mounted at /audit/change_sessions. Read-only — runs are written by the
@@ -35,20 +35,20 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[ChangeSessionSchema],
+    response_model=list[ChangeSessionSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.CHANGE_SESSION)],
 )
 async def list_change_sessions(
     service: Annotated[ChangeSessionService, Depends(get_change_session_service)],
-    source: Optional[ChangeSource] = Query(
+    source: ChangeSource | None = Query(
         None, description="Filter by source: manual | system"
     ),
-    run_status: Optional[ChangeRunStatus] = Query(
+    run_status: ChangeRunStatus | None = Query(
         None,
         alias="status",
         description="Filter by run status: running | success | failed",
     ),
-    limit: Optional[int] = Query(
+    limit: int | None = Query(
         None, ge=1, le=1000, description="Cap on rows returned (newest first)"
     ),
 ):
@@ -76,7 +76,7 @@ async def get_change_session(
 
 @router.get(
     "/{change_session_id}/logs",
-    response_model=List[ChangeLogSchema],
+    response_model=list[ChangeLogSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.CHANGE_LOG)],
 )
 async def get_change_session_logs(

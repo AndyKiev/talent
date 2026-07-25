@@ -1,18 +1,18 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, Query
 from fastapi.security import HTTPBearer
-from typing import Annotated, List, Optional
 
-from backend.api_v1.audit.change_log.change_log_schema import (
-    ChangeLogSchema,
-    ChangeAction,
-)
 from backend.api_v1.audit.change_log.change_log_dependencies import (
     get_change_log_service,
 )
+from backend.api_v1.audit.change_log.change_log_schema import (
+    ChangeAction,
+    ChangeLogSchema,
+)
 from backend.api_v1.audit.change_log.change_log_service import ChangeLogService
-
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 # -- Audit read API: change log entries ----------------------------------------
 # Mounted at /audit/change_logs. Read-only flexible query over individual
@@ -26,20 +26,20 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[ChangeLogSchema],
+    response_model=list[ChangeLogSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.CHANGE_LOG)],
 )
 async def list_change_logs(
     service: Annotated[ChangeLogService, Depends(get_change_log_service)],
-    change_session_id: Optional[int] = Query(None, description="Entries of one run"),
-    essence_key: Optional[str] = Query(
+    change_session_id: int | None = Query(None, description="Entries of one run"),
+    essence_key: str | None = Query(
         None, description="e.g. employee_event, talent_audit_job"
     ),
-    entity_id: Optional[int] = Query(None, description="PK of the changed row"),
-    parent_id: Optional[int] = Query(
+    entity_id: int | None = Query(None, description="PK of the changed row"),
+    parent_id: int | None = Query(
         None, description="Entries caused by this entry (cascade children)"
     ),
-    action: Optional[ChangeAction] = Query(
+    action: ChangeAction | None = Query(
         None, description="create | update | delete | apply | status_change | revert"
     ),
 ):

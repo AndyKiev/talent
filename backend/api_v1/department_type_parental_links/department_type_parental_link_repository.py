@@ -1,4 +1,3 @@
-from typing import Dict, List
 
 from sqlalchemy import select
 
@@ -11,7 +10,7 @@ from backend.api_v1.department_type_parental_links.department_type_parental_link
 class DepartmentTypeParentalLinkRepository(BaseRepository):
     model = DepartmentTypeParentalLink
 
-    async def get_active_child_map(self) -> Dict[int, List[int]]:
+    async def get_active_child_map(self) -> dict[int, list[int]]:
         """
         Return {parent_type_id: [child_type_id, ...]} built from all ACTIVE
         parental links. Used by the subtree generator to walk the type graph
@@ -22,7 +21,7 @@ class DepartmentTypeParentalLinkRepository(BaseRepository):
             DepartmentTypeParentalLink.child_id,
         ).where(DepartmentTypeParentalLink.is_active.is_(True))
         result = await self.session.execute(stmt)
-        child_map: Dict[int, List[int]] = {}
+        child_map: dict[int, list[int]] = {}
         for parent_id, child_id in result.all():
             child_map.setdefault(parent_id, []).append(child_id)
         return child_map

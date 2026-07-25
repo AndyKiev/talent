@@ -1,37 +1,35 @@
-from typing import Optional, List
-
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.training_link_type.training_link_type_messages import (
+    TrainingLinkTypeCreateSuccess,
+    TrainingLinkTypeDeleteError,
+    TrainingLinkTypeDeleteSuccess,
+    TrainingLinkTypeKeyTaken,
+    TrainingLinkTypeNotFound,
+    TrainingLinkTypeUpdateSuccess,
+)
 from backend.api_v1.training_link_type.training_link_type_repository import (
     TrainingLinkTypeRepository,
 )
 from backend.api_v1.training_link_type.training_link_type_schema import (
     TrainingLinkType as TrainingLinkTypeSchema,
+)
+from backend.api_v1.training_link_type.training_link_type_schema import (
     TrainingLinkTypeCreate,
     TrainingLinkTypeUpdate,
 )
-from backend.api_v1.training_link_type.training_link_type_messages import (
-    TrainingLinkTypeNotFound,
-    TrainingLinkTypeKeyTaken,
-    TrainingLinkTypeDeleteError,
-)
-from backend.api_v1.training_link_type.training_link_type_messages import (
-    TrainingLinkTypeCreateSuccess,
-    TrainingLinkTypeUpdateSuccess,
-    TrainingLinkTypeDeleteSuccess,
-)
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class TrainingLinkTypeService(BaseService):
     def __init__(
         self,
         repository: TrainingLinkTypeRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -41,11 +39,11 @@ class TrainingLinkTypeService(BaseService):
             raise await self._resolve_domain_error(TrainingLinkTypeNotFound(id))
         return result
 
-    async def get_training_link_types(self) -> List[TrainingLinkTypeSchema]:
+    async def get_training_link_types(self) -> list[TrainingLinkTypeSchema]:
         records = await self.get_all(sort=["id"])
         return [TrainingLinkTypeSchema.model_validate(r) for r in records]
 
-    async def get_id_by_key(self, key: str) -> Optional[int]:
+    async def get_id_by_key(self, key: str) -> int | None:
         return await self.repository.get_id_by_field("key", key)
 
     async def create_training_link_type(

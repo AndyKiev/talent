@@ -1,9 +1,8 @@
 """In-memory notification store + WebSocket connection manager."""
 
 import asyncio
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, List, Set
 from uuid import uuid4
 
 from fastapi import WebSocket
@@ -19,18 +18,18 @@ class Notification:
 
 
 # user_code -> list of notifications
-_store: Dict[str, List[Notification]] = {}
+_store: dict[str, list[Notification]] = {}
 
 # user_code -> set of active WebSocket connections
-_connections: Dict[str, Set[WebSocket]] = {}
+_connections: dict[str, set[WebSocket]] = {}
 _lock = asyncio.Lock()
 
 
-def _notifications_for(user_code: str) -> List[Notification]:
+def _notifications_for(user_code: str) -> list[Notification]:
     return _store.setdefault(user_code, [])
 
 
-def get_all(user_code: str) -> List[dict]:
+def get_all(user_code: str) -> list[dict]:
     return [_to_dict(n) for n in _notifications_for(user_code)]
 
 
@@ -87,7 +86,7 @@ async def add_and_broadcast(user_code: str, message: str) -> Notification:
 
 
 async def _broadcast(user_code: str, payload: dict) -> None:
-    dead: Set[WebSocket] = set()
+    dead: set[WebSocket] = set()
     for ws in list(_connections.get(user_code, set())):
         try:
             await ws.send_json(payload)

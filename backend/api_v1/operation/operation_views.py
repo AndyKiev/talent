@@ -1,24 +1,26 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, List, Optional
 from pydantic import BaseModel
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.operation.operation_schema import (
-    Operation as OperationSchema,
-    OperationCreate,
-    OperationUpdate,
-)
+from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
 from backend.api_v1.operation.operation_dependency import (
     get_operation_service,
     operation_by_id,
 )
+from backend.api_v1.operation.operation_schema import (
+    Operation as OperationSchema,
+)
+from backend.api_v1.operation.operation_schema import (
+    OperationCreate,
+    OperationUpdate,
+)
 from backend.api_v1.operation.operation_service import OperationService
-from backend.auth.jwt_auth import require_operation
-from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
-from backend.utils.enums import OperationTypes
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.auth.jwt_auth import require_operation
+from backend.utils.enums import EssenceName, OperationTypes, OperationVerb
 
 router = APIRouter(
     prefix="/operations",
@@ -29,12 +31,12 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[OperationSchema],
+    response_model=list[OperationSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.OPERATION)],
 )
 async def get_operations(
     service: Annotated[OperationService, Depends(get_operation_service)],
-    name: Optional[str] = None,
+    name: str | None = None,
 ):
     return await service.get_operations(name=name)
 
@@ -100,7 +102,7 @@ async def delete_operation(
 
 @router.get(
     "/{operation_id}/user_groups",
-    response_model=List[str],
+    response_model=list[str],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.OPERATION)],
 )
 async def get_operation_user_groups(
@@ -110,7 +112,7 @@ async def get_operation_user_groups(
 
 
 class OperationUserGroupsUpdate(BaseModel):
-    user_group_ids: List[int]
+    user_group_ids: list[int]
 
 
 @router.post(

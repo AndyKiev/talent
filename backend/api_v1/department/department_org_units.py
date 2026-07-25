@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
 from pydantic import BaseModel
 
 # ---------------------------------------------------------------------------
@@ -28,13 +27,13 @@ class TopOrgUnit(BaseModel):
 
 # `index` maps department id -> (parent_id, name, category_key) for every
 # department, so the walk never touches a lazy relationship.
-DepartmentIndex = dict[int, tuple[Optional[int], str, str]]
+DepartmentIndex = dict[int, tuple[int | None, str, str]]
 
 
 def resolve_top_org_unit(
     department_id: int,
     index: DepartmentIndex,
-) -> Optional[TopOrgUnit]:
+) -> TopOrgUnit | None:
     """
     Walk up the parent chain from `department_id` until a department whose
     category key is in TOP_ORG_UNIT_KEYS is found (the starting node counts).
@@ -42,7 +41,7 @@ def resolve_top_org_unit(
     without a match.
     """
     seen: set[int] = set()
-    current: Optional[int] = department_id
+    current: int | None = department_id
     while current is not None and current in index and current not in seen:
         seen.add(current)
         parent_id, name, key = index[current]

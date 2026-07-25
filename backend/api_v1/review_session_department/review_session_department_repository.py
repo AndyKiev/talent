@@ -1,4 +1,5 @@
 from sqlalchemy import select
+
 from backend.api_v1.base.base_repository import BaseRepository
 from backend.api_v1.review_session_department.review_session_department_model import (
     ReviewSessionDepartment,

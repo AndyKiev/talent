@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -18,5 +17,5 @@ class EmployeeMissionDimensionLinkSchema(BaseModel):
     dimension_id: int
     created_at: datetime
     # Convenience read fields, filled in the service from the relationship.
-    dimension_name: Optional[str] = None
-    dimension_color: Optional[str] = None
+    dimension_name: str | None = None
+    dimension_color: str | None = None

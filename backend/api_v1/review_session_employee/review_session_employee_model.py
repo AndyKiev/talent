@@ -1,26 +1,28 @@
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Boolean, ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import Boolean, String, Text, Integer, ForeignKey, UniqueConstraint
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 
 if TYPE_CHECKING:
-    from backend.api_v1.review_session.review_session_model import ReviewSession
     from backend.api_v1.employee.employee_model import Employee
+    from backend.api_v1.review_session.review_session_model import ReviewSession
+    from backend.api_v1.review_session_employee_dimension.review_session_employee_dimension_model import (
+        ReviewSessionEmployeeDimension,
+    )
     from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_model import (
         ReviewSessionEmployeeEvaluation,
     )
-    from backend.api_v1.review_session_employee_dimension.review_session_employee_dimension_model import (
-        ReviewSessionEmployeeDimension,
+    from backend.api_v1.review_session_employee_feedback.review_session_employee_feedback_model import (
+        ReviewSessionEmployeeFeedback,
     )
     from backend.api_v1.review_session_employee_result.review_session_employee_result_model import (
         ReviewSessionEmployeeResult,
     )
     from backend.api_v1.review_session_employee_status.review_session_employee_status_model import (
         ReviewSessionEmployeeStatus,
-    )
-    from backend.api_v1.review_session_employee_feedback.review_session_employee_feedback_model import (
-        ReviewSessionEmployeeFeedback,
     )
 
 
@@ -45,7 +47,7 @@ class ReviewSessionEmployee(IntIdPkMixin, TimestampMixin, Base):
 
     # Presentation-queue order for oversight mode (multiples of 10: 10, 20, 30 …).
     # NULL sorts last, so a newly-added employee lands at the end of the queue.
-    queue_position: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    queue_position: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     # NOTE: there are deliberately no `employee_feedback` / `manager_feedback`
     # columns here any more. They were the same concept twice, so they became
@@ -90,7 +92,7 @@ class ReviewSessionEmployee(IntIdPkMixin, TimestampMixin, Base):
         lazy="selectin",
     )
     employee: Mapped["Employee"] = relationship(lazy="selectin")
-    evaluations: Mapped[List["ReviewSessionEmployeeEvaluation"]] = relationship(
+    evaluations: Mapped[list["ReviewSessionEmployeeEvaluation"]] = relationship(
         back_populates="review_session_employee",
         lazy="selectin",
     )
@@ -98,13 +100,13 @@ class ReviewSessionEmployee(IntIdPkMixin, TimestampMixin, Base):
     # selectin-loading the summary (and each row's comments, and each row's
     # dimension) per record would reintroduce the people-review N+1. The detail
     # paths load it explicitly via _load_rse_dimensions instead.
-    rse_dimensions: Mapped[List["ReviewSessionEmployeeDimension"]] = relationship(
+    rse_dimensions: Mapped[list["ReviewSessionEmployeeDimension"]] = relationship(
         cascade="all, delete-orphan",
         lazy="noload",
     )
     # Same noload reasoning: the roster loads many RSE rows and must not pay for
     # each one's result list. The detail paths load it explicitly.
-    results: Mapped[List["ReviewSessionEmployeeResult"]] = relationship(
+    results: Mapped[list["ReviewSessionEmployeeResult"]] = relationship(
         back_populates="review_session_employee",
         cascade="all, delete-orphan",
         lazy="noload",
@@ -116,7 +118,7 @@ class ReviewSessionEmployee(IntIdPkMixin, TimestampMixin, Base):
         back_populates="review_session_employees",
         lazy="selectin",
     )
-    feedbacks: Mapped[List["ReviewSessionEmployeeFeedback"]] = relationship(
+    feedbacks: Mapped[list["ReviewSessionEmployeeFeedback"]] = relationship(
         back_populates="review_session_employee",
         cascade="all, delete-orphan",
         lazy="noload",

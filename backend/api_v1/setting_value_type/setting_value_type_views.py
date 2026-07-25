@@ -1,22 +1,25 @@
-from fastapi import APIRouter, Depends, status, Query
-from typing import Annotated, Optional, List
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.setting_value_type.setting_value_type_schema import (
-    SettingValueType as SettingValueTypeSchema,
-    SettingValueTypeCreate,
-    SettingValueTypeUpdate,
-)
 from backend.api_v1.setting_value_type.setting_value_type_dependencies import (
     get_setting_value_type_service,
     setting_value_type_by_id,
 )
+from backend.api_v1.setting_value_type.setting_value_type_schema import (
+    SettingValueType as SettingValueTypeSchema,
+)
+from backend.api_v1.setting_value_type.setting_value_type_schema import (
+    SettingValueTypeCreate,
+    SettingValueTypeUpdate,
+)
 from backend.api_v1.setting_value_type.setting_value_type_service import (
     SettingValueTypeService,
 )
-from backend.auth.jwt_auth import get_current_active_auth_user
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/setting_value_types",
@@ -27,14 +30,14 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[SettingValueTypeSchema],
+    response_model=list[SettingValueTypeSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.SETTING_VALUE_TYPE)],
 )
 async def get_setting_value_types(
     service: Annotated[
         SettingValueTypeService, Depends(get_setting_value_type_service)
     ],
-    sort: Optional[str] = Query(
+    sort: str | None = Query(
         None,
         description='JSON for sorting: {"field": "asc|desc"} or [{"field1": "asc"}, "field2"]',
     ),

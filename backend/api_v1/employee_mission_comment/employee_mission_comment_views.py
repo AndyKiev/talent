@@ -1,4 +1,4 @@
-from typing import Annotated, List
+from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPBearer
@@ -34,7 +34,7 @@ router = APIRouter(
 
 @router.get(
     "/mission/{mission_id}",
-    response_model=List[EmployeeMissionCommentSchema],
+    response_model=list[EmployeeMissionCommentSchema],
 )
 async def get_comments_for_mission(
     mission_id: int,

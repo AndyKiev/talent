@@ -1,20 +1,23 @@
-from fastapi import APIRouter, Depends, status, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, Optional, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.talent_period.talent_period_schema import (
-    TalentPeriod as TalentPeriodSchema,
-    TalentPeriodCreate,
-    TalentPeriodUpdate,
-)
 from backend.api_v1.talent_period.talent_period_dependencies import (
     get_talent_period_service,
     talent_period_by_id,
 )
+from backend.api_v1.talent_period.talent_period_schema import (
+    TalentPeriod as TalentPeriodSchema,
+)
+from backend.api_v1.talent_period.talent_period_schema import (
+    TalentPeriodCreate,
+    TalentPeriodUpdate,
+)
 from backend.api_v1.talent_period.talent_period_service import TalentPeriodService
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/admin/talent_periods",
@@ -25,14 +28,14 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[TalentPeriodSchema],
+    response_model=list[TalentPeriodSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_PERIOD)],
 )
 async def get_talent_periods(
     service: Annotated[TalentPeriodService, Depends(get_talent_period_service)],
-    name: Optional[str] = None,
-    is_active: Optional[bool] = None,
-    sort: Optional[str] = Query(None, description='JSON: {"field": "asc|desc"}'),
+    name: str | None = None,
+    is_active: bool | None = None,
+    sort: str | None = Query(None, description='JSON: {"field": "asc|desc"}'),
 ):
     return await service.get_talent_periods(name=name, is_active=is_active, sort=sort)
 

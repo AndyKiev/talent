@@ -1,7 +1,8 @@
 # backend/api_v1/employee/employee_schema.py
+from datetime import date, datetime
+from typing import Literal, Optional
+
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional, List, FrozenSet, Tuple, Literal
-from datetime import datetime, date
 
 from backend.api_v1.department.department_org_units import TopOrgUnit
 
@@ -9,16 +10,16 @@ from backend.api_v1.department.department_org_units import TopOrgUnit
 class EmployeeBase(BaseModel):
     code: str = Field(..., max_length=10)
     name: str = Field(..., max_length=100)
-    email: Optional[str] = Field(None, max_length=100)
+    email: str | None = Field(None, max_length=100)
     is_active: bool = True
-    job_id: Optional[int] = Field(default=None)
+    job_id: int | None = Field(default=None)
     lang_id: int = Field(default=3)
 
 
 class EmployeeCreate(EmployeeBase):
     # Physical person behind this employee (set by orchestration code that
     # created the person first; plain POST /employees may pass one directly).
-    person_id: Optional[int] = None
+    person_id: int | None = None
 
 
 class EmployeeWithActivationCreate(EmployeeBase):
@@ -29,18 +30,18 @@ class EmployeeWithActivationCreate(EmployeeBase):
     `name` is derived server-side ('LAST FIRST') and thus optional here.
     """
 
-    name: Optional[str] = Field(None, max_length=100)
+    name: str | None = Field(None, max_length=100)
     first_name: str = Field(..., max_length=64)
     last_name: str = Field(..., max_length=64)
-    patronymic: Optional[str] = Field(None, max_length=64)
-    sex: Optional[Literal["male", "female"]] = None
-    birth_date: Optional[date] = None
+    patronymic: str | None = Field(None, max_length=64)
+    sex: Literal["male", "female"] | None = None
+    birth_date: date | None = None
     # True = the user confirmed the namesake modal; assign next dedupe number.
     allow_duplicate: bool = False
     effective_date: date = Field(..., description="Activation date")
     department_id: int = Field(..., description="Main department for the employee")
     job_id: int = Field(..., description="Job for the employee")
-    description: Optional[str] = Field(None, max_length=512)
+    description: str | None = Field(None, max_length=512)
 
 
 class EmployeeStatusNested(BaseModel):
@@ -55,20 +56,20 @@ class EmployeePersonalDataUpdate(BaseModel):
     """Editable personal data (DD.MM.YYYY in the UI). Partial — only the fields
     actually sent are applied (model_dump(exclude_unset=True) in the service)."""
 
-    birth_date: Optional[date] = None
-    hire_date: Optional[date] = None
-    job_assigned_date: Optional[date] = None
-    sex: Optional[Literal["male", "female"]] = None
-    marital_status: Optional[Literal["married", "not_married"]] = None
+    birth_date: date | None = None
+    hire_date: date | None = None
+    job_assigned_date: date | None = None
+    sex: Literal["male", "female"] | None = None
+    marital_status: Literal["married", "not_married"] | None = None
 
 
 class EmployeeUpdate(BaseModel):
     # NOTE: no `name` here — employees.name is derived from the person
     # (PATCH /persons/{id} renames; the service rebuilds 'LAST FIRST').
-    email: Optional[str] = Field(None, max_length=100)
-    is_active: Optional[bool] = None
-    job_id: Optional[int] = None
-    lang_id: Optional[int] = None
+    email: str | None = Field(None, max_length=100)
+    is_active: bool | None = None
+    job_id: int | None = None
+    lang_id: int | None = None
 
 
 class EmployeePersonSlim(BaseModel):
@@ -76,41 +77,41 @@ class EmployeePersonSlim(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
     id: int
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    patronymic: Optional[str] = None
-    sex: Optional[str] = None
-    birth_date: Optional[date] = None
+    first_name: str | None = None
+    last_name: str | None = None
+    patronymic: str | None = None
+    sex: str | None = None
+    birth_date: date | None = None
 
 
 class EmployeeSchema(EmployeeBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
     created_at: datetime
-    person_id: Optional[int] = None
-    person: Optional[EmployeePersonSlim] = None
+    person_id: int | None = None
+    person: EmployeePersonSlim | None = None
     # 1=human, 2=robot (system accounts) — see EmployeeOrigin.
     origin_id: int = 1
     # Read-only — mirrors Employee.current_level_id @property (1:1 link table).
-    current_level_id: Optional[int] = None
+    current_level_id: int | None = None
     # Read-only — mirror Employee.birth_date / hire_date @propertys (personal-data table).
-    birth_date: Optional[date] = None
-    hire_date: Optional[date] = None
-    job_assigned_date: Optional[date] = None
-    sex: Optional[str] = None
-    marital_status: Optional[str] = None
-    groups: List[str] = []  # populated via Employee.groups @property
-    group_ids: List[int] = (
+    birth_date: date | None = None
+    hire_date: date | None = None
+    job_assigned_date: date | None = None
+    sex: str | None = None
+    marital_status: str | None = None
+    groups: list[str] = []  # populated via Employee.groups @property
+    group_ids: list[int] = (
         []
     )  # populated via Employee.group_ids @property (rename-safe)
-    operations: List[str] = []  # DEPRECATED — kept during transition window
+    operations: list[str] = []  # DEPRECATED — kept during transition window
 
     # Resolved access-control grants, populated by EmployeeService._to_schema.
     # Excluded from serialization — used only by the has_access dependencies.
-    permissions: FrozenSet[Tuple[str, str]] = Field(
+    permissions: frozenset[tuple[str, str]] = Field(
         default_factory=frozenset, exclude=True
     )
-    permission_sets: FrozenSet[Tuple[str, FrozenSet[str]]] = Field(
+    permission_sets: frozenset[tuple[str, frozenset[str]]] = Field(
         default_factory=frozenset, exclude=True
     )
     # Superadmin / bypass-group flag, set in jwt_auth.get_current_auth_user.
@@ -122,7 +123,7 @@ class EmployeeSchema(EmployeeBase):
     real_is_bypass: bool = Field(default=False, exclude=True)
     access_testing: bool = False
     can_access_test: bool = False
-    status: Optional[EmployeeStatusNested] = None
+    status: EmployeeStatusNested | None = None
     job: Optional["Job"] = None
     lang: Optional["Lang"] = None
     # Populated by EmployeeService._to_schema from the selectin-loaded relationships.
@@ -132,7 +133,7 @@ class EmployeeSchema(EmployeeBase):
     # (list of EmployeeResponsibilityDepartment rows, which lack `name`) and
     # blow up. Populated manually in EmployeeService._to_schema; serialized
     # under the field name `responsibility_departments`.
-    responsibility_departments: List["MainDepartmentSchema"] = Field(
+    responsibility_departments: list["MainDepartmentSchema"] = Field(
         default=[], validation_alias="responsibility_departments_manual"
     )
 
@@ -149,12 +150,12 @@ class MainDepartmentSchema(BaseModel):
     id: int  # link-row id (useful for delete)
     # main_department carries a department INSTANCE; responsibility_departments
     # carry a department TYPE — so exactly one of these id fields is set.
-    department_id: Optional[int] = None
-    department_type_id: Optional[int] = None
+    department_id: int | None = None
+    department_type_id: int | None = None
     name: str  # department (main) or type (responsibility) name — set in _to_schema
     # Derived top-level org unit (board / directorate / store) for this
     # department. Resolved server-side by walking up the department tree.
-    top_department: Optional[TopOrgUnit] = None
+    top_department: TopOrgUnit | None = None
     # Department category sort_order, used by the frontend to sort filter
     # dropdown options (closest-department filter) in category order.
     department_category_sort_order: int = 0

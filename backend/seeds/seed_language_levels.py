@@ -8,8 +8,8 @@ if str(_REPO_ROOT) not in sys.path:
 
 from sqlalchemy import select
 
-from backend.database.db_helper import db_helper
 from backend.api_v1.language_level.language_level_model import LanguageLevel
+from backend.database.db_helper import db_helper
 
 # CEFR A1..C2 with Ukrainian labels and "can-do" hints.
 LEVELS = [

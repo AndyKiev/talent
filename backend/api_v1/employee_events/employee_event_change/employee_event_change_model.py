@@ -1,26 +1,26 @@
 from __future__ import annotations
 
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import TYPE_CHECKING
+
 from sqlalchemy import ForeignKey
-from typing import TYPE_CHECKING, Optional
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin
 
-
 if TYPE_CHECKING:
+    from backend.api_v1.department.department_model import Department
     from backend.api_v1.employee_events.employee_event.employee_event_model import (
         EmployeeEvent,
-    )
-    from backend.api_v1.employee_events.employee_event_direction_type.employee_event_direction_type_model import (
-        EmployeeEventDirectionType,
     )
     from backend.api_v1.employee_events.employee_event_change_department.employee_event_change_department_model import (
         EmployeeEventChangeDepartment,
     )
-    from backend.api_v1.job.job_model import Job
+    from backend.api_v1.employee_events.employee_event_direction_type.employee_event_direction_type_model import (
+        EmployeeEventDirectionType,
+    )
     from backend.api_v1.employee_status.employee_status_model import EmployeeStatus
-    from backend.api_v1.department.department_model import Department
+    from backend.api_v1.job.job_model import Job
 
 
 class EmployeeEventChange(IntIdPkMixin, Base):
@@ -54,63 +54,63 @@ class EmployeeEventChange(IntIdPkMixin, Base):
     )
 
     # JOB_CHANGE
-    prev_job_id: Mapped[Optional[int]] = mapped_column(
+    prev_job_id: Mapped[int | None] = mapped_column(
         ForeignKey("jobs.id", ondelete="SET NULL"), nullable=True
     )
-    new_job_id: Mapped[Optional[int]] = mapped_column(
+    new_job_id: Mapped[int | None] = mapped_column(
         ForeignKey("jobs.id", ondelete="SET NULL"), nullable=True
     )
 
     # STATUS_CHANGE
-    prev_status_id: Mapped[Optional[int]] = mapped_column(
+    prev_status_id: Mapped[int | None] = mapped_column(
         ForeignKey("employee_statuses.id", ondelete="SET NULL"), nullable=True
     )
-    new_status_id: Mapped[Optional[int]] = mapped_column(
+    new_status_id: Mapped[int | None] = mapped_column(
         ForeignKey("employee_statuses.id", ondelete="SET NULL"), nullable=True
     )
 
     # MAIN_DEPT_CHANGE  (top-level department, one scalar value)
-    prev_department_id: Mapped[Optional[int]] = mapped_column(
+    prev_department_id: Mapped[int | None] = mapped_column(
         ForeignKey("departments.id", ondelete="SET NULL"), nullable=True
     )
-    new_department_id: Mapped[Optional[int]] = mapped_column(
+    new_department_id: Mapped[int | None] = mapped_column(
         ForeignKey("departments.id", ondelete="SET NULL"), nullable=True
     )
 
     # ── Relationships ──────────────────────────────────────────────────────────
 
-    event: Mapped["EmployeeEvent"] = relationship(
+    event: Mapped[EmployeeEvent] = relationship(
         back_populates="changes",
         lazy="selectin",
     )
-    direction_type: Mapped["EmployeeEventDirectionType"] = relationship(
+    direction_type: Mapped[EmployeeEventDirectionType] = relationship(
         back_populates="event_changes",
         lazy="selectin",
     )
 
-    prev_job: Mapped[Optional["Job"]] = relationship(
+    prev_job: Mapped[Job | None] = relationship(
         foreign_keys=[prev_job_id], lazy="selectin"
     )
-    new_job: Mapped[Optional["Job"]] = relationship(
+    new_job: Mapped[Job | None] = relationship(
         foreign_keys=[new_job_id], lazy="selectin"
     )
 
-    prev_status: Mapped[Optional["EmployeeStatus"]] = relationship(
+    prev_status: Mapped[EmployeeStatus | None] = relationship(
         foreign_keys=[prev_status_id], lazy="selectin"
     )
-    new_status: Mapped[Optional["EmployeeStatus"]] = relationship(
+    new_status: Mapped[EmployeeStatus | None] = relationship(
         foreign_keys=[new_status_id], lazy="selectin"
     )
 
-    prev_department: Mapped[Optional["Department"]] = relationship(
+    prev_department: Mapped[Department | None] = relationship(
         foreign_keys=[prev_department_id], lazy="selectin"
     )
-    new_department: Mapped[Optional["Department"]] = relationship(
+    new_department: Mapped[Department | None] = relationship(
         foreign_keys=[new_department_id], lazy="selectin"
     )
 
     # RESPONSIBILITY_DEPTS_CHANGE  (multi-valued — child rows)
-    dept_changes: Mapped[list["EmployeeEventChangeDepartment"]] = relationship(
+    dept_changes: Mapped[list[EmployeeEventChangeDepartment]] = relationship(
         back_populates="event_change",
         lazy="selectin",
         cascade="all, delete-orphan",

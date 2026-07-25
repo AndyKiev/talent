@@ -1,22 +1,25 @@
-from fastapi import APIRouter, Depends, status, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, Optional, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.department_type.department_type_dependencies import (
+    department_type_by_id,
+    get_department_type_service,
+)
 from backend.api_v1.department_type.department_type_schema import (
     DepartmentType as DepartmentTypeSchema,
+)
+from backend.api_v1.department_type.department_type_schema import (
     DepartmentTypeCreate,
     DepartmentTypeUpdate,
-    DepartmentTypeWithParentalLink,
     DepartmentTypeWithLinkStats,
-)
-from backend.api_v1.department_type.department_type_dependencies import (
-    get_department_type_service,
-    department_type_by_id,
+    DepartmentTypeWithParentalLink,
 )
 from backend.api_v1.department_type.department_type_service import DepartmentTypeService
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/admin/department_types",
@@ -27,14 +30,14 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[DepartmentTypeWithLinkStats],
+    response_model=list[DepartmentTypeWithLinkStats],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT_TYPE)],
 )
 async def get_department_types(
     service: Annotated[DepartmentTypeService, Depends(get_department_type_service)],
-    name: Optional[str] = None,
-    is_active: Optional[bool] = None,
-    sort: Optional[str] = Query(None, description='JSON: {"field": "asc|desc"}'),
+    name: str | None = None,
+    is_active: bool | None = None,
+    sort: str | None = Query(None, description='JSON: {"field": "asc|desc"}'),
 ):
     return await service.get_department_types(name=name, is_active=is_active, sort=sort)
 
@@ -92,14 +95,14 @@ async def delete_department_type(
 
 @router.get(
     "/{department_type_id}/children",
-    response_model=List[DepartmentTypeWithParentalLink],
+    response_model=list[DepartmentTypeWithParentalLink],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT_TYPE)],
 )
 async def get_children_by_parent(
     department_type_id: int,
     service: Annotated[DepartmentTypeService, Depends(get_department_type_service)],
-    is_active: Optional[bool] = None,
-    sort: Optional[str] = Query(None, description='JSON: {"field": "asc|desc"}'),
+    is_active: bool | None = None,
+    sort: str | None = Query(None, description='JSON: {"field": "asc|desc"}'),
 ):
     """Get all child department types for a given parent ID, with link metadata"""
     return await service.get_children_by_parent(

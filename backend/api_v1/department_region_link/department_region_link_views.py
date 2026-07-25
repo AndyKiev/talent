@@ -1,23 +1,25 @@
-from fastapi import APIRouter, Depends, status, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, Optional, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.department_region_link.department_region_link_dependencies import (
+    department_region_link_by_id,
+    get_department_region_link_service,
+)
 from backend.api_v1.department_region_link.department_region_link_schema import (
     DepartmentRegionLink as DepartmentRegionLinkSchema,
+)
+from backend.api_v1.department_region_link.department_region_link_schema import (
     DepartmentRegionLinkCreate,
     DepartmentRegionLinkUpdate,
-)
-from backend.api_v1.department_region_link.department_region_link_dependencies import (
-    get_department_region_link_service,
-    department_region_link_by_id,
 )
 from backend.api_v1.department_region_link.department_region_link_service import (
     DepartmentRegionLinkService,
 )
-
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/department_region_links",
@@ -28,7 +30,7 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[DepartmentRegionLinkSchema],
+    response_model=list[DepartmentRegionLinkSchema],
     dependencies=[
         Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT, EssenceName.REGION)
     ],
@@ -37,10 +39,10 @@ async def get_department_region_links(
     service: Annotated[
         DepartmentRegionLinkService, Depends(get_department_region_link_service)
     ],
-    department_id: Optional[int] = None,
-    region_id: Optional[int] = None,
-    is_active: Optional[bool] = None,
-    sort: Optional[str] = Query(None, description='JSON: {"field": "asc|desc"}'),
+    department_id: int | None = None,
+    region_id: int | None = None,
+    is_active: bool | None = None,
+    sort: str | None = Query(None, description='JSON: {"field": "asc|desc"}'),
 ):
     """List links. Optionally filter by ?department_id=, ?region_id=, or ?is_active=."""
     return await service.get_links(

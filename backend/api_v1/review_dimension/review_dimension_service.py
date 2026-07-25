@@ -1,31 +1,30 @@
 import re
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.review_dimension.review_dimension_messages import (
+    ReviewDimensionCreateSuccess,
+    ReviewDimensionDeleteError,
+    ReviewDimensionDeleteSuccess,
+    ReviewDimensionInvalidColor,
+    ReviewDimensionNameTaken,
+    ReviewDimensionNotFound,
+    ReviewDimensionNotFoundByName,
+    ReviewDimensionUpdateSuccess,
+)
 from backend.api_v1.review_dimension.review_dimension_repository import (
     ReviewDimensionRepository,
 )
 from backend.api_v1.review_dimension.review_dimension_schema import (
     ReviewDimension as ReviewDimensionSchema,
+)
+from backend.api_v1.review_dimension.review_dimension_schema import (
     ReviewDimensionCreate,
     ReviewDimensionUpdate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.review_dimension.review_dimension_messages import (
-    ReviewDimensionNotFound,
-    ReviewDimensionNameTaken,
-    ReviewDimensionDeleteError,
-    ReviewDimensionNotFoundByName,
-    ReviewDimensionInvalidColor,
-)
-from backend.api_v1.review_dimension.review_dimension_messages import (
-    ReviewDimensionDeleteSuccess,
-    ReviewDimensionCreateSuccess,
-    ReviewDimensionUpdateSuccess,
 )
 
 
@@ -33,15 +32,15 @@ class ReviewDimensionService(BaseService):
     def __init__(
         self,
         repository: ReviewDimensionRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
     # A 6-digit hex color (e.g. #2E7D32) — matches the picker output + DB column.
     _HEX_COLOR_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
 
-    async def _validate_color(self, color: Optional[str]) -> None:
+    async def _validate_color(self, color: str | None) -> None:
         if color is not None and not self._HEX_COLOR_RE.match(color):
             raise await self._resolve_domain_error(ReviewDimensionInvalidColor(color))
 
@@ -54,10 +53,10 @@ class ReviewDimensionService(BaseService):
 
     async def get_review_dimensions(
         self,
-        name: Optional[str] = None,
-        is_active: Optional[bool] = None,
-        sort: Optional[str] = None,
-    ) -> List[ReviewDimensionSchema]:
+        name: str | None = None,
+        is_active: bool | None = None,
+        sort: str | None = None,
+    ) -> list[ReviewDimensionSchema]:
         if name:
             record = await self.get_by_name(
                 name, not_found_exc=ReviewDimensionNotFoundByName

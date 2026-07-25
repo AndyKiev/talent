@@ -1,46 +1,39 @@
-from typing import List, Optional
+import io
 
+from fastapi import UploadFile
+from openpyxl import load_workbook
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
+from backend.api_v1.base.errors import DomainError
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.job.job_repository import JobRepository
-from backend.api_v1.job.job_schema import Job as JobSchema, JobCreate, JobUpdate
+from backend.api_v1.employee.employee_repository import EmployeeRepository
 from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
+from backend.api_v1.employee.employee_service import EmployeeService, SyncJobResult
 from backend.api_v1.job.job_messages import (
-    JobNotFound,
-    JobNameTaken,
-    JobDeleteError,
-    JobNotFoundByName,
-)
-from backend.api_v1.job.job_messages import (
-    JobDeleteSuccess,
+    JobBulkUploadInvalidFile,
+    JobBulkUploadNothingToInsert,
+    JobBulkUploadSuccess,
     JobCreateSuccess,
+    JobDeleteError,
+    JobDeleteSuccess,
+    JobNameTaken,
+    JobNotFound,
+    JobNotFoundByName,
     JobUpdateSuccess,
 )
-from backend.api_v1.employee.employee_repository import EmployeeRepository
-from backend.api_v1.employee.employee_service import EmployeeService, SyncJobResult
-from backend.api_v1.base.errors import DomainError
-
-import io
-from openpyxl import load_workbook
-from openpyxl.utils.exceptions import InvalidFileException
-from fastapi import UploadFile
-from backend.api_v1.job.job_schema import JobBulkRow, JobBulkUploadResult
-from backend.api_v1.job.job_messages import (
-    JobBulkUploadNothingToInsert,
-    JobBulkUploadInvalidFile,
-)
-from backend.api_v1.job.job_messages import JobBulkUploadSuccess
+from backend.api_v1.job.job_repository import JobRepository
+from backend.api_v1.job.job_schema import Job as JobSchema
+from backend.api_v1.job.job_schema import JobBulkRow, JobBulkUploadResult, JobCreate, JobUpdate
 
 
 class JobService(BaseService):
     def __init__(
         self,
         repository: JobRepository,
-        user: Optional[UserSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: UserSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -57,9 +50,9 @@ class JobService(BaseService):
 
     async def get_jobs(
         self,
-        name: Optional[str] = None,
-        sort: Optional[str] = None,
-    ) -> List[JobSchema]:
+        name: str | None = None,
+        sort: str | None = None,
+    ) -> list[JobSchema]:
         if name:
             job = await self.get_by_name(name, not_found_exc=JobNotFoundByName)
             return [JobSchema.model_validate(job)]
@@ -96,9 +89,10 @@ class JobService(BaseService):
             self.session, "job_apply_category_on_create", default=True
         )
 
-    async def _default_category_id(self) -> Optional[int]:
+    async def _default_category_id(self) -> int | None:
         """Resolve the default ('manager') category by KEY — survives reseed/id reorder."""
         from sqlalchemy import select
+
         from backend.api_v1.job_category.job_category_model import JobCategory
 
         return await self.session.scalar(
@@ -107,6 +101,7 @@ class JobService(BaseService):
 
     async def _link_default_category(self, job_id: int) -> None:
         from sqlalchemy import select
+
         from backend.api_v1.job_job_category_link.job_job_category_link_model import (
             JobJobCategoryLink,
         )
@@ -165,7 +160,7 @@ class JobService(BaseService):
         except DomainError as exc:
             raise await self._resolve_domain_error(exc)
 
-    async def set_groups(self, job_id: int, user_group_ids: List[int]) -> JobSchema:
+    async def set_groups(self, job_id: int, user_group_ids: list[int]) -> JobSchema:
         try:
             job = await self.repository.set_groups(job_id, user_group_ids)
             return JobSchema.model_validate(job)

@@ -20,19 +20,18 @@
 # Lives in the review_session_employee package (not auth/guards.py) and
 # lazy-imports the RSE service inside the dependency, so the auth ↔ routers
 # import graph stays acyclic.
-from typing import Callable
 
-from fastapi import Depends, HTTPException, status, params
+from fastapi import Depends, HTTPException, params, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.database.db_helper import db_helper
 from backend.auth.jwt_auth import (
-    get_current_active_auth_user,
     _translate_permission_denied,
+    get_current_active_auth_user,
 )
 from backend.auth.permission_errors import PermissionDeniedSet
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.database.db_helper import db_helper
+from backend.utils.enums import EssenceName, OperationVerb
 
 
 def PeopleReviewScopedGuard(
@@ -64,11 +63,11 @@ def PeopleReviewScopedGuard(
             return current_user
 
         # 2) People-review scope path — self + active-mode scope.
-        from backend.api_v1.review_session_employee.review_session_employee_service import (
-            ReviewSessionEmployeeService,
-        )
         from backend.api_v1.review_session_employee.review_session_employee_repository import (
             ReviewSessionEmployeeRepository,
+        )
+        from backend.api_v1.review_session_employee.review_session_employee_service import (
+            ReviewSessionEmployeeService,
         )
 
         service = ReviewSessionEmployeeService(

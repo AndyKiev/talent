@@ -1,32 +1,31 @@
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.process_roles.process_role_holder.process_role_holder_messages import (
+    ProcessRoleHolderNotFound,
+)
+from backend.api_v1.process_roles.process_role_holder.process_role_holder_repository import (
+    ProcessRoleHolderRepository,
+)
+from backend.api_v1.process_roles.process_role_holder_department_link.process_role_holder_department_link_messages import (
+    ProcessRoleHolderDepartmentCreateSuccess,
+    ProcessRoleHolderDepartmentDeleteError,
+    ProcessRoleHolderDepartmentDeleteSuccess,
+    ProcessRoleHolderDepartmentExists,
+    ProcessRoleHolderDepartmentNotFound,
+)
 from backend.api_v1.process_roles.process_role_holder_department_link.process_role_holder_department_link_repository import (
     ProcessRoleHolderDepartmentLinkRepository,
 )
 from backend.api_v1.process_roles.process_role_holder_department_link.process_role_holder_department_link_schema import (
     ProcessRoleHolderDepartmentLink as ProcessRoleHolderDepartmentLinkSchema,
+)
+from backend.api_v1.process_roles.process_role_holder_department_link.process_role_holder_department_link_schema import (
     ProcessRoleHolderDepartmentLinkCreate,
-)
-from backend.api_v1.process_roles.process_role_holder.process_role_holder_repository import (
-    ProcessRoleHolderRepository,
-)
-from backend.api_v1.process_roles.process_role_holder.process_role_holder_messages import (
-    ProcessRoleHolderNotFound,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.process_roles.process_role_holder_department_link.process_role_holder_department_link_messages import (
-    ProcessRoleHolderDepartmentNotFound,
-    ProcessRoleHolderDepartmentExists,
-    ProcessRoleHolderDepartmentDeleteError,
-)
-from backend.api_v1.process_roles.process_role_holder_department_link.process_role_holder_department_link_messages import (
-    ProcessRoleHolderDepartmentCreateSuccess,
-    ProcessRoleHolderDepartmentDeleteSuccess,
 )
 
 
@@ -34,8 +33,8 @@ class ProcessRoleHolderDepartmentLinkService(BaseService):
     def __init__(
         self,
         repository: ProcessRoleHolderDepartmentLinkRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
         self.holder_repository = ProcessRoleHolderRepository(session=session)
@@ -62,11 +61,11 @@ class ProcessRoleHolderDepartmentLinkService(BaseService):
 
     async def get_links(
         self,
-        process_role_holder_id: Optional[int] = None,
-        process_role_id: Optional[int] = None,
-        department_id: Optional[int] = None,
-        sort: Optional[str] = None,
-    ) -> List[ProcessRoleHolderDepartmentLinkSchema]:
+        process_role_holder_id: int | None = None,
+        process_role_id: int | None = None,
+        department_id: int | None = None,
+        sort: str | None = None,
+    ) -> list[ProcessRoleHolderDepartmentLinkSchema]:
         filters = {}
         if process_role_holder_id is not None:
             filters["process_role_holder_id"] = process_role_holder_id

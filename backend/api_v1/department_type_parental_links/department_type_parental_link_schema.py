@@ -1,6 +1,6 @@
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
 
 
 class DepartmentTypeParentalLinkBase(BaseModel):
@@ -14,9 +14,9 @@ class DepartmentTypeParentalLinkCreate(DepartmentTypeParentalLinkBase):
 
 
 class DepartmentTypeParentalLinkUpdate(BaseModel):
-    child_id: Optional[int] = None
-    parent_id: Optional[int] = None
-    is_active: Optional[bool] = None
+    child_id: int | None = None
+    parent_id: int | None = None
+    is_active: bool | None = None
 
 
 class DepartmentTypeParentalLink(DepartmentTypeParentalLinkBase):

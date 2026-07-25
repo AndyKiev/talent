@@ -1,12 +1,12 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.database.db_helper import db_helper
-from backend.api_v1.region.region_repository import RegionRepository
-from backend.api_v1.region.region_service import RegionService
-from backend.api_v1.region.region_schema import Region as RegionSchema
 from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.region.region_repository import RegionRepository
+from backend.api_v1.region.region_schema import Region as RegionSchema
+from backend.api_v1.region.region_service import RegionService
 from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.database.db_helper import db_helper
 
 
 def get_region_repository(

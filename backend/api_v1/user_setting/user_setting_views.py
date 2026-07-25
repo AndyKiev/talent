@@ -1,14 +1,17 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, status
-from typing import Annotated, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.user_setting.user_setting_schema import (
-    UserSetting as UserSettingSchema,
-    UserSettingWrite,
-    EffectiveUserSetting,
-)
 from backend.api_v1.user_setting.user_setting_dependencies import (
     get_user_setting_service,
+)
+from backend.api_v1.user_setting.user_setting_schema import (
+    EffectiveUserSetting,
+    UserSettingWrite,
+)
+from backend.api_v1.user_setting.user_setting_schema import (
+    UserSetting as UserSettingSchema,
 )
 from backend.api_v1.user_setting.user_setting_service import UserSettingService
 from backend.auth.jwt_auth import get_current_active_auth_user
@@ -20,7 +23,7 @@ router = APIRouter(
 )
 
 
-@router.get("/effective", response_model=List[EffectiveUserSetting])
+@router.get("/effective", response_model=list[EffectiveUserSetting])
 async def get_effective_user_settings(
     service: Annotated[UserSettingService, Depends(get_user_setting_service)],
 ):

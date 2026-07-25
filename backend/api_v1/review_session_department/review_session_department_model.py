@@ -1,12 +1,14 @@
 from typing import TYPE_CHECKING
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 
 if TYPE_CHECKING:
-    from backend.api_v1.review_session.review_session_model import ReviewSession
     from backend.api_v1.department.department_model import Department
+    from backend.api_v1.review_session.review_session_model import ReviewSession
 
 
 class ReviewSessionDepartment(IntIdPkMixin, TimestampMixin, Base):

@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.api_v1.base.base_model import Base
@@ -27,7 +27,7 @@ class EmployeeLanguage(IntIdPkMixin, Base):
         nullable=False,
     )
     language: Mapped[str] = mapped_column(String(32), nullable=False)
-    level_id: Mapped[Optional[int]] = mapped_column(
+    level_id: Mapped[int | None] = mapped_column(
         ForeignKey("language_levels.id"), nullable=True
     )
 

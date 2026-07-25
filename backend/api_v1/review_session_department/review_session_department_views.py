@@ -1,13 +1,16 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, status
-from typing import Annotated, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.review_session_department.review_session_department_schema import (
-    ReviewSessionDepartment as ReviewSessionDepartmentSchema,
-    ReviewSessionDepartmentCreate,
-)
 from backend.api_v1.review_session_department.review_session_department_dependencies import (
     get_review_session_department_service,
+)
+from backend.api_v1.review_session_department.review_session_department_schema import (
+    ReviewSessionDepartment as ReviewSessionDepartmentSchema,
+)
+from backend.api_v1.review_session_department.review_session_department_schema import (
+    ReviewSessionDepartmentCreate,
 )
 from backend.api_v1.review_session_department.review_session_department_service import (
     ReviewSessionDepartmentService,
@@ -23,7 +26,7 @@ router = APIRouter(
 
 @router.get(
     "/{session_id}/departments",
-    response_model=List[ReviewSessionDepartmentSchema],
+    response_model=list[ReviewSessionDepartmentSchema],
 )
 async def get_session_departments(
     session_id: int,

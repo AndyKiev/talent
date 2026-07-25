@@ -16,8 +16,8 @@
 # Idempotent: existing keys are left alone.
 #
 import asyncio
-from pathlib import Path
 import sys
+from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(_REPO_ROOT) not in sys.path:
@@ -25,7 +25,6 @@ if str(_REPO_ROOT) not in sys.path:
 
 from sqlalchemy import select
 
-from backend.database.db_helper import db_helper
 from backend.api_v1.employee_recommended_training_status.employee_recommended_training_status_model import (
     IN_PROCESS,
     PASSED,
@@ -33,6 +32,7 @@ from backend.api_v1.employee_recommended_training_status.employee_recommended_tr
     RECOMMENDED,
     EmployeeRecommendedTrainingStatus,
 )
+from backend.database.db_helper import db_helper
 
 # 'recommended' is first and is the DEFAULT every new row starts at; the rest are
 # the progression the employee or their oversight manager can move it through.

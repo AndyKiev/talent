@@ -1,7 +1,7 @@
 from sqlalchemy import delete
 
-from backend.api_v1.base.base_repository import BaseRepository
 from backend.api_v1.app_setting.app_setting_model import AppSetting
+from backend.api_v1.base.base_repository import BaseRepository
 from backend.api_v1.table_relationship_links.app_setting_user_group_link_model import (
     AppSettingUserGroupLink,
 )

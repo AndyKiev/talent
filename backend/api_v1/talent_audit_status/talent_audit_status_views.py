@@ -1,22 +1,25 @@
-from fastapi import APIRouter, Depends, status, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, Optional, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.talent_audit_status.talent_audit_status_schema import (
-    TalentAuditStatus as TalentAuditStatusSchema,
-    TalentAuditStatusCreate,
-    TalentAuditStatusUpdate,
-)
 from backend.api_v1.talent_audit_status.talent_audit_status_dependencies import (
     get_talent_audit_status_service,
     talent_audit_status_by_id,
+)
+from backend.api_v1.talent_audit_status.talent_audit_status_schema import (
+    TalentAuditStatus as TalentAuditStatusSchema,
+)
+from backend.api_v1.talent_audit_status.talent_audit_status_schema import (
+    TalentAuditStatusCreate,
+    TalentAuditStatusUpdate,
 )
 from backend.api_v1.talent_audit_status.talent_audit_status_service import (
     TalentAuditStatusService,
 )
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/talent_audit_statuses",
@@ -27,15 +30,15 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[TalentAuditStatusSchema],
+    response_model=list[TalentAuditStatusSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT_STATUS)],
 )
 async def get_talent_audit_statuses(
     service: Annotated[
         TalentAuditStatusService, Depends(get_talent_audit_status_service)
     ],
-    name: Optional[str] = None,
-    sort: Optional[str] = Query(
+    name: str | None = None,
+    sort: str | None = Query(
         None,
         description='JSON for sorting: {"field": "asc|desc"} or [{"field1": "asc"}, "field2"]',
     ),

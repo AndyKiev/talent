@@ -2,14 +2,14 @@
 import io
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status, Body
+from fastapi import APIRouter, Body, Depends, File, HTTPException, UploadFile, status
 from starlette.responses import StreamingResponse
 
 from backend.api_v1.msg_bulk.msg_bulk_dependencies import get_msg_bulk_service
 from backend.api_v1.msg_bulk.msg_bulk_schema import BulkImportResult
 from backend.api_v1.msg_bulk.msg_bulk_service import MsgBulkService
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(prefix="/msg_bulk", tags=["Message Bulk"])
 

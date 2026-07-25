@@ -1,30 +1,26 @@
 # backend/api_v1/employee_responsibility_department/employee_responsibility_department_service.py
-from typing import Optional, List
-
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.employee_responsibility_department.employee_responsibility_department_messages import (
+    EmployeeResponsibilityDepartmentAlreadyExists,
+    EmployeeResponsibilityDepartmentCreateSuccess,
+    EmployeeResponsibilityDepartmentDeleteError,
+    EmployeeResponsibilityDepartmentDeleteSuccess,
+    EmployeeResponsibilityDepartmentNotFound,
+    EmployeeResponsibilityDepartmentUpdateSuccess,
+)
 from backend.api_v1.employee_responsibility_department.employee_responsibility_department_repository import (
     EmployeeResponsibilityDepartmentRepository,
 )
 from backend.api_v1.employee_responsibility_department.employee_responsibility_department_schema import (
-    EmployeeResponsibilityDepartmentSchema,
     EmployeeResponsibilityDepartmentCreate,
+    EmployeeResponsibilityDepartmentSchema,
     EmployeeResponsibilityDepartmentUpdate,
 )
-from backend.api_v1.employee_responsibility_department.employee_responsibility_department_messages import (
-    EmployeeResponsibilityDepartmentNotFound,
-    EmployeeResponsibilityDepartmentAlreadyExists,
-    EmployeeResponsibilityDepartmentDeleteError,
-)
-from backend.api_v1.employee_responsibility_department.employee_responsibility_department_messages import (
-    EmployeeResponsibilityDepartmentCreateSuccess,
-    EmployeeResponsibilityDepartmentUpdateSuccess,
-    EmployeeResponsibilityDepartmentDeleteSuccess,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _link_label(department_type_id: int) -> str:
@@ -37,8 +33,8 @@ class EmployeeResponsibilityDepartmentService(BaseService):
     def __init__(
         self,
         repository: EmployeeResponsibilityDepartmentRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -55,7 +51,7 @@ class EmployeeResponsibilityDepartmentService(BaseService):
         self,
         employee_id: int,
         department_type_id: int,
-        exclude_link_id: Optional[int] = None,
+        exclude_link_id: int | None = None,
     ) -> None:
         existing = await self.repository.get_by_double(
             employee_id, department_type_id
@@ -80,7 +76,7 @@ class EmployeeResponsibilityDepartmentService(BaseService):
 
     async def get_by_employee(
         self, employee_id: int
-    ) -> List[EmployeeResponsibilityDepartmentSchema]:
+    ) -> list[EmployeeResponsibilityDepartmentSchema]:
         records = await self.repository.get_by_employee(employee_id)
         return [self._to_schema(r) for r in records]
 

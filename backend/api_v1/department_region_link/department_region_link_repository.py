@@ -1,4 +1,3 @@
-from typing import Optional, List
 
 from sqlalchemy import select
 
@@ -13,7 +12,7 @@ class DepartmentRegionLinkRepository(BaseRepository):
 
     async def get_by_department_id(
         self, department_id: int
-    ) -> Optional[DepartmentRegionLink]:
+    ) -> DepartmentRegionLink | None:
         """Fetch the single link for a department (one-to-one)."""
         return (
             await self.session.execute(
@@ -23,7 +22,7 @@ class DepartmentRegionLinkRepository(BaseRepository):
             )
         ).scalar_one_or_none()
 
-    async def get_by_region_id(self, region_id: int) -> List[DepartmentRegionLink]:
+    async def get_by_region_id(self, region_id: int) -> list[DepartmentRegionLink]:
         """All department links for a region."""
         result = await self.session.execute(
             select(DepartmentRegionLink).where(

@@ -1,8 +1,10 @@
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Boolean, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Boolean, Integer, UniqueConstraint
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from backend.api_v1.department_region_link.department_region_link_model import (

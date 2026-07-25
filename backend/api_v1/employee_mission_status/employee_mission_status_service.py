@@ -1,4 +1,3 @@
-from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,6 +14,8 @@ from backend.api_v1.employee_mission_status.employee_mission_status_repository i
 )
 from backend.api_v1.employee_mission_status.employee_mission_status_schema import (
     EmployeeMissionStatus as StatusSchema,
+)
+from backend.api_v1.employee_mission_status.employee_mission_status_schema import (
     EmployeeMissionStatusCreate,
     EmployeeMissionStatusUpdate,
 )
@@ -31,8 +32,8 @@ class EmployeeMissionStatusService(BaseService):
     def __init__(
         self,
         repository: EmployeeMissionStatusRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ) -> None:
         super().__init__(repository, user=user, session=session)
 

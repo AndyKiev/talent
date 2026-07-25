@@ -15,9 +15,10 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 from sqlalchemy import select
-from backend.database.db_helper import db_helper
+
 from backend.api_v1.msg_key.msg_key_model import MsgKey
 from backend.api_v1.msg_pg.msg_model import Msg
+from backend.database.db_helper import db_helper
 
 # (name, eng_value, ukr_value)
 TRANSLATIONS: list[tuple[str, str, str]] = [

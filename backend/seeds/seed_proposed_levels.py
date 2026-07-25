@@ -23,18 +23,17 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from sqlalchemy import select, desc
+from sqlalchemy import desc, select
 from sqlalchemy.orm import selectinload
 
-from backend.database.db_helper import db_helper
-from backend.api_v1.review_session.review_session_model import ReviewSession
-from backend.api_v1.review_session_employee.review_session_employee_model import (
-    ReviewSessionEmployee,
-)
 from backend.api_v1.employee.employee_model import Employee
 from backend.api_v1.review_level.review_level_model import ReviewLevel
 from backend.api_v1.review_level_requirement.review_level_requirement_model import (
     ReviewLevelRequirement,
+)
+from backend.api_v1.review_session.review_session_model import ReviewSession
+from backend.api_v1.review_session_employee.review_session_employee_model import (
+    ReviewSessionEmployee,
 )
 from backend.api_v1.review_session_employee_level.review_session_employee_level_model import (
     ReviewSessionEmployeeLevel,
@@ -42,6 +41,7 @@ from backend.api_v1.review_session_employee_level.review_session_employee_level_
 from backend.api_v1.review_session_employee_level_answer.review_session_employee_level_answer_model import (
     ReviewSessionEmployeeLevelAnswer,
 )
+from backend.database.db_helper import db_helper
 
 # ── Level-requirement facts bank (Ukrainian) ────────────────────────────────
 

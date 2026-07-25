@@ -1,6 +1,6 @@
 from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, Field
-from typing import List, Optional
 
 
 class JobRequirementItemMini(BaseModel):
@@ -22,8 +22,8 @@ class JobRequirementGroupCreate(JobRequirementGroupBase):
 
 
 class JobRequirementGroupUpdate(BaseModel):
-    name: Optional[str] = Field(None, max_length=128)
-    is_active: Optional[bool] = None
+    name: str | None = Field(None, max_length=128)
+    is_active: bool | None = None
 
 
 class JobRequirementGroupSchema(JobRequirementGroupBase):
@@ -31,4 +31,4 @@ class JobRequirementGroupSchema(JobRequirementGroupBase):
     id: int
     created_by: int
     created_at: datetime
-    items: List[JobRequirementItemMini] = []
+    items: list[JobRequirementItemMini] = []

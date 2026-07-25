@@ -1,5 +1,5 @@
 from backend.api_v1.base.errors import NotFoundError
-from backend.api_v1.base.success import DomainSuccess, CreateSuccess
+from backend.api_v1.base.success import CreateSuccess, DomainSuccess
 
 
 class CandidateNoteNotFound(NotFoundError):

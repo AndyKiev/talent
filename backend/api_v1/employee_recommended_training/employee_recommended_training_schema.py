@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -33,22 +32,22 @@ class EmployeeRecommendedTrainingCreate(BaseModel):
     recommendation starts as."""
 
     description: str = Field(..., min_length=1)
-    employee_recommended_training_status_id: Optional[int] = None
+    employee_recommended_training_status_id: int | None = None
 
 
 class EmployeeRecommendedTrainingUpdate(BaseModel):
     """Partial update — every field is separately optional so the status pill,
     the is_active toggle and the text can each be saved on their own."""
 
-    description: Optional[str] = Field(None, min_length=1)
-    employee_recommended_training_status_id: Optional[int] = None
-    is_active: Optional[bool] = None
+    description: str | None = Field(None, min_length=1)
+    employee_recommended_training_status_id: int | None = None
+    is_active: bool | None = None
 
 
 class EmployeeRecommendedTrainingReorder(BaseModel):
     """Recommendation ids in their new top-to-bottom order."""
 
-    ordered_ids: List[int] = []
+    ordered_ids: list[int] = []
 
 
 class EmployeeRecommendedTrainingPermissions(BaseModel):
@@ -62,7 +61,7 @@ class EmployeeRecommendedTrainingList(BaseModel):
     """The employee's list plus what the caller may do with it, so the frontend
     does not have to guess at the permission rules."""
 
-    items: List[EmployeeRecommendedTraining] = []
+    items: list[EmployeeRecommendedTraining] = []
     permissions: EmployeeRecommendedTrainingPermissions = (
         EmployeeRecommendedTrainingPermissions()
     )

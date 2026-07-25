@@ -1,29 +1,26 @@
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.employee_events.employee_event_status.employee_event_status_messages import (
+    EmployeeEventStatusCreateSuccess,
+    EmployeeEventStatusDeleteError,
+    EmployeeEventStatusDeleteSuccess,
+    EmployeeEventStatusNameTaken,
+    EmployeeEventStatusNotFound,
+    EmployeeEventStatusNotFoundByName,
+    EmployeeEventStatusUpdateSuccess,
+)
 from backend.api_v1.employee_events.employee_event_status.employee_event_status_repository import (
     EmployeeEventStatusRepository,
 )
 from backend.api_v1.employee_events.employee_event_status.employee_event_status_schema import (
-    EmployeeEventStatusSchema,
     EmployeeEventStatusCreate,
+    EmployeeEventStatusSchema,
     EmployeeEventStatusUpdate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.employee_events.employee_event_status.employee_event_status_messages import (
-    EmployeeEventStatusNotFound,
-    EmployeeEventStatusNotFoundByName,
-    EmployeeEventStatusNameTaken,
-    EmployeeEventStatusDeleteError,
-)
-from backend.api_v1.employee_events.employee_event_status.employee_event_status_messages import (
-    EmployeeEventStatusDeleteSuccess,
-    EmployeeEventStatusCreateSuccess,
-    EmployeeEventStatusUpdateSuccess,
 )
 
 
@@ -31,8 +28,8 @@ class EmployeeEventStatusService(BaseService):
     def __init__(
         self,
         repository: EmployeeEventStatusRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -44,9 +41,9 @@ class EmployeeEventStatusService(BaseService):
 
     async def get_employee_event_statuses(
         self,
-        name: Optional[str] = None,
-        sort: Optional[str] = None,
-    ) -> List[EmployeeEventStatusSchema]:
+        name: str | None = None,
+        sort: str | None = None,
+    ) -> list[EmployeeEventStatusSchema]:
         if name:
             record = await self.get_by_name(
                 name, not_found_exc=EmployeeEventStatusNotFoundByName

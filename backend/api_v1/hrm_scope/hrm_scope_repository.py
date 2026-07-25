@@ -1,15 +1,15 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import date
-from typing import List, Sequence
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
 from backend.api_v1.base.base_repository import BaseRepository
-from backend.api_v1.hrm_scope.hrm_scope_model import HrmScope
 from backend.api_v1.department.department_model import Department
 from backend.api_v1.employee.employee_model import Employee
+from backend.api_v1.hrm_scope.hrm_scope_model import HrmScope
 from backend.api_v1.table_relationship_links.employee_user_group_link_model import (
     EmployeeUserGroupLink,
 )
@@ -47,7 +47,7 @@ class HrmScopeRepository(BaseRepository):
         result = await self.session.scalars(stmt)
         return result.all()
 
-    async def get_hrm_employees(self, hrm_group_name: str) -> List[Employee]:
+    async def get_hrm_employees(self, hrm_group_name: str) -> list[Employee]:
         """
         Employees who hold the HRM authorisation group, with job + scopes
         preloaded for the grid counts.

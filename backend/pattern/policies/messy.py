@@ -1,4 +1,4 @@
-from backend.pattern.policies.domain import User, Request
+from backend.pattern.policies.domain import Request, User
 
 
 def process_request(user: User, request: Request) -> Request:

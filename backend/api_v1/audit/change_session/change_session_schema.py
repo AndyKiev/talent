@@ -1,6 +1,6 @@
 import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -18,10 +18,10 @@ class ChangeRunStatus(str, Enum):
 
 class ChangeSessionBase(BaseModel):
     source: ChangeSource
-    triggered_by_user_id: Optional[int] = None
-    task_name: Optional[str] = Field(None, max_length=128)
+    triggered_by_user_id: int | None = None
+    task_name: str | None = Field(None, max_length=128)
     status: ChangeRunStatus = ChangeRunStatus.RUNNING
-    summary: Optional[dict[str, Any]] = None
+    summary: dict[str, Any] | None = None
 
 
 class ChangeSessionCreate(ChangeSessionBase):
@@ -29,9 +29,9 @@ class ChangeSessionCreate(ChangeSessionBase):
 
 
 class ChangeSessionUpdate(BaseModel):
-    status: Optional[ChangeRunStatus] = None
-    finished_at: Optional[datetime.datetime] = None
-    summary: Optional[dict[str, Any]] = None
+    status: ChangeRunStatus | None = None
+    finished_at: datetime.datetime | None = None
+    summary: dict[str, Any] | None = None
 
 
 class ChangeSessionUser(BaseModel):
@@ -41,7 +41,7 @@ class ChangeSessionUser(BaseModel):
 
     id: int
     name: str
-    code: Optional[str] = None
+    code: str | None = None
 
 
 class ChangeSessionSchema(ChangeSessionBase):
@@ -49,10 +49,10 @@ class ChangeSessionSchema(ChangeSessionBase):
 
     id: int
     started_at: datetime.datetime
-    finished_at: Optional[datetime.datetime] = None
+    finished_at: datetime.datetime | None = None
     # Loaded from the `triggered_by` relationship (selectin). NULL for system
     # runs; the triggering employee (id + name) for manual runs.
-    triggered_by: Optional[ChangeSessionUser] = None
+    triggered_by: ChangeSessionUser | None = None
     # Subject employee the run concerns (NULL for bulk/scheduled sweeps).
-    employee_id: Optional[int] = None
-    employee: Optional[ChangeSessionUser] = None
+    employee_id: int | None = None
+    employee: ChangeSessionUser | None = None

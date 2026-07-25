@@ -7,8 +7,8 @@ from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
 
 if TYPE_CHECKING:
-    from backend.api_v1.interview.interview_model import Interview
     from backend.api_v1.employee.employee_model import Employee
+    from backend.api_v1.interview.interview_model import Interview
 
 
 class InterviewInterviewer(IntIdPkMixin, Base):

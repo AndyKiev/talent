@@ -1,24 +1,26 @@
-from fastapi import APIRouter, Depends, status
-from fastapi.security import HTTPBearer
-from typing import Annotated, List
+from typing import Annotated
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.training_type.training_type_schema import (
-    TrainingType as TrainingTypeSchema,
-    TrainingTypeCreate,
-    TrainingTypeUpdate,
+from backend.api_v1.review_session_employee.people_review_access import (
+    PeopleReviewScopedGuard,
 )
 from backend.api_v1.training_type.training_type_dependencies import (
     get_training_type_service,
     training_type_by_id,
 )
+from backend.api_v1.training_type.training_type_schema import (
+    TrainingType as TrainingTypeSchema,
+)
+from backend.api_v1.training_type.training_type_schema import (
+    TrainingTypeCreate,
+    TrainingTypeUpdate,
+)
 from backend.api_v1.training_type.training_type_service import TrainingTypeService
 from backend.auth.guards import Guard
 from backend.auth.jwt_auth import get_current_active_auth_user
-from backend.api_v1.review_session_employee.people_review_access import (
-    PeopleReviewScopedGuard,
-)
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
+from fastapi import APIRouter, Depends, status
+from fastapi.security import HTTPBearer
 
 router = APIRouter(
     prefix="/training_types",
@@ -29,7 +31,7 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[TrainingTypeSchema],
+    response_model=list[TrainingTypeSchema],
     # Auth-only: the training-type catalog (reference data, no employee scope)
     # is needed to render the people-review Trainings tab, like the other
     # catalog lookups (statuses / review levels / dimensions / language levels).
@@ -43,7 +45,7 @@ async def get_training_types(
 
 @router.get(
     "/eligible/{employee_id}",
-    response_model=List[TrainingTypeSchema],
+    response_model=list[TrainingTypeSchema],
     # Admin VIEW grant OR the employee is within the caller's people-review
     # scope — the self-reviewer's evaluation page lists their eligible trainings.
     dependencies=[

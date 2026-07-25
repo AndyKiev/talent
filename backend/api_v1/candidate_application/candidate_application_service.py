@@ -1,61 +1,59 @@
-from typing import Optional, List
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api_v1.recruitment_task.recruitment_task_model import RecruitmentTask
-from backend.api_v1.pipeline_status.pipeline_status_model import PipelineStatus
-
+from backend.api_v1.application_status_history.application_status_history_model import (
+    ApplicationStatusHistory,
+)
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.candidate_application.candidate_application_repository import (
-    CandidateApplicationRepository,
+from backend.api_v1.candidate.candidate_model import Candidate
+from backend.api_v1.candidate_application.candidate_application_messages import (
+    CandidateApplicationAlreadyExists,
+    CandidateApplicationCreateSuccess,
+    CandidateApplicationDeleteError,
+    CandidateApplicationDeleteSuccess,
+    CandidateApplicationInterviewRequired,
+    CandidateApplicationInvalidTransition,
+    CandidateApplicationNoOpenings,
+    CandidateApplicationNotFound,
+    CandidateApplicationStatusChangeSuccess,
 )
 from backend.api_v1.candidate_application.candidate_application_model import (
     CandidateApplication,
 )
-from backend.api_v1.application_status_history.application_status_history_model import (
-    ApplicationStatusHistory,
+from backend.api_v1.candidate_application.candidate_application_repository import (
+    CandidateApplicationRepository,
 )
-from backend.api_v1.pipeline_status.pipeline_status_repository import (
-    PipelineStatusRepository,
-)
-from backend.api_v1.candidate.candidate_model import Candidate
-from backend.api_v1.job.job_model import Job
-from backend.api_v1.employee.employee_minis import fetch_employee_minis
 from backend.api_v1.candidate_application.candidate_application_schema import (
-    CandidateApplicationSchema,
-    CandidateApplicationCreate,
     ApplicationCandidateMini,
-    ApplicationTaskMini,
-    ApplicationJobMini,
     ApplicationCreatorMini,
+    ApplicationJobMini,
+    ApplicationTaskMini,
+    CandidateApplicationCreate,
+    CandidateApplicationSchema,
 )
 from backend.api_v1.candidate_application.candidate_application_state_machine import (
     PipelineStatusKey,
     can_transition,
 )
-from backend.api_v1.candidate_application.candidate_application_messages import (
-    CandidateApplicationNotFound,
-    CandidateApplicationAlreadyExists,
-    CandidateApplicationInvalidTransition,
-    CandidateApplicationInterviewRequired,
-    CandidateApplicationNoOpenings,
-    CandidateApplicationDeleteError,
-    CandidateApplicationDeleteSuccess,
-    CandidateApplicationCreateSuccess,
-    CandidateApplicationStatusChangeSuccess,
+from backend.api_v1.employee.employee_minis import fetch_employee_minis
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.job.job_model import Job
+from backend.api_v1.pipeline_status.pipeline_status_model import PipelineStatus
+from backend.api_v1.pipeline_status.pipeline_status_repository import (
+    PipelineStatusRepository,
 )
+from backend.api_v1.recruitment_task.recruitment_task_model import RecruitmentTask
 
 
 class CandidateApplicationService(BaseService):
     def __init__(
         self,
         repository: CandidateApplicationRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
         self.status_repository = PipelineStatusRepository(session=session)
@@ -70,8 +68,8 @@ class CandidateApplicationService(BaseService):
         return await self.status_repository.get_by_field("name", name)
 
     async def _enrich_many(
-        self, schemas: List[CandidateApplicationSchema]
-    ) -> List[CandidateApplicationSchema]:
+        self, schemas: list[CandidateApplicationSchema]
+    ) -> list[CandidateApplicationSchema]:
         """Fill candidate / task / changer minis via batched COLUMN queries —
         the model relationships are lazy="noload" to avoid heavy graph loads."""
         if not schemas:
@@ -163,9 +161,9 @@ class CandidateApplicationService(BaseService):
 
     async def get_candidate_applications(
         self,
-        candidate_id: Optional[int] = None,
-        recruitment_task_id: Optional[int] = None,
-    ) -> List[CandidateApplicationSchema]:
+        candidate_id: int | None = None,
+        recruitment_task_id: int | None = None,
+    ) -> list[CandidateApplicationSchema]:
         filters = {}
         if candidate_id is not None:
             filters["candidate_id"] = candidate_id

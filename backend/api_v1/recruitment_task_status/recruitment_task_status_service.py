@@ -1,27 +1,26 @@
-from typing import Optional, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.recruitment_task_status.recruitment_task_status_messages import (
+    RecruitmentTaskStatusNotFound,
+    RecruitmentTaskStatusNotFoundByName,
+)
 from backend.api_v1.recruitment_task_status.recruitment_task_status_repository import (
     RecruitmentTaskStatusRepository,
 )
 from backend.api_v1.recruitment_task_status.recruitment_task_status_schema import (
     RecruitmentTaskStatusSchema,
 )
-from backend.api_v1.recruitment_task_status.recruitment_task_status_messages import (
-    RecruitmentTaskStatusNotFound,
-    RecruitmentTaskStatusNotFoundByName,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
 
 
 class RecruitmentTaskStatusService(BaseService):
     def __init__(
         self,
         repository: RecruitmentTaskStatusRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -39,6 +38,6 @@ class RecruitmentTaskStatusService(BaseService):
             )
         return result
 
-    async def get_recruitment_task_statuses(self) -> List[RecruitmentTaskStatusSchema]:
+    async def get_recruitment_task_statuses(self) -> list[RecruitmentTaskStatusSchema]:
         records = await self.get_all(sort=["id"])
         return [RecruitmentTaskStatusSchema.model_validate(r) for r in records]

@@ -1,4 +1,4 @@
-from typing import Annotated, List, Optional
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
@@ -10,6 +10,8 @@ from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_
 )
 from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_schema import (
     TalentAuditInterviewStatus as TalentAuditInterviewStatusSchema,
+)
+from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_schema import (
     TalentAuditInterviewStatusCreate,
     TalentAuditInterviewStatusUpdate,
 )
@@ -17,7 +19,7 @@ from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_
     TalentAuditInterviewStatusService,
 )
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/talent_audit_interview_statuses",
@@ -28,7 +30,7 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[TalentAuditInterviewStatusSchema],
+    response_model=list[TalentAuditInterviewStatusSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT_INTERVIEW_STATUS)],
 )
 async def get_talent_audit_interview_statuses(
@@ -36,8 +38,8 @@ async def get_talent_audit_interview_statuses(
         TalentAuditInterviewStatusService,
         Depends(get_talent_audit_interview_status_service),
     ],
-    name: Optional[str] = None,
-    sort: Optional[str] = Query(
+    name: str | None = None,
+    sort: str | None = Query(
         None,
         description='JSON for sorting: {"field": "asc|desc"} or [{"field1": "asc"}, "field2"]',
     ),

@@ -1,25 +1,23 @@
-from typing import Optional, List
 
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.job_requirement_group.job_requirement_group_messages import (
+    JobRequirementGroupCreateSuccess,
+    JobRequirementGroupDeleteError,
+    JobRequirementGroupDeleteSuccess,
+    JobRequirementGroupNotFound,
+    JobRequirementGroupUpdateSuccess,
+)
 from backend.api_v1.job_requirement_group.job_requirement_group_repository import (
     JobRequirementGroupRepository,
 )
 from backend.api_v1.job_requirement_group.job_requirement_group_schema import (
-    JobRequirementGroupSchema,
     JobRequirementGroupCreate,
+    JobRequirementGroupSchema,
     JobRequirementGroupUpdate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.job_requirement_group.job_requirement_group_messages import (
-    JobRequirementGroupNotFound,
-    JobRequirementGroupDeleteError,
-    JobRequirementGroupDeleteSuccess,
-    JobRequirementGroupCreateSuccess,
-    JobRequirementGroupUpdateSuccess,
 )
 
 
@@ -27,8 +25,8 @@ class JobRequirementGroupService(BaseService):
     def __init__(
         self,
         repository: JobRequirementGroupRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -40,9 +38,9 @@ class JobRequirementGroupService(BaseService):
 
     async def get_job_requirement_groups(
         self,
-        job_id: Optional[int] = None,
-        is_active: Optional[bool] = None,
-    ) -> List[JobRequirementGroupSchema]:
+        job_id: int | None = None,
+        is_active: bool | None = None,
+    ) -> list[JobRequirementGroupSchema]:
         filters = {}
         if job_id is not None:
             filters["job_id"] = job_id

@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import date, datetime
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import Date, DateTime, ForeignKey, Integer, Text, func
@@ -29,7 +29,7 @@ class RecruitmentTask(IntIdPkMixin, Base):
         nullable=False,
     )
     # Nullable at creation; required before the task may go in_process.
-    requirement_group_id: Mapped[Optional[int]] = mapped_column(
+    requirement_group_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("job_requirement_groups.id", ondelete="RESTRICT"),
         nullable=True,
@@ -46,13 +46,13 @@ class RecruitmentTask(IntIdPkMixin, Base):
     )
     # The exact (possibly deep) department this search is for. Its top-level org
     # unit (store / directorate / board) is derived in the service, not stored.
-    department_id: Mapped[Optional[int]] = mapped_column(
+    department_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("departments.id", ondelete="RESTRICT"),
         nullable=True,
     )
-    comment: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    target_deadline: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    comment: Mapped[str | None] = mapped_column(Text, nullable=True)
+    target_deadline: Mapped[date | None] = mapped_column(Date, nullable=True)
     created_by: Mapped[int] = mapped_column(
         Integer, ForeignKey("employees.id", ondelete="RESTRICT"), nullable=False
     )
@@ -60,10 +60,10 @@ class RecruitmentTask(IntIdPkMixin, Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
     # Transition stamps set by the state machine (service).
-    in_process_at: Mapped[Optional[datetime]] = mapped_column(
+    in_process_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    closed_at: Mapped[Optional[datetime]] = mapped_column(
+    closed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
 

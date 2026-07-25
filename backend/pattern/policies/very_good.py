@@ -1,9 +1,9 @@
+from collections.abc import Callable
 from dataclasses import replace
 from functools import reduce
-from typing import Callable
+
 from domain import Request, User
 from pydantic import Field
-from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 type Policy = Callable[[User, Request], Request]

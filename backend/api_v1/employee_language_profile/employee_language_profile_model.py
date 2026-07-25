@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -23,7 +23,7 @@ class EmployeeLanguageProfile(IntIdPkMixin, TimestampMixin, Base):
         ForeignKey("persons.id", ondelete="CASCADE"), nullable=False, unique=True
     )
 
-    languages: Mapped[List["EmployeeLanguage"]] = relationship(
+    languages: Mapped[list["EmployeeLanguage"]] = relationship(
         back_populates="profile",
         lazy="selectin",
         cascade="all, delete-orphan",

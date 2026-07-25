@@ -1,35 +1,36 @@
-from typing import Optional, List
+
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.department_type_parental_links.department_type_parental_link_messages import (
+    DepartmentTypeParentalLinkAlreadyExists,
+    DepartmentTypeParentalLinkCreateSuccess,
+    DepartmentTypeParentalLinkDeleteError,
+    DepartmentTypeParentalLinkDeleteSuccess,
+    DepartmentTypeParentalLinkNotFound,
+    DepartmentTypeParentalLinkUpdateSuccess,
+)
 from backend.api_v1.department_type_parental_links.department_type_parental_link_repository import (
     DepartmentTypeParentalLinkRepository,
 )
 from backend.api_v1.department_type_parental_links.department_type_parental_link_schema import (
     DepartmentTypeParentalLink as DepartmentTypeParentalLinkSchema,
+)
+from backend.api_v1.department_type_parental_links.department_type_parental_link_schema import (
     DepartmentTypeParentalLinkCreate,
     DepartmentTypeParentalLinkUpdate,
 )
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.department_type_parental_links.department_type_parental_link_messages import (
-    DepartmentTypeParentalLinkNotFound,
-    DepartmentTypeParentalLinkAlreadyExists,
-    DepartmentTypeParentalLinkDeleteError,
-)
-from backend.api_v1.department_type_parental_links.department_type_parental_link_messages import (
-    DepartmentTypeParentalLinkDeleteSuccess,
-    DepartmentTypeParentalLinkCreateSuccess,
-    DepartmentTypeParentalLinkUpdateSuccess,
-)
 
 
 class DepartmentTypeParentalLinkService(BaseService):
     def __init__(
         self,
         repository: DepartmentTypeParentalLinkRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -41,7 +42,7 @@ class DepartmentTypeParentalLinkService(BaseService):
             )
         return result
 
-    async def get_child_map(self) -> dict[int, List[int]]:
+    async def get_child_map(self) -> dict[int, list[int]]:
         """{parent_type_id: [child_type_id, ...]} from ACTIVE links — lets the
         frontend department tree resolve allowed types for every node with ONE
         request instead of one per parent type."""
@@ -49,11 +50,11 @@ class DepartmentTypeParentalLinkService(BaseService):
 
     async def get_links(
         self,
-        child_id: Optional[int] = None,
-        parent_id: Optional[int] = None,
-        is_active: Optional[bool] = None,
-        sort: Optional[str] = None,
-    ) -> List[DepartmentTypeParentalLinkSchema]:
+        child_id: int | None = None,
+        parent_id: int | None = None,
+        is_active: bool | None = None,
+        sort: str | None = None,
+    ) -> list[DepartmentTypeParentalLinkSchema]:
         filters = {}
         if child_id is not None:
             filters["child_id"] = child_id

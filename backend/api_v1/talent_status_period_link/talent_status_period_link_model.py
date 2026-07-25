@@ -1,15 +1,16 @@
-from typing import TYPE_CHECKING, Optional
+import datetime
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Boolean, DateTime, ForeignKey, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, Boolean, UniqueConstraint, func
-from sqlalchemy import DateTime
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
-import datetime
 
 if TYPE_CHECKING:
-    from backend.api_v1.talent_status.talent_status_model import TalentStatus
-    from backend.api_v1.talent_period.talent_period_model import TalentPeriod
     from backend.api_v1.talent_audit_job.talent_audit_job_model import TalentAuditJob
+    from backend.api_v1.talent_period.talent_period_model import TalentPeriod
+    from backend.api_v1.talent_status.talent_status_model import TalentStatus
 
 
 class TalentStatusPeriodLink(IntIdPkMixin, Base):
@@ -31,7 +32,7 @@ class TalentStatusPeriodLink(IntIdPkMixin, Base):
         nullable=False,
     )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    created_by: Mapped[Optional[int]] = mapped_column(
+    created_by: Mapped[int | None] = mapped_column(
         ForeignKey("employees.id", ondelete="SET NULL"),
         nullable=True,
     )

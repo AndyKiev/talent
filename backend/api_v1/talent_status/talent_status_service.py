@@ -1,28 +1,26 @@
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.talent_status.talent_status_messages import (
+    TalentStatusCreateSuccess,
+    TalentStatusDeleteError,
+    TalentStatusDeleteSuccess,
+    TalentStatusKeyTaken,
+    TalentStatusNotFound,
+    TalentStatusNotFoundByName,
+    TalentStatusUpdateSuccess,
+)
 from backend.api_v1.talent_status.talent_status_repository import TalentStatusRepository
 from backend.api_v1.talent_status.talent_status_schema import (
     TalentStatus as TalentStatusSchema,
+)
+from backend.api_v1.talent_status.talent_status_schema import (
     TalentStatusCreate,
     TalentStatusUpdate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.talent_status.talent_status_messages import (
-    TalentStatusNotFound,
-    TalentStatusNotFoundByName,
-    TalentStatusKeyTaken,
-    TalentStatusNameTaken,
-    TalentStatusDeleteError,
-)
-from backend.api_v1.talent_status.talent_status_messages import (
-    TalentStatusDeleteSuccess,
-    TalentStatusCreateSuccess,
-    TalentStatusUpdateSuccess,
 )
 
 
@@ -30,8 +28,8 @@ class TalentStatusService(BaseService):
     def __init__(
         self,
         repository: TalentStatusRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -43,10 +41,10 @@ class TalentStatusService(BaseService):
 
     async def get_talent_statuses(
         self,
-        name: Optional[str] = None,
-        is_active: Optional[bool] = None,
-        sort: Optional[str] = None,
-    ) -> List[TalentStatusSchema]:
+        name: str | None = None,
+        is_active: bool | None = None,
+        sort: str | None = None,
+    ) -> list[TalentStatusSchema]:
         if name:
             record = await self.get_by_name(
                 name, not_found_exc=TalentStatusNotFoundByName

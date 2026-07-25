@@ -1,18 +1,18 @@
 from __future__ import annotations
 
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, UniqueConstraint
 from typing import TYPE_CHECKING
+
+from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin
 
-
 if TYPE_CHECKING:
+    from backend.api_v1.department_type.department_type_model import DepartmentType
     from backend.api_v1.employee_events.employee_event_change.employee_event_change_model import (
         EmployeeEventChange,
     )
-    from backend.api_v1.department_type.department_type_model import DepartmentType
 
 
 class EmployeeEventChangeDepartment(IntIdPkMixin, Base):
@@ -46,11 +46,11 @@ class EmployeeEventChangeDepartment(IntIdPkMixin, Base):
         nullable=False,
     )
 
-    event_change: Mapped["EmployeeEventChange"] = relationship(
+    event_change: Mapped[EmployeeEventChange] = relationship(
         back_populates="dept_changes",
         lazy="selectin",
     )
-    department_type: Mapped["DepartmentType"] = relationship(
+    department_type: Mapped[DepartmentType] = relationship(
         lazy="selectin",
     )
 

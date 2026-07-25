@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends
-from typing import Annotated, Optional, List
+from typing import Annotated
 
-from backend.api_v1.education_degree.education_degree_schema import (
-    EducationDegree as EducationDegreeSchema,
-)
+from fastapi import APIRouter, Depends
+
 from backend.api_v1.education_degree.education_degree_dependencies import (
     get_education_degree_service,
+)
+from backend.api_v1.education_degree.education_degree_schema import (
+    EducationDegree as EducationDegreeSchema,
 )
 from backend.api_v1.education_degree.education_degree_service import (
     EducationDegreeService,
@@ -19,9 +20,9 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[EducationDegreeSchema])
+@router.get("", response_model=list[EducationDegreeSchema])
 async def get_education_degrees(
     service: Annotated[EducationDegreeService, Depends(get_education_degree_service)],
-    is_active: Optional[bool] = None,
+    is_active: bool | None = None,
 ):
     return await service.get_degrees(is_active=is_active)

@@ -47,10 +47,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from backend.database.db_helper import db_helper
 from psycopg2.extras import Json
 from sqlalchemy import inspect, text
-
-from backend.database.db_helper import db_helper
 
 HERE = Path(__file__).resolve().parent
 # Order matters only for readability — FK enforcement is disabled during load.

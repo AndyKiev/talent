@@ -1,25 +1,23 @@
-from typing import List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.job_group.job_group_messages import (
+    JobGroupCreateSuccess,
+    JobGroupDeleteError,
+    JobGroupDeleteSuccess,
+    JobGroupNameTaken,
+    JobGroupUpdateSuccess,
+)
 from backend.api_v1.job_group.job_group_repository import JobGroupRepository
 from backend.api_v1.job_group.job_group_schema import (
     JobGroup as JobGroupSchema,
+)
+from backend.api_v1.job_group.job_group_schema import (
     JobGroupCreate,
     JobGroupUpdate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.job_group.job_group_messages import (
-    JobGroupNotFound,
-    JobGroupNameTaken,
-    JobGroupDeleteError,
-)
-from backend.api_v1.job_group.job_group_messages import (
-    JobGroupCreateSuccess,
-    JobGroupUpdateSuccess,
-    JobGroupDeleteSuccess,
 )
 
 
@@ -27,8 +25,8 @@ class JobGroupService(BaseService):
     def __init__(
         self,
         repository: JobGroupRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -50,8 +48,8 @@ class JobGroupService(BaseService):
     # ------------------------------------------------------------------
 
     async def get_job_groups(
-        self, job_group_type_id: Optional[int] = None
-    ) -> List[JobGroupSchema]:
+        self, job_group_type_id: int | None = None
+    ) -> list[JobGroupSchema]:
         filters = (
             {"job_group_type_id": job_group_type_id} if job_group_type_id else None
         )

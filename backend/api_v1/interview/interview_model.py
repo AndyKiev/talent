@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -11,11 +11,11 @@ if TYPE_CHECKING:
     from backend.api_v1.candidate_application.candidate_application_model import (
         CandidateApplication,
     )
-    from backend.api_v1.interview_interviewer.interview_interviewer_model import (
-        InterviewInterviewer,
-    )
     from backend.api_v1.interview_feedback.interview_feedback_model import (
         InterviewFeedback,
+    )
+    from backend.api_v1.interview_interviewer.interview_interviewer_model import (
+        InterviewInterviewer,
     )
 
 
@@ -46,12 +46,12 @@ class Interview(IntIdPkMixin, Base):
     # queries (see /noload-plus-mini-enrichment). Link + feedback rows are tiny
     # and stay eager; their employee sides are themselves noload.
     application: Mapped["CandidateApplication"] = relationship(lazy="noload")
-    interviewers: Mapped[List["InterviewInterviewer"]] = relationship(
+    interviewers: Mapped[list["InterviewInterviewer"]] = relationship(
         back_populates="interview",
         lazy="selectin",
         cascade="all, delete-orphan",
     )
-    feedbacks: Mapped[List["InterviewFeedback"]] = relationship(
+    feedbacks: Mapped[list["InterviewFeedback"]] = relationship(
         back_populates="interview",
         lazy="selectin",
         cascade="all, delete-orphan",

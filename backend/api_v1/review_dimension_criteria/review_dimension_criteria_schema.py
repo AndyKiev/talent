@@ -1,5 +1,5 @@
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional
+
+from pydantic import BaseModel, ConfigDict
 
 
 class ReviewDimensionCriteriaBase(BaseModel):
@@ -14,9 +14,9 @@ class ReviewDimensionCriteriaCreate(ReviewDimensionCriteriaBase):
 
 
 class ReviewDimensionCriteriaUpdate(BaseModel):
-    text: Optional[str] = None
-    sort_order: Optional[int] = None
-    is_active: Optional[bool] = None
+    text: str | None = None
+    sort_order: int | None = None
+    is_active: bool | None = None
 
 
 class ReviewDimensionCriteria(ReviewDimensionCriteriaBase):

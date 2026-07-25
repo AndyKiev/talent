@@ -1,28 +1,27 @@
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.process_roles.process_role.process_role_messages import (
+    ProcessRoleCreateSuccess,
+    ProcessRoleDeleteError,
+    ProcessRoleDeleteSuccess,
+    ProcessRoleNameTaken,
+    ProcessRoleNotFound,
+    ProcessRoleUpdateSuccess,
+)
 from backend.api_v1.process_roles.process_role.process_role_repository import (
     ProcessRoleRepository,
 )
 from backend.api_v1.process_roles.process_role.process_role_schema import (
     ProcessRole as ProcessRoleSchema,
+)
+from backend.api_v1.process_roles.process_role.process_role_schema import (
     ProcessRoleCreate,
     ProcessRoleUpdate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.process_roles.process_role.process_role_messages import (
-    ProcessRoleNotFound,
-    ProcessRoleNameTaken,
-    ProcessRoleDeleteError,
-)
-from backend.api_v1.process_roles.process_role.process_role_messages import (
-    ProcessRoleCreateSuccess,
-    ProcessRoleUpdateSuccess,
-    ProcessRoleDeleteSuccess,
 )
 
 
@@ -30,8 +29,8 @@ class ProcessRoleService(BaseService):
     def __init__(
         self,
         repository: ProcessRoleRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -43,10 +42,10 @@ class ProcessRoleService(BaseService):
 
     async def get_process_roles(
         self,
-        process_id: Optional[int] = None,
-        is_active: Optional[bool] = None,
-        sort: Optional[str] = None,
-    ) -> List[ProcessRoleSchema]:
+        process_id: int | None = None,
+        is_active: bool | None = None,
+        sort: str | None = None,
+    ) -> list[ProcessRoleSchema]:
         filters = {}
         if process_id is not None:
             filters["process_id"] = process_id

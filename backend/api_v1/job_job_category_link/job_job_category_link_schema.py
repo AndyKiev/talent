@@ -1,6 +1,6 @@
-from pydantic import BaseModel, ConfigDict
-from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
 
 
 class JobJobCategoryLinkSet(BaseModel):
@@ -16,8 +16,8 @@ class JobJobCategoryLink(BaseModel):
     job_category_id: int
     created_at: datetime
     # Convenience read fields (populated in the service from the relationships).
-    job_name: Optional[str] = None
-    job_category_key: Optional[str] = None
+    job_name: str | None = None
+    job_category_key: str | None = None
 
 
 class JobJobCategoryClearAllResult(BaseModel):

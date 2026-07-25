@@ -1,24 +1,23 @@
-from typing import Optional, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.review_level.review_level_messages import (
+    ReviewLevelCreateSuccess,
+    ReviewLevelDeleteError,
+    ReviewLevelDeleteSuccess,
+    ReviewLevelNotFound,
+    ReviewLevelUpdateSuccess,
+)
 from backend.api_v1.review_level.review_level_repository import ReviewLevelRepository
 from backend.api_v1.review_level.review_level_schema import (
     ReviewLevel as ReviewLevelSchema,
+)
+from backend.api_v1.review_level.review_level_schema import (
     ReviewLevelCreate,
     ReviewLevelUpdate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.review_level.review_level_messages import (
-    ReviewLevelNotFound,
-    ReviewLevelDeleteError,
-)
-from backend.api_v1.review_level.review_level_messages import (
-    ReviewLevelDeleteSuccess,
-    ReviewLevelCreateSuccess,
-    ReviewLevelUpdateSuccess,
 )
 
 
@@ -26,8 +25,8 @@ class ReviewLevelService(BaseService):
     def __init__(
         self,
         repository: ReviewLevelRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -40,9 +39,9 @@ class ReviewLevelService(BaseService):
 
     async def get_levels(
         self,
-        is_active: Optional[bool] = None,
-        sort: Optional[str] = None,
-    ) -> List[ReviewLevelSchema]:
+        is_active: bool | None = None,
+        sort: str | None = None,
+    ) -> list[ReviewLevelSchema]:
         filters = {}
         if is_active is not None:
             filters["is_active"] = is_active

@@ -17,24 +17,23 @@
 # which a half-finished run could be observed, and no post-commit bookkeeping
 # call that could itself fail.
 import datetime
-from typing import List, Optional
 
 from sqlalchemy import select
-from sqlalchemy.orm import aliased
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 
 from backend.api_v1.audit.change_log.change_log_model import ChangeLog
 from backend.api_v1.audit.change_log.change_log_schema import ChangeAction
 from backend.api_v1.audit.change_session.change_session_model import ChangeSession
 from backend.api_v1.employee.employee_minis import fetch_employee_minis
 from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.employee_mission.employee_mission_schema import (
+    EmployeeMissionHistoryEntry,
+)
 from backend.api_v1.employee_mission_kpi.employee_mission_kpi_model import (
     EmployeeMissionKpi,
 )
 from backend.api_v1.review_dimension.review_dimension_model import ReviewDimension
-from backend.api_v1.employee_mission.employee_mission_schema import (
-    EmployeeMissionHistoryEntry,
-)
 
 # change_log.essence_key values. Free strings by design (no FK), so adding these
 # needed no schema change.
@@ -59,14 +58,14 @@ class MissionAudit:
 
     def __init__(
         self,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ) -> None:
         self.user = user
         self.session = session
-        self._change_session_id: Optional[int] = None
+        self._change_session_id: int | None = None
 
-    async def _run_id(self, employee_id: Optional[int]) -> int:
+    async def _run_id(self, employee_id: int | None) -> int:
         """The change_session for this request, created on first use."""
         if self._change_session_id is not None:
             return self._change_session_id
@@ -75,7 +74,7 @@ class MissionAudit:
             triggered_by_user_id=self.user.id if self.user else None,
             employee_id=employee_id,
             status="success",
-            finished_at=datetime.datetime.now(datetime.timezone.utc),
+            finished_at=datetime.datetime.now(datetime.UTC),
         )
         self.session.add(run)
         await self.session.flush()  # assign PK without committing
@@ -85,11 +84,11 @@ class MissionAudit:
     async def _log(
         self,
         essence_key: str,
-        entity_id: Optional[int],
-        employee_id: Optional[int],
+        entity_id: int | None,
+        employee_id: int | None,
         action: ChangeAction,
-        changes: Optional[dict] = None,
-        parent_id: Optional[int] = None,
+        changes: dict | None = None,
+        parent_id: int | None = None,
     ) -> ChangeLog:
         entry = ChangeLog(
             change_session_id=await self._run_id(employee_id),
@@ -108,11 +107,11 @@ class MissionAudit:
 
     async def log_mission(
         self,
-        mission_id: Optional[int],
+        mission_id: int | None,
         employee_id: int,
         action: ChangeAction,
-        changes: Optional[dict] = None,
-        parent_id: Optional[int] = None,
+        changes: dict | None = None,
+        parent_id: int | None = None,
     ) -> ChangeLog:
         return await self._log(
             ESSENCE_MISSION, mission_id, employee_id, action, changes, parent_id
@@ -120,11 +119,11 @@ class MissionAudit:
 
     async def log_kpi(
         self,
-        kpi_id: Optional[int],
+        kpi_id: int | None,
         employee_id: int,
         action: ChangeAction,
-        changes: Optional[dict] = None,
-        parent_id: Optional[int] = None,
+        changes: dict | None = None,
+        parent_id: int | None = None,
     ) -> ChangeLog:
         return await self._log(
             ESSENCE_KPI, kpi_id, employee_id, action, changes, parent_id
@@ -132,10 +131,10 @@ class MissionAudit:
 
     async def log_comment(
         self,
-        comment_id: Optional[int],
+        comment_id: int | None,
         employee_id: int,
         action: ChangeAction,
-        changes: Optional[dict] = None,
+        changes: dict | None = None,
     ) -> ChangeLog:
         return await self._log(
             ESSENCE_COMMENT, comment_id, employee_id, action, changes
@@ -143,14 +142,14 @@ class MissionAudit:
 
     async def log_vision(
         self,
-        vision_id: Optional[int],
+        vision_id: int | None,
         employee_id: int,
         action: ChangeAction,
-        changes: Optional[dict] = None,
+        changes: dict | None = None,
     ) -> ChangeLog:
         return await self._log(ESSENCE_VISION, vision_id, employee_id, action, changes)
 
-    async def _kpi_mission_map(self, kpi_ids: List[int]) -> dict:
+    async def _kpi_mission_map(self, kpi_ids: list[int]) -> dict:
         """kpi id -> mission id, for grouping. Live rows answer directly; a KPI
         deleted with its mission is resolved through the parent_id link its
         delete entry carries."""
@@ -198,7 +197,7 @@ class MissionAudit:
 
     # ── previous-progress lookups (the revert feature) ───────────────────────
 
-    async def _percent_history(self, kpi_ids: List[int]):
+    async def _percent_history(self, kpi_ids: list[int]):
         """Every logged percent change for the given KPIs, newest first."""
         if not kpi_ids:
             return []
@@ -207,13 +206,13 @@ class MissionAudit:
             .where(
                 ChangeLog.essence_key == ESSENCE_KPI,
                 ChangeLog.entity_id.in_(kpi_ids),
-                ChangeLog.changes.has_key("percent"),  # noqa: W601 - JSONB operator
+                ChangeLog.changes.has_key("percent"),
             )
             .order_by(ChangeLog.created_at.desc(), ChangeLog.id.desc())
         )
         return (await self.session.execute(stmt)).all()
 
-    async def previous_kpi_percents(self, kpi_ids: List[int]) -> dict[int, int]:
+    async def previous_kpi_percents(self, kpi_ids: list[int]) -> dict[int, int]:
         """kpi id -> the percentage it held BEFORE its most recent change.
 
         Reads `changes.percent.old` of the newest entry per KPI, which is exactly
@@ -229,7 +228,7 @@ class MissionAudit:
                 out[entity_id] = old
         return out
 
-    async def kpis_with_previous_percent(self, kpi_ids: List[int]) -> set[int]:
+    async def kpis_with_previous_percent(self, kpi_ids: list[int]) -> set[int]:
         """Which KPIs have somewhere to revert to — drives the UI affordance."""
         return set((await self.previous_kpi_percents(kpi_ids)).keys())
 
@@ -237,7 +236,7 @@ class MissionAudit:
 
     async def get_employee_history(
         self, employee_id: int
-    ) -> List[EmployeeMissionHistoryEntry]:
+    ) -> list[EmployeeMissionHistoryEntry]:
         """EVERY mission/KPI entry for one employee, newest first — including
         entries for missions that no longer exist.
 
@@ -260,8 +259,8 @@ class MissionAudit:
         return await self._to_entries((await self.session.execute(stmt)).all())
 
     async def get_history(
-        self, mission_id: int, kpi_ids: List[int]
-    ) -> List[EmployeeMissionHistoryEntry]:
+        self, mission_id: int, kpi_ids: list[int]
+    ) -> list[EmployeeMissionHistoryEntry]:
         """The mission's entries plus those of the given KPIs, newest first.
 
         KPI ids are passed in rather than re-derived because a DELETED KPI still
@@ -279,7 +278,7 @@ class MissionAudit:
                 )
                 | (
                     (ChangeLog.essence_key == ESSENCE_KPI)
-                    & (ChangeLog.entity_id.in_(kpi_ids if kpi_ids else [0]))
+                    & (ChangeLog.entity_id.in_(kpi_ids or [0]))
                 )
             )
             .order_by(ChangeLog.created_at.desc(), ChangeLog.id.desc())
@@ -308,7 +307,7 @@ class MissionAudit:
         return {i: n for i, n in rows_}
 
     @staticmethod
-    def _humanize(changes: Optional[dict], dim_names: dict) -> Optional[dict]:
+    def _humanize(changes: dict | None, dim_names: dict) -> dict | None:
         """Drop bookkeeping fields and swap competence ids for their names."""
         if not changes:
             return changes
@@ -325,7 +324,7 @@ class MissionAudit:
             out[field] = pair
         return out or None
 
-    async def _to_entries(self, rows) -> List[EmployeeMissionHistoryEntry]:
+    async def _to_entries(self, rows) -> list[EmployeeMissionHistoryEntry]:
         """Shape (ChangeLog, ChangeSession) pairs into API entries, naming the
         actor from one column-only lookup."""
         minis = await fetch_employee_minis(

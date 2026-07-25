@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, String, Boolean, Integer
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin
+from sqlalchemy import Boolean, ForeignKey, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
     from backend.api_v1.table_relationship_links.menu_user_group_link_model import (
@@ -31,8 +31,8 @@ class Menu(IntIdPkMixin, Base):
     key: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     label_key: Mapped[str] = mapped_column(String(128), nullable=False)
     path: Mapped[str] = mapped_column(String(128), nullable=False)
-    icon: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
-    parent_id: Mapped[Optional[int]] = mapped_column(
+    icon: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    parent_id: Mapped[int | None] = mapped_column(
         ForeignKey("menus.id", ondelete="RESTRICT"),
         nullable=True,
     )
@@ -48,7 +48,7 @@ class Menu(IntIdPkMixin, Base):
     )
 
     # Which groups may see this item (by id). Ignored when visible_to_all_groups.
-    user_group_links: Mapped[list["MenuUserGroupLink"]] = relationship(
+    user_group_links: Mapped[list[MenuUserGroupLink]] = relationship(
         back_populates="menu",
         lazy="selectin",
         cascade="all, delete-orphan",

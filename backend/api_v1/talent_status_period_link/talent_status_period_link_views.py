@@ -1,24 +1,27 @@
-from fastapi import APIRouter, Depends, status, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, Optional, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.talent_status_period_link.talent_status_period_link_schema import (
-    TalentStatusPeriodLink as TalentStatusPeriodLinkSchema,
-    TalentStatusPeriodLinkWithLabel,
-    TalentStatusPeriodLinkCreate,
-    TalentStatusPeriodLinkUpdate,
-)
 from backend.api_v1.talent_status_period_link.talent_status_period_link_dependencies import (
     get_talent_status_period_link_service,
-    talent_status_period_link_by_id,
     talent_status_period_link_by_composite_key,
+    talent_status_period_link_by_id,
+)
+from backend.api_v1.talent_status_period_link.talent_status_period_link_schema import (
+    TalentStatusPeriodLink as TalentStatusPeriodLinkSchema,
+)
+from backend.api_v1.talent_status_period_link.talent_status_period_link_schema import (
+    TalentStatusPeriodLinkCreate,
+    TalentStatusPeriodLinkUpdate,
+    TalentStatusPeriodLinkWithLabel,
 )
 from backend.api_v1.talent_status_period_link.talent_status_period_link_service import (
     TalentStatusPeriodLinkService,
 )
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/talent_status_period_links",
@@ -29,7 +32,7 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[TalentStatusPeriodLinkSchema],
+    response_model=list[TalentStatusPeriodLinkSchema],
     dependencies=[
         Guard(OperationVerb.VIEW, EssenceName.TALENT_STATUS, EssenceName.TALENT_PERIOD)
     ],
@@ -38,10 +41,10 @@ async def get_talent_status_period_links(
     service: Annotated[
         TalentStatusPeriodLinkService, Depends(get_talent_status_period_link_service)
     ],
-    talent_period_id: Optional[int] = None,
-    talent_status_id: Optional[int] = None,
-    is_active: Optional[bool] = None,
-    sort: Optional[str] = Query(None, description='JSON: {"field": "asc|desc"}'),
+    talent_period_id: int | None = None,
+    talent_status_id: int | None = None,
+    is_active: bool | None = None,
+    sort: str | None = Query(None, description='JSON: {"field": "asc|desc"}'),
 ):
     """
     List links. Filter by ?talent_period_id=, ?talent_status_id=, or ?is_active=.
@@ -57,7 +60,7 @@ async def get_talent_status_period_links(
 
 @router.get(
     "/active_pairs",
-    response_model=List[TalentStatusPeriodLinkWithLabel],
+    response_model=list[TalentStatusPeriodLinkWithLabel],
     dependencies=[
         Guard(OperationVerb.VIEW, EssenceName.TALENT_STATUS, EssenceName.TALENT_PERIOD)
     ],
@@ -66,7 +69,7 @@ async def get_talent_status_period_active_pairs(
     service: Annotated[
         TalentStatusPeriodLinkService, Depends(get_talent_status_period_link_service)
     ],
-    is_active: Optional[bool] = Query(
+    is_active: bool | None = Query(
         None,
         description=(
             "True → only rows where link, status AND period are all active. "

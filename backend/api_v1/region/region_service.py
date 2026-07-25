@@ -1,30 +1,29 @@
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.region.region_messages import (
+    RegionCreateSuccess,
+    RegionDeleteError,
+    RegionDeleteSuccess,
+    RegionKeyTaken,
+    RegionMoveError,
+    RegionMoveSuccess,
+    RegionNameTaken,
+    RegionNotFound,
+    RegionNotFoundByName,
+    RegionUpdateSuccess,
+)
 from backend.api_v1.region.region_repository import RegionRepository
 from backend.api_v1.region.region_schema import (
     Region as RegionSchema,
+)
+from backend.api_v1.region.region_schema import (
     RegionCreate,
     RegionUpdate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.region.region_messages import (
-    RegionNotFound,
-    RegionNameTaken,
-    RegionKeyTaken,
-    RegionDeleteError,
-    RegionMoveError,
-    RegionNotFoundByName,
-)
-from backend.api_v1.region.region_messages import (
-    RegionDeleteSuccess,
-    RegionCreateSuccess,
-    RegionUpdateSuccess,
-    RegionMoveSuccess,
 )
 from backend.utils.enums import MoveDirection
 
@@ -38,8 +37,8 @@ class RegionService(BaseService):
     def __init__(
         self,
         repository: RegionRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -51,10 +50,10 @@ class RegionService(BaseService):
 
     async def get_regions(
         self,
-        name: Optional[str] = None,
-        is_active: Optional[bool] = None,
-        sort: Optional[str] = None,
-    ) -> List[RegionSchema]:
+        name: str | None = None,
+        is_active: bool | None = None,
+        sort: str | None = None,
+    ) -> list[RegionSchema]:
         if name:
             record = await self.get_by_name(name, not_found_exc=RegionNotFoundByName)
             return [RegionSchema.model_validate(record)]

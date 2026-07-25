@@ -1,15 +1,15 @@
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional, List
 from datetime import date
+
+from pydantic import BaseModel, ConfigDict
 
 
 class EvaluationInRSE(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     dimension_id: int
-    score: Optional[int] = None
-    facts: Optional[str] = None
-    improvement: Optional[str] = None
+    score: int | None = None
+    facts: str | None = None
+    improvement: str | None = None
 
 
 class RseDimensionItem(BaseModel):
@@ -34,7 +34,7 @@ class RseDimensionItem(BaseModel):
     dimension_name: str
     dimension_color: str
     sort_order: int = 0
-    comments: List[str] = []
+    comments: list[str] = []
 
 
 class RseDimensionInput(BaseModel):
@@ -43,14 +43,14 @@ class RseDimensionInput(BaseModel):
 
     review_session_employee_dimension_type_id: int
     dimension_id: int
-    comments: List[str] = []
+    comments: list[str] = []
 
 
 class RseDimensionsUpdate(BaseModel):
     """Full desired state of one review's singled-out dimensions. `sort_order`
     is each item's index WITHIN ITS TYPE, taken from the payload order."""
 
-    items: List[RseDimensionInput] = []
+    items: list[RseDimensionInput] = []
 
 
 class RseResultItem(BaseModel):
@@ -75,7 +75,7 @@ class RseResultInput(BaseModel):
 class RseResultsUpdate(BaseModel):
     """Full desired state of one review's results list."""
 
-    items: List[RseResultInput] = []
+    items: list[RseResultInput] = []
 
 
 class RseFeedbackItem(BaseModel):
@@ -104,7 +104,7 @@ class RseFeedbackInput(BaseModel):
 class RseFeedbacksUpdate(BaseModel):
     """Full desired state of one review's feedback."""
 
-    items: List[RseFeedbackInput] = []
+    items: list[RseFeedbackInput] = []
 
 
 class ReviewSessionEmployeeBase(BaseModel):
@@ -117,7 +117,7 @@ class ReviewSessionEmployeeCreate(ReviewSessionEmployeeBase):
 
 
 class ReviewSessionEmployeeUpdate(BaseModel):
-    status: Optional[str] = None
+    status: str | None = None
 
 
 class ReviewSessionEmployeeFieldsUpdate(BaseModel):
@@ -131,7 +131,7 @@ class ReviewSessionEmployeeFieldsUpdate(BaseModel):
     # NOTE: no `dimensions` here any more. It moved to its own
     # PUT /{rse_id}/dimensions, because it is a set of rows
     # (review_session_employee_dimensions) rather than a text field on this record.
-    summary_full_competence_list: Optional[bool] = None
+    summary_full_competence_list: bool | None = None
 
 
 class ReviewSessionEmployee(ReviewSessionEmployeeBase):
@@ -148,25 +148,25 @@ class ReviewSessionEmployee(ReviewSessionEmployeeBase):
     # Employee-header facts, folded in here so the people-review page never has
     # to hit the admin-guarded GET /employees/{id}. Populated in _to_schema from
     # the (people-review-scoped) reviewee employee record.
-    current_level_id: Optional[int] = None
-    birth_date: Optional[date] = None
-    hire_date: Optional[date] = None
-    job_assigned_date: Optional[date] = None
-    sex: Optional[str] = None
-    marital_status: Optional[str] = None
-    job_name: Optional[str] = None
-    main_department_name: Optional[str] = None
+    current_level_id: int | None = None
+    birth_date: date | None = None
+    hire_date: date | None = None
+    job_assigned_date: date | None = None
+    sex: str | None = None
+    marital_status: str | None = None
+    job_name: str | None = None
+    main_department_name: str | None = None
     # Assembled from review_session_employee_feedbacks by the async callers.
-    feedbacks: List[RseFeedbackItem] = []
+    feedbacks: list[RseFeedbackItem] = []
     # Assembled from review_session_employee_results by the async callers.
-    results: List[RseResultItem] = []
+    results: list[RseResultItem] = []
     # NOTE: no `trainings` here. Recommended trainings are EMPLOYEE-scoped now and
     # are read from /employee_recommended_trainings, not off the review record.
     # Assembled from review_session_employee_dimensions by the async callers — the
     # relationship is lazy="noload" so the roster path never pays for it.
-    dimensions: List[RseDimensionItem] = []
+    dimensions: list[RseDimensionItem] = []
     summary_full_competence_list: bool = False
-    evaluations: List[EvaluationInRSE] = []
+    evaluations: list[EvaluationInRSE] = []
 
 
 class ReviewSessionEmployeeList(BaseModel):
@@ -181,7 +181,7 @@ class ReviewSessionEmployeeList(BaseModel):
     scored_count: int = 0
     facts_count: int = 0
     total_dimensions: int = 0
-    queue_position: Optional[int] = None
+    queue_position: int | None = None
 
 
 class ReviewSessionEmployeeReorder(BaseModel):
@@ -189,4 +189,4 @@ class ReviewSessionEmployeeReorder(BaseModel):
     presentation order. Positions are reassigned server-side as 10, 20, 30 …"""
 
     session_id: int
-    ordered_ids: List[int]
+    ordered_ids: list[int]

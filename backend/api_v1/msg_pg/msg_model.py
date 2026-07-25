@@ -7,8 +7,8 @@ from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
 
 if TYPE_CHECKING:
-    from backend.api_v1.msg_key.msg_key_model import MsgKey
     from backend.api_v1.lang.lang_model import Lang
+    from backend.api_v1.msg_key.msg_key_model import MsgKey
 
 
 class Msg(IntIdPkMixin, Base):

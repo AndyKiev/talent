@@ -1,4 +1,3 @@
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -21,5 +20,5 @@ class EmployeeMissionKpiUpdate(BaseModel):
     change_log'd; `changes` records which one actually moved.
     """
 
-    text: Optional[str] = Field(default=None, min_length=1)
-    percent: Optional[int] = Field(default=None, ge=0, le=100)
+    text: str | None = Field(default=None, min_length=1)
+    percent: int | None = Field(default=None, ge=0, le=100)

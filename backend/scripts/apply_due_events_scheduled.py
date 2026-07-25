@@ -18,13 +18,13 @@ _repo_root = Path(__file__).resolve().parents[2]
 if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
 
-from backend.database.db_helper import db_helper
 from backend.api_v1.employee_events.employee_event.employee_event_repository import (
     EmployeeEventRepository,
 )
 from backend.api_v1.employee_events.employee_event.employee_event_service import (
     EmployeeEventService,
 )
+from backend.database.db_helper import db_helper
 from backend.utils.system_actor import get_system_actor
 
 

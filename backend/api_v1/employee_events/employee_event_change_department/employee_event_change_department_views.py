@@ -1,12 +1,13 @@
-from fastapi import APIRouter, Depends, Query
-from typing import Annotated, Optional, List
+from typing import Annotated
 
+from fastapi import APIRouter, Depends, Query
+
+from backend.api_v1.employee_events.employee_event_change_department.employee_event_change_department_dependencies import (
+    employee_event_change_department_by_id,
+    get_employee_event_change_department_service,
+)
 from backend.api_v1.employee_events.employee_event_change_department.employee_event_change_department_schema import (
     EmployeeEventChangeDepartmentSchema,
-)
-from backend.api_v1.employee_events.employee_event_change_department.employee_event_change_department_dependencies import (
-    get_employee_event_change_department_service,
-    employee_event_change_department_by_id,
 )
 from backend.api_v1.employee_events.employee_event_change_department.employee_event_change_department_service import (
     EmployeeEventChangeDepartmentService,
@@ -20,17 +21,17 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[EmployeeEventChangeDepartmentSchema])
+@router.get("", response_model=list[EmployeeEventChangeDepartmentSchema])
 async def get_employee_event_change_departments(
     service: Annotated[
         EmployeeEventChangeDepartmentService,
         Depends(get_employee_event_change_department_service),
     ],
-    event_change_id: Optional[int] = Query(
+    event_change_id: int | None = Query(
         None,
         description="Filter by parent event_change_id",
     ),
-    sort: Optional[str] = Query(
+    sort: str | None = Query(
         None,
         description='JSON for sorting: {"field": "asc|desc"} or [{"field1": "asc"}, "field2"]',
     ),

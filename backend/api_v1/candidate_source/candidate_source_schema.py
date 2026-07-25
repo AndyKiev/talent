@@ -1,10 +1,10 @@
+
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional
 
 
 class CandidateSourceBase(BaseModel):
     key: str = Field(..., max_length=64)
-    description: Optional[str] = None
+    description: str | None = None
     sort_order: int = 0
 
 
@@ -13,9 +13,9 @@ class CandidateSourceCreate(CandidateSourceBase):
 
 
 class CandidateSourceUpdate(BaseModel):
-    key: Optional[str] = Field(None, max_length=64)
-    description: Optional[str] = None
-    sort_order: Optional[int] = None
+    key: str | None = Field(None, max_length=64)
+    description: str | None = None
+    sort_order: int | None = None
 
 
 class CandidateSource(CandidateSourceBase):

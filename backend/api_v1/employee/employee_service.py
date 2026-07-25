@@ -1,40 +1,39 @@
 # backend/api_v1/employee/employee_service.py
-from typing import List, Optional
 
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
-from backend.api_v1.employee.employee_repository import EmployeeRepository
-from backend.api_v1.employee.employee_schema import (
-    EmployeeSchema,
-    EmployeeCreate,
-    EmployeeUpdate,
-    EmployeePersonalDataUpdate,
-    MainDepartmentSchema,
-)
-from backend.api_v1.employee.employee_messages import (
-    EmployeeNotFound,
-    EmployeeNotFoundByCode,
-    EmployeeCodeTaken,
-    EmployeeEmailTaken,
-    EmployeeDeleteError,
-)
-from backend.api_v1.employee.employee_messages import EmployeeDeleteSuccess
 from backend.api_v1.base.errors import DomainError, NotFoundError
-from backend.auth.permission_resolvers import (
-    resolve_user_permissions,
-    resolve_user_permission_sets,
-    has_authorisation_group,
+from backend.api_v1.department.department_org_units import (
+    DepartmentIndex,
+    resolve_top_org_unit,
 )
-from sqlalchemy import select, func, or_
-from backend.api_v1.employee.employee_messages import EmployeeHasReferencesError
 
 # Top-level org-unit derivation (board / directorate / store).
 from backend.api_v1.department.department_repository import DepartmentRepository
-from backend.api_v1.department.department_org_units import (
-    resolve_top_org_unit,
-    DepartmentIndex,
+from backend.api_v1.employee.employee_messages import (
+    EmployeeCodeTaken,
+    EmployeeDeleteError,
+    EmployeeDeleteSuccess,
+    EmployeeEmailTaken,
+    EmployeeHasReferencesError,
+    EmployeeNotFound,
+    EmployeeNotFoundByCode,
+)
+from backend.api_v1.employee.employee_repository import EmployeeRepository
+from backend.api_v1.employee.employee_schema import (
+    EmployeeCreate,
+    EmployeePersonalDataUpdate,
+    EmployeeSchema,
+    EmployeeUpdate,
+    MainDepartmentSchema,
+)
+from backend.auth.permission_resolvers import (
+    has_authorisation_group,
+    resolve_user_permission_sets,
+    resolve_user_permissions,
 )
 
 
@@ -42,8 +41,8 @@ class EmployeeService(BaseService):
     def __init__(
         self,
         repository: EmployeeRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -102,7 +101,7 @@ class EmployeeService(BaseService):
         return schema
 
     async def _to_schema(
-        self, orm_employee, org_index: Optional[DepartmentIndex] = None
+        self, orm_employee, org_index: DepartmentIndex | None = None
     ) -> EmployeeSchema:
         """Build a fully-populated EmployeeSchema from an ORM Employee instance."""
         if org_index is None:
@@ -182,8 +181,8 @@ class EmployeeService(BaseService):
         Self-service: switch the calling user's app language.
         Returns the success detail translated in the NEW language.
         """
-        from backend.api_v1.lang.lang_model import Lang
         from backend.api_v1.employee.employee_messages import MyLangUpdateSuccess
+        from backend.api_v1.lang.lang_model import Lang
 
         lang = await self.session.get(Lang, lang_id)
         if lang is None:
@@ -204,7 +203,7 @@ class EmployeeService(BaseService):
         params: dict | None = None,
         department_id: int | None = None,
         **kwargs,
-    ) -> List[EmployeeSchema]:
+    ) -> list[EmployeeSchema]:
         # Resolve the current user's visibility restriction based on their groups
         # and active HRM scopes. None = unrestricted; a set (possibly empty)
         # restricts to employees whose MAIN department is in that set.
@@ -238,11 +237,11 @@ class EmployeeService(BaseService):
         type name. Empty when the employee has no main department or no matching
         children (graceful — never an error).
         """
+        from backend.api_v1.department.department_model import Department
+        from backend.api_v1.department_type.department_type_model import DepartmentType
         from backend.api_v1.employee_department.employee_department_model import (
             EmployeeDepartment,
         )
-        from backend.api_v1.department.department_model import Department
-        from backend.api_v1.department_type.department_type_model import DepartmentType
 
         main_dept_id = (
             await self.session.scalars(
@@ -285,10 +284,10 @@ class EmployeeService(BaseService):
         in DepartmentRepository.get_scope_select_departments.
         """
         from backend.api_v1.hrm_scope.hrm_scope_constants import (
+            DIRECTORATE_CATEGORY_KEY,
+            STORE_CATEGORY_KEY,
             has_bypass,
             is_hrm,
-            STORE_CATEGORY_KEY,
-            DIRECTORATE_CATEGORY_KEY,
         )
 
         allowed_ids = await self._resolve_scope_select_allowed_ids()
@@ -302,16 +301,17 @@ class EmployeeService(BaseService):
             directorate_key=DIRECTORATE_CATEGORY_KEY,
         )
 
-    async def _resolve_scope_select_allowed_ids(self) -> Optional[set[int]]:
+    async def _resolve_scope_select_allowed_ids(self) -> set[int] | None:
         """
         Department ids the current user may pick in the filter Select:
           - bypass (admin/HRS) -> None (all departments)
           - HRM                -> their ACTIVE scope roots (not expanded)
           - neither            -> empty set
         """
+        from datetime import date
+
         from backend.api_v1.hrm_scope.hrm_scope_constants import has_bypass, is_hrm
         from backend.api_v1.hrm_scope.hrm_scope_repository import HrmScopeRepository
-        from datetime import date
 
         if self.user is None:
             return None
@@ -326,7 +326,7 @@ class EmployeeService(BaseService):
             self.user.id, date.today()
         )
 
-    async def _resolve_visible_main_department_ids(self) -> Optional[set[int]]:
+    async def _resolve_visible_main_department_ids(self) -> set[int] | None:
         """
         Decide which employees the current user may see, expressed as the set of
         allowed MAIN department ids (or None for unrestricted).
@@ -370,8 +370,8 @@ class EmployeeService(BaseService):
             from backend.api_v1.person.person_model import Person
             from backend.api_v1.person.person_repository import PersonRepository
             from backend.utils.person_names import (
-                split_employee_full_name,
                 normalize_name_part,
+                split_employee_full_name,
             )
 
             last_raw, first_raw, patronymic_raw = split_employee_full_name(user_in.name)
@@ -811,7 +811,7 @@ class EmployeeService(BaseService):
             raise await self._resolve_domain_error(exc)
 
     async def set_groups(
-        self, user_id: int, user_group_ids: List[int]
+        self, user_id: int, user_group_ids: list[int]
     ) -> EmployeeSchema:
         try:
             orm_user = await self.repository.set_groups(user_id, user_group_ids)

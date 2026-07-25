@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -44,7 +44,7 @@ class JobRequirementGroup(IntIdPkMixin, Base):
         foreign_keys=[created_by],
         lazy="noload",
     )
-    items: Mapped[List["JobRequirementItem"]] = relationship(
+    items: Mapped[list["JobRequirementItem"]] = relationship(
         back_populates="group",
         lazy="selectin",
         cascade="all, delete-orphan",

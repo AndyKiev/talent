@@ -1,9 +1,11 @@
 import asyncio
-from backend.database.db_helper import db_helper
+
+from sqlalchemy import select
+
 from backend.api_v1.employee.employee_model import Employee
 from backend.api_v1.person.person_model import Person
-from backend.utils.person_names import split_employee_full_name, normalize_name_part
-from sqlalchemy import select
+from backend.database.db_helper import db_helper
+from backend.utils.person_names import normalize_name_part, split_employee_full_name
 
 
 async def seed_employee():

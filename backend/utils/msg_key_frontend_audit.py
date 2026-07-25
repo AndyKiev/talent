@@ -24,16 +24,15 @@ Usage (run from project root, backend/ or backend/utils/):
     python utils/msg_key_frontend_audit.py --backend-root  /home/andry/Projects/talent/backend
 """
 
-import asyncio
 import argparse
+import asyncio
 import json
 import re
 import sys
 from collections import defaultdict
+from datetime import datetime
 from pathlib import Path
 from typing import NamedTuple
-from datetime import datetime
-
 
 # ---------------------------------------------------------------------------
 # Data types
@@ -139,7 +138,7 @@ def scan_frontend_keys(frontend_src: Path) -> list[FoundKey]:
     targets = sorted(frontend_src.rglob("*.ts")) + sorted(frontend_src.rglob("*.tsx"))
     if not targets:
         print(
-            "[WARN] No .ts / .tsx files found under {}".format(frontend_src),
+            f"[WARN] No .ts / .tsx files found under {frontend_src}",
             file=sys.stderr,
         )
     all_keys: list[FoundKey] = []
@@ -147,7 +146,7 @@ def scan_frontend_keys(frontend_src: Path) -> list[FoundKey]:
         try:
             source = path.read_text(encoding="utf-8")
         except OSError as exc:
-            print("  [WARN] Cannot read {}: {}".format(path, exc), file=sys.stderr)
+            print(f"  [WARN] Cannot read {path}: {exc}", file=sys.stderr)
             continue
         all_keys.extend(_extract_keys_from_source(source, path))
     return all_keys
@@ -160,6 +159,7 @@ def scan_frontend_keys(frontend_src: Path) -> list[FoundKey]:
 
 async def fetch_db_keys(backend_root: Path) -> set[str]:
     from sqlalchemy import text
+
     from backend.database.db_helper import db_helper  # type: ignore
 
     async with db_helper.engine.connect() as conn:
@@ -193,7 +193,7 @@ def build_translation_prompt(missing: list[FoundKey]) -> str:
     lines.append("# Translation Prompt — Missing Frontend Message Keys")
     lines.append("")
     lines.append("Generated: {}".format(datetime.now().strftime("%Y-%m-%d %H:%M")))
-    lines.append("Missing keys: {}".format(len(missing)))
+    lines.append(f"Missing keys: {len(missing)}")
     lines.append("")
     lines.append("---")
     lines.append("")
@@ -236,7 +236,7 @@ def build_translation_prompt(missing: list[FoundKey]) -> str:
     lines.append("")
 
     for fk in missing:
-        lines.append("### `{}`".format(fk.key))
+        lines.append(f"### `{fk.key}`")
         if fk.variables:
             lines.append(
                 "- **Variables:** {}".format(
@@ -262,9 +262,7 @@ def build_translation_prompt(missing: list[FoundKey]) -> str:
             # Derive a readable English string from the camelCase key
             eng_val = re.sub(r"([A-Z])", r" \1", fk.key).strip().capitalize()
         example_lines.append(
-            '  "{}": {{\n    "ukr": "<Ukrainian translation>",\n    "eng": "{}"\n  }}'.format(
-                fk.key, eng_val
-            )
+            f'  "{fk.key}": {{\n    "ukr": "<Ukrainian translation>",\n    "eng": "{eng_val}"\n  }}'
         )
     lines.append(",\n".join(example_lines))
     lines.append("}")
@@ -317,26 +315,26 @@ def report(
     # ── keys found in code ───────────────────────────────────────────────────
     total_calls = len(code_keys)
     total_files = len({fk.file for fk in code_keys})
-    print("\n[CODE]  {} call(s) across {} file(s):\n".format(total_calls, total_files))
+    print(f"\n[CODE]  {total_calls} call(s) across {total_files} file(s):\n")
 
     by_file: dict[Path, list[FoundKey]] = defaultdict(list)
     for fk in sorted(code_keys, key=lambda x: (str(x.file), x.line)):
         by_file[fk.file].append(fk)
 
     for path, entries in sorted(by_file.items(), key=lambda kv: str(kv[0])):
-        print("  {}".format(_relative(path, frontend_root)))
+        print(f"  {_relative(path, frontend_root)}")
         for e in entries:
             vars_str = (
                 ", ".join("${" + v + "}" for v in e.variables) if e.variables else "-"
             )
-            print("    L{:<5}  {:<45}  [{}]".format(e.line, e.key, vars_str))
+            print(f"    L{e.line:<5}  {e.key:<45}  [{vars_str}]")
 
     # ── DB comparison ────────────────────────────────────────────────────────
     if db_keys is None:
         print("\n[DB]   Skipped (--no-db).\n")
         missing_found = sorted(by_key.values(), key=lambda x: x.key)
     else:
-        print("\n[DB]   {} key(s) currently in msg_keys table.".format(len(db_keys)))
+        print(f"\n[DB]   {len(db_keys)} key(s) currently in msg_keys table.")
         missing_found = [by_key[k] for k in sorted(unique_code_keys - db_keys)]
 
     if db_keys is not None and not missing_found:
@@ -346,9 +344,7 @@ def report(
     # ── list missing keys ────────────────────────────────────────────────────
     if db_keys is not None:
         print(
-            "\n  {} key(s) in FRONTEND CODE but MISSING from database:\n".format(
-                len(missing_found)
-            )
+            f"\n  {len(missing_found)} key(s) in FRONTEND CODE but MISSING from database:\n"
         )
         for fk in missing_found:
             vars_str = (
@@ -356,8 +352,8 @@ def report(
                 if fk.variables
                 else "  (no variables)"
             )
-            print('    "{}"{}'.format(fk.key, vars_str))
-            print("         {}:{}".format(_relative(fk.file, frontend_root), fk.line))
+            print(f'    "{fk.key}"{vars_str}')
+            print(f"         {_relative(fk.file, frontend_root)}:{fk.line}")
 
     # ── JSON stub (optional) ─────────────────────────────────────────────────
     if emit_json_stub and missing_found:
@@ -372,7 +368,7 @@ def report(
     if missing_found:
         prompt_path = write_prompt_file(missing_found, script_dir)
         print("\n  Translation prompt written to:")
-        print("  {}\n".format(prompt_path))
+        print(f"  {prompt_path}\n")
 
     return len(missing_found)
 
@@ -386,7 +382,7 @@ def _resolve_frontend_root(arg: str | None) -> Path:
     if arg:
         p = Path(arg).resolve()
         if not p.is_dir():
-            raise SystemExit("[ERROR] --frontend-root does not exist: {}".format(p))
+            raise SystemExit(f"[ERROR] --frontend-root does not exist: {p}")
         return p
 
     script_dir = Path(__file__).resolve().parent  # backend/utils/
@@ -421,7 +417,7 @@ def _resolve_backend_root(arg: str | None) -> Path | None:
     if arg:
         p = Path(arg).resolve()
         if not p.is_dir():
-            raise SystemExit("[ERROR] --backend-root does not exist: {}".format(p))
+            raise SystemExit(f"[ERROR] --backend-root does not exist: {p}")
         return p
 
     cwd = Path.cwd()
@@ -454,11 +450,11 @@ async def _async_main(
 ) -> int:
     frontend_src = frontend_root / "src"
     if not frontend_src.is_dir():
-        raise SystemExit("[ERROR] src/ not found under {}".format(frontend_root))
+        raise SystemExit(f"[ERROR] src/ not found under {frontend_root}")
 
     script_dir = Path(__file__).resolve().parent
 
-    print("Scanning: {}".format(frontend_src))
+    print(f"Scanning: {frontend_src}")
     code_keys = scan_frontend_keys(frontend_src)
 
     db_keys: set[str] | None = None
@@ -476,7 +472,7 @@ async def _async_main(
             try:
                 db_keys = await fetch_db_keys(backend_root)
             except Exception as exc:
-                print("[ERROR] DB query failed: {}".format(exc), file=sys.stderr)
+                print(f"[ERROR] DB query failed: {exc}", file=sys.stderr)
                 print(
                     "        Re-run with --no-db to see only the code scan.",
                     file=sys.stderr,

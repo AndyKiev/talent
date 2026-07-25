@@ -1,6 +1,6 @@
 # backend/utils/date_utils.py
 from datetime import date, datetime
-import re
+
 from fastapi import HTTPException, status
 
 
@@ -46,7 +46,7 @@ def get_full_date_from_day_month(day_month_value: str) -> date:
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid date format in parameter: {str(e)}",
+            detail=f"Invalid date format in parameter: {e!s}",
         )
 
 

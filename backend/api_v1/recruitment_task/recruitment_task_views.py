@@ -1,23 +1,24 @@
-from fastapi import APIRouter, Depends, status, Query
-from typing import Annotated, Optional, List
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.recruitment_task.recruitment_task_schema import (
-    RecruitmentTaskSchema,
-    RecruitmentTaskCreate,
-    RecruitmentTaskUpdate,
-    RecruitmentTaskStatusChange,
-)
 from backend.api_v1.recruitment_task.recruitment_task_dependencies import (
     get_recruitment_task_service,
     recruitment_task_by_id,
 )
+from backend.api_v1.recruitment_task.recruitment_task_schema import (
+    RecruitmentTaskCreate,
+    RecruitmentTaskSchema,
+    RecruitmentTaskStatusChange,
+    RecruitmentTaskUpdate,
+)
 from backend.api_v1.recruitment_task.recruitment_task_service import (
     RecruitmentTaskService,
 )
-from backend.auth.jwt_auth import get_current_active_auth_user
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/recruitment_tasks",
@@ -28,14 +29,14 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[RecruitmentTaskSchema],
+    response_model=list[RecruitmentTaskSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.RECRUITMENT_TASK)],
 )
 async def get_recruitment_tasks(
     service: Annotated[RecruitmentTaskService, Depends(get_recruitment_task_service)],
-    status_id: Optional[int] = None,
-    job_id: Optional[int] = None,
-    sort: Optional[str] = Query(None),
+    status_id: int | None = None,
+    job_id: int | None = None,
+    sort: str | None = Query(None),
 ):
     return await service.get_recruitment_tasks(
         status_id=status_id, job_id=job_id, sort=sort

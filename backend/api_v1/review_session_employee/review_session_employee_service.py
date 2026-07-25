@@ -1,96 +1,22 @@
-from typing import Optional, List, NamedTuple
+from typing import NamedTuple
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.review_session_employee.review_session_employee_repository import (
-    ReviewSessionEmployeeRepository,
-)
-from backend.api_v1.review_session_employee.review_session_employee_model import (
-    ReviewSessionEmployee as RSEModel,
-)
-from backend.api_v1.review_session_employee.review_session_employee_schema import (
-    ReviewSessionEmployee as RSESchema,
-    ReviewSessionEmployeeList as RSEListSchema,
-    ReviewSessionEmployeeFieldsUpdate,
-    RseDimensionsUpdate,
-    RseDimensionItem,
-    RseResultsUpdate,
-    RseResultItem,
-    RseFeedbacksUpdate,
-    RseFeedbackItem,
-)
-from backend.api_v1.review_session_employee_status.review_session_employee_status_model import (
-    OPEN as RSE_OPEN,
-    ReviewSessionEmployeeStatus,
-)
-from backend.api_v1.review_session_employee_feedback_type.review_session_employee_feedback_type_model import (
-    EMPLOYEE as FEEDBACK_EMPLOYEE,
-    MANAGER as FEEDBACK_MANAGER,
-    ReviewSessionEmployeeFeedbackType,
-)
-from backend.api_v1.review_session_employee_feedback.review_session_employee_feedback_model import (
-    ReviewSessionEmployeeFeedback,
-)
-from backend.api_v1.review_session_employee_result.review_session_employee_result_model import (
-    ReviewSessionEmployeeResult,
-)
-from backend.api_v1.review_session_employee_dimension_type.review_session_employee_dimension_type_model import (
-    DEVELOP,
-    STRONG,
-    ReviewSessionEmployeeDimensionType,
-)
-from backend.api_v1.review_session_employee_dimension.review_session_employee_dimension_model import (
-    ReviewSessionEmployeeDimension,
-)
-from backend.api_v1.review_session_employee_dimension_comment.review_session_employee_dimension_comment_model import (
-    ReviewSessionEmployeeDimensionComment,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.employee.employee_model import Employee
+from backend.api_v1.department.department_repository import DepartmentRepository
 from backend.api_v1.employee.employee_messages import EmployeeNotFound
-from backend.api_v1.review_session.review_session_repository import (
-    ReviewSessionRepository,
+from backend.api_v1.employee.employee_model import Employee
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.employee_department.employee_department_repository import (
+    EmployeeDepartmentRepository,
 )
-from backend.api_v1.review_session.review_session_model import ReviewSession
-from backend.api_v1.review_session.review_session_messages import ReviewSessionNotFound
-from backend.api_v1.review_dimension.review_dimension_model import ReviewDimension
-from backend.api_v1.review_dimension.review_dimension_messages import (
-    ReviewDimensionNotFound,
+from backend.api_v1.process_roles.process_role.process_role_model import (
+    ProcessRole,
 )
-from backend.api_v1.review_session_employee_dimension_type.review_session_employee_dimension_type_messages import (
-    ReviewSessionEmployeeDimensionTypeNotFound,
-)
-from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_messages import (
-    EvaluationNotEditable,
-)
-from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_model import (
-    ReviewSessionEmployeeEvaluation,
-)
-from backend.api_v1.review_session_employee.review_session_employee_messages import (
-    ReviewSessionEmployeeNotFound,
-    ReviewSessionEmployeeStatusError,
-    ReviewSessionEmployeeAlreadyInSession,
-    ReviewSessionEmployeeNotHuman,
-    ReviewSessionNotOpenForAdd,
-    ReviewSessionReorderNotAllowed,
-    ProposedLevelRequiredForReview,
-    ProposedLevelDetailsIncomplete,
-    ReviewSessionEmployeeStatusKeyNotFound,
-    ReviewSessionEmployeeFeedbackTypeNotFound,
-)
-from backend.api_v1.review_session_employee.review_session_employee_messages import (
-    ReviewSessionEmployeeStatusChangeSuccess,
-    ReviewSessionEmployeeAddedSuccess,
-    ReviewSessionEmployeeQueueOrderSuccess,
-)
-from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_repository import (
-    ProcessRoleHolderEmployeeLinkRepository,
-)
-from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_service import (
-    ProcessRoleHolderEmployeeLinkService,
+from backend.api_v1.process_roles.process_role_active_context.process_role_active_context_repository import (
+    ProcessRoleActiveContextRepository,
 )
 from backend.api_v1.process_roles.process_role_holder_department_link.process_role_holder_department_link_repository import (
     ProcessRoleHolderDepartmentLinkRepository,
@@ -98,15 +24,97 @@ from backend.api_v1.process_roles.process_role_holder_department_link.process_ro
 from backend.api_v1.process_roles.process_role_holder_department_link.process_role_holder_department_link_service import (
     ProcessRoleHolderDepartmentLinkService,
 )
-from backend.api_v1.process_roles.process_role_active_context.process_role_active_context_repository import (
-    ProcessRoleActiveContextRepository,
+from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_repository import (
+    ProcessRoleHolderEmployeeLinkRepository,
 )
-from backend.api_v1.process_roles.process_role.process_role_model import (
-    ProcessRole,
+from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_service import (
+    ProcessRoleHolderEmployeeLinkService,
 )
-from backend.api_v1.department.department_repository import DepartmentRepository
-from backend.api_v1.employee_department.employee_department_repository import (
-    EmployeeDepartmentRepository,
+from backend.api_v1.review_dimension.review_dimension_messages import (
+    ReviewDimensionNotFound,
+)
+from backend.api_v1.review_dimension.review_dimension_model import ReviewDimension
+from backend.api_v1.review_session.review_session_messages import ReviewSessionNotFound
+from backend.api_v1.review_session.review_session_model import ReviewSession
+from backend.api_v1.review_session.review_session_repository import (
+    ReviewSessionRepository,
+)
+from backend.api_v1.review_session_employee.review_session_employee_messages import (
+    ProposedLevelDetailsIncomplete,
+    ProposedLevelRequiredForReview,
+    ReviewSessionEmployeeAddedSuccess,
+    ReviewSessionEmployeeAlreadyInSession,
+    ReviewSessionEmployeeFeedbackTypeNotFound,
+    ReviewSessionEmployeeNotFound,
+    ReviewSessionEmployeeNotHuman,
+    ReviewSessionEmployeeQueueOrderSuccess,
+    ReviewSessionEmployeeStatusChangeSuccess,
+    ReviewSessionEmployeeStatusError,
+    ReviewSessionEmployeeStatusKeyNotFound,
+    ReviewSessionNotOpenForAdd,
+    ReviewSessionReorderNotAllowed,
+)
+from backend.api_v1.review_session_employee.review_session_employee_model import (
+    ReviewSessionEmployee as RSEModel,
+)
+from backend.api_v1.review_session_employee.review_session_employee_repository import (
+    ReviewSessionEmployeeRepository,
+)
+from backend.api_v1.review_session_employee.review_session_employee_schema import (
+    ReviewSessionEmployee as RSESchema,
+)
+from backend.api_v1.review_session_employee.review_session_employee_schema import (
+    ReviewSessionEmployeeFieldsUpdate,
+    RseDimensionItem,
+    RseDimensionsUpdate,
+    RseFeedbackItem,
+    RseFeedbacksUpdate,
+    RseResultItem,
+    RseResultsUpdate,
+)
+from backend.api_v1.review_session_employee.review_session_employee_schema import (
+    ReviewSessionEmployeeList as RSEListSchema,
+)
+from backend.api_v1.review_session_employee_dimension.review_session_employee_dimension_model import (
+    ReviewSessionEmployeeDimension,
+)
+from backend.api_v1.review_session_employee_dimension_comment.review_session_employee_dimension_comment_model import (
+    ReviewSessionEmployeeDimensionComment,
+)
+from backend.api_v1.review_session_employee_dimension_type.review_session_employee_dimension_type_messages import (
+    ReviewSessionEmployeeDimensionTypeNotFound,
+)
+from backend.api_v1.review_session_employee_dimension_type.review_session_employee_dimension_type_model import (
+    DEVELOP,
+    STRONG,
+    ReviewSessionEmployeeDimensionType,
+)
+from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_messages import (
+    EvaluationNotEditable,
+)
+from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_model import (
+    ReviewSessionEmployeeEvaluation,
+)
+from backend.api_v1.review_session_employee_feedback.review_session_employee_feedback_model import (
+    ReviewSessionEmployeeFeedback,
+)
+from backend.api_v1.review_session_employee_feedback_type.review_session_employee_feedback_type_model import (
+    EMPLOYEE as FEEDBACK_EMPLOYEE,
+)
+from backend.api_v1.review_session_employee_feedback_type.review_session_employee_feedback_type_model import (
+    MANAGER as FEEDBACK_MANAGER,
+)
+from backend.api_v1.review_session_employee_feedback_type.review_session_employee_feedback_type_model import (
+    ReviewSessionEmployeeFeedbackType,
+)
+from backend.api_v1.review_session_employee_result.review_session_employee_result_model import (
+    ReviewSessionEmployeeResult,
+)
+from backend.api_v1.review_session_employee_status.review_session_employee_status_model import (
+    OPEN as RSE_OPEN,
+)
+from backend.api_v1.review_session_employee_status.review_session_employee_status_model import (
+    ReviewSessionEmployeeStatus,
 )
 
 # people_review visibility scope (§9): roles are switchable MODES per user. With no
@@ -141,15 +149,15 @@ class _ActiveRoleFields(NamedTuple):
     ProcessRole.holders selectin cascade — see that method."""
 
     link_target: str
-    key: Optional[str]
+    key: str | None
 
 
 class ReviewSessionEmployeeService(BaseService):
     def __init__(
         self,
         repository: ReviewSessionEmployeeRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -160,7 +168,7 @@ class ReviewSessionEmployeeService(BaseService):
             raise await self._resolve_domain_error(exc)
         return result
 
-    async def _load_rse_dimensions(self, rse_id: int) -> List[RseDimensionItem]:
+    async def _load_rse_dimensions(self, rse_id: int) -> list[RseDimensionItem]:
         """The review's picked competences, both sides, in display order.
 
         The relationship is lazy="noload" (roster N+1), so every path that
@@ -185,7 +193,7 @@ class ReviewSessionEmployeeService(BaseService):
         )
         rows = (await self.session.execute(stmt)).scalars().all()
 
-        out: List[RseDimensionItem] = []
+        out: list[RseDimensionItem] = []
         for row in rows:
             dim = row.dimension
             raw_name = dim.name if dim else ""
@@ -228,7 +236,7 @@ class ReviewSessionEmployeeService(BaseService):
             )
         return status_id
 
-    async def _load_rse_feedbacks(self, rse_id: int) -> List[RseFeedbackItem]:
+    async def _load_rse_feedbacks(self, rse_id: int) -> list[RseFeedbackItem]:
         """This review's feedback rows, one per voice, in lookup order.
 
         Replaces the `employee_feedback` / `manager_feedback` columns. A voice
@@ -256,7 +264,7 @@ class ReviewSessionEmployeeService(BaseService):
             for r in rows
         ]
 
-    async def _load_rse_results(self, rse_id: int) -> List[RseResultItem]:
+    async def _load_rse_results(self, rse_id: int) -> list[RseResultItem]:
         """This review's results / achievements, in display order.
 
         Replaces splitting a numbered "1. ...\\n2. ..." blob: the position is a
@@ -290,9 +298,9 @@ class ReviewSessionEmployeeService(BaseService):
     def _to_schema(
         self,
         record,
-        dimensions: Optional[List[RseDimensionItem]] = None,
-        results: Optional[List[RseResultItem]] = None,
-        feedbacks: Optional[List[RseFeedbackItem]] = None,
+        dimensions: list[RseDimensionItem] | None = None,
+        results: list[RseResultItem] | None = None,
+        feedbacks: list[RseFeedbackItem] | None = None,
     ) -> RSESchema:
         # The row-backed lists are passed in PRE-LOADED because this method is
         # SYNCHRONOUS and both relationships are noload — it must never query.
@@ -349,7 +357,7 @@ class ReviewSessionEmployeeService(BaseService):
 
     async def _active_role_fields(
         self, process_role_id: int
-    ) -> Optional[_ActiveRoleFields]:
+    ) -> _ActiveRoleFields | None:
         """(link_target, key) of a ProcessRole via a COLUMN-ONLY query.
 
         Deliberately NOT ProcessRoleRepository.get_by_id: ProcessRole.holders is
@@ -427,7 +435,7 @@ class ReviewSessionEmployeeService(BaseService):
             )
         return visible
 
-    async def get_active_role(self) -> Optional[_ActiveRoleFields]:
+    async def get_active_role(self) -> _ActiveRoleFields | None:
         """The current user's ACTIVE people-review role (link_target + key) or None.
 
         None == 'only myself' mode (no active context / no role). Used by the
@@ -500,9 +508,9 @@ class ReviewSessionEmployeeService(BaseService):
     async def get_session_employees(
         self,
         session_id: int,
-        status: Optional[str] = None,
-        sort: Optional[str] = None,
-    ) -> List[RSEListSchema]:
+        status: str | None = None,
+        sort: str | None = None,
+    ) -> list[RSEListSchema]:
         # Constrained roster load: employee name/code + light evaluations only,
         # not each of the 33 employees' full selectin graph (see list_by_session).
         # The final ordering is applied below from the roster order map, so `sort`
@@ -635,7 +643,7 @@ class ReviewSessionEmployeeService(BaseService):
         return MutationResponse(detail=detail, data=schema)
 
     async def set_queue_order(
-        self, session_id: int, ordered_ids: List[int]
+        self, session_id: int, ordered_ids: list[int]
     ) -> MutationResponse[None]:
         """Persist a session reorder into the reviewer's SINGLE roster order
         (oversight only) — the same order_position store the admin reviewer screen
@@ -781,15 +789,15 @@ class ReviewSessionEmployeeService(BaseService):
         }
         return build_tempo_pptx(session_info, sheets)
 
-    async def _tempo_training_lines(self, employee_id: Optional[int]) -> list[str]:
+    async def _tempo_training_lines(self, employee_id: int | None) -> list[str]:
         """The employee's assigned trainings as '• name — status' lines for the
         TEMPO training section (all artifacts: PDF/HTML/presentation/PPTX).
         Empty while the training-module master switch is OFF — the free-text
         required-trainings notes are appended by the caller regardless, since
         they survive the module being disabled."""
         from backend.api_v1.app_setting.app_setting_service import (
-            get_bool_setting,
             TRAINING_MODULE_ENABLED_KEY,
+            get_bool_setting,
         )
 
         if employee_id is None:
@@ -824,7 +832,7 @@ class ReviewSessionEmployeeService(BaseService):
         return lines
 
     async def _tempo_recommended_training_lines(
-        self, employee_id: Optional[int]
+        self, employee_id: int | None
     ) -> list[str]:
         """The employee's ACTIVE recommended trainings as '• text — status' lines.
 
@@ -880,10 +888,11 @@ class ReviewSessionEmployeeService(BaseService):
         by the caller from the matching per-surface child flag) decides whether the
         photo blob is read at all."""
         from datetime import date as _date
+
+        from backend.api_v1.employee_child.employee_child_model import EmployeeChild
         from backend.api_v1.employee_education.employee_education_model import (
             EmployeeEducation,
         )
-        from backend.api_v1.employee_child.employee_child_model import EmployeeChild
 
         record = await self.get_by_id(rse_id)
         visible = await self._visible_employee_ids()
@@ -1431,7 +1440,7 @@ class ReviewSessionEmployeeService(BaseService):
         return out
 
     @staticmethod
-    def _rse_results_text(rows: List[RseResultItem]) -> Optional[str]:
+    def _rse_results_text(rows: list[RseResultItem]) -> str | None:
         """The results list as the numbered text the album has always rendered.
 
         Output shape is unchanged from when this was a stored column (a numbered
@@ -1444,8 +1453,8 @@ class ReviewSessionEmployeeService(BaseService):
 
     @staticmethod
     def _rse_dimensions_text(
-        summary_rows: List[RseDimensionItem], type_key: str
-    ) -> Optional[str]:
+        summary_rows: list[RseDimensionItem], type_key: str
+    ) -> str | None:
         """Flatten one side of the summary to the bulleted text the PDF renders.
 
         Output shape is unchanged from when this parsed the JSON blob ("• line"
@@ -1463,7 +1472,7 @@ class ReviewSessionEmployeeService(BaseService):
     async def get_my_reviews(
         self,
         employee_id: int,
-    ) -> List[RSEListSchema]:
+    ) -> list[RSEListSchema]:
         filters = {"employee_id": employee_id}
         records = await self.get_all(params=filters)
         return [
@@ -1472,7 +1481,7 @@ class ReviewSessionEmployeeService(BaseService):
             if r.session and r.session.status == "open" and r.status == "open"
         ]
 
-    async def get_my_latest_open(self) -> Optional[RSEListSchema]:
+    async def get_my_latest_open(self) -> RSEListSchema | None:
         """The current user's review row in the most-recently-created OPEN session.
 
         Used by the people-review landing redirect for a role-less user (fills only

@@ -1,22 +1,23 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, status
-from typing import Annotated, Optional, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.job_requirement_group.job_requirement_group_schema import (
-    JobRequirementGroupSchema,
-    JobRequirementGroupCreate,
-    JobRequirementGroupUpdate,
-)
 from backend.api_v1.job_requirement_group.job_requirement_group_dependencies import (
     get_job_requirement_group_service,
     job_requirement_group_by_id,
 )
+from backend.api_v1.job_requirement_group.job_requirement_group_schema import (
+    JobRequirementGroupCreate,
+    JobRequirementGroupSchema,
+    JobRequirementGroupUpdate,
+)
 from backend.api_v1.job_requirement_group.job_requirement_group_service import (
     JobRequirementGroupService,
 )
-from backend.auth.jwt_auth import get_current_active_auth_user
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/job_requirement_groups",
@@ -27,15 +28,15 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[JobRequirementGroupSchema],
+    response_model=list[JobRequirementGroupSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.JOB_REQUIREMENT)],
 )
 async def get_job_requirement_groups(
     service: Annotated[
         JobRequirementGroupService, Depends(get_job_requirement_group_service)
     ],
-    job_id: Optional[int] = None,
-    is_active: Optional[bool] = None,
+    job_id: int | None = None,
+    is_active: bool | None = None,
 ):
     return await service.get_job_requirement_groups(job_id=job_id, is_active=is_active)
 

@@ -1,22 +1,22 @@
-from fastapi import APIRouter, Depends, status
-from fastapi.security import HTTPBearer
-from typing import Annotated, List
+from typing import Annotated
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.employee_responsibility_department.employee_responsibility_department_schema import (
-    EmployeeResponsibilityDepartmentSchema,
-    EmployeeResponsibilityDepartmentCreate,
-    EmployeeResponsibilityDepartmentUpdate,
-)
 from backend.api_v1.employee_responsibility_department.employee_responsibility_department_dependencies import (
     get_employee_responsibility_department_service,
     responsibility_link_by_id,
+)
+from backend.api_v1.employee_responsibility_department.employee_responsibility_department_schema import (
+    EmployeeResponsibilityDepartmentCreate,
+    EmployeeResponsibilityDepartmentSchema,
+    EmployeeResponsibilityDepartmentUpdate,
 )
 from backend.api_v1.employee_responsibility_department.employee_responsibility_department_service import (
     EmployeeResponsibilityDepartmentService,
 )
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
+from fastapi import APIRouter, Depends, status
+from fastapi.security import HTTPBearer
 
 # All routes are nested under /employees/{employee_id}/responsibility_departments
 router = APIRouter(
@@ -31,7 +31,7 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[EmployeeResponsibilityDepartmentSchema],
+    response_model=list[EmployeeResponsibilityDepartmentSchema],
     summary="List all responsibility assignments for an employee",
     dependencies=[
         Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE, EssenceName.DEPARTMENT)

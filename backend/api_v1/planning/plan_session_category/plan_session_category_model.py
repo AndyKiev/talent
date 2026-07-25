@@ -1,14 +1,16 @@
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import Integer, ForeignKey, UniqueConstraint
-from backend.api_v1.base.base_model import Base
-from backend.api_v1.base.models.utils.mixins import IntIdPkMixin, TimestampMixin
 from typing import TYPE_CHECKING
 
+from sqlalchemy import ForeignKey, Integer, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from backend.api_v1.base.base_model import Base
+from backend.api_v1.base.models.utils.mixins import IntIdPkMixin, TimestampMixin
+
 if TYPE_CHECKING:
-    from backend.api_v1.planning.plan_session.plan_session_model import PlanSession
     from backend.api_v1.department_category.department_category_model import (
         DepartmentCategory,
     )
+    from backend.api_v1.planning.plan_session.plan_session_model import PlanSession
 
 
 class PlanSessionCategory(IntIdPkMixin, TimestampMixin, Base):

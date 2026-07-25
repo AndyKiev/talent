@@ -1,20 +1,23 @@
-from fastapi import APIRouter, Depends, status, Query
-from typing import Annotated, Optional, List
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.process_roles.process_role_holder_department_link.process_role_holder_department_link_schema import (
-    ProcessRoleHolderDepartmentLink as ProcessRoleHolderDepartmentLinkSchema,
-    ProcessRoleHolderDepartmentLinkCreate,
-)
 from backend.api_v1.process_roles.process_role_holder_department_link.process_role_holder_department_link_dependencies import (
     get_process_role_holder_department_link_service,
+)
+from backend.api_v1.process_roles.process_role_holder_department_link.process_role_holder_department_link_schema import (
+    ProcessRoleHolderDepartmentLink as ProcessRoleHolderDepartmentLinkSchema,
+)
+from backend.api_v1.process_roles.process_role_holder_department_link.process_role_holder_department_link_schema import (
+    ProcessRoleHolderDepartmentLinkCreate,
 )
 from backend.api_v1.process_roles.process_role_holder_department_link.process_role_holder_department_link_service import (
     ProcessRoleHolderDepartmentLinkService,
 )
-from backend.auth.jwt_auth import get_current_active_auth_user
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/admin/process_role_holder_departments",
@@ -25,7 +28,7 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[ProcessRoleHolderDepartmentLinkSchema],
+    response_model=list[ProcessRoleHolderDepartmentLinkSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.PROCESS_ROLE_HOLDER)],
 )
 async def get_department_links(
@@ -33,10 +36,10 @@ async def get_department_links(
         ProcessRoleHolderDepartmentLinkService,
         Depends(get_process_role_holder_department_link_service),
     ],
-    process_role_holder_id: Optional[int] = None,
-    process_role_id: Optional[int] = None,
-    department_id: Optional[int] = None,
-    sort: Optional[str] = Query(
+    process_role_holder_id: int | None = None,
+    process_role_id: int | None = None,
+    department_id: int | None = None,
+    sort: str | None = Query(
         None, description='JSON sort, e.g. {"created_at": "desc"}'
     ),
 ):

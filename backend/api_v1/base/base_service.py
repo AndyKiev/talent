@@ -1,5 +1,7 @@
 import json
-from typing import Any, Sequence, Optional, List, Dict
+from collections.abc import Sequence
+from typing import Any, Generic, TypeVar
+
 from fastapi import HTTPException
 from pydantic import BaseModel
 from sqlalchemy import Row, RowMapping
@@ -7,22 +9,17 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
-from backend.api_v1.base.base_repository import BaseRepository
-from backend.api_v1.base.base_repository import ModelType, SortSpec
-from backend.utils.enums import MoveDirection
-from typing import TypeVar, Generic
-
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-
-from backend.api_v1.msg_pg.msg_translate import translate_key
-
+from backend.api_v1.base.base_repository import BaseRepository, ModelType, SortSpec
 from backend.api_v1.base.errors import (
-    NotFoundError,
     AlreadyExistsError,
-    DomainError,
     DeleteError,
+    DomainError,
+    NotFoundError,
 )
 from backend.api_v1.base.success import DeleteSuccess
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.msg_pg.msg_translate import translate_key
+from backend.utils.enums import MoveDirection
 
 RepositoryType = TypeVar("RepositoryType", bound=BaseRepository)
 
@@ -31,8 +28,8 @@ class BaseService(Generic[RepositoryType]):
     def __init__(
         self,
         repository: RepositoryType,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ) -> None:
         self.repository: RepositoryType = repository
         self.user = user
@@ -47,7 +44,7 @@ class BaseService(Generic[RepositoryType]):
     async def _translate(
         self,
         message_key: str,
-        variables: Optional[Dict[str, Any]] = None,
+        variables: dict[str, Any] | None = None,
         fallback: str = "",
     ) -> str:
         """
@@ -70,7 +67,7 @@ class BaseService(Generic[RepositoryType]):
         self,
         message_key: str,
         status_code: int = status.HTTP_400_BAD_REQUEST,
-        variables: Optional[Dict[str, Any]] = None,
+        variables: dict[str, Any] | None = None,
         fallback: str = "",
     ):
         """Raise HTTPException with a translated error message."""
@@ -81,7 +78,7 @@ class BaseService(Generic[RepositoryType]):
         self,
         message_key: str,
         status_code: int = status.HTTP_200_OK,
-        variables: Optional[Dict[str, Any]] = None,
+        variables: dict[str, Any] | None = None,
         fallback: str = "Success",
     ):
         """Raise HTTPException with a translated success message."""
@@ -142,7 +139,7 @@ class BaseService(Generic[RepositoryType]):
         not_found_exc: type[NotFoundError] | None = None,
         case_insensitive: bool = False,
         is_unique: bool = True,
-    ) -> ModelType | List[ModelType]:
+    ) -> ModelType | list[ModelType]:
         result = await self.repository.get_by_field(
             "name",
             name,
@@ -171,7 +168,7 @@ class BaseService(Generic[RepositoryType]):
         not_found_exc: type[NotFoundError] | None = None,
         case_insensitive: bool = False,
         is_unique: bool = True,
-    ) -> ModelType | List[ModelType]:
+    ) -> ModelType | list[ModelType]:
         result = await self.repository.get_by_field(
             "code",
             code,
@@ -217,7 +214,7 @@ class BaseService(Generic[RepositoryType]):
         self,
         field_name: str,
         value: Any,
-        exclude_ids: List[int],
+        exclude_ids: list[int],
         already_exists_exc: type[AlreadyExistsError] | None = None,
     ) -> None:
         """
@@ -248,7 +245,7 @@ class BaseService(Generic[RepositoryType]):
     async def exists_by_name_excluding(
         self,
         name: str,
-        exclude_ids: List[int],
+        exclude_ids: list[int],
         already_exists_exc: type[AlreadyExistsError] | None = None,
     ) -> None:
         await self.exists_by_field_excluding(
@@ -264,7 +261,7 @@ class BaseService(Generic[RepositoryType]):
         value: Any,
         case_insensitive: bool = False,
         is_unique: bool = True,
-    ) -> Optional[ModelType]:
+    ) -> ModelType | None:
         return await self.repository.get_by_field(
             field_name=field_name,
             value=value,
@@ -376,7 +373,7 @@ class BaseService(Generic[RepositoryType]):
 
     async def get_by_key(
         self, key_value: str, case_insensitive: bool = False, is_unique: bool = True
-    ) -> ModelType | List[ModelType]:
+    ) -> ModelType | list[ModelType]:
         inst = await self.repository.get_by_field(
             field_name="key",
             value=key_value,
@@ -413,7 +410,7 @@ class BaseService(Generic[RepositoryType]):
         return result
 
     @staticmethod
-    def parse_sort_json(sort_json: Optional[str]) -> Optional[SortSpec]:
+    def parse_sort_json(sort_json: str | None) -> SortSpec | None:
         if not sort_json:
             return None
         try:
@@ -445,11 +442,11 @@ class BaseService(Generic[RepositoryType]):
             return sort_data
         except json.JSONDecodeError as e:
             raise HTTPException(
-                status_code=400, detail=f"Invalid JSON format: {str(e)}"
+                status_code=400, detail=f"Invalid JSON format: {e!s}"
             )
         except ValueError as e:
             raise HTTPException(
-                status_code=400, detail=f"Invalid sort specification: {str(e)}"
+                status_code=400, detail=f"Invalid sort specification: {e!s}"
             )
 
     async def get_by_ids(self, ids: list[int]) -> Sequence[Row[Any] | RowMapping | Any]:
@@ -508,7 +505,7 @@ class BaseService(Generic[RepositoryType]):
     ) -> None:
         items = list(await self.repository.get_all(sort={sort_field: "asc"}))
         if len(items) <= 1:
-            raise ValueError(f"Cannot move item: only one item in the list")
+            raise ValueError("Cannot move item: only one item in the list")
         item_index = None
         for i, item in enumerate(items):
             if item.id == item_id:

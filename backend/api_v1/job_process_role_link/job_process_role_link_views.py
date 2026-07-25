@@ -1,21 +1,24 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.job_process_role_link.job_process_role_link_schema import (
-    JobProcessRoleLink as JobProcessRoleLinkSchema,
-    JobProcessRoleLinkCreate,
-    SetLinkDepartmentTypes,
-)
 from backend.api_v1.job_process_role_link.job_process_role_link_dependencies import (
     get_job_process_role_link_service,
+)
+from backend.api_v1.job_process_role_link.job_process_role_link_schema import (
+    JobProcessRoleLink as JobProcessRoleLinkSchema,
+)
+from backend.api_v1.job_process_role_link.job_process_role_link_schema import (
+    JobProcessRoleLinkCreate,
+    SetLinkDepartmentTypes,
 )
 from backend.api_v1.job_process_role_link.job_process_role_link_service import (
     JobProcessRoleLinkService,
 )
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/job_process_role_links",
@@ -26,7 +29,7 @@ router = APIRouter(
 
 @router.get(
     "/job/{job_id}",
-    response_model=List[JobProcessRoleLinkSchema],
+    response_model=list[JobProcessRoleLinkSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.JOB)],
 )
 async def get_links_for_job(

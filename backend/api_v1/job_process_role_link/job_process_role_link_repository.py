@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from sqlalchemy import select
 
@@ -13,7 +13,7 @@ class JobProcessRoleLinkRepository(BaseRepository):
 
     async def get_link(
         self, job_id: int, process_role_id: int
-    ) -> Optional[JobProcessRoleLink]:
+    ) -> JobProcessRoleLink | None:
         stmt = select(JobProcessRoleLink).where(
             JobProcessRoleLink.job_id == job_id,
             JobProcessRoleLink.process_role_id == process_role_id,

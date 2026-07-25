@@ -2,9 +2,9 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.api_v1.base.base_repository import BaseRepository
 from backend.api_v1.essence.essence_model import Essence
 from backend.api_v1.essence.essence_schema import EssenceCreate, EssenceUpdate
-from backend.api_v1.base.base_repository import BaseRepository
 
 
 class EssenceRepository(BaseRepository):

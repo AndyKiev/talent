@@ -1,27 +1,37 @@
 from collections import defaultdict
-from datetime import date, datetime, timezone
-from typing import List, Optional
+from datetime import UTC, date, datetime
 
 from fastapi import status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api_v1.base.base_service import BaseService
-from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.app_setting.app_setting_service import (
+    HEADCOUNT_FACT_HUMANS_ONLY_KEY,
+    HEADCOUNT_PLAN_ENABLED_KEY,
     get_bool_setting,
     get_effective_bool_setting,
-    HEADCOUNT_PLAN_ENABLED_KEY,
-    HEADCOUNT_FACT_HUMANS_ONLY_KEY,
 )
+from backend.api_v1.base.base_service import BaseService
+from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.department.department_messages import DepartmentNotFound
 from backend.api_v1.department.department_repository import DepartmentRepository
+from backend.api_v1.department_job_target.department_job_target_messages import (
+    DepartmentJobTargetAlreadyExists,
+    DepartmentJobTargetCreateSuccess,
+    DepartmentJobTargetDeleteError,
+    DepartmentJobTargetDeleteSuccess,
+    DepartmentJobTargetNotFound,
+    DepartmentJobTargetTypeMismatch,
+    DepartmentJobTargetUpdateSuccess,
+)
 from backend.api_v1.department_job_target.department_job_target_repository import (
     DepartmentJobTargetRepository,
 )
 from backend.api_v1.department_job_target.department_job_target_schema import (
     DepartmentJobTarget as DepartmentJobTargetSchema,
+)
+from backend.api_v1.department_job_target.department_job_target_schema import (
     DepartmentJobTargetCreate,
     DepartmentJobTargetUpdate,
     FactEmployee,
@@ -29,15 +39,6 @@ from backend.api_v1.department_job_target.department_job_target_schema import (
     OrganigramJob,
     OrganigramNode,
     TargetCountByLink,
-)
-from backend.api_v1.department_job_target.department_job_target_messages import (
-    DepartmentJobTargetNotFound,
-    DepartmentJobTargetAlreadyExists,
-    DepartmentJobTargetTypeMismatch,
-    DepartmentJobTargetDeleteError,
-    DepartmentJobTargetCreateSuccess,
-    DepartmentJobTargetUpdateSuccess,
-    DepartmentJobTargetDeleteSuccess,
 )
 from backend.api_v1.department_type_job_link.department_type_job_link_messages import (
     DepartmentTypeJobLinkNotFound,
@@ -58,8 +59,8 @@ class DepartmentJobTargetService(BaseService):
     def __init__(
         self,
         repository: DepartmentJobTargetRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -78,7 +79,7 @@ class DepartmentJobTargetService(BaseService):
                 fallback="Headcount planning is disabled.",
             )
 
-    async def _resolve_allowed_department_ids(self) -> Optional[set[int]]:
+    async def _resolve_allowed_department_ids(self) -> set[int] | None:
         """
         Departments the current user may plan for:
           - bypass (admin / HRS / dev) -> None (all departments)
@@ -127,8 +128,8 @@ class DepartmentJobTargetService(BaseService):
         return schema
 
     async def get_targets(
-        self, department_id: int, link_id: Optional[int] = None
-    ) -> List[DepartmentJobTargetSchema]:
+        self, department_id: int, link_id: int | None = None
+    ) -> list[DepartmentJobTargetSchema]:
         await self._ensure_department_allowed(department_id)
         records = await self.repository.get_targets(department_id, link_id)
         return [self._schema_from_record(r) for r in records]
@@ -138,7 +139,7 @@ class DepartmentJobTargetService(BaseService):
 
     async def calculate(
         self, department_id: int, on_date: date
-    ) -> List[HeadcountCalcRow]:
+    ) -> list[HeadcountCalcRow]:
         """Plan-vs-fact rows for every job linked to the department's type."""
         await self._ensure_department_allowed(department_id)
 
@@ -195,7 +196,7 @@ class DepartmentJobTargetService(BaseService):
     @staticmethod
     def _fold_change_rows(
         change_rows: list[tuple], only_applied: bool = False
-    ) -> dict[int, dict[str, Optional[int]]]:
+    ) -> dict[int, dict[str, int | None]]:
         """
         Fold change rows into an as-of state per employee (job / status / main
         dept); the rows arrive pre-ordered, the last change of each direction
@@ -206,7 +207,7 @@ class DepartmentJobTargetService(BaseService):
         skips ready events entirely — the CONFIRMED state before any pending
         move.
         """
-        state: dict[int, dict[str, Optional[int]]] = defaultdict(
+        state: dict[int, dict[str, int | None]] = defaultdict(
             lambda: {
                 "job": None,
                 "status": None,
@@ -243,14 +244,14 @@ class DepartmentJobTargetService(BaseService):
 
     async def _replay_employee_states(
         self, department_ids: set[int], on_date: date
-    ) -> dict[int, dict[str, Optional[int]]]:
+    ) -> dict[int, dict[str, int | None]]:
         """As-of state per candidate employee, replayed from applied + ready
         events (drafts ignored) — future dates already reflect approved
         transfers/leaves."""
         rows = await self._get_candidate_change_rows(department_ids, on_date)
         return self._fold_change_rows(rows)
 
-    async def _working_status_id(self) -> Optional[int]:
+    async def _working_status_id(self) -> int | None:
         return (
             await self.session.execute(
                 select(EmployeeStatus.id).where(
@@ -261,7 +262,7 @@ class DepartmentJobTargetService(BaseService):
 
     def _is_fact(
         self,
-        st: dict[str, Optional[int]],
+        st: dict[str, int | None],
         department_id: int,
         working_status_id: int,
     ) -> bool:
@@ -272,7 +273,7 @@ class DepartmentJobTargetService(BaseService):
         )
 
     @staticmethod
-    def _is_pending(st: dict[str, Optional[int]]) -> bool:
+    def _is_pending(st: dict[str, int | None]) -> bool:
         """A counted placement is provisional when any of its three
         determinants (job / status / dept) was set by a not-yet-applied
         (ready) event."""
@@ -300,7 +301,7 @@ class DepartmentJobTargetService(BaseService):
 
     async def get_fact_employees(
         self, department_id: int, on_date: date, job_id: int
-    ) -> List[FactEmployee]:
+    ) -> list[FactEmployee]:
         """The employees behind one fact qty: as-of state matches the row."""
         await self._ensure_department_allowed(department_id)
         working_status_id = await self._working_status_id()
@@ -435,7 +436,7 @@ class DepartmentJobTargetService(BaseService):
             full_state = self._fold_change_rows(rows)
             applied_state = self._fold_change_rows(rows, only_applied=True)
 
-            def _placement(st) -> Optional[tuple[int, int]]:
+            def _placement(st) -> tuple[int, int] | None:
                 if (
                     st is not None
                     and st["status"] == working_status_id
@@ -514,7 +515,7 @@ class DepartmentJobTargetService(BaseService):
                 )
             )
 
-        def jobs_of(dept_id: int, type_id: Optional[int]) -> list[OrganigramJob]:
+        def jobs_of(dept_id: int, type_id: int | None) -> list[OrganigramJob]:
             # Active-link jobs (vacant included) plus any occupied job.
             job_ids = {
                 lr.job_id for lr in links_by_type.get(type_id, []) if lr.is_active
@@ -668,7 +669,7 @@ class DepartmentJobTargetService(BaseService):
         record.qty = target_update.qty
         record.effective_date = target_update.effective_date
         record.created_by = self.user.id if self.user else None
-        record.created_at = datetime.now(timezone.utc)
+        record.created_at = datetime.now(UTC)
         try:
             await self.session.commit()
         except IntegrityError:

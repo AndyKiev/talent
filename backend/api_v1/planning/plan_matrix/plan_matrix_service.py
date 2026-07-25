@@ -1,41 +1,37 @@
 # backend/api_v1/planning/plan_matrix/plan_matrix_service.py
 from __future__ import annotations
 
-from typing import Optional, Dict, Set, Tuple, List
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
+from backend.api_v1.department.department_repository import DepartmentRepository
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-
 from backend.api_v1.planning.plan_matrix.plan_matrix_repository import (
     PlanMatrixRepository,
-    ScopeRow,
 )
 from backend.api_v1.planning.plan_matrix.plan_matrix_schema import (
-    PlanMatrix,
-    MatrixMeta,
-    MatrixEssences,
-    MatrixJobGroupDef,
-    MatrixJobGroupConfig,
-    MatrixTalentStatus,
     MatrixDepartment,
+    MatrixEssences,
+    MatrixJobGroupCell,
+    MatrixJobGroupConfig,
+    MatrixJobGroupDef,
+    MatrixMeta,
     MatrixRegion,
     MatrixRow,
-    MatrixJobGroupCell,
     MatrixStatusValue,
     MatrixSummary,
+    MatrixTalentStatus,
+    PlanMatrix,
 )
 from backend.api_v1.planning.plan_report.plan_report_repository import (
     PlanReportRepository,
 )
 from backend.api_v1.planning.plan_report.plan_report_service import PlanReportService
-from backend.api_v1.department.department_repository import DepartmentRepository
 
 
 # Talent status keys we split columns by. Anything else still works (keyed by
 # its own id) but the two canonical store statuses are Pa / Po.
-def _pct(fact: int, target: int) -> Optional[float]:
+def _pct(fact: int, target: int) -> float | None:
     if target <= 0:
         return None
     return round(min(fact / target, 1.0), 2)
@@ -45,8 +41,8 @@ class PlanMatrixService(BaseService):
     def __init__(
         self,
         repository: PlanMatrixRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
         self.report_repo = PlanReportRepository(session=session)
@@ -71,7 +67,7 @@ class PlanMatrixService(BaseService):
         # the exact report logic (single source of truth).
         fact_rows = await self.report_repo.get_fact_rows()
         org_index = await self.department_repo.get_org_unit_index()
-        plan_dept_ids: Set[int] = {s.department_id for s in scopes}
+        plan_dept_ids: set[int] = {s.department_id for s in scopes}
         fact_counts = PlanReportService.compute_fact_counts(
             fact_rows, plan_dept_ids, org_index
         )
@@ -79,16 +75,16 @@ class PlanMatrixService(BaseService):
         # ── Discover essences from the scope set ──────────────────────────
         # Job group → mode: by_status if any per-status (non-NULL) plan row
         # exists for it; otherwise total (only the combined row).
-        jg_order: List[int] = []
-        jg_meta: Dict[int, Tuple[str, str]] = {}  # id -> (key, name)
-        jg_by_status: Dict[int, bool] = {}
-        ts_meta: Dict[int, Tuple[str, str]] = {}  # id -> (key, name)
-        dept_order: List[int] = []
-        dept_name: Dict[int, str] = {}
-        dept_region: Dict[int, Optional[Tuple[str, str, str, int]]] = (
+        jg_order: list[int] = []
+        jg_meta: dict[int, tuple[str, str]] = {}  # id -> (key, name)
+        jg_by_status: dict[int, bool] = {}
+        ts_meta: dict[int, tuple[str, str]] = {}  # id -> (key, name)
+        dept_order: list[int] = []
+        dept_name: dict[int, str] = {}
+        dept_region: dict[int, tuple[str, str, str, int] | None] = (
             {}
         )  # did -> (id,key,name,sort)
-        region_seen: Dict[int, Tuple[str, str, int]] = (
+        region_seen: dict[int, tuple[str, str, int]] = (
             {}
         )  # region_id -> (key,name,sort)
 
@@ -161,21 +157,21 @@ class PlanMatrixService(BaseService):
         )
 
         # ── Index plan values: (dept, jg, ts_id|None) -> value ─────────────
-        plan_value: Dict[Tuple[int, int, Optional[int]], int] = {}
+        plan_value: dict[tuple[int, int, int | None], int] = {}
         for s in scopes:
             plan_value[(s.department_id, s.job_group_id, s.talent_status_id)] = s.value
 
         # ── Build per-store rows ──────────────────────────────────────────
         # Running grand totals per job group, accumulated in the same shape.
-        data_rows: List[MatrixRow] = []
-        gt_cells: Dict[int, Dict[str, int]] = {
+        data_rows: list[MatrixRow] = []
+        gt_cells: dict[int, dict[str, int]] = {
             jid: {"t_pa": 0, "t_po": 0, "t_tot": 0, "f_pa": 0, "f_po": 0, "f_tot": 0}
             for jid in jg_order
         }
         gt_base = gt_obj = gt_fact = 0
 
         for did in dept_order:
-            jg_cells: Dict[str, MatrixJobGroupCell] = {}
+            jg_cells: dict[str, MatrixJobGroupCell] = {}
             row_target = 0
             row_fact = 0
 
@@ -248,7 +244,7 @@ class PlanMatrixService(BaseService):
             gt_fact += row_fact
 
         # ── Grand totals row ──────────────────────────────────────────────
-        gt_jg: Dict[str, MatrixJobGroupCell] = {}
+        gt_jg: dict[str, MatrixJobGroupCell] = {}
         for jid in jg_order:
             g = gt_cells[jid]
             if jg_by_status[jid]:

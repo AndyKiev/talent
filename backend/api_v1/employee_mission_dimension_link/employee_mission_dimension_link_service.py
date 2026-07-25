@@ -1,4 +1,3 @@
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -42,8 +41,8 @@ class EmployeeMissionDimensionLinkService(BaseService):
     def __init__(
         self,
         repository: EmployeeMissionDimensionLinkRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ) -> None:
         super().__init__(repository, user=user, session=session)
         self.access = EmployeeMissionAccess(user=user, session=session)
@@ -57,7 +56,7 @@ class EmployeeMissionDimensionLinkService(BaseService):
             raise await self._resolve_domain_error(EmployeeMissionNotFound(mission_id))
         return employee_id
 
-    def _to_schema(self, record) -> Optional[EmployeeMissionDimensionLinkSchema]:
+    def _to_schema(self, record) -> EmployeeMissionDimensionLinkSchema | None:
         if record is None:
             return None
         schema = EmployeeMissionDimensionLinkSchema.model_validate(record)
@@ -68,7 +67,7 @@ class EmployeeMissionDimensionLinkService(BaseService):
 
     async def get_for_mission(
         self, mission_id: int
-    ) -> Optional[EmployeeMissionDimensionLinkSchema]:
+    ) -> EmployeeMissionDimensionLinkSchema | None:
         """Scoped read — same reasoning as the comment service: mission_id-keyed
         routes carry no {employee_id} for the route guard, so the owner is
         resolved here and the read audience applied."""

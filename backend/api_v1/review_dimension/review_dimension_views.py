@@ -1,22 +1,25 @@
-from fastapi import APIRouter, Depends, status, Query
-from typing import Annotated, Optional, List
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.review_dimension.review_dimension_schema import (
-    ReviewDimension as ReviewDimensionSchema,
-    ReviewDimensionCreate,
-    ReviewDimensionUpdate,
-)
 from backend.api_v1.review_dimension.review_dimension_dependencies import (
     get_review_dimension_service,
     review_dimension_by_id,
 )
+from backend.api_v1.review_dimension.review_dimension_schema import (
+    ReviewDimension as ReviewDimensionSchema,
+)
+from backend.api_v1.review_dimension.review_dimension_schema import (
+    ReviewDimensionCreate,
+    ReviewDimensionUpdate,
+)
 from backend.api_v1.review_dimension.review_dimension_service import (
     ReviewDimensionService,
 )
-from backend.auth.jwt_auth import get_current_active_auth_user
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/review_dimensions",
@@ -25,12 +28,12 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[ReviewDimensionSchema])
+@router.get("", response_model=list[ReviewDimensionSchema])
 async def get_review_dimensions(
     service: Annotated[ReviewDimensionService, Depends(get_review_dimension_service)],
-    name: Optional[str] = None,
-    is_active: Optional[bool] = None,
-    sort: Optional[str] = Query(None),
+    name: str | None = None,
+    is_active: bool | None = None,
+    sort: str | None = Query(None),
 ):
     return await service.get_review_dimensions(
         name=name, is_active=is_active, sort=sort

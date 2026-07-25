@@ -1,6 +1,8 @@
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Boolean, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, Boolean
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 
@@ -18,7 +20,7 @@ class ReviewLevel(IntIdPkMixin, TimestampMixin, Base):
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    requirements: Mapped[List["ReviewLevelRequirement"]] = relationship(
+    requirements: Mapped[list["ReviewLevelRequirement"]] = relationship(
         back_populates="level",
         lazy="selectin",
     )

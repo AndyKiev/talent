@@ -1,5 +1,5 @@
+
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
 
 
 class RecruitmentDimensionMini(BaseModel):
@@ -22,12 +22,12 @@ class JobRequirementItemCreate(JobRequirementItemBase):
 
 
 class JobRequirementItemUpdate(BaseModel):
-    dimension_id: Optional[int] = None
-    text: Optional[str] = None
-    sort_order: Optional[int] = None
+    dimension_id: int | None = None
+    text: str | None = None
+    sort_order: int | None = None
 
 
 class JobRequirementItemSchema(JobRequirementItemBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
-    dimension: Optional[RecruitmentDimensionMini] = None
+    dimension: RecruitmentDimensionMini | None = None

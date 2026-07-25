@@ -32,10 +32,10 @@ Dependencies:
 
 import json
 import sys
-from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
-from openpyxl.utils import get_column_letter
 
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Header labels (localized; English = in-code fallback)
@@ -676,8 +676,8 @@ def _cli_fetch_labels(lang_code: str) -> dict:
     if str(repo_root) not in sys.path:
         sys.path.insert(0, str(repo_root))
     try:
-        from backend.database.db_helper import db_helper
         from backend.api_v1.msg_pg.msg_translate import LANG_ID_ENG, LANG_ID_UKR
+        from backend.database.db_helper import db_helper
 
         lang_id = LANG_ID_UKR if lang_code == "ukr" else LANG_ID_ENG
 

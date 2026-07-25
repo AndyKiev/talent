@@ -1,26 +1,25 @@
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.process_roles.process_role_holder.process_role_holder_messages import (
+    ProcessRoleHolderCreateSuccess,
+    ProcessRoleHolderDeleteError,
+    ProcessRoleHolderDeleteSuccess,
+    ProcessRoleHolderExists,
+    ProcessRoleHolderNotFound,
+)
 from backend.api_v1.process_roles.process_role_holder.process_role_holder_repository import (
     ProcessRoleHolderRepository,
 )
 from backend.api_v1.process_roles.process_role_holder.process_role_holder_schema import (
     ProcessRoleHolder as ProcessRoleHolderSchema,
+)
+from backend.api_v1.process_roles.process_role_holder.process_role_holder_schema import (
     ProcessRoleHolderCreate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.process_roles.process_role_holder.process_role_holder_messages import (
-    ProcessRoleHolderNotFound,
-    ProcessRoleHolderExists,
-    ProcessRoleHolderDeleteError,
-)
-from backend.api_v1.process_roles.process_role_holder.process_role_holder_messages import (
-    ProcessRoleHolderCreateSuccess,
-    ProcessRoleHolderDeleteSuccess,
 )
 
 
@@ -28,8 +27,8 @@ class ProcessRoleHolderService(BaseService):
     def __init__(
         self,
         repository: ProcessRoleHolderRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -41,10 +40,10 @@ class ProcessRoleHolderService(BaseService):
 
     async def get_holders(
         self,
-        process_role_id: Optional[int] = None,
-        holder_employee_id: Optional[int] = None,
-        sort: Optional[str] = None,
-    ) -> List[ProcessRoleHolderSchema]:
+        process_role_id: int | None = None,
+        holder_employee_id: int | None = None,
+        sort: str | None = None,
+    ) -> list[ProcessRoleHolderSchema]:
         filters = {}
         if process_role_id is not None:
             filters["process_role_id"] = process_role_id

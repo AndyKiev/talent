@@ -1,6 +1,6 @@
-from pydantic import BaseModel, ConfigDict
 from datetime import datetime
-from typing import Optional
+
+from pydantic import BaseModel, ConfigDict
 
 
 class TrainingTypeJobCategoryLinkBulkSet(BaseModel):
@@ -16,5 +16,5 @@ class TrainingTypeJobCategoryLink(BaseModel):
     job_category_id: int
     created_at: datetime
     # Denormalised for convenience
-    job_category_key: Optional[str] = None
-    training_type_name: Optional[str] = None
+    job_category_key: str | None = None
+    training_type_name: str | None = None

@@ -1,15 +1,18 @@
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from sqlalchemy import ForeignKey, ForeignKeyConstraint, Integer, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, ForeignKeyConstraint, UniqueConstraint, Integer
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
-from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
+    from backend.api_v1.employee.employee_model import Employee
     from backend.api_v1.process_roles.process_role_holder.process_role_holder_model import (
         ProcessRoleHolder,
     )
-    from backend.api_v1.employee.employee_model import Employee
 
 
 class ProcessRoleHolderEmployeeLink(IntIdPkMixin, TimestampMixin, Base):
@@ -39,9 +42,9 @@ class ProcessRoleHolderEmployeeLink(IntIdPkMixin, TimestampMixin, Base):
     )
     # Per-holder roster order for oversight presentation (multiples of 10).
     # NULL sorts last, so a newly-assigned employee lands at the end.
-    order_position: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    order_position: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
-    holder: Mapped["ProcessRoleHolder"] = relationship(
+    holder: Mapped[ProcessRoleHolder] = relationship(
         "ProcessRoleHolder",
         primaryjoin=(
             "ProcessRoleHolderEmployeeLink.process_role_holder_id "
@@ -51,7 +54,7 @@ class ProcessRoleHolderEmployeeLink(IntIdPkMixin, TimestampMixin, Base):
         back_populates="employees",
         lazy="selectin",
     )
-    employee: Mapped["Employee"] = relationship(
+    employee: Mapped[Employee] = relationship(
         "Employee",
         foreign_keys="[ProcessRoleHolderEmployeeLink.employee_id]",
         lazy="selectin",

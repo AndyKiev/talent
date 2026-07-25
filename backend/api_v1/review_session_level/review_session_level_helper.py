@@ -6,18 +6,17 @@ active levels when the session has no snapshot (sessions opened before the
 freeze), mirroring how the criteria read path falls back to the live hint.
 """
 
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload, raiseload
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from backend.api_v1.review_level.review_level_model import ReviewLevel
 from backend.api_v1.review_session_level.review_session_level_model import (
     ReviewSessionLevel,
 )
 from backend.api_v1.review_session_level.review_session_level_schema import (
-    SessionLevelSchema,
     SessionLevelRequirementSchema,
+    SessionLevelSchema,
 )
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import raiseload, selectinload
 
 
 async def frozen_levels_for_session(

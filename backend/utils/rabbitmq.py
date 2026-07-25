@@ -4,7 +4,7 @@ import asyncio
 import json
 import logging
 import os
-from typing import Callable, Awaitable
+from collections.abc import Awaitable, Callable
 
 import aio_pika
 

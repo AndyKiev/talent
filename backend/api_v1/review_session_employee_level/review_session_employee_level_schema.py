@@ -1,5 +1,6 @@
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict
-from typing import Optional, List, Literal
 
 ProposedLevelStatus = Literal["proposed", "validated", "rejected"]
 
@@ -8,7 +9,7 @@ class LevelAnswerSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     requirement_id: int
-    facts: Optional[str] = None
+    facts: str | None = None
 
 
 class ProposedLevelSchema(BaseModel):
@@ -17,7 +18,7 @@ class ProposedLevelSchema(BaseModel):
     review_session_employee_id: int
     level_id: int
     status: ProposedLevelStatus = "proposed"
-    answers: List[LevelAnswerSchema] = []
+    answers: list[LevelAnswerSchema] = []
 
 
 class ProposedLevelStatusUpdate(BaseModel):
@@ -26,9 +27,9 @@ class ProposedLevelStatusUpdate(BaseModel):
 
 class LevelAnswerInput(BaseModel):
     requirement_id: int
-    facts: Optional[str] = None
+    facts: str | None = None
 
 
 class ProposedLevelUpsert(BaseModel):
     level_id: int
-    answers: List[LevelAnswerInput] = []
+    answers: list[LevelAnswerInput] = []

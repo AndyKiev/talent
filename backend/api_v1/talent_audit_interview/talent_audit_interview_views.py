@@ -1,4 +1,4 @@
-from typing import Annotated, List, Optional
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
@@ -10,6 +10,8 @@ from backend.api_v1.talent_audit_interview.talent_audit_interview_dependencies i
 )
 from backend.api_v1.talent_audit_interview.talent_audit_interview_schema import (
     TalentAuditInterview as TalentAuditInterviewSchema,
+)
+from backend.api_v1.talent_audit_interview.talent_audit_interview_schema import (
     TalentAuditInterviewCreate,
     TalentAuditInterviewUpdate,
 )
@@ -17,7 +19,7 @@ from backend.api_v1.talent_audit_interview.talent_audit_interview_service import
     TalentAuditInterviewService,
 )
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/talent_audit_interviews",
@@ -28,14 +30,14 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[TalentAuditInterviewSchema],
+    response_model=list[TalentAuditInterviewSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT_INTERVIEW)],
 )
 async def get_talent_audit_interviews(
     service: Annotated[
         TalentAuditInterviewService, Depends(get_talent_audit_interview_service)
     ],
-    sort: Optional[str] = Query(
+    sort: str | None = Query(
         None,
         description='JSON for sorting: {"field": "asc|desc"} or [{"field1": "asc"}, "field2"]',
     ),
@@ -48,7 +50,7 @@ async def get_talent_audit_interviews(
 
 @router.get(
     "/by_talent_audit/{talent_audit_id}",
-    response_model=List[TalentAuditInterviewSchema],
+    response_model=list[TalentAuditInterviewSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT_INTERVIEW)],
 )
 async def get_interviews_by_audit(
@@ -62,7 +64,7 @@ async def get_interviews_by_audit(
 
 @router.get(
     "/free_jobs/{talent_audit_id}",
-    response_model=List[dict],
+    response_model=list[dict],
     summary="Get audit jobs eligible for a new interview",
     description=(
         "Returns talent_audit_job records that have 'created' status "

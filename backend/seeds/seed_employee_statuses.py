@@ -1,7 +1,9 @@
 import asyncio
-from backend.database.db_helper import db_helper
-from backend.api_v1.employee_status.employee_status_model import EmployeeStatus
+
 from sqlalchemy import select
+
+from backend.api_v1.employee_status.employee_status_model import EmployeeStatus
+from backend.database.db_helper import db_helper
 
 
 async def seed_employee_statuses():

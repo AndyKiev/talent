@@ -1,22 +1,25 @@
-from fastapi import APIRouter, Depends, status, Query
-from typing import Annotated, Optional, List
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.process_roles.process_role.process_role_schema import (
-    ProcessRole as ProcessRoleSchema,
-    ProcessRoleCreate,
-    ProcessRoleUpdate,
-)
 from backend.api_v1.process_roles.process_role.process_role_dependencies import (
     get_process_role_service,
     process_role_by_id,
 )
+from backend.api_v1.process_roles.process_role.process_role_schema import (
+    ProcessRole as ProcessRoleSchema,
+)
+from backend.api_v1.process_roles.process_role.process_role_schema import (
+    ProcessRoleCreate,
+    ProcessRoleUpdate,
+)
 from backend.api_v1.process_roles.process_role.process_role_service import (
     ProcessRoleService,
 )
-from backend.auth.jwt_auth import get_current_active_auth_user
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/admin/process_roles",
@@ -27,14 +30,14 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[ProcessRoleSchema],
+    response_model=list[ProcessRoleSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.PROCESS_ROLE)],
 )
 async def get_process_roles(
     service: Annotated[ProcessRoleService, Depends(get_process_role_service)],
-    process_id: Optional[int] = None,
-    is_active: Optional[bool] = None,
-    sort: Optional[str] = Query(None, description='JSON sort, e.g. {"name": "asc"}'),
+    process_id: int | None = None,
+    is_active: bool | None = None,
+    sort: str | None = Query(None, description='JSON sort, e.g. {"name": "asc"}'),
 ):
     return await service.get_process_roles(
         process_id=process_id, is_active=is_active, sort=sort

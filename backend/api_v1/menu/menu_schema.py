@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
-from typing import List, Optional
 
 
 class MenuSchema(BaseModel):
@@ -12,8 +11,8 @@ class MenuSchema(BaseModel):
     key: str
     label_key: str
     path: str
-    icon: Optional[str] = None
-    parent_id: Optional[int] = None
+    icon: str | None = None
+    parent_id: int | None = None
     sort_order: int
     is_active: bool
 
@@ -27,31 +26,31 @@ class MenuAdminSchema(MenuSchema):
 
     visible_to_all_groups: bool = False
     visible_to_regular: bool = False
-    group_ids: List[int] = []
+    group_ids: list[int] = []
 
 
 class MenuCreate(BaseModel):
     key: str = Field(..., max_length=64)
     label_key: str = Field("", max_length=128)
     path: str = Field(..., max_length=128)
-    icon: Optional[str] = Field(None, max_length=64)
-    parent_id: Optional[int] = None
+    icon: str | None = Field(None, max_length=64)
+    parent_id: int | None = None
     sort_order: int = 0
     is_active: bool = True
     # Visibility (see Menu model): all_groups / regular flags + specific groups.
     visible_to_all_groups: bool = False
     visible_to_regular: bool = False
-    group_ids: List[int] = []
+    group_ids: list[int] = []
 
 
 class MenuUpdate(BaseModel):
-    key: Optional[str] = Field(None, max_length=64)
-    label_key: Optional[str] = Field(None, max_length=128)
-    path: Optional[str] = Field(None, max_length=128)
-    icon: Optional[str] = Field(None, max_length=64)
-    parent_id: Optional[int] = None
-    sort_order: Optional[int] = None
-    is_active: Optional[bool] = None
-    visible_to_all_groups: Optional[bool] = None
-    visible_to_regular: Optional[bool] = None
-    group_ids: Optional[List[int]] = None
+    key: str | None = Field(None, max_length=64)
+    label_key: str | None = Field(None, max_length=128)
+    path: str | None = Field(None, max_length=128)
+    icon: str | None = Field(None, max_length=64)
+    parent_id: int | None = None
+    sort_order: int | None = None
+    is_active: bool | None = None
+    visible_to_all_groups: bool | None = None
+    visible_to_regular: bool | None = None
+    group_ids: list[int] | None = None

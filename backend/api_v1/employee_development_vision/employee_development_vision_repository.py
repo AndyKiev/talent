@@ -1,4 +1,3 @@
-from typing import Optional
 
 from sqlalchemy import select
 
@@ -13,7 +12,7 @@ class EmployeeDevelopmentVisionRepository(BaseRepository):
 
     async def get_for_employee(
         self, employee_id: int
-    ) -> Optional[EmployeeDevelopmentVision]:
+    ) -> EmployeeDevelopmentVision | None:
         stmt = select(EmployeeDevelopmentVision).where(
             EmployeeDevelopmentVision.employee_id == employee_id
         )

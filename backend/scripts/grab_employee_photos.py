@@ -30,13 +30,12 @@ from PIL import Image, UnidentifiedImageError
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
-from sqlalchemy import select
-
-from backend.database.db_helper import db_helper
 from backend.api_v1.employee.employee_model import Employee
 from backend.api_v1.employee_photo.employee_photo_model import EmployeePhoto
 from backend.api_v1.person.person_model import Person
 from backend.api_v1.sex.sex_model import Sex
+from backend.database.db_helper import db_helper
+from sqlalchemy import select
 
 # ── Image processing (mirrors EmployeePhotoService._process_image) ──
 MAX_DIMENSION = 320

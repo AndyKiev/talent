@@ -1,35 +1,34 @@
-from typing import List, Optional
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.department_type_job_link.department_type_job_link_messages import (
+    DepartmentTypeJobLinkAlreadyExists,
+    DepartmentTypeJobLinkBulkSyncSuccess,
+    DepartmentTypeJobLinkCreateSuccess,
+    DepartmentTypeJobLinkDeleteError,
+    DepartmentTypeJobLinkDeleteSuccess,
+    DepartmentTypeJobLinkNotFound,
+    DepartmentTypeJobLinkNotFoundByCompositeKey,
+    DepartmentTypeJobLinkUpdateSuccess,
+)
 from backend.api_v1.department_type_job_link.department_type_job_link_repository import (
     DepartmentTypeJobLinkRepository,
 )
 from backend.api_v1.department_type_job_link.department_type_job_link_schema import (
     DepartmentTypeJobLink as DepartmentTypeJobLinkSchema,
+)
+from backend.api_v1.department_type_job_link.department_type_job_link_schema import (
     DepartmentTypeJobLinkBulkSync,
     DepartmentTypeJobLinkBulkSyncResult,
     DepartmentTypeJobLinkCreate,
     DepartmentTypeJobLinkUpdate,
     JobWithLinkId,
 )
-from backend.api_v1.job.job_schema import Job as JobSchema
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.department_type_job_link.department_type_job_link_messages import (
-    DepartmentTypeJobLinkNotFound,
-    DepartmentTypeJobLinkAlreadyExists,
-    DepartmentTypeJobLinkDeleteError,
-    DepartmentTypeJobLinkNotFoundByCompositeKey,
-)
-from backend.api_v1.department_type_job_link.department_type_job_link_messages import (
-    DepartmentTypeJobLinkDeleteSuccess,
-    DepartmentTypeJobLinkCreateSuccess,
-    DepartmentTypeJobLinkUpdateSuccess,
-    DepartmentTypeJobLinkBulkSyncSuccess,
-)
+from backend.api_v1.job.job_schema import Job as JobSchema
 
 
 def _link_label(link: DepartmentTypeJobLinkSchema) -> str:
@@ -47,8 +46,8 @@ class DepartmentTypeJobLinkService(BaseService):
     def __init__(
         self,
         repository: DepartmentTypeJobLinkRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -66,11 +65,11 @@ class DepartmentTypeJobLinkService(BaseService):
 
     async def get_links(
         self,
-        department_type_id: Optional[int] = None,
-        job_id: Optional[int] = None,
-        is_active: Optional[bool] = None,
-        sort: Optional[str] = None,
-    ) -> List[DepartmentTypeJobLinkSchema]:
+        department_type_id: int | None = None,
+        job_id: int | None = None,
+        is_active: bool | None = None,
+        sort: str | None = None,
+    ) -> list[DepartmentTypeJobLinkSchema]:
         filters = {}
         if department_type_id is not None:
             filters["department_type_id"] = department_type_id
@@ -94,8 +93,8 @@ class DepartmentTypeJobLinkService(BaseService):
     async def get_jobs_by_department_type(
         self,
         department_type_id: int,
-        is_active: Optional[bool] = None,  # Changed from True to None
-    ) -> List[JobWithLinkId]:
+        is_active: bool | None = None,  # Changed from True to None
+    ) -> list[JobWithLinkId]:
         """
         Return enriched Job objects for a given department type.
         Each record includes link_id and link_is_active for use in delete operations.

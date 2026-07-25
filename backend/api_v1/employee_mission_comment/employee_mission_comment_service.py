@@ -1,4 +1,3 @@
-from typing import List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -49,8 +48,8 @@ class EmployeeMissionCommentService(BaseService):
     def __init__(
         self,
         repository: EmployeeMissionCommentRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ) -> None:
         super().__init__(repository, user=user, session=session)
         self.access = EmployeeMissionAccess(user=user, session=session)
@@ -72,7 +71,7 @@ class EmployeeMissionCommentService(BaseService):
             )
         return record
 
-    async def _to_schema(self, records: List) -> List[EmployeeMissionCommentSchema]:
+    async def _to_schema(self, records: list) -> list[EmployeeMissionCommentSchema]:
         minis = await fetch_employee_minis(
             self.session, [r.author_employee_id for r in records]
         )
@@ -86,7 +85,7 @@ class EmployeeMissionCommentService(BaseService):
 
     async def get_for_mission(
         self, mission_id: int
-    ) -> List[EmployeeMissionCommentSchema]:
+    ) -> list[EmployeeMissionCommentSchema]:
         """Scoped read: this route is keyed by mission_id, so there is no
         {employee_id} for PeopleReviewScopedGuard to check — resolve the owner
         first and apply the same audience here. Comments are free text about a

@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional, List
 from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class EmployeeEventTypeBase(BaseModel):
     code: str = Field(..., max_length=64)
     name: str = Field(..., max_length=128)
-    description: Optional[str] = Field(None, max_length=512)
+    description: str | None = Field(None, max_length=512)
 
 
 class EmployeeEventTypeCreate(EmployeeEventTypeBase):
@@ -16,16 +16,16 @@ class EmployeeEventTypeCreate(EmployeeEventTypeBase):
 
 
 class EmployeeEventTypeUpdate(BaseModel):
-    code: Optional[str] = Field(None, max_length=64)
-    name: Optional[str] = Field(None, max_length=128)
-    description: Optional[str] = Field(None, max_length=512)
+    code: str | None = Field(None, max_length=64)
+    name: str | None = Field(None, max_length=128)
+    description: str | None = Field(None, max_length=512)
 
 
 class EmployeeEventType(EmployeeEventTypeBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
     created_at: datetime
-    type_directions: List["EmployeeEventTypeDirectionNested"] = []
+    type_directions: list[EmployeeEventTypeDirectionNested] = []
 
 
 # ── Late import to avoid circular references ───────────────────────────────────

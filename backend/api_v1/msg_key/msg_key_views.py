@@ -1,25 +1,27 @@
-from fastapi import APIRouter, Depends, status
-
 # from fastapi import APIRouter, Depends, status, Query
 # from fastapi.security import HTTPBearer
-from typing import Annotated, Optional, List
+from typing import Annotated
 
-# from pydantic import BaseModel
-from backend.api_v1.msg_key.msg_key_model import MsgKey as MsgKeyModel
+from fastapi import APIRouter, Depends, status
+
 from backend.api_v1.base.errors import NotFoundError
 from backend.api_v1.msg_key.msg_key_dependencies import (
     get_msg_key_service,
     msg_key_by_id,
 )
+
+# from pydantic import BaseModel
+from backend.api_v1.msg_key.msg_key_model import MsgKey as MsgKeyModel
 from backend.api_v1.msg_key.msg_key_schema import (
     MsgKey as MsgKeySchema,
+)
+from backend.api_v1.msg_key.msg_key_schema import (
     MsgKeyCreate,
     MsgKeyUpdate,
 )
 from backend.api_v1.msg_key.msg_key_service import MsgKeyService
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
-
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/msg_keys",
@@ -28,10 +30,10 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[MsgKeySchema])
+@router.get("", response_model=list[MsgKeySchema])
 async def get_msg_keys(
     service: Annotated[MsgKeyService, Depends(get_msg_key_service)],
-    name: Optional[str] = None,
+    name: str | None = None,
 ):
     if name:
         msg_key = await service.get_by_name(name, not_found_exc=NotFoundError)
@@ -40,7 +42,6 @@ async def get_msg_keys(
     return [MsgKeySchema.model_validate(msk) for msk in msg_keys]
 
 
-#
 @router.get("/{msg_key_id}", response_model=MsgKeySchema)
 async def get_msg_key(job: MsgKeySchema = Depends(msg_key_by_id)):
     return job

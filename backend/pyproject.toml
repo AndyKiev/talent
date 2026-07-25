@@ -45,3 +45,45 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 norecursedirs = [".venv", "migrations", "scripts", "seeds", "utils"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "N",      # pep8-naming
+    "UP",     # pyupgrade
+    "B",      # flake8-bugbear
+    "BLE",    # flake8-blind-except
+    "C4",     # flake8-comprehensions
+    "SIM",    # flake8-simplify
+    "RUF",    # Ruff-specific rules
+    "PIE",    # flake8-pie
+    "ISC",    # flake8-implicit-str-concat
+    "TRY",    # tryceratops
+    "DTZ",    # flake8-datetimez
+    "ASYNC",  # flake8-async
+    "FURB",   # refurb
+    "PL",     # Pylint
+    "PLC",    # Pylint conventions
+    "PLE",    # Pylint errors
+]
+ignore = [
+    "E501",   # line-too-long (handled by formatter)
+    "N818",   # exception names (project convention differs)
+    "PLR09",  # too-many-* (subjective, review manually)
+]
+exclude = [
+    "migrations/versions/*",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

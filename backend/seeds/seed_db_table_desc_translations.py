@@ -22,13 +22,14 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 from sqlalchemy import select
-from backend.database.db_helper import db_helper
+
+from backend.api_v1.db_table_info.db_table_info_service import (
+    TABLE_DESCRIPTIONS_EN,
+    DbTableInfoService,
+)
 from backend.api_v1.msg_key.msg_key_model import MsgKey
 from backend.api_v1.msg_pg.msg_model import Msg
-from backend.api_v1.db_table_info.db_table_info_service import (
-    DbTableInfoService,
-    TABLE_DESCRIPTIONS_EN,
-)
+from backend.database.db_helper import db_helper
 
 # table_name -> Ukrainian description (English comes from TABLE_DESCRIPTIONS_EN)
 TABLE_DESCRIPTIONS_UKR: dict[str, str] = {

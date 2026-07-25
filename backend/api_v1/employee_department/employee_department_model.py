@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, UniqueConstraint
 from typing import TYPE_CHECKING
+
+from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 
 if TYPE_CHECKING:
-    from backend.api_v1.employee.employee_model import Employee
     from backend.api_v1.department.department_model import Department
+    from backend.api_v1.employee.employee_model import Employee
 
 
 class EmployeeDepartment(IntIdPkMixin, TimestampMixin, Base):
@@ -41,11 +42,11 @@ class EmployeeDepartment(IntIdPkMixin, TimestampMixin, Base):
     )
 
     # ── Relationships ──────────────────────────────────────────────────────
-    employee: Mapped["Employee"] = relationship(
+    employee: Mapped[Employee] = relationship(
         back_populates="departments",
         lazy="selectin",
     )
-    department: Mapped["Department"] = relationship(
+    department: Mapped[Department] = relationship(
         lazy="selectin",
     )
 

@@ -1,8 +1,8 @@
+from collections.abc import Callable
 from dataclasses import replace
 from functools import reduce
-from typing import Callable
-from domain import Request, User
 
+from domain import Request, User
 
 type PolicyFn = Callable[[User, Request], Request]
 

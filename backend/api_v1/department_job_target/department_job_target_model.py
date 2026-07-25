@@ -1,7 +1,6 @@
-from typing import TYPE_CHECKING, Optional
 import datetime
+from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import (
     CheckConstraint,
     Date,
@@ -11,6 +10,7 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
 )
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin
@@ -58,7 +58,7 @@ class DepartmentJobTarget(IntIdPkMixin, Base):
     effective_date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
     # Who set the current qty and when — refreshed on every edit, so it always
     # answers "who set this value" rather than "who inserted the row".
-    created_by: Mapped[Optional[int]] = mapped_column(
+    created_by: Mapped[int | None] = mapped_column(
         ForeignKey("employees.id", ondelete="SET NULL"),
         nullable=True,
     )

@@ -1,9 +1,11 @@
+import datetime
 from typing import TYPE_CHECKING
+
+from sqlalchemy import Boolean, DateTime, ForeignKey, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, Boolean, UniqueConstraint, func, DateTime
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
-import datetime
 
 if TYPE_CHECKING:
     from backend.api_v1.department.department_model import Department

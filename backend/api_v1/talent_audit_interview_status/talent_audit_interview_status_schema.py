@@ -1,11 +1,10 @@
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
 class TalentAuditInterviewStatusBase(BaseModel):
     name: str = Field(..., max_length=32)
-    description: Optional[str] = Field(None, max_length=128)
+    description: str | None = Field(None, max_length=128)
 
 
 class TalentAuditInterviewStatusCreate(TalentAuditInterviewStatusBase):
@@ -13,8 +12,8 @@ class TalentAuditInterviewStatusCreate(TalentAuditInterviewStatusBase):
 
 
 class TalentAuditInterviewStatusUpdate(BaseModel):
-    name: Optional[str] = Field(None, max_length=32)
-    description: Optional[str] = Field(None, max_length=128)
+    name: str | None = Field(None, max_length=32)
+    description: str | None = Field(None, max_length=128)
 
 
 class TalentAuditInterviewStatus(TalentAuditInterviewStatusBase):

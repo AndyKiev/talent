@@ -23,8 +23,8 @@ async def run_heavy_process() -> None:
 
     # 1. Send email (best-effort — don't crash if SMTP unavailable)
     try:
-        from backend.utils.send_mail import send_email
         from backend.config import settings
+        from backend.utils.send_mail import send_email
 
         await send_email(
             sender=settings.loader_error_mail.sender,

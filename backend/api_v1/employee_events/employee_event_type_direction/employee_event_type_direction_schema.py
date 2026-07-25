@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
 
 
 class EmployeeEventTypeDirectionBase(BaseModel):
@@ -23,8 +22,8 @@ class EmployeeEventTypeDirectionCreate(BaseModel):
 
 
 class EmployeeEventTypeDirectionUpdate(BaseModel):
-    is_required: Optional[bool] = None
-    sort_order: Optional[int] = None
+    is_required: bool | None = None
+    sort_order: int | None = None
 
 
 class EmployeeEventTypeDirection(EmployeeEventTypeDirectionBase):
@@ -32,7 +31,7 @@ class EmployeeEventTypeDirection(EmployeeEventTypeDirectionBase):
 
     model_config = ConfigDict(from_attributes=True)
     id: int
-    direction_type: Optional["EmployeeEventDirectionType"] = None
+    direction_type: EmployeeEventDirectionType | None = None
 
 
 class EmployeeEventTypeDirectionNested(BaseModel):
@@ -46,7 +45,7 @@ class EmployeeEventTypeDirectionNested(BaseModel):
     direction_type_id: int
     is_required: bool
     sort_order: int
-    direction_type: Optional["EmployeeEventDirectionType"] = None
+    direction_type: EmployeeEventDirectionType | None = None
 
 
 # ── Late import — must be outside TYPE_CHECKING so the name is available

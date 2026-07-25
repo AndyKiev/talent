@@ -1,24 +1,23 @@
-from fastapi import APIRouter, Depends, status, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, Optional, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.employee_events.employee_event.employee_event_schema import (
-    EmployeeEventSchema,
-    EmployeeEventFlat,
-    EmployeeEventCreate,
-    EmployeeEventUpdate,
-)
 from backend.api_v1.employee_events.employee_event.employee_event_dependencies import (
-    get_employee_event_service,
     employee_event_by_id,
+    get_employee_event_service,
+)
+from backend.api_v1.employee_events.employee_event.employee_event_schema import (
+    EmployeeEventCreate,
+    EmployeeEventSchema,
+    EmployeeEventUpdate,
 )
 from backend.api_v1.employee_events.employee_event.employee_event_service import (
     EmployeeEventService,
 )
-
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 # -- Router nested under /employees/{employee_id}/events -----------------------
 # Mount this router on the employee router with prefix="/employees".
@@ -46,13 +45,13 @@ async def apply_due_employee_events(
 
 @router.get(
     "/{employee_id}/events",
-    response_model=List[EmployeeEventSchema],
+    response_model=list[EmployeeEventSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE_EVENT)],
 )
 async def get_employee_events(
     employee_id: int,
     service: Annotated[EmployeeEventService, Depends(get_employee_event_service)],
-    sort: Optional[str] = Query(
+    sort: str | None = Query(
         None,
         description='JSON for sorting: {"field": "asc|desc"} or [{"field1": "asc"}, "field2"]',
     ),

@@ -1,7 +1,8 @@
 from __future__ import annotations
-from typing import Optional, List
+
+from sqlalchemy import JSON, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import ForeignKey, JSON, UniqueConstraint
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 
@@ -24,7 +25,7 @@ class AccessTestContext(IntIdPkMixin, TimestampMixin, Base):
         nullable=False,
         index=True,
     )
-    group_ids: Mapped[Optional[List[int]]] = mapped_column(JSON, nullable=True)
+    group_ids: Mapped[list[int] | None] = mapped_column(JSON, nullable=True)
 
     def __repr__(self) -> str:
         return (

@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.dialects.postgresql import JSONB
@@ -32,7 +32,7 @@ class ChangeLog(IntIdPkMixin, Base):
         nullable=False,
     )
     # Self-link: the entry whose action caused this one (NULL for top-level).
-    parent_id: Mapped[Optional[int]] = mapped_column(
+    parent_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("change_log.id", ondelete="SET NULL"),
         nullable=True,
@@ -40,16 +40,16 @@ class ChangeLog(IntIdPkMixin, Base):
     # Free string identifying the changed essence (no FK — max extensibility).
     essence_key: Mapped[str] = mapped_column(String(64), nullable=False)
     # PK of the changed row (NULL only transiently before a create is flushed).
-    entity_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    entity_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # 'create' | 'update' | 'delete' | 'apply' | 'status_change' | ...
     action: Mapped[str] = mapped_column(String(32), nullable=False)
     # Field-level before/after, e.g.
     # {"status_id": {"old": 3, "new": 5}, "status_key": {"old": "created", "new": "applied"}}
-    changes: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    changes: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     # Subject employee this entry concerns (set for employee_event entries).
     # Lets the audit UI show "who" even for bulk sweeps, where the run itself
     # has no single employee. Resolvable post-delete (employees aren't deleted).
-    employee_id: Mapped[Optional[int]] = mapped_column(
+    employee_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("employees.id", ondelete="SET NULL"),
         nullable=True,

@@ -1,23 +1,25 @@
-from typing import Annotated, List
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 
-from backend.api_v1.language_level.language_level_model import (
-    LanguageLevel as LanguageLevelModel,
-)
 from backend.api_v1.language_level.language_level_dependencies import (
     get_language_level_service,
     language_level_by_id,
 )
+from backend.api_v1.language_level.language_level_model import (
+    LanguageLevel as LanguageLevelModel,
+)
 from backend.api_v1.language_level.language_level_schema import (
     LanguageLevel as LanguageLevelSchema,
+)
+from backend.api_v1.language_level.language_level_schema import (
     LanguageLevelCreate,
     LanguageLevelUpdate,
 )
 from backend.api_v1.language_level.language_level_service import LanguageLevelService
-from backend.auth.jwt_auth import get_current_active_auth_user
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/language_levels",
@@ -26,7 +28,7 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[LanguageLevelSchema])
+@router.get("", response_model=list[LanguageLevelSchema])
 async def get_language_levels(
     service: Annotated[LanguageLevelService, Depends(get_language_level_service)],
 ):

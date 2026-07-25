@@ -6,7 +6,7 @@ user_groups, …) fire. Services use this to fill creator/author/changer minis o
 schemas whose model relationships are deliberately lazy="noload".
 """
 
-from typing import Iterable, Optional
+from collections.abc import Iterable
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,7 +15,7 @@ from backend.api_v1.employee.employee_model import Employee
 
 
 async def fetch_employee_minis(
-    session: AsyncSession, ids: Iterable[Optional[int]]
+    session: AsyncSession, ids: Iterable[int | None]
 ) -> dict[int, dict]:
     wanted = {i for i in ids if i is not None}
     if not wanted:

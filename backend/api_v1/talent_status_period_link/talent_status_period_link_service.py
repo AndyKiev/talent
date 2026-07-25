@@ -1,30 +1,29 @@
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.talent_status_period_link.talent_status_period_link_messages import (
+    TalentStatusPeriodLinkAlreadyExists,
+    TalentStatusPeriodLinkCreateSuccess,
+    TalentStatusPeriodLinkDeleteError,
+    TalentStatusPeriodLinkDeleteSuccess,
+    TalentStatusPeriodLinkNotFound,
+    TalentStatusPeriodLinkNotFoundByCompositeKey,
+    TalentStatusPeriodLinkUpdateSuccess,
+)
 from backend.api_v1.talent_status_period_link.talent_status_period_link_repository import (
     TalentStatusPeriodLinkRepository,
 )
 from backend.api_v1.talent_status_period_link.talent_status_period_link_schema import (
     TalentStatusPeriodLink as TalentStatusPeriodLinkSchema,
-    TalentStatusPeriodLinkWithLabel,
+)
+from backend.api_v1.talent_status_period_link.talent_status_period_link_schema import (
     TalentStatusPeriodLinkCreate,
     TalentStatusPeriodLinkUpdate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.talent_status_period_link.talent_status_period_link_messages import (
-    TalentStatusPeriodLinkNotFound,
-    TalentStatusPeriodLinkAlreadyExists,
-    TalentStatusPeriodLinkDeleteError,
-    TalentStatusPeriodLinkNotFoundByCompositeKey,
-)
-from backend.api_v1.talent_status_period_link.talent_status_period_link_messages import (
-    TalentStatusPeriodLinkDeleteSuccess,
-    TalentStatusPeriodLinkCreateSuccess,
-    TalentStatusPeriodLinkUpdateSuccess,
+    TalentStatusPeriodLinkWithLabel,
 )
 
 
@@ -37,8 +36,8 @@ class TalentStatusPeriodLinkService(BaseService):
     def __init__(
         self,
         repository: TalentStatusPeriodLinkRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -52,8 +51,8 @@ class TalentStatusPeriodLinkService(BaseService):
         """Resolve a name-based link label from the status/period ids. Uses
         session.get (identity-map cached / by-PK) so it is safe to call after a
         commit, unlike lazy relationship access on an expired ORM instance."""
-        from backend.api_v1.talent_status.talent_status_model import TalentStatus
         from backend.api_v1.talent_period.talent_period_model import TalentPeriod
+        from backend.api_v1.talent_status.talent_status_model import TalentStatus
 
         status = await self.session.get(TalentStatus, status_id)
         period = await self.session.get(TalentPeriod, period_id)
@@ -64,11 +63,11 @@ class TalentStatusPeriodLinkService(BaseService):
 
     async def get_links(
         self,
-        talent_period_id: Optional[int] = None,
-        talent_status_id: Optional[int] = None,
-        is_active: Optional[bool] = None,
-        sort: Optional[str] = None,
-    ) -> List[TalentStatusPeriodLinkSchema]:
+        talent_period_id: int | None = None,
+        talent_status_id: int | None = None,
+        is_active: bool | None = None,
+        sort: str | None = None,
+    ) -> list[TalentStatusPeriodLinkSchema]:
         """
         Filtered list. Supports narrowing by period, status, or active flag.
         When talent_period_id or talent_status_id is given the dedicated
@@ -91,8 +90,8 @@ class TalentStatusPeriodLinkService(BaseService):
 
     async def get_active_pairs(
         self,
-        is_active: Optional[bool] = None,
-    ) -> List[TalentStatusPeriodLinkWithLabel]:
+        is_active: bool | None = None,
+    ) -> list[TalentStatusPeriodLinkWithLabel]:
         """
         Returns links with a computed label ("PO - 24") for use in select dropdowns.
 

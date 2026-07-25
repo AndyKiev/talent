@@ -1,20 +1,23 @@
-from fastapi import APIRouter, Depends, status, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, Optional, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.job_group.job_group_schema import (
-    JobGroup as JobGroupSchema,
-    JobGroupCreate,
-    JobGroupUpdate,
-)
 from backend.api_v1.job_group.job_group_dependencies import (
     get_job_group_service,
     job_group_by_id,
 )
+from backend.api_v1.job_group.job_group_schema import (
+    JobGroup as JobGroupSchema,
+)
+from backend.api_v1.job_group.job_group_schema import (
+    JobGroupCreate,
+    JobGroupUpdate,
+)
 from backend.api_v1.job_group.job_group_service import JobGroupService
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/job_groups",
@@ -25,12 +28,12 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[JobGroupSchema],
+    response_model=list[JobGroupSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.JOB_GROUP)],
 )
 async def get_job_groups(
     service: Annotated[JobGroupService, Depends(get_job_group_service)],
-    job_group_type_id: Optional[int] = Query(
+    job_group_type_id: int | None = Query(
         None, description="Filter job groups by job group type ID"
     ),
 ):

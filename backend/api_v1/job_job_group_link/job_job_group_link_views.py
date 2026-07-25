@@ -1,21 +1,24 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.job_job_group_link.job_job_group_link_schema import (
-    JobJobGroupLink as JobJobGroupLinkSchema,
-    JobJobGroupLinkCreate,
-    JobJobGroupLinkBulkSet,
-)
 from backend.api_v1.job_job_group_link.job_job_group_link_dependencies import (
     get_job_job_group_link_service,
+)
+from backend.api_v1.job_job_group_link.job_job_group_link_schema import (
+    JobJobGroupLink as JobJobGroupLinkSchema,
+)
+from backend.api_v1.job_job_group_link.job_job_group_link_schema import (
+    JobJobGroupLinkBulkSet,
+    JobJobGroupLinkCreate,
 )
 from backend.api_v1.job_job_group_link.job_job_group_link_service import (
     JobJobGroupLinkService,
 )
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/job_job_group_links",
@@ -26,7 +29,7 @@ router = APIRouter(
 
 @router.get(
     "/job/{job_id}",
-    response_model=List[JobJobGroupLinkSchema],
+    response_model=list[JobJobGroupLinkSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.JOB, EssenceName.JOB_GROUP)],
 )
 async def get_links_for_job(
@@ -87,7 +90,7 @@ async def remove_link(
 
 @router.put(
     "/job/{job_id}",
-    response_model=List[JobJobGroupLinkSchema],
+    response_model=list[JobJobGroupLinkSchema],
     dependencies=[Guard(OperationVerb.LINK, EssenceName.JOB, EssenceName.JOB_GROUP)],
 )
 async def set_links(

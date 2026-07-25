@@ -1,23 +1,23 @@
 import io
-from typing import Annotated, List
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from starlette.responses import StreamingResponse
 
 from backend.api_v1.msg_full.msg_full_dependencies import get_msg_full_service
 from backend.api_v1.msg_full.msg_full_schema import (
     FullMsgCreate,
-    FullMsgUpdate,
     FullMsgRead,
+    FullMsgUpdate,
 )
 from backend.api_v1.msg_full.msg_full_service import MsgFullService
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(prefix="/full_msgs", tags=["Full Messages"])
 
 
-@router.get("", response_model=List[FullMsgRead])
+@router.get("", response_model=list[FullMsgRead])
 async def get_full_messages(
     service: Annotated[MsgFullService, Depends(get_msg_full_service)],
 ):
@@ -38,7 +38,7 @@ async def get_full_message(
     dependencies=[Guard(OperationVerb.CREATE, EssenceName.MSG_KEY, EssenceName.MSG)],
 )
 async def create_full_messages(
-    data_in: List[FullMsgCreate],
+    data_in: list[FullMsgCreate],
     service: Annotated[MsgFullService, Depends(get_msg_full_service)],
 ):
     await service.create_full_messages(data_in)

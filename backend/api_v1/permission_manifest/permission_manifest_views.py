@@ -11,18 +11,17 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Request
 from fastapi.security import HTTPBearer
 
-from backend.api_v1.permission_manifest.permission_manifest_schema import (
-    PermissionManifest,
-)
 from backend.api_v1.permission_manifest.permission_manifest_dependencies import (
     get_permission_manifest_service,
+)
+from backend.api_v1.permission_manifest.permission_manifest_schema import (
+    PermissionManifest,
 )
 from backend.api_v1.permission_manifest.permission_manifest_service import (
     PermissionManifestService,
 )
-
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/admin",

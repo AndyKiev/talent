@@ -1,22 +1,25 @@
-from fastapi import APIRouter, Depends, status, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, Optional, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.review_session_status.review_session_status_schema import (
-    ReviewSessionStatus as ReviewSessionStatusSchema,
-    ReviewSessionStatusCreate,
-    ReviewSessionStatusUpdate,
-)
 from backend.api_v1.review_session_status.review_session_status_dependencies import (
     get_review_session_status_service,
     review_session_status_by_id,
+)
+from backend.api_v1.review_session_status.review_session_status_schema import (
+    ReviewSessionStatus as ReviewSessionStatusSchema,
+)
+from backend.api_v1.review_session_status.review_session_status_schema import (
+    ReviewSessionStatusCreate,
+    ReviewSessionStatusUpdate,
 )
 from backend.api_v1.review_session_status.review_session_status_service import (
     ReviewSessionStatusService,
 )
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/review_session_statuses",
@@ -27,14 +30,14 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[ReviewSessionStatusSchema],
+    response_model=list[ReviewSessionStatusSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.REVIEW_SESSION_STATUS)],
 )
 async def get_review_session_statuses(
     service: Annotated[
         ReviewSessionStatusService, Depends(get_review_session_status_service)
     ],
-    sort: Optional[str] = Query(None, description='JSON: {"field": "asc|desc"}'),
+    sort: str | None = Query(None, description='JSON: {"field": "asc|desc"}'),
 ):
     return await service.get_review_session_statuses(sort=sort)
 

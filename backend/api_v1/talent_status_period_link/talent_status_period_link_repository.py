@@ -1,7 +1,5 @@
-from typing import Optional
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_repository import BaseRepository
 from backend.api_v1.talent_status_period_link.talent_status_period_link_model import (
@@ -17,7 +15,7 @@ class TalentStatusPeriodLinkRepository(BaseRepository):
         self,
         talent_period_id: int,
         talent_status_id: int,
-    ) -> Optional[TalentStatusPeriodLink]:
+    ) -> TalentStatusPeriodLink | None:
         """Look up an existing link by the unique (period, status) pair."""
         stmt = select(self.model).where(
             self.model.talent_period_id == talent_period_id,

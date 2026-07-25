@@ -5,16 +5,14 @@ Reads/writes backend/db_table_info.json — no database involvement.
 
 import json
 from pathlib import Path
-from typing import Optional
 
+from backend.api_v1.db_table_info.db_table_info_messages import (
+    DbTableInfoFileError,
+)
 from backend.api_v1.db_table_info.db_table_info_schema import (
     DbTableInfo,
     TableDataFile,
 )
-from backend.api_v1.db_table_info.db_table_info_messages import (
-    DbTableInfoFileError,
-)
-
 
 # JSON file lives next to the backend package root.
 _JSON_PATH = Path(__file__).resolve().parents[2] / "db_table_info.json"
@@ -57,7 +55,7 @@ class DbTableInfoRepository:
 
     # ── single-record helpers ──────────────────────────────────────────────
 
-    def get_by_table_name(self, table_name: str) -> Optional[DbTableInfo]:
+    def get_by_table_name(self, table_name: str) -> DbTableInfo | None:
         data = self.load_all()
         for t in data.tables:
             if t.table_name == table_name:

@@ -1,4 +1,4 @@
-from typing import Annotated, List
+from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPBearer
@@ -20,7 +20,7 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[RseDimensionTypeSchema])
+@router.get("", response_model=list[RseDimensionTypeSchema])
 async def get_review_session_employee_dimension_types(
     service: Annotated[
         ReviewSessionEmployeeDimensionTypeService,

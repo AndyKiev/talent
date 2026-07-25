@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Annotated, List, Optional
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
@@ -11,6 +11,8 @@ from backend.api_v1.department_job_target.department_job_target_dependencies imp
 )
 from backend.api_v1.department_job_target.department_job_target_schema import (
     DepartmentJobTarget as DepartmentJobTargetSchema,
+)
+from backend.api_v1.department_job_target.department_job_target_schema import (
     DepartmentJobTargetCreate,
     DepartmentJobTargetUpdate,
     FactEmployee,
@@ -22,7 +24,7 @@ from backend.api_v1.department_job_target.department_job_target_service import (
     DepartmentJobTargetService,
 )
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/department_job_targets",
@@ -36,7 +38,7 @@ router = APIRouter(
 
 @router.get(
     "/calculate",
-    response_model=List[HeadcountCalcRow],
+    response_model=list[HeadcountCalcRow],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT_JOB_TARGET)],
 )
 async def calculate_headcount(
@@ -52,7 +54,7 @@ async def calculate_headcount(
 
 @router.get(
     "/fact_employees",
-    response_model=List[FactEmployee],
+    response_model=list[FactEmployee],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT_JOB_TARGET)],
 )
 async def get_fact_employees(
@@ -102,7 +104,7 @@ async def count_targets_by_link(
 
 @router.get(
     "",
-    response_model=List[DepartmentJobTargetSchema],
+    response_model=list[DepartmentJobTargetSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT_JOB_TARGET)],
 )
 async def get_department_job_targets(
@@ -110,7 +112,7 @@ async def get_department_job_targets(
         DepartmentJobTargetService, Depends(get_department_job_target_service)
     ],
     department_id: int = Query(...),
-    department_type_job_link_id: Optional[int] = Query(None),
+    department_type_job_link_id: int | None = Query(None),
 ):
     """Dated target history for a department (optionally one job link)."""
     return await service.get_targets(department_id, department_type_job_link_id)

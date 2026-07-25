@@ -1,24 +1,25 @@
 import re
-from typing import Callable
-from pydantic import BaseModel
+from collections.abc import Callable
+
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.auth.auth_dependencies import validate_auth_user_ldap
-from backend.auth import auth_utils as auth_utils
-from backend.auth.auth_schemas import LDAPUser, AuthResponse, RefreshRequest
-from backend.auth.permission_errors import PermissionDeniedSet
-from backend.auth.permission_resolvers import resolve_user_is_bypass
-from backend.auth.access_testing import apply_access_test_context
-from backend.api_v1.employee.employee_service import EmployeeService
 from backend.api_v1.employee.employee_repository import EmployeeRepository
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.employee.employee_service import EmployeeService
 from backend.api_v1.msg_key.msg_key_model import MsgKey
 from backend.api_v1.msg_pg.msg_model import Msg
+from backend.auth import auth_utils as auth_utils
+from backend.auth.access_testing import apply_access_test_context
+from backend.auth.auth_dependencies import validate_auth_user_ldap
+from backend.auth.auth_schemas import AuthResponse, LDAPUser, RefreshRequest
+from backend.auth.permission_errors import PermissionDeniedSet
+from backend.auth.permission_resolvers import resolve_user_is_bypass
 from backend.database.db_helper import db_helper
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.utils.enums import OperationTypes, OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationTypes, OperationVerb
 
 # No import from user_dependency — that module imports us, so importing it
 # here would create a circular dependency.
@@ -172,10 +173,11 @@ async def register_employee(
     body: RegisterRequest,
     session: AsyncSession = Depends(db_helper.session_getter),
 ):
+    from sqlalchemy import func
+
     from backend.api_v1.app_setting.app_setting_service import get_bool_setting
     from backend.api_v1.employee.employee_schema import EmployeeCreate
     from backend.api_v1.employee_status.employee_status_model import EmployeeStatus
-    from sqlalchemy import func
 
     enabled = await get_bool_setting(session, SELF_REGISTRATION_SETTING, default=False)
     if not enabled:
@@ -219,9 +221,9 @@ async def register_employee(
     from backend.api_v1.person.person_model import Person
     from backend.api_v1.person.person_repository import PersonRepository
     from backend.utils.person_names import (
-        split_employee_full_name,
-        normalize_name_part,
         build_employee_name,
+        normalize_name_part,
+        split_employee_full_name,
     )
 
     last_raw, first_raw, patronymic_raw = split_employee_full_name(name)

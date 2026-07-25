@@ -1,12 +1,12 @@
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TrainingCategoryBase(BaseModel):
     name: str = Field(..., max_length=128)
     key: str = Field(..., max_length=64)
-    description: Optional[str] = Field(None, max_length=256)
+    description: str | None = Field(None, max_length=256)
 
 
 class TrainingCategoryCreate(TrainingCategoryBase):
@@ -14,9 +14,9 @@ class TrainingCategoryCreate(TrainingCategoryBase):
 
 
 class TrainingCategoryUpdate(BaseModel):
-    name: Optional[str] = Field(None, max_length=128)
-    key: Optional[str] = Field(None, max_length=64)
-    description: Optional[str] = Field(None, max_length=256)
+    name: str | None = Field(None, max_length=128)
+    key: str | None = Field(None, max_length=64)
+    description: str | None = Field(None, max_length=256)
 
 
 class TrainingCategory(TrainingCategoryBase):

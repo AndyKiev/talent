@@ -1,37 +1,37 @@
-from typing import Optional, List, Any
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api_v1.base.base_service import BaseService
-from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.user_setting.user_setting_repository import UserSettingRepository
-from backend.api_v1.user_setting.user_setting_model import UserSetting
-from backend.api_v1.user_setting.user_setting_schema import (
-    UserSetting as UserSettingSchema,
-    EffectiveUserSetting,
-)
-from backend.api_v1.user_setting.user_setting_messages import (
-    UserSettingNotFound,
-    UserSettingNotOverridable,
-    UserSettingValueBelowMin,
-)
-from backend.api_v1.user_setting.user_setting_messages import (
-    UserSettingUpdateSuccess,
-    UserSettingDeleteSuccess,
-)
 from backend.api_v1.app_setting.app_setting_model import AppSetting
 from backend.api_v1.app_setting.app_setting_repository import AppSettingRepository
 from backend.api_v1.app_setting.app_setting_service import AppSettingService, cast_value
+from backend.api_v1.base.base_service import BaseService
+from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.user_setting.user_setting_messages import (
+    UserSettingDeleteSuccess,
+    UserSettingNotFound,
+    UserSettingNotOverridable,
+    UserSettingUpdateSuccess,
+    UserSettingValueBelowMin,
+)
+from backend.api_v1.user_setting.user_setting_model import UserSetting
+from backend.api_v1.user_setting.user_setting_repository import UserSettingRepository
+from backend.api_v1.user_setting.user_setting_schema import (
+    EffectiveUserSetting,
+)
+from backend.api_v1.user_setting.user_setting_schema import (
+    UserSetting as UserSettingSchema,
+)
 
 
 class UserSettingService(BaseService):
     def __init__(
         self,
         repository: UserSettingRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -40,13 +40,13 @@ class UserSettingService(BaseService):
     # ------------------------------------------------------------------
 
     @property
-    def _employee_id(self) -> Optional[int]:
+    def _employee_id(self) -> int | None:
         return self.user.id if self.user else None
 
-    async def _setting_by_key(self, key: str) -> Optional[AppSetting]:
+    async def _setting_by_key(self, key: str) -> AppSetting | None:
         return await self.session.scalar(select(AppSetting).where(AppSetting.key == key))
 
-    async def _override_for(self, app_setting_id: int) -> Optional[UserSetting]:
+    async def _override_for(self, app_setting_id: int) -> UserSetting | None:
         return await self.session.scalar(
             select(UserSetting).where(
                 UserSetting.employee_id == self._employee_id,
@@ -83,7 +83,7 @@ class UserSettingService(BaseService):
             return True
         return bool(user_group_ids & set(setting.allowed_group_ids))
 
-    async def get_effective_settings(self) -> List[EffectiveUserSetting]:
+    async def get_effective_settings(self) -> list[EffectiveUserSetting]:
         """All overridable, active settings with this user's override merged in.
         Drives the user-facing /settings page. Respects per-setting visibility
         (visible_to_all_groups / visible_to_regular / specific group links)."""
@@ -107,7 +107,7 @@ class UserSettingService(BaseService):
             ).all()
             overrides = {r.app_setting_id: r for r in rows}
 
-        result: List[EffectiveUserSetting] = []
+        result: list[EffectiveUserSetting] = []
         for s in settings:
             if not self._setting_visible(s):
                 continue

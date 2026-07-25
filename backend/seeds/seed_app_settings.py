@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(_REPO_ROOT) not in sys.path:
@@ -9,10 +9,9 @@ import asyncio
 
 from sqlalchemy import select
 
-from backend.database.db_helper import db_helper
-from backend.api_v1.setting_value_type.setting_value_type_model import SettingValueType
 from backend.api_v1.app_setting.app_setting_model import AppSetting
-
+from backend.api_v1.setting_value_type.setting_value_type_model import SettingValueType
+from backend.database.db_helper import db_helper
 
 # Value types — the catalog that says how to read a setting's JSON value.
 VALUE_TYPES = [

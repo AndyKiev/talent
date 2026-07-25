@@ -1,9 +1,11 @@
 # backend/api_v1/user_group/user_group_model.py
 from typing import TYPE_CHECKING
-from sqlalchemy import Integer, String, Text, Boolean, ForeignKey
+
+from sqlalchemy import Boolean, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
+
 from backend.api_v1.base.base_model import Base
+from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
 
 if TYPE_CHECKING:
     from backend.api_v1.table_relationship_links.employee_user_group_link_model import (
@@ -12,13 +14,13 @@ if TYPE_CHECKING:
     from backend.api_v1.table_relationship_links.job_user_group_link_model import (
         JobUserGroupLink,
     )
-    from backend.api_v1.user_group_type.user_group_type_model import UserGroupType
     from backend.api_v1.table_relationship_links.user_group_operation_essence_link_model import (
         UserGroupOperationEssenceLink,
     )
     from backend.api_v1.table_relationship_links.user_group_operation_essence_set_link_model import (
         UserGroupOperationEssenceSetLink,
     )
+    from backend.api_v1.user_group_type.user_group_type_model import UserGroupType
 
 
 class UserGroup(IntIdPkMixin, Base):

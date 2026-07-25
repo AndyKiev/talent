@@ -1,5 +1,4 @@
 from datetime import date
-from typing import List, Optional
 
 from sqlalchemy import func, select, union
 
@@ -30,7 +29,7 @@ class DepartmentJobTargetRepository(BaseRepository):
 
     async def get_by_dept_link_date(
         self, department_id: int, link_id: int, effective_date: date
-    ) -> Optional[DepartmentJobTarget]:
+    ) -> DepartmentJobTarget | None:
         """Fetch a row by its unique (department, link, effective_date) triple."""
         return (
             await self.session.execute(
@@ -43,8 +42,8 @@ class DepartmentJobTargetRepository(BaseRepository):
         ).scalar_one_or_none()
 
     async def get_targets(
-        self, department_id: int, link_id: Optional[int] = None
-    ) -> List[DepartmentJobTarget]:
+        self, department_id: int, link_id: int | None = None
+    ) -> list[DepartmentJobTarget]:
         """Target history for a department (optionally one link), newest first."""
         stmt = select(DepartmentJobTarget).where(
             DepartmentJobTarget.department_id == department_id
@@ -155,7 +154,7 @@ class DepartmentJobTargetRepository(BaseRepository):
         on_date: date,
         humans_only: bool,
         human_origin_id: int,
-    ) -> List[tuple]:
+    ) -> list[tuple]:
         """
         Flattened (employee_id, effective_date, event_id, event_status_name,
         direction_code, new_job_id, new_status_id, new_department_id) rows for

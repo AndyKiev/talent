@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, UniqueConstraint
 from typing import TYPE_CHECKING
 
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
+from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
     from backend.api_v1.department_type.department_type_model import DepartmentType
@@ -47,7 +47,7 @@ class EmployeeResponsibilityDepartment(IntIdPkMixin, TimestampMixin, Base):
     )
 
     # ── Relationships ──────────────────────────────────────────────────────
-    department_type: Mapped["DepartmentType"] = relationship(
+    department_type: Mapped[DepartmentType] = relationship(
         lazy="selectin",
     )
 

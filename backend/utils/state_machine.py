@@ -22,7 +22,8 @@ Firing an event:
 Raises InvalidTransitionError on undefined (state, event) pairs.
 """
 
-from typing import Callable, Generic, Hashable, TypeVar, Union
+from collections.abc import Callable, Hashable
+from typing import Generic, TypeVar
 
 StateT = TypeVar("StateT", bound=Hashable)
 EventT = TypeVar("EventT", bound=Hashable)
@@ -74,7 +75,7 @@ class StateMachine(Generic[StateT, EventT, CtxT]):
 
     def transition(
         self,
-        from_state: Union[StateT, tuple[StateT, ...]],
+        from_state: StateT | tuple[StateT, ...],
         event: EventT,
         to_state: StateT,
     ) -> Callable[[Action[CtxT]], Action[CtxT]]:

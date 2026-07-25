@@ -1,5 +1,5 @@
 # backend/utils/enums.py
-from enum import Enum, auto
+from enum import Enum
 
 # Canonical display date format (day.month.year), e.g. 31.12.2026.
 DATE_FORMAT = "DD.MM.YYYY"

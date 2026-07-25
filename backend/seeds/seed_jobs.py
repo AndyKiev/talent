@@ -1,7 +1,9 @@
 import asyncio
-from backend.database.db_helper import db_helper
-from backend.api_v1.job.job_model import Job
+
 from sqlalchemy import select
+
+from backend.api_v1.job.job_model import Job
+from backend.database.db_helper import db_helper
 
 
 async def seed_jobs():

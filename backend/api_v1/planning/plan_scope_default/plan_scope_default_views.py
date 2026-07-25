@@ -1,20 +1,23 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.planning.plan_scope_default.plan_scope_default_schema import (
-    PlanScopeDefault as PlanScopeDefaultSchema,
-    PlanScopeDefaultCreate,
-)
 from backend.api_v1.planning.plan_scope_default.plan_scope_default_dependencies import (
     get_plan_scope_default_service,
+)
+from backend.api_v1.planning.plan_scope_default.plan_scope_default_schema import (
+    PlanScopeDefault as PlanScopeDefaultSchema,
+)
+from backend.api_v1.planning.plan_scope_default.plan_scope_default_schema import (
+    PlanScopeDefaultCreate,
 )
 from backend.api_v1.planning.plan_scope_default.plan_scope_default_service import (
     PlanScopeDefaultService,
 )
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/admin/plan_scope_defaults",
@@ -25,7 +28,7 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[PlanScopeDefaultSchema],
+    response_model=list[PlanScopeDefaultSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.PLAN_SCOPE_DEFAULT)],
 )
 async def get_plan_scope_defaults(

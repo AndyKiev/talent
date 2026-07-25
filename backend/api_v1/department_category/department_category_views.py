@@ -1,22 +1,25 @@
-from fastapi import APIRouter, Depends, status, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, Optional, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.department_category.department_category_dependencies import (
+    department_category_by_id,
+    get_department_category_service,
+)
 from backend.api_v1.department_category.department_category_schema import (
     DepartmentCategory as DepartmentCategorySchema,
+)
+from backend.api_v1.department_category.department_category_schema import (
     DepartmentCategoryCreate,
     DepartmentCategoryUpdate,
-)
-from backend.api_v1.department_category.department_category_dependencies import (
-    get_department_category_service,
-    department_category_by_id,
 )
 from backend.api_v1.department_category.department_category_service import (
     DepartmentCategoryService,
 )
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/admin/department_categories",
@@ -27,18 +30,18 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[DepartmentCategorySchema],
+    response_model=list[DepartmentCategorySchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT_CATEGORY)],
 )
 async def get_department_categories(
     service: Annotated[
         DepartmentCategoryService, Depends(get_department_category_service)
     ],
-    name: Optional[str] = None,
-    is_active: Optional[bool] = None,
-    is_main: Optional[bool] = None,
-    is_responsibility: Optional[bool] = None,
-    sort: Optional[str] = Query(None, description='JSON: {"field": "asc|desc"}'),
+    name: str | None = None,
+    is_active: bool | None = None,
+    is_main: bool | None = None,
+    is_responsibility: bool | None = None,
+    sort: str | None = Query(None, description='JSON: {"field": "asc|desc"}'),
 ):
     return await service.get_department_categories(
         name=name,

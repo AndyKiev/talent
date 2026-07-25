@@ -1,26 +1,25 @@
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.process_roles.process.process_messages import (
+    ProcessCreateSuccess,
+    ProcessDeleteError,
+    ProcessDeleteSuccess,
+    ProcessNameTaken,
+    ProcessNotFound,
+    ProcessUpdateSuccess,
+)
 from backend.api_v1.process_roles.process.process_repository import ProcessRepository
 from backend.api_v1.process_roles.process.process_schema import (
     Process as ProcessSchema,
+)
+from backend.api_v1.process_roles.process.process_schema import (
     ProcessCreate,
     ProcessUpdate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.process_roles.process.process_messages import (
-    ProcessNotFound,
-    ProcessNameTaken,
-    ProcessDeleteError,
-)
-from backend.api_v1.process_roles.process.process_messages import (
-    ProcessCreateSuccess,
-    ProcessUpdateSuccess,
-    ProcessDeleteSuccess,
 )
 
 
@@ -28,8 +27,8 @@ class ProcessService(BaseService):
     def __init__(
         self,
         repository: ProcessRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -41,9 +40,9 @@ class ProcessService(BaseService):
 
     async def get_processes(
         self,
-        is_active: Optional[bool] = None,
-        sort: Optional[str] = None,
-    ) -> List[ProcessSchema]:
+        is_active: bool | None = None,
+        sort: str | None = None,
+    ) -> list[ProcessSchema]:
         filters = {}
         if is_active is not None:
             filters["is_active"] = is_active

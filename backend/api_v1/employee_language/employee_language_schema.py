@@ -1,5 +1,5 @@
+
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
 
 
 class EmployeeLanguageItem(BaseModel):
@@ -8,13 +8,13 @@ class EmployeeLanguageItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     language: str
-    level_id: Optional[int] = None
-    level_code: Optional[str] = None
-    level_hint: Optional[str] = None
+    level_id: int | None = None
+    level_code: str | None = None
+    level_hint: str | None = None
 
 
 class EmployeeLanguageInput(BaseModel):
     """One language row as submitted by the client when saving a profile."""
 
     language: str
-    level_id: Optional[int] = None
+    level_id: int | None = None

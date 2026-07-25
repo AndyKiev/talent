@@ -1,22 +1,24 @@
-from fastapi import APIRouter, Depends, status, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, Optional, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.region.region_schema import (
-    Region as RegionSchema,
-    RegionCreate,
-    RegionUpdate,
-    RegionMove,
-)
 from backend.api_v1.region.region_dependencies import (
     get_region_service,
     region_by_id,
 )
+from backend.api_v1.region.region_schema import (
+    Region as RegionSchema,
+)
+from backend.api_v1.region.region_schema import (
+    RegionCreate,
+    RegionMove,
+    RegionUpdate,
+)
 from backend.api_v1.region.region_service import RegionService
-
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/regions",
@@ -27,14 +29,14 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[RegionSchema],
+    response_model=list[RegionSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.REGION)],
 )
 async def get_regions(
     service: Annotated[RegionService, Depends(get_region_service)],
-    name: Optional[str] = None,
-    is_active: Optional[bool] = None,
-    sort: Optional[str] = Query(None, description='JSON: {"field": "asc|desc"}'),
+    name: str | None = None,
+    is_active: bool | None = None,
+    sort: str | None = Query(None, description='JSON: {"field": "asc|desc"}'),
 ):
     return await service.get_regions(name=name, is_active=is_active, sort=sort)
 

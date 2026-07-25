@@ -1,4 +1,4 @@
-from typing import Annotated, List
+from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPBearer
@@ -27,7 +27,7 @@ class ReviewSessionEmployeeFeedbackTypeSchema(BaseModel):
     sort_order: int = 0
 
 
-@router.get("", response_model=List[ReviewSessionEmployeeFeedbackTypeSchema])
+@router.get("", response_model=list[ReviewSessionEmployeeFeedbackTypeSchema])
 async def list_rows(
     session: Annotated[AsyncSession, Depends(db_helper.session_getter)],
 ):

@@ -1,13 +1,11 @@
-from fastapi import HTTPException, status
-
-from jwt.exceptions import InvalidTokenError
-from datetime import timedelta, UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import bcrypt
-
 import jwt
-from backend.config.config import settings
+from fastapi import HTTPException, status
+from jwt.exceptions import InvalidTokenError
 
+from backend.config.config import settings
 
 # Token type discriminator embedded in every JWT we issue. The access path and
 # the refresh path each accept ONLY their own type, so a refresh token can never
@@ -49,12 +47,12 @@ def decode_jwt(
 
     try:
         decoded = jwt.decode(token, public_key, algorithms=[algorithm])
-    except InvalidTokenError as e:
+    except InvalidTokenError:
         # this error means the structure_frontend of token is not correct. for example it is not split by three dots
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             # detail=f"invalid token error: {e}",
-            detail=f"invalid token error",
+            detail="invalid token error",
         )
     return decoded
 

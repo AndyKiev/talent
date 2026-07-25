@@ -1,6 +1,8 @@
 from typing import TYPE_CHECKING
+
+from sqlalchemy import CheckConstraint, ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import Integer, ForeignKey, CheckConstraint, UniqueConstraint
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_constants import (

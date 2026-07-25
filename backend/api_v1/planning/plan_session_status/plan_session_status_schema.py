@@ -1,12 +1,12 @@
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class PlanSessionStatusBase(BaseModel):
     key: str = Field(..., max_length=16)
     name: str = Field(..., max_length=64)
-    description: Optional[str] = Field(None, max_length=256)
+    description: str | None = Field(None, max_length=256)
 
 
 class PlanSessionStatusCreate(PlanSessionStatusBase):
@@ -14,9 +14,9 @@ class PlanSessionStatusCreate(PlanSessionStatusBase):
 
 
 class PlanSessionStatusUpdate(BaseModel):
-    key: Optional[str] = Field(None, max_length=16)
-    name: Optional[str] = Field(None, max_length=64)
-    description: Optional[str] = Field(None, max_length=256)
+    key: str | None = Field(None, max_length=16)
+    name: str | None = Field(None, max_length=64)
+    description: str | None = Field(None, max_length=256)
 
 
 class PlanSessionStatus(PlanSessionStatusBase):

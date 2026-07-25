@@ -7,16 +7,15 @@ and needs no separate msg-create permission (the gate lives on the msg views).
 """
 
 import json
-from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api_v1.msg_full.msg_full_service import MsgFullService
 from backend.api_v1.msg_full.msg_full_repository import MsgFullRepository
+from backend.api_v1.msg_full.msg_full_service import MsgFullService
 
 
 async def upsert_translations(
-    session: AsyncSession, entries: dict[str, dict[str, Optional[str]]]
+    session: AsyncSession, entries: dict[str, dict[str, str | None]]
 ) -> None:
     """Upsert ``{key: {"eng": ..., "ukr": ...}}``. Keys/langs with empty values are
     dropped; a no-op when nothing usable remains (so callers can pass blanks)."""

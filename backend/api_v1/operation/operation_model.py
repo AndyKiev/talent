@@ -1,18 +1,20 @@
 # backend/api_v1/models/operation_model.py
 from typing import TYPE_CHECKING
+
 from sqlalchemy import String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
+
 from backend.api_v1.base.base_model import Base
+from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
 
 # backend/api_v1/operation/operation_model.py
 
 if TYPE_CHECKING:
-    from backend.api_v1.table_relationship_links.operation_user_group_link_model import (
-        OperationUserGroupLink,
-    )
     from backend.api_v1.operation_essence_link.operation_essence_link_model import (
         OperationEssenceLink,
+    )
+    from backend.api_v1.table_relationship_links.operation_user_group_link_model import (
+        OperationUserGroupLink,
     )
 
 

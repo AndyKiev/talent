@@ -1,4 +1,3 @@
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,21 +5,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.planning.plan_scope_default.plan_scope_default_messages import (
+    PlanScopeDefaultCreateSuccess,
+    PlanScopeDefaultDeleteError,
+    PlanScopeDefaultDeleteSuccess,
+    PlanScopeDefaultExists,
+    PlanScopeDefaultNotFound,
+)
 from backend.api_v1.planning.plan_scope_default.plan_scope_default_repository import (
     PlanScopeDefaultRepository,
 )
 from backend.api_v1.planning.plan_scope_default.plan_scope_default_schema import (
     PlanScopeDefault as PlanScopeDefaultSchema,
+)
+from backend.api_v1.planning.plan_scope_default.plan_scope_default_schema import (
     PlanScopeDefaultCreate,
-)
-from backend.api_v1.planning.plan_scope_default.plan_scope_default_messages import (
-    PlanScopeDefaultNotFound,
-    PlanScopeDefaultExists,
-    PlanScopeDefaultDeleteError,
-)
-from backend.api_v1.planning.plan_scope_default.plan_scope_default_messages import (
-    PlanScopeDefaultCreateSuccess,
-    PlanScopeDefaultDeleteSuccess,
 )
 
 
@@ -35,8 +34,8 @@ class PlanScopeDefaultService(BaseService):
     def __init__(
         self,
         repository: PlanScopeDefaultRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -46,7 +45,7 @@ class PlanScopeDefaultService(BaseService):
             raise await self._resolve_domain_error(PlanScopeDefaultNotFound(id))
         return result
 
-    async def get_plan_scope_defaults(self) -> List[PlanScopeDefaultSchema]:
+    async def get_plan_scope_defaults(self) -> list[PlanScopeDefaultSchema]:
         records = await self.get_all(sort="id")
         return [PlanScopeDefaultSchema.model_validate(r) for r in records]
 

@@ -1,44 +1,40 @@
-from typing import List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.base.errors import DomainError
-from backend.api_v1.job_job_group_link.job_job_group_link_repository import (
-    JobJobGroupLinkRepository,
-)
-from backend.api_v1.job_job_group_link.job_job_group_link_model import JobJobGroupLink
-from backend.api_v1.job_job_group_link.job_job_group_link_schema import (
-    JobJobGroupLink as JobJobGroupLinkSchema,
-    JobJobGroupLinkCreate,
-    JobJobGroupLinkBulkSet,
-)
-from backend.api_v1.job_job_group_link.job_job_group_link_messages import (
-    JobJobGroupLinkNotFound,
-    JobAlreadyInJobGroup,
-    JobJobGroupLinkDeleteError,
-    JobGroupTypeSingletonViolation,
-    JobGroupNotFoundForLink,
-    JobGroupsNotFoundForLink,
-    JobNotFoundForLink,
-)
-from backend.api_v1.job_job_group_link.job_job_group_link_messages import (
-    JobJobGroupLinkCreateSuccess,
-    JobJobGroupLinkDeleteSuccess,
-    JobJobGroupLinkSetSuccess,
-)
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.job.job_model import Job
 from backend.api_v1.job_group.job_group_model import JobGroup
+from backend.api_v1.job_job_group_link.job_job_group_link_messages import (
+    JobAlreadyInJobGroup,
+    JobGroupNotFoundForLink,
+    JobGroupsNotFoundForLink,
+    JobGroupTypeSingletonViolation,
+    JobJobGroupLinkCreateSuccess,
+    JobJobGroupLinkDeleteSuccess,
+    JobJobGroupLinkNotFound,
+    JobNotFoundForLink,
+)
+from backend.api_v1.job_job_group_link.job_job_group_link_model import JobJobGroupLink
+from backend.api_v1.job_job_group_link.job_job_group_link_repository import (
+    JobJobGroupLinkRepository,
+)
+from backend.api_v1.job_job_group_link.job_job_group_link_schema import (
+    JobJobGroupLink as JobJobGroupLinkSchema,
+)
+from backend.api_v1.job_job_group_link.job_job_group_link_schema import (
+    JobJobGroupLinkBulkSet,
+    JobJobGroupLinkCreate,
+)
 
 
 class JobJobGroupLinkService(BaseService):
     def __init__(
         self,
         repository: JobJobGroupLinkRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -60,6 +56,7 @@ class JobJobGroupLinkService(BaseService):
 
     async def _get_job_or_raise(self, job_id: int) -> Job:
         from sqlalchemy import select
+
         from backend.api_v1.job.job_model import Job as JobModel
 
         result = await self.session.execute(
@@ -109,7 +106,7 @@ class JobJobGroupLinkService(BaseService):
     # Read
     # ------------------------------------------------------------------
 
-    async def get_links_for_job(self, job_id: int) -> List[JobJobGroupLinkSchema]:
+    async def get_links_for_job(self, job_id: int) -> list[JobJobGroupLinkSchema]:
         links = await self.repository.get_links_for_job(job_id)
         return [self._to_schema(lnk) for lnk in links]
 
@@ -180,7 +177,7 @@ class JobJobGroupLinkService(BaseService):
 
     async def set_links(
         self, job_id: int, payload: JobJobGroupLinkBulkSet
-    ) -> List[JobJobGroupLinkSchema]:
+    ) -> list[JobJobGroupLinkSchema]:
         job = await self._get_job_or_raise(job_id)
 
         # Validate all requested group IDs exist

@@ -1,12 +1,11 @@
-from typing import Sequence
-
-from sqlalchemy import delete, select
+from collections.abc import Sequence
 
 from backend.api_v1.base.base_repository import BaseRepository
 from backend.api_v1.menu.menu_model import Menu
 from backend.api_v1.table_relationship_links.menu_user_group_link_model import (
     MenuUserGroupLink,
 )
+from sqlalchemy import delete, select
 
 
 class MenuRepository(BaseRepository):

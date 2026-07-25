@@ -30,16 +30,15 @@ from PIL import Image, UnidentifiedImageError
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
-from sqlalchemy import select
-
-from backend.database.db_helper import db_helper
 from backend.api_v1.employee_photo.employee_photo_model import EmployeePhoto
 
 # Pull the live target straight from the service so this can never drift from it.
 from backend.api_v1.employee_photo.employee_photo_service import (
-    MAX_DIMENSION,
     JPEG_QUALITY,
+    MAX_DIMENSION,
 )
+from backend.database.db_helper import db_helper
+from sqlalchemy import select
 
 
 def reprocess(raw: bytes) -> tuple[bytes, str]:

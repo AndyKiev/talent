@@ -1,6 +1,8 @@
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Boolean, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Boolean
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin, TimestampMixin
 
@@ -20,7 +22,7 @@ class SettingValueType(IntIdPkMixin, TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(64), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
-    settings: Mapped[List["AppSetting"]] = relationship(
+    settings: Mapped[list["AppSetting"]] = relationship(
         back_populates="value_type",
         lazy="selectin",
     )

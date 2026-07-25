@@ -1,26 +1,29 @@
-from fastapi import APIRouter, Depends, status, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, Optional, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.department_type_job_link.department_type_job_link_dependencies import (
+    department_type_job_link_by_composite_key,
+    department_type_job_link_by_id,
+    get_department_type_job_link_service,
+)
 from backend.api_v1.department_type_job_link.department_type_job_link_schema import (
     DepartmentTypeJobLink as DepartmentTypeJobLinkSchema,
+)
+from backend.api_v1.department_type_job_link.department_type_job_link_schema import (
     DepartmentTypeJobLinkBulkSync,
     DepartmentTypeJobLinkBulkSyncResult,
     DepartmentTypeJobLinkCreate,
     DepartmentTypeJobLinkUpdate,
     JobWithLinkId,
 )
-from backend.api_v1.department_type_job_link.department_type_job_link_dependencies import (
-    get_department_type_job_link_service,
-    department_type_job_link_by_id,
-    department_type_job_link_by_composite_key,
-)
 from backend.api_v1.department_type_job_link.department_type_job_link_service import (
     DepartmentTypeJobLinkService,
 )
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/department_type_job_links",
@@ -31,7 +34,7 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[DepartmentTypeJobLinkSchema],
+    response_model=list[DepartmentTypeJobLinkSchema],
     dependencies=[
         Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT_TYPE, EssenceName.JOB)
     ],
@@ -40,10 +43,10 @@ async def get_department_type_job_links(
     service: Annotated[
         DepartmentTypeJobLinkService, Depends(get_department_type_job_link_service)
     ],
-    department_type_id: Optional[int] = None,
-    job_id: Optional[int] = None,
-    is_active: Optional[bool] = None,
-    sort: Optional[str] = Query(None, description='JSON: {"field": "asc|desc"}'),
+    department_type_id: int | None = None,
+    job_id: int | None = None,
+    is_active: bool | None = None,
+    sort: str | None = Query(None, description='JSON: {"field": "asc|desc"}'),
 ):
     """
     List links. Optionally filter by ?department_type_id=, ?job_id=, or ?is_active=.
@@ -77,7 +80,7 @@ async def get_department_type_job_link_by_composite_key(
 
 @router.get(
     "/by_department_type/{department_type_id}/jobs",
-    response_model=List[JobWithLinkId],
+    response_model=list[JobWithLinkId],
     dependencies=[
         Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT_TYPE, EssenceName.JOB)
     ],
@@ -87,7 +90,7 @@ async def get_jobs_by_department_type(
     service: Annotated[
         DepartmentTypeJobLinkService, Depends(get_department_type_job_link_service)
     ],
-    is_active: Optional[bool] = Query(
+    is_active: bool | None = Query(
         None,  # Changed from True to None
         description=(
             "True → only jobs where both the link and the job are active. "

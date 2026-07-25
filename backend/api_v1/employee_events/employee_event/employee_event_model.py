@@ -1,24 +1,24 @@
 from __future__ import annotations
 
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, String, Text, Date
-from typing import TYPE_CHECKING
 import datetime
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Date, ForeignKey, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 
-
 if TYPE_CHECKING:
     from backend.api_v1.employee.employee_model import Employee
-    from backend.api_v1.employee_events.employee_event_type.employee_event_type_model import (
-        EmployeeEventType,
-    )
     from backend.api_v1.employee_events.employee_event_change.employee_event_change_model import (
         EmployeeEventChange,
     )
     from backend.api_v1.employee_events.employee_event_status.employee_event_status_model import (
         EmployeeEventStatus,
+    )
+    from backend.api_v1.employee_events.employee_event_type.employee_event_type_model import (
+        EmployeeEventType,
     )
 
 
@@ -57,24 +57,24 @@ class EmployeeEvent(IntIdPkMixin, TimestampMixin, Base):
         nullable=False,
     )
 
-    employee: Mapped["Employee"] = relationship(
+    employee: Mapped[Employee] = relationship(
         foreign_keys=[employee_id],
         back_populates="events",
         lazy="selectin",
     )
-    creator: Mapped["Employee"] = relationship(
+    creator: Mapped[Employee] = relationship(
         foreign_keys=[created_by],
         lazy="selectin",
     )
-    event_type: Mapped["EmployeeEventType"] = relationship(
+    event_type: Mapped[EmployeeEventType] = relationship(
         back_populates="events",
         lazy="selectin",
     )
-    status: Mapped["EmployeeEventStatus"] = relationship(
+    status: Mapped[EmployeeEventStatus] = relationship(
         back_populates="events",
         lazy="selectin",
     )
-    changes: Mapped[list["EmployeeEventChange"]] = relationship(
+    changes: Mapped[list[EmployeeEventChange]] = relationship(
         back_populates="event",
         lazy="selectin",
         cascade="all, delete-orphan",

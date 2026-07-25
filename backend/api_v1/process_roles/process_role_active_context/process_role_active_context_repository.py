@@ -1,17 +1,21 @@
-from typing import Optional, Sequence, Tuple
+from collections.abc import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.orm import raiseload
 
 from backend.api_v1.base.base_repository import BaseRepository
+from backend.api_v1.department.department_model import Department
+from backend.api_v1.department_category.department_category_model import (
+    DepartmentCategory,
+)
+from backend.api_v1.process_roles.process.process_model import Process
+from backend.api_v1.process_roles.process_role.process_role_model import ProcessRole
 from backend.api_v1.process_roles.process_role_active_context.process_role_active_context_model import (
     ProcessRoleActiveContext,
 )
 from backend.api_v1.process_roles.process_role_holder.process_role_holder_model import (
     ProcessRoleHolder,
 )
-from backend.api_v1.process_roles.process_role.process_role_model import ProcessRole
-from backend.api_v1.process_roles.process.process_model import Process
 from backend.api_v1.process_roles.process_role_holder_department_link.process_role_holder_department_link_model import (
     ProcessRoleHolderDepartmentLink,
 )
@@ -21,10 +25,6 @@ from backend.api_v1.process_roles.process_role_holder_employee_link.process_role
 from backend.api_v1.review_session_employee.review_session_employee_model import (
     ReviewSessionEmployee,
 )
-from backend.api_v1.department.department_model import Department
-from backend.api_v1.department_category.department_category_model import (
-    DepartmentCategory,
-)
 
 
 class ProcessRoleActiveContextRepository(BaseRepository):
@@ -32,7 +32,7 @@ class ProcessRoleActiveContextRepository(BaseRepository):
 
     async def get_for_employee(
         self, employee_id: int
-    ) -> Optional[ProcessRoleActiveContext]:
+    ) -> ProcessRoleActiveContext | None:
         stmt = select(self.model).where(self.model.employee_id == employee_id)
         return await self.session.scalar(stmt)
 
@@ -62,7 +62,7 @@ class ProcessRoleActiveContextRepository(BaseRepository):
 
     async def get_assigned_departments(
         self, employee_id: int, process_key: str
-    ) -> Sequence[Tuple[int, Department]]:
+    ) -> Sequence[tuple[int, Department]]:
         """(process_role_id, Department) the employee supervises within the process
         (i.e. department links for any dept-target role they hold), ordered by the
         department category's sort_order then name — the display order of the
@@ -140,8 +140,8 @@ class ProcessRoleActiveContextRepository(BaseRepository):
     async def upsert(
         self,
         employee_id: int,
-        process_role_id: Optional[int],
-        department_id: Optional[int],
+        process_role_id: int | None,
+        department_id: int | None,
     ) -> ProcessRoleActiveContext:
         record = await self.get_for_employee(employee_id)
         if record is None:

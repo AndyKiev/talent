@@ -1,16 +1,16 @@
-from typing import TYPE_CHECKING
 from datetime import date
+from typing import TYPE_CHECKING
 
+from sqlalchemy import Date, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, Date, ForeignKey, UniqueConstraint
 
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 
 if TYPE_CHECKING:
     from backend.api_v1.employee.employee_model import Employee
-    from backend.api_v1.sex.sex_model import Sex
     from backend.api_v1.marital_status.marital_status_model import MaritalStatus
+    from backend.api_v1.sex.sex_model import Sex
 
 
 class Person(IntIdPkMixin, TimestampMixin, Base):

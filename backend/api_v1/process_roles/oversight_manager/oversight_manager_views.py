@@ -1,14 +1,15 @@
+from typing import Annotated, Optional
+
 from fastapi import APIRouter, Depends, Query
-from typing import Annotated, List, Optional
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.process_roles.oversight_manager.oversight_manager_schema import (
-    OversightManagerOption,
-    MyOversightManager,
-    SetOversightManager,
-)
 from backend.api_v1.process_roles.oversight_manager.oversight_manager_dependencies import (
     get_oversight_manager_service,
+)
+from backend.api_v1.process_roles.oversight_manager.oversight_manager_schema import (
+    MyOversightManager,
+    OversightManagerOption,
+    SetOversightManager,
 )
 from backend.api_v1.process_roles.oversight_manager.oversight_manager_service import (
     OversightManagerService,
@@ -24,7 +25,7 @@ router = APIRouter(
 )
 
 
-@router.get("/oversight_managers", response_model=List[OversightManagerOption])
+@router.get("/oversight_managers", response_model=list[OversightManagerOption])
 async def get_oversight_managers(
     service: Annotated[OversightManagerService, Depends(get_oversight_manager_service)],
     short: Annotated[bool, Query(description="Return only managers from the user's department scope")] = False,

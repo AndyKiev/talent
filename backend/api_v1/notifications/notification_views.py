@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, status
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, status
 
 from backend.api_v1.notifications import notification_store as store
 from backend.utils.heavy_process import run_heavy_process
@@ -21,8 +21,8 @@ async def _send_read_email(notification_message: str, user_code: str) -> None:
     if not SEND_READ_EMAIL:
         return
     try:
-        from backend.utils.send_mail import send_email
         from backend.config import settings
+        from backend.utils.send_mail import send_email
 
         body = (
             f"Your notification '{notification_message}' "

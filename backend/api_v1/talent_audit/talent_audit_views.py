@@ -1,4 +1,4 @@
-from typing import Annotated, List, Optional
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
@@ -10,12 +10,14 @@ from backend.api_v1.talent_audit.talent_audit_dependencies import (
 )
 from backend.api_v1.talent_audit.talent_audit_schema import (
     TalentAudit as TalentAuditSchema,
+)
+from backend.api_v1.talent_audit.talent_audit_schema import (
     TalentAuditCreate,
     TalentAuditUpdate,
 )
 from backend.api_v1.talent_audit.talent_audit_service import TalentAuditService
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/talent_audits",
@@ -26,12 +28,12 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[TalentAuditSchema],
+    response_model=list[TalentAuditSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT)],
 )
 async def get_talent_audits(
     service: Annotated[TalentAuditService, Depends(get_talent_audit_service)],
-    sort: Optional[str] = Query(
+    sort: str | None = Query(
         None,
         description='JSON for sorting: {"field": "asc|desc"} or [{"field1": "asc"}, "field2"]',
     ),

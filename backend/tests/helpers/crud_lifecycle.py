@@ -12,7 +12,6 @@ return the bare schema. A new essence gets API coverage with ~10 lines:
         )
 """
 
-from typing import Optional
 
 import httpx
 
@@ -24,7 +23,7 @@ def run_crud_lifecycle(
     update_body: dict,
     name_field: str = "name",
 ) -> None:
-    record_id: Optional[int] = None
+    record_id: int | None = None
     try:
         created = api.post(path, json=create_body)
         assert created.status_code == 201, f"POST {path}: {created.text}"

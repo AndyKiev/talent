@@ -1,4 +1,3 @@
-from typing import Optional, List
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -6,38 +5,38 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_repository import (
-    ProcessRoleHolderEmployeeLinkRepository,
-)
-from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_model import (
-    ProcessRoleHolderEmployeeLink as ProcessRoleHolderEmployeeLinkModel,
-)
-from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_schema import (
-    ProcessRoleHolderEmployeeLink as ProcessRoleHolderEmployeeLinkSchema,
-    ProcessRoleHolderEmployeeLinkCreate,
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.process_roles.process.process_model import Process
+from backend.api_v1.process_roles.process_role.process_role_model import ProcessRole
+from backend.api_v1.process_roles.process_role_holder.process_role_holder_messages import (
+    ProcessRoleHolderNotFound,
 )
 from backend.api_v1.process_roles.process_role_holder.process_role_holder_model import (
     ProcessRoleHolder,
 )
-from backend.api_v1.process_roles.process_role.process_role_model import ProcessRole
-from backend.api_v1.process_roles.process.process_model import Process
 from backend.api_v1.process_roles.process_role_holder.process_role_holder_repository import (
     ProcessRoleHolderRepository,
 )
-from backend.api_v1.process_roles.process_role_holder.process_role_holder_messages import (
-    ProcessRoleHolderNotFound,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_messages import (
-    ProcessRoleHolderEmployeeNotFound,
-    ProcessRoleHolderEmployeeExists,
-    ProcessRoleHolderEmployeeSelf,
-    ProcessRoleHolderEmployeeDeleteError,
-)
 from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_messages import (
     ProcessRoleHolderEmployeeCreateSuccess,
+    ProcessRoleHolderEmployeeDeleteError,
     ProcessRoleHolderEmployeeDeleteSuccess,
+    ProcessRoleHolderEmployeeExists,
+    ProcessRoleHolderEmployeeNotFound,
     ProcessRoleHolderEmployeeOrderSuccess,
+    ProcessRoleHolderEmployeeSelf,
+)
+from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_model import (
+    ProcessRoleHolderEmployeeLink as ProcessRoleHolderEmployeeLinkModel,
+)
+from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_repository import (
+    ProcessRoleHolderEmployeeLinkRepository,
+)
+from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_schema import (
+    ProcessRoleHolderEmployeeLink as ProcessRoleHolderEmployeeLinkSchema,
+)
+from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_schema import (
+    ProcessRoleHolderEmployeeLinkCreate,
 )
 
 
@@ -45,8 +44,8 @@ class ProcessRoleHolderEmployeeLinkService(BaseService):
     def __init__(
         self,
         repository: ProcessRoleHolderEmployeeLinkRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
         self.holder_repository = ProcessRoleHolderRepository(session=session)
@@ -74,7 +73,7 @@ class ProcessRoleHolderEmployeeLinkService(BaseService):
 
     async def get_holder_id(
         self, holder_employee_id: int, process_key: str, role_key: str
-    ) -> Optional[int]:
+    ) -> int | None:
         """The ProcessRoleHolder id for a given holder employee + process/role
         (stable keys). Used to resolve which roster's order_position to read/write
         when a reviewer reorders from inside a people-review session."""
@@ -108,7 +107,7 @@ class ProcessRoleHolderEmployeeLinkService(BaseService):
         }
 
     async def set_session_order(
-        self, holder_id: int, ordered_employee_ids: List[int]
+        self, holder_id: int, ordered_employee_ids: list[int]
     ) -> None:
         """Write a session reorder into the holder's single roster order (shared
         with the admin screen). Commits."""
@@ -117,11 +116,11 @@ class ProcessRoleHolderEmployeeLinkService(BaseService):
 
     async def get_links(
         self,
-        process_role_holder_id: Optional[int] = None,
-        process_role_id: Optional[int] = None,
-        employee_id: Optional[int] = None,
-        sort: Optional[str] = None,
-    ) -> List[ProcessRoleHolderEmployeeLinkSchema]:
+        process_role_holder_id: int | None = None,
+        process_role_id: int | None = None,
+        employee_id: int | None = None,
+        sort: str | None = None,
+    ) -> list[ProcessRoleHolderEmployeeLinkSchema]:
         filters = {}
         if process_role_holder_id is not None:
             filters["process_role_holder_id"] = process_role_holder_id
@@ -145,7 +144,7 @@ class ProcessRoleHolderEmployeeLinkService(BaseService):
         return [ProcessRoleHolderEmployeeLinkSchema.model_validate(r) for r in records]
 
     async def _renumber_holder_links(
-        self, process_role_holder_id: int, ordered_employee_ids: List[int]
+        self, process_role_holder_id: int, ordered_employee_ids: list[int]
     ) -> None:
         """Renumber one holder's roster links (10, 20, 30 …) so that the employees
         in `ordered_employee_ids` come first in that exact order, followed by any
@@ -168,7 +167,7 @@ class ProcessRoleHolderEmployeeLinkService(BaseService):
 
         # Listed employees first (dedup, only ones that belong to this holder),
         # then the remaining roster members in their current stored order.
-        front: List[int] = []
+        front: list[int] = []
         seen: set[int] = set()
         for emp_id in ordered_employee_ids:
             if emp_id in by_employee and emp_id not in seen:
@@ -188,7 +187,7 @@ class ProcessRoleHolderEmployeeLinkService(BaseService):
             row.order_position = position
 
     async def set_order(
-        self, process_role_holder_id: int, ordered_ids: List[int]
+        self, process_role_holder_id: int, ordered_ids: list[int]
     ) -> MutationResponse[None]:
         """Admin reviewer screen: reorder a holder's whole roster (payload is LINK
         ids). Maps link ids -> employee ids and delegates to the shared renumber so

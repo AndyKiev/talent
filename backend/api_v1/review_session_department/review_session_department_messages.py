@@ -1,5 +1,6 @@
-from backend.api_v1.base.errors import DomainError
 from dataclasses import dataclass
+
+from backend.api_v1.base.errors import DomainError
 
 
 @dataclass

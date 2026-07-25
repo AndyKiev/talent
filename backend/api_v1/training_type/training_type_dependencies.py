@@ -1,14 +1,13 @@
-from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
+from backend.api_v1.training_type.training_type_repository import TrainingTypeRepository
 from backend.api_v1.training_type.training_type_schema import (
     TrainingType as TrainingTypeSchema,
 )
-from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
-from backend.database.db_helper import db_helper
-from backend.api_v1.training_type.training_type_repository import TrainingTypeRepository
 from backend.api_v1.training_type.training_type_service import TrainingTypeService
 from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.database.db_helper import db_helper
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_training_type_service(

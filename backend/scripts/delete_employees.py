@@ -28,12 +28,11 @@ sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-from fastapi import HTTPException  # noqa: E402
-from sqlalchemy import text  # noqa: E402
-
-from backend.database.db_helper import db_helper  # noqa: E402
-from backend.api_v1.employee.employee_repository import EmployeeRepository  # noqa: E402
-from backend.api_v1.employee.employee_service import EmployeeService  # noqa: E402
+from backend.api_v1.employee.employee_repository import EmployeeRepository
+from backend.api_v1.employee.employee_service import EmployeeService
+from backend.database.db_helper import db_helper
+from fastapi import HTTPException
+from sqlalchemy import text
 
 ADMIN_CODE = "UKR7101004"  # the real admin (me) — never deleted
 

@@ -1,6 +1,6 @@
-from pydantic import BaseModel, ConfigDict
 from datetime import datetime
-from typing import Optional
+
+from pydantic import BaseModel, ConfigDict
 
 
 class JobJobGroupLinkCreate(BaseModel):
@@ -21,7 +21,7 @@ class JobJobGroupLink(BaseModel):
     job_group_id: int
     created_at: datetime
     # Denormalised for convenience
-    job_name: Optional[str] = None
-    job_group_name: Optional[str] = None
-    job_group_type_name: Optional[str] = None
-    allow_multiple: Optional[bool] = None
+    job_name: str | None = None
+    job_group_name: str | None = None
+    job_group_type_name: str | None = None
+    allow_multiple: bool | None = None

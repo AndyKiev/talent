@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(_REPO_ROOT) not in sys.path:
@@ -9,9 +9,8 @@ import asyncio
 
 from sqlalchemy import select
 
-from backend.database.db_helper import db_helper
 from backend.api_v1.training_link_type.training_link_type_model import TrainingLinkType
-
+from backend.database.db_helper import db_helper
 
 # Code-referenced keys — see TrainingTypeService.get_eligible_for_employee.
 TRAINING_LINK_TYPES = [

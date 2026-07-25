@@ -1,6 +1,6 @@
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
 
 
 class ReviewSessionDepartmentBase(BaseModel):
@@ -16,7 +16,7 @@ class ReviewSessionDepartment(ReviewSessionDepartmentBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
     created_at: datetime
-    department_name: Optional[str] = None
+    department_name: str | None = None
 
     @classmethod
     def from_orm_with_name(cls, record) -> "ReviewSessionDepartment":

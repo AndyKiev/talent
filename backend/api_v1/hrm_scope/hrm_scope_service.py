@@ -1,42 +1,38 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.hrm_scope.hrm_scope_repository import HrmScopeRepository
-from backend.api_v1.hrm_scope.hrm_scope_schema import (
-    HrmScopeSchema,
-    HrmScopeCreate,
-    HrmScopeCreateInternal,
-    HrmScopeUpdate,
-    HrmEmployeeRow,
-)
-from backend.api_v1.hrm_scope.hrm_scope_messages import (
-    HrmScopeNotFound,
-    HrmScopeStartAfterEnd,
-    HrmScopeEmployeeNotHrm,
-    HrmScopeDeleteError,
-)
+from backend.api_v1.hrm_scope.hrm_scope_constants import HRM_GROUP_NAME
 from backend.api_v1.hrm_scope.hrm_scope_messages import (
     HrmScopeCreateSuccess,
-    HrmScopeUpdateSuccess,
+    HrmScopeDeleteError,
     HrmScopeDeleteSuccess,
+    HrmScopeEmployeeNotHrm,
+    HrmScopeNotFound,
+    HrmScopeStartAfterEnd,
+    HrmScopeUpdateSuccess,
 )
-
-from backend.api_v1.hrm_scope.hrm_scope_constants import HRM_GROUP_NAME
+from backend.api_v1.hrm_scope.hrm_scope_repository import HrmScopeRepository
+from backend.api_v1.hrm_scope.hrm_scope_schema import (
+    HrmEmployeeRow,
+    HrmScopeCreate,
+    HrmScopeCreateInternal,
+    HrmScopeSchema,
+    HrmScopeUpdate,
+)
 
 
 class HrmScopeService(BaseService):
     def __init__(
         self,
         repository: HrmScopeRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -50,13 +46,13 @@ class HrmScopeService(BaseService):
             raise await self._resolve_domain_error(HrmScopeNotFound(scope_id))
         return self._to_schema(record)
 
-    async def get_employee_scopes(self, employee_id: int) -> List[HrmScopeSchema]:
+    async def get_employee_scopes(self, employee_id: int) -> list[HrmScopeSchema]:
         rows = await self.repository.get_by_employee(employee_id)
         return [self._to_schema(r) for r in rows]
 
-    async def get_hrm_employees(self) -> List[HrmEmployeeRow]:
+    async def get_hrm_employees(self) -> list[HrmEmployeeRow]:
         employees = await self.repository.get_hrm_employees(HRM_GROUP_NAME)
-        rows: List[HrmEmployeeRow] = []
+        rows: list[HrmEmployeeRow] = []
         for emp in employees:
             scopes = await self.repository.get_by_employee(emp.id)
             active = sum(1 for s in scopes if self._is_active(s.start_date, s.end_date))
@@ -148,28 +144,21 @@ class HrmScopeService(BaseService):
         schema = HrmScopeSchema.model_validate(record)
         dept = record.department
         cat = dept.department_category if dept else None
-        setattr(
-            schema, "employee_code", record.employee.code if record.employee else None
-        )
-        setattr(
-            schema, "employee_name", record.employee.name if record.employee else None
-        )
-        setattr(schema, "department_name", dept.name if dept else None)
-        setattr(schema, "department_category_id", cat.id if cat else None)
-        setattr(schema, "department_category_name", cat.name if cat else None)
-        setattr(
-            schema,
-            "is_currently_active",
-            self._is_active(record.start_date, record.end_date),
-        )
+        schema.employee_code = record.employee.code if record.employee else None
+        schema.employee_name = record.employee.name if record.employee else None
+        schema.department_name = dept.name if dept else None
+        schema.department_category_id = cat.id if cat else None
+        schema.department_category_name = cat.name if cat else None
+        schema.is_currently_active = self._is_active(record.start_date, record.end_date)
         return schema
 
     async def _get_hrm_employee_or_raise(self, employee_id: int):
         """Return (employee, hrm_link) or raise. hrm_link is the
         EmployeeUserGroupLink row whose user_group is the HRM group."""
-        from backend.api_v1.employee.employee_model import Employee
         from sqlalchemy import select
         from sqlalchemy.orm import selectinload
+
+        from backend.api_v1.employee.employee_model import Employee
         from backend.api_v1.table_relationship_links.employee_user_group_link_model import (
             EmployeeUserGroupLink,
         )

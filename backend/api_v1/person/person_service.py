@@ -1,4 +1,3 @@
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,40 +5,38 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.person.person_model import Person
-from backend.api_v1.person.person_repository import PersonRepository
-from backend.api_v1.person.person_schema import (
-    PersonSchema,
-    PersonCreate,
-    PersonUpdate,
-    PersonEmployeeSlim,
-    PersonNameMatch,
-    PersonCheckNameResponse,
-)
-from backend.api_v1.person.person_messages import (
-    PersonNotFound,
-    PersonNotFoundForEmployee,
-    PersonNameExists,
-    PersonHasEmployees,
-)
-from backend.api_v1.person.person_messages import (
-    PersonDeleteSuccess,
-    PersonCreateSuccess,
-    PersonUpdateSuccess,
-)
-from backend.api_v1.sex.sex_model import SEX_ID_BY_NAME
 from backend.api_v1.marital_status.marital_status_model import (
     MARITAL_STATUS_ID_BY_NAME,
 )
-from backend.utils.person_names import normalize_name_part, build_employee_name
+from backend.api_v1.person.person_messages import (
+    PersonCreateSuccess,
+    PersonDeleteSuccess,
+    PersonHasEmployees,
+    PersonNameExists,
+    PersonNotFound,
+    PersonNotFoundForEmployee,
+    PersonUpdateSuccess,
+)
+from backend.api_v1.person.person_model import Person
+from backend.api_v1.person.person_repository import PersonRepository
+from backend.api_v1.person.person_schema import (
+    PersonCheckNameResponse,
+    PersonCreate,
+    PersonEmployeeSlim,
+    PersonNameMatch,
+    PersonSchema,
+    PersonUpdate,
+)
+from backend.api_v1.sex.sex_model import SEX_ID_BY_NAME
+from backend.utils.person_names import build_employee_name, normalize_name_part
 
 
 class PersonService(BaseService):
     def __init__(
         self,
         repository: PersonRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -80,7 +77,7 @@ class PersonService(BaseService):
     async def get_person(self, person_id: int) -> PersonSchema:
         return self._to_schema(await self.get_by_id(person_id))
 
-    async def get_persons(self, sort: Optional[str] = None) -> List[PersonSchema]:
+    async def get_persons(self, sort: str | None = None) -> list[PersonSchema]:
         records = await self.get_all(sort_json=sort)
         return [self._to_schema(r) for r in records]
 
@@ -240,7 +237,7 @@ class PersonService(BaseService):
         if changed:
             await self.session.commit()
 
-    async def set_sex(self, person_id: int, sex: Optional[str]) -> Person:
+    async def set_sex(self, person_id: int, sex: str | None) -> Person:
         """Targeted sex update ('male'/'female' -> sex_id) used by
         EmployeeService.set_personal_data."""
         person = await self.get_by_id(person_id)

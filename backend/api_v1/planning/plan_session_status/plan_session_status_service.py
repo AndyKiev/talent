@@ -1,4 +1,3 @@
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,24 +5,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.planning.plan_session_status.plan_session_status_messages import (
+    PlanSessionStatusCreateSuccess,
+    PlanSessionStatusDeleteError,
+    PlanSessionStatusDeleteSuccess,
+    PlanSessionStatusKeyTaken,
+    PlanSessionStatusNotFound,
+    PlanSessionStatusNotFoundByKey,
+    PlanSessionStatusUpdateSuccess,
+)
 from backend.api_v1.planning.plan_session_status.plan_session_status_repository import (
     PlanSessionStatusRepository,
 )
 from backend.api_v1.planning.plan_session_status.plan_session_status_schema import (
     PlanSessionStatus as PlanSessionStatusSchema,
+)
+from backend.api_v1.planning.plan_session_status.plan_session_status_schema import (
     PlanSessionStatusCreate,
     PlanSessionStatusUpdate,
-)
-from backend.api_v1.planning.plan_session_status.plan_session_status_messages import (
-    PlanSessionStatusNotFound,
-    PlanSessionStatusNotFoundByKey,
-    PlanSessionStatusKeyTaken,
-    PlanSessionStatusDeleteError,
-)
-from backend.api_v1.planning.plan_session_status.plan_session_status_messages import (
-    PlanSessionStatusDeleteSuccess,
-    PlanSessionStatusCreateSuccess,
-    PlanSessionStatusUpdateSuccess,
 )
 
 
@@ -31,8 +30,8 @@ class PlanSessionStatusService(BaseService):
     def __init__(
         self,
         repository: PlanSessionStatusRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -51,8 +50,8 @@ class PlanSessionStatusService(BaseService):
 
     async def get_plan_session_statuses(
         self,
-        sort: Optional[str] = None,
-    ) -> List[PlanSessionStatusSchema]:
+        sort: str | None = None,
+    ) -> list[PlanSessionStatusSchema]:
         records = await self.get_all(sort_json=sort)
         return [PlanSessionStatusSchema.model_validate(r) for r in records]
 

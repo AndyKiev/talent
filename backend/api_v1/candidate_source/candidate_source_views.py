@@ -1,22 +1,25 @@
-from fastapi import APIRouter, Depends, status, Query
-from typing import Annotated, Optional, List
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.candidate_source.candidate_source_dependencies import (
+    candidate_source_by_id,
+    get_candidate_source_service,
+)
 from backend.api_v1.candidate_source.candidate_source_schema import (
     CandidateSource as CandidateSourceSchema,
+)
+from backend.api_v1.candidate_source.candidate_source_schema import (
     CandidateSourceCreate,
     CandidateSourceUpdate,
-)
-from backend.api_v1.candidate_source.candidate_source_dependencies import (
-    get_candidate_source_service,
-    candidate_source_by_id,
 )
 from backend.api_v1.candidate_source.candidate_source_service import (
     CandidateSourceService,
 )
-from backend.auth.jwt_auth import get_current_active_auth_user
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/candidate_sources",
@@ -25,12 +28,12 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[CandidateSourceSchema])
+@router.get("", response_model=list[CandidateSourceSchema])
 async def get_candidate_sources(
     service: Annotated[
         CandidateSourceService, Depends(get_candidate_source_service)
     ],
-    sort: Optional[str] = Query(None),
+    sort: str | None = Query(None),
 ):
     return await service.get_candidate_sources(sort=sort)
 

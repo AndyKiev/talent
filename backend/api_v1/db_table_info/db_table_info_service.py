@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import text
@@ -10,6 +10,9 @@ from sqlalchemy import text
 if TYPE_CHECKING:
     from backend.api_v1.employee.employee_schema import EmployeeSchema
 
+from backend.api_v1.db_table_info.db_table_info_messages import (
+    DbTableInfoNotFound,
+)
 from backend.api_v1.db_table_info.db_table_info_repository import (
     DbTableInfoRepository,
 )
@@ -19,11 +22,8 @@ from backend.api_v1.db_table_info.db_table_info_schema import (
     DbTableInfo,
     DbTableInfoUpdate,
     FkRef,
-    TableStats,
     TableDataFile,
-)
-from backend.api_v1.db_table_info.db_table_info_messages import (
-    DbTableInfoNotFound,
+    TableStats,
 )
 from backend.database.db_helper import db_helper
 
@@ -287,12 +287,10 @@ class DbTableInfoService:
     # ── column preferences ──────────────────────────────────────────────
 
     def get_column_prefs(self) -> list["ColumnPref"]:
-        from backend.api_v1.db_table_info.db_table_info_schema import ColumnPref
         data = self.repository.load_all()
         return data.column_prefs
 
     def save_column_prefs(self, prefs: list["ColumnPref"]) -> list["ColumnPref"]:
-        from backend.api_v1.db_table_info.db_table_info_schema import ColumnPref
         data = self.repository.load_all()
         data.column_prefs = prefs
         self.repository.save_all(data)
@@ -375,7 +373,7 @@ class DbTableInfoService:
             raise DbTableInfoNotFound(table_name)
 
         # Exclude PK columns from the SET clause — they identify the row
-        non_pk_cols = [col for col in data.keys() if col not in pk]
+        non_pk_cols = [col for col in data if col not in pk]
         if not non_pk_cols:
             raise DbTableInfoNotFound(table_name)
         set_clause = ", ".join(

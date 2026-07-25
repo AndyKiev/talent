@@ -6,9 +6,7 @@ Location: talent/backend/utils/structure_scanner.py
 Scans project structure and generates visual tree representation.
 """
 
-import os
 from pathlib import Path
-from typing import List, Set, Optional
 
 
 class ProjectStructureScanner:
@@ -35,9 +33,9 @@ class ProjectStructureScanner:
     def __init__(
         self,
         root_path: str,
-        exclude: Optional[Set[str]] = None,
-        include_extensions: Optional[Set[str]] = None,
-        max_depth: Optional[int] = None,
+        exclude: set[str] | None = None,
+        include_extensions: set[str] | None = None,
+        max_depth: int | None = None,
     ):
         """
         Initialize the scanner.
@@ -74,7 +72,7 @@ class ProjectStructureScanner:
 
     def _get_tree_structure(
         self, directory: Path, prefix: str = "", depth: int = 0
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Recursively build the tree structure.
 

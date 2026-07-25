@@ -1,24 +1,25 @@
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Any, Dict, List, Optional
 import datetime
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ReviewSessionBase(BaseModel):
     name: str = Field(..., max_length=256)
-    description: Optional[str] = None
-    period_start: Optional[datetime.date] = None
-    period_end: Optional[datetime.date] = None
+    description: str | None = None
+    period_start: datetime.date | None = None
+    period_end: datetime.date | None = None
 
 
 class ReviewSessionCreate(ReviewSessionBase):
-    department_id: Optional[int] = None
+    department_id: int | None = None
 
 
 class ReviewSessionUpdate(BaseModel):
-    name: Optional[str] = Field(None, max_length=256)
-    description: Optional[str] = None
-    period_start: Optional[datetime.date] = None
-    period_end: Optional[datetime.date] = None
+    name: str | None = Field(None, max_length=256)
+    description: str | None = None
+    period_start: datetime.date | None = None
+    period_end: datetime.date | None = None
 
 
 class ReviewSession(ReviewSessionBase):
@@ -27,7 +28,7 @@ class ReviewSession(ReviewSessionBase):
     status_id: int
     status: str
     employee_count: int = 0
-    department_name: Optional[str] = None
+    department_name: str | None = None
 
 
 class ReviewSessionDetail(ReviewSession):
@@ -38,8 +39,8 @@ class FrozenParamsSection(BaseModel):
     """One frozen table's rows, dumped generically (column name -> value)."""
 
     table: str
-    rows: List[Dict[str, Any]] = []
+    rows: list[dict[str, Any]] = []
 
 
 class FrozenParamsResponse(BaseModel):
-    sections: List[FrozenParamsSection] = []
+    sections: list[FrozenParamsSection] = []

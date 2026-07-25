@@ -1,5 +1,6 @@
-from sqlalchemy import Integer, Boolean, UniqueConstraint, ForeignKey
+from sqlalchemy import Boolean, ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 

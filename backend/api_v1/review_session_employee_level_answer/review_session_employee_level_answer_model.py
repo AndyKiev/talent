@@ -1,15 +1,17 @@
 from typing import TYPE_CHECKING
+
+from sqlalchemy import ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import Text, ForeignKey
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 
 if TYPE_CHECKING:
-    from backend.api_v1.review_session_employee_level.review_session_employee_level_model import (
-        ReviewSessionEmployeeLevel,
-    )
     from backend.api_v1.review_level_requirement.review_level_requirement_model import (
         ReviewLevelRequirement,
+    )
+    from backend.api_v1.review_session_employee_level.review_session_employee_level_model import (
+        ReviewSessionEmployeeLevel,
     )
 
 

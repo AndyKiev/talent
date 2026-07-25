@@ -2,33 +2,31 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 from sqlalchemy import select
 
 from backend.api_v1.base.base_repository import BaseRepository
-from backend.api_v1.planning.plan_scope.plan_scope_model import PlanScope
-from backend.api_v1.talent_audit.talent_audit_model import TalentAudit
-from backend.api_v1.talent_audit_job.talent_audit_job_model import TalentAuditJob
-from backend.api_v1.talent_status_period_link.talent_status_period_link_model import (
-    TalentStatusPeriodLink,
-)
-from backend.api_v1.talent_period.talent_period_model import TalentPeriod
-from backend.api_v1.job.job_model import Job
-from backend.api_v1.job_job_group_link.job_job_group_link_model import (
-    JobJobGroupLink,
-)
-from backend.api_v1.employee.employee_model import Employee
-from backend.api_v1.employee_status.employee_status_model import EmployeeStatus
-from backend.api_v1.employee_department.employee_department_model import (
-    EmployeeDepartment,
-)
 from backend.api_v1.department.department_model import Department
 from backend.api_v1.department_region_link.department_region_link_model import (
     DepartmentRegionLink,
 )
+from backend.api_v1.employee.employee_model import Employee
+from backend.api_v1.employee_department.employee_department_model import (
+    EmployeeDepartment,
+)
+from backend.api_v1.employee_status.employee_status_model import EmployeeStatus
+from backend.api_v1.job.job_model import Job
+from backend.api_v1.job_job_group_link.job_job_group_link_model import (
+    JobJobGroupLink,
+)
+from backend.api_v1.planning.plan_scope.plan_scope_model import PlanScope
 from backend.api_v1.region.region_model import Region
-
+from backend.api_v1.talent_audit.talent_audit_model import TalentAudit
+from backend.api_v1.talent_audit_job.talent_audit_job_model import TalentAuditJob
+from backend.api_v1.talent_period.talent_period_model import TalentPeriod
+from backend.api_v1.talent_status_period_link.talent_status_period_link_model import (
+    TalentStatusPeriodLink,
+)
 
 # Employee status NAME that marks an employee as currently working.
 WORKING_EMPLOYEE_STATUS_NAME = "working"
@@ -45,7 +43,7 @@ class FactRow:
 
     employee_id: int
     main_department_id: int
-    job_group_id: Optional[int]
+    job_group_id: int | None
     talent_status_id: int
     qty_months: int
 

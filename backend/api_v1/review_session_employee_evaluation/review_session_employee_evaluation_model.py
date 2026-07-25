@@ -1,6 +1,8 @@
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
+
+from sqlalchemy import CheckConstraint, ForeignKey, Integer, Numeric, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import Text, Integer, Numeric, ForeignKey, CheckConstraint
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_constants import (
@@ -8,10 +10,10 @@ from backend.api_v1.review_session_employee_evaluation.review_session_employee_e
 )
 
 if TYPE_CHECKING:
+    from backend.api_v1.review_dimension.review_dimension_model import ReviewDimension
     from backend.api_v1.review_session_employee.review_session_employee_model import (
         ReviewSessionEmployee,
     )
-    from backend.api_v1.review_dimension.review_dimension_model import ReviewDimension
     from backend.api_v1.review_session_employee_criterion_score.review_session_employee_criterion_score_model import (
         ReviewSessionEmployeeCriterionScore,
     )
@@ -55,7 +57,7 @@ class ReviewSessionEmployeeEvaluation(IntIdPkMixin, TimestampMixin, Base):
         lazy="selectin",
     )
     dimension: Mapped["ReviewDimension"] = relationship(lazy="selectin")
-    criterion_scores: Mapped[List["ReviewSessionEmployeeCriterionScore"]] = (
+    criterion_scores: Mapped[list["ReviewSessionEmployeeCriterionScore"]] = (
         relationship(
             back_populates="evaluation",
             lazy="selectin",

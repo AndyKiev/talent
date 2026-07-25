@@ -1,5 +1,6 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
-from typing import List, Literal, Optional
 
 
 class OversightAssignmentRunRequest(BaseModel):
@@ -20,26 +21,26 @@ class OversightAssignmentRunRequest(BaseModel):
 #       multipleCandidates— anomaly: 2+ possible managers, none assigned
 class OversightAssignmentResultRow(BaseModel):
     employee_id: int
-    employee_code: Optional[str] = None
-    employee_name: Optional[str] = None
-    department_id: Optional[int] = None
-    department_name: Optional[str] = None
+    employee_code: str | None = None
+    employee_name: str | None = None
+    department_id: int | None = None
+    department_name: str | None = None
     status: Literal["assigned", "overwritten", "already_assigned", "failed"]
-    reason_key: Optional[str] = None
+    reason_key: str | None = None
     # names of the conflicting candidates for the multipleCandidates anomaly
-    candidates: List[str] = Field(default_factory=list)
-    previous_manager_name: Optional[str] = None
-    new_manager_name: Optional[str] = None
+    candidates: list[str] = Field(default_factory=list)
+    previous_manager_name: str | None = None
+    new_manager_name: str | None = None
     # how many levels above the employee's department the manager was found (0 = same)
-    levels_up: Optional[int] = None
+    levels_up: int | None = None
 
 
 class OversightAssignmentReport(BaseModel):
     detail: str
     department_id: int
-    department_name: Optional[str] = None
-    session_id: Optional[int] = None
-    session_name: Optional[str] = None
+    department_name: str | None = None
+    session_id: int | None = None
+    session_name: str | None = None
     # True when the session is department-linked and intersects the selected subtree
     session_department_linked: bool = False
     max_levels_up: int
@@ -49,4 +50,4 @@ class OversightAssignmentReport(BaseModel):
     overwritten: int
     already_assigned: int
     failed: int
-    rows: List[OversightAssignmentResultRow]
+    rows: list[OversightAssignmentResultRow]

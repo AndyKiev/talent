@@ -1,9 +1,9 @@
 # backend/api_v1/planning/plan_matrix/plan_matrix_schema.py
 from __future__ import annotations
 
-from pydantic import BaseModel
-from typing import Optional, List, Dict, Literal
+from typing import Literal
 
+from pydantic import BaseModel
 
 # A job group renders either as a single "total" column (only a combined,
 # talent_status=NULL plan row exists) or split into Pa/Po columns (per-status
@@ -22,7 +22,7 @@ class MatrixJobGroupConfig(BaseModel):
     # the same envelope the frontend grid already understands.
     target_mode: TargetMode
     fact_mode: TargetMode
-    jobs: List[MatrixJobDef] = []
+    jobs: list[MatrixJobDef] = []
 
 
 class MatrixJobGroupDef(BaseModel):
@@ -42,9 +42,9 @@ class MatrixDepartment(BaseModel):
     id: str
     key: str
     name: str
-    region_id: Optional[str] = None
-    region_key: Optional[str] = None
-    region_name: Optional[str] = None
+    region_id: str | None = None
+    region_key: str | None = None
+    region_name: str | None = None
 
 
 class MatrixRegion(BaseModel):
@@ -55,42 +55,42 @@ class MatrixRegion(BaseModel):
 
 
 class MatrixEssences(BaseModel):
-    talent_statuses: List[MatrixTalentStatus] = []
-    job_groups: List[MatrixJobGroupDef] = []
-    departments: List[MatrixDepartment] = []
-    regions: List[MatrixRegion] = []
+    talent_statuses: list[MatrixTalentStatus] = []
+    job_groups: list[MatrixJobGroupDef] = []
+    departments: list[MatrixDepartment] = []
+    regions: list[MatrixRegion] = []
 
 
 class MatrixStatusValue(BaseModel):
-    pa: Optional[int] = None
-    po: Optional[int] = None
+    pa: int | None = None
+    po: int | None = None
 
 
 class MatrixJobGroupCell(BaseModel):
     # target / fact are either a scalar int (total mode) or {pa, po} (by_status).
     # Pydantic serialises whichever is set; the frontend already branches on
     # config.target_mode / fact_mode.
-    target: Optional[object] = None
-    fact: Optional[object] = None
-    pct: Optional[float] = None
+    target: object | None = None
+    fact: object | None = None
+    pct: float | None = None
 
 
 class MatrixSummary(BaseModel):
-    base_target: Optional[int] = None
-    object_target: Optional[int] = None
-    fact: Optional[int] = None
-    pct: Optional[float] = None
+    base_target: int | None = None
+    object_target: int | None = None
+    fact: int | None = None
+    pct: float | None = None
 
 
 class MatrixRow(BaseModel):
-    department_id: Optional[str] = None
-    department_key: Optional[str] = None
-    org_unit_key: Optional[str] = None
-    region_id: Optional[str] = None
-    region_key: Optional[str] = None
-    region_name: Optional[str] = None
-    label: Optional[str] = None  # only on grand_totals
-    job_groups: Dict[str, MatrixJobGroupCell] = {}
+    department_id: str | None = None
+    department_key: str | None = None
+    org_unit_key: str | None = None
+    region_id: str | None = None
+    region_key: str | None = None
+    region_name: str | None = None
+    label: str | None = None  # only on grand_totals
+    job_groups: dict[str, MatrixJobGroupCell] = {}
     summary: MatrixSummary
 
 
@@ -104,4 +104,4 @@ class PlanMatrix(BaseModel):
     matrix_meta: MatrixMeta
     essences: MatrixEssences
     grand_totals: MatrixRow
-    data: List[MatrixRow]
+    data: list[MatrixRow]

@@ -1,4 +1,3 @@
-from typing import Optional, List
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,6 +9,18 @@ from backend.api_v1.employee.employee_model import Employee
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.employee_department.employee_department_model import EmployeeDepartment
 from backend.api_v1.job_process_role_link.job_process_role_link_model import JobProcessRoleLink
+from backend.api_v1.process_roles.oversight_manager.oversight_manager_messages import (
+    OversightHolderInvalid,
+    OversightManagerClearSuccess,
+    OversightManagerSelf,
+    OversightManagerSetSuccess,
+    OversightRoleNotConfigured,
+)
+from backend.api_v1.process_roles.oversight_manager.oversight_manager_schema import (
+    MyOversightManager,
+    OversightManagerOption,
+    SetOversightManager,
+)
 from backend.api_v1.process_roles.process.process_model import Process
 from backend.api_v1.process_roles.process_role.process_role_model import ProcessRole
 from backend.api_v1.process_roles.process_role_holder.process_role_holder_model import (
@@ -18,25 +29,11 @@ from backend.api_v1.process_roles.process_role_holder.process_role_holder_model 
 from backend.api_v1.process_roles.process_role_holder.process_role_holder_repository import (
     ProcessRoleHolderRepository,
 )
-from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_repository import (
-    ProcessRoleHolderEmployeeLinkRepository,
-)
 from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_model import (
     ProcessRoleHolderEmployeeLink,
 )
-from backend.api_v1.process_roles.oversight_manager.oversight_manager_schema import (
-    OversightManagerOption,
-    MyOversightManager,
-    SetOversightManager,
-)
-from backend.api_v1.process_roles.oversight_manager.oversight_manager_messages import (
-    OversightRoleNotConfigured,
-    OversightHolderInvalid,
-    OversightManagerSelf,
-)
-from backend.api_v1.process_roles.oversight_manager.oversight_manager_messages import (
-    OversightManagerSetSuccess,
-    OversightManagerClearSuccess,
+from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_repository import (
+    ProcessRoleHolderEmployeeLinkRepository,
 )
 
 # Self-service "pick my oversight manager" within people-review. The oversight role
@@ -50,8 +47,8 @@ class OversightManagerService(BaseService):
     def __init__(
         self,
         repository: ProcessRoleHolderEmployeeLinkRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
         self.holder_repository = ProcessRoleHolderRepository(session=session)
@@ -74,7 +71,7 @@ class OversightManagerService(BaseService):
 
     async def get_candidate_managers(
         self, short: bool = False
-    ) -> List[OversightManagerOption]:
+    ) -> list[OversightManagerOption]:
         """Existing oversight reviewers the user may pick, excluding themselves.
 
         When ``short=True``, the list is built directly from employees whose main
@@ -111,7 +108,7 @@ class OversightManagerService(BaseService):
 
     async def _build_short_list(
         self, oversight_role_ids: list[int]
-    ) -> List[OversightManagerOption]:
+    ) -> list[OversightManagerOption]:
         """Build the short list from employees (not existing holders). Finds
         employees whose main department falls within the user's branch AND whose
         job is linked to oversight. Auto-creates ProcessRoleHolder records for
@@ -226,7 +223,7 @@ class OversightManagerService(BaseService):
         await self.session.refresh(holder)
         return holder
 
-    async def get_my_manager(self) -> Optional[MyOversightManager]:
+    async def get_my_manager(self) -> MyOversightManager | None:
         """The current user's chosen oversight manager (their single oversight
         link), or None when they have not picked one."""
         role_ids = await self._oversight_role_ids()

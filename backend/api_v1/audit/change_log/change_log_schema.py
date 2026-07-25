@@ -1,6 +1,6 @@
 import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -16,12 +16,12 @@ class ChangeAction(str, Enum):
 
 class ChangeLogBase(BaseModel):
     change_session_id: int
-    parent_id: Optional[int] = None
+    parent_id: int | None = None
     essence_key: str = Field(..., max_length=64)
-    entity_id: Optional[int] = None
+    entity_id: int | None = None
     action: ChangeAction
     # Field-level before/after map: {"field": {"old": ..., "new": ...}}
-    changes: Optional[dict[str, Any]] = None
+    changes: dict[str, Any] | None = None
 
 
 class ChangeLogCreate(ChangeLogBase):
@@ -35,7 +35,7 @@ class ChangeLogEmployee(BaseModel):
 
     id: int
     name: str
-    code: Optional[str] = None
+    code: str | None = None
 
 
 class ChangeLogSchema(ChangeLogBase):
@@ -45,5 +45,5 @@ class ChangeLogSchema(ChangeLogBase):
     created_at: datetime.datetime
     # Subject employee this entry concerns (NULL for entries with no employee,
     # e.g. cascaded talent rows that inherit their parent's employee).
-    employee_id: Optional[int] = None
-    employee: Optional[ChangeLogEmployee] = None
+    employee_id: int | None = None
+    employee: ChangeLogEmployee | None = None

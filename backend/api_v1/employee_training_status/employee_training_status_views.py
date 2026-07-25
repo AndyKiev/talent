@@ -1,23 +1,25 @@
-from fastapi import APIRouter, Depends, status
-from fastapi.security import HTTPBearer
-from typing import Annotated, List
+from typing import Annotated
 
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee_training_status.employee_training_status_dependencies import (
+    employee_training_status_by_id,
+    get_employee_training_status_service,
+)
 from backend.api_v1.employee_training_status.employee_training_status_schema import (
     EmployeeTrainingStatus as EmployeeTrainingStatusSchema,
+)
+from backend.api_v1.employee_training_status.employee_training_status_schema import (
     EmployeeTrainingStatusCreate,
     EmployeeTrainingStatusUpdate,
-)
-from backend.api_v1.employee_training_status.employee_training_status_dependencies import (
-    get_employee_training_status_service,
-    employee_training_status_by_id,
 )
 from backend.api_v1.employee_training_status.employee_training_status_service import (
     EmployeeTrainingStatusService,
 )
 from backend.auth.guards import Guard
 from backend.auth.jwt_auth import get_current_active_auth_user
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
+from fastapi import APIRouter, Depends, status
+from fastapi.security import HTTPBearer
 
 router = APIRouter(
     prefix="/employee_training_statuses",
@@ -28,7 +30,7 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[EmployeeTrainingStatusSchema],
+    response_model=list[EmployeeTrainingStatusSchema],
     # Auth-only, like the other people-review catalog lookups (review levels /
     # dimensions / language levels): a harmless status enum that the evaluation
     # page needs to render training-status labels for any authenticated user.

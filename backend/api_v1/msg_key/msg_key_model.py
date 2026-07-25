@@ -1,4 +1,4 @@
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     # ForeignKey,
@@ -9,9 +9,9 @@ from sqlalchemy import (
 
 # from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
-
 
 # backend/api_v1/models/message_model.py
 
@@ -22,6 +22,6 @@ if TYPE_CHECKING:
 class MsgKey(IntIdPkMixin, Base):
     name: Mapped[str] = mapped_column(String(256), nullable=False, unique=True)
     # relationship
-    msg: Mapped[List["Msg"]] = relationship(
+    msg: Mapped[list["Msg"]] = relationship(
         back_populates="msg_key", lazy="selectin", cascade="all, delete-orphan"
     )

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
 
 
 class EmployeeEventChangeDepartmentBase(BaseModel):
@@ -14,14 +13,13 @@ class EmployeeEventChangeDepartmentCreate(EmployeeEventChangeDepartmentBase):
     `event_change_id` is set by the service, not the caller.
     """
 
-    pass
 
 
 class EmployeeEventChangeDepartmentSchema(EmployeeEventChangeDepartmentBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
     event_change_id: int
-    department_type: Optional["DepartmentTypeSchema"] = None
+    department_type: DepartmentTypeSchema | None = None
 
 
 # ── Late imports — outside TYPE_CHECKING so model_rebuild can resolve them ─────

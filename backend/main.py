@@ -10,9 +10,9 @@ load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 import uvicorn
 
-from backend.utils.create_fastapi_app import create_app
 from backend.config.config import settings
 from backend.routers.main_router import router
+from backend.utils.create_fastapi_app import create_app
 
 logging.basicConfig(level=settings.log_config.log_level)
 app = create_app(

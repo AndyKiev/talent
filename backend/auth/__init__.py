@@ -5,5 +5,5 @@ __all__ = (
 )
 
 
-from backend.auth.ldap_connection import authenticate_ldap
 from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.auth.ldap_connection import authenticate_ldap

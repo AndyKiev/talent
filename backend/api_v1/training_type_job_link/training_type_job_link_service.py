@@ -1,44 +1,42 @@
-from typing import List, Optional
 
-from fastapi import status
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from backend.api_v1.base.base_service import BaseService
-from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.app_setting.app_setting_service import (
-    get_bool_setting,
     TRAINING_MODULE_ENABLED_KEY,
+    get_bool_setting,
 )
+from backend.api_v1.base.base_service import BaseService
+from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.job.job_model import Job
 from backend.api_v1.training_type.training_type_model import TrainingType
+from backend.api_v1.training_type_job_link.training_type_job_link_messages import (
+    JobNotFoundForTrainingTypeLink,
+    JobsNotFoundForTrainingTypeLink,
+    TrainingTypeJobLinkSetForJobSuccess,
+    TrainingTypeJobLinkSetSuccess,
+    TrainingTypeNotFoundForJobLink,
+    TrainingTypesNotFoundForJobLink,
+)
 from backend.api_v1.training_type_job_link.training_type_job_link_repository import (
     TrainingTypeJobLinkRepository,
 )
 from backend.api_v1.training_type_job_link.training_type_job_link_schema import (
     TrainingTypeJobLink as TrainingTypeJobLinkSchema,
+)
+from backend.api_v1.training_type_job_link.training_type_job_link_schema import (
     TrainingTypeJobLinkBulkSet,
     TrainingTypeJobLinkBulkSetForJob,
 )
-from backend.api_v1.training_type_job_link.training_type_job_link_messages import (
-    TrainingTypeNotFoundForJobLink,
-    JobsNotFoundForTrainingTypeLink,
-    JobNotFoundForTrainingTypeLink,
-    TrainingTypesNotFoundForJobLink,
-)
-from backend.api_v1.training_type_job_link.training_type_job_link_messages import (
-    TrainingTypeJobLinkSetSuccess,
-    TrainingTypeJobLinkSetForJobSuccess,
-)
-from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.job.job_model import Job
+from fastapi import status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class TrainingTypeJobLinkService(BaseService):
     def __init__(
         self,
         repository: TrainingTypeJobLinkRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -70,17 +68,17 @@ class TrainingTypeJobLinkService(BaseService):
 
     async def get_links_for_training_type(
         self, training_type_id: int
-    ) -> List[TrainingTypeJobLinkSchema]:
+    ) -> list[TrainingTypeJobLinkSchema]:
         links = await self.repository.get_links_for_training_type(training_type_id)
         return [self._to_schema(lnk) for lnk in links]
 
-    async def get_links_for_job(self, job_id: int) -> List[TrainingTypeJobLinkSchema]:
+    async def get_links_for_job(self, job_id: int) -> list[TrainingTypeJobLinkSchema]:
         links = await self.repository.get_links_for_job(job_id)
         return [self._to_schema(lnk) for lnk in links]
 
     async def set_links(
         self, training_type_id: int, payload: TrainingTypeJobLinkBulkSet
-    ) -> MutationResponse[List[TrainingTypeJobLinkSchema]]:
+    ) -> MutationResponse[list[TrainingTypeJobLinkSchema]]:
         if not await get_bool_setting(
             self.session, TRAINING_MODULE_ENABLED_KEY, default=False
         ):
@@ -116,7 +114,7 @@ class TrainingTypeJobLinkService(BaseService):
 
     async def set_links_for_job(
         self, job_id: int, payload: TrainingTypeJobLinkBulkSetForJob
-    ) -> MutationResponse[List[TrainingTypeJobLinkSchema]]:
+    ) -> MutationResponse[list[TrainingTypeJobLinkSchema]]:
         """Reverse side of set_links: replace all training types recommending a job."""
         if not await get_bool_setting(
             self.session, TRAINING_MODULE_ENABLED_KEY, default=False

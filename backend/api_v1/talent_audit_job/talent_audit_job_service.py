@@ -1,4 +1,3 @@
-from typing import List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -7,35 +6,34 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.talent_audit.talent_audit_repository import TalentAuditRepository
 from backend.api_v1.talent_audit_job.talent_audit_job_messages import (
+    TalentAuditJobCreateSuccess,
     TalentAuditJobDeleteError,
+    TalentAuditJobDeleteSuccess,
+    TalentAuditJobDuplicateJob,
+    TalentAuditJobDuplicatePeriod,
     TalentAuditJobNotFound,
     TalentAuditJobPeriodNotAscending,
-    TalentAuditJobDuplicatePeriod,
-    TalentAuditJobDuplicateJob,
+    TalentAuditJobUpdateSuccess,
 )
+from backend.api_v1.talent_audit_job.talent_audit_job_model import TalentAuditJob
 from backend.api_v1.talent_audit_job.talent_audit_job_repository import (
     TalentAuditJobRepository,
 )
 from backend.api_v1.talent_audit_job.talent_audit_job_schema import (
     TalentAuditJob as TalentAuditJobSchema,
+)
+from backend.api_v1.talent_audit_job.talent_audit_job_schema import (
     TalentAuditJobCreate,
     TalentAuditJobUpdate,
 )
-from backend.api_v1.talent_audit_job.talent_audit_job_messages import (
-    TalentAuditJobCreateSuccess,
-    TalentAuditJobDeleteSuccess,
-    TalentAuditJobUpdateSuccess,
-)
-from backend.api_v1.talent_audit_job.talent_audit_job_model import TalentAuditJob
-from backend.api_v1.talent_status_period_link.talent_status_period_link_model import (
-    TalentStatusPeriodLink,
-)
-from backend.api_v1.talent_audit.talent_audit_repository import TalentAuditRepository
 from backend.api_v1.talent_audit_job_status.talent_audit_job_status_repository import (
     TalentAuditJobStatusRepository,
 )
-
+from backend.api_v1.talent_status_period_link.talent_status_period_link_model import (
+    TalentStatusPeriodLink,
+)
 
 # ── Reconcile status keys ────────────────────────────────────────────────────
 # "Open" audit jobs eligible for auto-transition when an employee's job change
@@ -71,8 +69,8 @@ class TalentAuditJobService(BaseService):
     def __init__(
         self,
         repository: TalentAuditJobRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -93,7 +91,7 @@ class TalentAuditJobService(BaseService):
 
     async def _get_existing_audit_jobs(
         self, talent_audit_id: int
-    ) -> List[TalentAuditJob]:
+    ) -> list[TalentAuditJob]:
         """Get all existing audit jobs for this audit via repository (selectin loaded)."""
         records = await self.repository.get_all(
             filters={"talent_audit_id": talent_audit_id}
@@ -153,15 +151,15 @@ class TalentAuditJobService(BaseService):
 
     async def get_by_talent_audit_id(
         self, talent_audit_id: int
-    ) -> List[TalentAuditJobSchema]:
+    ) -> list[TalentAuditJobSchema]:
         records = await self.repository.get_all(
             filters={"talent_audit_id": talent_audit_id}
         )
         return [_to_schema(r) for r in records]
 
     async def get_talent_audit_jobs(
-        self, sort: Optional[str] = None
-    ) -> List[TalentAuditJobSchema]:
+        self, sort: str | None = None
+    ) -> list[TalentAuditJobSchema]:
         records = await self.get_all(sort_json=sort)
         return [_to_schema(r) for r in records]
 

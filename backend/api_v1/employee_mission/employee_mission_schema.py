@@ -1,5 +1,4 @@
 from datetime import date, datetime
-from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -31,7 +30,7 @@ class EmployeeMissionCommentSchema(BaseModel):
     created_at: datetime
     # Filled in the service from an employee-mini lookup (never a selectin on
     # Employee — that pulls its whole 13-way graph).
-    author_name: Optional[str] = None
+    author_name: str | None = None
 
 
 class EmployeeMissionCreate(BaseModel):
@@ -48,9 +47,9 @@ class EmployeeMissionCreate(BaseModel):
     text: str = Field(..., min_length=1)
     start_date: date
     duration_months: int = Field(..., gt=0)
-    kpis: List[EmployeeMissionKpiInput] = Field(..., min_length=1)
+    kpis: list[EmployeeMissionKpiInput] = Field(..., min_length=1)
     # Optional competence to develop. None = no dimension link row is created.
-    dimension_id: Optional[int] = None
+    dimension_id: int | None = None
 
 
 class EmployeeMissionUpdate(BaseModel):
@@ -60,9 +59,9 @@ class EmployeeMissionUpdate(BaseModel):
     `end_date`; KPIs and the competence link have their own endpoints.
     """
 
-    text: Optional[str] = Field(default=None, min_length=1)
-    start_date: Optional[date] = None
-    duration_months: Optional[int] = Field(default=None, gt=0)
+    text: str | None = Field(default=None, min_length=1)
+    start_date: date | None = None
+    duration_months: int | None = Field(default=None, gt=0)
 
 
 class EmployeeMissionSchema(BaseModel):
@@ -79,12 +78,12 @@ class EmployeeMissionSchema(BaseModel):
     status_id: int
     status_key: str = ""
 
-    kpis: List[EmployeeMissionKpiSchema] = []
-    comments: List[EmployeeMissionCommentSchema] = []
+    kpis: list[EmployeeMissionKpiSchema] = []
+    comments: list[EmployeeMissionCommentSchema] = []
     # Flattened from the 1:1 link table — None when the mission has no competence.
-    dimension_id: Optional[int] = None
-    dimension_name: Optional[str] = None
-    dimension_color: Optional[str] = None
+    dimension_id: int | None = None
+    dimension_name: str | None = None
+    dimension_color: str | None = None
 
     # Derived state, computed server-side so the UI and the `mission_max_active`
     # check can never disagree about what "active" means.
@@ -105,12 +104,12 @@ class EmployeeMissionHistoryEntry(BaseModel):
 
     id: int
     entity_kind: str  # 'employee_mission' | 'employee_mission_kpi'
-    entity_id: Optional[int] = None
+    entity_id: int | None = None
     action: str
-    changes: Optional[dict] = None
-    actor_name: Optional[str] = None
+    changes: dict | None = None
+    actor_name: str | None = None
     changed_at: datetime
     # Grouping key + label so the UI can group by mission without a second
     # request; the label survives deletion because it comes from the trail.
-    mission_id: Optional[int] = None
-    mission_label: Optional[str] = None
+    mission_id: int | None = None
+    mission_label: str | None = None

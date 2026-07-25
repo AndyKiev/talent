@@ -1,6 +1,6 @@
-from typing import Sequence
+from collections.abc import Sequence
 
-from sqlalchemy import select, func, case
+from sqlalchemy import case, func, select
 from sqlalchemy.orm import noload, selectinload
 
 from backend.api_v1.base.base_repository import BaseRepository
@@ -161,10 +161,10 @@ class DepartmentRepository(BaseRepository):
         from backend.api_v1.department_category.department_category_model import (
             DepartmentCategory,
         )
-        from backend.api_v1.region.region_model import Region
         from backend.api_v1.department_region_link.department_region_link_model import (
             DepartmentRegionLink,
         )
+        from backend.api_v1.region.region_model import Region
 
         if allowed_ids is not None and not allowed_ids:
             return []

@@ -1,4 +1,3 @@
-from typing import List, Optional
 
 from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
@@ -8,24 +7,22 @@ from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.talent_audit_interview.talent_audit_interview_messages import (
-    TalentAuditInterviewDeleteError,
-    TalentAuditInterviewNotFound,
-    TalentAuditInterviewNoFreeJobs,
-    TalentAuditInterviewPeriodsNotAscending,
+    TalentAuditInterviewCreateSuccess,
     TalentAuditInterviewDuplicatePeriod,
+    TalentAuditInterviewNoFreeJobs,
+    TalentAuditInterviewNotFound,
+    TalentAuditInterviewPeriodsNotAscending,
+    TalentAuditInterviewUpdateSuccess,
 )
 from backend.api_v1.talent_audit_interview.talent_audit_interview_repository import (
     TalentAuditInterviewRepository,
 )
 from backend.api_v1.talent_audit_interview.talent_audit_interview_schema import (
     TalentAuditInterview as TalentAuditInterviewSchema,
+)
+from backend.api_v1.talent_audit_interview.talent_audit_interview_schema import (
     TalentAuditInterviewCreate,
     TalentAuditInterviewUpdate,
-)
-from backend.api_v1.talent_audit_interview.talent_audit_interview_messages import (
-    TalentAuditInterviewCreateSuccess,
-    TalentAuditInterviewDeleteSuccess,
-    TalentAuditInterviewUpdateSuccess,
 )
 from backend.api_v1.talent_audit_interview_job.talent_audit_interview_job_model import (
     TalentAuditInterviewJob,
@@ -38,7 +35,6 @@ from backend.api_v1.talent_status_period_link.talent_status_period_link_model im
     TalentStatusPeriodLink,
 )
 
-
 STATUS_KEY_CREATED = "created"
 STATUS_KEY_CLOSED = "closed"
 
@@ -47,8 +43,8 @@ class TalentAuditInterviewService(BaseService):
     def __init__(
         self,
         repository: TalentAuditInterviewRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -65,7 +61,7 @@ class TalentAuditInterviewService(BaseService):
         return status.id
 
     async def _set_audit_jobs_status(
-        self, audit_job_ids: List[int], status_key: str
+        self, audit_job_ids: list[int], status_key: str
     ) -> None:
         status_id = await self._get_status_id_by_key(status_key)
         stmt = (
@@ -79,7 +75,7 @@ class TalentAuditInterviewService(BaseService):
     # Helpers — period resolution
     # ------------------------------------------------------------------
 
-    async def _get_link_details(self, link_id: int) -> Optional[TalentStatusPeriodLink]:
+    async def _get_link_details(self, link_id: int) -> TalentStatusPeriodLink | None:
         """Get the full link with talent_period and talent_status loaded."""
         stmt = select(TalentStatusPeriodLink).where(
             TalentStatusPeriodLink.id == link_id
@@ -90,7 +86,7 @@ class TalentAuditInterviewService(BaseService):
     async def _validate_hrs_periods_ascending(
         self,
         job_assessments: list,
-        free_jobs: List[TalentAuditJob],
+        free_jobs: list[TalentAuditJob],
     ) -> None:
         """
         Validate HRS assessments: qty_months must be strictly ascending
@@ -140,15 +136,15 @@ class TalentAuditInterviewService(BaseService):
 
     async def get_by_talent_audit_id(
         self, talent_audit_id: int
-    ) -> List[TalentAuditInterviewSchema]:
+    ) -> list[TalentAuditInterviewSchema]:
         records = await self.repository.get_all(
             filters={"talent_audit_id": talent_audit_id}
         )
         return [TalentAuditInterviewSchema.model_validate(r) for r in records]
 
     async def get_talent_audit_interviews(
-        self, sort: Optional[str] = None
-    ) -> List[TalentAuditInterviewSchema]:
+        self, sort: str | None = None
+    ) -> list[TalentAuditInterviewSchema]:
         records = await self.get_all(sort_json=sort)
         return [TalentAuditInterviewSchema.model_validate(r) for r in records]
 
@@ -156,7 +152,7 @@ class TalentAuditInterviewService(BaseService):
     # Helpers — free jobs
     # ------------------------------------------------------------------
 
-    async def _get_free_audit_jobs(self, talent_audit_id: int) -> List[TalentAuditJob]:
+    async def _get_free_audit_jobs(self, talent_audit_id: int) -> list[TalentAuditJob]:
         created_status_id = await self._get_status_id_by_key(STATUS_KEY_CREATED)
         stmt = (
             select(TalentAuditJob)
@@ -173,7 +169,7 @@ class TalentAuditInterviewService(BaseService):
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_free_audit_jobs_for_audit(self, talent_audit_id: int) -> List[dict]:
+    async def get_free_audit_jobs_for_audit(self, talent_audit_id: int) -> list[dict]:
         jobs = await self._get_free_audit_jobs(talent_audit_id)
         result = []
         for j in jobs:

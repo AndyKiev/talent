@@ -1,51 +1,51 @@
-from typing import Optional, List
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_model import Employee
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.review_dimension.review_dimension_model import ReviewDimension
+from backend.api_v1.review_dimension_criteria.review_dimension_criteria_model import (
+    ReviewDimensionCriteria,
+)
+from backend.api_v1.review_level.review_level_model import ReviewLevel
+from backend.api_v1.review_session.review_session_messages import (
+    ReviewSessionCannotCloseError,
+    ReviewSessionCloseSuccess,
+    ReviewSessionCreateSuccess,
+    ReviewSessionDeleteError,
+    ReviewSessionDeletePermission,
+    ReviewSessionDeleteSuccess,
+    ReviewSessionNotFound,
+    ReviewSessionOpenSuccess,
+    ReviewSessionRevertSuccess,
+    ReviewSessionStatusError,
+    ReviewSessionUpdateSuccess,
+)
 from backend.api_v1.review_session.review_session_repository import (
     ReviewSessionRepository,
 )
 from backend.api_v1.review_session.review_session_schema import (
     ReviewSession as ReviewSessionSchema,
+)
+from backend.api_v1.review_session.review_session_schema import (
     ReviewSessionCreate,
     ReviewSessionUpdate,
 )
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.review_session.review_session_messages import (
-    ReviewSessionNotFound,
-    ReviewSessionDeleteError,
-    ReviewSessionDeletePermission,
-    ReviewSessionStatusError,
-    ReviewSessionCannotCloseError,
-)
-from backend.api_v1.review_session.review_session_messages import (
-    ReviewSessionDeleteSuccess,
-    ReviewSessionCreateSuccess,
-    ReviewSessionUpdateSuccess,
-    ReviewSessionOpenSuccess,
-    ReviewSessionCloseSuccess,
-    ReviewSessionRevertSuccess,
+from backend.api_v1.review_session_criterion.review_session_criterion_model import (
+    ReviewSessionCriterion,
 )
 from backend.api_v1.review_session_employee.review_session_employee_model import (
     ReviewSessionEmployee,
 )
-from backend.api_v1.review_session_status.review_session_status_repository import (
-    ReviewSessionStatusRepository,
-)
-from backend.api_v1.review_session_status.review_session_status_messages import (
-    ReviewSessionStatusNotFoundByKey,
-)
-from backend.utils.enums import ReviewSessionStatusKey
-from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_model import (
-    ReviewSessionEmployeeEvaluation,
-)
 from backend.api_v1.review_session_employee_criterion_score.review_session_employee_criterion_score_model import (
     ReviewSessionEmployeeCriterionScore,
+)
+from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_model import (
+    ReviewSessionEmployeeEvaluation,
 )
 from backend.api_v1.review_session_employee_level.review_session_employee_level_model import (
     ReviewSessionEmployeeLevel,
@@ -53,15 +53,6 @@ from backend.api_v1.review_session_employee_level.review_session_employee_level_
 from backend.api_v1.review_session_employee_level_answer.review_session_employee_level_answer_model import (
     ReviewSessionEmployeeLevelAnswer,
 )
-from backend.api_v1.employee.employee_model import Employee
-from backend.api_v1.review_dimension.review_dimension_model import ReviewDimension
-from backend.api_v1.review_dimension_criteria.review_dimension_criteria_model import (
-    ReviewDimensionCriteria,
-)
-from backend.api_v1.review_session_criterion.review_session_criterion_model import (
-    ReviewSessionCriterion,
-)
-from backend.api_v1.review_level.review_level_model import ReviewLevel
 from backend.api_v1.review_session_level.review_session_level_model import (
     ReviewSessionLevel,
 )
@@ -71,7 +62,13 @@ from backend.api_v1.review_session_level_requirement.review_session_level_requir
 from backend.api_v1.review_session_setting.review_session_setting_model import (
     ReviewSessionSetting,
 )
-
+from backend.api_v1.review_session_status.review_session_status_messages import (
+    ReviewSessionStatusNotFoundByKey,
+)
+from backend.api_v1.review_session_status.review_session_status_repository import (
+    ReviewSessionStatusRepository,
+)
+from backend.utils.enums import ReviewSessionStatusKey
 
 VALID_TRANSITIONS = {
     "pending": ["open"],
@@ -89,8 +86,8 @@ class ReviewSessionService(BaseService):
     def __init__(
         self,
         repository: ReviewSessionRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
         self.status_repo = ReviewSessionStatusRepository(session=session)
@@ -118,9 +115,9 @@ class ReviewSessionService(BaseService):
 
     async def get_review_sessions(
         self,
-        status: Optional[str] = None,
-        sort: Optional[str] = None,
-    ) -> List[ReviewSessionSchema]:
+        status: str | None = None,
+        sort: str | None = None,
+    ) -> list[ReviewSessionSchema]:
         filters = {}
         if status:
             status_id = await self._resolve_status_id(status)
@@ -195,11 +192,11 @@ class ReviewSessionService(BaseService):
         from backend.api_v1.app_setting.app_setting_model import (
             AppSetting as AppSettingModel,
         )
-        from backend.api_v1.review_session_department.review_session_department_repository import (
-            ReviewSessionDepartmentRepository,
-        )
         from backend.api_v1.employee_department.employee_department_model import (
             EmployeeDepartment,
+        )
+        from backend.api_v1.review_session_department.review_session_department_repository import (
+            ReviewSessionDepartmentRepository,
         )
 
         orm_record = await self.get_by_id(rs_id)
@@ -226,15 +223,15 @@ class ReviewSessionService(BaseService):
         # filter is read fresh here, so it only affects THIS (newly opened)
         # session — never previously opened ones.
         from sqlalchemy import or_
+
         from backend.api_v1.app_setting.app_setting_service import get_list_setting
+        from backend.api_v1.employee_origin.employee_origin_model import (
+            HUMAN_ORIGIN_ID,
+        )
         from backend.api_v1.employee_status.employee_status_model import EmployeeStatus
         from backend.api_v1.job_category.job_category_model import JobCategory
         from backend.api_v1.job_job_category_link.job_job_category_link_model import (
             JobJobCategoryLink,
-        )
-
-        from backend.api_v1.employee_origin.employee_origin_model import (
-            HUMAN_ORIGIN_ID,
         )
 
         stmt = select(Employee)
@@ -425,6 +422,7 @@ class ReviewSessionService(BaseService):
 
     async def close_session(self, rs_id: int) -> MutationResponse[ReviewSessionSchema]:
         from sqlalchemy import select as sa_select
+
         from backend.api_v1.review_session_employee.review_session_employee_model import (
             ReviewSessionEmployee as RSEModel,
         )
@@ -485,7 +483,9 @@ class ReviewSessionService(BaseService):
         missing one surfaces as the misleading "has employee reviews" error.
         Restricted to developers (the `dev` group).
         """
-        from sqlalchemy import select as sa_select, delete as sa_delete
+        from sqlalchemy import delete as sa_delete
+        from sqlalchemy import select as sa_select
+
         from backend.api_v1.review_session_department.review_session_department_model import (
             ReviewSessionDepartment,
         )
@@ -653,15 +653,17 @@ class ReviewSessionService(BaseService):
         Returns average score per dimension across all employees in the session.
         Only evaluations with a non-null score contribute to the average.
         """
-        from sqlalchemy import select as sa_select, func
+        from sqlalchemy import func
+        from sqlalchemy import select as sa_select
+
+        from backend.api_v1.review_dimension.review_dimension_model import (
+            ReviewDimension,
+        )
         from backend.api_v1.review_session_employee.review_session_employee_model import (
             ReviewSessionEmployee as RSEModel,
         )
         from backend.api_v1.review_session_employee_evaluation.review_session_employee_evaluation_model import (
             ReviewSessionEmployeeEvaluation as EvalModel,
-        )
-        from backend.api_v1.review_dimension.review_dimension_model import (
-            ReviewDimension,
         )
 
         stmt = (
@@ -736,6 +738,7 @@ class ReviewSessionService(BaseService):
         resolved on the frontend.
         """
         from sqlalchemy import inspect as sa_inspect
+
         from backend.api_v1.review_session_department.review_session_department_model import (
             ReviewSessionDepartment,
         )

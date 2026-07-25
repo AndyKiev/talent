@@ -4,12 +4,12 @@ from pathlib import Path
 
 from sqlalchemy import select, text
 
-from backend.database.db_helper import db_helper
 from backend.api_v1.msg_key.msg_key_model import MsgKey
 
 # NOTE: use Msg from msg_pg, NOT from message.message_model — the latter also defines a
 # duplicate MsgKey class that conflicts with msg_key.msg_key_model.MsgKey at MetaData level.
 from backend.api_v1.msg_pg.msg_model import Msg
+from backend.database.db_helper import db_helper
 
 JSON_PATH = (
     Path(__file__).resolve().parent.parent / "utils" / "table_data" / "table_data.json"
@@ -127,7 +127,7 @@ async def reset_sequence(table_name: str, col: str = "id") -> None:
 
 
 async def seed_messages():
-    with open(JSON_PATH, "r", encoding="utf-8") as f:
+    with open(JSON_PATH, encoding="utf-8") as f:
         table_data = json.load(f)
 
     msg_keys_data: list[dict] = table_data["tables"]["msg_keys"]["rows"]

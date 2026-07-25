@@ -1,6 +1,6 @@
-from pydantic import BaseModel, ConfigDict
-from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
 
 
 class ProcessRoleHolderBase(BaseModel):
@@ -18,7 +18,7 @@ class ProcessRoleHolder(ProcessRoleHolderBase):
     id: int
     assigned_by: int
     created_at: datetime
-    holder_code: Optional[str] = None
-    holder_name: Optional[str] = None
-    assigner_name: Optional[str] = None
-    role_name: Optional[str] = None
+    holder_code: str | None = None
+    holder_name: str | None = None
+    assigner_name: str | None = None
+    role_name: str | None = None

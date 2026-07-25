@@ -1,14 +1,15 @@
-from fastapi import APIRouter, Depends
 from typing import Annotated
 
-from backend.api_v1.process_roles.process_role_active_context.process_role_active_context_schema import (
-    MyScopes,
-    ActiveContextRead,
-    ActiveContextUpdate,
-    SessionScopeAvailability,
-)
+from fastapi import APIRouter, Depends
+
 from backend.api_v1.process_roles.process_role_active_context.process_role_active_context_dependencies import (
     get_process_role_active_context_service,
+)
+from backend.api_v1.process_roles.process_role_active_context.process_role_active_context_schema import (
+    ActiveContextRead,
+    ActiveContextUpdate,
+    MyScopes,
+    SessionScopeAvailability,
 )
 from backend.api_v1.process_roles.process_role_active_context.process_role_active_context_service import (
     ProcessRoleActiveContextService,

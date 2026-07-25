@@ -1,12 +1,12 @@
+
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional
 
 
 class EmployeeEducationBase(BaseModel):
     institution: str = Field(..., max_length=256)
-    degree_id: Optional[int] = None
-    speciality: Optional[str] = Field(None, max_length=256)
-    graduation_year: Optional[int] = None
+    degree_id: int | None = None
+    speciality: str | None = Field(None, max_length=256)
+    graduation_year: int | None = None
 
 
 class EmployeeEducationCreate(EmployeeEducationBase):
@@ -14,10 +14,10 @@ class EmployeeEducationCreate(EmployeeEducationBase):
 
 
 class EmployeeEducationUpdate(BaseModel):
-    institution: Optional[str] = Field(None, max_length=256)
-    degree_id: Optional[int] = None
-    speciality: Optional[str] = Field(None, max_length=256)
-    graduation_year: Optional[int] = None
+    institution: str | None = Field(None, max_length=256)
+    degree_id: int | None = None
+    speciality: str | None = Field(None, max_length=256)
+    graduation_year: int | None = None
 
 
 class EmployeeEducation(EmployeeEducationBase):

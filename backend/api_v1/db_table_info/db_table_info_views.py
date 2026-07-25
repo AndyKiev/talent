@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends
 from typing import Annotated
+
+from fastapi import APIRouter, Depends
 
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.db_table_info.db_table_info_dependencies import (
@@ -22,7 +23,7 @@ from backend.api_v1.db_table_info.db_table_info_service import (
 )
 from backend.auth.guards import Guard
 from backend.auth.jwt_auth import get_current_active_auth_user
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/developer/db_tables",

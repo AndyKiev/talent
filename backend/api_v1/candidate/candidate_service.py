@@ -1,35 +1,34 @@
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.candidate.candidate_repository import CandidateRepository
+from backend.api_v1.candidate.candidate_messages import (
+    CandidateCreateSuccess,
+    CandidateDeleteError,
+    CandidateDeleteSuccess,
+    CandidateEmailTaken,
+    CandidateNotFound,
+    CandidateUpdateSuccess,
+)
 from backend.api_v1.candidate.candidate_model import Candidate
-from backend.api_v1.candidate_phone.candidate_phone_model import CandidatePhone
+from backend.api_v1.candidate.candidate_repository import CandidateRepository
 from backend.api_v1.candidate.candidate_schema import (
-    CandidateSchema,
     CandidateCreate,
+    CandidateSchema,
     CandidateUpdate,
 )
-from backend.api_v1.candidate.candidate_messages import (
-    CandidateNotFound,
-    CandidateEmailTaken,
-    CandidateDeleteError,
-    CandidateCreateSuccess,
-    CandidateUpdateSuccess,
-    CandidateDeleteSuccess,
-)
+from backend.api_v1.candidate_phone.candidate_phone_model import CandidatePhone
+from backend.api_v1.employee.employee_schema import EmployeeSchema
 
 
 class CandidateService(BaseService):
     def __init__(
         self,
         repository: CandidateRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -58,7 +57,7 @@ class CandidateService(BaseService):
         return f"{orm.first_name} {orm.last_name}".strip()
 
     async def _check_email_free(
-        self, email: Optional[str], exclude_id: Optional[int] = None
+        self, email: str | None, exclude_id: int | None = None
     ) -> None:
         if not email:
             return
@@ -67,8 +66,8 @@ class CandidateService(BaseService):
             raise await self._resolve_domain_error(CandidateEmailTaken(email))
 
     async def get_candidates(
-        self, sort: Optional[str] = None
-    ) -> List[CandidateSchema]:
+        self, sort: str | None = None
+    ) -> list[CandidateSchema]:
         records = await self.get_all(
             sort_json=sort,
             sort=None if sort else [{"created_at": "desc"}, {"id": "desc"}],

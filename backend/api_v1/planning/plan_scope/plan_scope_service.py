@@ -1,29 +1,25 @@
-from typing import Optional, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.utils.enums import PlanSessionStatusKey
-
+from backend.api_v1.planning.plan_scope.plan_scope_messages import (
+    PlanScopeDeleteError,
+    PlanScopeDeleteSuccess,
+    PlanScopeInactive,
+    PlanScopeNotFound,
+    PlanScopeSessionClosed,
+    PlanScopeSessionPending,
+    PlanScopeUpdateSuccess,
+)
 from backend.api_v1.planning.plan_scope.plan_scope_repository import PlanScopeRepository
 from backend.api_v1.planning.plan_scope.plan_scope_schema import (
     PlanScope as PlanScopeSchema,
+)
+from backend.api_v1.planning.plan_scope.plan_scope_schema import (
     PlanScopeUpdate,
 )
-from backend.api_v1.planning.plan_scope.plan_scope_messages import (
-    PlanScopeNotFound,
-    PlanScopeSessionPending,
-    PlanScopeSessionClosed,
-    PlanScopeInactive,
-    PlanScopeDeleteError,
-)
-from backend.api_v1.planning.plan_scope.plan_scope_messages import (
-    PlanScopeUpdateSuccess,
-    PlanScopeDeleteSuccess,
-)
-
 from backend.api_v1.planning.plan_session.plan_session_repository import (
     PlanSessionRepository,
 )
@@ -31,6 +27,7 @@ from backend.api_v1.planning.plan_session_status.plan_session_status_repository 
     PlanSessionStatusRepository,
 )
 from backend.api_v1.region.region_schema import RegionSlim
+from backend.utils.enums import PlanSessionStatusKey
 
 
 def _scope_label(schema: PlanScopeSchema) -> str:
@@ -44,8 +41,8 @@ class PlanScopeService(BaseService):
     def __init__(
         self,
         repository: PlanScopeRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
         # Sibling repositories share the same AsyncSession
@@ -60,11 +57,11 @@ class PlanScopeService(BaseService):
 
     async def get_scopes_by_session(
         self, plan_session_id: int
-    ) -> List[PlanScopeSchema]:
+    ) -> list[PlanScopeSchema]:
         records = await self.repository.get_by_session(plan_session_id)
         dept_ids = {r.department_id for r in records}
         region_map = await self.repository.get_region_map(dept_ids)
-        out: List[PlanScopeSchema] = []
+        out: list[PlanScopeSchema] = []
         for r in records:
             schema = PlanScopeSchema.model_validate(r)
             region = region_map.get(r.department_id)

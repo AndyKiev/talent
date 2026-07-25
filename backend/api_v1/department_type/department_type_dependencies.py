@@ -1,15 +1,16 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.database.db_helper import db_helper  # <-- corrected import
+
 from backend.api_v1.department_type.department_type_repository import (
     DepartmentTypeRepository,
 )
-from backend.api_v1.department_type.department_type_service import DepartmentTypeService
 from backend.api_v1.department_type.department_type_schema import (
     DepartmentType as DepartmentTypeSchema,
 )
+from backend.api_v1.department_type.department_type_service import DepartmentTypeService
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.auth.jwt_auth import get_current_active_auth_user  # <-- corrected auth
+from backend.database.db_helper import db_helper  # <-- corrected import
 
 
 def get_department_type_repository(

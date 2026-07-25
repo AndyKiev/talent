@@ -1,17 +1,16 @@
-from typing import Optional, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.employee_events.employee_event_change_department.employee_event_change_department_messages import (
+    EmployeeEventChangeDepartmentNotFound,
+)
 from backend.api_v1.employee_events.employee_event_change_department.employee_event_change_department_repository import (
     EmployeeEventChangeDepartmentRepository,
 )
 from backend.api_v1.employee_events.employee_event_change_department.employee_event_change_department_schema import (
     EmployeeEventChangeDepartmentSchema,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.employee_events.employee_event_change_department.employee_event_change_department_messages import (
-    EmployeeEventChangeDepartmentNotFound,
 )
 
 
@@ -24,8 +23,8 @@ class EmployeeEventChangeDepartmentService(BaseService):
     def __init__(
         self,
         repository: EmployeeEventChangeDepartmentRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -39,9 +38,9 @@ class EmployeeEventChangeDepartmentService(BaseService):
 
     async def get_employee_event_change_departments(
         self,
-        event_change_id: Optional[int] = None,
-        sort: Optional[str] = None,
-    ) -> List[EmployeeEventChangeDepartmentSchema]:
+        event_change_id: int | None = None,
+        sort: str | None = None,
+    ) -> list[EmployeeEventChangeDepartmentSchema]:
         if event_change_id is not None:
             records = await self.get_all(
                 filters={"event_change_id": event_change_id},

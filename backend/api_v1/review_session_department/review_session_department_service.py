@@ -1,32 +1,32 @@
-from typing import List, Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.review_session_department.review_session_department_messages import (
+    ReviewSessionDepartmentAlreadyExists,
+    ReviewSessionDepartmentCreateSuccess,
+    ReviewSessionDepartmentDeleteSuccess,
+    ReviewSessionDepartmentNotFound,
+)
 from backend.api_v1.review_session_department.review_session_department_repository import (
     ReviewSessionDepartmentRepository,
 )
 from backend.api_v1.review_session_department.review_session_department_schema import (
     ReviewSessionDepartment as ReviewSessionDepartmentSchema,
+)
+from backend.api_v1.review_session_department.review_session_department_schema import (
     ReviewSessionDepartmentCreate,
 )
-from backend.api_v1.review_session_department.review_session_department_messages import (
-    ReviewSessionDepartmentNotFound,
-    ReviewSessionDepartmentAlreadyExists,
-)
-from backend.api_v1.review_session_department.review_session_department_messages import (
-    ReviewSessionDepartmentCreateSuccess,
-    ReviewSessionDepartmentDeleteSuccess,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
 
 
 class ReviewSessionDepartmentService(BaseService):
     def __init__(
         self,
         repository: ReviewSessionDepartmentRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -54,7 +54,7 @@ class ReviewSessionDepartmentService(BaseService):
 
     async def get_departments_for_session(
         self, session_id: int
-    ) -> List[ReviewSessionDepartmentSchema]:
+    ) -> list[ReviewSessionDepartmentSchema]:
         records = await self.repository.get_by_session(session_id)
         return [ReviewSessionDepartmentSchema.from_orm_with_name(r) for r in records]
 

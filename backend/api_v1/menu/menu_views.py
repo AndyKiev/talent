@@ -1,18 +1,18 @@
-from fastapi import APIRouter, Depends, status
-from fastapi.security import HTTPBearer
-from typing import Annotated, List
+from typing import Annotated
 
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.menu.menu_dependencies import get_menu_service
 from backend.api_v1.menu.menu_schema import (
-    MenuSchema,
     MenuAdminSchema,
     MenuCreate,
+    MenuSchema,
     MenuUpdate,
 )
-from backend.api_v1.menu.menu_dependencies import get_menu_service
 from backend.api_v1.menu.menu_service import MenuService
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
+from fastapi import APIRouter, Depends, status
+from fastapi.security import HTTPBearer
 
 # The two public reads (/menus, /menus/my) carry NO set-permission Guard: every
 # authenticated user needs their own menu to render the navigation. The editor
@@ -26,7 +26,7 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[MenuSchema],
+    response_model=list[MenuSchema],
     summary="All active menu items (developer default-menu select)",
 )
 async def get_menus(
@@ -37,7 +37,7 @@ async def get_menus(
 
 @router.get(
     "/my",
-    response_model=List[MenuSchema],
+    response_model=list[MenuSchema],
     summary="Menu items visible to the current user",
 )
 async def get_my_menus(
@@ -51,7 +51,7 @@ async def get_my_menus(
 
 @router.get(
     "/manage",
-    response_model=List[MenuAdminSchema],
+    response_model=list[MenuAdminSchema],
     summary="All menu items with visibility config (developer editor)",
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.MENU)],
 )

@@ -1,4 +1,3 @@
-from typing import List, Optional
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,23 +6,23 @@ from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_messages import (
+    TalentAuditInterviewStatusCreateSuccess,
     TalentAuditInterviewStatusDeleteError,
+    TalentAuditInterviewStatusDeleteSuccess,
     TalentAuditInterviewStatusNameTaken,
     TalentAuditInterviewStatusNotFound,
     TalentAuditInterviewStatusNotFoundByName,
+    TalentAuditInterviewStatusUpdateSuccess,
 )
 from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_repository import (
     TalentAuditInterviewStatusRepository,
 )
 from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_schema import (
     TalentAuditInterviewStatus as TalentAuditInterviewStatusSchema,
+)
+from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_schema import (
     TalentAuditInterviewStatusCreate,
     TalentAuditInterviewStatusUpdate,
-)
-from backend.api_v1.talent_audit_interview_status.talent_audit_interview_status_messages import (
-    TalentAuditInterviewStatusCreateSuccess,
-    TalentAuditInterviewStatusDeleteSuccess,
-    TalentAuditInterviewStatusUpdateSuccess,
 )
 
 
@@ -31,8 +30,8 @@ class TalentAuditInterviewStatusService(BaseService):
     def __init__(
         self,
         repository: TalentAuditInterviewStatusRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -46,9 +45,9 @@ class TalentAuditInterviewStatusService(BaseService):
 
     async def get_talent_audit_interview_statuses(
         self,
-        name: Optional[str] = None,
-        sort: Optional[str] = None,
-    ) -> List[TalentAuditInterviewStatusSchema]:
+        name: str | None = None,
+        sort: str | None = None,
+    ) -> list[TalentAuditInterviewStatusSchema]:
         if name:
             record = await self.get_by_name(
                 name, not_found_exc=TalentAuditInterviewStatusNotFoundByName

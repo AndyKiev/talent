@@ -1,68 +1,67 @@
-from typing import Optional, List
 
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.department.department_messages import (
+    DepartmentCircularReferenceError,
+    DepartmentCreateSuccess,
+    DepartmentDeleteError,
+    DepartmentDeleteSuccess,
+    DepartmentGenerateCategoryNotFound,
+    DepartmentNotFound,
+    DepartmentNotFoundByName,
+    DepartmentSubtreeGenerateSuccess,
+    DepartmentUpdateSuccess,
+)
+from backend.api_v1.department.department_model import Department
+from backend.api_v1.department.department_org_units import resolve_top_org_unit
 from backend.api_v1.department.department_repository import DepartmentRepository
 from backend.api_v1.department.department_schema import (
     Department as DepartmentSchema,
-    DepartmentFlat,
+)
+from backend.api_v1.department.department_schema import (
     DepartmentCreate,
+    DepartmentFlat,
+    DepartmentSubtreeGenerateResult,
+    DepartmentTopResolution,
     DepartmentUpdate,
 )
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.department.department_messages import (
-    DepartmentNotFound,
-    DepartmentDeleteError,
-    DepartmentNotFoundByName,
-    DepartmentCircularReferenceError,
-    DepartmentGenerateCategoryNotFound,
-)
-from backend.api_v1.department.department_messages import (
-    DepartmentDeleteSuccess,
-    DepartmentCreateSuccess,
-    DepartmentUpdateSuccess,
-    DepartmentSubtreeGenerateSuccess,
+from backend.api_v1.department_category.department_category_model import (
+    DepartmentCategory,
 )
 from backend.api_v1.department_category.department_category_schema import (
     DepartmentCategory as DepartmentCategorySchema,
 )
+from backend.api_v1.department_type.department_type_model import DepartmentType
 from backend.api_v1.department_type.department_type_schema import (
     DepartmentType as DepartmentTypeSchema,
 )
-from backend.api_v1.department.department_model import Department
-from backend.api_v1.department.department_schema import DepartmentSubtreeGenerateResult
-from backend.api_v1.department.department_schema import DepartmentTopResolution
-from backend.api_v1.department.department_org_units import resolve_top_org_unit
-from backend.api_v1.department_category.department_category_model import (
-    DepartmentCategory,
-)
-from backend.api_v1.department_type.department_type_model import DepartmentType
 from backend.api_v1.department_type_parental_links.department_type_parental_link_repository import (
     DepartmentTypeParentalLinkRepository,
 )
-from sqlalchemy import select
+from backend.api_v1.employee.employee_schema import EmployeeSchema
 
 
 class DepartmentService(BaseService):
     def __init__(
         self,
         repository: DepartmentRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
     async def get_departments(
         self,
-        name: Optional[str] = None,
-        is_active: Optional[bool] = None,
-        department_type_id: Optional[int] = None,
-        department_category_id: Optional[int] = None,
-        sort: Optional[str] = None,
-    ) -> List[DepartmentFlat]:
+        name: str | None = None,
+        is_active: bool | None = None,
+        department_type_id: int | None = None,
+        department_category_id: int | None = None,
+        sort: str | None = None,
+    ) -> list[DepartmentFlat]:
         if name:
             record = await self.get_by_name(
                 name, not_found_exc=DepartmentNotFoundByName
@@ -78,14 +77,14 @@ class DepartmentService(BaseService):
         records = await self.get_all(params=filters or None, sort_json=sort)
         return [DepartmentFlat.model_validate(r) for r in records]
 
-    async def get_root_departments(self) -> List[DepartmentFlat]:
+    async def get_root_departments(self) -> list[DepartmentFlat]:
         """Return all departments with parent_id IS NULL."""
         records = await self.repository.get_roots_with_rels()
         return [DepartmentFlat.model_validate(r) for r in records]
 
     async def resolve_top_org_units(
-        self, department_ids: List[int]
-    ) -> List[DepartmentTopResolution]:
+        self, department_ids: list[int]
+    ) -> list[DepartmentTopResolution]:
         """
         For each department id, resolve its top-level org unit (board /
         directorate / store) by walking up the tree. Reuses the flat org-unit
@@ -101,7 +100,7 @@ class DepartmentService(BaseService):
             for did in department_ids
         ]
 
-    async def get_tree(self) -> List[DepartmentSchema]:
+    async def get_tree(self) -> list[DepartmentSchema]:
         """Return full tree as a list of root departments with nested children."""
         all_depts = await self.repository.get_all_with_rels()
 

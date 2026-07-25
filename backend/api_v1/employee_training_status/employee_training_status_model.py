@@ -1,9 +1,10 @@
 # backend/api_v1/employee_training_status/employee_training_status_model.py
 from typing import TYPE_CHECKING
-from sqlalchemy import String, Integer
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin, TimestampMixin
+from sqlalchemy import Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
     from backend.api_v1.employee_training.employee_training_model import (

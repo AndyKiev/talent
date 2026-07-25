@@ -1,39 +1,38 @@
-from typing import List, Optional
 
-from sqlalchemy import select, delete, distinct, and_
+from sqlalchemy import and_, delete, distinct, select
 from sqlalchemy.orm import noload, selectinload
 
 from backend.api_v1.base.base_repository import BaseRepository, SortSpec
+from backend.api_v1.employee.employee_messages import (
+    EmployeeAlreadyInGroup,
+    EmployeeNotFound,
+    UserNotInGroup,
+)
 from backend.api_v1.employee.employee_model import Employee
 from backend.api_v1.employee_department.employee_department_model import (
     EmployeeDepartment,
 )
-from backend.api_v1.user_group.user_group_messages import (
-    UserGroupNotFound,
-    UserGroupsNotFound,
-)
-from backend.api_v1.user_group.user_group_model import UserGroup
-from backend.api_v1.table_relationship_links.employee_user_group_link_model import (
-    EmployeeUserGroupLink,
-)
-from backend.api_v1.table_relationship_links.job_user_group_link_model import (
-    JobUserGroupLink,
-)
+from backend.api_v1.operation.operation_model import Operation
 from backend.api_v1.table_relationship_links.employee_current_level_model import (
     EmployeeCurrentLevel,
 )
 from backend.api_v1.table_relationship_links.employee_personal_data_model import (
     EmployeePersonalData,
 )
-from backend.api_v1.operation.operation_model import Operation
+from backend.api_v1.table_relationship_links.employee_user_group_link_model import (
+    EmployeeUserGroupLink,
+)
+from backend.api_v1.table_relationship_links.job_user_group_link_model import (
+    JobUserGroupLink,
+)
 from backend.api_v1.table_relationship_links.operation_user_group_link_model import (
     OperationUserGroupLink,
 )
-from backend.api_v1.employee.employee_messages import (
-    EmployeeNotFound,
-    EmployeeAlreadyInGroup,
-    UserNotInGroup,
+from backend.api_v1.user_group.user_group_messages import (
+    UserGroupNotFound,
+    UserGroupsNotFound,
 )
+from backend.api_v1.user_group.user_group_model import UserGroup
 
 
 class EmployeeRepository(BaseRepository):
@@ -47,7 +46,7 @@ class EmployeeRepository(BaseRepository):
         self,
         filters: dict | None = None,
         sort: SortSpec = None,
-        main_department_ids: Optional[set[int]] = None,
+        main_department_ids: set[int] | None = None,
     ):
         """
         Override of BaseRepository.get_all that additionally supports restricting
@@ -101,7 +100,7 @@ class EmployeeRepository(BaseRepository):
     # Custom multi-join query — no base equivalent
     # -----------------------------------------------------------------------
 
-    async def get_user_operations(self, user_id: int) -> List[str]:
+    async def get_user_operations(self, user_id: int) -> list[str]:
         """Return unique operation names accessible to a employee via their groups."""
         stmt = (
             select(distinct(Operation.name))
@@ -134,21 +133,21 @@ class EmployeeRepository(BaseRepository):
         Do NOT use for profile/detail responses — job/lang/status/departments
         come back empty; /jwt/users/me refetches the full record instead.
         """
-        from backend.api_v1.table_relationship_links.user_group_operation_essence_link_model import (
-            UserGroupOperationEssenceLink,
+        from backend.api_v1.essence_set.essence_set_member_model import (
+            EssenceSetMember,
         )
-        from backend.api_v1.table_relationship_links.user_group_operation_essence_set_link_model import (
-            UserGroupOperationEssenceSetLink,
-        )
+        from backend.api_v1.essence_set.essence_set_model import EssenceSet
         from backend.api_v1.operation_essence_link.operation_essence_link_model import (
             OperationEssenceLink,
         )
         from backend.api_v1.operation_essence_set_link.operation_essence_set_link_model import (
             OperationEssenceSetLink,
         )
-        from backend.api_v1.essence_set.essence_set_model import EssenceSet
-        from backend.api_v1.essence_set.essence_set_member_model import (
-            EssenceSetMember,
+        from backend.api_v1.table_relationship_links.user_group_operation_essence_link_model import (
+            UserGroupOperationEssenceLink,
+        )
+        from backend.api_v1.table_relationship_links.user_group_operation_essence_set_link_model import (
+            UserGroupOperationEssenceSetLink,
         )
 
         group_chain = selectinload(self.model.user_groups).options(
@@ -314,7 +313,7 @@ class EmployeeRepository(BaseRepository):
         await self.session.commit()
         return await self.get_by_id(user_id)
 
-    async def set_groups(self, user_id: int, user_group_ids: List[int]) -> Employee:
+    async def set_groups(self, user_id: int, user_group_ids: list[int]) -> Employee:
         if not await self.get_by_id(user_id):
             raise EmployeeNotFound(user_id)
 
@@ -401,7 +400,7 @@ class EmployeeRepository(BaseRepository):
         updated_user = await self.get_by_id(user_id)
         return updated_user, len(to_add), len(to_remove)
 
-    async def get_employee_ids_by_job(self, job_id: int) -> List[int]:
+    async def get_employee_ids_by_job(self, job_id: int) -> list[int]:
         """Return IDs of all users assigned to a given job."""
         result = await self.session.execute(
             select(Employee.id).where(Employee.job_id == job_id)

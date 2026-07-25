@@ -8,7 +8,7 @@ instance. In-code fallbacks passed by callers must always be English.
 lang ids follow the langs table: 2 = english, 3 = ukrainian.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,7 +24,7 @@ async def translate_key(
     session: AsyncSession,
     message_key: str,
     lang_id: int,
-    variables: Optional[Dict[str, Any]] = None,
+    variables: dict[str, Any] | None = None,
     fallback: str = "",
 ) -> str:
     """Resolve one message key for the given language.
@@ -57,9 +57,9 @@ async def translate_key(
 
 async def translate_keys(
     session: AsyncSession,
-    keys: Dict[str, str],
+    keys: dict[str, str],
     lang_id: int,
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """Resolve many message keys for the given language in ONE query.
 
     ``keys`` maps message_key -> English fallback; the result maps every

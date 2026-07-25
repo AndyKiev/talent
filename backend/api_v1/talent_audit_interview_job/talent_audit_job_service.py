@@ -1,4 +1,3 @@
-from typing import List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -8,25 +7,25 @@ from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.talent_audit_job.talent_audit_job_messages import (
+    TalentAuditJobCreateSuccess,
     TalentAuditJobDeleteError,
+    TalentAuditJobDeleteSuccess,
+    TalentAuditJobDuplicatePeriod,
     TalentAuditJobNotFound,
     TalentAuditJobPeriodNotAscending,
-    TalentAuditJobDuplicatePeriod,
+    TalentAuditJobUpdateSuccess,
 )
+from backend.api_v1.talent_audit_job.talent_audit_job_model import TalentAuditJob
 from backend.api_v1.talent_audit_job.talent_audit_job_repository import (
     TalentAuditJobRepository,
 )
 from backend.api_v1.talent_audit_job.talent_audit_job_schema import (
     TalentAuditJob as TalentAuditJobSchema,
+)
+from backend.api_v1.talent_audit_job.talent_audit_job_schema import (
     TalentAuditJobCreate,
     TalentAuditJobUpdate,
 )
-from backend.api_v1.talent_audit_job.talent_audit_job_messages import (
-    TalentAuditJobCreateSuccess,
-    TalentAuditJobDeleteSuccess,
-    TalentAuditJobUpdateSuccess,
-)
-from backend.api_v1.talent_audit_job.talent_audit_job_model import TalentAuditJob
 from backend.api_v1.talent_status_period_link.talent_status_period_link_model import (
     TalentStatusPeriodLink,
 )
@@ -58,8 +57,8 @@ class TalentAuditJobService(BaseService):
     def __init__(
         self,
         repository: TalentAuditJobRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -78,7 +77,7 @@ class TalentAuditJobService(BaseService):
             return 0
         return link.talent_period.qty_months
 
-    async def _get_existing_qty_months(self, talent_audit_id: int) -> List[int]:
+    async def _get_existing_qty_months(self, talent_audit_id: int) -> list[int]:
         """Get sorted list of qty_months for existing audit jobs in this audit."""
         stmt = select(TalentAuditJob).where(
             TalentAuditJob.talent_audit_id == talent_audit_id
@@ -126,15 +125,15 @@ class TalentAuditJobService(BaseService):
 
     async def get_by_talent_audit_id(
         self, talent_audit_id: int
-    ) -> List[TalentAuditJobSchema]:
+    ) -> list[TalentAuditJobSchema]:
         records = await self.repository.get_all(
             filters={"talent_audit_id": talent_audit_id}
         )
         return [_to_schema(r) for r in records]
 
     async def get_talent_audit_jobs(
-        self, sort: Optional[str] = None
-    ) -> List[TalentAuditJobSchema]:
+        self, sort: str | None = None
+    ) -> list[TalentAuditJobSchema]:
         records = await self.get_all(sort_json=sort)
         return [_to_schema(r) for r in records]
 

@@ -1,12 +1,12 @@
-from pydantic import BaseModel, ConfigDict, Field, computed_field
-from typing import Optional
 from datetime import datetime
 
-from backend.api_v1.talent_status.talent_status_schema import (
-    TalentStatus as TalentStatusSchema,
-)
+from pydantic import BaseModel, ConfigDict, computed_field
+
 from backend.api_v1.talent_period.talent_period_schema import (
     TalentPeriod as TalentPeriodSchema,
+)
+from backend.api_v1.talent_status.talent_status_schema import (
+    TalentStatus as TalentStatusSchema,
 )
 
 
@@ -21,16 +21,16 @@ class TalentStatusPeriodLinkCreate(TalentStatusPeriodLinkBase):
 
 
 class TalentStatusPeriodLinkUpdate(BaseModel):
-    is_active: Optional[bool] = None
+    is_active: bool | None = None
 
 
 class TalentStatusPeriodLink(TalentStatusPeriodLinkBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
-    created_by: Optional[int] = None
+    created_by: int | None = None
     created_at: datetime
-    talent_period: Optional[TalentPeriodSchema] = None
-    talent_status: Optional[TalentStatusSchema] = None
+    talent_period: TalentPeriodSchema | None = None
+    talent_status: TalentStatusSchema | None = None
 
 
 class TalentStatusPeriodLinkWithLabel(TalentStatusPeriodLink):

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, model_validator
-from typing import Optional, List
 from datetime import date, datetime
+
+from pydantic import BaseModel, ConfigDict, model_validator
 
 
 class HrmScopeBase(BaseModel):
@@ -31,24 +31,24 @@ class HrmScopeCreateInternal(HrmScopeBase):
 
 
 class HrmScopeUpdate(BaseModel):
-    department_id: Optional[int] = None
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
+    department_id: int | None = None
+    start_date: date | None = None
+    end_date: date | None = None
 
 
 class HrmScopeSchema(HrmScopeBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
     created_at: datetime
-    employee_user_group_link_id: Optional[int] = None
+    employee_user_group_link_id: int | None = None
 
     # Read-only enrichments (populated via setattr in the service _to_schema).
-    employee_code: Optional[str] = None
-    employee_name: Optional[str] = None
-    department_name: Optional[str] = None
-    department_category_id: Optional[int] = None
-    department_category_name: Optional[str] = None
-    is_currently_active: Optional[bool] = None
+    employee_code: str | None = None
+    employee_name: str | None = None
+    department_name: str | None = None
+    department_category_id: int | None = None
+    department_category_name: str | None = None
+    is_currently_active: bool | None = None
 
 
 class HrmEmployeeRow(BaseModel):
@@ -58,7 +58,7 @@ class HrmEmployeeRow(BaseModel):
     id: int
     code: str
     name: str
-    email: Optional[str] = None
-    job_name: Optional[str] = None
+    email: str | None = None
+    job_name: str | None = None
     scope_count: int = 0
     active_scope_count: int = 0

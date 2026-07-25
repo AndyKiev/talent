@@ -1,14 +1,15 @@
-from fastapi import APIRouter, Depends
-from typing import Annotated, List
+from typing import Annotated
 
-from backend.api_v1.pipeline_status.pipeline_status_schema import PipelineStatusSchema
+from fastapi import APIRouter, Depends
+
 from backend.api_v1.pipeline_status.pipeline_status_dependencies import (
     get_pipeline_status_service,
 )
+from backend.api_v1.pipeline_status.pipeline_status_schema import PipelineStatusSchema
 from backend.api_v1.pipeline_status.pipeline_status_service import PipelineStatusService
-from backend.auth.jwt_auth import get_current_active_auth_user
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.utils.enums import EssenceName, OperationVerb
 
 # Read-only: the pipeline stage set is fixed (seeded by migration) and
 # transitions are enforced by the pipeline state machine — no mutation endpoints.
@@ -21,7 +22,7 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[PipelineStatusSchema],
+    response_model=list[PipelineStatusSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.PIPELINE_STATUS)],
 )
 async def get_pipeline_statuses(

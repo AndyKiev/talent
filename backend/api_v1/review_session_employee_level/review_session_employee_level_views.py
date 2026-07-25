@@ -1,20 +1,21 @@
-from fastapi import APIRouter, Depends
 from typing import Annotated, Optional
 
+from fastapi import APIRouter, Depends
+
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.review_session_employee_level.review_session_employee_level_schema import (
-    ProposedLevelSchema,
-    ProposedLevelUpsert,
-    ProposedLevelStatusUpdate,
-)
-from backend.api_v1.review_session_level.review_session_level_schema import (
-    SessionLevelSchema,
-)
 from backend.api_v1.review_session_employee_level.review_session_employee_level_dependencies import (
     get_review_session_employee_level_service,
 )
+from backend.api_v1.review_session_employee_level.review_session_employee_level_schema import (
+    ProposedLevelSchema,
+    ProposedLevelStatusUpdate,
+    ProposedLevelUpsert,
+)
 from backend.api_v1.review_session_employee_level.review_session_employee_level_service import (
     ReviewSessionEmployeeLevelService,
+)
+from backend.api_v1.review_session_level.review_session_level_schema import (
+    SessionLevelSchema,
 )
 from backend.auth.jwt_auth import get_current_active_auth_user
 

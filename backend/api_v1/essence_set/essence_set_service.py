@@ -1,18 +1,17 @@
 # backend/api_v1/essence_set/essence_set_service.py
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
-from backend.api_v1.essence_set.essence_set_repository import EssenceSetRepository
-from backend.api_v1.essence_set.essence_set_model import EssenceSet
+from backend.api_v1.essence.essence_model import Essence
 from backend.api_v1.essence_set.essence_set_member_model import EssenceSetMember
 from backend.api_v1.essence_set.essence_set_messages import (
-    EssenceSetNotFound,
     EssenceSetInvalidMembers,
+    EssenceSetNotFound,
 )
-from backend.api_v1.essence.essence_model import Essence
+from backend.api_v1.essence_set.essence_set_model import EssenceSet
+from backend.api_v1.essence_set.essence_set_repository import EssenceSetRepository
 from backend.utils.essence_set_fingerprint import fingerprint
 
 
@@ -20,7 +19,7 @@ class EssenceSetService(BaseService):
     def __init__(
         self,
         repository: EssenceSetRepository,
-        session: Optional[AsyncSession] = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, session=session)
 

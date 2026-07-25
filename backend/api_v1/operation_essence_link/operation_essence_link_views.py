@@ -6,23 +6,18 @@
 #   - Granting / revoking pairs to/from user groups
 #   - Setting a user group's full permission set (bulk replace)
 #
-from fastapi import APIRouter, Depends, status, HTTPException
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, List, Optional
-from pydantic import BaseModel
-
-from backend.api_v1.operation_essence_link.operation_essence_link_service import (
-    OperationEssenceLinkService,
-    PermissionPairSchema,
-    GrantPermissionRequest,
-    SetGroupPermissionsRequest,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
-from backend.auth.jwt_auth import has_access
-
-from backend.utils.enums import OperationVerb, EssenceName
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.api_v1.operation_essence_link.operation_essence_link_service import (
+    GrantPermissionRequest,
+    OperationEssenceLinkService,
+    PermissionPairSchema,
+    SetGroupPermissionsRequest,
+)
 from backend.database.db_helper import db_helper
 
 router = APIRouter(
@@ -41,11 +36,11 @@ async def get_oel_service(
 # ── Permission pair CRUD ──────────────────────────────────────────────────────
 
 
-@router.get("", response_model=List[PermissionPairSchema])
+@router.get("", response_model=list[PermissionPairSchema])
 async def list_permission_pairs(
     service: Annotated[OperationEssenceLinkService, Depends(get_oel_service)],
-    operation_name: Optional[str] = None,
-    essence_name: Optional[str] = None,
+    operation_name: str | None = None,
+    essence_name: str | None = None,
     # _auth_user: Annotated[
     #     UserSchema,
     #     Depends(has_access(OperationVerb.VIEW, EssenceName.OPERATION)),
@@ -117,7 +112,7 @@ async def delete_permission_pair(
 # ── Group grant endpoints ─────────────────────────────────────────────────────
 
 
-@router.get("/user_groups/{user_group_id}", response_model=List[PermissionPairSchema])
+@router.get("/user_groups/{user_group_id}", response_model=list[PermissionPairSchema])
 async def get_group_permissions(
     user_group_id: int,
     service: Annotated[OperationEssenceLinkService, Depends(get_oel_service)],

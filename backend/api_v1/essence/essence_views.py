@@ -1,23 +1,22 @@
 # backend/api_v1/essence/essence_views.py
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, List, Optional
 
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.essence.essence_dependencies import (
+    essence_by_id,
+    get_essence_service,
+)
 from backend.api_v1.essence.essence_schema import (
-    EssenceSchema,
     EssenceCreate,
+    EssenceSchema,
     EssenceUpdate,
 )
-from backend.api_v1.essence.essence_dependencies import (
-    get_essence_service,
-    essence_by_id,
-)
 from backend.api_v1.essence.essence_service import EssenceService
-from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
-from backend.auth.jwt_auth import has_access
-from backend.utils.enums import OperationVerb, EssenceName
 from backend.auth.guards import Guard
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/admin/essences",
@@ -28,12 +27,12 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[EssenceSchema],
+    response_model=list[EssenceSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.ESSENCE)],
 )
 async def get_essences(
     service: Annotated[EssenceService, Depends(get_essence_service)],
-    name: Optional[str] = None,
+    name: str | None = None,
     # _auth_user: Annotated[
     #     UserSchema,
     #     Depends(has_access(OperationVerb.VIEW, EssenceName.ESSENCE)),

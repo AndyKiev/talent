@@ -2,23 +2,21 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 from sqlalchemy import select
 
 from backend.api_v1.base.base_repository import BaseRepository
-from backend.api_v1.planning.plan_scope.plan_scope_model import PlanScope
 from backend.api_v1.department.department_model import Department
 from backend.api_v1.department_category.department_category_model import (
     DepartmentCategory,
 )
-from backend.api_v1.job_group.job_group_model import JobGroup
-from backend.api_v1.talent_status.talent_status_model import TalentStatus
 from backend.api_v1.department_region_link.department_region_link_model import (
     DepartmentRegionLink,
 )
+from backend.api_v1.job_group.job_group_model import JobGroup
+from backend.api_v1.planning.plan_scope.plan_scope_model import PlanScope
 from backend.api_v1.region.region_model import Region
-
+from backend.api_v1.talent_status.talent_status_model import TalentStatus
 
 # Category key that marks a department instance as a store.
 STORE_CATEGORY_KEY = "store"
@@ -33,13 +31,13 @@ class ScopeRow:
     job_group_id: int
     job_group_key: str
     job_group_name: str
-    talent_status_id: Optional[int]
-    talent_status_key: Optional[str]
-    talent_status_name: Optional[str]
-    region_id: Optional[int]
-    region_key: Optional[str]
-    region_name: Optional[str]
-    region_sort_order: Optional[int]
+    talent_status_id: int | None
+    talent_status_key: str | None
+    talent_status_name: str | None
+    region_id: int | None
+    region_key: str | None
+    region_name: str | None
+    region_sort_order: int | None
     value: int
 
 

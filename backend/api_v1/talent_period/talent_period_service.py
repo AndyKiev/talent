@@ -1,27 +1,26 @@
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.talent_period.talent_period_messages import (
+    TalentPeriodCreateSuccess,
+    TalentPeriodDeleteError,
+    TalentPeriodDeleteSuccess,
+    TalentPeriodNameTaken,
+    TalentPeriodNotFound,
+    TalentPeriodNotFoundByName,
+    TalentPeriodUpdateSuccess,
+)
 from backend.api_v1.talent_period.talent_period_repository import TalentPeriodRepository
 from backend.api_v1.talent_period.talent_period_schema import (
     TalentPeriod as TalentPeriodSchema,
+)
+from backend.api_v1.talent_period.talent_period_schema import (
     TalentPeriodCreate,
     TalentPeriodUpdate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.talent_period.talent_period_messages import (
-    TalentPeriodNotFound,
-    TalentPeriodNotFoundByName,
-    TalentPeriodNameTaken,
-    TalentPeriodDeleteError,
-)
-from backend.api_v1.talent_period.talent_period_messages import (
-    TalentPeriodDeleteSuccess,
-    TalentPeriodCreateSuccess,
-    TalentPeriodUpdateSuccess,
 )
 
 
@@ -29,8 +28,8 @@ class TalentPeriodService(BaseService):
     def __init__(
         self,
         repository: TalentPeriodRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -42,10 +41,10 @@ class TalentPeriodService(BaseService):
 
     async def get_talent_periods(
         self,
-        name: Optional[str] = None,
-        is_active: Optional[bool] = None,
-        sort: Optional[str] = None,
-    ) -> List[TalentPeriodSchema]:
+        name: str | None = None,
+        is_active: bool | None = None,
+        sort: str | None = None,
+    ) -> list[TalentPeriodSchema]:
         if name:
             record = await self.get_by_name(
                 name, not_found_exc=TalentPeriodNotFoundByName

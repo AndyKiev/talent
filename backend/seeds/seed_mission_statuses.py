@@ -11,8 +11,8 @@
 # Idempotent: existing keys are left alone.
 #
 import asyncio
-from pathlib import Path
 import sys
+from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(_REPO_ROOT) not in sys.path:
@@ -20,13 +20,13 @@ if str(_REPO_ROOT) not in sys.path:
 
 from sqlalchemy import select
 
-from backend.database.db_helper import db_helper
 from backend.api_v1.employee_mission_status.employee_mission_status_model import (
     COMPLETED,
     IN_PROCESS,
     PLANNED,
     EmployeeMissionStatus,
 )
+from backend.database.db_helper import db_helper
 
 STATUSES = [
     (PLANNED, "No KPI progress recorded yet", 10),

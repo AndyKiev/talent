@@ -5,17 +5,17 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.responses import ORJSONResponse, JSONResponse
+from fastapi.responses import JSONResponse, ORJSONResponse
 from starlette.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 
-from backend.config.config import settings
 from backend.api_v1.base.errors import (
-    NotFoundError,
     AlreadyExistsError,
-    RelationshipError,
     DomainError,
+    NotFoundError,
+    RelationshipError,
 )
+from backend.config.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +23,8 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Start RabbitMQ consumer in background
-    from backend.utils.rabbitmq import start_consumer
     from backend.api_v1.notifications.notification_store import add_and_broadcast
+    from backend.utils.rabbitmq import start_consumer
 
     async def on_notification(payload: dict) -> None:
         user_code = payload.get("user_code", "")

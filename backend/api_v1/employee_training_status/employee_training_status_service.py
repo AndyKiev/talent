@@ -1,37 +1,35 @@
-from typing import Optional, List
-
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.employee_training_status.employee_training_status_messages import (
+    EmployeeTrainingStatusCreateSuccess,
+    EmployeeTrainingStatusDeleteError,
+    EmployeeTrainingStatusDeleteSuccess,
+    EmployeeTrainingStatusKeyTaken,
+    EmployeeTrainingStatusNotFound,
+    EmployeeTrainingStatusUpdateSuccess,
+)
 from backend.api_v1.employee_training_status.employee_training_status_repository import (
     EmployeeTrainingStatusRepository,
 )
 from backend.api_v1.employee_training_status.employee_training_status_schema import (
     EmployeeTrainingStatus as EmployeeTrainingStatusSchema,
+)
+from backend.api_v1.employee_training_status.employee_training_status_schema import (
     EmployeeTrainingStatusCreate,
     EmployeeTrainingStatusUpdate,
 )
-from backend.api_v1.employee_training_status.employee_training_status_messages import (
-    EmployeeTrainingStatusNotFound,
-    EmployeeTrainingStatusKeyTaken,
-    EmployeeTrainingStatusDeleteError,
-)
-from backend.api_v1.employee_training_status.employee_training_status_messages import (
-    EmployeeTrainingStatusCreateSuccess,
-    EmployeeTrainingStatusUpdateSuccess,
-    EmployeeTrainingStatusDeleteSuccess,
-)
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class EmployeeTrainingStatusService(BaseService):
     def __init__(
         self,
         repository: EmployeeTrainingStatusRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -41,11 +39,11 @@ class EmployeeTrainingStatusService(BaseService):
             raise await self._resolve_domain_error(EmployeeTrainingStatusNotFound(id))
         return result
 
-    async def get_employee_training_statuses(self) -> List[EmployeeTrainingStatusSchema]:
+    async def get_employee_training_statuses(self) -> list[EmployeeTrainingStatusSchema]:
         records = await self.get_all(sort=["sort_order", "id"])
         return [EmployeeTrainingStatusSchema.model_validate(r) for r in records]
 
-    async def get_id_by_key(self, key: str) -> Optional[int]:
+    async def get_id_by_key(self, key: str) -> int | None:
         return await self.repository.get_id_by_field("key", key)
 
     async def create_employee_training_status(

@@ -1,6 +1,8 @@
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Boolean, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Text, Boolean, Integer
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 
@@ -21,7 +23,7 @@ class ReviewDimension(IntIdPkMixin, TimestampMixin, Base):
     # Display order across all lists/PDF; admins keep it in 10s (10, 20, 30...).
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
-    criteria: Mapped[List["ReviewDimensionCriteria"]] = relationship(
+    criteria: Mapped[list["ReviewDimensionCriteria"]] = relationship(
         back_populates="dimension",
         lazy="selectin",
     )

@@ -1,24 +1,23 @@
-from typing import Optional, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.job_requirement_item.job_requirement_item_messages import (
+    JobRequirementItemCreateSuccess,
+    JobRequirementItemDeleteError,
+    JobRequirementItemDeleteSuccess,
+    JobRequirementItemNotFound,
+    JobRequirementItemUpdateSuccess,
+)
 from backend.api_v1.job_requirement_item.job_requirement_item_repository import (
     JobRequirementItemRepository,
 )
 from backend.api_v1.job_requirement_item.job_requirement_item_schema import (
-    JobRequirementItemSchema,
     JobRequirementItemCreate,
+    JobRequirementItemSchema,
     JobRequirementItemUpdate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.job_requirement_item.job_requirement_item_messages import (
-    JobRequirementItemNotFound,
-    JobRequirementItemDeleteError,
-    JobRequirementItemDeleteSuccess,
-    JobRequirementItemCreateSuccess,
-    JobRequirementItemUpdateSuccess,
 )
 
 
@@ -26,8 +25,8 @@ class JobRequirementItemService(BaseService):
     def __init__(
         self,
         repository: JobRequirementItemRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -39,8 +38,8 @@ class JobRequirementItemService(BaseService):
 
     async def get_job_requirement_items(
         self,
-        group_id: Optional[int] = None,
-    ) -> List[JobRequirementItemSchema]:
+        group_id: int | None = None,
+    ) -> list[JobRequirementItemSchema]:
         filters = {}
         if group_id is not None:
             filters["group_id"] = group_id

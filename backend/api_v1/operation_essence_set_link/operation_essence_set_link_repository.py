@@ -1,5 +1,5 @@
 # backend/api_v1/operation_essence_set_link/operation_essence_set_link_repository.py
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.engine import Result
@@ -15,7 +15,7 @@ class OperationEssenceSetLinkRepository(BaseRepository):
 
     async def get_by_operation_and_set(
         self, operation_id: int, essence_set_id: int
-    ) -> Optional[OperationEssenceSetLink]:
+    ) -> OperationEssenceSetLink | None:
         stmt = select(OperationEssenceSetLink).where(
             OperationEssenceSetLink.operation_id == operation_id,
             OperationEssenceSetLink.essence_set_id == essence_set_id,

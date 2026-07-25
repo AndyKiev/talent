@@ -1,37 +1,38 @@
-from typing import List, Optional
+
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from backend.api_v1.base.base_service import BaseService
+from backend.api_v1.base.errors import DomainError
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
+from backend.api_v1.operation.operation_messages import (
+    OperationCreateSuccess,
+    OperationDeleteError,
+    OperationDeleteSuccess,
+    OperationHasGroups,
+    OperationNameTaken,
+    OperationNotFound,
+    OperationNotFoundByName,
+    OperationUpdateSuccess,
+)
+from backend.api_v1.operation.operation_model import Operation  # Import ORM model
 from backend.api_v1.operation.operation_repository import OperationRepository
 from backend.api_v1.operation.operation_schema import (
     Operation as OperationSchema,
+)
+from backend.api_v1.operation.operation_schema import (
     OperationCreate,
     OperationUpdate,
 )
-from backend.api_v1.employee.employee_schema import EmployeeSchema as UserSchema
-from backend.api_v1.operation.operation_messages import (
-    OperationNotFound,
-    OperationNotFoundByName,
-    OperationNameTaken,
-    OperationHasGroups,
-    OperationDeleteError,
-)
-from backend.api_v1.operation.operation_messages import (
-    OperationDeleteSuccess,
-    OperationCreateSuccess,
-    OperationUpdateSuccess,
-)
-from backend.api_v1.base.errors import DomainError
-from backend.api_v1.operation.operation_model import Operation  # Import ORM model
 
 
 class OperationService(BaseService):
     def __init__(
         self,
         repository: OperationRepository,
-        user: Optional[UserSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: UserSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -48,8 +49,8 @@ class OperationService(BaseService):
 
     async def get_operations(
         self,
-        name: Optional[str] = None,
-    ) -> List[OperationSchema]:
+        name: str | None = None,
+    ) -> list[OperationSchema]:
         if name:
             operation = await self.get_by_name(
                 name, not_found_exc=OperationNotFoundByName
@@ -144,7 +145,7 @@ class OperationService(BaseService):
             raise await self._resolve_domain_error(exc)
 
     async def set_groups(
-        self, operation_id: int, user_group_ids: List[int]
+        self, operation_id: int, user_group_ids: list[int]
     ) -> OperationSchema:
         try:
             operation = await self.repository.set_operation_user_groups(

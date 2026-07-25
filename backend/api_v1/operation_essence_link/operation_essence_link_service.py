@@ -3,20 +3,19 @@
 # Manages the cartesian product of (operation, essence) permission pairs
 # and their assignment to user groups.
 #
-from sqlalchemy import select, delete
+
+from pydantic import BaseModel
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.api_v1.essence.essence_model import Essence
+from backend.api_v1.operation.operation_model import Operation
 from backend.api_v1.operation_essence_link.operation_essence_link_model import (
     OperationEssenceLink,
 )
 from backend.api_v1.table_relationship_links.user_group_operation_essence_link_model import (
     UserGroupOperationEssenceLink,
 )
-from backend.api_v1.operation.operation_model import Operation
-from backend.api_v1.essence.essence_model import Essence
-from pydantic import BaseModel
-from typing import List
-
 
 # ── Pydantic schemas (inline — simple enough to not need a separate file) ──────
 
@@ -27,7 +26,7 @@ class PermissionPairSchema(BaseModel):
     operation_name: str
     essence_id: int
     essence_name: str
-    user_group_names: List[str] = []
+    user_group_names: list[str] = []
 
     model_config = {"from_attributes": True}
 
@@ -40,7 +39,7 @@ class GrantPermissionRequest(BaseModel):
 class SetGroupPermissionsRequest(BaseModel):
     """Replace all OEL grants for a user group with this new list."""
 
-    operation_essence_link_ids: List[int]
+    operation_essence_link_ids: list[int]
 
 
 # ── Service ───────────────────────────────────────────────────────────────────

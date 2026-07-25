@@ -1,8 +1,9 @@
-from typing import TYPE_CHECKING, List, Optional
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, ForeignKey
+from typing import TYPE_CHECKING
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
+from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
     from backend.api_v1.review_session.review_session_model import ReviewSession
@@ -28,7 +29,7 @@ class ReviewSessionLevel(IntIdPkMixin, TimestampMixin, Base):
     # deleted. ON DELETE SET NULL so an admin can still delete a live level
     # that's already frozen into a session — the key copy survives, only the
     # back-link (used to map the employee's live current_level_id) is cleared.
-    source_level_id: Mapped[Optional[int]] = mapped_column(
+    source_level_id: Mapped[int | None] = mapped_column(
         ForeignKey("review_levels.id", ondelete="SET NULL"), nullable=True
     )
     name_key: Mapped[str] = mapped_column(String(128), nullable=False)
@@ -36,7 +37,7 @@ class ReviewSessionLevel(IntIdPkMixin, TimestampMixin, Base):
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     session: Mapped["ReviewSession"] = relationship(lazy="selectin")
-    requirements: Mapped[List["ReviewSessionLevelRequirement"]] = relationship(
+    requirements: Mapped[list["ReviewSessionLevelRequirement"]] = relationship(
         back_populates="session_level",
         lazy="selectin",
     )

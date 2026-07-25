@@ -1,18 +1,21 @@
 from __future__ import annotations
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, UniqueConstraint
-from backend.api_v1.base.base_model import Base
-from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
+
 from typing import TYPE_CHECKING
 
+from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from backend.api_v1.base.base_model import Base
+from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
+
 if TYPE_CHECKING:
-    from backend.api_v1.process_roles.process_role.process_role_model import ProcessRole
     from backend.api_v1.employee.employee_model import Employee
-    from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_model import (
-        ProcessRoleHolderEmployeeLink,
-    )
+    from backend.api_v1.process_roles.process_role.process_role_model import ProcessRole
     from backend.api_v1.process_roles.process_role_holder_department_link.process_role_holder_department_link_model import (
         ProcessRoleHolderDepartmentLink,
+    )
+    from backend.api_v1.process_roles.process_role_holder_employee_link.process_role_holder_employee_link_model import (
+        ProcessRoleHolderEmployeeLink,
     )
 
 
@@ -43,22 +46,22 @@ class ProcessRoleHolder(IntIdPkMixin, TimestampMixin, Base):
         nullable=False,
     )
 
-    process_role: Mapped["ProcessRole"] = relationship(
+    process_role: Mapped[ProcessRole] = relationship(
         back_populates="holders",
         lazy="selectin",
     )
     # two FKs to employees -> each relationship needs explicit foreign_keys
-    holder: Mapped["Employee"] = relationship(
+    holder: Mapped[Employee] = relationship(
         "Employee",
         foreign_keys="[ProcessRoleHolder.holder_employee_id]",
         lazy="selectin",
     )
-    assigner: Mapped["Employee"] = relationship(
+    assigner: Mapped[Employee] = relationship(
         "Employee",
         foreign_keys="[ProcessRoleHolder.assigned_by]",
         lazy="selectin",
     )
-    employees: Mapped[list["ProcessRoleHolderEmployeeLink"]] = relationship(
+    employees: Mapped[list[ProcessRoleHolderEmployeeLink]] = relationship(
         "ProcessRoleHolderEmployeeLink",
         primaryjoin=(
             "ProcessRoleHolder.id "
@@ -68,7 +71,7 @@ class ProcessRoleHolder(IntIdPkMixin, TimestampMixin, Base):
         back_populates="holder",
         lazy="selectin",
     )
-    department_links: Mapped[list["ProcessRoleHolderDepartmentLink"]] = relationship(
+    department_links: Mapped[list[ProcessRoleHolderDepartmentLink]] = relationship(
         "ProcessRoleHolderDepartmentLink",
         primaryjoin=(
             "ProcessRoleHolder.id "

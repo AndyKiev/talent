@@ -1,16 +1,17 @@
-from fastapi import APIRouter, Depends, status, Query, UploadFile, File
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, File, Query, UploadFile, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, Optional, List
 from pydantic import BaseModel
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.job.job_schema import Job as JobSchema, JobCreate, JobUpdate
-from backend.api_v1.job.job_dependencies import get_job_service, job_by_id
-from backend.api_v1.job.job_service import JobService
 from backend.api_v1.employee.employee_service import SyncJobResult
-from backend.api_v1.job.job_schema import JobBulkUploadResult
+from backend.api_v1.job.job_dependencies import get_job_service, job_by_id
+from backend.api_v1.job.job_schema import Job as JobSchema
+from backend.api_v1.job.job_schema import JobBulkUploadResult, JobCreate, JobUpdate
+from backend.api_v1.job.job_service import JobService
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/jobs",
@@ -21,13 +22,13 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[JobSchema],
+    response_model=list[JobSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.JOB)],
 )
 async def get_jobs(
     service: Annotated[JobService, Depends(get_job_service)],
-    name: Optional[str] = None,
-    sort: Optional[str] = Query(
+    name: str | None = None,
+    sort: str | None = Query(
         None,
         description='JSON for sorting: {"field": "asc|desc"} or [{"field1": "asc"}, "field2"]',
     ),
@@ -84,7 +85,7 @@ async def delete_job(
 
 @router.get(
     "/{job_id}/groups",
-    response_model=List[str],
+    response_model=list[str],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.JOB)],
 )
 async def get_job_groups(job: JobSchema = Depends(job_by_id)):
@@ -118,7 +119,7 @@ async def remove_job_from_group(
 
 
 class JobGroupsUpdate(BaseModel):
-    group_ids: List[int]
+    group_ids: list[int]
 
 
 @router.put(

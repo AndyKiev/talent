@@ -1,15 +1,14 @@
-from typing import List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api_v1.base.base_service import BaseService
-from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.audit.change_log.change_log_messages import ChangeLogNotFound
 from backend.api_v1.audit.change_log.change_log_repository import ChangeLogRepository
 from backend.api_v1.audit.change_log.change_log_schema import (
-    ChangeLogSchema,
     ChangeAction,
+    ChangeLogSchema,
 )
+from backend.api_v1.base.base_service import BaseService
+from backend.api_v1.employee.employee_schema import EmployeeSchema
 
 
 class ChangeLogService(BaseService):
@@ -25,8 +24,8 @@ class ChangeLogService(BaseService):
     def __init__(
         self,
         repository: ChangeLogRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -37,10 +36,10 @@ class ChangeLogService(BaseService):
         change_session_id: int,
         essence_key: str,
         action: ChangeAction,
-        entity_id: Optional[int] = None,
-        changes: Optional[dict] = None,
-        parent_id: Optional[int] = None,
-        employee_id: Optional[int] = None,
+        entity_id: int | None = None,
+        changes: dict | None = None,
+        parent_id: int | None = None,
+        employee_id: int | None = None,
         commit: bool = False,
     ):
         """
@@ -81,12 +80,12 @@ class ChangeLogService(BaseService):
 
     async def get_logs(
         self,
-        change_session_id: Optional[int] = None,
-        essence_key: Optional[str] = None,
-        entity_id: Optional[int] = None,
-        parent_id: Optional[int] = None,
-        action: Optional[str] = None,
-    ) -> List[ChangeLogSchema]:
+        change_session_id: int | None = None,
+        essence_key: str | None = None,
+        entity_id: int | None = None,
+        parent_id: int | None = None,
+        action: str | None = None,
+    ) -> list[ChangeLogSchema]:
         records = await self.repository.get_filtered(
             change_session_id=change_session_id,
             essence_key=essence_key,
@@ -96,7 +95,7 @@ class ChangeLogService(BaseService):
         )
         return [ChangeLogSchema.model_validate(r) for r in records]
 
-    async def get_children(self, parent_id: int) -> List[ChangeLogSchema]:
+    async def get_children(self, parent_id: int) -> list[ChangeLogSchema]:
         """All entries caused by the given entry (for reversal/inspection)."""
         return await self.get_logs(parent_id=parent_id)
 

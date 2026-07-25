@@ -1,6 +1,5 @@
 from fastapi import APIRouter
 
-
 router = APIRouter(prefix="/base_router", tags=["Test base router"])
 
 

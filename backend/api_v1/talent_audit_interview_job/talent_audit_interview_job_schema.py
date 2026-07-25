@@ -1,5 +1,4 @@
 import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
@@ -25,9 +24,9 @@ class TalentAuditInterviewJob(TalentAuditInterviewJobBase):
     created_at: datetime.datetime
 
     # Enriched fields resolved from ORM relationships
-    job_name: Optional[str] = None
-    hrm_status_period_label: Optional[str] = None
-    hrs_status_period_label: Optional[str] = None
+    job_name: str | None = None
+    hrm_status_period_label: str | None = None
+    hrs_status_period_label: str | None = None
 
     @model_validator(mode="before")
     @classmethod

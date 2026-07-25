@@ -1,6 +1,7 @@
 from datetime import datetime
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field
-from typing import List, Literal, Optional
 
 Recommendation = Literal["hire", "no_hire", "maybe"]
 
@@ -9,7 +10,7 @@ class InterviewEmployeeMini(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     name: str
-    code: Optional[str] = None
+    code: str | None = None
 
 
 class InterviewCandidateMini(BaseModel):
@@ -30,7 +31,7 @@ class InterviewInterviewerMini(BaseModel):
     id: int
     employee_id: int
     # Filled by the service via a column lookup (model relationship is noload).
-    employee: Optional[InterviewEmployeeMini] = None
+    employee: InterviewEmployeeMini | None = None
 
 
 class InterviewFeedbackSchema(BaseModel):
@@ -39,9 +40,9 @@ class InterviewFeedbackSchema(BaseModel):
     interview_id: int
     author_id: int
     body: str
-    recommendation: Optional[Recommendation] = None
+    recommendation: Recommendation | None = None
     created_at: datetime
-    author: Optional[InterviewEmployeeMini] = None
+    author: InterviewEmployeeMini | None = None
 
 
 class InterviewCreate(BaseModel):
@@ -49,13 +50,13 @@ class InterviewCreate(BaseModel):
     scheduled_at: datetime
     location: str = Field(..., max_length=256)
     # 1..3 interviewers, all holding a manager-category job.
-    interviewer_ids: List[int] = Field(..., min_length=1, max_length=3)
+    interviewer_ids: list[int] = Field(..., min_length=1, max_length=3)
 
 
 class InterviewUpdate(BaseModel):
-    scheduled_at: Optional[datetime] = None
-    location: Optional[str] = Field(None, max_length=256)
-    interviewer_ids: Optional[List[int]] = Field(None, min_length=1, max_length=3)
+    scheduled_at: datetime | None = None
+    location: str | None = Field(None, max_length=256)
+    interviewer_ids: list[int] | None = Field(None, min_length=1, max_length=3)
 
 
 class InterviewSchema(BaseModel):
@@ -66,15 +67,15 @@ class InterviewSchema(BaseModel):
     location: str
     created_by: int
     created_at: datetime
-    interviewers: List[InterviewInterviewerMini] = []
-    feedbacks: List[InterviewFeedbackSchema] = []
+    interviewers: list[InterviewInterviewerMini] = []
+    feedbacks: list[InterviewFeedbackSchema] = []
     # Enriched by the service from the application (noload relationships).
-    candidate: Optional[InterviewCandidateMini] = None
-    job: Optional[InterviewJobMini] = None
-    recruitment_task_id: Optional[int] = None
+    candidate: InterviewCandidateMini | None = None
+    job: InterviewJobMini | None = None
+    recruitment_task_id: int | None = None
 
 
 class InterviewFeedbackCreate(BaseModel):
     interview_id: int
     body: str
-    recommendation: Optional[Recommendation] = None
+    recommendation: Recommendation | None = None

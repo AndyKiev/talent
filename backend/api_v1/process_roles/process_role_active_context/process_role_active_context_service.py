@@ -1,23 +1,22 @@
-from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.process_roles.process_role_active_context.process_role_active_context_messages import (
+    ActiveContextDepartmentNotAssigned,
+    ActiveContextRoleNotHeld,
+)
 from backend.api_v1.process_roles.process_role_active_context.process_role_active_context_repository import (
     ProcessRoleActiveContextRepository,
 )
 from backend.api_v1.process_roles.process_role_active_context.process_role_active_context_schema import (
     ActiveContextRead,
     ActiveContextUpdate,
-    MyRole,
     MyDepartment,
+    MyRole,
     MyScopes,
     SessionScopeAvailability,
-)
-from backend.api_v1.process_roles.process_role_active_context.process_role_active_context_messages import (
-    ActiveContextRoleNotHeld,
-    ActiveContextDepartmentNotAssigned,
 )
 
 PEOPLE_REVIEW_PROCESS_KEY = "people_review"
@@ -27,8 +26,8 @@ class ProcessRoleActiveContextService(BaseService):
     def __init__(
         self,
         repository: ProcessRoleActiveContextRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 

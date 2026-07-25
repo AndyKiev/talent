@@ -47,9 +47,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from sqlalchemy import MetaData, create_engine, select
-
 from backend.config import settings
+from sqlalchemy import MetaData, create_engine, select
 
 # Importing the api_v1 package registers every ORM model on ``Base.metadata``.
 # It is not strictly required because we reflect the live database below, but it

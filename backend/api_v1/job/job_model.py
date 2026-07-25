@@ -1,16 +1,18 @@
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Boolean
-from backend.api_v1.base.base_model import Base
-from backend.api_v1.base.models.utils.mixins import IntIdPkMixin, TimestampMixin
 from typing import TYPE_CHECKING, Optional
 
+from sqlalchemy import Boolean, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from backend.api_v1.base.base_model import Base
+from backend.api_v1.base.models.utils.mixins import IntIdPkMixin, TimestampMixin
+
 if TYPE_CHECKING:
-    from backend.api_v1.employee.employee_model import Employee
-    from backend.api_v1.table_relationship_links.job_user_group_link_model import (
-        JobUserGroupLink,
-    )
     from backend.api_v1.department_type_job_link.department_type_job_link_model import (
         DepartmentTypeJobLink,
+    )
+    from backend.api_v1.employee.employee_model import Employee
+    from backend.api_v1.job_job_category_link.job_job_category_link_model import (
+        JobJobCategoryLink,
     )
     from backend.api_v1.job_job_group_link.job_job_group_link_model import (
         JobJobGroupLink,
@@ -18,8 +20,8 @@ if TYPE_CHECKING:
     from backend.api_v1.job_process_role_link.job_process_role_link_model import (
         JobProcessRoleLink,
     )
-    from backend.api_v1.job_job_category_link.job_job_category_link_model import (
-        JobJobCategoryLink,
+    from backend.api_v1.table_relationship_links.job_user_group_link_model import (
+        JobUserGroupLink,
     )
     from backend.api_v1.training_type_job_link.training_type_job_link_model import (
         TrainingTypeJobLink,

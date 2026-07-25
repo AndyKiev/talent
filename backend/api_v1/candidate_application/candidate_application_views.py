@@ -1,22 +1,23 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, status
-from typing import Annotated, Optional, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.candidate_application.candidate_application_schema import (
-    CandidateApplicationSchema,
-    CandidateApplicationCreate,
-    CandidateApplicationStatusChange,
-)
 from backend.api_v1.candidate_application.candidate_application_dependencies import (
-    get_candidate_application_service,
     candidate_application_by_id,
+    get_candidate_application_service,
+)
+from backend.api_v1.candidate_application.candidate_application_schema import (
+    CandidateApplicationCreate,
+    CandidateApplicationSchema,
+    CandidateApplicationStatusChange,
 )
 from backend.api_v1.candidate_application.candidate_application_service import (
     CandidateApplicationService,
 )
-from backend.auth.jwt_auth import get_current_active_auth_user
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.auth.jwt_auth import get_current_active_auth_user
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/candidate_applications",
@@ -27,15 +28,15 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[CandidateApplicationSchema],
+    response_model=list[CandidateApplicationSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.CANDIDATE_APPLICATION)],
 )
 async def get_candidate_applications(
     service: Annotated[
         CandidateApplicationService, Depends(get_candidate_application_service)
     ],
-    candidate_id: Optional[int] = None,
-    recruitment_task_id: Optional[int] = None,
+    candidate_id: int | None = None,
+    recruitment_task_id: int | None = None,
 ):
     return await service.get_candidate_applications(
         candidate_id=candidate_id, recruitment_task_id=recruitment_task_id

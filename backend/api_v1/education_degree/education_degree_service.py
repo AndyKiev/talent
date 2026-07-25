@@ -1,4 +1,3 @@
-from typing import Optional, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,14 +15,14 @@ class EducationDegreeService(BaseService):
     def __init__(
         self,
         repository: EducationDegreeRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
     async def get_degrees(
-        self, is_active: Optional[bool] = None
-    ) -> List[EducationDegreeSchema]:
+        self, is_active: bool | None = None
+    ) -> list[EducationDegreeSchema]:
         filters = {}
         if is_active is not None:
             filters["is_active"] = is_active

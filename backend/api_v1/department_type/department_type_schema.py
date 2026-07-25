@@ -1,11 +1,11 @@
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional, List
 from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class DepartmentTypeBase(BaseModel):
     name: str = Field(..., max_length=128)
-    description: Optional[str] = Field(None, max_length=256)
+    description: str | None = Field(None, max_length=256)
     is_active: bool = True
 
 
@@ -14,9 +14,9 @@ class DepartmentTypeCreate(DepartmentTypeBase):
 
 
 class DepartmentTypeUpdate(BaseModel):
-    name: Optional[str] = Field(None, max_length=128)
-    description: Optional[str] = Field(None, max_length=256)
-    is_active: Optional[bool] = None
+    name: str | None = Field(None, max_length=128)
+    description: str | None = Field(None, max_length=256)
+    is_active: bool | None = None
 
 
 class DepartmentType(DepartmentTypeBase):
@@ -48,5 +48,5 @@ class DepartmentTypeWithLinkStats(DepartmentTypeBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
     created_at: datetime
-    parent_names: List[str] = []
+    parent_names: list[str] = []
     job_count: int = 0

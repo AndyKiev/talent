@@ -7,15 +7,14 @@
 # onto every guard dependency (_is_access_guard / _access_operation /
 # _access_essences). Nothing here writes to the database.
 #
-from typing import Iterable
+from collections.abc import Iterable
 
 from fastapi.routing import APIRoute
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api_v1.operation.operation_model import Operation
 from backend.api_v1.essence.essence_model import Essence
-
+from backend.api_v1.operation.operation_model import Operation
 
 # ── Pure route-walking helpers ────────────────────────────────────────────────
 

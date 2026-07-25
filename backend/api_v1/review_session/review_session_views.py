@@ -1,16 +1,19 @@
-from fastapi import APIRouter, Depends, status, Query
-from typing import Annotated, Optional, List, Any, Dict
+from typing import Annotated, Any
+
+from fastapi import APIRouter, Depends, Query, status
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.review_session.review_session_schema import (
-    ReviewSession as ReviewSessionSchema,
-    ReviewSessionCreate,
-    ReviewSessionUpdate,
-    FrozenParamsResponse,
-)
 from backend.api_v1.review_session.review_session_dependencies import (
     get_review_session_service,
     review_session_by_id,
+)
+from backend.api_v1.review_session.review_session_schema import (
+    FrozenParamsResponse,
+    ReviewSessionCreate,
+    ReviewSessionUpdate,
+)
+from backend.api_v1.review_session.review_session_schema import (
+    ReviewSession as ReviewSessionSchema,
 )
 from backend.api_v1.review_session.review_session_service import (
     ReviewSessionService,
@@ -24,11 +27,11 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=List[ReviewSessionSchema])
+@router.get("", response_model=list[ReviewSessionSchema])
 async def get_review_sessions(
     service: Annotated[ReviewSessionService, Depends(get_review_session_service)],
-    status_filter: Optional[str] = Query(None, alias="status"),
-    sort: Optional[str] = Query(None),
+    status_filter: str | None = Query(None, alias="status"),
+    sort: str | None = Query(None),
 ):
     return await service.get_review_sessions(status=status_filter, sort=sort)
 
@@ -99,7 +102,7 @@ async def revert_review_session(
     return await service.revert_session(review_session_id)
 
 
-@router.get("/{review_session_id}/analytics", response_model=List[Any])
+@router.get("/{review_session_id}/analytics", response_model=list[Any])
 async def get_session_analytics(
     review_session_id: int,
     service: Annotated[ReviewSessionService, Depends(get_review_session_service)],
@@ -109,7 +112,7 @@ async def get_session_analytics(
 
 @router.get(
     "/{review_session_id}/frozen_settings",
-    response_model=Dict[str, Any],
+    response_model=dict[str, Any],
 )
 async def get_review_session_frozen_settings(
     review_session_id: int,

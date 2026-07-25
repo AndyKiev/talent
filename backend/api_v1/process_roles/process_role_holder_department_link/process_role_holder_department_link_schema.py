@@ -1,6 +1,6 @@
-from pydantic import BaseModel, ConfigDict
-from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
 
 
 class ProcessRoleHolderDepartmentLinkBase(BaseModel):
@@ -18,4 +18,4 @@ class ProcessRoleHolderDepartmentLink(ProcessRoleHolderDepartmentLinkBase):
     id: int
     process_role_id: int
     created_at: datetime
-    department_name: Optional[str] = None
+    department_name: str | None = None

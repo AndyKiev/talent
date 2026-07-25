@@ -1,4 +1,3 @@
-from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -7,6 +6,9 @@ from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee_language.employee_language_model import EmployeeLanguage
 from backend.api_v1.employee_language.employee_language_schema import (
     EmployeeLanguageItem,
+)
+from backend.api_v1.employee_language_profile.employee_language_profile_messages import (
+    EmployeeLanguagesSaveSuccess,
 )
 from backend.api_v1.employee_language_profile.employee_language_profile_model import (
     EmployeeLanguageProfile,
@@ -18,16 +20,13 @@ from backend.api_v1.employee_language_profile.employee_language_profile_schema i
     EmployeeLanguageProfileSchema,
     EmployeeLanguageProfileUpsert,
 )
-from backend.api_v1.employee_language_profile.employee_language_profile_messages import (
-    EmployeeLanguagesSaveSuccess,
-)
 
 
 class EmployeeLanguageProfileService(BaseService):
     def __init__(
         self,
         repository: EmployeeLanguageProfileRepository,
-        session: Optional[AsyncSession] = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, session=session)
 
@@ -46,8 +45,9 @@ class EmployeeLanguageProfileService(BaseService):
     async def _person_id_for_employee(self, employee_id: int) -> int:
         """Languages belong to the PERSON; the HTTP API still speaks employee_id."""
         from sqlalchemy import select
-        from backend.api_v1.employee.employee_model import Employee
+
         from backend.api_v1.employee.employee_messages import EmployeeNotFound
+        from backend.api_v1.employee.employee_model import Employee
 
         person_id = await self.repository.session.scalar(
             select(Employee.person_id).where(Employee.id == employee_id)

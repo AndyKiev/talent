@@ -29,17 +29,17 @@ class ChangeSession(IntIdPkMixin, Base):
     # 'manual' | 'system'
     source: Mapped[str] = mapped_column(String(16), nullable=False)
     # Set for manual actions; NULL for system/celery runs.
-    triggered_by_user_id: Mapped[Optional[int]] = mapped_column(
+    triggered_by_user_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("employees.id", ondelete="SET NULL"),
         nullable=True,
     )
     # Set for system runs (e.g. 'loader_employee_event_apply'); NULL for manual.
-    task_name: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    task_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
     # Subject employee the run concerns (single manual actions). NULL for bulk /
     # scheduled sweeps that span many employees. Kept resolvable for the audit UI
     # (employees are not deleted), unlike the event row which a delete removes.
-    employee_id: Mapped[Optional[int]] = mapped_column(
+    employee_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("employees.id", ondelete="SET NULL"),
         nullable=True,
@@ -52,11 +52,11 @@ class ChangeSession(IntIdPkMixin, Base):
     started_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
-    finished_at: Mapped[Optional[datetime.datetime]] = mapped_column(
+    finished_at: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
     # Free-form aggregate run stats, e.g. {"checked": 10, "applied": 7}.
-    summary: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    summary: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     triggered_by: Mapped[Optional["Employee"]] = relationship(
         foreign_keys=[triggered_by_user_id],

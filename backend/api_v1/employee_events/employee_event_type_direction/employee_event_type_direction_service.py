@@ -1,28 +1,27 @@
-from typing import Optional, List
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.employee_events.employee_event_type_direction.employee_event_type_direction_messages import (
+    EmployeeEventTypeDirectionCreateSuccess,
+    EmployeeEventTypeDirectionDeleteError,
+    EmployeeEventTypeDirectionDeleteSuccess,
+    EmployeeEventTypeDirectionDuplicate,
+    EmployeeEventTypeDirectionNotFound,
+    EmployeeEventTypeDirectionUpdateSuccess,
+)
 from backend.api_v1.employee_events.employee_event_type_direction.employee_event_type_direction_repository import (
     EmployeeEventTypeDirectionRepository,
 )
 from backend.api_v1.employee_events.employee_event_type_direction.employee_event_type_direction_schema import (
     EmployeeEventTypeDirection as EmployeeEventTypeDirectionSchema,
+)
+from backend.api_v1.employee_events.employee_event_type_direction.employee_event_type_direction_schema import (
     EmployeeEventTypeDirectionCreate,
     EmployeeEventTypeDirectionUpdate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.employee_events.employee_event_type_direction.employee_event_type_direction_messages import (
-    EmployeeEventTypeDirectionNotFound,
-    EmployeeEventTypeDirectionDeleteError,
-    EmployeeEventTypeDirectionDuplicate,
-)
-from backend.api_v1.employee_events.employee_event_type_direction.employee_event_type_direction_messages import (
-    EmployeeEventTypeDirectionDeleteSuccess,
-    EmployeeEventTypeDirectionCreateSuccess,
-    EmployeeEventTypeDirectionUpdateSuccess,
 )
 
 
@@ -30,8 +29,8 @@ class EmployeeEventTypeDirectionService(BaseService):
     def __init__(
         self,
         repository: EmployeeEventTypeDirectionRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -46,8 +45,8 @@ class EmployeeEventTypeDirectionService(BaseService):
     async def get_type_directions(
         self,
         event_type_id: int,
-        sort: Optional[str] = None,
-    ) -> List[EmployeeEventTypeDirectionSchema]:
+        sort: str | None = None,
+    ) -> list[EmployeeEventTypeDirectionSchema]:
         records = await self.repository.get_all(
             filters={"event_type_id": event_type_id},
             sort=sort,

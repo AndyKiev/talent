@@ -1,27 +1,26 @@
-from typing import List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.job_group_type.job_group_type_messages import (
+    JobGroupTypeCreateSuccess,
+    JobGroupTypeDeleteError,
+    JobGroupTypeDeleteSuccess,
+    JobGroupTypeNameTaken,
+    JobGroupTypeNotFound,
+    JobGroupTypeUpdateSuccess,
+)
 from backend.api_v1.job_group_type.job_group_type_repository import (
     JobGroupTypeRepository,
 )
 from backend.api_v1.job_group_type.job_group_type_schema import (
     JobGroupType as JobGroupTypeSchema,
+)
+from backend.api_v1.job_group_type.job_group_type_schema import (
     JobGroupTypeCreate,
     JobGroupTypeUpdate,
-)
-from backend.api_v1.employee.employee_schema import EmployeeSchema
-from backend.api_v1.job_group_type.job_group_type_messages import (
-    JobGroupTypeNotFound,
-    JobGroupTypeNameTaken,
-    JobGroupTypeDeleteError,
-)
-from backend.api_v1.job_group_type.job_group_type_messages import (
-    JobGroupTypeCreateSuccess,
-    JobGroupTypeUpdateSuccess,
-    JobGroupTypeDeleteSuccess,
 )
 
 
@@ -29,8 +28,8 @@ class JobGroupTypeService(BaseService):
     def __init__(
         self,
         repository: JobGroupTypeRepository,
-        user: Optional[EmployeeSchema] = None,
-        session: Optional[AsyncSession] = None,
+        user: EmployeeSchema | None = None,
+        session: AsyncSession | None = None,
     ):
         super().__init__(repository, user=user, session=session)
 
@@ -39,8 +38,8 @@ class JobGroupTypeService(BaseService):
     # ------------------------------------------------------------------
 
     async def get_job_group_types(
-        self, name: Optional[str] = None, sort: Optional[str] = None
-    ) -> List[JobGroupTypeSchema]:
+        self, name: str | None = None, sort: str | None = None
+    ) -> list[JobGroupTypeSchema]:
         if name:
             record = await self.get_by_name(name, not_found_exc=JobGroupTypeNotFound)
             return [JobGroupTypeSchema.model_validate(record)]

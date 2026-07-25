@@ -1,15 +1,12 @@
 import os
-from functools import wraps
-from typing import Annotated, Callable, List
 
-from fastapi import Form, HTTPException, Request, status, Depends
+from fastapi import Form, HTTPException, Request, status
 from jwt import PyJWTError
 from ldap3.core.exceptions import LDAPBindError, LDAPSessionTerminatedByServerError
 
-
-from backend.auth.auth_utils import decode_jwt
 from backend.auth import authenticate_ldap
 from backend.auth.auth_schemas import LDAPUser, TokenUser  # Use the new schemas
+from backend.auth.auth_utils import decode_jwt
 from backend.config import settings
 
 _BYPASS_LDAP = os.environ.get("BYPASS_LDAP", "false").lower() == "true"

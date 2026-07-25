@@ -1,13 +1,12 @@
-from typing import TYPE_CHECKING, List
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import TYPE_CHECKING
+
 from sqlalchemy import ForeignKey, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
 
 if TYPE_CHECKING:
-    from backend.api_v1.review_session_employee.review_session_employee_model import (
-        ReviewSessionEmployee,
-    )
     from backend.api_v1.review_level.review_level_model import ReviewLevel
     from backend.api_v1.review_session_employee_level_answer.review_session_employee_level_answer_model import (
         ReviewSessionEmployeeLevelAnswer,
@@ -36,7 +35,7 @@ class ReviewSessionEmployeeLevel(IntIdPkMixin, TimestampMixin, Base):
     )
 
     level: Mapped["ReviewLevel"] = relationship(lazy="selectin")
-    answers: Mapped[List["ReviewSessionEmployeeLevelAnswer"]] = relationship(
+    answers: Mapped[list["ReviewSessionEmployeeLevelAnswer"]] = relationship(
         back_populates="registration",
         lazy="selectin",
         cascade="all, delete-orphan",

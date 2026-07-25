@@ -1,14 +1,15 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, status
-from typing import Annotated, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.review_session_employee_comment.review_session_employee_comment_schema import (
-    ReviewCommentSchema,
-    ReviewCommentCreate,
-    ReviewCommentUpdate,
-)
 from backend.api_v1.review_session_employee_comment.review_session_employee_comment_dependencies import (
     get_review_session_employee_comment_service,
+)
+from backend.api_v1.review_session_employee_comment.review_session_employee_comment_schema import (
+    ReviewCommentCreate,
+    ReviewCommentSchema,
+    ReviewCommentUpdate,
 )
 from backend.api_v1.review_session_employee_comment.review_session_employee_comment_service import (
     ReviewSessionEmployeeCommentService,
@@ -26,7 +27,7 @@ router = APIRouter(
 
 @router.get(
     "/{rse_id}/comments",
-    response_model=List[ReviewCommentSchema],
+    response_model=list[ReviewCommentSchema],
 )
 async def list_review_comments(
     rse_id: int,

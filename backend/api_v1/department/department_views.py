@@ -1,23 +1,25 @@
-from fastapi import APIRouter, Depends, status, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPBearer
-from typing import Annotated, Optional, List
 
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.department.department_schema import (
-    Department as DepartmentSchema,
-    DepartmentFlat,
-    DepartmentCreate,
-    DepartmentUpdate,
-    DepartmentSubtreeGenerateResult,
-    DepartmentTopResolution,
-)
 from backend.api_v1.department.department_dependencies import (
     get_department_service,
-    department_by_id,
+)
+from backend.api_v1.department.department_schema import (
+    Department as DepartmentSchema,
+)
+from backend.api_v1.department.department_schema import (
+    DepartmentCreate,
+    DepartmentFlat,
+    DepartmentSubtreeGenerateResult,
+    DepartmentTopResolution,
+    DepartmentUpdate,
 )
 from backend.api_v1.department.department_service import DepartmentService
 from backend.auth.guards import Guard
-from backend.utils.enums import OperationVerb, EssenceName
+from backend.utils.enums import EssenceName, OperationVerb
 
 router = APIRouter(
     prefix="/departments",
@@ -28,16 +30,16 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=List[DepartmentFlat],
+    response_model=list[DepartmentFlat],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT)],
 )
 async def get_departments(
     service: Annotated[DepartmentService, Depends(get_department_service)],
-    name: Optional[str] = None,
-    is_active: Optional[bool] = None,
-    department_type_id: Optional[int] = None,
-    department_category_id: Optional[int] = None,
-    sort: Optional[str] = Query(None, description='JSON: {"field": "asc|desc"}'),
+    name: str | None = None,
+    is_active: bool | None = None,
+    department_type_id: int | None = None,
+    department_category_id: int | None = None,
+    sort: str | None = Query(None, description='JSON: {"field": "asc|desc"}'),
 ):
     """Flat list of all departments — for grids and selects."""
     return await service.get_departments(
@@ -51,7 +53,7 @@ async def get_departments(
 
 @router.get(
     "/tree",
-    response_model=List[DepartmentSchema],
+    response_model=list[DepartmentSchema],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT)],
 )
 async def get_department_tree(
@@ -66,7 +68,7 @@ async def get_department_tree(
 
 @router.get(
     "/roots",
-    response_model=List[DepartmentFlat],
+    response_model=list[DepartmentFlat],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT)],
 )
 async def get_root_departments(
@@ -82,7 +84,7 @@ async def get_root_departments(
 
 @router.get(
     "/top_org_units",
-    response_model=List[DepartmentTopResolution],
+    response_model=list[DepartmentTopResolution],
     dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT)],
 )
 async def get_top_org_units(
