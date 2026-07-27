@@ -1,13 +1,19 @@
-FROM python:3.11.9-custom AS python_base
-#FROM python:3.11.9-slim AS python_base
+# python:3.11.9-custom is the office-internal base image and is unreachable from
+# home; the public slim image is equivalent for our purposes.
+FROM python:3.11.9-slim AS python_base
+#FROM python:3.11.9-custom AS python_base
 
 ARG APP_HTTP_PROXY
 
 ENV HTTP_PROXY=$APP_HTTP_PROXY
 ENV HTTPS_PROXY=$APP_HTTP_PROXY
 
-RUN /bin/sh -c 'echo "Acquire::http::Proxy \"${HTTP_PROXY}\";" > /etc/apt/apt.conf.d/99proxy' && \
-    /bin/sh -c 'echo "Acquire::https::Proxy \"${HTTPS_PROXY}\";" >> /etc/apt/apt.conf.d/99proxy'
+# Only configure the apt proxy when one was supplied. Writing an empty proxy
+# makes apt fail at home, where there is no proxy at all.
+RUN if [ -n "$APP_HTTP_PROXY" ]; then \
+      echo "Acquire::http::Proxy \"$APP_HTTP_PROXY\";"  > /etc/apt/apt.conf.d/99proxy && \
+      echo "Acquire::https::Proxy \"$APP_HTTP_PROXY\";" >> /etc/apt/apt.conf.d/99proxy; \
+    fi
 
 ENV POETRY_VERSION=2.3.2
 

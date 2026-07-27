@@ -21,6 +21,11 @@ build/
 venv/
 backend/venv/
 backend/__pycache__/
+# ".venv/" only matches the repo root. Without these, the host's Windows
+# backend/.venv is copied into the image and overwrites the Linux virtualenv
+# poetry built, leaving "Command not found: alembic".
+**/.venv/
+**/venv/
 
 # ─── JWT keys — generated at runtime, never bake into image ───────────────────
 backend/auth/keys/

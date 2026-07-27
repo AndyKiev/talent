@@ -5,26 +5,13 @@ networks:
       config:
         - subnet: 172.24.0.0/16
 
+# Option B: the app runs in containers, the database does NOT.
+#
+# Postgres lives on the host (native PostgreSQL 18, C:\Users\andre\PostgresData\talent,
+# 127.0.0.1:5433) and is reached through host.docker.internal - mirroring
+# production, where the database is an external server rather than a container.
+# Start it before `docker compose up`:  make db-up
 services:
-  postgres:
-    image: postgres:15-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: talent
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin12345
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d talent"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    networks:
-      talent:
-        ipv4_address: 172.24.0.9
-
   redis:
     image: redis:5
     volumes:
@@ -43,16 +30,26 @@ services:
       extra_hosts:
         - ${APP_EXTRA_HOST_LNVUAHQ}
         - ${APP_EXTRA_HOST_LNVDC}
+        # reach the host's native Postgres from inside the container
+        - "host.docker.internal:host-gateway"
       env_file:
         - stack.env
       environment:
         - NO_PROXY=${APP_NO_PROXY}
+        # These override the values in the mounted .env, which point at
+        # 127.0.0.1 - correct for native dev, meaningless inside a container.
+        # Real environment variables win over .env in pydantic-settings.
+        - APP_CONFIG__DB__HOST=host.docker.internal
+        - APP_CONFIG__DB__PORT=5433
+        - APP_CONFIG__REDIS__HOST=redis
       volumes:
         - .env:/app/.env
 #        - .env:/app/backend/.env
+        # Keys are generated at runtime (never baked into the image) but must
+        # survive restarts and be identical in backend and migrate - otherwise
+        # every restart invalidates all issued JWTs.
+        - jwt_keys:/app/backend/auth/keys
       depends_on:
-        postgres:
-          condition: service_healthy
         migrate:
           condition: service_completed_successfully
         redis:
@@ -65,19 +62,33 @@ services:
 
   migrate:
     <<: *backend
-    entrypoint: ["poetry", "run", "alembic", "-c", "alembic.ini", "upgrade", "head"]
+    # The app reads the JWT private key at import time, and alembic's env.py
+    # imports the app - so the keys must exist before alembic runs, even though
+    # migrations have nothing to do with auth.
+    entrypoint:
+      - sh
+      - -c
+      - bash /app/backend/generate_keys.sh && poetry run alembic -c alembic.ini upgrade head
     command: []
     restart: "no"
-    extra_hosts: []
     working_dir: /app/backend
-    depends_on:
-      postgres:
-        condition: service_healthy
+    # inherits extra_hosts (incl. host.docker.internal) and the DB overrides
+    # from the *backend anchor above
+    depends_on: []
+    # Must NOT inherit the backend's fixed 172.24.0.2: when backend is already
+    # running, that address is taken and migrate dies with "Address already in
+    # use". It needs no fixed address of its own.
+    networks:
+      - talent
+    ports: []
 
   frontend:
     build:
-      context: ./
-      dockerfile: ./frontend/Dockerfile
+      # context is ./frontend, NOT the repo root: the root .dockerignore
+      # excludes frontend/ (so it stays out of the backend image), which would
+      # hide this image's own sources from its build.
+      context: ./frontend
+      dockerfile: ./Dockerfile
       args:
         APP_HTTP_PROXY: ${APP_HTTP_PROXY}
         APP_HTTPS_PROXY: ${APP_HTTPS_PROXY}
@@ -108,4 +119,5 @@ services:
 
 volumes:
   redis_data:
-  postgres_data:
+  jwt_keys:
+  # postgres_data intentionally removed - the database is on the host now

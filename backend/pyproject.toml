@@ -31,6 +31,10 @@ orjson = "^3.11.8"
 pillow = "^12.2.0"
 matplotlib = "^3.11.0"
 python-pptx = "^1.0.2"
+# imported by backend/utils/rabbitmq.py (notification publishing)
+aio-pika = "^9.6.2"
+# imported by api_v1/review_session_employee/tempo_html.py (TEMPO HTML export)
+jinja2 = "^3.1.6"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
