@@ -12,6 +12,8 @@ lerna-debug.log*
 .env
 .env.local
 .env.*.local
+# holds proxy credentials and internal hostnames - never commit
+stack.env
 
 # OS
 Thumbs.db
