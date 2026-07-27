@@ -1,36 +1,32 @@
 # Dump the talent database to a plain folder on the local disk.
-# Independent of Docker volumes: even a full `docker system prune -a --volumes`
-# leaves these files untouched.
 #
 #   powershell -File scripts\backup_db.ps1
 #
-# Restore a dump into a running talent-postgres-fresh:
-#   docker cp <file> talent-postgres-fresh:/tmp/r.dump
-#   docker exec talent-postgres-fresh pg_restore -U admin -d talent --clean --if-exists /tmp/r.dump
+# Restore one of these dumps back into an empty talent database:
+#   powershell -File scripts\restore_db.ps1 -File <path-to-.dump>
 
 param(
-    [string]$OutDir    = "C:\Users\andre\TalentBackups",
-    [string]$Container = "talent-postgres-fresh",
-    [int]$Keep         = 20
+    [string]$OutDir = "C:\Users\andre\TalentBackups",
+    [string]$DbHost = "127.0.0.1",
+    [int]$Port      = 5433,
+    [string]$Db     = "talent",
+    [string]$User   = "admin",
+    [int]$Keep      = 20
 )
 
 $ErrorActionPreference = "Stop"
+$pgdump = "C:\Program Files\PostgreSQL\18\bin\pg_dump.exe"
 
-if (-not (docker ps --filter "name=$Container" --format "{{.Names}}")) {
-    Write-Error "[ERR] container '$Container' is not running - start it with: make db-up"
-}
-
+if (-not (Test-Path $pgdump)) { Write-Error "[ERR] pg_dump not found at $pgdump" }
 if (-not (Test-Path $OutDir)) { New-Item -ItemType Directory -Path $OutDir -Force | Out-Null }
 
+if (-not $env:PGPASSWORD) { $env:PGPASSWORD = "admin12345" }
+
 $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
-$name  = "talent_$stamp.dump"
-$dest  = Join-Path $OutDir $name
+$dest  = Join-Path $OutDir "talent_$stamp.dump"
 
-docker exec $Container pg_dump -U admin -d talent -Fc -f "/tmp/$name"
-if ($LASTEXITCODE -ne 0) { Write-Error "[ERR] pg_dump failed" }
-
-docker cp "${Container}:/tmp/$name" $dest
-docker exec $Container rm -f "/tmp/$name"
+& $pgdump -U $User -h $DbHost -p $Port -d $Db -Fc -f $dest
+if ($LASTEXITCODE -ne 0) { Write-Error "[ERR] pg_dump failed - is the db running? (make db-status)" }
 
 $size = [math]::Round((Get-Item $dest).Length / 1MB, 2)
 Write-Host "[OK] $dest ($size MB)"

@@ -1,10 +1,14 @@
-# start Postgres container (required for backend)
+# start native Postgres (required for backend) - data in C:\Users\andre\PostgresData\talent
 db-up:
-	docker start talent-postgres-fresh
+	powershell -ExecutionPolicy Bypass -File scripts/db.ps1 start
 
-# stop Postgres container
+# stop native Postgres
 db-down:
-	docker stop talent-postgres-fresh
+	powershell -ExecutionPolicy Bypass -File scripts/db.ps1 stop
+
+# is the database running?
+db-status:
+	powershell -ExecutionPolicy Bypass -File scripts/db.ps1 status
 
 # start RabbitMQ broker container (only when RABBITMQ_ENABLED=true)
 rabbit-up:
