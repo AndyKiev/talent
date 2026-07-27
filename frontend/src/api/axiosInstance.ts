@@ -60,8 +60,13 @@ const refreshAccessToken = async (): Promise<string> => {
     }>(`${BASE_URL}/jwt/refresh`, { refresh_token: refreshToken });
     // The backend rotates the refresh token on every refresh (sliding
     // session) — persist the new one so the next refresh uses it.
+    // rotateTokens, NOT setTokens: the identity is unchanged, so the query
+    // cache must survive. setTokens clears it, which would kill the very
+    // requests waiting on this refresh.
     if (data.refresh_token) {
-        useAuthStore.getState().setTokens(data.access_token, data.refresh_token);
+        useAuthStore
+            .getState()
+            .rotateTokens(data.access_token, data.refresh_token);
     } else {
         useAuthStore.getState().setAccessToken(data.access_token);
     }

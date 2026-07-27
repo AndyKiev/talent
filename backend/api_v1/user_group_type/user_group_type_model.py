@@ -20,14 +20,22 @@ class UserGroupType(IntIdPkMixin, TimestampMixin, Base):
         Boolean, nullable=False, default=False
     )
 
+    # lazy="noload" — NOT selectin. This relationship sits on a cycle: each
+    # UserGroup selectin-loads employees / jobs / both grant grains, and every
+    # member EmployeeUserGroupLink selectin-loads its Employee with its own
+    # ~13-way web. Eager-loading it exploded BOTH directions:
+    #   forward  — a 3-row /admin/user_group_types lookup pulled the whole
+    #              access-grant graph (~1 s, scaling with headcount);
+    #   backward — UserGroup.user_group_type (still selectin, a cheap many-to-one
+    #              to this small table) came back through here and dragged every
+    #              sibling group of that type plus all their members.
+    # noload here truncates the cycle at the type row, so the reverse direction
+    # needs no change. The schema's `groups` field (group NAMES) is filled by
+    # UserGroupTypeService from a column query — see user_group_minis.py.
     user_groups: Mapped[list["UserGroup"]] = relationship(
         back_populates="user_group_type",
-        lazy="selectin",
+        lazy="noload",
     )
-
-    @property
-    def groups(self) -> list[str]:
-        return [ug.name for ug in self.user_groups if ug.name]
 
     def __repr__(self) -> str:
         return f"<UserGroupType(id={self.id}, name='{self.name}')>"

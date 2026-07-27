@@ -32,6 +32,9 @@ async def user_group_type_by_id(
     user_group_type_id: int,
     service: UserGroupTypeService = Depends(get_user_group_type_service),
 ) -> UserGroupTypeSchema:
-    """Resolve employee group type by ID → schema. Raises UserGroupTypeNotFound (→ 404) if missing."""
-    record = await service.get_by_id(user_group_type_id)
-    return UserGroupTypeSchema.model_validate(record)
+    """Resolve employee group type by ID → schema. Raises UserGroupTypeNotFound (→ 404) if missing.
+
+    Goes through the service (not a bare model_validate) so `groups` is filled
+    from the column query — the relationship behind it is lazy="noload".
+    """
+    return await service.get_user_group_type_schema(user_group_type_id)
