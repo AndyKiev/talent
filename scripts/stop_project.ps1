@@ -4,7 +4,7 @@
     - Frees the backend (:8004) and frontend (:4004) ports -> kills uvicorn + vite.
     - Detects mode by the talent-rabbitmq container: if it is running (/start2),
       stops the broker via `make rabbit-down`.
-    - Leaves Postgres running on purpose (the DB container always stays up).
+    - Leaves Postgres running on purpose (the native DB always stays up).
 
   Leaves the named integrated terminals open (their server process is just killed),
   so a later /start1 or /start2 reuses the same panels.
@@ -46,5 +46,5 @@ try {
     Pop-Location
 }
 
-# Postgres is intentionally left running (DB container always stays up).
+# Postgres is intentionally left running (native DB always stays up).
 Write-Host "done -- app stopped (Postgres left running)."
