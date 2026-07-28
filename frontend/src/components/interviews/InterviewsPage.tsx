@@ -1,10 +1,9 @@
 import { useState } from 'react';
+import { PageBreadcrumbs } from '../ui/PageBreadcrumbs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import {
     Alert,
     Box,
-    Breadcrumbs,
     Button,
     Chip,
     CircularProgress,
@@ -18,7 +17,6 @@ import {
     TextField,
     Typography,
 } from '@mui/material';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import PlaceIcon from '@mui/icons-material/Place';
 import EventIcon from '@mui/icons-material/Event';
 import dayjs from 'dayjs';
@@ -200,16 +198,12 @@ export function InterviewsPage() {
 
     return (
         <Box>
-            <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <Typography variant="body2" color="text.secondary">
-                        {cfl(getString('home') || 'Home')}
-                    </Typography>
-                </Link>
-                <Typography variant="body2" color="text.primary" fontWeight={600}>
-                    {cfl(getString('interviews') || 'Interviews')}
-                </Typography>
-            </Breadcrumbs>
+            <PageBreadcrumbs
+                items={[
+                    { to: '/', label: cfl(getString('home') || 'Home') },
+                    { label: cfl(getString('interviews') || 'Interviews') },
+                ]}
+            />
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                 <Typography variant="h6" fontWeight={600} sx={{ flex: 1 }}>

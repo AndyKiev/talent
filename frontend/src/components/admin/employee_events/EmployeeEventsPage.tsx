@@ -1,16 +1,14 @@
 // src/components/admin/employee_events/EmployeeEventsPage.tsx
 import React, { useState } from 'react';
-import { Box, Breadcrumbs, Tab, Tabs, Typography } from '@mui/material';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import { Link } from '@tanstack/react-router';
+import { Box, Tab, Tabs } from '@mui/material';
 import AppShell from '../../layout/AppShell';
 import { PageContainer } from '../../layout/PageContainer';
+import { PageBreadcrumbs } from '../../ui/PageBreadcrumbs';
 import { EmployeeEventTypeCrud } from './employee_event_types/EmployeeEventTypeCrud';
 import { EmployeeEventDirectionTypeCrud } from './employee_event_direction_types/EmployeeEventDirectionTypeCrud';
 import { EmployeeEventStatusCrud } from './employee_event_statuses/EmployeeEventStatusCrud';
 import cfl from '../../../utils/helpers.ts';
 import useString from '../../../hooks/useString';
-import str from '../../../strings/str';
 
 function TabPanel({ children, value, index }: { children: React.ReactNode; value: number; index: number }) {
     return (
@@ -21,22 +19,18 @@ function TabPanel({ children, value, index }: { children: React.ReactNode; value
 }
 
 export function EmployeeEventsPage() {
-    const getString = useString({ str });
+    const getString = useString();
     const [tab, setTab] = useState(0);
 
     return (
         <AppShell>
             <PageContainer>
-                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                    <Link to="/admin" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {cfl(getString('admin'))}
-                        </Typography>
-                    </Link>
-                    <Typography variant="body2" color="text.primary" fontWeight={600}>
-                        {cfl(getString('employeeEvents') || 'Employee Events')}
-                    </Typography>
-                </Breadcrumbs>
+                <PageBreadcrumbs
+                    items={[
+                        { to: '/admin', label: cfl(getString('admin')) },
+                        { label: cfl(getString('employeeEvents') || 'Employee Events') },
+                    ]}
+                />
 
                 <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ borderBottom: 1, borderColor: 'divider' }}>
                     <Tab label={cfl(getString('employeeEventTypes') || 'Event Types')} />

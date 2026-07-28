@@ -1,12 +1,9 @@
 // src/components/admin/departments/DepartmentDetailPage.tsx
 import AppShell from '../../layout/AppShell';
 import { PageContainer } from '../../layout/PageContainer';
-import { Breadcrumbs, Typography } from '@mui/material';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import { Link } from '@tanstack/react-router';
+import { PageBreadcrumbs } from '../../ui/PageBreadcrumbs';
 import { DepartmentTree } from './DepartmentTree';
 import useString from '../../../hooks/useString';
-import str from '../../../strings/str';
 import cfl from '../../../utils/helpers.ts';
 
 interface Props {
@@ -14,27 +11,18 @@ interface Props {
 }
 
 export function DepartmentDetailPage({ departmentId }: Props) {
-    const getString = useString({ str });
+    const getString = useString();
 
     return (
         <AppShell>
             <PageContainer>
-                {/* Breadcrumbs */}
-                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                    <Link to="/admin" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {cfl(getString('admin') || 'Admin')}
-                        </Typography>
-                    </Link>
-                    <Link to="/admin/structure" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {cfl(getString('structure') || 'Structure')}
-                        </Typography>
-                    </Link>
-                    <Typography variant="body2" color="text.primary" fontWeight={600}>
-                        #{departmentId}
-                    </Typography>
-                </Breadcrumbs>
+                <PageBreadcrumbs
+                    items={[
+                        { to: '/admin', label: cfl(getString('admin') || 'Admin') },
+                        { to: '/admin/structure', label: cfl(getString('structure') || 'Structure') },
+                        { label: `#${departmentId}` },
+                    ]}
+                />
 
                 <DepartmentTree selectedId={departmentId} />
             </PageContainer>

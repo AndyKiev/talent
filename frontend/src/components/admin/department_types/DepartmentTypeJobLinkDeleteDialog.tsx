@@ -6,17 +6,12 @@
 import { useQuery } from '@tanstack/react-query';
 import {
     Alert,
-    Button,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    Typography,
 } from '@mui/material';
 import { fetchTargetCountByLink } from '../../employees/headcount_plan/headcountPlanApi';
 import { HEADCOUNT_TARGET_COUNT_BY_LINK_QK } from '../../../utils/queryKeys';
 import { useBooleanSetting } from '../../../hooks/useAppSetting';
 import type { GetStringFn } from '../../../types/getStringFn';
+import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
 
 interface Props {
     open: boolean;
@@ -49,31 +44,20 @@ export function DepartmentTypeJobLinkDeleteDialog({
     const count = targetCount?.count ?? 0;
 
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-            <DialogTitle>{getString('removeLink')}</DialogTitle>
-            <DialogContent>
-                <Typography variant="body2" sx={{ mb: count > 0 ? 2 : 0 }}>
-                    {getString('removeJobLinkConfirm', { jobName })}
-                </Typography>
-                {count > 0 && (
+        <ConfirmDeleteDialog
+            open={open}
+            title={getString('removeLink')}
+            message={getString('removeJobLinkConfirm', { jobName })}
+            isDeleting={isPending}
+            onConfirm={onConfirm}
+            onClose={onClose}
+            children={
+                count > 0 ? (
                     <Alert severity="warning">
                         {getString('planRowsCascadeWarning', { count })}
                     </Alert>
-                )}
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={onClose} disabled={isPending}>
-                    {getString('cancel')}
-                </Button>
-                <Button
-                    color="error"
-                    variant="contained"
-                    onClick={onConfirm}
-                    disabled={isPending}
-                >
-                    {getString('delete')}
-                </Button>
-            </DialogActions>
-        </Dialog>
+                ) : undefined
+            }
+        />
     );
 }

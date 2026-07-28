@@ -6,22 +6,21 @@
 // fact qty (working employees as of the date, replayed from events).
 // Gated by the headcount_plan_enabled developer setting.
 import { useState } from 'react';
+import { PageBreadcrumbs } from '../../ui/PageBreadcrumbs';
 import { useQuery } from '@tanstack/react-query';
 import {
     Alert,
     Box,
-    Breadcrumbs,
     Button,
     CircularProgress,
     Paper,
     Snackbar,
     Typography,
 } from '@mui/material';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import EventIcon from '@mui/icons-material/Event';
 import GroupsIcon from '@mui/icons-material/Groups';
 import { DataGrid } from '@mui/x-data-grid';
-import { Link, Navigate, useNavigate, useSearch } from '@tanstack/react-router';
+import { Navigate, useNavigate, useSearch } from '@tanstack/react-router';
 import dayjs from 'dayjs';
 
 import AppShell from '../../layout/AppShell';
@@ -104,16 +103,12 @@ export function HeadcountPlanPage() {
     return (
         <AppShell>
             <PageContainer>
-                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                    <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {cfl(getString('home'))}
-                        </Typography>
-                    </Link>
-                    <Typography variant="body2" color="text.primary" fontWeight={600}>
-                        {cfl(getString('headcountPlanTitle'))}
-                    </Typography>
-                </Breadcrumbs>
+                <PageBreadcrumbs
+                    items={[
+                        { to: '/', label: cfl(getString('home')) },
+                        { label: cfl(getString('headcountPlanTitle')) },
+                    ]}
+                />
 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
                     <GroupsIcon color="action" />

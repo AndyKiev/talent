@@ -1,10 +1,10 @@
-import { Box, Breadcrumbs, Tab, Tabs, Typography } from '@mui/material';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import { Box, Tab, Tabs } from '@mui/material';
 import { Link, Outlet, useLocation } from '@tanstack/react-router';
 import AppShell from '../../layout/AppShell';
 import { PageContainer } from '../../layout/PageContainer';
 import cfl from '../../../utils/helpers.ts';
 import useString from '../../../hooks/useString';
+import { PageBreadcrumbs } from '../../ui/PageBreadcrumbs';
 
 // Single sub-screen for now (dimensions); kept as a tabbed layout so more
 // recruitment-admin lookups can be added later without restructuring.
@@ -21,16 +21,12 @@ export function RecruitmentAdminLayout() {
     return (
         <AppShell>
             <PageContainer>
-                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                    <Link to="/admin" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {cfl(getString('admin'))}
-                        </Typography>
-                    </Link>
-                    <Typography variant="body2" color="text.primary" fontWeight={600}>
-                        {cfl(getString('recruitment') || 'Recruitment')}
-                    </Typography>
-                </Breadcrumbs>
+                <PageBreadcrumbs
+                    items={[
+                        { to: '/admin', label: cfl(getString('admin')) },
+                        { label: cfl(getString('recruitment') || 'Recruitment') },
+                    ]}
+                />
 
                 <Tabs value={active} sx={{ borderBottom: 1, borderColor: 'divider' }}>
                     {TABS.map((t) => (

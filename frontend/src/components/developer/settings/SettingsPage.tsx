@@ -5,9 +5,7 @@
 // Clicking a card opens /developer/settings/$groupKey (SettingsGroupView),
 // where the settings render exactly as the old flat list did.
 import { useMemo } from 'react';
-import { Box, Breadcrumbs, CircularProgress, Typography } from '@mui/material';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import { Link } from '@tanstack/react-router';
+import { Box, CircularProgress, Typography } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import AppShell from '../../layout/AppShell';
 import { PageContainer } from '../../layout/PageContainer';
@@ -17,6 +15,7 @@ import { APP_SETTINGS_QK } from '../../../utils/queryKeys';
 import { fetchAppSettings } from './settingsApi';
 import { SETTINGS_GROUPS, groupForSetting } from './settingsGroups';
 import { SettingsGroupCard } from './SettingsGroupCard';
+import { PageBreadcrumbs } from '../../ui/PageBreadcrumbs';
 
 export function SettingsPage() {
     const getString = useString();
@@ -44,14 +43,12 @@ export function SettingsPage() {
     return (
         <AppShell>
             <PageContainer>
-                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                    <Link to="/developer" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">{cfl(getString('devPanel'))}</Typography>
-                    </Link>
-                    <Typography variant="body2" color="text.primary" fontWeight={600}>
-                        {cfl(getString('settings'))}
-                    </Typography>
-                </Breadcrumbs>
+                <PageBreadcrumbs
+                    items={[
+                        { to: '/developer', label: cfl(getString('devPanel')) },
+                        { label: cfl(getString('settings')) },
+                    ]}
+                />
 
                 <Typography variant="h6" fontWeight={700} mb={2}>{cfl(getString('settings'))}</Typography>
 

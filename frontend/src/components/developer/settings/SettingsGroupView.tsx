@@ -5,13 +5,13 @@
 // accordions, Add / Delete / Visibility / training-off dialogs) — only the set
 // of rows is filtered by group. See settingsGroups.ts for the grouping map.
 import { useMemo, useState } from 'react';
+import { PageBreadcrumbs } from '../../ui/PageBreadcrumbs';
 import {
     Accordion,
     AccordionDetails,
     AccordionSummary,
     Alert,
     Box,
-    Breadcrumbs,
     Button,
     CircularProgress,
     Dialog,
@@ -33,14 +33,12 @@ import {
     Typography,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import SaveIcon from '@mui/icons-material/Save';
 import SettingsIcon from '@mui/icons-material/Settings';
 import Autocomplete from '@mui/material/Autocomplete';
 import Chip from '@mui/material/Chip';
-import { Link } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import AppShell from '../../layout/AppShell';
 import { PageContainer } from '../../layout/PageContainer';
@@ -657,17 +655,13 @@ export function SettingsGroupView({ groupKey }: { groupKey: string }) {
     return (
         <AppShell>
             <PageContainer>
-                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                    <Link to="/developer" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">{cfl(getString('devPanel'))}</Typography>
-                    </Link>
-                    <Link to="/developer/settings" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">{cfl(getString('settings'))}</Typography>
-                    </Link>
-                    <Typography variant="body2" color="text.primary" fontWeight={600}>
-                        {groupLabel}
-                    </Typography>
-                </Breadcrumbs>
+                <PageBreadcrumbs
+                    items={[
+                        { to: '/developer', label: cfl(getString('devPanel')) },
+                        { to: '/developer/settings', label: cfl(getString('settings')) },
+                        { label: groupLabel },
+                    ]}
+                />
 
                 <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
                     <Typography variant="h6" fontWeight={700}>{groupLabel}</Typography>

@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import {
   Box,
-  Breadcrumbs,
   Button,
   Chip,
   CircularProgress,
@@ -15,9 +14,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import { Link } from '@tanstack/react-router';
 import AppShell from '../../layout/AppShell';
 import { PageContainer } from '../../layout/PageContainer';
 import { useMutation } from '@tanstack/react-query';
@@ -26,11 +23,11 @@ import {
   type EventApplyStats,
 } from './eventApplyApi';
 import useString from '../../../hooks/useString';
-import str from '../../../strings/str';
 import cfl from '../../../utils/helpers.ts';
+import { PageBreadcrumbs } from '../../ui/PageBreadcrumbs';
 
 export function EventApplyPage() {
-  const getString = useString({ str });
+  const getString = useString();
   const [stats, setStats] = useState<EventApplyStats | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -49,21 +46,13 @@ export function EventApplyPage() {
   return (
     <AppShell>
       <PageContainer>
-        <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-          <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <Typography variant="body2" color="text.secondary">
-              {cfl(getString('home') || 'Home')}
-            </Typography>
-          </Link>
-          <Link to="/developer" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <Typography variant="body2" color="text.secondary">
-              {cfl(getString('devPanel') || 'Developer')}
-            </Typography>
-          </Link>
-          <Typography variant="body2" color="text.primary">
-            {cfl(getString('eventApply') || 'Apply due events')}
-          </Typography>
-        </Breadcrumbs>
+        <PageBreadcrumbs
+          items={[
+            { to: '/', label: cfl(getString('home') || 'Home') },
+            { to: '/developer', label: cfl(getString('devPanel') || 'Developer') },
+            { label: cfl(getString('eventApply') || 'Apply due events') },
+          ]}
+        />
 
         <Typography variant="h5" fontWeight={700} sx={{ mb: 1 }}>
           {cfl(getString('eventApply') || 'Apply due events')}

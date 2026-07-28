@@ -1,13 +1,6 @@
-import {
-    Button,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-} from '@mui/material';
 import type { Mission } from './missionApi';
 import type { GetStringFn } from '../../types/getStringFn';
+import ConfirmDeleteDialog from '../ui/ConfirmDeleteDialog';
 
 interface Props {
     open: boolean;
@@ -29,30 +22,14 @@ export function MissionDeleteDialog({
     isDeleting,
 }: Props) {
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-            <DialogTitle>{getString('deleteMission')}</DialogTitle>
-            <DialogContent>
-                <DialogContentText>{getString('deleteMissionConfirm')}</DialogContentText>
-                {mission && (
-                    <DialogContentText sx={{ mt: 1, fontWeight: 600 }}>
-                        {mission.text}
-                    </DialogContentText>
-                )}
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={onClose} sx={{ textTransform: 'none' }}>
-                    {getString('cancel')}
-                </Button>
-                <Button
-                    color="error"
-                    variant="contained"
-                    onClick={onConfirm}
-                    disabled={isDeleting}
-                    sx={{ textTransform: 'none' }}
-                >
-                    {getString('delete')}
-                </Button>
-            </DialogActions>
-        </Dialog>
+        <ConfirmDeleteDialog
+            open={open}
+            title={getString('deleteMission')}
+            message={getString('deleteMissionConfirm')}
+            itemLabel={mission?.text}
+            isDeleting={isDeleting}
+            onConfirm={onConfirm}
+            onClose={onClose}
+        />
     );
 }

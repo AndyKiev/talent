@@ -5,10 +5,8 @@
 // user may override, so a group card shows iff at least one returned setting
 // maps to it. Clicking a card opens /settings/$groupKey (UserSettingsGroupView).
 import { useMemo } from 'react';
-import { Box, Breadcrumbs, CircularProgress, Typography } from '@mui/material';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import { Box, CircularProgress, Typography } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import AppShell from '../layout/AppShell';
 import { PageContainer } from '../layout/PageContainer';
 import useString from '../../hooks/useString';
@@ -17,6 +15,7 @@ import { fetchEffectiveUserSettings } from './userSettingsApi';
 import cfl from '../../utils/helpers.ts';
 import { SETTINGS_GROUPS, groupForKey } from '../developer/settings/settingsGroups';
 import { SettingsGroupCard } from '../developer/settings/SettingsGroupCard';
+import { PageBreadcrumbs } from '../ui/PageBreadcrumbs';
 
 export function UserSettingsPage() {
     const getString = useString();
@@ -42,16 +41,12 @@ export function UserSettingsPage() {
     return (
         <AppShell>
             <PageContainer>
-                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                    <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {cfl(getString('home') || 'Home')}
-                        </Typography>
-                    </Link>
-                    <Typography variant="body2" color="text.primary" fontWeight={600}>
-                        {getString('mySettings')}
-                    </Typography>
-                </Breadcrumbs>
+                <PageBreadcrumbs
+                    items={[
+                        { to: '/', label: cfl(getString('home') || 'Home') },
+                        { label: getString('mySettings') },
+                    ]}
+                />
 
                 <Typography variant="h6" fontWeight={700} mb={2}>{getString('mySettings')}</Typography>
 

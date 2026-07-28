@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
+import { PageBreadcrumbs } from '../ui/PageBreadcrumbs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate, useParams } from '@tanstack/react-router';
+import { useNavigate, useParams } from '@tanstack/react-router';
 import {
     Alert,
     Autocomplete,
     Box,
-    Breadcrumbs,
     Button,
     Chip,
     CircularProgress,
@@ -17,7 +17,6 @@ import {
     TextField,
     Typography,
 } from '@mui/material';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import EditIcon from '@mui/icons-material/Edit';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import dayjs from 'dayjs';
@@ -76,16 +75,12 @@ export function CandidateDetailPage() {
 
     return (
         <Box>
-            <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                <Link to="/candidates" style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <Typography variant="body2" color="text.secondary">
-                        {cfl(getString('candidates') || 'Candidates')}
-                    </Typography>
-                </Link>
-                <Typography variant="body2" color="text.primary" fontWeight={600}>
-                    {candidate ? `${candidate.first_name} ${candidate.last_name}` : `#${candidateId}`}
-                </Typography>
-            </Breadcrumbs>
+            <PageBreadcrumbs
+                items={[
+                    { to: '/candidates', label: cfl(getString('candidates') || 'Candidates') },
+                    { label: candidate ? `${candidate.first_name} ${candidate.last_name}` : `#${candidateId}` },
+                ]}
+            />
 
             {isLoading && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>

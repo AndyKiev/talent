@@ -6,13 +6,13 @@
 // actions (edit plan / show report) both open that route, differing only by the
 // `view` search param.
 import AppShell from '../layout/AppShell';
-import { Box, Breadcrumbs, Typography } from '@mui/material';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Box } from '@mui/material';
+import { useNavigate } from '@tanstack/react-router';
 import { PlanSessionsCrud } from './PlanSessionsCrud';
 import type { PlanSession } from './planningApi';
 import useString from '../../hooks/useString';
 import cfl from '../../utils/helpers.ts';
+import { PageBreadcrumbs } from '../ui/PageBreadcrumbs';
 
 export function PlanningSessionsPage() {
     const getString = useString();
@@ -41,16 +41,12 @@ export function PlanningSessionsPage() {
                     overflow: 'hidden',
                 }}
             >
-                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                    <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {cfl(getString('home') || 'Home')}
-                        </Typography>
-                    </Link>
-                    <Typography variant="body2" color="text.primary" fontWeight={600}>
-                        {cfl(getString('planning') || 'Planning')}
-                    </Typography>
-                </Breadcrumbs>
+                <PageBreadcrumbs
+                    items={[
+                        { to: '/', label: cfl(getString('home') || 'Home') },
+                        { label: cfl(getString('planning') || 'Planning') },
+                    ]}
+                />
 
                 <Box sx={{ flex: 1, minHeight: 0 }}>
                     <PlanSessionsCrud

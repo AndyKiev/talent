@@ -1,9 +1,9 @@
 // src/components/developer/audit_log/AuditLogPage.tsx
 import { useState, useMemo } from 'react';
+import { PageBreadcrumbs } from '../../ui/PageBreadcrumbs';
 import { useQuery } from '@tanstack/react-query';
 import {
     Box,
-    Breadcrumbs,
     Chip,
     CircularProgress,
     Divider,
@@ -21,11 +21,9 @@ import {
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import CloseIcon from '@mui/icons-material/Close';
 import HistoryIcon from '@mui/icons-material/History';
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
-import { Link } from '@tanstack/react-router';
 import AppShell from '../../layout/AppShell';
 import { PageContainer } from '../../layout/PageContainer';
 import {
@@ -428,21 +426,13 @@ export function AuditLogPage() {
         <AppShell>
             <PageContainer>
                 {/* Breadcrumbs */}
-                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                    <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {cfl(getString('home') || 'Home')}
-                        </Typography>
-                    </Link>
-                    <Link to="/developer" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {cfl(getString('devPanel') || 'Developer')}
-                        </Typography>
-                    </Link>
-                    <Typography variant="body2" color="text.primary">
-                        {cfl(getString('auditLog') || 'Audit log')}
-                    </Typography>
-                </Breadcrumbs>
+                <PageBreadcrumbs
+                    items={[
+                        { to: '/', label: cfl(getString('home') || 'Home') },
+                        { to: '/developer', label: cfl(getString('devPanel') || 'Developer') },
+                        { label: cfl(getString('auditLog') || 'Audit log') },
+                    ]}
+                />
 
                 {/* Header + filters */}
                 <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2, flexWrap: 'wrap' }}>

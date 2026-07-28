@@ -4,12 +4,11 @@
 // (top-level department → job → recruitment task), then the per-task board
 // component is REUSED as-is underneath.
 import { useMemo, useState } from 'react';
+import { PageBreadcrumbs } from '../../ui/PageBreadcrumbs';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import {
     Alert,
     Box,
-    Breadcrumbs,
     CircularProgress,
     MenuItem,
     Paper,
@@ -17,7 +16,6 @@ import {
     TextField,
     Typography,
 } from '@mui/material';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import useString from '../../../hooks/useString';
 import cfl from '../../../utils/helpers.ts';
 import { RECRUITMENT_TASK_QK } from '../../../utils/queryKeys';
@@ -62,16 +60,12 @@ export function RecruitmentBoardPage() {
 
     return (
         <Box>
-            <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <Typography variant="body2" color="text.secondary">
-                        {cfl(getString('home') || 'Home')}
-                    </Typography>
-                </Link>
-                <Typography variant="body2" color="text.primary" fontWeight={600}>
-                    {cfl(getString('board') || 'Board')}
-                </Typography>
-            </Breadcrumbs>
+            <PageBreadcrumbs
+                items={[
+                    { to: '/', label: cfl(getString('home') || 'Home') },
+                    { label: cfl(getString('board') || 'Board') },
+                ]}
+            />
 
             {isLoading && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>

@@ -5,17 +5,14 @@
 // the plan-values (scope) editor or the plan-vs-fact report; a toggle switches
 // between them. The session id in the URL maps to the backend plan_sessions/{id}.
 import { useQuery } from '@tanstack/react-query';
-import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import {
     Alert,
     Box,
-    Breadcrumbs,
     CircularProgress,
     ToggleButton,
     ToggleButtonGroup,
-    Typography,
 } from '@mui/material';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import AppShell from '../layout/AppShell';
 import { PlanScopeGrid } from './PlanScopeGrid';
 import { PlanReportGrid } from './PlanReportGrid';
@@ -23,6 +20,7 @@ import { fetchPlanSessionById } from './planningApi';
 import { PLAN_SESSION_QK } from '../../utils/queryKeys.ts';
 import useString from '../../hooks/useString';
 import cfl from '../../utils/helpers.ts';
+import { PageBreadcrumbs } from '../ui/PageBreadcrumbs';
 
 const ROUTE_ID = '/planning/$sessionId/';
 
@@ -61,25 +59,20 @@ export function PlanSessionDetailPage() {
                     overflow: 'hidden',
                 }}
             >
-                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 2 }}>
-                    <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {cfl(getString('home') || 'Home')}
-                        </Typography>
-                    </Link>
-                    <Link to="/planning" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {cfl(getString('planning') || 'Planning')}
-                        </Typography>
-                    </Link>
-                    <Typography variant="body2" color="text.primary" fontWeight={600}>
-                        {session
-                            ? view === 'report'
-                                ? `${session.name} — ${cfl(getString('planVsFact')) || 'Plan vs Fact'}`
-                                : session.name
-                            : '…'}
-                    </Typography>
-                </Breadcrumbs>
+                <PageBreadcrumbs
+                    sx={{ mb: 2 }}
+                    items={[
+                        { to: '/', label: cfl(getString('home') || 'Home') },
+                        { to: '/planning', label: cfl(getString('planning') || 'Planning') },
+                        {
+                            label: session
+                                ? view === 'report'
+                                    ? `${session.name} — ${cfl(getString('planVsFact')) || 'Plan vs Fact'}`
+                                    : session.name
+                                : '…',
+                        },
+                    ]}
+                />
 
                 <Box sx={{ mb: 2 }}>
                     <ToggleButtonGroup

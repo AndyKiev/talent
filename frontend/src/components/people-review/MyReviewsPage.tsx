@@ -1,15 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link, useNavigate } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import {
     Alert,
     Box,
-    Breadcrumbs,
     Button,
     CircularProgress,
     Paper,
-    Typography,
 } from '@mui/material';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import AppShell from '../layout/AppShell.tsx';
@@ -18,6 +15,7 @@ import { fetchMyReviews, type ReviewSessionEmployeeList } from './peopleReviewAp
 import { useDataGridLocale } from '../../hooks/useDataGridLocale';
 import useString from '../../hooks/useString';
 import cfl from '../../utils/helpers.ts';
+import { PageBreadcrumbs } from '../ui/PageBreadcrumbs';
 
 export function MyReviewsPage() {
     const navigate = useNavigate();
@@ -62,21 +60,13 @@ export function MyReviewsPage() {
     return (
         <AppShell>
             <PageContainer>
-                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                    <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {cfl(getString('home') || 'Home')}
-                        </Typography>
-                    </Link>
-                    <Link to="/people_review" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {cfl(getString('peopleReview') || 'People Review')}
-                        </Typography>
-                    </Link>
-                    <Typography variant="body2" color="text.primary" fontWeight={600}>
-                        {getString('myPeopleReviews')}
-                    </Typography>
-                </Breadcrumbs>
+                <PageBreadcrumbs
+                    items={[
+                        { to: '/', label: cfl(getString('home') || 'Home') },
+                        { to: '/people_review', label: cfl(getString('peopleReview') || 'People Review') },
+                        { label: getString('myPeopleReviews') },
+                    ]}
+                />
 
                 {isLoading && (
                     <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>

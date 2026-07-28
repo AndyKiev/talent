@@ -30,6 +30,8 @@ interface Props {
     isDeleting?: boolean;
     /** Disable the confirm button (e.g. while a blocking condition holds). */
     confirmDisabled?: boolean;
+    /** Already-resolved confirm label; defaults to "Delete" (scopes say "Remove"). */
+    confirmLabel?: string;
     onConfirm: () => void;
     onClose: () => void;
 }
@@ -42,6 +44,7 @@ export default function ConfirmDeleteDialog({
     children,
     isDeleting = false,
     confirmDisabled = false,
+    confirmLabel,
     onConfirm,
     onClose,
 }: Props) {
@@ -70,7 +73,7 @@ export default function ConfirmDeleteDialog({
                     disabled={isDeleting || confirmDisabled}
                     startIcon={isDeleting ? <CircularProgress size={16} /> : <DeleteIcon />}
                 >
-                    {isDeleting ? getString('deleting') : getString('delete')}
+                    {isDeleting ? getString('deleting') : confirmLabel ?? getString('delete')}
                 </Button>
             </DialogActions>
         </Dialog>

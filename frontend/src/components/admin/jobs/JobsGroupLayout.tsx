@@ -1,12 +1,11 @@
 // src/components/admin/jobs/JobsGroupLayout.tsx
-import { Outlet, useRouter, useMatchRoute, Link } from '@tanstack/react-router';
-import { Tabs, Tab, Breadcrumbs, Typography } from '@mui/material';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import { Outlet, useRouter, useMatchRoute } from '@tanstack/react-router';
+import { Tabs, Tab } from '@mui/material';
 import AppShell from '../../layout/AppShell';
 import { PageContainer } from '../../layout/PageContainer';
+import { PageBreadcrumbs } from '../../ui/PageBreadcrumbs';
 import cfl from '../../../utils/helpers.ts';
 import useString from '../../../hooks/useString';
-import str from '../../../strings/str';
 
 const SUB_TABS = [
     { label: 'jobs', path: '/admin/jobs_group/jobs' },
@@ -16,7 +15,7 @@ const SUB_TABS = [
 ] as const;
 
 export function JobsGroupLayout() {
-    const getString = useString({ str });
+    const getString = useString();
     const router = useRouter();
     const matchRoute = useMatchRoute();
 
@@ -31,16 +30,12 @@ export function JobsGroupLayout() {
     return (
         <AppShell>
             <PageContainer>
-                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                    <Link to="/admin" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {cfl(getString('admin'))}
-                        </Typography>
-                    </Link>
-                    <Typography variant="body2" color="text.primary" fontWeight={600}>
-                        {cfl(getString('jobs') || 'Jobs')}
-                    </Typography>
-                </Breadcrumbs>
+                <PageBreadcrumbs
+                    items={[
+                        { to: '/admin', label: cfl(getString('admin')) },
+                        { label: cfl(getString('jobs') || 'Jobs') },
+                    ]}
+                />
 
                 <Tabs
                     value={activeTab === -1 ? 0 : activeTab}

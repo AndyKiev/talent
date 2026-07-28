@@ -1,12 +1,12 @@
 // src/components/developer/process_roles/ProcessRolesLayout.tsx
 import React from 'react';
-import { Outlet, useRouter, useMatchRoute, Link } from '@tanstack/react-router';
-import { Box, Breadcrumbs, Tab, Tabs, Typography } from '@mui/material';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import { Outlet, useRouter, useMatchRoute } from '@tanstack/react-router';
+import { Box, Tab, Tabs } from '@mui/material';
 import AppShell from '../../layout/AppShell';
 import { PageContainer } from '../../layout/PageContainer';
 import cfl from '../../../utils/capitalizeFirstLetter';
 import useString from '../../../hooks/useString';
+import { PageBreadcrumbs } from '../../ui/PageBreadcrumbs';
 
 const TOP_TABS = [
     { label: 'processes', path: '/developer/process_roles/process' },
@@ -29,16 +29,12 @@ export function ProcessRolesLayout() {
     return (
         <AppShell>
             <PageContainer>
-                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                    <Link to="/developer" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {cfl(getString('developer'))}
-                        </Typography>
-                    </Link>
-                    <Typography variant="body2" color="text.primary" fontWeight={600}>
-                        {cfl(getString('processRolesGroup') || 'Process Roles')}
-                    </Typography>
-                </Breadcrumbs>
+                <PageBreadcrumbs
+                    items={[
+                        { to: '/developer', label: cfl(getString('developer')) },
+                        { label: cfl(getString('processRolesGroup') || 'Process Roles') },
+                    ]}
+                />
 
                 <Tabs
                     value={activeTab === -1 ? 0 : activeTab}

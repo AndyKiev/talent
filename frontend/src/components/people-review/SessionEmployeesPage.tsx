@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
+import { PageBreadcrumbs } from '../ui/PageBreadcrumbs';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import {
     Alert,
     Autocomplete,
     Box,
-    Breadcrumbs,
     Button,
     Card,
     CardActionArea,
@@ -36,7 +36,6 @@ import {
     useTheme as useMuiTheme,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import LockIcon from '@mui/icons-material/Lock';
@@ -49,7 +48,6 @@ import ViewListIcon from '@mui/icons-material/ViewList';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
-import { Link } from '@tanstack/react-router';
 import AppShell from '../layout/AppShell.tsx';
 import {
     fetchSessionEmployees,
@@ -522,17 +520,13 @@ export function SessionEmployeesPage() {
                     flexDirection: 'column',
                 }}
             >
-                <Breadcrumbs
-                    separator={<NavigateNextIcon sx={{ fontSize: compact ? 13 : 20 }} />}
-                    sx={{ mb: compact ? 0.5 : 3, '& .MuiTypography-root': { fontSize: compact ? 12 : undefined } }}
-                >
-                    <Link to="/people_review" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">{getString('peopleReview')}</Typography>
-                    </Link>
-                    <Typography variant="body2" color="text.primary" fontWeight={600}>
-                        {sessionName}
-                    </Typography>
-                </Breadcrumbs>
+                <PageBreadcrumbs
+                    items={[
+                        { to: '/people_review', label: getString('peopleReview') },
+                        { label: sessionName },
+                    ]}
+                    sx={{fontSize: compact ? 13 : 20}}
+                />
 
                 {/* Session header */}
                 <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between" mb={compact ? 0.75 : 2} flexWrap="wrap" gap={compact ? 0.75 : 1.5}>

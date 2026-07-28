@@ -1,10 +1,10 @@
 import { useState } from 'react';
+import { PageBreadcrumbs } from '../ui/PageBreadcrumbs';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useNavigate } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import {
     Alert,
     Box,
-    Breadcrumbs,
     Button,
     Card,
     CardActionArea,
@@ -21,7 +21,6 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PhoneIcon from '@mui/icons-material/Phone';
 import EmailIcon from '@mui/icons-material/Email';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import useString from '../../hooks/useString';
 import cfl from '../../utils/helpers.ts';
 import { snakeToCamel } from '../../utils/helpers.ts';
@@ -55,16 +54,12 @@ export function CandidatesPage() {
 
     return (
         <Box>
-            <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <Typography variant="body2" color="text.secondary">
-                        {cfl(getString('home') || 'Home')}
-                    </Typography>
-                </Link>
-                <Typography variant="body2" color="text.primary" fontWeight={600}>
-                    {cfl(getString('candidates') || 'Candidates')}
-                </Typography>
-            </Breadcrumbs>
+            <PageBreadcrumbs
+                items={[
+                    { to: '/', label: cfl(getString('home') || 'Home') },
+                    { label: cfl(getString('candidates') || 'Candidates') },
+                ]}
+            />
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                 <Typography variant="h6" fontWeight={600} sx={{ flex: 1 }}>

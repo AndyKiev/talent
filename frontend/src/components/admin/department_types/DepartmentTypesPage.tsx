@@ -2,37 +2,28 @@
 import { useState } from 'react';
 import AppShell from '../../layout/AppShell.tsx';
 import { PageContainer } from '../../layout/PageContainer';
-import { Breadcrumbs, Tab, Tabs, Typography } from '@mui/material';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import { Link } from '@tanstack/react-router';
+import { Tab, Tabs } from '@mui/material';
 import { DepartmentTypeCrud } from './DepartmentTypeCrud.tsx';
 import { DepartmentTypeHierarchy } from './DepartmentTypeHierarchy.tsx';
 import { DepartmentTypeJobLinkPanel } from './DepartmentTypeJobLinkPanel.tsx';
+import { PageBreadcrumbs } from '../../ui/PageBreadcrumbs';
 
 import cfl from '../../../utils/helpers.ts';
 import useString from '../../../hooks/useString.ts';
-import str from '../../../strings/str.ts';
 
 export function DepartmentTypesPage() {
-    const getString = useString({ str });
+    const getString = useString();
     const [tab, setTab] = useState(0);
 
     return (
         <AppShell>
             <PageContainer>
-                <Breadcrumbs
-                    separator={<NavigateNextIcon fontSize="small" />}
-                    sx={{ mb: 3 }}
-                >
-                    <Link to="/admin" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {cfl(getString('admin'))}
-                        </Typography>
-                    </Link>
-                    <Typography variant="body2" color="text.primary" fontWeight={600}>
-                        {cfl(getString('departmentTypes'))}
-                    </Typography>
-                </Breadcrumbs>
+                <PageBreadcrumbs
+                    items={[
+                        { to: '/admin', label: cfl(getString('admin')) },
+                        { label: cfl(getString('departmentTypes')) },
+                    ]}
+                />
 
                 <Tabs
                     value={tab}

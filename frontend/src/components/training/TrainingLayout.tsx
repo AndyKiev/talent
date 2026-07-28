@@ -1,13 +1,12 @@
 // src/components/training/TrainingLayout.tsx
-import { Box, Breadcrumbs, Tab, Tabs, Typography } from '@mui/material';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import { Box, Tab, Tabs } from '@mui/material';
 import { Link, Navigate, Outlet, useLocation } from '@tanstack/react-router';
 import AppShell from '../layout/AppShell';
 import { PageContainer } from '../layout/PageContainer';
 import cfl from '../../utils/helpers.ts';
 import useString from '../../hooks/useString';
-import str from '../../strings/str';
 import { useBooleanSetting } from '../../hooks/useAppSetting';
+import { PageBreadcrumbs } from '../ui/PageBreadcrumbs';
 
 // Training categories/statuses live under /admin/training (admin-managed
 // lookups) — this top-level page is Types only.
@@ -17,7 +16,7 @@ const TABS = [
 ] as const;
 
 export function TrainingLayout() {
-    const getString = useString({ str });
+    const getString = useString();
     const { pathname } = useLocation();
     const active = Math.max(0, TABS.findIndex((t) => pathname.startsWith(t.to)));
 
@@ -30,16 +29,12 @@ export function TrainingLayout() {
     return (
         <AppShell>
             <PageContainer>
-                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                    <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {cfl(getString('home') || 'Home')}
-                        </Typography>
-                    </Link>
-                    <Typography variant="body2" color="text.primary" fontWeight={600}>
-                        {cfl(getString('training') || 'Training')}
-                    </Typography>
-                </Breadcrumbs>
+                <PageBreadcrumbs
+                    items={[
+                        { to: '/', label: cfl(getString('home') || 'Home') },
+                        { label: cfl(getString('training') || 'Training') },
+                    ]}
+                />
 
                 <Tabs value={active} sx={{ borderBottom: 1, borderColor: 'divider' }}>
                     {TABS.map((t) => (

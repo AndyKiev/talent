@@ -1,15 +1,15 @@
 import { useMemo } from "react";
-import { Outlet, useNavigate, useParams, useRouterState, Link } from "@tanstack/react-router";
+import { PageBreadcrumbs } from '../ui/PageBreadcrumbs';
+import { Outlet, useNavigate, useParams, useRouterState } from "@tanstack/react-router";
 import useString from "../../hooks/useString.ts";
 import str from "../../strings/str.ts";
 import { useQuery } from "@tanstack/react-query";
 import { fetchEmployeeById } from "./employeeApi.ts";
 import AppShell from "../layout/AppShell.tsx";
 import { PageContainer } from '../layout/PageContainer';
-import { Breadcrumbs, Chip, Divider, Paper, Stack, Typography } from "@mui/material";
+import { Chip, Divider, Paper, Stack, Typography } from "@mui/material";
 import { ResponsiveTabs } from "../ui/ResponsiveTabs.tsx";
 import type { TabItem } from "../ui/ResponsiveTabs.tsx";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import cfl from "../../utils/helpers.ts";
 
 const STATUS_COLOR: Record<string, 'warning' | 'success' | 'error' | 'default'> = {
@@ -67,16 +67,13 @@ export function EmployeeCardLayout() {
         <AppShell>
             <PageContainer>
                 {/* ── Breadcrumbs: back to the employees table ─────────────── */}
-                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 1.5 }}>
-                    <Link to="/employees" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {cfl(getString('employees') || 'Employees')}
-                        </Typography>
-                    </Link>
-                    <Typography variant="body2" color="text.primary" fontWeight={600}>
-                        {employee?.name ?? `#${id}`}
-                    </Typography>
-                </Breadcrumbs>
+                <PageBreadcrumbs
+                    items={[
+                        { to: '/employees', label: cfl(getString('employees') || 'Employees') },
+                        { label: employee?.name ?? `#${id}` },
+                    ]}
+                    sx={{mb: 1.5}}
+                />
 
                 {/* ── Header card ─────────────────────────────────────────── */}
                 <Paper variant="outlined" sx={{ p: 1, px: 1.5, mb: 1.5 }}>

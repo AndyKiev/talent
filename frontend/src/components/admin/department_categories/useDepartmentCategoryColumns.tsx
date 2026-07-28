@@ -6,7 +6,6 @@ import type { DepartmentCategory } from './departmentCategoryApi.ts';
 import type { GetStringFn } from '../../../types/getStringFn.ts';
 import { formatToUkrDate } from '../../../utils/dateFormatter.ts';
 import { makeTextEditCol, makeToggleCol, deleteActionCol, type EditingState } from '../../../utils/columnBuilders';
-export type { EditingState };
 
 interface Params {
     getString: GetStringFn;

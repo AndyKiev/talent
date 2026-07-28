@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react';
+import { PageBreadcrumbs } from '../ui/PageBreadcrumbs';
 import { useForm, Controller } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import {
     Alert,
     Box,
-    Breadcrumbs,
     Button,
     Card,
     CardActionArea,
@@ -35,7 +35,6 @@ import AddIcon from '@mui/icons-material/Add';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
 import DeleteIcon from '@mui/icons-material/Delete';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import PeopleIcon from '@mui/icons-material/People';
 import ReplayIcon from '@mui/icons-material/Replay';
 import BarChartIcon from '@mui/icons-material/BarChart';
@@ -471,16 +470,13 @@ export function ReviewSessionsPage() {
                     overflow: 'hidden',
                 }}
             >
-                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 2 }}>
-                    <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {cfl(getString('home') || 'Home')}
-                        </Typography>
-                    </Link>
-                    <Typography variant="body2" color="text.primary" fontWeight={600}>
-                        {getString('peopleReviewSessions')}
-                    </Typography>
-                </Breadcrumbs>
+                <PageBreadcrumbs
+                    items={[
+                        { to: '/', label: cfl(getString('home') || 'Home') },
+                        { label: getString('peopleReviewSessions') },
+                    ]}
+                    sx={{mb: 2}}
+                />
 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                     {statusOptions.length > 0 && (

@@ -1,12 +1,11 @@
 // src/components/developer/catalog/CatalogGroupLayout.tsx
-import { Outlet, useRouter, useLocation, Link } from '@tanstack/react-router';
-import { Box, Breadcrumbs, Tab, Tabs, Typography } from '@mui/material';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import { Outlet, useRouter, useLocation } from '@tanstack/react-router';
+import { Box, Tab, Tabs } from '@mui/material';
 import AppShell from '../../layout/AppShell.tsx';
 import { PageContainer } from '../../layout/PageContainer';
 import cfl from '../../../utils/helpers.ts';
 import useString from '../../../hooks/useString.ts';
-import str from '../../../strings/str.ts';
+import { PageBreadcrumbs } from '../../ui/PageBreadcrumbs';
 
 const ROOT = '/developer/catalog';
 
@@ -17,7 +16,7 @@ const TOP_TABS = [
 ];
 
 export function CatalogGroupLayout() {
-    const getString = useString({ str });
+    const getString = useString();
     const router = useRouter();
     const location = useLocation();
 
@@ -33,16 +32,12 @@ export function CatalogGroupLayout() {
     return (
         <AppShell>
             <PageContainer>
-                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                    <Link to="/developer" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {cfl(getString('devPanel') || 'Developer')}
-                        </Typography>
-                    </Link>
-                    <Typography variant="body2" color="text.primary" fontWeight={600}>
-                        {cfl(getString('catalog') || 'Catalog')}
-                    </Typography>
-                </Breadcrumbs>
+                <PageBreadcrumbs
+                    items={[
+                        { to: '/developer', label: cfl(getString('devPanel') || 'Developer') },
+                        { label: cfl(getString('catalog') || 'Catalog') },
+                    ]}
+                />
 
                 <Tabs
                     value={activeTab}

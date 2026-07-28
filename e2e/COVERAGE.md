@@ -8,6 +8,7 @@ Levels: **FULL** = smoke + happy-path CRUD/flow · **SMOKE** = page-load only ·
 | auth (login) | /auth/login | tests/fe/auth/login.spec.ts | backend/tests/api/test_auth.py | FULL | 2026-07-18 |
 | auth (silent token refresh) | any authed route | tests/fe/auth/token_refresh.spec.ts | — | FULL | 2026-07-27 |
 | app shell / main menu | / (default-menu forward) | tests/fe/smoke/app_shell.spec.ts | — | SMOKE | 2026-07-18 |
+| all static pages (breadcrumb + render sweep) | 47 static routes, see the spec's ROUTES list | tests/fe/smoke/pages.spec.ts | — | SMOKE | 2026-07-29 |
 | admin / department_categories | /admin/department_categories | tests/fe/admin/department_categories.spec.ts | backend/tests/api/test_department_categories.py | FULL | 2026-07-18 |
 | admin / department_types | /admin/department_types | tests/fe/admin/department_types.spec.ts | backend/tests/api/test_department_types.py | FULL | 2026-07-20 |
 | admin / jobs | /admin/jobs_group/jobs | tests/fe/admin/jobs.spec.ts | backend/tests/api/test_jobs.py | FULL | 2026-07-20 |
@@ -32,7 +33,7 @@ Levels: **FULL** = smoke + happy-path CRUD/flow · **SMOKE** = page-load only ·
 | admin / recruitment_dimensions | (API only) | — | backend/tests/api/test_recruitment_dimensions.py | FULL (API) | 2026-07-20 |
 | admin / candidate_sources | (API only) | — | backend/tests/api/test_candidate_sources.py | FULL (API) | 2026-07-20 |
 | department_job_targets (headcount plan) | (API only) | — | backend/tests/api/test_department_job_targets.py | FULL (API) | 2026-07-27 |
-| admin / other essences (persons, structure) | /admin/... | — | — | NONE | — |
+| admin / other essences (persons, structure) | /admin/... | smoke only (tests/fe/smoke/pages.spec.ts) | — | SMOKE | 2026-07-29 |
 | employees | /employees, /employees/$employeeId/* (summary, events, career_history, departments, responsibility_history, talent_audit, trainings), /employees/headcount_plan | — | — | NONE | — |
 | people review | /people_review, /people_review/my, /people_review/$sessionId, .../employee/$employeeId | — | — | NONE | — |
 | planning | /planning, /planning/$sessionId | — | — | NONE | — |

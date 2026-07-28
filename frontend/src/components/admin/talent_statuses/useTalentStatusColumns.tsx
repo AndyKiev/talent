@@ -13,7 +13,6 @@ import {TextEditCell} from "../TextEditCell.tsx";
 import {ReadonlyCell} from "../ReadonlyCell.tsx";
 import {formatToUkrDate} from "../../../utils/dateFormatter.ts";
 import { makeTextEditCol, deleteActionCol, type EditingState } from '../../../utils/columnBuilders';
-export type { EditingState };
 
 interface Params {
   getString: GetStringFn;

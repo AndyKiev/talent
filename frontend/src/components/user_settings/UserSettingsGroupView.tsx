@@ -4,10 +4,10 @@
 // current user's overridable settings that map to `groupKey` exactly as the old
 // flat page did (per-setting override / reset). See settingsGroups.ts.
 import { useState } from 'react';
+import { PageBreadcrumbs } from '../ui/PageBreadcrumbs';
 import {
     Alert,
     Box,
-    Breadcrumbs,
     Chip,
     CircularProgress,
     IconButton,
@@ -21,11 +21,9 @@ import {
     Tooltip,
     Typography,
 } from '@mui/material';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import SaveIcon from '@mui/icons-material/Save';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import AppShell from '../layout/AppShell';
 import { PageContainer } from '../layout/PageContainer';
 import { useTheme } from '../theme/useTheme';
@@ -273,21 +271,13 @@ export function UserSettingsGroupView({ groupKey }: { groupKey: string }) {
     return (
         <AppShell>
             <PageContainer>
-                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                    <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {cfl(getString('home') || 'Home')}
-                        </Typography>
-                    </Link>
-                    <Link to="/settings" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {getString('mySettings')}
-                        </Typography>
-                    </Link>
-                    <Typography variant="body2" color="text.primary" fontWeight={600}>
-                        {groupLabel}
-                    </Typography>
-                </Breadcrumbs>
+                <PageBreadcrumbs
+                    items={[
+                        { to: '/', label: cfl(getString('home') || 'Home') },
+                        { to: '/settings', label: getString('mySettings') },
+                        { label: groupLabel },
+                    ]}
+                />
 
                 <Typography variant="h6" fontWeight={700} mb={2}>{groupLabel}</Typography>
 

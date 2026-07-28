@@ -1,5 +1,6 @@
 // src/components/employees/EmployeesPage.tsx
 import { useState, useCallback, useMemo } from 'react';
+import { PageBreadcrumbs } from '../ui/PageBreadcrumbs';
 import { useQuery } from '@tanstack/react-query';
 import {
     Autocomplete,
@@ -19,7 +20,6 @@ import {
     ToggleButton,
     ToggleButtonGroup,
     Typography,
-    Breadcrumbs,
     Tooltip,
     IconButton,
     useMediaQuery,
@@ -29,7 +29,6 @@ import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import FilterListIcon from '@mui/icons-material/FilterList';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ApartmentIcon from '@mui/icons-material/Apartment';
@@ -37,7 +36,7 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
-import { Link, useNavigate, useSearch } from '@tanstack/react-router';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import type { EmployeesSearch } from '../../routes/employees/index';
 import AppShell from '../layout/AppShell';
 import { fetchEmployees, fetchEmployeesByDepartment, type Employee } from './employeeApi';
@@ -397,16 +396,12 @@ export function EmployeesPage() {
                 }}
             >
                 {/* Breadcrumbs */}
-                <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                    <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {cfl(getString('home') || 'Home')}
-                        </Typography>
-                    </Link>
-                    <Typography variant="body2" color="text.primary" fontWeight={600}>
-                        {cfl(getString('employees') || 'Employees')}
-                    </Typography>
-                </Breadcrumbs>
+                <PageBreadcrumbs
+                    items={[
+                        { to: '/', label: cfl(getString('home') || 'Home') },
+                        { label: cfl(getString('employees') || 'Employees') },
+                    ]}
+                />
 
                 {/* Toolbar. Desktop (md+): search + filter selects + Add on one line.
                     Mobile/tablet: search + filter-lines icon (opens the drawer) + icon-only Add,

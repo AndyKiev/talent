@@ -1,7 +1,6 @@
 // src/components/admin/people_review/PeopleReviewLayout.tsx
-import { Box, Breadcrumbs, Typography } from '@mui/material';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import { Link, Outlet, useLocation } from '@tanstack/react-router';
+import { Box } from '@mui/material';
+import { Outlet, useLocation } from '@tanstack/react-router';
 import AppShell from '../../layout/AppShell';
 import { PageContainer } from '../../layout/PageContainer';
 import { EssenceCard } from '../../ui/EssenceCard';
@@ -9,10 +8,10 @@ import { useEssences } from '../../../hooks/useEssences';
 import { ESSENCES as RAW_ESSENCES } from '../admin.essences.config';
 import cfl from '../../../utils/helpers.ts';
 import useString from '../../../hooks/useString';
-import str from '../../../strings/str';
+import { PageBreadcrumbs } from '../../ui/PageBreadcrumbs';
 
 export function PeopleReviewLayout() {
-    const getString = useString({ str });
+    const getString = useString();
     const { pathname } = useLocation();
     const isIndex = pathname === '/admin/people_review' || pathname === '/admin/people_review/';
 
@@ -24,16 +23,12 @@ export function PeopleReviewLayout() {
             <PageContainer>
                 {isIndex ? (
                     <>
-                        <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 3 }}>
-                            <Link to="/admin" style={{ textDecoration: 'none', color: 'inherit' }}>
-                                <Typography variant="body2" color="text.secondary">
-                                    {cfl(getString('admin'))}
-                                </Typography>
-                            </Link>
-                            <Typography variant="body2" color="text.primary" fontWeight={600}>
-                                {cfl(getString('peopleReview') || 'People Review')}
-                            </Typography>
-                        </Breadcrumbs>
+                        <PageBreadcrumbs
+                            items={[
+                                { to: '/admin', label: cfl(getString('admin')) },
+                                { label: cfl(getString('peopleReview') || 'People Review') },
+                            ]}
+                        />
 
                         <Box
                             sx={{
