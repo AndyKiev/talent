@@ -1,19 +1,14 @@
 // src/components/admin/departments/DepartmentForm.tsx
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod/v4';
 import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
-  TextField,
-  Button,
   Box,
   Alert,
   CircularProgress,
-  FormControlLabel,
-  Switch,
   MenuItem,
   Select,
   InputLabel,
@@ -42,6 +37,9 @@ import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import cfl from '../../../utils/helpers.ts';
 import {fetchDepartmentCategories} from "../department_categories/departmentCategoryApi.ts";
+import { FormSwitch } from '../../ui/FormSwitch';
+import { CrudFormActions } from '../../ui/CrudFormActions';
+import { FormTextField } from '../../ui/FormTextField';
 
 const schema = z.object({
   name: z.string().min(1, 'nameRequired').max(128, 'nameTooLong'),
@@ -90,7 +88,6 @@ export function DepartmentForm({ open, onClose, parentNode, createMutation }: Pr
     control,
     formState: { errors },
     reset,
-    watch,
     setValue,
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -118,8 +115,8 @@ export function DepartmentForm({ open, onClose, parentNode, createMutation }: Pr
   };
 
   // Get current values for conditional logic
-  const selectedCategoryId = watch('department_category_id');
-  const currentName = watch('name');
+  const selectedCategoryId = useWatch({ control, name: 'department_category_id' });
+  const currentName = useWatch({ control, name: 'name' });
 
 
     const isStoreDepartmentsCategory = selectedCategoryId
@@ -155,15 +152,11 @@ export function DepartmentForm({ open, onClose, parentNode, createMutation }: Pr
                 </Box>
             )}
 
-            <TextField
+            <FormTextField
                 label={cfl(getString('name') || 'Name')}
-                fullWidth
-                slotProps={{ htmlInput: { maxLength: 128 } }}
-                error={!!errors.name}
-                helperText={
-                    errors.name?.message &&
-                    (getString(errors.name.message) || errors.name.message)
-                }
+                getString={getString}
+                maxLength={128}
+                fieldError={errors.name}
                 {...register('name')}
             />
 
@@ -272,34 +265,20 @@ export function DepartmentForm({ open, onClose, parentNode, createMutation }: Pr
                 </Typography>
             )}
 
-            <FormControlLabel
-                control={
-                  <Switch
-                      checked={watch('is_active')}
-                      onChange={(_, checked) => setValue('is_active', checked)}
-                  />
-                }
+            <FormSwitch
+                name="is_active"
+                control={control}
                 label={cfl(getString('isActive') || 'Active')}
             />
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button variant="outlined" onClick={handleClose} disabled={createMutation.isPending}>
-            {getString('cancel') || 'Cancel'}
-          </Button>
-          <Button
-              variant="contained"
-              onClick={handleSubmit(onSubmit)}
-              disabled={
-                  createMutation.isPending || (parentTypeId != null && allowedTypes.length === 0)
-              }
-              startIcon={
-                createMutation.isPending ? <CircularProgress size={16} color="inherit" /> : undefined
-              }
-          >
-            {getString('create') || 'Create'}
-          </Button>
-        </DialogActions>
+        <CrudFormActions
+            getString={getString}
+            onCancel={handleClose}
+            onSubmit={handleSubmit(onSubmit)}
+            isPending={createMutation.isPending}
+            submitDisabled={parentTypeId != null && allowedTypes.length === 0}
+        />
       </Dialog>
   );
 }

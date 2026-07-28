@@ -1,8 +1,7 @@
 // src/components/admin/job_groups/useJobGroupColumns.tsx
 import React from 'react';
 import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Box, Chip, IconButton, Tooltip } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { Box, Chip, Tooltip } from '@mui/material';
 
 import type { JobGroup } from './jobGroupApi';
 import type { JobGroupType } from '../job_group_types/jobGroupTypeApi';
@@ -10,6 +9,7 @@ import type { GetStringFn } from '../../../types/getStringFn';
 import { TextEditCell } from '../TextEditCell';
 import { ReadonlyCell } from '../ReadonlyCell';
 import cfl, {snakeToCamel} from '../../../utils/helpers.ts';
+import { deleteActionCol } from '../../../utils/columnBuilders';
 
 export interface EditingState {
   rowId: number | null;
@@ -116,32 +116,6 @@ export function useJobGroupColumns({
       },
     },
 
-    {
-      field: '_actions',
-      headerName: '',
-      width: 56,
-      sortable: false,
-      filterable: false,
-      disableColumnMenu: true,
-      renderCell: (params: GridRenderCellParams<JobGroup>) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          <Tooltip title={getString('delete') || 'Delete'}>
-            <span>
-              <IconButton
-                size="small"
-                color="error"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteClick(params.row);
-                }}
-                disabled={deleteIsPending}
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-        </Box>
-      ),
-    },
+    deleteActionCol<JobGroup>({ getString, onDeleteClick, deleteIsPending }),
   ];
 }

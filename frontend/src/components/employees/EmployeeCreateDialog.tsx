@@ -1,6 +1,6 @@
 // src/components/employees/EmployeeCreateDialog.tsx
 import { useEffect, useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod/v4';
 import { useQuery } from '@tanstack/react-query';
@@ -22,8 +22,6 @@ import {
     FormHelperText,
     Typography,
     Divider,
-    FormControlLabel,
-    Switch,
     Chip,
     Paper,
     Stack,
@@ -55,6 +53,7 @@ import { DATE_FORMAT } from '../../utils/eNums';
 import { useBooleanSetting } from '../../hooks/useAppSetting';
 import useString from '../../hooks/useString';
 import str from '../../strings/str';
+import { FormSwitch } from '../ui/FormSwitch';
 import cfl from '../../utils/helpers.ts';
 
 // Global feature flag: allow adding talent target jobs on the fly during
@@ -141,7 +140,6 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
         formState: { errors },
         reset,
         control,
-        watch,
         setValue,
     } = useForm<FormData>({
         resolver: zodResolver(schema),
@@ -162,8 +160,8 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
         },
     });
 
-    const selectedCategoryId = watch('department_category_id');
-    const selectedDeptId = watch('department_id');
+    const selectedCategoryId = useWatch({ control, name: 'department_category_id' });
+    const selectedDeptId = useWatch({ control, name: 'department_id' });
 
     // ── Local cascade state (the picked node's id lives on the form as
     //    department_id; here we keep what we need to drive the tree + job list)
@@ -191,7 +189,7 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
     // ── Birth-date wheel picker (same component as people-review dates) ───────
     const [birthOpen, setBirthOpen] = useState(false);
     const [draftBirth, setDraftBirth] = useState<string | null>(null);
-    const birthDate = watch('birth_date');
+    const birthDate = useWatch({ control, name: 'birth_date' });
 
     const resetTalentPicker = () => {
         setTTypeId(null);
@@ -498,13 +496,9 @@ export function EmployeeCreateDialog({ open, onClose, createMutation }: Props) {
                                 helperText={errors.email?.message && (getString(errors.email.message) || errors.email.message)}
                                 {...register('email')}
                             />
-                            <FormControlLabel
-                                control={
-                                    <Switch
-                                        checked={watch('is_active')}
-                                        onChange={(_, v) => setValue('is_active', v)}
-                                    />
-                                }
+                            <FormSwitch
+                                name="is_active"
+                                control={control}
                                 label={cfl(getString('isActive') || 'Active')}
                             />
 

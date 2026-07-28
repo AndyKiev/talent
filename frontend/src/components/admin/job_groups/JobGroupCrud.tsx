@@ -2,13 +2,12 @@
 import React, { useCallback, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Paper,
-  Snackbar,
-  Typography,
+    Alert,
+    Box,
+    Button,
+    Paper,
+    Snackbar,
+    Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { DataGrid } from '@mui/x-data-grid';
@@ -26,6 +25,7 @@ import str from '../../../strings/str';
 import cfl from '../../../utils/helpers.ts';
 import {JOB_GROUP_QK, JOB_GROUP_TYPE_QK} from "../../../utils/queryKeys.ts";
 import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
+import { AsyncContent } from '../../ui/AsyncContent';
 
 export function JobGroupCrud() {
   const getString = useString({ str });
@@ -159,17 +159,7 @@ export function JobGroupCrud() {
           </Button>
         </Box>
 
-        {isLoading && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-              <CircularProgress />
-            </Box>
-        )}
-
-        {!isLoading && error && (
-            <Alert severity="error" sx={{ m: 2 }}>{(error as Error).message}</Alert>
-        )}
-
-        {!isLoading && !error && (
+        <AsyncContent isLoading={isLoading} error={error}>
             <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
               <DataGrid
                   rows={rows}
@@ -185,7 +175,7 @@ export function JobGroupCrud() {
                   sx={{ '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
               />
             </Paper>
-        )}
+        </AsyncContent>
 
         <JobGroupForm open={formOpen} onClose={() => setFormOpen(false)} createMutation={createMutation} />
 

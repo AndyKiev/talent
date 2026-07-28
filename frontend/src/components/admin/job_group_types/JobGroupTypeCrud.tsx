@@ -1,205 +1,81 @@
-// src/components/admin/job_group_types/JobGroupTypeCrud.tsx
-import React, { useCallback, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Paper,
-  Snackbar,
-  Typography,
+    Box,
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import { DataGrid } from '@mui/x-data-grid';
 
-import { fetchJobGroupTypes, type JobGroupType } from './jobGroupTypeApi';
-import { useJobGroupTypeMutations } from './useJobGroupTypeMutations';
+import { fetchJobGroupTypes, createJobGroupType, updateJobGroupType, deleteJobGroupType, type JobGroupType } from './jobGroupTypeApi';
 import { useJobGroupTypeColumns, type EditingState } from './useJobGroupTypeColumns';
 import { JobGroupTypeForm } from './JobGroupTypeForm';
-import { FieldEditConfirmDialog, type PendingEdit } from '../../ui/FieldEditConfirmDialog';
-import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
+import { useCrudGrid } from '../../../hooks/useCrudGrid';
+import { CrudDialogs } from '../../ui/CrudDialogs';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import cfl from '../../../utils/helpers.ts';
 import {JOB_GROUP_TYPE_QK} from "../../../utils/queryKeys.ts";
-import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
+import { CrudDataGrid, CrudHeader } from '../../ui/CrudGridSection';
+
+const FIELD_LABELS = {
+    name: 'name',
+    key: 'key',
+    description: 'description',
+};
 
 export function JobGroupTypeCrud() {
-  const getString = useString({ str });
+    const getString = useString({ str });
 
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: '',
-    severity: 'success' as 'success' | 'error',
-  });
-  const [formOpen, setFormOpen] = useState(false);
-  const [editingState, setEditingState] = useState<EditingState>({ rowId: null, field: null });
-  const [pendingEdit, setPendingEdit] = useState<PendingEdit | null>(null);
-  const [rowToDelete, setRowToDelete] = useState<JobGroupType | null>(null);
-  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
+    const crud = useCrudGrid({
+        queryKey: JOB_GROUP_TYPE_QK,
+        fetchFn: () => fetchJobGroupTypes(),
+        createFn: createJobGroupType,
+        updateFn: updateJobGroupType,
+        deleteFn: deleteJobGroupType,
+        getString,
+        fieldLabels: FIELD_LABELS,
+    });
 
-  const { data: rows = [], isLoading, error } = useQuery({
-    queryKey: JOB_GROUP_TYPE_QK,
-    queryFn: fetchJobGroupTypes,
-    staleTime: 2 * 60 * 1000,
-  });
+    // The column builder expects editingState with `rowId`, not `userId`.
+    const editingStateForColumns: EditingState = {
+        rowId: crud.editingState.userId,
+        field: crud.editingState.field,
+    };
 
-  const { createMutation, updateMutation, deleteMutation } = useJobGroupTypeMutations({
-    setSnackbar,
-    deleteSuccessMessage: getString('jobGroupTypeDeleteSuccess') || 'Job group type deleted successfully',
-    onCreateSuccess: () => setFormOpen(false),
-    onUpdateSuccess: () => {
-      setEditingState({ rowId: null, field: null });
-      setPendingEdit(null);
-    },
-    onDeleteSuccess: () => setRowToDelete(null),
-    onDeleteError: () => setRowToDelete(null),
-  });
+    const columns = useJobGroupTypeColumns({
+        getString,
+        editingState: editingStateForColumns,
+        onEditFieldClick: crud.handleEditFieldClick,
+        onRequestSave: crud.handleRequestSave,
+        onCancelEdit: crud.handleCancelEdit,
+        updateIsPending: crud.updateMutation.isPending,
+        onToggleAllowMultiple: (row) =>
+            crud.requestToggle(row, 'allow_multiple', 'allowMultiple', 'Allow Multiple'),
+        toggleIsPending: crud.updateMutation.isPending,
+        onDeleteClick: crud.handleDeleteClick,
+        deleteIsPending: crud.deleteMutation.isPending,
+    });
 
-  const localeText = useDataGridLocale();
-
-  const handleEditFieldClick = useCallback(
-    (row: JobGroupType, field: string, e: React.MouseEvent) => {
-      e.stopPropagation();
-      setEditingState({ rowId: row.id, field });
-    },
-    [],
-  );
-
-  const handleRequestSave = useCallback(
-    (row: JobGroupType, field: string, newValue: string) => {
-      const fieldLabelMap: Record<string, string> = {
-        name: getString('name') || 'Name',
-        key: getString('key') || 'Key',
-        description: getString('description') || 'Description',
-      };
-      setPendingEdit({
-        id: row.id,
-        fieldLabel: fieldLabelMap[field] ?? field,
-        field,
-        newValue,
-        oldValue: String((row as unknown as Record<string, unknown>)[field] ?? ''),
-      });
-    },
-    [getString],
-  );
-
-  const handleConfirmEdit = useCallback(() => {
-    if (!pendingEdit) return;
-    updateMutation.mutate({ id: pendingEdit.id, data: { [pendingEdit.field]: pendingEdit.newValue } });
-  }, [pendingEdit, updateMutation]);
-
-  const handleCancelEdit = useCallback(() => {
-    setEditingState({ rowId: null, field: null });
-  }, []);
-
-  const handleCancelPending = useCallback(() => {
-    setPendingEdit(null);
-    setEditingState({ rowId: null, field: null });
-  }, []);
-
-  const handleToggleAllowMultiple = useCallback(
-    (row: JobGroupType) => {
-      setPendingEdit({
-        id: row.id,
-        fieldLabel: getString('allowMultiple') || 'Allow Multiple',
-        field: 'allow_multiple',
-        newValue: !row.allow_multiple,
-        oldValue: row.allow_multiple,
-      });
-    },
-    [getString],
-  );
-
-  const handleDeleteClick = useCallback((row: JobGroupType) => setRowToDelete(row), []);
-  const handleConfirmDelete = useCallback(() => {
-    if (!rowToDelete) return;
-    deleteMutation.mutate(rowToDelete.id);
-  }, [rowToDelete, deleteMutation]);
-
-  const columns = useJobGroupTypeColumns({
-    getString,
-    editingState,
-    onEditFieldClick: handleEditFieldClick,
-    onRequestSave: handleRequestSave,
-    onCancelEdit: handleCancelEdit,
-    updateIsPending: updateMutation.isPending,
-    onToggleAllowMultiple: handleToggleAllowMultiple,
-    toggleIsPending: updateMutation.isPending,
-    onDeleteClick: handleDeleteClick,
-    deleteIsPending: deleteMutation.isPending,
-  });
-
-  return (
-    <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-        <Typography variant="h6" fontWeight={600} sx={{ flex: 1 }}>
-          {getString('jobGroupTypes') || 'Job Group Types'}
-        </Typography>
-        <Button variant="contained" size="medium" startIcon={<AddIcon />} onClick={() => setFormOpen(true)}>
-          {cfl(getString('addJobGroupType')) || 'Add Type'}
-        </Button>
-      </Box>
-
-      {isLoading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-          <CircularProgress />
-        </Box>
-      )}
-
-      {!isLoading && error && (
-        <Alert severity="error" sx={{ m: 2 }}>{(error as Error).message}</Alert>
-      )}
-
-      {!isLoading && !error && (
-        <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            paginationModel={paginationModel}
-            onPaginationModelChange={setPaginationModel}
-            pageSizeOptions={[5, 10, 25, 50]}
-            disableRowSelectionOnClick
-            getRowId={(row) => row.id}
-            getRowHeight={() => 'auto'}
-            localeText={localeText}
-            hideFooterSelectedRowCount
-            sx={{ '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
-          />
-        </Paper>
-      )}
-
-      <JobGroupTypeForm open={formOpen} onClose={() => setFormOpen(false)} createMutation={createMutation} />
-      <FieldEditConfirmDialog
-        pending={pendingEdit}
-        isPending={updateMutation.isPending}
-        onConfirm={handleConfirmEdit}
-        onCancel={handleCancelPending}
-      />
-      <ConfirmDeleteDialog
-                open={!!rowToDelete}
-                title={getString('deleteJobGroupType') || 'Delete Job Group Type'}
-                message={getString('areYouSureDeleteJobGroupType') || `Are you sure you want to delete "${rowToDelete?.name}"? This action cannot be undone.`}
-                isDeleting={deleteMutation.isPending}
-                onConfirm={handleConfirmDelete}
-                onClose={() => setRowToDelete(null)}
+    return (
+        <Box>
+            <CrudHeader
+                title={getString('jobGroupTypes') || 'Job Group Types'}
+                addLabel={cfl(getString('addJobGroupType')) || 'Add Type'}
+                onAdd={() => crud.setFormOpen(true)}
             />
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar((p) => ({ ...p, open: false }))}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          severity={snackbar.severity}
-          onClose={() => setSnackbar((p) => ({ ...p, open: false }))}
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
-  );
+            <CrudDataGrid crud={crud} columns={columns} />
+
+            <JobGroupTypeForm
+                open={crud.formOpen}
+                onClose={() => crud.setFormOpen(false)}
+                createMutation={crud.createMutation}
+            />
+
+            <CrudDialogs
+                crud={crud}
+                deleteTitle={getString('deleteJobGroupType') || 'Delete Job Group Type'}
+                deleteMessage={
+                    getString('areYouSureDeleteJobGroupType') ||
+                    `Are you sure you want to delete "${crud.rowToDelete ? (crud.rowToDelete as JobGroupType).name : ''}"? This action cannot be undone.`
+                }
+            />
+        </Box>
+    );
 }

@@ -1,72 +1,52 @@
 // src/components/admin/planning_setup/plan_scope_default/PlanScopeDefaultCrud.tsx
-import { useCallback, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import {
-    Alert,
     Box,
     Button,
-    CircularProgress,
-    Paper,
-    Snackbar,
     Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { DataGrid } from '@mui/x-data-grid';
 
-import { fetchPlanScopeDefaults, type PlanScopeDefault } from '../planningSetupApi';
-import { usePlanScopeDefaultMutations } from './usePlanScopeDefaultMutations';
+import {
+    fetchPlanScopeDefaults,
+    createPlanScopeDefault,
+    deletePlanScopeDefault,
+} from '../planningSetupApi';
 import { usePlanScopeDefaultColumns } from './usePlanScopeDefaultColumns';
 import { PlanScopeDefaultForm } from './PlanScopeDefaultForm';
-import { useDataGridLocale } from '../../../../hooks/useDataGridLocale';
+import { useCrudGrid } from '../../../../hooks/useCrudGrid';
+import { CrudDialogs } from '../../../ui/CrudDialogs';
 import { PLAN_SCOPE_DEFAULT_QK } from '../../../../utils/queryKeys.ts';
 import useString from '../../../../hooks/useString';
 import str from '../../../../strings/str';
 import cfl from '../../../../utils/helpers.ts';
-import ConfirmDeleteDialog from '../../../ui/ConfirmDeleteDialog';
+import { CrudDataGrid } from '../../../ui/CrudGridSection';
+
+const dummyUpdate: (vars: { id: number; data: Record<string, unknown> }) => Promise<{ detail: string }> = () =>
+    Promise.resolve({ detail: 'Not applicable' });
 
 export function PlanScopeDefaultCrud() {
     const getString = useString({ str });
 
-    const [snackbar, setSnackbar] = useState({
-        open: false,
-        message: '',
-        severity: 'success' as 'success' | 'error',
-    });
-    const [formOpen, setFormOpen] = useState(false);
-    const [rowToDelete, setRowToDelete] = useState<PlanScopeDefault | null>(null);
-    const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
-
-    const { data: rows = [], isLoading, error } = useQuery({
+    const crud = useCrudGrid({
         queryKey: PLAN_SCOPE_DEFAULT_QK,
-        queryFn: fetchPlanScopeDefaults,
-        staleTime: 2 * 60 * 1000,
+        fetchFn: fetchPlanScopeDefaults,
+        createFn: createPlanScopeDefault,
+        updateFn: dummyUpdate,
+        deleteFn: deletePlanScopeDefault,
+        getString,
     });
-
-    const { createMutation, deleteMutation } = usePlanScopeDefaultMutations({
-        setSnackbar,
-        onCreateSuccess: () => setFormOpen(false),
-        onDeleteSuccess: () => setRowToDelete(null),
-        onDeleteError: () => setRowToDelete(null),
-    });
-
-    const localeText = useDataGridLocale();
-
-    const handleConfirmDelete = useCallback(() => {
-        if (!rowToDelete) return;
-        deleteMutation.mutate(rowToDelete.id);
-    }, [rowToDelete, deleteMutation]);
 
     // "<job group> / <talent status>" label for the delete confirmation.
-    const deleteLabel = rowToDelete
-        ? `${rowToDelete.job_group?.name ?? `#${rowToDelete.job_group_id}`} / ${
-              rowToDelete.talent_status ? rowToDelete.talent_status.key : getString('combinedOption') || 'Combined (all)'
+    const deleteLabel = crud.rowToDelete
+        ? `${crud.rowToDelete.job_group?.name ?? `#${crud.rowToDelete.job_group_id}`} / ${
+              crud.rowToDelete.talent_status ? crud.rowToDelete.talent_status.key : getString('combinedOption') || 'Combined (all)'
           }`
         : '';
 
     const columns = usePlanScopeDefaultColumns({
         getString,
-        onDeleteClick: setRowToDelete,
-        deleteIsPending: deleteMutation.isPending,
+        onDeleteClick: crud.handleDeleteClick,
+        deleteIsPending: crud.deleteMutation.isPending,
     });
 
     return (
@@ -79,7 +59,7 @@ export function PlanScopeDefaultCrud() {
                     variant="contained"
                     size="medium"
                     startIcon={<AddIcon />}
-                    onClick={() => setFormOpen(true)}
+                    onClick={() => crud.setFormOpen(true)}
                 >
                     {cfl(getString('add')) || 'Add'}
                 </Button>
@@ -89,65 +69,20 @@ export function PlanScopeDefaultCrud() {
                     'Job group + talent-status profiles that define the granularity of each plan. Changes apply to future sessions only.'}
             </Typography>
 
-            {isLoading && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                    <CircularProgress />
-                </Box>
-            )}
-
-            {!isLoading && error && (
-                <Alert severity="error" sx={{ m: 2 }}>
-                    {(error as Error).message}
-                </Alert>
-            )}
-
-            {!isLoading && !error && (
-                <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
-                    <DataGrid
-                        rows={rows}
-                        columns={columns}
-                        paginationModel={paginationModel}
-                        onPaginationModelChange={setPaginationModel}
-                        pageSizeOptions={[5, 10, 25, 50]}
-                        disableRowSelectionOnClick
-                        getRowId={(row) => row.id}
-                        getRowHeight={() => 'auto'}
-                        localeText={localeText}
-                        hideFooterSelectedRowCount
-                        sx={{ '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
-                    />
-                </Paper>
-            )}
+            <CrudDataGrid crud={crud} columns={columns} />
 
             <PlanScopeDefaultForm
-                open={formOpen}
-                onClose={() => setFormOpen(false)}
-                createMutation={createMutation}
+                open={crud.formOpen}
+                onClose={() => crud.setFormOpen(false)}
+                createMutation={crud.createMutation}
             />
 
-            <ConfirmDeleteDialog
-                open={!!rowToDelete}
-                title={getString('removePlanScopeDefault') || 'Remove Scope Profile'}
-                message={getString('areYouSureRemovePlanScopeDefault', { name: deleteLabel }) || `Remove "${deleteLabel}" from planning defaults? Future sessions will no longer include it.`}
-                isDeleting={deleteMutation.isPending}
-                onConfirm={handleConfirmDelete}
-                onClose={() => setRowToDelete(null)}
+            <CrudDialogs
+                crud={crud}
+                deleteTitle={getString('removePlanScopeDefault') || 'Remove Scope Profile'}
+                deleteMessage={getString('areYouSureRemovePlanScopeDefault', { name: deleteLabel }) || `Remove "${deleteLabel}" from planning defaults? Future sessions will no longer include it.`}
+                withFieldEdit={false}
             />
-
-            <Snackbar
-                open={snackbar.open}
-                autoHideDuration={6000}
-                onClose={() => setSnackbar((p) => ({ ...p, open: false }))}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            >
-                <Alert
-                    severity={snackbar.severity}
-                    onClose={() => setSnackbar((p) => ({ ...p, open: false }))}
-                    sx={{ width: '100%' }}
-                >
-                    {snackbar.message}
-                </Alert>
-            </Snackbar>
         </Box>
     );
 }

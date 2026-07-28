@@ -5,7 +5,6 @@ import {
     Alert,
     Box,
     Button,
-    CircularProgress,
     Paper,
     Snackbar,
     Typography,
@@ -28,6 +27,7 @@ import cfl from '../../../utils/helpers.ts';
 import { UserGroupForm } from './UserGroupForm';
 import {USER_GROUP_QK, USER_GROUP_TYPE_QK} from "../../../utils/queryKeys.ts";
 import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
+import { AsyncContent } from '../../ui/AsyncContent';
 
 export function UserGroupCrud() {
     const getString = useString({ str });
@@ -181,19 +181,7 @@ export function UserGroupCrud() {
                 </Button>
             </Box>
 
-            {isLoading && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                    <CircularProgress />
-                </Box>
-            )}
-
-            {!isLoading && error && (
-                <Alert severity="error" sx={{ m: 2 }}>
-                    {(error as Error).message}
-                </Alert>
-            )}
-
-            {!isLoading && !error && (
+            <AsyncContent isLoading={isLoading} error={error}>
                 <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
                     <DataGrid
                         rows={rows}
@@ -209,7 +197,7 @@ export function UserGroupCrud() {
                         sx={{ '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
                     />
                 </Paper>
-            )}
+            </AsyncContent>
 
             <UserGroupForm
                 open={formOpen}

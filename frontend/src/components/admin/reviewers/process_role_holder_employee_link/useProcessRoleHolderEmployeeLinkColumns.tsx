@@ -1,12 +1,12 @@
 // src/components/admin/reviewers/process_role_holder_employee_link/useProcessRoleHolderEmployeeLinkColumns.tsx
 import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Box, IconButton, Tooltip, Typography } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { Typography } from '@mui/material';
 
 import type { ProcessRoleHolderEmployeeLink } from './processRoleHolderEmployeeLinkApi.ts';
 import cfl from '../../../../utils/capitalizeFirstLetter.ts';
 import type { GetStringFn } from '../../../../types/getStringFn.ts';
 import { formatToUkrDate } from '../../../../utils/dateFormatter.ts';
+import { deleteActionCol } from '../../../../utils/columnBuilders';
 
 interface Params {
     getString: GetStringFn;
@@ -49,29 +49,6 @@ export function useProcessRoleHolderEmployeeLinkColumns({
             renderCell: (params: GridRenderCellParams<ProcessRoleHolderEmployeeLink>) =>
                 formatToUkrDate(params.row.created_at),
         },
-        {
-            field: '_actions',
-            headerName: '',
-            width: 56,
-            sortable: false,
-            filterable: false,
-            disableColumnMenu: true,
-            renderCell: (params: GridRenderCellParams<ProcessRoleHolderEmployeeLink>) => (
-                <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                    <Tooltip title={getString('delete') || 'Delete'}>
-                        <span>
-                            <IconButton
-                                size="small"
-                                color="error"
-                                onClick={(e) => { e.stopPropagation(); onDeleteClick(params.row); }}
-                                disabled={deleteIsPending}
-                            >
-                                <DeleteIcon fontSize="small" />
-                            </IconButton>
-                        </span>
-                    </Tooltip>
-                </Box>
-            ),
-        },
+        deleteActionCol<ProcessRoleHolderEmployeeLink>({ getString, onDeleteClick, deleteIsPending }),
     ];
 }

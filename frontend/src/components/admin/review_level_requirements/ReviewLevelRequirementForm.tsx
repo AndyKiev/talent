@@ -3,8 +3,6 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogActions,
-    Button,
     TextField,
     Stack,
     Switch,
@@ -23,6 +21,7 @@ import type {
     ReviewLevelRequirement,
     MutationResponse,
 } from './reviewLevelRequirementApi';
+import { CrudFormActions } from '../../ui/CrudFormActions';
 
 interface Props {
     open: boolean;
@@ -137,6 +136,9 @@ function ReviewLevelRequirementFormBody({
     const editValid = isEdit && !!effectiveKey.trim();
     const canSubmit = levelId !== '' && (createValid || editValid) && !pending;
 
+    const submitLabelKey = pending ? 'saving' : (isEdit ? 'save' : 'create');
+    const submitLabelFallback = pending ? 'Saving' : (isEdit ? 'Save' : 'Create');
+
     return (
         <>
             <DialogContent>
@@ -202,12 +204,15 @@ function ReviewLevelRequirementFormBody({
                     />
                 </Stack>
             </DialogContent>
-            <DialogActions>
-                <Button onClick={onClose}>{getString('cancel')}</Button>
-                <Button variant="contained" onClick={handleSubmit} disabled={!canSubmit}>
-                    {pending ? getString('saving') : getString(isEdit ? 'save' : 'create')}
-                </Button>
-            </DialogActions>
+            <CrudFormActions
+                getString={getString}
+                onCancel={onClose}
+                onSubmit={handleSubmit}
+                isPending={pending}
+                submitKey={submitLabelKey}
+                submitFallback={submitLabelFallback}
+                submitDisabled={!canSubmit}
+            />
         </>
     );
 }

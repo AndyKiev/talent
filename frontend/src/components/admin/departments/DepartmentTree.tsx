@@ -5,7 +5,6 @@ import {
   Alert,
   Box,
   Button,
-  CircularProgress,
   InputAdornment,
   MenuItem,
   Paper,
@@ -40,6 +39,7 @@ import {
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import cfl from '../../../utils/helpers.ts';
+import { AsyncContent } from '../../ui/AsyncContent';
 import {fetchDepartmentCategories} from "../department_categories/departmentCategoryApi.ts";
 import {
   DEPARTMENT_ROOTS_QK,
@@ -301,19 +301,7 @@ export function DepartmentTree({ selectedId = null }: Props) {
           </TextField>
         </Box>
 
-        {isLoading && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-              <CircularProgress />
-            </Box>
-        )}
-
-        {!isLoading && error && (
-            <Alert severity="error" sx={{ m: 2 }}>
-              {(error as Error).message}
-            </Alert>
-        )}
-
-        {!isLoading && !error && (
+        <AsyncContent isLoading={isLoading} error={error}>
             <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
               {visibleTree.length === 0 ? (
                   <Box sx={{ p: 4, textAlign: 'center' }}>
@@ -349,7 +337,7 @@ export function DepartmentTree({ selectedId = null }: Props) {
                   </Box>
               )}
             </Paper>
-        )}
+        </AsyncContent>
 
         <DepartmentForm
             open={formOpen}

@@ -1,14 +1,14 @@
 // src/components/admin/employee_events/employee_event_direction_types/useEmployeeEventDirectionTypeColumns.tsx
 import React from 'react';
 import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Box, IconButton, Tooltip, Typography } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { Typography } from '@mui/material';
 
 import type { EmployeeEventDirectionType } from './employeeEventDirectionTypeApi.ts';
 import cfl from '../../../../utils/helpers.ts';
 import type { GetStringFn } from '../../../../types/getStringFn.ts';
 import { TextEditCell } from '../../TextEditCell.tsx';
 import { ReadonlyCell } from '../../ReadonlyCell.tsx';
+import { deleteActionCol } from '../../../../utils/columnBuilders';
 
 export interface EditingState {
     rowId: number | null;
@@ -73,29 +73,6 @@ export function useEmployeeEventDirectionTypeColumns({
                 );
             },
         },
-        {
-            field: '_actions',
-            headerName: '',
-            width: 56,
-            sortable: false,
-            filterable: false,
-            disableColumnMenu: true,
-            renderCell: (params: GridRenderCellParams<EmployeeEventDirectionType>) => (
-                <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                    <Tooltip title={getString('delete') || 'Delete'}>
-                        <span>
-                            <IconButton
-                                size="small"
-                                color="error"
-                                onClick={(e) => { e.stopPropagation(); onDeleteClick(params.row); }}
-                                disabled={deleteIsPending}
-                            >
-                                <DeleteIcon fontSize="small" />
-                            </IconButton>
-                        </span>
-                    </Tooltip>
-                </Box>
-            ),
-        },
+        deleteActionCol<EmployeeEventDirectionType>({ getString, onDeleteClick, deleteIsPending }),
     ];
 }

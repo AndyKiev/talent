@@ -115,3 +115,10 @@ free-claude-code/
 
 # Local DB dumps taken before destructive migrations (never commit data).
 /backups/
+
+# Generated per-batch delegation briefs — each embeds full copies of the source
+# files it ships to DeepSeek. The reusable half is the *_head.md constraints.
+scripts/delegate/briefs/*
+!scripts/delegate/briefs/*_head.md
+!scripts/delegate/briefs/department_job_targets.md
+!scripts/delegate/briefs/recon_talent_audit.md

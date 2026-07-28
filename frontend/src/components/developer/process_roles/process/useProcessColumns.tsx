@@ -1,8 +1,6 @@
 // src/components/developer/process_roles/process/useProcessColumns.tsx
 import React from 'react';
 import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Box, IconButton, Switch, Tooltip } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
 
 import type { Process } from './processApi.ts';
 import cfl from '../../../../utils/capitalizeFirstLetter.ts';
@@ -10,6 +8,7 @@ import type { GetStringFn } from '../../../../types/getStringFn.ts';
 import { TextEditCell } from '../../../admin/TextEditCell.tsx';
 import { ReadonlyCell } from '../../../admin/ReadonlyCell.tsx';
 import { formatToUkrDate } from '../../../../utils/dateFormatter.ts';
+import { makeToggleCol, deleteActionCol } from '../../../../utils/columnBuilders';
 
 export interface EditingState {
     rowId: number | null;
@@ -41,6 +40,8 @@ export function useProcessColumns({
     onDeleteClick,
     deleteIsPending,
 }: Params): GridColDef[] {
+
+    const toggleCol = makeToggleCol<Process>({ getString, toggleIsPending });
 
     function textEditCol(
         field: keyof Process,
@@ -78,23 +79,7 @@ export function useProcessColumns({
     return [
         textEditCol('name', 'name', 220, 1),
         textEditCol('key', 'key', 180, 0.7),
-        {
-            field: 'is_active',
-            headerName: cfl(getString('isActive')) || 'isActive',
-            width: 120,
-            sortable: false,
-            renderCell: (params: GridRenderCellParams<Process>) => (
-                <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                    <Switch
-                        size="small"
-                        checked={params.row.is_active}
-                        onChange={() => onToggleActive(params.row)}
-                        disabled={toggleIsPending}
-                        onClick={(e) => e.stopPropagation()}
-                    />
-                </Box>
-            ),
-        },
+        toggleCol('is_active', 'isActive', onToggleActive),
         {
             field: 'created_at',
             headerName: getString('createdAt'),
@@ -102,29 +87,6 @@ export function useProcessColumns({
             renderCell: (params: GridRenderCellParams<Process>) =>
                 formatToUkrDate(params.row.created_at),
         },
-        {
-            field: '_actions',
-            headerName: '',
-            width: 56,
-            sortable: false,
-            filterable: false,
-            disableColumnMenu: true,
-            renderCell: (params: GridRenderCellParams<Process>) => (
-                <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                    <Tooltip title={getString('delete') || 'Delete'}>
-                        <span>
-                            <IconButton
-                                size="small"
-                                color="error"
-                                onClick={(e) => { e.stopPropagation(); onDeleteClick(params.row); }}
-                                disabled={deleteIsPending}
-                            >
-                                <DeleteIcon fontSize="small" />
-                            </IconButton>
-                        </span>
-                    </Tooltip>
-                </Box>
-            ),
-        },
+        deleteActionCol<Process>({ getString, onDeleteClick, deleteIsPending }),
     ];
 }

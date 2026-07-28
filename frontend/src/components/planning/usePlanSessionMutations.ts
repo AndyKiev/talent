@@ -11,6 +11,7 @@ import {
 } from './planningApi';
 import { PLAN_SESSION_QK } from '../../utils/queryKeys.ts';
 import type { SnackbarType } from '../../types/types.ts';
+import { useCrudMutations } from '../../hooks/useCrudMutations';
 
 interface Props {
     setSnackbar: (s: SnackbarType) => void;
@@ -41,28 +42,16 @@ export function usePlanSessionMutations({
         await qc.invalidateQueries({ queryKey: PLAN_SESSION_QK });
     };
 
-    const createMutation = useMutation({
-        mutationFn: createPlanSession,
-        onSuccess: async (res) => {
-            await invalidate();
-            setSnackbar({ open: true, message: res.detail, severity: 'success' });
-            onCreateSuccess?.();
-        },
-        onError: (err: Error) => {
-            setSnackbar({ open: true, message: err.message, severity: 'error' });
-        },
-    });
-
-    const updateMutation = useMutation({
-        mutationFn: updatePlanSession,
-        onSuccess: async (res) => {
-            await invalidate();
-            setSnackbar({ open: true, message: res.detail, severity: 'success' });
-            onUpdateSuccess?.();
-        },
-        onError: (err: Error) => {
-            setSnackbar({ open: true, message: err.message, severity: 'error' });
-        },
+    const { createMutation, updateMutation, deleteMutation } = useCrudMutations({
+        queryKey: PLAN_SESSION_QK,
+        createFn: createPlanSession,
+        updateFn: updatePlanSession,
+        deleteFn: deletePlanSession,
+        setSnackbar,
+        onCreateSuccess,
+        onUpdateSuccess,
+        onDeleteSuccess,
+        onDeleteError,
     });
 
     const openMutation = useMutation({
@@ -101,19 +90,6 @@ export function usePlanSessionMutations({
         onError: (err: Error) => {
             setSnackbar({ open: true, message: err.message, severity: 'error' });
             onStatusError?.();
-        },
-    });
-
-    const deleteMutation = useMutation({
-        mutationFn: deletePlanSession,
-        onSuccess: async (res) => {
-            await invalidate();
-            setSnackbar({ open: true, message: res.detail, severity: 'success' });
-            onDeleteSuccess?.();
-        },
-        onError: (err: Error) => {
-            setSnackbar({ open: true, message: err.message, severity: 'error' });
-            onDeleteError?.();
         },
     });
 

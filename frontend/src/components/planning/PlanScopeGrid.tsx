@@ -6,7 +6,6 @@ import {
     Autocomplete,
     Box,
     Chip,
-    CircularProgress,
     Paper,
     Snackbar,
     TextField,
@@ -30,6 +29,7 @@ import useString from '../../hooks/useString';
 import str from '../../strings/str';
 import cfl from '../../utils/helpers.ts';
 import ConfirmDeleteDialog from '../ui/ConfirmDeleteDialog';
+import { AsyncContent } from '../ui/AsyncContent';
 
 interface Props {
     session: PlanSession;
@@ -311,19 +311,7 @@ export function PlanScopeGrid({ session }: Props) {
                 </ToggleButtonGroup>
             </Box>
 
-            {isLoading && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                    <CircularProgress />
-                </Box>
-            )}
-
-            {!isLoading && error && (
-                <Alert severity="error" sx={{ m: 2 }}>
-                    {(error as Error).message}
-                </Alert>
-            )}
-
-            {!isLoading && !error && (
+            <AsyncContent isLoading={isLoading} error={error}>
                 <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', flex: 1, minHeight: 0 }}>
                     {rows.length === 0 ? (
                         <Box sx={{ p: 4, textAlign: 'center' }}>
@@ -348,7 +336,7 @@ export function PlanScopeGrid({ session }: Props) {
                         />
                     )}
                 </Paper>
-            )}
+            </AsyncContent>
 
             <ConfirmDeleteDialog
                 open={!!rowToDelete}

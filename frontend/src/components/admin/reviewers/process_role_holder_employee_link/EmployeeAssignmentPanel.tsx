@@ -2,8 +2,16 @@
 import { useCallback, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-    Alert, Box, Button, Chip, CircularProgress, FormControlLabel,
-    Paper, Snackbar, Stack, Switch, Typography,
+    Alert,
+    Box,
+    Button,
+    Chip,
+    FormControlLabel,
+    Paper,
+    Snackbar,
+    Stack,
+    Switch,
+    Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { DataGrid } from '@mui/x-data-grid';
@@ -21,6 +29,7 @@ import { useDataGridLocale } from '../../../../hooks/useDataGridLocale';
 import useString from '../../../../hooks/useString';
 import cfl from '../../../../utils/capitalizeFirstLetter';
 import ConfirmDeleteDialog from '../../../ui/ConfirmDeleteDialog';
+import { AsyncContent } from '../../../ui/AsyncContent';
 
 export function EmployeeAssignmentPanel({ holderId }: { holderId: number }) {
     const getString = useString();
@@ -81,10 +90,8 @@ export function EmployeeAssignmentPanel({ holderId }: { holderId: number }) {
                 </Button>
             </Box>
 
-            {isLoading && <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>}
-            {!isLoading && error && <Alert severity="error" sx={{ m: 2 }}>{(error as Error).message}</Alert>}
-            {!isLoading && !error && (
-                reorderMode ? (
+            <AsyncContent isLoading={isLoading} error={error}>
+                {reorderMode ? (
                     <ReorderableList<ProcessRoleHolderEmployeeLink>
                         rows={rows}
                         getRowId={(r) => r.id}
@@ -112,8 +119,8 @@ export function EmployeeAssignmentPanel({ holderId }: { holderId: number }) {
                             sx={{ '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
                         />
                     </Paper>
-                )
-            )}
+                )}
+            </AsyncContent>
 
             <ProcessRoleHolderEmployeeLinkForm
                 open={formOpen} onClose={() => setFormOpen(false)} defaultHolderId={holderId} createMutation={createMutation}

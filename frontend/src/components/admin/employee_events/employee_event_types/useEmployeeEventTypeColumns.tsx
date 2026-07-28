@@ -1,13 +1,11 @@
 // src/components/admin/employee_event_types/useEmployeeEventTypeColumns.tsx
 import React from 'react';
 import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Box, IconButton, Tooltip } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
 
 import type { EmployeeEventType } from './employeeEventTypeApi.ts';
 import type { GetStringFn } from '../../../../types/getStringFn.ts';
 import { formatToUkrDate } from '../../../../utils/dateFormatter.ts';
-import { makeTextEditCol, type EditingState } from '../../../../utils/columnBuilders';
+import { makeTextEditCol, deleteActionCol, type EditingState } from '../../../../utils/columnBuilders';
 export type { EditingState };
 
 interface Params {
@@ -47,29 +45,6 @@ export function useEmployeeEventTypeColumns({
             renderCell: (params: GridRenderCellParams<EmployeeEventType>) =>
                 formatToUkrDate(params.row.created_at),
         },
-        {
-            field: '_actions',
-            headerName: '',
-            width: 56,
-            sortable: false,
-            filterable: false,
-            disableColumnMenu: true,
-            renderCell: (params: GridRenderCellParams<EmployeeEventType>) => (
-                <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                    <Tooltip title={getString('delete') || 'Delete'}>
-                        <span>
-                            <IconButton
-                                size="small"
-                                color="error"
-                                onClick={(e) => { e.stopPropagation(); onDeleteClick(params.row); }}
-                                disabled={deleteIsPending}
-                            >
-                                <DeleteIcon fontSize="small" />
-                            </IconButton>
-                        </span>
-                    </Tooltip>
-                </Box>
-            ),
-        },
+        deleteActionCol<EmployeeEventType>({ getString, onDeleteClick, deleteIsPending }),
     ];
 }

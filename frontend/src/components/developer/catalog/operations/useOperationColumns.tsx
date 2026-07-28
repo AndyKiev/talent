@@ -1,13 +1,12 @@
 // src/components/admin/operations/useOperationColumns.tsx
 import React from 'react';
 import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Box, IconButton, Tooltip } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
 import type { Operation } from './operationApi.ts';
 import { TextEditCell } from '../../../admin/TextEditCell.tsx';
 import { ReadonlyCell } from '../../../admin/ReadonlyCell.tsx';
 import type { GetStringFn } from '../../../../types/getStringFn.ts';
 import cfl from '../../../../utils/helpers.ts';
+import { deleteActionCol } from '../../../../utils/columnBuilders';
 
 export interface EditingState {
   rowId: number | null;
@@ -66,29 +65,6 @@ export function useOperationColumns({
   return [
     textCol('name', 'name'),
     textCol('description', 'description'),
-    {
-      field: '_actions',
-      headerName: '',
-      width: 56,
-      sortable: false,
-      filterable: false,
-      disableColumnMenu: true,
-      renderCell: (params: GridRenderCellParams<Operation>) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          <Tooltip title={getString('delete') || 'Delete'}>
-            <span>
-              <IconButton
-                size="small"
-                color="error"
-                onClick={(e) => { e.stopPropagation(); onDeleteClick(params.row); }}
-                disabled={deleteIsPending}
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-        </Box>
-      ),
-    },
+    deleteActionCol<Operation>({ getString, onDeleteClick, deleteIsPending }),
   ];
 }

@@ -1,8 +1,6 @@
 // src/components/admin/job_categories/useJobCategoryColumns.tsx
 import React from 'react';
 import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Box, IconButton, Tooltip } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
 
 import type { JobCategory } from './jobCategoryApi.ts';
 import cfl, { snakeToCamel } from '../../../utils/helpers.ts';
@@ -10,6 +8,7 @@ import type { GetStringFn } from '../../../types/getStringFn.ts';
 import { TextEditCell } from '../TextEditCell.tsx';
 import { ReadonlyCell } from '../ReadonlyCell.tsx';
 import { formatToUkrDate } from '../../../utils/dateFormatter.ts';
+import { deleteActionCol } from '../../../utils/columnBuilders';
 
 export interface EditingState {
     rowId: number | null;
@@ -93,29 +92,6 @@ export function useJobCategoryColumns({
             renderCell: (params: GridRenderCellParams<JobCategory>) =>
                 formatToUkrDate(params.row.created_at),
         },
-        {
-            field: '_actions',
-            headerName: '',
-            width: 56,
-            sortable: false,
-            filterable: false,
-            disableColumnMenu: true,
-            renderCell: (params: GridRenderCellParams<JobCategory>) => (
-                <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                    <Tooltip title={getString('delete') || 'Delete'}>
-                        <span>
-                            <IconButton
-                                size="small"
-                                color="error"
-                                onClick={(e) => { e.stopPropagation(); onDeleteClick(params.row); }}
-                                disabled={deleteIsPending}
-                            >
-                                <DeleteIcon fontSize="small" />
-                            </IconButton>
-                        </span>
-                    </Tooltip>
-                </Box>
-            ),
-        },
+        deleteActionCol<JobCategory>({ getString, onDeleteClick, deleteIsPending }),
     ];
 }

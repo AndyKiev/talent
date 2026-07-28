@@ -1,14 +1,13 @@
 // src/components/admin/employee_events/employee_event_statuses/useEmployeeEventStatusColumns.tsx
 import React from 'react';
 import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Box, IconButton, Tooltip } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
 
 import type { EmployeeEventStatus } from './employeeEventStatusApi';
 import type { GetStringFn } from '../../../../types/getStringFn';
 import { TextEditCell } from '../../TextEditCell';
 import { ReadonlyCell } from '../../ReadonlyCell';
 import cfl from '../../../../utils/helpers.ts';
+import { deleteActionCol } from '../../../../utils/columnBuilders';
 
 export interface EditingState {
   rowId: number | null;
@@ -72,29 +71,6 @@ export function useEmployeeEventStatusColumns({
   return [
     textEditCol('name', 'name', 200, 1),
     textEditCol('description', 'description', 300, 2),
-    {
-      field: '_actions',
-      headerName: '',
-      width: 56,
-      sortable: false,
-      filterable: false,
-      disableColumnMenu: true,
-      renderCell: (params: GridRenderCellParams<EmployeeEventStatus>) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          <Tooltip title={getString('delete') || 'Delete'}>
-            <span>
-              <IconButton
-                size="small"
-                color="error"
-                onClick={(e) => { e.stopPropagation(); onDeleteClick(params.row); }}
-                disabled={deleteIsPending}
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-        </Box>
-      ),
-    },
+    deleteActionCol<EmployeeEventStatus>({ getString, onDeleteClick, deleteIsPending }),
   ];
 }

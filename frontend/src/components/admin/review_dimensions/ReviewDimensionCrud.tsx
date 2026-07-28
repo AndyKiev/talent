@@ -5,7 +5,6 @@ import {
     Box,
     Button,
     Chip,
-    CircularProgress,
     IconButton,
     Paper,
     Snackbar,
@@ -25,6 +24,7 @@ import { ReviewDimensionForm } from './ReviewDimensionForm';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import ConfirmDialog from '../../ui/ConfirmDialog';
 import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
+import { AsyncContent } from '../../ui/AsyncContent';
 
 export function ReviewDimensionCrud() {
     const getString = useString();
@@ -159,19 +159,7 @@ export function ReviewDimensionCrud() {
                 </Button>
             </Box>
 
-            {isLoading && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                    <CircularProgress />
-                </Box>
-            )}
-
-            {!isLoading && error && (
-                <Alert severity="error" sx={{ m: 2 }}>
-                    {(error as Error).message}
-                </Alert>
-            )}
-
-            {!isLoading && !error && (
+            <AsyncContent isLoading={isLoading} error={error}>
                 <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
                     <DataGrid
                         rows={sortedRows}
@@ -187,7 +175,7 @@ export function ReviewDimensionCrud() {
                         sx={{ '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
                     />
                 </Paper>
-            )}
+            </AsyncContent>
 
             <ReviewDimensionForm
                 open={formOpen}

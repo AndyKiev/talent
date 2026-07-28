@@ -1,11 +1,11 @@
 // src/components/admin/planning_setup/plan_category_default/usePlanCategoryDefaultMutations.ts
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     createPlanCategoryDefault,
     deletePlanCategoryDefault,
 } from '../planningSetupApi';
 import { PLAN_CATEGORY_DEFAULT_QK } from '../../../../utils/queryKeys.ts';
 import type { SnackbarType } from '../../../../types/types.ts';
+import { useCrudMutations } from '../../../../hooks/useCrudMutations';
 
 interface Props {
     setSnackbar: (s: SnackbarType) => void;
@@ -20,36 +20,20 @@ export function usePlanCategoryDefaultMutations({
     onDeleteSuccess,
     onDeleteError,
 }: Props) {
-    const qc = useQueryClient();
+    // The entity has no update endpoint. A stub is provided so the helper's
+    // type contract is satisfied; the returned updateMutation is never exposed.
+    const noopUpdateFn = (() =>
+        Promise.reject(new Error('Update not supported'))) as typeof createPlanCategoryDefault;
 
-    const invalidate = async () => {
-        await qc.invalidateQueries({ queryKey: PLAN_CATEGORY_DEFAULT_QK });
-    };
-
-    const createMutation = useMutation({
-        mutationFn: createPlanCategoryDefault,
-        onSuccess: async (res) => {
-            await invalidate();
-            setSnackbar({ open: true, message: res.detail, severity: 'success' });
-            onCreateSuccess?.();
-        },
-        onError: (err: Error) => {
-            setSnackbar({ open: true, message: err.message, severity: 'error' });
-        },
+    const { createMutation, deleteMutation } = useCrudMutations({
+        queryKey: PLAN_CATEGORY_DEFAULT_QK,
+        createFn: createPlanCategoryDefault,
+        updateFn: noopUpdateFn,
+        deleteFn: deletePlanCategoryDefault,
+        setSnackbar,
+        onCreateSuccess,
+        onDeleteSuccess,
+        onDeleteError,
     });
-
-    const deleteMutation = useMutation({
-        mutationFn: deletePlanCategoryDefault,
-        onSuccess: async (res) => {
-            await invalidate();
-            setSnackbar({ open: true, message: res.detail, severity: 'success' });
-            onDeleteSuccess?.();
-        },
-        onError: (err: Error) => {
-            setSnackbar({ open: true, message: err.message, severity: 'error' });
-            onDeleteError?.();
-        },
-    });
-
     return { createMutation, deleteMutation };
 }

@@ -28,6 +28,7 @@ import { useDataGridLocale } from '../../hooks/useDataGridLocale';
 import useString from '../../hooks/useString';
 import str from '../../strings/str';
 import cfl from '../../utils/helpers.ts';
+import { AsyncContent } from '../ui/AsyncContent';
 
 // Local query keys — keep report/matrix caches separate from the scope grid.
 const PLAN_REPORT_QK = ['plan_report'] as const;
@@ -279,19 +280,7 @@ export function PlanReportGrid({ session }: Props) {
                 </Button>
             </Box>
 
-            {isLoading && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                    <CircularProgress />
-                </Box>
-            )}
-
-            {!isLoading && error && (
-                <Alert severity="error" sx={{ m: 2 }}>
-                    {(error as Error).message}
-                </Alert>
-            )}
-
-            {!isLoading && !error && (
+            <AsyncContent isLoading={isLoading} error={error}>
                 <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', flex: 1, minHeight: 0 }}>
                     {rows.length === 0 ? (
                         <Box sx={{ p: 4, textAlign: 'center' }}>
@@ -316,7 +305,7 @@ export function PlanReportGrid({ session }: Props) {
                         />
                     )}
                 </Paper>
-            )}
+            </AsyncContent>
         </Box>
     );
 }

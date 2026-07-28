@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -45,14 +45,8 @@ export function ReviewCriteriaForm({
     updateMutation,
 }: Props) {
     const getString = useString();
-    const [text, setText] = useState('');
-    const [isActive, setIsActive] = useState(true);
-
-    useEffect(() => {
-        if (!open) return;
-        setText(editing?.text ?? '');
-        setIsActive(editing?.is_active ?? true);
-    }, [open, editing]);
+    const [text, setText] = useState(editing?.text ?? '');
+    const [isActive, setIsActive] = useState(editing?.is_active ?? true);
 
     const isEdit = !!editing;
     const pending = createMutation.isPending || updateMutation.isPending;
@@ -73,7 +67,13 @@ export function ReviewCriteriaForm({
     };
 
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+        <Dialog
+            key={`${open}-${editing?.id ?? 'new'}`}
+            open={open}
+            onClose={onClose}
+            maxWidth="sm"
+            fullWidth
+        >
             <DialogTitle>{getString(isEdit ? 'editCriterion' : 'addCriterion')}</DialogTitle>
             <DialogContent>
                 <Stack spacing={2} sx={{ mt: 1 }}>

@@ -1,14 +1,13 @@
 // src/components/admin/department_types/useDepartmentTypeColumns.tsx
 import React from 'react';
 import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Box, IconButton, Switch, Tooltip } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { Box, Switch } from '@mui/material';
 
 import type { DepartmentType } from './departmentTypeApi.ts';
 import cfl from '../../../utils/helpers.ts';
 import type { GetStringFn } from '../../../types/getStringFn.ts';
 import { formatToUkrDate } from '../../../utils/dateFormatter.ts';
-import { makeTextEditCol, type EditingState } from '../../../utils/columnBuilders';
+import { makeTextEditCol, deleteActionCol, type EditingState } from '../../../utils/columnBuilders';
 export type { EditingState };
 
 interface Params {
@@ -71,29 +70,6 @@ export function useDepartmentTypeColumns({
             renderCell: (params: GridRenderCellParams<DepartmentType>) =>
                 formatToUkrDate(params.row.created_at),
         },
-        {
-            field: '_actions',
-            headerName: '',
-            width: 56,
-            sortable: false,
-            filterable: false,
-            disableColumnMenu: true,
-            renderCell: (params: GridRenderCellParams<DepartmentType>) => (
-                <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                    <Tooltip title={getString('delete') || 'Delete'}>
-                        <span>
-                            <IconButton
-                                size="small"
-                                color="error"
-                                onClick={(e) => { e.stopPropagation(); onDeleteClick(params.row); }}
-                                disabled={deleteIsPending}
-                            >
-                                <DeleteIcon fontSize="small" />
-                            </IconButton>
-                        </span>
-                    </Tooltip>
-                </Box>
-            ),
-        },
+        deleteActionCol<DepartmentType>({ getString, onDeleteClick, deleteIsPending }),
     ];
 }

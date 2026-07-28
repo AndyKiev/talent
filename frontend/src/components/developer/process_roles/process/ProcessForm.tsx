@@ -6,19 +6,16 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogActions,
-    TextField,
-    Button,
     Box,
     Alert,
-    CircularProgress,
-    FormControlLabel,
-    Switch,
 } from '@mui/material';
 import type { UseMutationResult } from '@tanstack/react-query';
 import type { ProcessCreate, MutationResponse, Process } from './processApi';
 import useString from '../../../../hooks/useString.ts';
 import cfl from '../../../../utils/capitalizeFirstLetter.ts';
+import { FormSwitch } from '../../../ui/FormSwitch';
+import { CrudFormActions } from '../../../ui/CrudFormActions';
+import { FormTextField } from '../../../ui/FormTextField';
 
 const schema = z.object({
     name: z.string().min(1, 'nameRequired').max(128, 'nameTooLong'),
@@ -42,8 +39,7 @@ export function ProcessForm({ open, onClose, createMutation }: Props) {
         handleSubmit,
         formState: { errors },
         reset,
-        watch,
-        setValue,
+        control,
     } = useForm<FormData>({
         resolver: zodResolver(schema),
         defaultValues: { name: '', key: '', is_active: true },
@@ -70,46 +66,33 @@ export function ProcessForm({ open, onClose, createMutation }: Props) {
                     {createMutation.isError && (
                         <Alert severity="error">{createMutation.error?.message}</Alert>
                     )}
-                    <TextField
+                    <FormTextField
                         label={cfl(getString('name')) || 'Name'}
-                        fullWidth
-                        slotProps={{ htmlInput: { maxLength: 128 } }}
-                        error={!!errors.name}
-                        helperText={errors.name?.message && (getString(errors.name.message) || errors.name.message)}
+                        getString={getString}
+                        maxLength={128}
+                        fieldError={errors.name}
                         {...register('name')}
                     />
-                    <TextField
+                    <FormTextField
                         label={cfl(getString('key')) || 'Key'}
-                        fullWidth
-                        slotProps={{ htmlInput: { maxLength: 64 } }}
-                        error={!!errors.key}
-                        helperText={errors.key?.message && (getString(errors.key.message) || errors.key.message)}
+                        getString={getString}
+                        maxLength={64}
+                        fieldError={errors.key}
                         {...register('key')}
                     />
-                    <FormControlLabel
-                        control={
-                            <Switch
-                                checked={watch('is_active')}
-                                onChange={(_, checked) => setValue('is_active', checked)}
-                            />
-                        }
+                    <FormSwitch
+                        name="is_active"
+                        control={control}
                         label={cfl(getString('isActive')) || 'Active'}
                     />
                 </Box>
             </DialogContent>
-            <DialogActions>
-                <Button variant="outlined" onClick={handleClose} disabled={createMutation.isPending}>
-                    {getString('cancel') || 'Cancel'}
-                </Button>
-                <Button
-                    variant="contained"
-                    onClick={handleSubmit(onSubmit)}
-                    disabled={createMutation.isPending}
-                    startIcon={createMutation.isPending ? <CircularProgress size={16} color="inherit" /> : undefined}
-                >
-                    {getString('create') || 'Create'}
-                </Button>
-            </DialogActions>
+            <CrudFormActions
+                getString={getString}
+                onCancel={handleClose}
+                onSubmit={handleSubmit(onSubmit)}
+                isPending={createMutation.isPending}
+            />
         </Dialog>
     );
 }

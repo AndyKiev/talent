@@ -6,20 +6,17 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
-  TextField,
-  Button,
   Box,
   Alert,
-  CircularProgress,
-  FormControlLabel,
-  Switch,
 } from '@mui/material';
+import { FormSwitch } from '../../ui/FormSwitch';
+import { FormTextField } from '../../ui/FormTextField';
 import type { UseMutationResult } from '@tanstack/react-query';
 import type { JobGroupTypeCreate, MutationResponse, JobGroupType } from './jobGroupTypeApi';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import cfl from '../../../utils/helpers.ts';
+import { CrudFormActions } from '../../ui/CrudFormActions';
 
 const schema = z.object({
   name: z.string().min(1, 'nameRequired').max(128, 'nameTooLong'),
@@ -44,8 +41,7 @@ export function JobGroupTypeForm({ open, onClose, createMutation }: Props) {
     handleSubmit,
     formState: { errors },
     reset,
-    watch,
-    setValue,
+    control,
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { name: '', key: '', description: '', allow_multiple: true },
@@ -74,59 +70,45 @@ export function JobGroupTypeForm({ open, onClose, createMutation }: Props) {
             <Alert severity="error">{createMutation.error?.message}</Alert>
           )}
 
-          <TextField
+          <FormTextField
             label={cfl(getString('name')) || 'Name'}
-            fullWidth
-            slotProps={{ htmlInput: { maxLength: 128 } }}
-            error={!!errors.name}
-            helperText={errors.name?.message && (getString(errors.name.message) || errors.name.message)}
+            getString={getString}
+            maxLength={128}
+            fieldError={errors.name}
             {...register('name')}
           />
 
-          <TextField
+          <FormTextField
             label={cfl(getString('key')) || 'Key'}
-            fullWidth
-            slotProps={{ htmlInput: { maxLength: 64 } }}
-            error={!!errors.key}
-            helperText={errors.key?.message && (getString(errors.key.message) || errors.key.message)}
+            getString={getString}
+            maxLength={64}
+            fieldError={errors.key}
             {...register('key')}
           />
 
-          <TextField
+          <FormTextField
             label={cfl(getString('description')) || 'Description'}
-            fullWidth
+            getString={getString}
             multiline
             minRows={2}
-            slotProps={{ htmlInput: { maxLength: 256 } }}
-            error={!!errors.description}
-            helperText={errors.description?.message && (getString(errors.description.message) || errors.description.message)}
+            maxLength={256}
+            fieldError={errors.description}
             {...register('description')}
           />
 
-          <FormControlLabel
-            control={
-              <Switch
-                checked={watch('allow_multiple')}
-                onChange={(_, checked) => setValue('allow_multiple', checked)}
-              />
-            }
+          <FormSwitch
+            name="allow_multiple"
+            control={control}
             label={cfl(getString('allowMultiple')) || 'Allow Multiple Groups per Job'}
           />
         </Box>
       </DialogContent>
-      <DialogActions>
-        <Button variant="outlined" onClick={handleClose} disabled={createMutation.isPending}>
-          {getString('cancel') || 'Cancel'}
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleSubmit(onSubmit)}
-          disabled={createMutation.isPending}
-          startIcon={createMutation.isPending ? <CircularProgress size={16} color="inherit" /> : undefined}
-        >
-          {getString('create') || 'Create'}
-        </Button>
-      </DialogActions>
+      <CrudFormActions
+        getString={getString}
+        onCancel={handleClose}
+        onSubmit={handleSubmit(onSubmit)}
+        isPending={createMutation.isPending}
+      />
     </Dialog>
   );
 }

@@ -1,4 +1,3 @@
-// src/components/admin/jobs/useJobMutations.ts
 import {useMutation, useQueryClient} from '@tanstack/react-query';
 import type {JobBulkUploadResult} from './jobApi';
 import {
@@ -15,6 +14,7 @@ import {
 } from './jobApi';
 import {JOB_QK} from "../../../utils/queryKeys.ts";
 import type {SnackbarType} from "../../../types/types.ts";
+import { useCrudMutations } from '../../../hooks/useCrudMutations';
 
 interface Props {
   setSnackbar: (s: SnackbarType) => void;
@@ -47,16 +47,16 @@ export function useJobMutations({
 }: Props) {
   const qc = useQueryClient();
 
-  const createMutation = useMutation({
-    mutationFn: createJob,
-    onSuccess: async (res) => {
-      await qc.invalidateQueries({ queryKey: JOB_QK });
-      setSnackbar({ open: true, message: res.detail, severity: 'success' });
-      onCreateSuccess?.();
-    },
-    onError: (err: Error) => {
-      setSnackbar({ open: true, message: err.message, severity: 'error' });
-    },
+  const { createMutation, updateMutation, deleteMutation } = useCrudMutations({
+    queryKey: JOB_QK,
+    createFn: createJob,
+    updateFn: updateJob,
+    deleteFn: deleteJob,
+    setSnackbar,
+    onCreateSuccess,
+    onUpdateSuccess,
+    onDeleteSuccess,
+    onDeleteError,
   });
 
   const bulkUploadMutation = useMutation({
@@ -67,31 +67,6 @@ export function useJobMutations({
     },
     onError: (err: Error) => {
       setSnackbar({ open: true, message: err.message, severity: 'error' });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: updateJob,
-    onSuccess: async (res) => {
-      await qc.invalidateQueries({ queryKey: JOB_QK });
-      setSnackbar({ open: true, message: res.detail, severity: 'success' });
-      onUpdateSuccess?.();
-    },
-    onError: (err: Error) => {
-      setSnackbar({ open: true, message: err.message, severity: 'error' });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteJob,
-    onSuccess: async (res) => {
-      await qc.invalidateQueries({ queryKey: JOB_QK });
-      setSnackbar({ open: true, message: res.detail, severity: 'success' });
-      onDeleteSuccess?.();
-    },
-    onError: (err: Error) => {
-      setSnackbar({ open: true, message: err.message, severity: 'error' });
-      onDeleteError?.();
     },
   });
 

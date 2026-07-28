@@ -1,6 +1,6 @@
 // src/components/admin/hrm_scopes/HrmScopeForm.tsx
 import { useMemo } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod/v4';
 import {
@@ -72,7 +72,6 @@ export function HrmScopeForm({ open, onClose, employeeId, createMutation }: Prop
     const {
         control,
         handleSubmit,
-        watch,
         setValue,
         reset,
         formState: { errors },
@@ -86,7 +85,7 @@ export function HrmScopeForm({ open, onClose, employeeId, createMutation }: Prop
         },
     });
 
-    const selectedCategoryId = watch('department_category_id');
+    const selectedCategoryId = useWatch({ control, name: 'department_category_id' });
 
     // Distinct categories that actually have department instances.
     const categories = useMemo(() => {

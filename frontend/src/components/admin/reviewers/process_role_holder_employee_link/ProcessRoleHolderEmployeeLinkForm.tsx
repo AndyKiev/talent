@@ -1,6 +1,6 @@
 // src/components/admin/reviewers/process_role_holder_employee_link/ProcessRoleHolderEmployeeLinkForm.tsx
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod/v4';
 import { useQuery } from '@tanstack/react-query';
@@ -63,7 +63,7 @@ export function ProcessRoleHolderEmployeeLinkForm({ open, onClose, defaultHolder
         handleSubmit,
         formState: { errors },
         reset,
-        watch,
+        control,
         setValue,
     } = useForm<FormData>({
         resolver: zodResolver(schema),
@@ -89,8 +89,8 @@ export function ProcessRoleHolderEmployeeLinkForm({ open, onClose, defaultHolder
         });
     };
 
-    const holderId = watch('process_role_holder_id');
-    const employeeId = watch('employee_id');
+    const holderId = useWatch({ control, name: 'process_role_holder_id' });
+    const employeeId = useWatch({ control, name: 'employee_id' });
 
     return (
         <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>

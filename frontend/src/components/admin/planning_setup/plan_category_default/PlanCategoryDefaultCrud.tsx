@@ -1,73 +1,53 @@
 // src/components/admin/planning_setup/plan_category_default/PlanCategoryDefaultCrud.tsx
-import { useCallback, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import {
-    Alert,
     Box,
     Button,
-    CircularProgress,
-    Paper,
-    Snackbar,
     Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { DataGrid } from '@mui/x-data-grid';
 
-import { fetchPlanCategoryDefaults, type PlanCategoryDefault } from '../planningSetupApi';
-import { usePlanCategoryDefaultMutations } from './usePlanCategoryDefaultMutations';
+import {
+    fetchPlanCategoryDefaults,
+    createPlanCategoryDefault,
+    deletePlanCategoryDefault,
+} from '../planningSetupApi';
 import { usePlanCategoryDefaultColumns } from './usePlanCategoryDefaultColumns';
 import { PlanCategoryDefaultForm } from './PlanCategoryDefaultForm';
-import { useDataGridLocale } from '../../../../hooks/useDataGridLocale';
+import { useCrudGrid } from '../../../../hooks/useCrudGrid';
+import { CrudDialogs } from '../../../ui/CrudDialogs';
 import { PLAN_CATEGORY_DEFAULT_QK } from '../../../../utils/queryKeys.ts';
 import useString from '../../../../hooks/useString';
 import str from '../../../../strings/str';
 import cfl from '../../../../utils/helpers.ts';
-import ConfirmDeleteDialog from '../../../ui/ConfirmDeleteDialog';
+import { CrudDataGrid } from '../../../ui/CrudGridSection';
+
+const dummyUpdate: (vars: { id: number; data: Record<string, unknown> }) => Promise<{ detail: string }> = () =>
+    Promise.resolve({ detail: 'Not applicable' });
 
 export function PlanCategoryDefaultCrud() {
     const getString = useString({ str });
 
-    const [snackbar, setSnackbar] = useState({
-        open: false,
-        message: '',
-        severity: 'success' as 'success' | 'error',
-    });
-    const [formOpen, setFormOpen] = useState(false);
-    const [rowToDelete, setRowToDelete] = useState<PlanCategoryDefault | null>(null);
-    const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
-
-    const { data: rows = [], isLoading, error } = useQuery({
+    const crud = useCrudGrid({
         queryKey: PLAN_CATEGORY_DEFAULT_QK,
-        queryFn: fetchPlanCategoryDefaults,
-        staleTime: 2 * 60 * 1000,
+        fetchFn: fetchPlanCategoryDefaults,
+        createFn: createPlanCategoryDefault,
+        updateFn: dummyUpdate,
+        deleteFn: deletePlanCategoryDefault,
+        getString,
     });
-
-    const { createMutation, deleteMutation } = usePlanCategoryDefaultMutations({
-        setSnackbar,
-        onCreateSuccess: () => setFormOpen(false),
-        onDeleteSuccess: () => setRowToDelete(null),
-        onDeleteError: () => setRowToDelete(null),
-    });
-
-    const localeText = useDataGridLocale();
-
-    const handleConfirmDelete = useCallback(() => {
-        if (!rowToDelete) return;
-        deleteMutation.mutate(rowToDelete.id);
-    }, [rowToDelete, deleteMutation]);
 
     // Category name label for the delete confirmation.
-    const deleteLabel = rowToDelete
-        ? rowToDelete.department_category?.name ?? `#${rowToDelete.department_category_id}`
+    const deleteLabel = crud.rowToDelete
+        ? crud.rowToDelete.department_category?.name ?? `#${crud.rowToDelete.department_category_id}`
         : '';
 
     const columns = usePlanCategoryDefaultColumns({
         getString,
-        onDeleteClick: setRowToDelete,
-        deleteIsPending: deleteMutation.isPending,
+        onDeleteClick: crud.handleDeleteClick,
+        deleteIsPending: crud.deleteMutation.isPending,
     });
 
-    const existingCategoryIds = rows.map((r) => r.department_category_id);
+    const existingCategoryIds = crud.rows.map((r) => r.department_category_id);
 
     return (
         <Box>
@@ -79,7 +59,7 @@ export function PlanCategoryDefaultCrud() {
                     variant="contained"
                     size="medium"
                     startIcon={<AddIcon />}
-                    onClick={() => setFormOpen(true)}
+                    onClick={() => crud.setFormOpen(true)}
                 >
                     {cfl(getString('add')) || 'Add'}
                 </Button>
@@ -89,66 +69,21 @@ export function PlanCategoryDefaultCrud() {
                     'Department categories used to resolve which departments a new session plans for. Changes apply to future sessions only.'}
             </Typography>
 
-            {isLoading && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                    <CircularProgress />
-                </Box>
-            )}
-
-            {!isLoading && error && (
-                <Alert severity="error" sx={{ m: 2 }}>
-                    {(error as Error).message}
-                </Alert>
-            )}
-
-            {!isLoading && !error && (
-                <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
-                    <DataGrid
-                        rows={rows}
-                        columns={columns}
-                        paginationModel={paginationModel}
-                        onPaginationModelChange={setPaginationModel}
-                        pageSizeOptions={[5, 10, 25, 50]}
-                        disableRowSelectionOnClick
-                        getRowId={(row) => row.id}
-                        getRowHeight={() => 'auto'}
-                        localeText={localeText}
-                        hideFooterSelectedRowCount
-                        sx={{ '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
-                    />
-                </Paper>
-            )}
+            <CrudDataGrid crud={crud} columns={columns} />
 
             <PlanCategoryDefaultForm
-                open={formOpen}
-                onClose={() => setFormOpen(false)}
+                open={crud.formOpen}
+                onClose={() => crud.setFormOpen(false)}
                 existingCategoryIds={existingCategoryIds}
-                createMutation={createMutation}
+                createMutation={crud.createMutation}
             />
 
-            <ConfirmDeleteDialog
-                open={!!rowToDelete}
-                title={getString('removePlanCategoryDefault') || 'Remove Planning Category'}
-                message={getString('areYouSureRemovePlanCategoryDefault', { name: deleteLabel }) || `Remove "${deleteLabel}" from planning defaults? Future sessions will no longer include it.`}
-                isDeleting={deleteMutation.isPending}
-                onConfirm={handleConfirmDelete}
-                onClose={() => setRowToDelete(null)}
+            <CrudDialogs
+                crud={crud}
+                deleteTitle={getString('removePlanCategoryDefault') || 'Remove Planning Category'}
+                deleteMessage={getString('areYouSureRemovePlanCategoryDefault', { name: deleteLabel }) || `Remove "${deleteLabel}" from planning defaults? Future sessions will no longer include it.`}
+                withFieldEdit={false}
             />
-
-            <Snackbar
-                open={snackbar.open}
-                autoHideDuration={6000}
-                onClose={() => setSnackbar((p) => ({ ...p, open: false }))}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            >
-                <Alert
-                    severity={snackbar.severity}
-                    onClose={() => setSnackbar((p) => ({ ...p, open: false }))}
-                    sx={{ width: '100%' }}
-                >
-                    {snackbar.message}
-                </Alert>
-            </Snackbar>
         </Box>
     );
 }

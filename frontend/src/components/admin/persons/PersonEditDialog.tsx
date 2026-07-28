@@ -1,6 +1,6 @@
 // src/components/admin/persons/PersonEditDialog.tsx
 import { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod/v4';
 import {
@@ -66,7 +66,6 @@ export function PersonEditDialog({ person, onClose, updateMutation }: Props) {
         formState: { errors },
         reset,
         control,
-        watch,
     } = useForm<FormData>({
         resolver: zodResolver(schema),
         defaultValues: {
@@ -79,7 +78,7 @@ export function PersonEditDialog({ person, onClose, updateMutation }: Props) {
         },
     });
 
-    const sexValue = watch('sex');
+    const sexValue = useWatch({ control, name: 'sex' });
 
     useEffect(() => {
         if (person) {

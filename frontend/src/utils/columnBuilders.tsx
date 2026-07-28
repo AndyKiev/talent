@@ -6,7 +6,8 @@
 // unchanged. Renders the shared admin cells (TextEditCell / ReadonlyCell).
 import React from 'react';
 import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Box, Switch } from '@mui/material';
+import { Box, IconButton, Switch, Tooltip } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { TextEditCell } from '../components/admin/TextEditCell';
 import { ReadonlyCell } from '../components/admin/ReadonlyCell';
 import cfl from './helpers.ts';
@@ -61,6 +62,47 @@ export function makeTextEditCol<T extends { id: number }>(ctx: TextEditColContex
                 );
             },
         };
+    };
+}
+
+export interface DeleteColContext<T extends { id: number }> {
+    getString: GetStringFn;
+    onDeleteClick: (row: T) => void;
+    deleteIsPending: boolean;
+}
+
+/**
+ * The trailing delete-action column every admin CRUD grid ends with.
+ *
+ * Unlike makeTextEditCol / makeToggleCol this returns the column directly rather
+ * than a bound builder — the column takes no per-call arguments, so there is
+ * nothing left to bind.
+ */
+export function deleteActionCol<T extends { id: number }>(ctx: DeleteColContext<T>): GridColDef {
+    const { getString, onDeleteClick, deleteIsPending } = ctx;
+    return {
+        field: '_actions',
+        headerName: '',
+        width: 56,
+        sortable: false,
+        filterable: false,
+        disableColumnMenu: true,
+        renderCell: (params: GridRenderCellParams<T>) => (
+            <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+                <Tooltip title={getString('delete') || 'Delete'}>
+                    <span>
+                        <IconButton
+                            size="small"
+                            color="error"
+                            onClick={(e) => { e.stopPropagation(); onDeleteClick(params.row); }}
+                            disabled={deleteIsPending}
+                        >
+                            <DeleteIcon fontSize="small" />
+                        </IconButton>
+                    </span>
+                </Tooltip>
+            </Box>
+        ),
     };
 }
 

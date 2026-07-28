@@ -6,11 +6,8 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogActions,
-    Button,
     Box,
     Alert,
-    CircularProgress,
     MenuItem,
     Select,
     InputLabel,
@@ -28,6 +25,7 @@ import {
 import useString from '../../../../hooks/useString.ts';
 import cfl from '../../../../utils/helpers.ts';
 import str from '../../../../strings/str.ts';
+import { CrudFormActions } from '../../../ui/CrudFormActions';
 
 const schema = z.object({
     department_category_id: z.number({ error: 'categoryRequired' }),
@@ -118,19 +116,15 @@ export function PlanCategoryDefaultForm({ open, onClose, existingCategoryIds, cr
                     />
                 </Box>
             </DialogContent>
-            <DialogActions>
-                <Button variant="outlined" onClick={handleClose} disabled={createMutation.isPending}>
-                    {getString('cancel') || 'Cancel'}
-                </Button>
-                <Button
-                    variant="contained"
-                    onClick={handleSubmit(onSubmit)}
-                    disabled={createMutation.isPending || available.length === 0}
-                    startIcon={createMutation.isPending ? <CircularProgress size={16} color="inherit" /> : undefined}
-                >
-                    {getString('add') || 'Add'}
-                </Button>
-            </DialogActions>
+            <CrudFormActions
+                getString={getString}
+                onCancel={handleClose}
+                onSubmit={handleSubmit(onSubmit)}
+                isPending={createMutation.isPending}
+                submitKey="add"
+                submitFallback="Add"
+                submitDisabled={available.length === 0}
+            />
         </Dialog>
     );
 }

@@ -11,8 +11,6 @@ import {
     DialogActions,
     Button,
     TextField,
-    FormControlLabel,
-    Switch,
     Box,
     Alert,
     CircularProgress,
@@ -25,6 +23,7 @@ import type { PersonUpdate } from '../admin/persons/personApi';
 import useString from '../../hooks/useString';
 import str from '../../strings/str';
 import cfl from '../../utils/helpers.ts';
+import { FormSwitch } from '../ui/FormSwitch';
 
 const schema = z.object({
     last_name: z.string().min(1, 'fieldRequired').max(64, 'nameTooLong'),
@@ -54,8 +53,7 @@ export function EmployeeEditDialog({ employee, onClose, updateMutation }: Props)
         handleSubmit,
         formState: { errors },
         reset,
-        watch,
-        setValue,
+        control,
     } = useForm<FormData>({
         resolver: zodResolver(schema),
         defaultValues: {
@@ -201,13 +199,9 @@ export function EmployeeEditDialog({ employee, onClose, updateMutation }: Props)
                         {...register('email')}
                     />
 
-                    <FormControlLabel
-                        control={
-                            <Switch
-                                checked={watch('is_active')}
-                                onChange={(_, checked) => setValue('is_active', checked)}
-                            />
-                        }
+                    <FormSwitch
+                        name="is_active"
+                        control={control}
                         label={cfl(getString('isActive') || 'Active')}
                     />
                 </Box>

@@ -7,10 +7,8 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogActions,
     TextField,
     MenuItem,
-    Button,
     Box,
     Alert,
     CircularProgress,
@@ -34,6 +32,7 @@ import str from '../../../strings/str';
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums';
 import {TALENT_PERIOD_QK} from "../../../utils/queryKeys.ts";
+import { CrudFormActions } from '../../ui/CrudFormActions';
 
 const TALENT_STATUS_QK = ['talent_statuses'] as const;
 
@@ -251,27 +250,12 @@ export function TalentStatusPeriodLinkForm({ open, onClose, createMutation }: Pr
                 </Box>
             </DialogContent>
 
-            <DialogActions>
-                <Button
-                    variant="outlined"
-                    onClick={handleClose}
-                    disabled={createMutation.isPending}
-                >
-                    {getString('cancel') || 'Cancel'}
-                </Button>
-                <Button
-                    variant="contained"
-                    onClick={handleSubmit(onSubmit)}
-                    disabled={createMutation.isPending}
-                    startIcon={
-                        createMutation.isPending ? (
-                            <CircularProgress size={16} color="inherit" />
-                        ) : undefined
-                    }
-                >
-                    {getString('create') || 'Create'}
-                </Button>
-            </DialogActions>
+            <CrudFormActions
+                getString={getString}
+                onCancel={handleClose}
+                onSubmit={handleSubmit(onSubmit)}
+                isPending={createMutation.isPending}
+            />
         </Dialog>
     );
 }

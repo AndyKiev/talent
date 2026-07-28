@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Controller, useFieldArray, useForm } from 'react-hook-form';
+import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import {
     Box,
     Button,
@@ -102,7 +102,7 @@ export function MissionFormDialog({
 }: Props) {
     const isEdit = mission !== null;
 
-    const { control, handleSubmit, reset, watch } = useForm<MissionFormValues>({
+    const { control, handleSubmit, reset } = useForm<MissionFormValues>({
         defaultValues: {
             text: '',
             start_date: dayjs().format(API_DATE),
@@ -130,8 +130,10 @@ export function MissionFormDialog({
         });
     }, [open, mission, reset]);
 
-    const startDate = watch('start_date');
-    const durationMonths = watch('duration_months');
+    const startDate = useWatch({ control, name: 'start_date' });
+    const durationMonths = useWatch({ control, name: 'duration_months' });
+    const missionText = useWatch({ control, name: 'text' });
+    const kpiRows = useWatch({ control, name: 'kpis' });
 
     const submit = handleSubmit((values) => {
         const dimensionId = values.dimension_id === '' ? null : Number(values.dimension_id);
@@ -155,9 +157,8 @@ export function MissionFormDialog({
         });
     });
 
-    const values = watch();
-    const kpisValid = isEdit || values.kpis.some((k) => k.text.trim().length > 0);
-    const canSubmit = values.text?.trim().length > 0 && !!values.start_date && kpisValid;
+    const kpisValid = isEdit || kpiRows.some((k) => k.text.trim().length > 0);
+    const canSubmit = missionText.trim().length > 0 && !!startDate && kpisValid;
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>

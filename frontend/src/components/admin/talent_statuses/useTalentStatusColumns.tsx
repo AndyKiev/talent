@@ -4,10 +4,7 @@ import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import {
   Box,
   // Chip,
-  IconButton,
-  Switch,
-  Tooltip } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
+  Switch } from '@mui/material';
 
 import type {TalentStatus} from "./talentStatusApi.ts";
 import cfl from "../../../utils/helpers.ts";
@@ -15,7 +12,7 @@ import type {GetStringFn} from "../../../types/getStringFn.ts";
 import {TextEditCell} from "../TextEditCell.tsx";
 import {ReadonlyCell} from "../ReadonlyCell.tsx";
 import {formatToUkrDate} from "../../../utils/dateFormatter.ts";
-import { makeTextEditCol, type EditingState } from '../../../utils/columnBuilders';
+import { makeTextEditCol, deleteActionCol, type EditingState } from '../../../utils/columnBuilders';
 export type { EditingState };
 
 interface Params {
@@ -123,29 +120,6 @@ export function useTalentStatusColumns({
       renderCell: (params: GridRenderCellParams<TalentStatus>) =>
           formatToUkrDate(params.row.created_at),
     },
-    {
-      field: '_actions',
-      headerName: '',
-      width: 56,
-      sortable: false,
-      filterable: false,
-      disableColumnMenu: true,
-      renderCell: (params: GridRenderCellParams<TalentStatus>) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          <Tooltip title={getString('delete') || 'Delete'}>
-            <span>
-              <IconButton
-                size="small"
-                color="error"
-                onClick={(e) => { e.stopPropagation(); onDeleteClick(params.row); }}
-                disabled={deleteIsPending}
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-        </Box>
-      ),
-    },
+    deleteActionCol<TalentStatus>({ getString, onDeleteClick, deleteIsPending }),
   ];
 }

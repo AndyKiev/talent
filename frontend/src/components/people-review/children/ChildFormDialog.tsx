@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     Box,
@@ -36,7 +36,7 @@ export default function ChildFormDialog({
     onError?: (message: string) => void;
 }) {
     const qc = useQueryClient();
-    const { control, handleSubmit, reset, watch } = useForm<FormValues>({
+    const { control, handleSubmit, reset } = useForm<FormValues>({
         defaultValues: { date: null },
     });
 
@@ -55,7 +55,7 @@ export default function ChildFormDialog({
         onError: (err: Error) => onError?.(err.message),
     });
 
-    const previewIso = watch('date');
+    const previewIso = useWatch({ control, name: 'date' });
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>

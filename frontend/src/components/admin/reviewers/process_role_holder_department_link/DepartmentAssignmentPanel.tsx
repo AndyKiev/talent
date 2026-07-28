@@ -19,6 +19,7 @@ import { fetchDepartmentCategories } from '../../department_categories/departmen
 import { useDataGridLocale } from '../../../../hooks/useDataGridLocale';
 import useString from '../../../../hooks/useString';
 import cfl from '../../../../utils/capitalizeFirstLetter';
+import { AsyncContent } from '../../../ui/AsyncContent';
 
 const SUPERVISION_CATEGORY_KEYS = ['store', 'directorate'];
 
@@ -71,9 +72,7 @@ export function DepartmentAssignmentPanel({ holderId }: { holderId: number }) {
                 </Button>
             </Box>
 
-            {isLoading && <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>}
-            {!isLoading && error && <Alert severity="error" sx={{ m: 2 }}>{(error as Error).message}</Alert>}
-            {!isLoading && !error && (
+            <AsyncContent isLoading={isLoading} error={error}>
                 <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
                     <DataGrid
                         rows={rows} columns={columns}
@@ -83,7 +82,7 @@ export function DepartmentAssignmentPanel({ holderId }: { holderId: number }) {
                         sx={{ '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
                     />
                 </Paper>
-            )}
+            </AsyncContent>
 
             {/* Add dialog with department picker */}
             <Dialog open={formOpen} onClose={() => setFormOpen(false)} maxWidth="sm" fullWidth>

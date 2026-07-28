@@ -1,268 +1,94 @@
 // src/components/admin/department_categories/DepartmentCategoryCrud.tsx
-import React, { useCallback, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import {
-    Alert,
     Box,
-    Button,
-    CircularProgress,
-    Paper,
-    Snackbar,
-    Typography,
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import { DataGrid } from '@mui/x-data-grid';
-import { fetchDepartmentCategories, updateDepartmentCategory, type DepartmentCategory } from './departmentCategoryApi';
-import { useDepartmentCategoryMutations } from './useDepartmentCategoryMutations';
-import { useDepartmentCategoryColumns, type EditingState } from './useDepartmentCategoryColumns';
+import {
+    createDepartmentCategory,
+    deleteDepartmentCategory,
+    fetchDepartmentCategories,
+    updateDepartmentCategory,
+    type DepartmentCategory,
+} from './departmentCategoryApi';
+import { useDepartmentCategoryColumns } from './useDepartmentCategoryColumns';
 import { useArrowReorder } from '../../../hooks/useArrowReorder';
+import { useCrudGrid } from '../../../hooks/useCrudGrid';
 import { DepartmentCategoryForm } from './DepartmentCategoryForm';
-import { FieldEditConfirmDialog, type PendingEdit } from '../../ui/FieldEditConfirmDialog';
-import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
+import { CrudDialogs } from '../../ui/CrudDialogs';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import cfl from '../../../utils/helpers.ts';
 import {DEPARTMENT_CATEGORY_QK} from "../../../utils/queryKeys.ts";
-import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
+import { CrudDataGrid, CrudHeader } from '../../ui/CrudGridSection';
+
+// Display in the admin-defined order (sort_order, id tiebreak). Module-level so
+// its identity stays stable — an inline arrow would re-sort on every render.
+const bySortOrder = (a: DepartmentCategory, b: DepartmentCategory) =>
+    (a.sort_order - b.sort_order) || (a.id - b.id);
+
+const FIELD_LABELS = { name: 'name', key: 'key', description: 'description' };
 
 export function DepartmentCategoryCrud() {
     const getString = useString({ str });
 
-    const [snackbar, setSnackbar] = useState({
-        open: false,
-        message: '',
-        severity: 'success' as 'success' | 'error',
-    });
-
-    const [formOpen, setFormOpen] = useState(false);
-    const [editingState, setEditingState] = useState<EditingState>({ userId: null, field: null });
-    const [pendingEdit, setPendingEdit] = useState<PendingEdit | null>(null);
-    const [rowToDelete, setRowToDelete] = useState<DepartmentCategory | null>(null);
-    const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
-
-    const { data: rows = [], isLoading, error } = useQuery({
+    const crud = useCrudGrid({
         queryKey: DEPARTMENT_CATEGORY_QK,
-        queryFn: () => fetchDepartmentCategories(),
-        staleTime: 2 * 60 * 1000,
+        fetchFn: () => fetchDepartmentCategories(),
+        createFn: createDepartmentCategory,
+        updateFn: updateDepartmentCategory,
+        deleteFn: deleteDepartmentCategory,
+        getString,
+        fieldLabels: FIELD_LABELS,
+        compare: bySortOrder,
     });
 
-    // Display in the admin-defined order (sort_order, id tiebreak).
-    const sortedRows = useMemo(
-        () => [...rows].sort((a, b) => (a.sort_order - b.sort_order) || (a.id - b.id)),
-        [rows],
-    );
-
-    const { createMutation, updateMutation, deleteMutation } = useDepartmentCategoryMutations({
-        setSnackbar,
-        onCreateSuccess: () => setFormOpen(false),
-        onUpdateSuccess: () => {
-            setEditingState({ userId: null, field: null });
-            setPendingEdit(null);
-        },
-        onDeleteSuccess: () => setRowToDelete(null),
-        onDeleteError: () => setRowToDelete(null),
-    });
-
-    const localeText = useDataGridLocale();
-
-    // Shared up/down-arrow reordering.
+    // Shared up/down-arrow reordering — stays here, it needs the slice's own
+    // sort_order patch.
     const { orderColumn } = useArrowReorder<DepartmentCategory>({
-        rows: sortedRows,
+        rows: crud.rows,
         updateSortOrder: (id, sort_order) => updateDepartmentCategory({ id, data: { sort_order } }),
         invalidateKeys: [DEPARTMENT_CATEGORY_QK],
         getString,
-        onError: (message) => setSnackbar({ open: true, message, severity: 'error' }),
+        onError: (message) => crud.setSnackbar({ open: true, message, severity: 'error' }),
     });
-
-    const handleEditFieldClick = useCallback(
-        (row: DepartmentCategory, field: string, e: React.MouseEvent) => {
-            e.stopPropagation();
-            setEditingState({ userId: row.id, field });
-        },
-        [],
-    );
-
-    const handleRequestSave = useCallback(
-        (row: DepartmentCategory, field: string, newValue: string) => {
-            const fieldLabelMap: Record<string, string> = {
-                name: getString('name') || 'Name',
-                key: getString('key') || 'Key',
-                description: getString('description') || 'Description',
-            };
-            setPendingEdit({
-                id: row.id,
-                fieldLabel: fieldLabelMap[field] ?? field,
-                field,
-                newValue,
-                oldValue: String((row as unknown as Record<string, unknown>)[field] ?? ''),
-            });
-        },
-        [getString],
-    );
-
-    const handleConfirmEdit = useCallback(() => {
-        if (!pendingEdit) return;
-        updateMutation.mutate({
-            id: pendingEdit.id,
-            data: { [pendingEdit.field]: pendingEdit.newValue },
-        });
-    }, [pendingEdit, updateMutation]);
-
-    const handleCancelEdit = useCallback(() => {
-        setEditingState({ userId: null, field: null });
-    }, []);
-
-    const handleCancelPending = useCallback(() => {
-        setPendingEdit(null);
-        setEditingState({ userId: null, field: null });
-    }, []);
-
-    const handleToggleActive = useCallback(
-        (row: DepartmentCategory) => {
-            setPendingEdit({
-                id: row.id,
-                fieldLabel: getString('isActive') || 'Active',
-                field: 'is_active',
-                newValue: !row.is_active,
-                oldValue: row.is_active,
-            });
-        },
-        [getString],
-    );
-
-    const handleToggleMain = useCallback(
-        (row: DepartmentCategory) => {
-            setPendingEdit({
-                id: row.id,
-                fieldLabel: getString('isMain') || 'Main',
-                field: 'is_main',
-                newValue: !row.is_main,
-                oldValue: row.is_main,
-            });
-        },
-        [getString],
-    );
-
-    const handleToggleResponsibility = useCallback(
-        (row: DepartmentCategory) => {
-            setPendingEdit({
-                id: row.id,
-                fieldLabel: getString('isResponsibility') || 'Responsibility list',
-                field: 'is_responsibility',
-                newValue: !row.is_responsibility,
-                oldValue: row.is_responsibility,
-            });
-        },
-        [getString],
-    );
-
-    const handleDeleteClick = useCallback((row: DepartmentCategory) => {
-        setRowToDelete(row);
-    }, []);
-
-    const handleConfirmDelete = useCallback(() => {
-        if (!rowToDelete) return;
-        deleteMutation.mutate(rowToDelete.id);
-    }, [rowToDelete, deleteMutation]);
 
     const columns = useDepartmentCategoryColumns({
         getString,
-        editingState,
-        onEditFieldClick: handleEditFieldClick,
-        onRequestSave: handleRequestSave,
-        onCancelEdit: handleCancelEdit,
-        updateIsPending: updateMutation.isPending,
-        onToggleActive: handleToggleActive,
-        onToggleMain: handleToggleMain,
-        onToggleResponsibility: handleToggleResponsibility,
-        toggleIsPending: updateMutation.isPending,
-        onDeleteClick: handleDeleteClick,
-        deleteIsPending: deleteMutation.isPending,
+        editingState: crud.editingState,
+        onEditFieldClick: crud.handleEditFieldClick,
+        onRequestSave: crud.handleRequestSave,
+        onCancelEdit: crud.handleCancelEdit,
+        updateIsPending: crud.updateMutation.isPending,
+        onToggleActive: (row) => crud.requestToggle(row, 'is_active', 'isActive', 'Active'),
+        onToggleMain: (row) => crud.requestToggle(row, 'is_main', 'isMain', 'Main'),
+        onToggleResponsibility: (row) =>
+            crud.requestToggle(row, 'is_responsibility', 'isResponsibility', 'Responsibility list'),
+        toggleIsPending: crud.updateMutation.isPending,
+        onDeleteClick: crud.handleDeleteClick,
+        deleteIsPending: crud.deleteMutation.isPending,
         orderColumn,
     });
 
     return (
         <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                <Typography variant="h6" fontWeight={600} sx={{ flex: 1 }}>
-                    {getString('departmentCategories') || 'Department Categories'}
-                </Typography>
-                <Button
-                    variant="contained"
-                    size="medium"
-                    startIcon={<AddIcon />}
-                    onClick={() => setFormOpen(true)}
-                >
-                    {cfl(getString('addDepartmentCategory')) || 'Add'}
-                </Button>
-            </Box>
+            <CrudHeader
+                title={getString('departmentCategories') || 'Department Categories'}
+                addLabel={cfl(getString('addDepartmentCategory')) || 'Add'}
+                onAdd={() => crud.setFormOpen(true)}
+            />
 
-            {isLoading && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                    <CircularProgress />
-                </Box>
-            )}
-
-            {!isLoading && error && (
-                <Alert severity="error" sx={{ m: 2 }}>
-                    {(error as Error).message}
-                </Alert>
-            )}
-
-            {!isLoading && !error && (
-                <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
-                    <DataGrid
-                        rows={sortedRows}
-                        columns={columns}
-                        paginationModel={paginationModel}
-                        onPaginationModelChange={setPaginationModel}
-                        pageSizeOptions={[5, 10, 25, 50]}
-                        disableRowSelectionOnClick
-                        getRowId={(row) => row.id}
-                        getRowHeight={() => 'auto'}
-                        localeText={localeText}
-                        hideFooterSelectedRowCount
-                        sx={{ '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
-                    />
-                </Paper>
-            )}
+            <CrudDataGrid crud={crud} columns={columns} />
 
             <DepartmentCategoryForm
-                open={formOpen}
-                onClose={() => setFormOpen(false)}
-                createMutation={createMutation}
+                open={crud.formOpen}
+                onClose={() => crud.setFormOpen(false)}
+                createMutation={crud.createMutation}
             />
 
-            <FieldEditConfirmDialog
-                pending={pendingEdit}
-                isPending={updateMutation.isPending}
-                onConfirm={handleConfirmEdit}
-                onCancel={handleCancelPending}
+            <CrudDialogs
+                crud={crud}
+                deleteTitle={getString('deleteDepartmentCategory') || 'Delete Department Category'}
+                deleteMessage={getString('areYouSureDeleteDepartmentCategory') || `Are you sure you want to delete "${crud.rowToDelete?.name}"? This action cannot be undone.`}
             />
-
-            <ConfirmDeleteDialog
-                open={!!rowToDelete}
-                title={getString('deleteDepartmentCategory') || 'Delete Department Category'}
-                message={getString('areYouSureDeleteDepartmentCategory') || `Are you sure you want to delete "${rowToDelete?.name}"? This action cannot be undone.`}
-                isDeleting={deleteMutation.isPending}
-                onConfirm={handleConfirmDelete}
-                onClose={() => setRowToDelete(null)}
-            />
-
-            <Snackbar
-                open={snackbar.open}
-                autoHideDuration={6000}
-                onClose={() => setSnackbar((p) => ({ ...p, open: false }))}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            >
-                <Alert
-                    severity={snackbar.severity}
-                    onClose={() => setSnackbar((p) => ({ ...p, open: false }))}
-                    sx={{ width: '100%' }}
-                >
-                    {snackbar.message}
-                </Alert>
-            </Snackbar>
         </Box>
     );
 }

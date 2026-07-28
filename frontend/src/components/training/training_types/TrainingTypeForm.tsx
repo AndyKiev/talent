@@ -1,6 +1,6 @@
 // src/components/training/training_types/TrainingTypeForm.tsx
 import { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod/v4';
 import {
@@ -91,7 +91,6 @@ export function TrainingTypeForm({ open, onClose, editingRecord, createMutation,
         register,
         handleSubmit,
         control,
-        watch,
         formState: { errors },
         reset,
     } = useForm<FormData>({
@@ -124,7 +123,7 @@ export function TrainingTypeForm({ open, onClose, editingRecord, createMutation,
         }
     }, [open, editingRecord, reset]);
 
-    const selectedLinkTypeId = watch('training_link_type_id');
+    const selectedLinkTypeId = useWatch({ control, name: 'training_link_type_id' });
     const selectedLinkType = linkTypes.find((t) => t.id === selectedLinkTypeId);
     const showJobCategorySelect = selectedLinkType?.key === BY_JOB_CATEGORY_KEY;
     const showJobSelect = selectedLinkType?.key === BY_JOB_KEY;

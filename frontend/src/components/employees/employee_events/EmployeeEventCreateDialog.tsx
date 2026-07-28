@@ -1,6 +1,6 @@
 // src/components/employees/employee_events/EmployeeEventCreateDialog.tsx
 import { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import {
     Button,
@@ -62,7 +62,6 @@ export function EmployeeEventCreateDialog({
         control,
         handleSubmit,
         reset,
-        watch,
         formState: { errors },
     } = useForm<FormValues>({
         defaultValues: {
@@ -100,7 +99,7 @@ export function EmployeeEventCreateDialog({
     const draftStatus = statuses.find((s) => s.name === 'draft');
 
     // The selected date cannot collide with an existing event's effective date.
-    const selectedDate = watch('effective_date');
+    const selectedDate = useWatch({ control, name: 'effective_date' });
     const dateTaken = !!selectedDate && existingDates.includes(selectedDate);
 
     // Activation-first rule:

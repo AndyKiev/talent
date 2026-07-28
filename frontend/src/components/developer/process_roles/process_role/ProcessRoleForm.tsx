@@ -1,5 +1,5 @@
 // src/components/developer/process_roles/process_role/ProcessRoleForm.tsx
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod/v4';
 import { useQuery } from '@tanstack/react-query';
@@ -7,14 +7,8 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogActions,
-    TextField,
-    Button,
     Box,
     Alert,
-    CircularProgress,
-    FormControlLabel,
-    Switch,
     FormControl,
     InputLabel,
     Select,
@@ -27,6 +21,9 @@ import { fetchProcesses } from '../process/processApi';
 import { PROCESS_QK } from '../../../../utils/queryKeys';
 import useString from '../../../../hooks/useString.ts';
 import cfl from '../../../../utils/capitalizeFirstLetter.ts';
+import { FormSwitch } from '../../../ui/FormSwitch';
+import { CrudFormActions } from '../../../ui/CrudFormActions';
+import { FormTextField } from '../../../ui/FormTextField';
 
 const schema = z.object({
     process_id: z.number().int().positive('processRequired'),
@@ -60,8 +57,8 @@ export function ProcessRoleForm({ open, onClose, createMutation }: Props) {
         handleSubmit,
         formState: { errors },
         reset,
-        watch,
         setValue,
+        control,
     } = useForm<FormData>({
         resolver: zodResolver(schema),
         defaultValues: { process_id: 0, name: '', short_name: '', key: '', is_active: true, link_target: 'employee' },
@@ -83,8 +80,8 @@ export function ProcessRoleForm({ open, onClose, createMutation }: Props) {
         });
     };
 
-    const processId = watch('process_id');
-    const linkTarget = watch('link_target');
+    const processId = useWatch({ control, name: 'process_id' });
+    const linkTarget = useWatch({ control, name: 'link_target' });
 
     return (
         <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
@@ -117,28 +114,25 @@ export function ProcessRoleForm({ open, onClose, createMutation }: Props) {
                             </FormHelperText>
                         )}
                     </FormControl>
-                    <TextField
+                    <FormTextField
                         label={cfl(getString('name')) || 'Name'}
-                        fullWidth
-                        slotProps={{ htmlInput: { maxLength: 128 } }}
-                        error={!!errors.name}
-                        helperText={errors.name?.message && (getString(errors.name.message) || errors.name.message)}
+                        getString={getString}
+                        maxLength={128}
+                        fieldError={errors.name}
                         {...register('name')}
                     />
-                    <TextField
+                    <FormTextField
                         label={cfl(getString('shortName')) || 'Short name'}
-                        fullWidth
-                        slotProps={{ htmlInput: { maxLength: 32 } }}
-                        error={!!errors.short_name}
-                        helperText={errors.short_name?.message && (getString(errors.short_name.message) || errors.short_name.message)}
+                        getString={getString}
+                        maxLength={32}
+                        fieldError={errors.short_name}
                         {...register('short_name')}
                     />
-                    <TextField
+                    <FormTextField
                         label={cfl(getString('key')) || 'Key'}
-                        fullWidth
-                        slotProps={{ htmlInput: { maxLength: 64 } }}
-                        error={!!errors.key}
-                        helperText={errors.key?.message && (getString(errors.key.message) || errors.key.message)}
+                        getString={getString}
+                        maxLength={64}
+                        fieldError={errors.key}
                         {...register('key')}
                     />
                     <FormControl fullWidth variant="outlined">
@@ -156,30 +150,19 @@ export function ProcessRoleForm({ open, onClose, createMutation }: Props) {
                             <MenuItem value="department">{getString('linkTargetDepartment') || 'Departments'}</MenuItem>
                         </Select>
                     </FormControl>
-                    <FormControlLabel
-                        control={
-                            <Switch
-                                checked={watch('is_active')}
-                                onChange={(_, checked) => setValue('is_active', checked)}
-                            />
-                        }
+                    <FormSwitch
+                        name="is_active"
+                        control={control}
                         label={cfl(getString('isActive')) || 'Active'}
                     />
                 </Box>
             </DialogContent>
-            <DialogActions>
-                <Button variant="outlined" onClick={handleClose} disabled={createMutation.isPending}>
-                    {getString('cancel') || 'Cancel'}
-                </Button>
-                <Button
-                    variant="contained"
-                    onClick={handleSubmit(onSubmit)}
-                    disabled={createMutation.isPending}
-                    startIcon={createMutation.isPending ? <CircularProgress size={16} color="inherit" /> : undefined}
-                >
-                    {getString('create') || 'Create'}
-                </Button>
-            </DialogActions>
+            <CrudFormActions
+                getString={getString}
+                onCancel={handleClose}
+                onSubmit={handleSubmit(onSubmit)}
+                isPending={createMutation.isPending}
+            />
         </Dialog>
     );
 }

@@ -1,11 +1,9 @@
-// src/components/developer/security/menus/MenuCrud.tsx
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
     Alert,
     Box,
     Button,
-    CircularProgress,
     Paper,
     Snackbar,
     Typography,
@@ -23,6 +21,7 @@ import { useDataGridLocale } from '../../../../hooks/useDataGridLocale';
 import useString from '../../../../hooks/useString';
 import cfl from '../../../../utils/helpers';
 import { MENUS_MANAGE_QK, USER_GROUP_QK } from '../../../../utils/queryKeys';
+import { AsyncContent } from '../../../ui/AsyncContent';
 
 export function MenuCrud() {
     const getString = useString();
@@ -106,19 +105,7 @@ export function MenuCrud() {
                 </Button>
             </Box>
 
-            {isLoading && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                    <CircularProgress />
-                </Box>
-            )}
-
-            {!isLoading && error && (
-                <Alert severity="error" sx={{ m: 2 }}>
-                    {(error as Error).message}
-                </Alert>
-            )}
-
-            {!isLoading && !error && (
+            <AsyncContent isLoading={isLoading} error={error}>
                 <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
                     <DataGrid
                         rows={rows}
@@ -134,7 +121,7 @@ export function MenuCrud() {
                         sx={{ '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
                     />
                 </Paper>
-            )}
+            </AsyncContent>
 
             <MenuForm
                 open={formOpen}

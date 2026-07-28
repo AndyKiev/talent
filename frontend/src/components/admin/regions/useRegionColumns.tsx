@@ -2,7 +2,6 @@
 import React from 'react';
 import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { Box, IconButton, Switch, Tooltip } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
@@ -10,7 +9,7 @@ import type { Region, MoveDirection } from './regionApi.ts';
 import cfl from '../../../utils/helpers.ts';
 import type { GetStringFn } from '../../../types/getStringFn.ts';
 import { formatToUkrDate } from '../../../utils/dateFormatter.ts';
-import { makeTextEditCol, type EditingState } from '../../../utils/columnBuilders';
+import { makeTextEditCol, deleteActionCol, type EditingState } from '../../../utils/columnBuilders';
 export type { EditingState };
 
 interface Params {
@@ -119,29 +118,6 @@ export function useRegionColumns({
             renderCell: (params: GridRenderCellParams<Region>) =>
                 formatToUkrDate(params.row.created_at),
         },
-        {
-            field: '_actions',
-            headerName: '',
-            width: 56,
-            sortable: false,
-            filterable: false,
-            disableColumnMenu: true,
-            renderCell: (params: GridRenderCellParams<Region>) => (
-                <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                    <Tooltip title={getString('delete') || 'Delete'}>
-                        <span>
-                            <IconButton
-                                size="small"
-                                color="error"
-                                onClick={(e) => { e.stopPropagation(); onDeleteClick(params.row); }}
-                                disabled={deleteIsPending}
-                            >
-                                <DeleteIcon fontSize="small" />
-                            </IconButton>
-                        </span>
-                    </Tooltip>
-                </Box>
-            ),
-        },
+        deleteActionCol<Region>({ getString, onDeleteClick, deleteIsPending }),
     ];
 }

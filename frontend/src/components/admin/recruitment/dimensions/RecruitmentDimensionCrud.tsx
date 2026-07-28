@@ -4,7 +4,6 @@ import {
     Alert,
     Box,
     Button,
-    CircularProgress,
     IconButton,
     Paper,
     Snackbar,
@@ -26,6 +25,7 @@ import { centeredGridCellsSx } from '../../../../utils/dataGridSx';
 import { RECRUITMENT_DIMENSION_QK } from '../../../../utils/queryKeys';
 import ConfirmDialog from '../../../ui/ConfirmDialog';
 import ConfirmDeleteDialog from '../../../ui/ConfirmDeleteDialog';
+import { AsyncContent } from '../../../ui/AsyncContent';
 
 export function RecruitmentDimensionCrud() {
     const getString = useString();
@@ -145,15 +145,7 @@ export function RecruitmentDimensionCrud() {
                 </Button>
             </Box>
 
-            {isLoading && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                    <CircularProgress />
-                </Box>
-            )}
-
-            {!isLoading && error && <Alert severity="error" sx={{ m: 2 }}>{(error as Error).message}</Alert>}
-
-            {!isLoading && !error && (
+            <AsyncContent isLoading={isLoading} error={error}>
                 <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
                     <DataGrid
                         rows={sortedRows}
@@ -169,7 +161,7 @@ export function RecruitmentDimensionCrud() {
                         sx={{ ...centeredGridCellsSx, '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
                     />
                 </Paper>
-            )}
+            </AsyncContent>
 
             <RecruitmentDimensionForm
                 open={formOpen}

@@ -28,6 +28,7 @@ import useString from '../../../hooks/useString';
 import cfl from '../../../utils/helpers.ts';
 import { JOB_CATEGORY_QK } from '../../../utils/queryKeys.ts';
 import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
+import { AsyncContent } from '../../ui/AsyncContent';
 
 export function JobCategoryCrud() {
     const getString = useString();
@@ -167,19 +168,7 @@ export function JobCategoryCrud() {
                 </Button>
             </Box>
 
-            {isLoading && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                    <CircularProgress />
-                </Box>
-            )}
-
-            {!isLoading && error && (
-                <Alert severity="error" sx={{ m: 2 }}>
-                    {(error as Error).message}
-                </Alert>
-            )}
-
-            {!isLoading && !error && (
+            <AsyncContent isLoading={isLoading} error={error}>
                 <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
                     <DataGrid
                         rows={sortedRows}
@@ -195,7 +184,7 @@ export function JobCategoryCrud() {
                         sx={{ '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
                     />
                 </Paper>
-            )}
+            </AsyncContent>
 
             <JobCategoryForm
                 open={formOpen}

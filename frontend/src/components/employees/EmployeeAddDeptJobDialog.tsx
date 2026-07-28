@@ -15,7 +15,7 @@
 // in the select/tree handlers (event-driven), not in effects.
 
 import { useEffect, useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod/v4';
 import { useQuery } from '@tanstack/react-query';
@@ -145,7 +145,6 @@ function AddDeptJobForm({
         handleSubmit,
         control,
         formState: { errors },
-        watch,
         setValue,
     } = useForm<FormData>({
         resolver: zodResolver(schema),
@@ -157,10 +156,10 @@ function AddDeptJobForm({
         },
     });
 
-    const categoryId = watch('department_category_id');
-    const departmentId = watch('department_id');
-    const selectedJobId = watch('job_id');
-    const isMain = watch('is_main');
+    const categoryId = useWatch({ control, name: 'department_category_id' });
+    const departmentId = useWatch({ control, name: 'department_id' });
+    const selectedJobId = useWatch({ control, name: 'job_id' });
+    const isMain = useWatch({ control, name: 'is_main' });
 
     const clearPicker = () => {
         setTopDeptId(null);

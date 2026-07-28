@@ -5,7 +5,6 @@ import {
     Alert,
     Box,
     Button,
-    CircularProgress,
     Paper,
     Snackbar,
     Typography,
@@ -22,6 +21,7 @@ import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import cfl from '../../../utils/helpers.ts';
+import { AsyncContent } from '../../ui/AsyncContent';
 import {USER_GROUP_TYPE_QK} from "../../../utils/queryKeys.ts";
 
 export function UserGroupTypeCrud() {
@@ -136,19 +136,7 @@ export function UserGroupTypeCrud() {
                 </Button>
             </Box>
 
-            {isLoading && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                    <CircularProgress />
-                </Box>
-            )}
-
-            {!isLoading && error && (
-                <Alert severity="error" sx={{ m: 2 }}>
-                    {(error as Error).message}
-                </Alert>
-            )}
-
-            {!isLoading && !error && (
+            <AsyncContent isLoading={isLoading} error={error}>
                 <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
                     <DataGrid
                         rows={rows}
@@ -164,7 +152,7 @@ export function UserGroupTypeCrud() {
                         sx={{ '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
                     />
                 </Paper>
-            )}
+            </AsyncContent>
 
             <UserGroupTypeForm
                 open={formOpen}

@@ -4,7 +4,6 @@ import {
     Alert,
     Box,
     Button,
-    CircularProgress,
     IconButton,
     MenuItem,
     Paper,
@@ -35,6 +34,7 @@ import { ReviewLevelRequirementForm } from './ReviewLevelRequirementForm';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import ConfirmDialog from '../../ui/ConfirmDialog';
 import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
+import { AsyncContent } from '../../ui/AsyncContent';
 
 export function ReviewLevelRequirementCrud() {
     const getString = useString();
@@ -198,19 +198,7 @@ export function ReviewLevelRequirementCrud() {
                 </Button>
             </Box>
 
-            {isLoading && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                    <CircularProgress />
-                </Box>
-            )}
-
-            {!isLoading && error && (
-                <Alert severity="error" sx={{ m: 2 }}>
-                    {(error as Error).message}
-                </Alert>
-            )}
-
-            {!isLoading && !error && (
+            <AsyncContent isLoading={isLoading} error={error}>
                 <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
                     <DataGrid
                         rows={rows}
@@ -230,7 +218,7 @@ export function ReviewLevelRequirementCrud() {
                         }}
                     />
                 </Paper>
-            )}
+            </AsyncContent>
 
             <ReviewLevelRequirementForm
                 open={formOpen}

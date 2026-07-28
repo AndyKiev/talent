@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import {
     Alert,
     Box,
-    CircularProgress,
     Paper,
     Snackbar,
     Typography,
@@ -21,6 +20,7 @@ import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import { EMPLOYEE_USER_GROUP_QK } from '../../../utils/queryKeys.ts';
+import { AsyncContent } from '../../ui/AsyncContent';
 
 const AUTH_TYPE_NAME = 'authorisation';
 
@@ -85,19 +85,7 @@ export function UsersCrud() {
                 {getString('users') || 'Users'}
             </Typography>
 
-            {isLoading && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                    <CircularProgress />
-                </Box>
-            )}
-
-            {!isLoading && error && (
-                <Alert severity="error" sx={{ m: 2 }}>
-                    {(error as Error).message}
-                </Alert>
-            )}
-
-            {!isLoading && !error && (
+            <AsyncContent isLoading={isLoading} error={error}>
                 <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
                     <DataGrid
                         rows={rows}
@@ -113,7 +101,7 @@ export function UsersCrud() {
                         sx={{ '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
                     />
                 </Paper>
-            )}
+            </AsyncContent>
 
             <UserGroupsManageDialog
                 open={!!manage}

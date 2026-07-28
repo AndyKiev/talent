@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "fallow": {
+      "command": "node",
+      "args": ["frontend/node_modules/fallow/bin/fallow-mcp"]
+    }
+  }
+}

@@ -6,11 +6,8 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogActions,
-    Button,
     Box,
     Alert,
-    CircularProgress,
     MenuItem,
     Select,
     InputLabel,
@@ -30,6 +27,7 @@ import {
 import useString from '../../../../hooks/useString.ts';
 import cfl from '../../../../utils/helpers.ts';
 import str from '../../../../strings/str.ts';
+import { CrudFormActions } from '../../../ui/CrudFormActions';
 
 // talent_status_id: -1 sentinel = "Combined (all)" -> sent as null
 const COMBINED = -1;
@@ -154,19 +152,14 @@ export function PlanScopeDefaultForm({ open, onClose, createMutation }: Props) {
                     </Typography>
                 </Box>
             </DialogContent>
-            <DialogActions>
-                <Button variant="outlined" onClick={handleClose} disabled={createMutation.isPending}>
-                    {getString('cancel') || 'Cancel'}
-                </Button>
-                <Button
-                    variant="contained"
-                    onClick={handleSubmit(onSubmit)}
-                    disabled={createMutation.isPending}
-                    startIcon={createMutation.isPending ? <CircularProgress size={16} color="inherit" /> : undefined}
-                >
-                    {getString('add') || 'Add'}
-                </Button>
-            </DialogActions>
+            <CrudFormActions
+                getString={getString}
+                onCancel={handleClose}
+                onSubmit={handleSubmit(onSubmit)}
+                isPending={createMutation.isPending}
+                submitKey="add"
+                submitFallback="Add"
+            />
         </Dialog>
     );
 }

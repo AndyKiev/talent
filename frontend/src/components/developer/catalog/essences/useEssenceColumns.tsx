@@ -1,13 +1,13 @@
 // src/components/admin/essences/useEssenceColumns.tsx
 import React from 'react';
 import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Box, Chip, IconButton, Tooltip } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { Box, Chip } from '@mui/material';
 import type { Essence } from './essenceApi.ts';
 import { TextEditCell } from '../../../admin/TextEditCell.tsx';
 import { ReadonlyCell } from '../../../admin/ReadonlyCell.tsx';
 import type { GetStringFn } from '../../../../types/getStringFn.ts';
 import cfl from '../../../../utils/helpers.ts';
+import { deleteActionCol } from '../../../../utils/columnBuilders';
 
 export interface EditingState {
   rowId: number | null;
@@ -79,29 +79,6 @@ export function useEssenceColumns({
         </Box>
       ),
     },
-    {
-      field: '_actions',
-      headerName: '',
-      width: 56,
-      sortable: false,
-      filterable: false,
-      disableColumnMenu: true,
-      renderCell: (params: GridRenderCellParams<Essence>) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          <Tooltip title={getString('delete') || 'Delete'}>
-            <span>
-              <IconButton
-                size="small"
-                color="error"
-                onClick={(e) => { e.stopPropagation(); onDeleteClick(params.row); }}
-                disabled={deleteIsPending}
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-        </Box>
-      ),
-    },
+    deleteActionCol<Essence>({ getString, onDeleteClick, deleteIsPending }),
   ];
 }

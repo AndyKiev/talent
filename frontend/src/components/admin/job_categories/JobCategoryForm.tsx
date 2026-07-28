@@ -6,17 +6,15 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogActions,
-    TextField,
-    Button,
     Box,
     Alert,
-    CircularProgress,
 } from '@mui/material';
 import type { UseMutationResult } from '@tanstack/react-query';
 import type { JobCategoryCreate, MutationResponse, JobCategory } from './jobCategoryApi';
 import useString from '../../../hooks/useString.ts';
 import cfl from '../../../utils/helpers.ts';
+import { CrudFormActions } from '../../ui/CrudFormActions';
+import { FormTextField } from '../../ui/FormTextField';
 
 const schema = z.object({
     // snake_case key — drives the translated label via getString(snakeToCamel(key)).
@@ -67,42 +65,30 @@ export function JobCategoryForm({ open, onClose, createMutation, nextSortOrder }
                     {createMutation.isError && (
                         <Alert severity="error">{createMutation.error?.message}</Alert>
                     )}
-                    <TextField
+                    <FormTextField
                         label={cfl(getString('key')) || 'Key'}
-                        fullWidth
-                        slotProps={{ htmlInput: { maxLength: 64 } }}
-                        error={!!errors.key}
-                        helperText={errors.key?.message && (getString(errors.key.message) || errors.key.message)}
+                        getString={getString}
+                        maxLength={64}
+                        fieldError={errors.key}
                         {...register('key')}
                     />
-                    <TextField
+                    <FormTextField
                         label={cfl(getString('description')) || 'Description'}
-                        fullWidth
+                        getString={getString}
                         multiline
                         minRows={2}
-                        slotProps={{ htmlInput: { maxLength: 256 } }}
-                        error={!!errors.description}
-                        helperText={
-                            errors.description?.message &&
-                            (getString(errors.description.message) || errors.description.message)
-                        }
+                        maxLength={256}
+                        fieldError={errors.description}
                         {...register('description')}
                     />
                 </Box>
             </DialogContent>
-            <DialogActions>
-                <Button variant="outlined" onClick={handleClose} disabled={createMutation.isPending}>
-                    {getString('cancel') || 'Cancel'}
-                </Button>
-                <Button
-                    variant="contained"
-                    onClick={handleSubmit(onSubmit)}
-                    disabled={createMutation.isPending}
-                    startIcon={createMutation.isPending ? <CircularProgress size={16} color="inherit" /> : undefined}
-                >
-                    {getString('create') || 'Create'}
-                </Button>
-            </DialogActions>
+            <CrudFormActions
+                getString={getString}
+                onCancel={handleClose}
+                onSubmit={handleSubmit(onSubmit)}
+                isPending={createMutation.isPending}
+            />
         </Dialog>
     );
 }

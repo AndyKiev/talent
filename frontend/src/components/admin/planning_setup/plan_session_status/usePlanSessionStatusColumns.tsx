@@ -1,8 +1,7 @@
 // src/components/admin/planning_setup/plan_session_status/usePlanSessionStatusColumns.tsx
 import React from 'react';
 import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Box, Chip, IconButton, Tooltip } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { Box, Chip } from '@mui/material';
 
 import type { PlanSessionStatus } from '../planningSetupApi.ts';
 import cfl from '../../../../utils/helpers.ts';
@@ -10,6 +9,7 @@ import type { GetStringFn } from '../../../../types/getStringFn.ts';
 import { TextEditCell } from '../../TextEditCell.tsx';
 import { ReadonlyCell } from '../../ReadonlyCell.tsx';
 import { formatToUkrDate } from '../../../../utils/dateFormatter.ts';
+import { deleteActionCol } from '../../../../utils/columnBuilders';
 
 export interface EditingState {
     rowId: number | null;
@@ -99,29 +99,6 @@ export function usePlanSessionStatusColumns({
             renderCell: (params: GridRenderCellParams<PlanSessionStatus>) =>
                 formatToUkrDate(params.row.created_at),
         },
-        {
-            field: '_actions',
-            headerName: '',
-            width: 56,
-            sortable: false,
-            filterable: false,
-            disableColumnMenu: true,
-            renderCell: (params: GridRenderCellParams<PlanSessionStatus>) => (
-                <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                    <Tooltip title={getString('delete') || 'Delete'}>
-                        <span>
-                            <IconButton
-                                size="small"
-                                color="error"
-                                onClick={(e) => { e.stopPropagation(); onDeleteClick(params.row); }}
-                                disabled={deleteIsPending}
-                            >
-                                <DeleteIcon fontSize="small" />
-                            </IconButton>
-                        </span>
-                    </Tooltip>
-                </Box>
-            ),
-        },
+        deleteActionCol<PlanSessionStatus>({ getString, onDeleteClick, deleteIsPending }),
     ];
 }

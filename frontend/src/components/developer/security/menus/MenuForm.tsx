@@ -1,20 +1,15 @@
 // src/components/developer/security/menus/MenuForm.tsx
 import { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod/v4';
 import {
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogActions,
     TextField,
-    Button,
     Box,
     Alert,
-    CircularProgress,
-    FormControlLabel,
-    Switch,
     MenuItem,
     FormControl,
     InputLabel,
@@ -23,6 +18,9 @@ import {
     Chip,
 } from '@mui/material';
 import type { UseMutationResult } from '@tanstack/react-query';
+import { FormSwitch } from '../../../ui/FormSwitch';
+import { CrudFormActions } from '../../../ui/CrudFormActions';
+import { FormTextField } from '../../../ui/FormTextField';
 
 import type {
     MenuAdmin,
@@ -93,8 +91,6 @@ export function MenuForm({
         register,
         handleSubmit,
         control,
-        watch,
-        setValue,
         reset,
         formState: { errors },
     } = useForm<FormData>({
@@ -122,7 +118,7 @@ export function MenuForm({
         }
     }, [open, editing, reset]);
 
-    const mode = watch('visibility_mode') as MenuVisibilityMode;
+    const mode = useWatch({ control, name: 'visibility_mode' }) as MenuVisibilityMode;
 
     // Parent options: top-level items only (one nesting level), excluding self.
     const parentOptions = menus.filter(
@@ -155,7 +151,8 @@ export function MenuForm({
         }
     };
 
-    const errText = (key?: string) => (key ? getString(key) || key : undefined);
+    const submitKey = isEdit ? 'save' : 'create';
+    const submitFallback = isEdit ? 'Save' : 'Create';
 
     return (
         <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
@@ -170,42 +167,36 @@ export function MenuForm({
                         <Alert severity="error">{activeMutation.error?.message}</Alert>
                     )}
 
-                    <TextField
+                    <FormTextField
                         label={cfl(getString('menuKey')) || 'Key'}
-                        fullWidth
-                        slotProps={{ htmlInput: { maxLength: 64 } }}
-                        error={!!errors.key}
-                        helperText={errText(errors.key?.message)}
+                        getString={getString}
+                        maxLength={64}
+                        fieldError={errors.key}
                         {...register('key')}
                     />
 
-                    <TextField
+                    <FormTextField
                         label={cfl(getString('label')) || 'Label key'}
-                        fullWidth
-                        slotProps={{ htmlInput: { maxLength: 128 } }}
-                        error={!!errors.label_key}
-                        helperText={
-                            errText(errors.label_key?.message) ||
-                            (getString('menuLabelKeyHint') || 'Translation key resolved via getString')
-                        }
+                        getString={getString}
+                        maxLength={128}
+                        fieldError={errors.label_key}
+                        hint={(getString('menuLabelKeyHint') || 'Translation key resolved via getString')}
                         {...register('label_key')}
                     />
 
-                    <TextField
+                    <FormTextField
                         label={cfl(getString('path')) || 'Path'}
-                        fullWidth
-                        slotProps={{ htmlInput: { maxLength: 128 } }}
-                        error={!!errors.path}
-                        helperText={errText(errors.path?.message)}
+                        getString={getString}
+                        maxLength={128}
+                        fieldError={errors.path}
                         {...register('path')}
                     />
 
-                    <TextField
+                    <FormTextField
                         label={cfl(getString('icon')) || 'Icon'}
-                        fullWidth
-                        slotProps={{ htmlInput: { maxLength: 64 } }}
-                        error={!!errors.icon}
-                        helperText={errText(errors.icon?.message)}
+                        getString={getString}
+                        maxLength={64}
+                        fieldError={errors.icon}
                         {...register('icon')}
                     />
 
@@ -240,12 +231,11 @@ export function MenuForm({
                         )}
                     />
 
-                    <TextField
+                    <FormTextField
                         label={cfl(getString('sortOrder')) || 'Sort order'}
+                        getString={getString}
                         type="number"
-                        fullWidth
-                        error={!!errors.sort_order}
-                        helperText={errText(errors.sort_order?.message)}
+                        fieldError={errors.sort_order}
                         {...register('sort_order', { valueAsNumber: true })}
                     />
 
@@ -309,34 +299,21 @@ export function MenuForm({
                         />
                     )}
 
-                    <FormControlLabel
-                        control={
-                            <Switch
-                                checked={watch('is_active')}
-                                onChange={(_, checked) => setValue('is_active', checked)}
-                            />
-                        }
+                    <FormSwitch
+                        name="is_active"
+                        control={control}
                         label={cfl(getString('active')) || 'Active'}
                     />
                 </Box>
             </DialogContent>
-            <DialogActions>
-                <Button variant="outlined" onClick={handleClose} disabled={activeMutation.isPending}>
-                    {getString('cancel') || 'Cancel'}
-                </Button>
-                <Button
-                    variant="contained"
-                    onClick={handleSubmit(onSubmit)}
-                    disabled={activeMutation.isPending}
-                    startIcon={
-                        activeMutation.isPending ? (
-                            <CircularProgress size={16} color="inherit" />
-                        ) : undefined
-                    }
-                >
-                    {isEdit ? getString('save') || 'Save' : getString('create') || 'Create'}
-                </Button>
-            </DialogActions>
+            <CrudFormActions
+                getString={getString}
+                onCancel={handleClose}
+                onSubmit={handleSubmit(onSubmit)}
+                isPending={activeMutation.isPending}
+                submitKey={submitKey}
+                submitFallback={submitFallback}
+            />
         </Dialog>
     );
 }

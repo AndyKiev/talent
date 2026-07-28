@@ -1,12 +1,12 @@
 // src/components/admin/talent-status-period-links/useTalentStatusPeriodLinkColumns.tsx
 import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Box, Chip, IconButton, Switch, Tooltip } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { Box, Chip, Switch } from '@mui/material';
 
 import type { TalentStatusPeriodLink } from './talentStatusPeriodLinkApi';
 import type { GetStringFn } from '../../../types/getStringFn';
 import cfl from '../../../utils/helpers.ts';
 import { formatToUkrDate } from '../../../utils/dateFormatter';
+import { deleteActionCol } from '../../../utils/columnBuilders';
 
 interface Params {
     getString: GetStringFn;
@@ -93,32 +93,6 @@ export function useTalentStatusPeriodLinkColumns({
             renderCell: (params: GridRenderCellParams<TalentStatusPeriodLink>) =>
                 formatToUkrDate(params.row.created_at),
         },
-        {
-            field: '_actions',
-            headerName: '',
-            width: 56,
-            sortable: false,
-            filterable: false,
-            disableColumnMenu: true,
-            renderCell: (params: GridRenderCellParams<TalentStatusPeriodLink>) => (
-                <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                    <Tooltip title={getString('delete') || 'Delete'}>
-                        <span>
-                            <IconButton
-                                size="small"
-                                color="error"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onDeleteClick(params.row);
-                                }}
-                                disabled={deleteIsPending}
-                            >
-                                <DeleteIcon fontSize="small" />
-                            </IconButton>
-                        </span>
-                    </Tooltip>
-                </Box>
-            ),
-        },
+        deleteActionCol<TalentStatusPeriodLink>({ getString, onDeleteClick, deleteIsPending }),
     ];
 }

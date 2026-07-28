@@ -19,7 +19,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
-import { useForm, Controller, useFieldArray } from 'react-hook-form';
+import { useForm, useWatch, Controller, useFieldArray } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   fetchFreeAuditJobs,
@@ -114,14 +114,13 @@ export function TalentAuditInterviewDialog({
     control,
     handleSubmit,
     reset,
-    watch,
     formState: { errors },
   } = useForm<FormValues>({
     defaultValues: { interview_date: '', jobs: [] },
   });
 
   const { fields } = useFieldArray({ control, name: 'jobs' });
-  const watchedJobs = watch('jobs');
+  const watchedJobs = useWatch({ control, name: 'jobs' });
 
   // Populate job rows when free jobs load
   const freeJobsCount = freeJobs.length;
@@ -144,6 +143,10 @@ export function TalentAuditInterviewDialog({
   }, [open, freeJobsCount]);
 
 
+  // Close-reset: this dialog stays mounted across opens, so the confirmation
+  // state has to be cleared here rather than by remounting. The setState calls
+  // run only on the closing render, never in a loop.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!open) {
       reset({ interview_date: '', jobs: [] });
@@ -152,6 +155,7 @@ export function TalentAuditInterviewDialog({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+  /* eslint-enable react-hooks/set-state-in-effect */
   // ── Validation helpers ──────────────────────────────────────────────────────
 
   const getValidationError = (): string | null => {
