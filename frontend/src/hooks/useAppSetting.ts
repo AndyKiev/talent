@@ -80,3 +80,13 @@ export function useEffectiveBooleanSetting(key: string): { enabled: boolean; isL
     }, [settings, key]);
     return { enabled, isLoading };
 }
+
+/**
+ * Read a `json`-typed setting as its raw parsed value (list or object). The
+ * caller owns the shape — a stored JSON value is developer-editable free-form
+ * text, so always normalise it before use (e.g. normalizeSectionOrder).
+ */
+export function useJsonSetting(key: string): { value: unknown; isLoading: boolean } {
+    const { value, isLoading } = useAppSetting(key);
+    return { value, isLoading };
+}

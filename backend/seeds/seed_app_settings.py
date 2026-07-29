@@ -544,6 +544,20 @@ APP_SETTINGS = [
         "user_override_allowed": False,
     },
     {
+        # Top-to-bottom order of the three big sections on the people-review
+        # employee page: employee data / competence analysis / competence
+        # details. The developer default lives here; each user may override it
+        # by dragging the sections on the page itself (or in /settings).
+        # Unknown or missing entries are ignored client-side and the remaining
+        # sections are appended in the order below.
+        "key": "people_review_section_order",
+        "value": ["employee_data", "analysis", "competences"],
+        "value_type_key": "json",
+        "label_key": "settingPeopleReviewSectionOrder",
+        "description_key": "settingPeopleReviewSectionOrderDesc",
+        "user_overridable": True,
+    },
+    {
         # The menu (menus table id) users land on after login. App default here;
         # each user may override it in /settings with any menu THEY can see —
         # if the chosen menu later disappears from their access, the override

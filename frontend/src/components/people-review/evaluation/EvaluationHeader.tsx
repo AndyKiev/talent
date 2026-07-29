@@ -65,6 +65,10 @@ interface Props {
     isEditable: boolean;
     presentationMode: boolean;
     setPresentationMode: Dispatch<SetStateAction<boolean>>;
+    // Section reorder toggle — a VIEW preference, so it is not gated on the
+    // review being editable (a closed session can still be re-stacked).
+    sectionReorderMode: boolean;
+    setSectionReorderMode: Dispatch<SetStateAction<boolean>>;
     // Progress.
     allFilled: boolean;
     filledCount: number;
@@ -97,6 +101,7 @@ export function EvaluationHeader({
     showCommentsButton, commentsCount, onOpenComments,
     isOwnRecord,
     isEditable, presentationMode, setPresentationMode,
+    sectionReorderMode, setSectionReorderMode,
     allFilled, filledCount, totalCount,
     markReviewedHint, canMarkReviewed, onMarkReviewed, markReviewedPending,
     sessionStatus, onRevert, revertPending, onReopen, reopenPending,
@@ -269,6 +274,24 @@ export function EvaluationHeader({
                             onSuccess={onSuccess}
                             onError={onError}
                         />
+                    )}
+
+                    {/* Section reorder — deliberately NOT gated on isEditable /
+                        viewOnly: the stacking is a personal view preference, not
+                        review data. Hidden only while presenting. */}
+                    {!presentationMode && (
+                        <Tooltip title={getString('sectionOrderModeHint')} placement="top">
+                            <Stack direction="row" alignItems="center" spacing={0.25} sx={{ ml: 0.5 }}>
+                                <Switch
+                                    size="small"
+                                    checked={sectionReorderMode}
+                                    onChange={(e) => setSectionReorderMode(e.target.checked)}
+                                />
+                                <Typography fontSize={12} fontWeight={600} color={t.textMuted} sx={{ whiteSpace: 'nowrap' }}>
+                                    {getString('sectionOrderMode')}
+                                </Typography>
+                            </Stack>
+                        </Tooltip>
                     )}
 
                     {isEditable && !viewOnly && (

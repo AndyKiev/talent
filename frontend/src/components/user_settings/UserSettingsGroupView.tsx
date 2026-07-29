@@ -43,9 +43,42 @@ import cfl from '../../utils/helpers.ts';
 import type { GetStringFn } from '../../types/getStringFn';
 import { groupForKey, SETTINGS_GROUP_BY_KEY, GENERAL_GROUP_KEY } from '../developer/settings/settingsGroups';
 import { UserGridColumnsPanel } from '../user_grid_columns/UserGridColumnsPanel';
+import { ReorderableList } from '../people-review/ReorderableList';
+import {
+    EvaluationSection,
+    SECTION_ORDER_SETTING_KEY,
+    normalizeSectionOrder,
+    sectionLabel,
+    sectionMeta,
+    sectionsFromIds,
+} from '../people-review/evaluation/sectionOrder';
 
 // One option in a select-driven setting (value stored, label shown).
 interface SettingOption { value: string; label: string; }
+
+// ── Ordered-list settings ─────────────────────────────────────────────────────
+// A `json` setting whose value is an ORDERED list of known items. The generic
+// editors have no widget for that (they fall through to a raw text field), so
+// such a setting registers here and is rendered as a drag-to-reorder list.
+// Register a new one by adding an entry; nothing else changes.
+interface OrderedListSetting {
+    /** Read the stored value into a clean, complete item list. */
+    normalize: (value: unknown) => string[];
+    /** Stable numeric id per item — ReorderableList keys rows by number. */
+    idOf: (item: string) => number;
+    labelOf: (item: string, getString: GetStringFn) => string;
+    /** Map the ids the list emits back to items. */
+    fromIds: (ids: number[]) => string[];
+}
+
+const ORDERED_LIST_SETTINGS: Record<string, OrderedListSetting> = {
+    [SECTION_ORDER_SETTING_KEY]: {
+        normalize: (value) => normalizeSectionOrder(value),
+        idOf: (item) => sectionMeta(item as EvaluationSection).id,
+        labelOf: (item, getString) => sectionLabel(getString, item as EvaluationSection),
+        fromIds: (ids) => sectionsFromIds(ids),
+    },
+};
 
 type Severity = 'success' | 'error';
 
@@ -61,9 +94,10 @@ interface RowProps {
 
 function UserSettingRow({ setting, getString, onSave, onReset, saving, options }: RowProps) {
     const { t } = useTheme();
-    const isBoolean = setting.value_type_key === 'boolean';
-    const isSelect = !!setting.options_source && setting.value_type_key === 'integer';
-    const isInteger = !isSelect && setting.value_type_key === 'integer';
+    const ordered = ORDERED_LIST_SETTINGS[setting.key];
+    const isBoolean = !ordered && setting.value_type_key === 'boolean';
+    const isSelect = !ordered && !!setting.options_source && setting.value_type_key === 'integer';
+    const isInteger = !ordered && !isSelect && setting.value_type_key === 'integer';
     const [draft, setDraft] = useState<SettingValue>(setting.effective_value);
 
     // Re-sync the local draft whenever the server value actually changes (e.g.
@@ -95,7 +129,7 @@ function UserSettingRow({ setting, getString, onSave, onReset, saving, options }
     };
 
     const dirty =
-        !isBoolean && !isSelect &&
+        !ordered && !isBoolean && !isSelect &&
         JSON.stringify(draft) !== JSON.stringify(setting.effective_value);
 
     return (
@@ -106,7 +140,7 @@ function UserSettingRow({ setting, getString, onSave, onReset, saving, options }
                     {description && (
                         <Typography variant="body2" color={t.textSecondary} mt={0.5}>{description}</Typography>
                     )}
-                    {!setting.has_override ? (
+                    {ordered ? null : !setting.has_override ? (
                         <Chip
                             size="small"
                             variant="outlined"
@@ -129,7 +163,31 @@ function UserSettingRow({ setting, getString, onSave, onReset, saving, options }
                     )}
                 </Box>
                 <Stack direction="row" alignItems="center" gap={1}>
-                    {isSelect ? (
+                    {ordered ? (
+                        // Ordered list: every move saves immediately, like the
+                        // boolean switch — there is no half-finished order.
+                        <Box sx={{ minWidth: 300 }}>
+                            <ReorderableList
+                                // Same fixed id set every time, so the list's own
+                                // re-sync never fires — key it on the order.
+                                key={ordered.normalize(draft).join(',')}
+                                rows={ordered.normalize(draft)}
+                                getRowId={(item) => ordered.idOf(item)}
+                                getString={getString}
+                                positionLabel={(index) => String(index + 1)}
+                                renderRow={(item) => (
+                                    <Typography fontSize={14} fontWeight={600} color={t.text}>
+                                        {ordered.labelOf(item, getString)}
+                                    </Typography>
+                                )}
+                                onReorder={(orderedIds) => {
+                                    const next = ordered.fromIds(orderedIds);
+                                    setDraft(next);
+                                    onSave(setting.key, next);
+                                }}
+                            />
+                        </Box>
+                    ) : isSelect ? (
                         // Select-driven setting (e.g. default menu): pick one of
                         // the options AVAILABLE TO THIS USER; saved immediately.
                         <Select

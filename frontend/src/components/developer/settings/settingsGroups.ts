@@ -120,6 +120,8 @@ export const SETTING_GROUP_BY_KEY: Record<string, string> = {
     people_review_prefetch_max_employees: 'people_review',
     people_review_show_trainings: 'people_review',
     oversight_assign_max_levels_up: 'people_review',
+    // Top-to-bottom stacking of the three evaluation-page sections.
+    people_review_section_order: 'people_review',
     // ── Training ─────────────────────────────────────────────────────────────
     // Master; its delete-on-disable child inherits this via parent_id.
     training_module_enabled: 'training',

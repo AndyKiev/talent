@@ -26,6 +26,12 @@ interface ReorderableListProps<T> {
     renderRow: (row: T) => React.ReactNode;
     onReorder: (orderedIds: number[]) => void;
     getString: GetStringFn;
+    /**
+     * Label shown left of each row. Defaults to the backend queue position
+     * ((index + 1) * 10); pass e.g. `(i) => String(i + 1)` for a plain ranking
+     * that has no server-side position behind it.
+     */
+    positionLabel?: (index: number) => string;
 }
 
 /** Move the element at `from` to position `to`, returning a new array. */
@@ -41,6 +47,7 @@ function moveItem<T>(arr: T[], from: number, to: number): T[] {
 
 export function ReorderableList<T>({
     rows, getRowId, renderRow, onReorder, getString,
+    positionLabel = (index) => String((index + 1) * 10),
 }: ReorderableListProps<T>) {
     const { t } = useTheme();
 
@@ -135,7 +142,7 @@ export function ReorderableList<T>({
                             color={t.textMuted}
                             sx={{ minWidth: 28, textAlign: 'right' }}
                         >
-                            {(idx + 1) * 10}
+                            {positionLabel(idx)}
                         </Typography>
 
                         <Box sx={{ flex: 1, minWidth: 0 }}>{renderRow(row)}</Box>

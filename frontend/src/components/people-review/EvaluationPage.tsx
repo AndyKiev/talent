@@ -65,6 +65,9 @@ import { useTempoAlbum } from './evaluation/hooks/useTempoAlbum';
 import { useEmployeeLevel } from './evaluation/hooks/useEmployeeLevel';
 import { useRseDimensions } from './evaluation/hooks/useRseDimensions';
 import { useDimensionFacts } from './evaluation/hooks/useDimensionFacts';
+import { useSectionOrder } from './evaluation/hooks/useSectionOrder';
+import { SectionOrderEditor } from './evaluation/SectionOrderEditor';
+import { EvaluationSection } from './evaluation/sectionOrder';
 
 export function EvaluationPage() {
     const { sessionId: sessionIdParam, employeeId: employeeIdParam } = useParams({ strict: false }) as { sessionId: string; employeeId: string };
@@ -96,6 +99,14 @@ export function EvaluationPage() {
     // Presentation mode: hide every editing affordance for a clean read-only view
     // even while the record is technically editable (job done, just presenting).
     const [presentationMode, setPresentationMode] = useState(false);
+
+    // --- Section stacking order (developer default + personal override) -------
+    const {
+        order: sectionOrder, setOrder: setSectionOrder,
+        reorderMode: sectionReorderMode, setReorderMode: setSectionReorderMode,
+    } = useSectionOrder({
+        onError: (message) => setSnackbar({ open: true, message, severity: 'error' }),
+    });
 
     // --- Data (queries + scope realign) ---------------------------------------
     const {
@@ -493,6 +504,8 @@ export function EvaluationPage() {
                             isEditable={isEditable}
                             presentationMode={presentationMode}
                             setPresentationMode={setPresentationMode}
+                            sectionReorderMode={sectionReorderMode}
+                            setSectionReorderMode={setSectionReorderMode}
                             allFilled={allFilled}
                             filledCount={filledCount}
                             totalCount={totalCount}
@@ -509,6 +522,20 @@ export function EvaluationPage() {
                             onAutosaveRetry={() => { void flushAutosave(); }}
                         />
 
+                        {/* The three big sections. Their stacking is a personal
+                            preference (see useSectionOrder): they live in a flex
+                            column and each one carries its CSS `order`, so the
+                            markup stays put while the view re-stacks. Reorder
+                            mode replaces them with the draggable strips. */}
+                        {sectionReorderMode && !presentationMode ? (
+                            <SectionOrderEditor
+                                order={sectionOrder}
+                                onChange={setSectionOrder}
+                                getString={getString}
+                            />
+                        ) : (
+                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                        <Box sx={{ order: sectionOrder.indexOf(EvaluationSection.EmployeeData) }}>
                         {/* Employee data tabs: languages / feedback / results */}
                         <EmployeeDataTabs
                             dataTab={dataTab}
@@ -580,7 +607,9 @@ export function EvaluationPage() {
                             employeeId={employeeId}
 
                         />
+                        </Box>
 
+                        <Box sx={{ order: sectionOrder.indexOf(EvaluationSection.Analysis) }}>
                         {/* Scores overview + competence summary tabs */}
                         {visibleEvals.length > 0 && (
                             <Box sx={{ mb: 3, border: `1px solid ${t.borderLight}`, borderRadius: '12px', overflow: 'hidden', background: t.cardBg }}>
@@ -689,7 +718,12 @@ export function EvaluationPage() {
                                 </Box>
                             </Box>
                         )}
+                        </Box>
 
+                        {/* The other two sections carry their own mb:3; the
+                            dimension panel does not, so the gap below it lives
+                            on the wrapper (matters when it is not last). */}
+                        <Box sx={{ mb: 3, order: sectionOrder.indexOf(EvaluationSection.Competences) }}>
                         {/* Dimension tabs */}
                         {visibleEvals.length > 0 && (
                             <DimensionPanel
@@ -724,6 +758,9 @@ export function EvaluationPage() {
                                 copyFactToStrong={copyFactToStrong}
                                 copyImprovementToDevelop={copyImprovementToDevelop}
                             />
+                        )}
+                        </Box>
+                        </Box>
                         )}
                     </>
                 )}
