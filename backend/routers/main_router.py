@@ -15,16 +15,16 @@ from backend.api_v1.audit.change_log.change_log_views import (
 from backend.api_v1.audit.change_session.change_session_views import (
     router as change_session_router,
 )
-from backend.api_v1.candidate.candidate_views import (
+from backend.api_v1.recruitment_candidate.recruitment_candidate_views import (
     router as candidate_router,
 )
-from backend.api_v1.candidate_application.candidate_application_views import (
+from backend.api_v1.recruitment_application.recruitment_application_views import (
     router as candidate_application_router,
 )
-from backend.api_v1.candidate_note.candidate_note_views import (
+from backend.api_v1.recruitment_candidate_note.recruitment_candidate_note_views import (
     router as candidate_note_router,
 )
-from backend.api_v1.candidate_source.candidate_source_views import (
+from backend.api_v1.recruitment_candidate_source.recruitment_candidate_source_views import (
     router as candidate_source_router,
 )
 
@@ -131,10 +131,10 @@ from backend.api_v1.employee_user_group_link.employee_user_group_link_views impo
 )
 from backend.api_v1.essence.essence_views import router as essence_router
 from backend.api_v1.hrm_scope.hrm_scope_views import router as hrm_scope_router
-from backend.api_v1.interview.interview_views import (
+from backend.api_v1.recruitment_interview.recruitment_interview_views import (
     router as interview_router,
 )
-from backend.api_v1.interview_feedback.interview_feedback_views import (
+from backend.api_v1.recruitment_interview_feedback.recruitment_interview_feedback_views import (
     router as interview_feedback_router,
 )
 from backend.api_v1.job.job_views import router as job_router
@@ -186,7 +186,7 @@ from backend.api_v1.permission_manifest.permission_manifest_views import (
     router as permission_manifest_router,
 )
 from backend.api_v1.person.person_views import router as person_router
-from backend.api_v1.pipeline_status.pipeline_status_views import (
+from backend.api_v1.recruitment_application_status.recruitment_application_status_views import (
     router as pipeline_status_router,
 )
 from backend.api_v1.planning.plan_category_default.plan_category_default_views import (
@@ -275,6 +275,15 @@ from backend.api_v1.review_session_employee.review_session_employee_views import
 )
 from backend.api_v1.review_session_employee_comment.review_session_employee_comment_views import (
     router as review_session_employee_comment_router,
+)
+
+# Employee facts — the numbered lines under a competence, plus the pool of
+# facts registered before a competence was chosen. The kind lookup is read-only.
+from backend.api_v1.employee_fact.employee_fact_views import (
+    router as employee_fact_router,
+)
+from backend.api_v1.employee_fact_type.employee_fact_type_views import (
+    router as employee_fact_type_router,
 )
 
 # Competence summary — the strong / to-develop side lookup (read-only).
@@ -499,6 +508,9 @@ router.include_router(interview_router)
 router.include_router(interview_feedback_router)
 
 router.include_router(review_session_employee_dimension_type_router)
+
+router.include_router(employee_fact_type_router)
+router.include_router(employee_fact_router)
 
 router.include_router(review_session_employee_status_router)
 router.include_router(review_session_employee_feedback_type_router)

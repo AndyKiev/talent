@@ -134,16 +134,16 @@ __all__ = {
     "JobRequirementItem",
     "RecruitmentTask",
     # Candidates / hiring pipeline
-    "CandidateSource",
-    "PipelineStatus",
-    "Candidate",
-    "CandidatePhone",
-    "CandidateNote",
-    "CandidateApplication",
-    "ApplicationStatusHistory",
-    "Interview",
-    "InterviewInterviewer",
-    "InterviewFeedback",
+    "RecruitmentCandidateSource",
+    "RecruitmentApplicationStatus",
+    "RecruitmentCandidate",
+    "RecruitmentCandidatePhone",
+    "RecruitmentCandidateNote",
+    "RecruitmentApplication",
+    "RecruitmentApplicationStatusChange",
+    "RecruitmentInterview",
+    "RecruitmentInterviewInterviewer",
+    "RecruitmentInterviewFeedback",
     # Employee development missions (employee-scoped development plan)
     "EmployeeMissionStatus",
     "EmployeeMission",
@@ -163,30 +163,34 @@ __all__ = {
     "ReviewSessionEmployeeStatus",
     "ReviewSessionEmployeeFeedbackType",
     "ReviewSessionEmployeeFeedback",
+    # Employee facts (normalized replacement for the evaluation text columns)
+    "EmployeeFactType",
+    "EmployeeFact",
+    "EmployeeFactEvaluationLink",
 }
 
 from backend.api_v1.access_test_context.access_test_context_model import (
     AccessTestContext,
 )
 from backend.api_v1.app_setting.app_setting_model import AppSetting
-from backend.api_v1.application_status_history.application_status_history_model import (
-    ApplicationStatusHistory,
+from backend.api_v1.recruitment_application_status_change.recruitment_application_status_change_model import (
+    RecruitmentApplicationStatusChange,
 )
 from backend.api_v1.audit.change_log.change_log_model import ChangeLog
 
 # Audit change-log subsystem (ported from talent-test) — session first, then log.
 from backend.api_v1.audit.change_session.change_session_model import ChangeSession
-from backend.api_v1.candidate.candidate_model import Candidate
-from backend.api_v1.candidate_application.candidate_application_model import (
-    CandidateApplication,
+from backend.api_v1.recruitment_candidate.recruitment_candidate_model import RecruitmentCandidate
+from backend.api_v1.recruitment_application.recruitment_application_model import (
+    RecruitmentApplication,
 )
-from backend.api_v1.candidate_note.candidate_note_model import CandidateNote
-from backend.api_v1.candidate_phone.candidate_phone_model import CandidatePhone
+from backend.api_v1.recruitment_candidate_note.recruitment_candidate_note_model import RecruitmentCandidateNote
+from backend.api_v1.recruitment_candidate_phone.recruitment_candidate_phone_model import RecruitmentCandidatePhone
 
-# Candidates / hiring pipeline — lookups first (candidate_source, pipeline_status),
+# Candidates / hiring pipeline — lookups first (recruitment_candidate_source, recruitment_application_status),
 # then candidate + its children (phone, note), then the per-task application row
-# (FKs into candidates, recruitment_tasks, pipeline_statuses) and its status log.
-from backend.api_v1.candidate_source.candidate_source_model import CandidateSource
+# (FKs into candidates, recruitment_tasks, recruitment_application_statuses) and its status log.
+from backend.api_v1.recruitment_candidate_source.recruitment_candidate_source_model import RecruitmentCandidateSource
 from backend.api_v1.department.department_model import Department
 from backend.api_v1.department_category.department_category_model import (
     DepartmentCategory,
@@ -220,6 +224,15 @@ from backend.api_v1.employee_development_vision.employee_development_vision_mode
     EmployeeDevelopmentVision,
 )
 from backend.api_v1.employee_education.employee_education_model import EmployeeEducation
+
+# Employee facts — the kind lookup first (FK target), then the fact rows, then
+# the 0..1 link that attaches a fact to a competence evaluation. The link table
+# also FKs into review_session_employee_evaluations, imported further down.
+from backend.api_v1.employee_fact.employee_fact_model import EmployeeFact
+from backend.api_v1.employee_fact_evaluation_link.employee_fact_evaluation_link_model import (
+    EmployeeFactEvaluationLink,
+)
+from backend.api_v1.employee_fact_type.employee_fact_type_model import EmployeeFactType
 from backend.api_v1.employee_events.employee_event.employee_event_model import (
     EmployeeEvent,
 )
@@ -293,14 +306,14 @@ from backend.api_v1.essence_set.essence_set_model import EssenceSet
 # employee_user_group_links) all already registered above.
 from backend.api_v1.hrm_scope.hrm_scope_model import HrmScope
 
-# Interviews — the interview (FKs into candidate_applications, employees), then
+# Interviews — the interview (FKs into recruitment_applications, employees), then
 # its interviewer links and feedback rows.
-from backend.api_v1.interview.interview_model import Interview
-from backend.api_v1.interview_feedback.interview_feedback_model import (
-    InterviewFeedback,
+from backend.api_v1.recruitment_interview.recruitment_interview_model import RecruitmentInterview
+from backend.api_v1.recruitment_interview_feedback.recruitment_interview_feedback_model import (
+    RecruitmentInterviewFeedback,
 )
-from backend.api_v1.interview_interviewer.interview_interviewer_model import (
-    InterviewInterviewer,
+from backend.api_v1.recruitment_interview_interviewer.recruitment_interview_interviewer_model import (
+    RecruitmentInterviewInterviewer,
 )
 from backend.api_v1.job.job_model import Job
 
@@ -341,7 +354,7 @@ from backend.api_v1.operation_essence_set_link.operation_essence_set_link_model 
     OperationEssenceSetLink,
 )
 from backend.api_v1.person.person_model import Person
-from backend.api_v1.pipeline_status.pipeline_status_model import PipelineStatus
+from backend.api_v1.recruitment_application_status.recruitment_application_status_model import RecruitmentApplicationStatus
 from backend.api_v1.planning.plan_category_default.plan_category_default_model import (
     PlanCategoryDefault,
 )

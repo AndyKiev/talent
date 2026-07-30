@@ -47,7 +47,7 @@ CLEANUP_TARGETS = [
     ("training_categories", "/training_categories", "name"),
     ("employee_training_statuses", "/employee_training_statuses", "key"),
     ("recruitment_dimensions", "/recruitment_dimensions", "name"),
-    ("candidate_sources", "/candidate_sources", "key"),
+    ("recruitment_candidate_sources", "/recruitment_candidate_sources", "key"),
 ]
 
 

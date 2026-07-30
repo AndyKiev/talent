@@ -43,7 +43,7 @@ class RecruitmentTaskDepartmentMini(BaseModel):
 
 class RecruitmentTaskBase(BaseModel):
     job_id: int
-    requirement_group_id: int | None = None
+    job_requirement_group_id: int | None = None
     department_id: int | None = None
     openings: int = Field(1, ge=1)
     comment: str | None = None
@@ -55,7 +55,7 @@ class RecruitmentTaskCreate(RecruitmentTaskBase):
 
 
 class RecruitmentTaskUpdate(BaseModel):
-    requirement_group_id: int | None = None
+    job_requirement_group_id: int | None = None
     department_id: int | None = None
     openings: int | None = Field(None, ge=1)
     comment: str | None = None

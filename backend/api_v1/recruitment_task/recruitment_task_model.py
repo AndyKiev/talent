@@ -29,7 +29,7 @@ class RecruitmentTask(IntIdPkMixin, Base):
         nullable=False,
     )
     # Nullable at creation; required before the task may go in_process.
-    requirement_group_id: Mapped[int | None] = mapped_column(
+    job_requirement_group_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("job_requirement_groups.id", ondelete="RESTRICT"),
         nullable=True,

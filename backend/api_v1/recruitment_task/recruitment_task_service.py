@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
-from backend.api_v1.candidate_application.candidate_application_model import (
-    CandidateApplication,
+from backend.api_v1.recruitment_application.recruitment_application_model import (
+    RecruitmentApplication,
 )
 from backend.api_v1.department.department_org_units import (
     DepartmentIndex,
@@ -26,7 +26,9 @@ from backend.api_v1.job_requirement_group.job_requirement_group_model import (
 from backend.api_v1.job_requirement_group.job_requirement_group_repository import (
     JobRequirementGroupRepository,
 )
-from backend.api_v1.pipeline_status.pipeline_status_model import PipelineStatus
+from backend.api_v1.recruitment_application_status.recruitment_application_status_model import (
+    RecruitmentApplicationStatus,
+)
 from backend.api_v1.recruitment_task.recruitment_task_messages import (
     RecruitmentTaskClosed,
     RecruitmentTaskCreateSuccess,
@@ -86,11 +88,14 @@ class RecruitmentTaskService(BaseService):
         """True if at least one application for this task reached the 'hired' stage."""
         stmt = (
             select(func.count())
-            .select_from(CandidateApplication)
-            .join(PipelineStatus, PipelineStatus.id == CandidateApplication.status_id)
+            .select_from(RecruitmentApplication)
+            .join(
+                RecruitmentApplicationStatus,
+                RecruitmentApplicationStatus.id == RecruitmentApplication.status_id,
+            )
             .where(
-                CandidateApplication.recruitment_task_id == task_id,
-                PipelineStatus.name == "hired",
+                RecruitmentApplication.recruitment_task_id == task_id,
+                RecruitmentApplicationStatus.name == "hired",
             )
         )
         count = (await self.repository.session.execute(stmt)).scalar_one()
@@ -113,9 +118,7 @@ class RecruitmentTaskService(BaseService):
             return schemas
         session = self.repository.session
         index = await self._org_index()
-        emp_minis = await fetch_employee_minis(
-            session, (s.created_by for s in schemas)
-        )
+        emp_minis = await fetch_employee_minis(session, (s.created_by for s in schemas))
         job_rows = (
             await session.execute(
                 select(Job.id, Job.name, Job.is_active).where(
@@ -128,9 +131,9 @@ class RecruitmentTaskService(BaseService):
             for r in job_rows
         }
         group_ids = {
-            s.requirement_group_id
+            s.job_requirement_group_id
             for s in schemas
-            if s.requirement_group_id is not None
+            if s.job_requirement_group_id is not None
         }
         group_minis: dict[int, RecruitmentTaskGroupMini] = {}
         if group_ids:
@@ -159,8 +162,8 @@ class RecruitmentTaskService(BaseService):
             mini = emp_minis.get(s.created_by)
             if mini:
                 s.creator = RecruitmentTaskCreatorMini(**mini)
-            if s.requirement_group_id is not None:
-                s.requirement_group = group_minis.get(s.requirement_group_id)
+            if s.job_requirement_group_id is not None:
+                s.requirement_group = group_minis.get(s.job_requirement_group_id)
         return schemas
 
     async def _enrich(self, schema: RecruitmentTaskSchema) -> RecruitmentTaskSchema:
@@ -207,9 +210,9 @@ class RecruitmentTaskService(BaseService):
         self, task_in: RecruitmentTaskCreate
     ) -> MutationResponse[RecruitmentTaskSchema]:
         # Job is pickable regardless of is_active — no active-state check here.
-        if task_in.requirement_group_id is not None:
+        if task_in.job_requirement_group_id is not None:
             await self._validate_group_for_job(
-                task_in.requirement_group_id, task_in.job_id
+                task_in.job_requirement_group_id, task_in.job_id
             )
         created_status = await self._status_by_name(
             RecruitmentTaskStatusKey.CREATED.value
@@ -236,11 +239,12 @@ class RecruitmentTaskService(BaseService):
         if current_key in CLOSED_STATUS_KEYS:
             raise await self._resolve_domain_error(RecruitmentTaskClosed(task_id))
         if (
-            task_update.requirement_group_id is not None
-            and task_update.requirement_group_id != orm_record.requirement_group_id
+            task_update.job_requirement_group_id is not None
+            and task_update.job_requirement_group_id
+            != orm_record.job_requirement_group_id
         ):
             await self._validate_group_for_job(
-                task_update.requirement_group_id, orm_record.job_id
+                task_update.job_requirement_group_id, orm_record.job_id
             )
         updated = await self.update(orm_record, task_update, partial=True)
         # Detach the cached instance so the re-fetch builds a fresh one with
@@ -267,7 +271,7 @@ class RecruitmentTaskService(BaseService):
         # Cannot start work without a requirement group linked.
         if (
             target_key == RecruitmentTaskStatusKey.IN_PROCESS
-            and orm_record.requirement_group_id is None
+            and orm_record.job_requirement_group_id is None
         ):
             raise await self._resolve_domain_error(
                 RecruitmentTaskRequirementGroupRequired()

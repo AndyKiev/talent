@@ -40,18 +40,18 @@ HR_ESSENCES = [
     "job_requirement",
     # Candidates / hiring pipeline — HRM/HRS manage sources, candidates and the
     # per-task applications (drag cards through stages).
-    "candidate_source",
+    "recruitment_candidate_source",
     "candidate",
-    "candidate_application",
+    "recruitment_application",
     # Interviews — HRM/HRS schedule them and may write feedback directly.
     "interview",
-    "interview_feedback",
+    "recruitment_interview_feedback",
 ]
 # Read-only reference essences HRM/HRS may VIEW but must not mutate (e.g. pick a
 # department for a recruitment task, or read the fixed pipeline stages).
 HR_VIEW_ONLY_ESSENCES = [
     "department",
-    "pipeline_status",
+    "recruitment_application_status",
     # Employee development missions: HR reads the plans and the KPI change trail
     # but never edits them — only the employee's oversight manager (or admin) may
     # write. employee_mission_history is a dedicated read-only essence so HR does
@@ -68,9 +68,9 @@ HR_GROUPS = ["HRM", "HRS"]
 INTERVIEWER_GRANTS: dict[str, list[str]] = {
     "interview": ["view"],
     "candidate": ["view"],
-    "candidate_application": ["view"],
-    "pipeline_status": ["view"],
-    "interview_feedback": ["view", "create"],
+    "recruitment_application": ["view"],
+    "recruitment_application_status": ["view"],
+    "recruitment_interview_feedback": ["view", "create"],
 }
 
 

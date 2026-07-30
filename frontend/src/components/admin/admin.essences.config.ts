@@ -343,7 +343,7 @@ export const ESSENCES: RawEssenceConfig[] = [
   },
   {
     parent: 'admin',
-    key: 'candidate_sources',
+    key: 'recruitment_candidate_sources',
     labelKey: 'candidateSources',
     descriptionKey: 'candidateSourcesDesc',
     Icon: CategoryIcon,

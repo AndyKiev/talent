@@ -49,6 +49,11 @@ export const RECOMMENDED_TRAININGS_QK = (employeeId: number, includeInactive?: b
 export const RSE_DIMENSION_TYPES_QK = ['review_session_employee_dimension_types'] as const;
 // The review record's feedback voices (employee / manager) — a seeded lookup.
 export const RSE_FEEDBACK_TYPES_QK = ['review_session_employee_feedback_types'] as const;
+// The kinds of numbered line (fact / improvement) — a seeded lookup.
+export const EMPLOYEE_FACT_TYPES_QK = ['employee_fact_types'] as const;
+// One employee's facts not yet attached to a competence (the badge count).
+export const EMPLOYEE_UNLINKED_FACTS_QK = (employeeId: number) =>
+    ['employee_facts', 'unlinked', employeeId] as const;
 export const SESSION_DEPARTMENTS_QK = (sessionId: number) => ['session_departments', sessionId] as const;
 export const PEOPLE_REVIEW_SESSION_AVAILABILITY_QK = (sessionId: number) =>
     ['people_review_session_availability', sessionId] as const;
@@ -110,26 +115,29 @@ export const EMPLOYEE_TRAININGS_QK = (employeeId: number) => ['employee_training
 export const TRAINING_STATE_QK = (trainingTypeId: number | null) => ['training_state', trainingTypeId] as const;
 
 // ── Recruitment ────────────────────────────────────────────────────────────────
-export const RECRUITMENT_TASK_QK = ['recruitment_tasks'] as const;
-export const RECRUITMENT_TASK_STATUS_QK = ['recruitment_task_statuses'] as const;
-export const RECRUITMENT_DIMENSION_QK = ['recruitment_dimensions'] as const;
+// One module, one block. Each constant is the UPPER_SNAKE of its table + _QK, and the
+// first element of the key array is that table name verbatim.
+export const RECRUITMENT_TASKS_QK = ['recruitment_tasks'] as const;
+export const RECRUITMENT_TASK_STATUSES_QK = ['recruitment_task_statuses'] as const;
+export const RECRUITMENT_DIMENSIONS_QK = ['recruitment_dimensions'] as const;
+// job_requirement_* keeps the job_ stem: `jobs` owns those rows, recruitment reads them.
 export const JOB_REQUIREMENT_GROUPS_QK = (jobId: number) => ['job_requirement_groups', jobId] as const;
 export const JOB_REQUIREMENT_ITEMS_QK = (groupId: number) => ['job_requirement_items', groupId] as const;
-
-// ── Candidates / hiring pipeline ────────────────────────────────────────────────
-export const CANDIDATE_QK = ['candidates'] as const;
-export const CANDIDATE_SOURCE_QK = ['candidate_sources'] as const;
-export const PIPELINE_STATUS_QK = ['pipeline_statuses'] as const;
-export const CANDIDATE_NOTES_QK = (candidateId: number) => ['candidate_notes', candidateId] as const;
-export const CANDIDATE_APPLICATIONS_BY_CANDIDATE_QK = (candidateId: number) =>
-    ['candidate_applications', 'candidate', candidateId] as const;
-export const CANDIDATE_APPLICATIONS_BY_TASK_QK = (taskId: number) =>
-    ['candidate_applications', 'task', taskId] as const;
-export const INTERVIEWS_QK = (scope: string, id: number | 'mine' | 'all') =>
-    ['interviews', scope, id] as const;
+export const RECRUITMENT_CANDIDATES_QK = ['recruitment_candidates'] as const;
+export const RECRUITMENT_CANDIDATE_SOURCES_QK = ['recruitment_candidate_sources'] as const;
+export const RECRUITMENT_APPLICATION_STATUSES_QK = ['recruitment_application_statuses'] as const;
+export const RECRUITMENT_CANDIDATE_NOTES_QK = (candidateId: number) =>
+    ['recruitment_candidate_notes', candidateId] as const;
+export const RECRUITMENT_APPLICATIONS_BY_CANDIDATE_QK = (candidateId: number) =>
+    ['recruitment_applications', 'candidate', candidateId] as const;
+export const RECRUITMENT_APPLICATIONS_BY_TASK_QK = (taskId: number) =>
+    ['recruitment_applications', 'task', taskId] as const;
+export const RECRUITMENT_INTERVIEWS_QK = (scope: string, id: number | 'mine' | 'all') =>
+    ['recruitment_interviews', scope, id] as const;
+// Not a table — a computed endpoint, so it keeps its own name.
 export const AVAILABLE_INTERVIEWERS_QK = ['available_interviewers'] as const;
-export const INTERVIEW_FEEDBACKS_BY_CANDIDATE_QK = (candidateId: number) =>
-    ['interview_feedbacks', 'candidate', candidateId] as const;
+export const RECRUITMENT_INTERVIEW_FEEDBACKS_BY_CANDIDATE_QK = (candidateId: number) =>
+    ['recruitment_interview_feedbacks', 'candidate', candidateId] as const;
 
 // ── Employee development missions ───────────────────────────────────────────────
 export const EMPLOYEE_MISSIONS_QK = (employeeId: number) =>

@@ -4,6 +4,6 @@ import { createFileRoute, redirect } from '@tanstack/react-router';
 // /admin/recruitment has no own screen — land on the first tab.
 export const Route = createFileRoute('/admin/recruitment/')({
     beforeLoad: () => {
-        throw redirect({ to: '/admin/recruitment/dimensions' });
+        throw redirect({ to: '/admin/recruitment/recruitment_dimensions' });
     },
 });

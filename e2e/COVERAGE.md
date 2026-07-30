@@ -31,7 +31,7 @@ Levels: **FULL** = smoke + happy-path CRUD/flow · **SMOKE** = page-load only ·
 | admin / training_categories | /admin/training/categories | tests/fe/admin/training_categories.spec.ts | backend/tests/api/test_training_categories.py | FULL | 2026-07-20 |
 | admin / employee_training_statuses | /admin/training/statuses | tests/fe/admin/employee_training_statuses.spec.ts | backend/tests/api/test_employee_training_statuses.py | FULL | 2026-07-20 |
 | admin / recruitment_dimensions | (API only) | — | backend/tests/api/test_recruitment_dimensions.py | FULL (API) | 2026-07-20 |
-| admin / candidate_sources | (API only) | — | backend/tests/api/test_candidate_sources.py | FULL (API) | 2026-07-20 |
+| admin / recruitment_candidate_sources | (API only) | — | backend/tests/api/test_recruitment_candidate_sources.py | FULL (API) | 2026-07-20 |
 | department_job_targets (headcount plan) | (API only) | — | backend/tests/api/test_department_job_targets.py | FULL (API) | 2026-07-27 |
 | admin / other essences (persons, structure) | /admin/... | smoke only (tests/fe/smoke/pages.spec.ts) | — | SMOKE | 2026-07-29 |
 | employees | /employees, /employees/$employeeId/* (summary, events, career_history, departments, responsibility_history, talent_audit, trainings), /employees/headcount_plan | — | — | NONE | — |

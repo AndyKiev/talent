@@ -1,7 +1,7 @@
 // src/routes/candidates/route.tsx
 import { createFileRoute } from '@tanstack/react-router';
-import { CandidatesLayout } from '../../components/candidates/CandidatesLayout';
+import { RecruitmentCandidatesLayout } from '../../components/recruitment/candidates/RecruitmentCandidatesLayout';
 
 export const Route = createFileRoute('/candidates')({
-    component: CandidatesLayout,
+    component: RecruitmentCandidatesLayout,
 });

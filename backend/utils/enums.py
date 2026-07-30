@@ -157,13 +157,14 @@ class EssenceName(str, Enum):
     RECRUITMENT_TASK_STATUS = "recruitment_task_status"
     RECRUITMENT_DIMENSION = "recruitment_dimension"
     JOB_REQUIREMENT = "job_requirement"
-    # Candidates / hiring pipeline
-    CANDIDATE_SOURCE = "candidate_source"
-    PIPELINE_STATUS = "pipeline_status"
-    CANDIDATE = "candidate"
-    CANDIDATE_APPLICATION = "candidate_application"
-    INTERVIEW = "interview"
-    INTERVIEW_FEEDBACK = "interview_feedback"
+    # Recruitment — candidates, applications, interviews. The VALUE must equal the
+    # essence package name: essences.name holds it and every grant hangs off that row.
+    RECRUITMENT_CANDIDATE_SOURCE = "recruitment_candidate_source"
+    RECRUITMENT_APPLICATION_STATUS = "recruitment_application_status"
+    RECRUITMENT_CANDIDATE = "recruitment_candidate"
+    RECRUITMENT_APPLICATION = "recruitment_application"
+    RECRUITMENT_INTERVIEW = "recruitment_interview"
+    RECRUITMENT_INTERVIEW_FEEDBACK = "recruitment_interview_feedback"
 
 
 class PlanSessionStatusKey(str, Enum):
