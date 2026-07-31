@@ -10,6 +10,111 @@ time from the person's parts, ordered by the `surname_first_in_names` setting
 # Characters after which the next letter is re-capitalized inside one part.
 _SEPARATORS = ("-", "'", "’", "`")
 
+# Ukrainian given names by sex. Used to derive persons.sex_id when only a name
+# is available (seeding, and the one-off repair of the demo data). NOT a
+# validation list: an unknown name simply yields None, never a rejection —
+# people have names outside any list.
+UKRAINIAN_MALE_NAMES = frozenset(
+    {
+        "Анатолій",
+        "Андрій",
+        "Артем",
+        "Богдан",
+        "Валентин",
+        "Василь",
+        "Віктор",
+        "Віталій",
+        "Володимир",
+        "В'ячеслав",
+        "Григорій",
+        "Данило",
+        "Денис",
+        "Дмитро",
+        "Євген",
+        "Ігор",
+        "Іван",
+        "Леонід",
+        "Максим",
+        "Марко",
+        "Микола",
+        "Михайло",
+        "Назар",
+        "Олег",
+        "Олександр",
+        "Остап",
+        "Павло",
+        "Петро",
+        "Роман",
+        "Ростислав",
+        "Сергій",
+        "Степан",
+        "Тарас",
+        "Юрій",
+        "Ярослав",
+    }
+)
+UKRAINIAN_FEMALE_NAMES = frozenset(
+    {
+        "Алла",
+        "Анна",
+        "Богдана",
+        "Валентина",
+        "Василиса",
+        "Вікторія",
+        "Галина",
+        "Дарина",
+        "Даяна",
+        "Зоряна",
+        "Інна",
+        "Ірина",
+        "Катерина",
+        "Лариса",
+        "Людмила",
+        "Марія",
+        "Мирослава",
+        "Надія",
+        "Наталія",
+        "Оксана",
+        "Олена",
+        "Ольга",
+        "Світлана",
+        "Соломія",
+        "Софія",
+        "Тетяна",
+        "Христина",
+        "Юлія",
+    }
+)
+UKRAINIAN_GIVEN_NAMES = UKRAINIAN_MALE_NAMES | UKRAINIAN_FEMALE_NAMES
+
+
+def sex_from_patronymic(patronymic: str | None) -> str | None:
+    """'male' / 'female' from a patronymic ending, or None.
+
+    Stronger evidence than any name list because it is grammatical rather than
+    a lookup — but most rows have no patronymic, so it cannot be the only test.
+    """
+    if not patronymic:
+        return None
+    p = patronymic.strip().lower()
+    if p.endswith(("ович", "йович", "ич")):
+        return "male"
+    if p.endswith(("івна", "ївна", "чна")):
+        return "female"
+    return None
+
+
+def sex_from_given_name(given_name: str | None) -> str | None:
+    """'male' / 'female' from a known Ukrainian given name, else None."""
+    if not given_name:
+        return None
+    name = given_name.strip()
+    if name in UKRAINIAN_MALE_NAMES:
+        return "male"
+    if name in UKRAINIAN_FEMALE_NAMES:
+        return "female"
+    return None
+
 
 def normalize_name_part(raw: str | None) -> str | None:
     """Title-case one name part: first letter upper, rest lower, and the letter

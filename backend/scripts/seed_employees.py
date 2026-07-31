@@ -73,8 +73,9 @@ from backend.api_v1.employee_events.employee_event.employee_event_service import
 )
 from backend.api_v1.person.person_model import Person
 from backend.api_v1.person.person_repository import PersonRepository
+from backend.api_v1.sex.sex_model import SEX_ID_BY_NAME
 from backend.database.db_helper import db_helper
-from backend.utils.person_names import normalize_name_part
+from backend.utils.person_names import normalize_name_part, sex_from_given_name
 from sqlalchemy import text
 
 # ── Config ────────────────────────────────────────────────────────────────────
@@ -87,11 +88,41 @@ SEED = 42  # deterministic name pairing / dates within a run
 
 # ── Ukrainian -> Latin transliteration (KMU-2010, simplified) ─────────────────
 _TRANSLIT = {
-    "а": "a", "б": "b", "в": "v", "г": "h", "ґ": "g", "д": "d", "е": "e",
-    "є": "ie", "ж": "zh", "з": "z", "и": "y", "і": "i", "ї": "i", "й": "i",
-    "к": "k", "л": "l", "м": "m", "н": "n", "о": "o", "п": "p", "р": "r",
-    "с": "s", "т": "t", "у": "u", "ф": "f", "х": "kh", "ц": "ts", "ч": "ch",
-    "ш": "sh", "щ": "shch", "ь": "", "ю": "iu", "я": "ia", "'": "", "’": "",
+    "а": "a",
+    "б": "b",
+    "в": "v",
+    "г": "h",
+    "ґ": "g",
+    "д": "d",
+    "е": "e",
+    "є": "ie",
+    "ж": "zh",
+    "з": "z",
+    "и": "y",
+    "і": "i",
+    "ї": "i",
+    "й": "i",
+    "к": "k",
+    "л": "l",
+    "м": "m",
+    "н": "n",
+    "о": "o",
+    "п": "p",
+    "р": "r",
+    "с": "s",
+    "т": "t",
+    "у": "u",
+    "ф": "f",
+    "х": "kh",
+    "ц": "ts",
+    "ч": "ch",
+    "ш": "sh",
+    "щ": "shch",
+    "ь": "",
+    "ю": "iu",
+    "я": "ia",
+    "'": "",
+    "’": "",
 }
 
 
@@ -103,34 +134,172 @@ def translit(word: str) -> str:
 
 # ── Invented Ukrainian name pools (paired pseudo-randomly) ────────────────────
 FIRST_NAMES = [
-    "Наталія", "Олександр", "Ірина", "Андрій", "Оксана", "Сергій", "Катерина",
-    "Дмитро", "Марія", "Володимир", "Тетяна", "Микола", "Юлія", "Олег",
-    "Світлана", "Ігор", "Людмила", "Василь", "Анна", "Павло", "Галина",
-    "Роман", "Вікторія", "Богдан", "Ольга", "Максим", "Лариса", "Віктор",
-    "Надія", "Юрій", "Дарина", "Тарас", "Інна", "Артем", "Алла", "Назар",
-    "Софія", "Степан", "Валентина", "Денис",
+    "Наталія",
+    "Олександр",
+    "Ірина",
+    "Андрій",
+    "Оксана",
+    "Сергій",
+    "Катерина",
+    "Дмитро",
+    "Марія",
+    "Володимир",
+    "Тетяна",
+    "Микола",
+    "Юлія",
+    "Олег",
+    "Світлана",
+    "Ігор",
+    "Людмила",
+    "Василь",
+    "Анна",
+    "Павло",
+    "Галина",
+    "Роман",
+    "Вікторія",
+    "Богдан",
+    "Ольга",
+    "Максим",
+    "Лариса",
+    "Віктор",
+    "Надія",
+    "Юрій",
+    "Дарина",
+    "Тарас",
+    "Інна",
+    "Артем",
+    "Алла",
+    "Назар",
+    "Софія",
+    "Степан",
+    "Валентина",
+    "Денис",
 ]
 SURNAMES = [
-    "Вітренко", "Коваленко", "Бондаренко", "Шевченко", "Ткаченко", "Кравчук",
-    "Мельник", "Поліщук", "Бойко", "Лисенко", "Гуменюк", "Савченко",
-    "Руденко", "Марченко", "Петренко", "Гнатюк", "Захарченко", "Левченко",
-    "Павленко", "Кравченко", "Сидоренко", "Демченко", "Карпенко",
-    "Морозенко", "Романюк", "Гончар", "Дорошенко", "Мороз", "Кравець",
-    "Тимошенко", "Семенюк", "Іваненко", "Федоренко", "Дяченко", "Зінченко",
-    "Якименко", "Соколенко", "Ковальчук", "Литвин", "Олійник",
+    "Вітренко",
+    "Коваленко",
+    "Бондаренко",
+    "Шевченко",
+    "Ткаченко",
+    "Кравчук",
+    "Мельник",
+    "Поліщук",
+    "Бойко",
+    "Лисенко",
+    "Гуменюк",
+    "Савченко",
+    "Руденко",
+    "Марченко",
+    "Петренко",
+    "Гнатюк",
+    "Захарченко",
+    "Левченко",
+    "Павленко",
+    "Кравченко",
+    "Сидоренко",
+    "Демченко",
+    "Карпенко",
+    "Морозенко",
+    "Романюк",
+    "Гончар",
+    "Дорошенко",
+    "Мороз",
+    "Кравець",
+    "Тимошенко",
+    "Семенюк",
+    "Іваненко",
+    "Федоренко",
+    "Дяченко",
+    "Зінченко",
+    "Якименко",
+    "Соколенко",
+    "Ковальчук",
+    "Литвин",
+    "Олійник",
+    # Extended so a full seeding run can give EVERY employee a different
+    # surname: the roster is ~72 people and 40 surnames meant guaranteed
+    # repeats. All invariant forms (-ко / -ук / -юк / -ник / -ар), which do not
+    # inflect for sex, so a woman can never be handed a masculine surname.
+    "Андрущенко",
+    "Бабенко",
+    "Василенко",
+    "Герасименко",
+    "Дмитренко",
+    "Клименко",
+    "Луценко",
+    "Макаренко",
+    "Мартиненко",
+    "Науменко",
+    "Нестеренко",
+    "Онищенко",
+    "Опанасенко",
+    "Пилипенко",
+    "Приходько",
+    "Проценко",
+    "Радченко",
+    "Романенко",
+    "Семененко",
+    "Сергієнко",
+    "Стельмах",
+    "Тарасенко",
+    "Троценко",
+    "Устименко",
+    "Филипенко",
+    "Харченко",
+    "Хоменко",
+    "Черненко",
+    "Шульга",
+    "Щербак",
+    "Юрченко",
+    "Юрчук",
+    "Яценко",
+    "Ярошенко",
+    "Бондарчук",
+    "Ващенко",
+    "Гаврилюк",
+    "Захарчук",
+    "Іванчук",
+    "Кириленко",
+    "Лещенко",
+    "Максименко",
+    "Мироненко",
+    "Назаренко",
+    "Овчаренко",
+    "Рибак",
+    "Сорока",
+    "Ткачук",
+    "Цимбалюк",
+    "Гончаренко",
 ]
 
 
-def build_name_pool(count: int) -> list[str]:
-    """`count` invented 'First Surname' Ukrainian names (duplicates allowed — the
-    DB enforces uniqueness only on code/email, which are de-duplicated separately)."""
+def build_name_pool(count: int) -> list[tuple[str, str, str | None]]:
+    """`count` invented (first_name, surname, sex) Ukrainian people.
+
+    Surnames advance with EVERY person, not every len(FIRST_NAMES)-th one. The
+    old `surs[(i // f) % s]` only changed surname once per full pass over the
+    given names, so the first 40 employees all shared one surname and the next
+    40 shared another — which is exactly what the demo data looked like.
+
+    Walking the two lists at co-prime-ish rates keeps pairs distinct for as long
+    as the pools allow, and `sex` is derived from the given name so the seeded
+    person is internally consistent instead of being assigned a random sex.
+    """
     rng = random.Random(SEED)
     firsts = FIRST_NAMES[:]
     surs = SURNAMES[:]
     rng.shuffle(firsts)
     rng.shuffle(surs)
     f, s = len(firsts), len(surs)
-    return [f"{firsts[i % f]} {surs[(i // f) % s]}" for i in range(count)]
+    out: list[tuple[str, str, str | None]] = []
+    for i in range(count):
+        # Surnames are consumed one per person, so every employee gets a
+        # different one until the pool is exhausted (it holds ~90, the roster
+        # is ~72). Past that they repeat, paired with a shifted given name.
+        surname = surs[i % s]
+        first = firsts[(i + i // f) % f]
+        out.append((first, surname, sex_from_given_name(first)))
+    return out
 
 
 def random_activation_date() -> datetime.date:
@@ -149,15 +318,19 @@ async def resolve_root_ids(session, departments_arg: list[str] | None) -> list[i
     """
     if not departments_arg:
         rows = (
-            await session.execute(
-                text(
-                    "SELECT d.id FROM departments d "
-                    "JOIN department_categories dc ON dc.id = d.department_category_id "
-                    "WHERE d.is_active = TRUE AND dc.key = ANY(:keys)"
-                ),
-                {"keys": list(SCOPE_CATEGORY_KEYS)},
+            (
+                await session.execute(
+                    text(
+                        "SELECT d.id FROM departments d "
+                        "JOIN department_categories dc ON dc.id = d.department_category_id "
+                        "WHERE d.is_active = TRUE AND dc.key = ANY(:keys)"
+                    ),
+                    {"keys": list(SCOPE_CATEGORY_KEYS)},
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return list(rows)
 
     tokens = [t.strip() for t in departments_arg if t.strip()]
@@ -225,11 +398,23 @@ async def fetch_pairs(session, root_ids: list[int], recurse: bool) -> list[dict]
 async def existing_state(session) -> tuple[set[int], set[str]]:
     """(used UKR code numbers, used lowercase emails) currently in the DB."""
     codes = (
-        await session.execute(text("SELECT code FROM employees WHERE code ~ '^UKR[0-9]{7}$'"))
-    ).scalars().all()
+        (
+            await session.execute(
+                text("SELECT code FROM employees WHERE code ~ '^UKR[0-9]{7}$'")
+            )
+        )
+        .scalars()
+        .all()
+    )
     emails = (
-        await session.execute(text("SELECT lower(email) FROM employees WHERE email IS NOT NULL"))
-    ).scalars().all()
+        (
+            await session.execute(
+                text("SELECT lower(email) FROM employees WHERE email IS NOT NULL")
+            )
+        )
+        .scalars()
+        .all()
+    )
     return {int(c[3:]) for c in codes}, set(emails)
 
 
@@ -258,16 +443,20 @@ def make_email(full_name: str, used_emails: set[str]) -> str:
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Seed employees down the department tree.")
     p.add_argument(
-        "-d", "--departments", default=None,
+        "-d",
+        "--departments",
+        default=None,
         help="Comma-separated root department NAMES or IDs "
-             "(default: all active directorate + store departments).",
+        "(default: all active directorate + store departments).",
     )
     p.add_argument(
-        "--no-recurse", action="store_true",
+        "--no-recurse",
+        action="store_true",
         help="Seed only the root departments, do not descend into children.",
     )
     p.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Print the (department, job) slots that would be filled; create nothing.",
     )
     return p.parse_args(argv)
@@ -290,18 +479,26 @@ async def main(argv: list[str] | None = None) -> None:
 
         pairs = await fetch_pairs(session, root_ids, recurse)
         if not pairs:
-            print("Nothing to seed — every (department, job) in scope already has an employee.")
+            print(
+                "Nothing to seed — every (department, job) in scope already has an employee."
+            )
             return
         print(f"Found {len(pairs)} (department, job) slot(s) to fill.")
 
         if args.dry_run:
             for p in pairs:
-                print(f"  · dept {p['dept_id']} '{p['dept_name']}' / job {p['job_id']} "
-                      f"'{p['job_name']}' [{p['cat_key']}]")
-            print(f"\nDRY RUN — would create {len(pairs)} employee(s). No changes made.")
+                print(
+                    f"  · dept {p['dept_id']} '{p['dept_name']}' / job {p['job_id']} "
+                    f"'{p['job_name']}' [{p['cat_key']}]"
+                )
+            print(
+                f"\nDRY RUN — would create {len(pairs)} employee(s). No changes made."
+            )
             return
 
-        boot = EmployeeService(repository=EmployeeRepository(session=session), session=session)
+        boot = EmployeeService(
+            repository=EmployeeRepository(session=session), session=session
+        )
         admin = await boot.get_by_code(ADMIN_CODE)
         print(f"Actor (created_by): {admin.code} (id={admin.id})")
 
@@ -309,7 +506,9 @@ async def main(argv: list[str] | None = None) -> None:
             repository=EmployeeRepository(session=session), user=admin, session=session
         )
         event_service = EmployeeEventService(
-            repository=EmployeeEventRepository(session=session), user=admin, session=session
+            repository=EmployeeEventRepository(session=session),
+            user=admin,
+            session=session,
         )
 
         used_nums, used_emails = await existing_state(session)
@@ -318,18 +517,21 @@ async def main(argv: list[str] | None = None) -> None:
 
         person_repo = PersonRepository(session=session)
         for idx, pair in enumerate(pairs):
-            full_name = names[idx]
-            first, surname = full_name.split()[0], full_name.split()[-1]
+            first, surname, sex = names[idx]
             code = next_code(used_nums, counter)
-            email = make_email(full_name, used_emails)
+            email = make_email(f"{first} {surname}", used_emails)
 
             # The person carries the name parts; the employee has no name column.
+            # sex comes from the given name, so a seeded Ольга is never male.
+            first_n = normalize_name_part(first)
+            surname_n = normalize_name_part(surname)
             person = await person_repo.create(
                 Person(
-                    first_name=normalize_name_part(first),
-                    last_name=normalize_name_part(surname),
+                    first_name=first_n,
+                    last_name=surname_n,
+                    sex_id=SEX_ID_BY_NAME.get(sex) if sex else None,
                     name_dedupe_no=await person_repo.get_next_dedupe_no(
-                        normalize_name_part(first), normalize_name_part(surname)
+                        first_n, surname_n
                     ),
                 )
             )
@@ -364,7 +566,9 @@ async def main(argv: list[str] | None = None) -> None:
     if stats["failures"]:
         print("Activation failures:")
         for f in stats["failures"]:
-            print(f"  ! event {f['event_id']} (employee {f['employee_id']}): {f['error']}")
+            print(
+                f"  ! event {f['event_id']} (employee {f['employee_id']}): {f['error']}"
+            )
 
 
 if __name__ == "__main__":
