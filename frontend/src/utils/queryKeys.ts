@@ -154,3 +154,7 @@ export const DEVELOPMENT_VISION_QK = (employeeId: number) =>
 // Competence options for the mission form. Near-static, so both hosts (employee
 // card + people-review tab) share this one cache entry.
 export const MISSION_DIMENSION_OPTIONS_QK = ['mission_dimension_options'] as const;
+
+// Person events (surname history). key[0] is the table name; the person id is
+// appended by the consumer so one person's list invalidates alone.
+export const PERSON_EVENTS_QK = ['person_events'] as const;

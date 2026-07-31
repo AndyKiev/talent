@@ -1,10 +1,10 @@
-import { axiosInstance } from '../../api/axiosInstance';
-import { BASE_URL } from '../../utils/eNums.ts';
-import type { MutationResponse } from './candidateApi';
+import { axiosInstance } from '../../../api/axiosInstance';
+import { BASE_URL } from '../../../utils/eNums.ts';
+import type { MutationResponse } from './recruitmentCandidateApi';
 
-const BASE = `${BASE_URL}/candidate_applications`;
+const BASE = `${BASE_URL}/recruitment_applications`;
 
-export type PipelineStatusKey =
+export type RecruitmentApplicationStatusKey =
     | 'applied'
     | 'screen'
     | 'interview'
@@ -32,7 +32,7 @@ export interface ApplicationTaskMini {
 
 export interface ApplicationStatusMini {
     id: number;
-    name: PipelineStatusKey;
+    name: RecruitmentApplicationStatusKey;
     sort_order: number;
 }
 
@@ -45,13 +45,13 @@ export interface ApplicationCreatorMini {
 export interface ApplicationHistoryMini {
     id: number;
     status_id: number;
-    changed_by: number;
-    changed_at: string;
+    created_by: number;
+    created_at: string;
     status: ApplicationStatusMini | null;
-    changer: ApplicationCreatorMini | null;
+    creator: ApplicationCreatorMini | null;
 }
 
-export interface CandidateApplication {
+export interface RecruitmentApplication {
     id: number;
     candidate_id: number;
     recruitment_task_id: number;
@@ -64,15 +64,15 @@ export interface CandidateApplication {
     status_history: ApplicationHistoryMini[];
 }
 
-export interface CandidateApplicationCreate {
+export interface RecruitmentApplicationCreate {
     candidate_id: number;
     recruitment_task_id: number;
 }
 
 export const fetchApplicationsByCandidate = async (
     candidateId: number,
-): Promise<CandidateApplication[]> => {
-    const res = await axiosInstance.get<CandidateApplication[]>(BASE, {
+): Promise<RecruitmentApplication[]> => {
+    const res = await axiosInstance.get<RecruitmentApplication[]>(BASE, {
         params: { candidate_id: candidateId },
     });
     return res.data ?? [];
@@ -80,17 +80,17 @@ export const fetchApplicationsByCandidate = async (
 
 export const fetchApplicationsByTask = async (
     taskId: number,
-): Promise<CandidateApplication[]> => {
-    const res = await axiosInstance.get<CandidateApplication[]>(BASE, {
+): Promise<RecruitmentApplication[]> => {
+    const res = await axiosInstance.get<RecruitmentApplication[]>(BASE, {
         params: { recruitment_task_id: taskId },
     });
     return res.data ?? [];
 };
 
 export const createApplication = async (
-    body: CandidateApplicationCreate,
-): Promise<MutationResponse<CandidateApplication>> => {
-    const res = await axiosInstance.post<MutationResponse<CandidateApplication>>(BASE, body);
+    body: RecruitmentApplicationCreate,
+): Promise<MutationResponse<RecruitmentApplication>> => {
+    const res = await axiosInstance.post<MutationResponse<RecruitmentApplication>>(BASE, body);
     return res.data;
 };
 
@@ -99,9 +99,9 @@ export const changeApplicationStatus = async ({
     statusKey,
 }: {
     id: number;
-    statusKey: PipelineStatusKey;
-}): Promise<MutationResponse<CandidateApplication>> => {
-    const res = await axiosInstance.post<MutationResponse<CandidateApplication>>(
+    statusKey: RecruitmentApplicationStatusKey;
+}): Promise<MutationResponse<RecruitmentApplication>> => {
+    const res = await axiosInstance.post<MutationResponse<RecruitmentApplication>>(
         `${BASE}/${id}/status`,
         { status_key: statusKey },
     );

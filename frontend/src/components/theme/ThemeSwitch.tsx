@@ -32,6 +32,7 @@ interface Family {
 }
 
 const FAMILIES: Family[] = [
+    { labelKey: "familyGraphite", members: ["graphiteLight", "graphite"] },
     { labelKey: "familyNeutral", members: ["light", "dark"] },
     { labelKey: "familyBlue",   members: ["blueLight", "blueDark"] },
     { labelKey: "familySand",   members: ["sand", "sandDark"] },

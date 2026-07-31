@@ -31,6 +31,15 @@ from sqlalchemy import desc, func, select
 from sqlalchemy.orm import selectinload
 
 from backend.api_v1.employee.employee_model import Employee
+from backend.api_v1.employee_fact.employee_fact_model import EmployeeFact
+from backend.api_v1.employee_fact_evaluation_link.employee_fact_evaluation_link_model import (
+    EmployeeFactEvaluationLink,
+)
+from backend.api_v1.employee_fact_type.employee_fact_type_model import (
+    FACT,
+    IMPROVEMENT,
+    EmployeeFactType,
+)
 from backend.api_v1.employee_mission.employee_mission_model import EmployeeMission
 from backend.api_v1.employee_mission_dimension_link.employee_mission_dimension_link_model import (
     EmployeeMissionDimensionLink,
@@ -101,6 +110,7 @@ from backend.api_v1.review_session_employee_result.review_session_employee_resul
     ReviewSessionEmployeeResult,
 )
 from backend.database.db_helper import db_helper
+from backend.utils.system_actor import SYSTEM_ACTOR_CODE
 
 # Numbering prefix inside the demo banks ("1. ", "2) ", "- ", "• ").
 _BANK_PREFIX = re.compile(r"^\s*(?:\d+[.)]|[-•*])\s*")
@@ -369,7 +379,9 @@ def _pick(items: list, count: int = 3) -> list:
     return random.sample(items, count)
 
 
-def _build_facts(dim: ReviewDimension, job: Job | None) -> str:
+# Both builders return LINES, not a numbered string: the position is the row's
+# sort_order now, so no "1." / "2." is ever stored in the text.
+def _build_facts(dim: ReviewDimension, job: Job | None) -> list[str]:
     theme = _theme_for_dimension(dim)
     pool = _FACT_BANK.get(theme, _FACT_BANK["_default"])
     chosen = _pick(pool, random.randint(2, 4))
@@ -377,14 +389,57 @@ def _build_facts(dim: ReviewDimension, job: Job | None) -> str:
         chosen.append(
             f"У ролі «{job.name}» продемонстрував(ла) високий рівень компетенції."
         )
-    return "\n".join(f"{i}. {line}" for i, line in enumerate(chosen, 1))
+    return chosen
 
 
-def _build_improvement(dim: ReviewDimension) -> str:
+def _build_improvement(dim: ReviewDimension) -> list[str]:
     theme = _theme_for_dimension(dim)
     pool = _IMPROVEMENT_BANK.get(theme, _IMPROVEMENT_BANK["_default"])
-    chosen = _pick(pool, random.randint(1, 3))
-    return "\n".join(f"{i}. {line}" for i, line in enumerate(chosen, 1))
+    return _pick(pool, random.randint(1, 3))
+
+
+async def _seed_evaluation_facts(
+    session,
+    evaluation: ReviewSessionEmployeeEvaluation,
+    employee_id: int,
+    actor_id: int,
+    fact_type_ids: dict[str, int],
+    lines_by_key: dict[str, list[str]],
+) -> None:
+    """Replace one competence's two numbered lists with `employee_facts` rows
+    linked to it. Idempotent per evaluation: a competence that already has facts
+    is left alone, so re-running the seed never duplicates lines."""
+    already = await session.scalar(
+        select(EmployeeFactEvaluationLink.id)
+        .where(
+            EmployeeFactEvaluationLink.review_session_employee_evaluation_id
+            == evaluation.id
+        )
+        .limit(1)
+    )
+    if already:
+        return
+    for key, lines in lines_by_key.items():
+        type_id = fact_type_ids.get(key)
+        if type_id is None:
+            continue
+        for index, line in enumerate(lines):
+            fact = EmployeeFact(
+                employee_id=employee_id,
+                employee_fact_type_id=type_id,
+                text=line,
+                created_by_id=actor_id,
+                updated_by_id=actor_id,
+            )
+            session.add(fact)
+            await session.flush()
+            session.add(
+                EmployeeFactEvaluationLink(
+                    employee_fact_id=fact.id,
+                    review_session_employee_evaluation_id=evaluation.id,
+                    sort_order=index,
+                )
+            )
 
 
 async def _seed_dimensions(
@@ -393,6 +448,7 @@ async def _seed_dimensions(
     evaluations: list[ReviewSessionEmployeeEvaluation],
     dimensions_by_id: dict[int, ReviewDimension],
     types_by_key: dict[str, ReviewSessionEmployeeDimensionType],
+    fact_lines_by_eval: dict[int, list[str]],
 ) -> tuple[int, int]:
     """Seed the two top-scored competences as strong and the two lowest as
     to-develop, with their facts as comment rows.
@@ -424,10 +480,9 @@ async def _seed_dimensions(
     def _comments(
         e: ReviewSessionEmployeeEvaluation, dim: ReviewDimension
     ) -> list[str]:
-        facts_text = e.facts or ""
-        lines = [line.strip() for line in facts_text.split("\n") if line.strip()]
-        lines = [c.split(". ", 1)[1] if ". " in c[:4] else c for c in lines]
-        return lines or [dim.name]
+        return [line for line in fact_lines_by_eval.get(e.id, []) if line.strip()] or [
+            dim.name
+        ]
 
     counts: dict[str, int] = {STRONG: 0, DEVELOP: 0}
     for type_key, evals in picks.items():
@@ -787,6 +842,24 @@ async def seed_people_review():
             )
             return
 
+        # Fact kinds (fact / improvement). Resolved BY KEY — ids move on reseed.
+        result = await session.execute(select(EmployeeFactType))
+        fact_type_ids = {t.key: t.id for t in result.scalars().all()}
+        if not {FACT, IMPROVEMENT} <= set(fact_type_ids):
+            print(
+                "[ERR] employee_fact_types is missing 'fact'/'improvement'. "
+                "Run seeds/seed_employee_fact_types.py first."
+            )
+            return
+        # Seeded facts are authored by the robot admin: the columns are NOT NULL
+        # and demo data has no real author. Falls back to the lowest employee id.
+        actor_id = await session.scalar(
+            select(Employee.id).where(Employee.code == SYSTEM_ACTOR_CODE)
+        ) or await session.scalar(select(Employee.id).order_by(Employee.id))
+        if actor_id is None:
+            print("[ERR] No employees found — cannot attribute seeded facts.")
+            return
+
         # ── 5. Frozen criteria for this session (per dimension) ─────────────
         result = await session.execute(
             select(ReviewSessionCriterion)
@@ -843,6 +916,11 @@ async def seed_people_review():
             )
             existing_by_dim = {e.dimension_id: e for e in existing_evals}
             touched_evals: list[ReviewSessionEmployeeEvaluation] = []
+            # The competence summary reuses this employee's fact LINES as its
+            # comment rows. They used to be re-read off the evaluation's text
+            # column; they are rows now, so the seed carries them forward here
+            # instead of querying them back.
+            fact_lines_by_eval: dict[int, list[str]] = {}
 
             for dim in dimensions:
                 existing = existing_by_dim.get(dim.id)
@@ -858,14 +936,14 @@ async def seed_people_review():
                 # Display (graph/album) must derive the value from criterion_scores,
                 # never this column. See the mean_score field comment on the model.
                 mean_score = float(score)
-                facts = _build_facts(dim, job)
-                improvement = _build_improvement(dim)
+                fact_lines = {
+                    FACT: _build_facts(dim, job),
+                    IMPROVEMENT: _build_improvement(dim),
+                }
 
                 if existing is not None:
                     existing.score = score
                     existing.mean_score = mean_score
-                    existing.facts = facts
-                    existing.improvement = improvement
                     touched_evals.append(existing)
                     updated_evals += 1
                     eval_obj = existing
@@ -875,8 +953,6 @@ async def seed_people_review():
                         dimension_id=dim.id,
                         score=score,
                         mean_score=mean_score,
-                        facts=facts,
-                        improvement=improvement,
                     )
                     session.add(evaluation)
                     touched_evals.append(evaluation)
@@ -885,13 +961,28 @@ async def seed_people_review():
 
                 await session.flush()
                 await _seed_criterion_scores(session, eval_obj, criteria_by_dim)
+                if emp is not None:
+                    await _seed_evaluation_facts(
+                        session,
+                        eval_obj,
+                        emp.id,
+                        actor_id,
+                        fact_type_ids,
+                        fact_lines,
+                    )
+                    fact_lines_by_eval[eval_obj.id] = fact_lines[FACT]
 
             await session.flush()
 
             # ── 7b. Competence summary ──────────────────────────────────
             if touched_evals:
                 strong_n, develop_n = await _seed_dimensions(
-                    session, rse, touched_evals, dimensions_by_id, summary_types_by_key
+                    session,
+                    rse,
+                    touched_evals,
+                    dimensions_by_id,
+                    summary_types_by_key,
+                    fact_lines_by_eval,
                 )
                 if strong_n or develop_n:
                     updated_rses += 1

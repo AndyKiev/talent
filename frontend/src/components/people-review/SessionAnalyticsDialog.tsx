@@ -64,9 +64,10 @@ function DimBar({ dim, idx, getString }: { dim: DimensionAnalytics; idx: number;
                     {dim.dimension_description && (
                         <Tooltip
                             title={dim.dimension_description}
-                            placement="right"
+                            // "top", not "right" — a right-hand tooltip on a phone
+                            // resolves past the edge and widens the document.
+                            placement="top"
                             arrow
-                            componentsProps={{ tooltip: { sx: { maxWidth: 300 } } }}
                         >
                             <InfoOutlinedIcon sx={{ fontSize: 14, color: '#aaa', cursor: 'help' }} />
                         </Tooltip>

@@ -12,6 +12,8 @@ from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.employee_department.employee_department_repository import (
     EmployeeDepartmentRepository,
 )
+from backend.api_v1.employee_fact.employee_fact_repository import EmployeeFactRepository
+from backend.api_v1.employee_fact_type.employee_fact_type_model import FACT
 from backend.api_v1.process_roles.process_role.process_role_model import (
     ProcessRole,
 )
@@ -333,7 +335,9 @@ class ReviewSessionEmployeeService(BaseService):
             schema.session_status = record.session.status
         return schema
 
-    def _to_list_schema(self, record) -> RSEListSchema:
+    def _to_list_schema(
+        self, record, facts_counts: dict[int, int] | None = None
+    ) -> RSEListSchema:
         schema = RSEListSchema.model_validate(record)
         if record.employee:
             schema.employee_name = record.employee.name
@@ -342,7 +346,14 @@ class ReviewSessionEmployeeService(BaseService):
         schema.scored_count = sum(
             1 for e in evals if e.score is not None and e.score > 0
         )
-        schema.facts_count = sum(1 for e in evals if e.facts and e.facts.strip())
+        # Facts are rows now (employee_facts + the link table), not a text column
+        # on the evaluation, so this count cannot be read off the loaded rows. It
+        # is passed in PRE-AGGREGATED by _facts_counts — one grouped query for the
+        # whole roster; a per-row relationship here would reintroduce the
+        # documented people-review N+1. Granularity is unchanged: the number of
+        # COMPETENCES carrying at least one fact, which the frontend divides by
+        # total_dimensions to draw the progress bar.
+        schema.facts_count = (facts_counts or {}).get(record.id, 0)
         schema.total_dimensions = len(evals)
         # queue_position is filled by get_session_employees from the reviewer's
         # roster order (the shared order_position store), not from the RSE row.
@@ -374,6 +385,13 @@ class ReviewSessionEmployeeService(BaseService):
         ).first()
         # Positional access matches the select order (link_target, key).
         return _ActiveRoleFields(row[0], row[1]) if row else None
+
+    async def _facts_counts(self, rse_ids: list[int]) -> dict[int, int]:
+        """Per review record: how many competences carry at least one FACT.
+        ONE grouped query for the whole list (see _to_list_schema)."""
+        return await EmployeeFactRepository(
+            session=self.session
+        ).count_evaluations_with_facts(rse_ids, FACT)
 
     async def _visible_employee_ids(self) -> set[int]:
         """Employee ids the current user may see in people-review (§9).
@@ -474,6 +492,17 @@ class ReviewSessionEmployeeService(BaseService):
                 ReviewSessionEmployeeNotFound(rse_id)
             )
 
+    async def assert_employee_visible(self, employee_id: int) -> None:
+        """Visibility guard for EMPLOYEE-scoped people-review sub-resources (the
+        employee's facts). Same resolver as assert_rse_visible, but keyed on the
+        employee directly, because a fact can exist with no review record at all.
+        Raises NotFound (404, not 403) so an out-of-scope id is not confirmed."""
+        visible = await self._visible_employee_ids()
+        if employee_id not in visible:
+            raise await self._resolve_domain_error(
+                ReviewSessionEmployeeNotFound(employee_id)
+            )
+
     async def get_rse_detail_by_session_employee(
         self, session_id: int, employee_id: int
     ) -> RSESchema:
@@ -531,8 +560,9 @@ class ReviewSessionEmployeeService(BaseService):
         )
         in_role_mode = ctx is not None and ctx.process_role_id is not None
         self_id = self.user.id if self.user else None
+        facts_counts = await self._facts_counts([r.id for r in records])
         result = [
-            self._to_list_schema(r)
+            self._to_list_schema(r, facts_counts)
             for r in records
             if r.employee_id in visible
             and not (in_role_mode and r.employee_id == self_id)
@@ -1475,8 +1505,9 @@ class ReviewSessionEmployeeService(BaseService):
     ) -> list[RSEListSchema]:
         filters = {"employee_id": employee_id}
         records = await self.get_all(params=filters)
+        facts_counts = await self._facts_counts([r.id for r in records])
         return [
-            self._to_list_schema(r)
+            self._to_list_schema(r, facts_counts)
             for r in records
             if r.session and r.session.status == "open" and r.status == "open"
         ]
@@ -1514,7 +1545,7 @@ class ReviewSessionEmployeeService(BaseService):
         record = await self.session.scalar(stmt)
         if record is None:
             return None
-        return self._to_list_schema(record)
+        return self._to_list_schema(record, await self._facts_counts([record.id]))
 
     async def get_rse_detail(self, rse_id: int) -> RSESchema:
         record = await self.get_by_id(rse_id)

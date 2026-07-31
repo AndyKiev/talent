@@ -15,8 +15,11 @@ import {
     fetchRseDimensionTypes,
     fetchRseFeedbackTypes,
 } from '../../peopleReviewApi';
+import { fetchEmployeeFactTypes, fetchUnlinkedFacts } from '../../employeeFactApi';
 import {
     PEOPLE_REVIEW_MY_SCOPES_QK,
+    EMPLOYEE_FACT_TYPES_QK,
+    EMPLOYEE_UNLINKED_FACTS_QK,
     RSE_DIMENSION_TYPES_QK,
     RSE_FEEDBACK_TYPES_QK,
 } from '../../../../utils/queryKeys';
@@ -126,6 +129,22 @@ export function useEvaluationQueries(sid: number, eid: number) {
         queryFn: fetchRseFeedbackTypes,
         staleTime: 5 * 60_000,
     });
+
+    // --- Employee facts: the kinds lookup + the unlinked pool ---
+    // Same reasoning as the two lookups above: every write sends a type id read
+    // from data. The pool is employee-scoped (a fact can exist with no review),
+    // and its length is the badge on the page header.
+    const { data: factTypes = [] } = useQuery({
+        queryKey: EMPLOYEE_FACT_TYPES_QK,
+        queryFn: fetchEmployeeFactTypes,
+        staleTime: 5 * 60_000,
+    });
+    const { data: unlinkedFacts = [], refetch: refetchUnlinkedFacts } = useQuery({
+        queryKey: EMPLOYEE_UNLINKED_FACTS_QK(employeeId ?? 0),
+        queryFn: () => fetchUnlinkedFacts(employeeId!),
+        enabled: !!employeeId,
+        staleTime: 15_000,
+    });
     const { data: langProfile, isLoading: langLoading } = useQuery({
         queryKey: ['employee_language_profile', employeeId],
         queryFn: () => fetchEmployeeLanguageProfile(employeeId!),
@@ -215,6 +234,7 @@ export function useEvaluationQueries(sid: number, eid: number) {
         evaluations, evalLoading,
         langLevels, employeeId, langProfile, langLoading,
         dimensionTypes, dimensionTypesUnavailable, feedbackTypes,
+        factTypes, unlinkedFacts, refetchUnlinkedFacts,
         comments, allLevels, sessionLevels, proposedLevel,
         refreshPersonData, refreshing, realignTargetId,
     };

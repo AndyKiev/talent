@@ -6,6 +6,10 @@ __all__ = {
     "Sex",
     "MaritalStatus",
     "Person",
+    "PersonEventType",
+    "PersonEventStatus",
+    "PersonEvent",
+    "PersonEventChange",
     "EmployeeOrigin",
     "Employee",
     "UserGroup",
@@ -354,6 +358,16 @@ from backend.api_v1.operation_essence_set_link.operation_essence_set_link_model 
     OperationEssenceSetLink,
 )
 from backend.api_v1.person.person_model import Person
+from backend.api_v1.person_events.person_event.person_event_model import PersonEvent
+from backend.api_v1.person_events.person_event_change.person_event_change_model import (
+    PersonEventChange,
+)
+from backend.api_v1.person_events.person_event_status.person_event_status_model import (
+    PersonEventStatus,
+)
+from backend.api_v1.person_events.person_event_type.person_event_type_model import (
+    PersonEventType,
+)
 from backend.api_v1.recruitment_application_status.recruitment_application_status_model import RecruitmentApplicationStatus
 from backend.api_v1.planning.plan_category_default.plan_category_default_model import (
     PlanCategoryDefault,

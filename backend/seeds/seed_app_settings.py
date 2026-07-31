@@ -570,6 +570,31 @@ APP_SETTINGS = [
         "user_overridable": True,
         "options_source": "menus",
     },
+    {
+        # Order of the parts in a composed employee display name. ON (default)
+        # renders "Last First", OFF renders "First Last". Employees carry NO
+        # name column: every display name is composed server-side per request
+        # from the person's parts, so flipping this changes what THIS user sees
+        # everywhere (grids, chips, review headers) without touching the data.
+        # Patronymic is never part of the display name.
+        # When ON (default) a surname-change person event may only be recorded
+        # for a woman — the case it was built for is marriage. OFF lifts the
+        # check entirely. App-only: this is a policy, not a preference.
+        "key": "person_last_name_change_female_only",
+        "value": True,
+        "value_type_key": "boolean",
+        "label_key": "settingPersonLastNameChangeFemaleOnly",
+        "description_key": "settingPersonLastNameChangeFemaleOnlyDesc",
+        "user_override_allowed": False,
+    },
+    {
+        "key": "surname_first_in_names",
+        "value": True,
+        "value_type_key": "boolean",
+        "label_key": "settingSurnameFirstInNames",
+        "description_key": "settingSurnameFirstInNamesDesc",
+        "user_overridable": True,
+    },
 ]
 
 

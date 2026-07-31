@@ -441,9 +441,7 @@ class BaseService(Generic[RepositoryType]):
                         )
             return sort_data
         except json.JSONDecodeError as e:
-            raise HTTPException(
-                status_code=400, detail=f"Invalid JSON format: {e!s}"
-            )
+            raise HTTPException(status_code=400, detail=f"Invalid JSON format: {e!s}")
         except ValueError as e:
             raise HTTPException(
                 status_code=400, detail=f"Invalid sort specification: {e!s}"

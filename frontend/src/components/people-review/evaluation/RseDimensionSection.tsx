@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     Box,
     Button,
@@ -17,6 +17,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import DoneIcon from '@mui/icons-material/Done';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import BackspaceOutlinedIcon from '@mui/icons-material/BackspaceOutlined';
 import type { GetStringFn } from '../../../types/getStringFn';
 import type { DimensionOption } from './evaluationHelpers';
 import { InlineEditField } from './InlineEditField';
@@ -33,7 +34,7 @@ import { InlineEditField } from './InlineEditField';
 export function RseDimensionSection({
     title, accent, options, candidates, nameOf, colorOf, isEditable, getString,
     drafts, onDraftChange, onAddOption, onRemoveOption, onAddComment, onRemoveComment,
-    onEditComment, onReorderOption, onSelectDimension,
+    onEditComment, onReorderOption, onSelectDimension, onOpenCardChange,
 }: {
     title: string;
     accent: string;
@@ -52,6 +53,10 @@ export function RseDimensionSection({
     onEditComment: (key: string, index: number, text: string) => void;
     onReorderOption: (fromIndex: number, toIndex: number) => void;
     onSelectDimension: (key: string) => void;
+    /** Reports which card currently HAS a visible comment input (null when none).
+     *  The copy-to-summary buttons in the competence panel below refuse to write
+     *  into a card that is not open, so they need this. */
+    onOpenCardChange: (key: string | null) => void;
 }) {
     const [pick, setPick] = useState('');
     // Which comment row (dimension key + index) is being edited inline; null when none.
@@ -64,6 +69,17 @@ export function RseDimensionSection({
     // facts/improvements and the data tabs.
     const [sectionEditing, setSectionEditing] = useState(false);
     const editingActive = isEditable && sectionEditing;
+
+    // Mirror the open card upward. Derived, so it stays correct however the card
+    // closes — the Done toggle, removing the option, or leaving section edit.
+    // The cleanup matters: if this section unmounts with a card still open (the
+    // section-reorder mode swaps both sides for draggable strips), a stale key
+    // would leave the copy buttons writing into an input nobody can see again.
+    const openCard = editingActive ? editKey : null;
+    useEffect(() => {
+        onOpenCardChange(openCard);
+        return () => onOpenCardChange(null);
+    }, [openCard, onOpenCardChange]);
 
     const exitSectionEdit = () => {
         setSectionEditing(false);
@@ -111,6 +127,9 @@ export function RseDimensionSection({
                             label={getString('selectCompetence')}
                             value={pick}
                             onChange={e => { setPick(e.target.value); onSelectDimension(e.target.value); }}
+                            // Without this the menu locks body scroll, and the whole
+                            // page jumps sideways by the scrollbar width on open.
+                            MenuProps={{ disableScrollLock: true }}
                         >
                             {candidates.map(c => (
                                 <MenuItem key={c.key} value={c.key}>{c.name}</MenuItem>
@@ -256,14 +275,27 @@ export function RseDimensionSection({
                                     onChange={e => onDraftChange(opt.dimension_key, e.target.value)}
                                     fullWidth
                                 />
-                                <Button
-                                    variant="outlined" size="small" startIcon={<AddIcon />}
-                                    onClick={() => submitComment(opt.dimension_key)}
-                                    disabled={!(drafts[opt.dimension_key] ?? '').trim()}
-                                    sx={{ textTransform: 'none', whiteSpace: 'nowrap', mt: 0.25 }}
-                                >
-                                    {getString('addComment')}
-                                </Button>
+                                <Stack spacing={0.5} sx={{ mt: 0.25 }}>
+                                    {/* Clear first: lines arrive here by the copy
+                                        button as well as by typing, so undoing a
+                                        wrong copy must not mean selecting text. */}
+                                    <Button
+                                        variant="text" size="small" startIcon={<BackspaceOutlinedIcon />}
+                                        onClick={() => onDraftChange(opt.dimension_key, '')}
+                                        disabled={!(drafts[opt.dimension_key] ?? '').trim()}
+                                        sx={{ textTransform: 'none', whiteSpace: 'nowrap' }}
+                                    >
+                                        {getString('clearComment')}
+                                    </Button>
+                                    <Button
+                                        variant="outlined" size="small" startIcon={<AddIcon />}
+                                        onClick={() => submitComment(opt.dimension_key)}
+                                        disabled={!(drafts[opt.dimension_key] ?? '').trim()}
+                                        sx={{ textTransform: 'none', whiteSpace: 'nowrap' }}
+                                    >
+                                        {getString('addComment')}
+                                    </Button>
+                                </Stack>
                             </Stack>
                         )}
                     </Box>

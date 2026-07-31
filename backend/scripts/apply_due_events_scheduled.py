@@ -1,5 +1,5 @@
 # backend/scripts/apply_due_events_scheduled.py
-"""Scheduled job: apply all due employee events, attributed to the ROBOT admin.
+"""Scheduled job: apply all due employee AND person events, as the ROBOT admin.
 
 Run (from repo root, e.g. via Windows Task Scheduler / cron):
     python -m backend.scripts.apply_due_events_scheduled
@@ -24,6 +24,12 @@ from backend.api_v1.employee_events.employee_event.employee_event_repository imp
 from backend.api_v1.employee_events.employee_event.employee_event_service import (
     EmployeeEventService,
 )
+from backend.api_v1.person_events.person_event.person_event_repository import (
+    PersonEventRepository,
+)
+from backend.api_v1.person_events.person_event.person_event_service import (
+    PersonEventService,
+)
 from backend.database.db_helper import db_helper
 from backend.utils.system_actor import get_system_actor
 
@@ -40,6 +46,18 @@ async def apply_due_events_scheduled() -> None:
         )
         stats = await event_service.apply_due_events(datetime.date.today())
 
+        # Person events ride the same sweep: both are "ready rows whose date has
+        # arrived", both must land before anyone reads today's data, and one
+        # scheduled entry is one thing to forget to set up instead of two.
+        person_event_service = PersonEventService(
+            repository=PersonEventRepository(session=session),
+            user=actor,
+            session=session,
+        )
+        person_stats = await person_event_service.apply_due_person_events(
+            datetime.date.today()
+        )
+
     print(
         f"Applied {stats['applied']}/{stats['checked']} due event(s) "
         f"(failed {stats['failed']})."
@@ -49,6 +67,12 @@ async def apply_due_events_scheduled() -> None:
             print(
                 f"  ! event {f['event_id']} (employee {f['employee_id']}): {f['error']}"
             )
+    print(
+        f"Applied {person_stats['applied']}/{person_stats['checked']} due person "
+        f"event(s) (failed {person_stats['failed']})."
+    )
+    for f in person_stats["failures"]:
+        print(f"  ! person event {f['event_id']}: {f['error']}")
 
 
 if __name__ == "__main__":

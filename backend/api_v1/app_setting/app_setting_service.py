@@ -53,6 +53,12 @@ RECRUITMENT_MODULE_ENABLED_KEY = "recruitment_module_enabled"
 # User-overridable (each user can turn the confirm dialog on/off for themselves).
 PIPELINE_DRAG_CONFIRM_KEY = "pipeline_drag_confirm"
 
+# Per-user toggle: the order of the parts in a composed employee display name.
+# ON (default) = "Last First", OFF = "First Last". Employees carry no name
+# column — every display name is composed at serialization time. Resolved once
+# per request into a ContextVar; see backend/utils/name_order.py.
+SURNAME_FIRST_KEY = "surname_first_in_names"
+
 
 def cast_value(value: Any, type_key: str | None) -> Any:
     """
@@ -272,9 +278,7 @@ class AppSettingService(BaseService):
             raise await self._resolve_domain_error(AppSettingNotFound(id))
         return result
 
-    async def get_app_settings(
-        self, sort: str | None = None
-    ) -> list[AppSettingSchema]:
+    async def get_app_settings(self, sort: str | None = None) -> list[AppSettingSchema]:
         records = await self.get_all(sort_json=sort)
         return [AppSettingSchema.from_orm_with_groups(r) for r in records]
 

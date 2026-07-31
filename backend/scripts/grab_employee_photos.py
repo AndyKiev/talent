@@ -35,7 +35,7 @@ from backend.api_v1.employee_photo.employee_photo_model import EmployeePhoto
 from backend.api_v1.person.person_model import Person
 from backend.api_v1.sex.sex_model import Sex
 from backend.database.db_helper import db_helper
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 # ── Image processing (mirrors EmployeePhotoService._process_image) ──
 MAX_DIMENSION = 320
@@ -233,8 +233,15 @@ def main(dry_run: bool = False, limit: int | None = None):
     session = db_helper.sync_session_factory()
 
     # 1. All employees
-    all_emps = session.execute(select(Employee.id, Employee.name)).fetchall()
-    all_ids = {row[0]: row[1] for row in all_emps}
+    # Names live on the person; this script only needs them to genderize.
+    # Joined in Python, not with concat_ws: the name columns are encrypted, so
+    # SQL would concatenate ciphertext. The driver decrypts each column on read.
+    all_emps = session.execute(
+        select(Employee.id, Person.last_name, Person.first_name).join(
+            Person, Person.id == Employee.person_id
+        )
+    ).fetchall()
+    all_ids = {row[0]: f"{row[1]} {row[2]}".strip() for row in all_emps}
 
     # 2. Employees that already have a photo
     existing = session.execute(select(EmployeePhoto.employee_id)).fetchall()

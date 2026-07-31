@@ -1,4 +1,3 @@
-
 from sqlalchemy import and_, delete, distinct, select
 from sqlalchemy.orm import noload, selectinload
 
@@ -186,9 +185,15 @@ class EmployeeRepository(BaseRepository):
             ),
         )
         stmt = (
-            select(self.model)
-            .where(self.model.code == code.strip().upper())
-            .options(noload("*"), group_chain)
+            select(self.model).where(self.model.code == code.strip().upper())
+            # person is the ONE extra relationship auth needs: Employee.name is
+            # a property composed from it, and EmployeeSchema.name is required.
+            # One cheap selectin by PK — not part of the heavy web.
+            .options(
+                noload("*"),
+                group_chain,
+                selectinload(self.model.person).noload("*"),
+            )
         )
         return (await self.session.scalars(stmt)).one_or_none()
 

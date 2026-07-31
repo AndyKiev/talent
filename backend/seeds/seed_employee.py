@@ -28,7 +28,6 @@ async def seed_employee():
             session.add(
                 Employee(
                     code="UKR7101004",
-                    name="БАКУЛІН АНДРІЙ",
                     email=None,
                     is_active=True,
                     status_id=1,

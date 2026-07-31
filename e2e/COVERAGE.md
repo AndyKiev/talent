@@ -33,9 +33,10 @@ Levels: **FULL** = smoke + happy-path CRUD/flow · **SMOKE** = page-load only ·
 | admin / recruitment_dimensions | (API only) | — | backend/tests/api/test_recruitment_dimensions.py | FULL (API) | 2026-07-20 |
 | admin / recruitment_candidate_sources | (API only) | — | backend/tests/api/test_recruitment_candidate_sources.py | FULL (API) | 2026-07-20 |
 | department_job_targets (headcount plan) | (API only) | — | backend/tests/api/test_department_job_targets.py | FULL (API) | 2026-07-27 |
+| person_events (surname change) | (API only; UI lives on /employees/$employeeId/summary) | — | backend/tests/api/test_person_events.py | FULL (API) | 2026-07-30 |
 | admin / other essences (persons, structure) | /admin/... | smoke only (tests/fe/smoke/pages.spec.ts) | — | SMOKE | 2026-07-29 |
 | employees | /employees, /employees/$employeeId/* (summary, events, career_history, departments, responsibility_history, talent_audit, trainings), /employees/headcount_plan | — | — | NONE | — |
-| people review | /people_review, /people_review/my, /people_review/$sessionId, .../employee/$employeeId | — | — | NONE | — |
+| people review | /people_review, /people_review/my, /people_review/$sessionId, .../employee/$employeeId | — | backend/tests/api/test_people_review_roster.py (roster + detail load only) | SMOKE (API) | 2026-07-31 |
 | planning | /planning, /planning/$sessionId | — | — | NONE | — |
 | recruitment | /recruitment, /recruitment/$taskId/* (board, details, requirements), /recruitment_board, /recruitment_dashboard | — | — | NONE | — |
 | candidates | /candidates, /candidates/$candidateId | — | — | NONE | — |

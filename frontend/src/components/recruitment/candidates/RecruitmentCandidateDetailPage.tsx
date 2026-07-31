@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { PageBreadcrumbs } from '../ui/PageBreadcrumbs';
+import { PageBreadcrumbs } from '../../ui/PageBreadcrumbs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import {
@@ -20,34 +20,34 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import dayjs from 'dayjs';
-import useString from '../../hooks/useString';
-import cfl from '../../utils/helpers.ts';
-import { snakeToCamel } from '../../utils/helpers.ts';
+import useString from '../../../hooks/useString';
+import cfl from '../../../utils/helpers.ts';
+import { snakeToCamel } from '../../../utils/helpers.ts';
 import {
-    CANDIDATE_QK,
-    CANDIDATE_NOTES_QK,
-    CANDIDATE_APPLICATIONS_BY_CANDIDATE_QK,
-} from '../../utils/queryKeys';
-import { fetchCandidate } from './candidateApi';
-import { useCandidateMutations } from './useCandidateMutations';
-import { CandidateFormDialog } from './CandidateFormDialog';
-import { fetchCandidateNotes, createCandidateNote } from './candidateNoteApi';
+    RECRUITMENT_CANDIDATES_QK,
+    RECRUITMENT_CANDIDATE_NOTES_QK,
+    RECRUITMENT_APPLICATIONS_BY_CANDIDATE_QK,
+} from '../../../utils/queryKeys';
+import { fetchCandidate } from './recruitmentCandidateApi';
+import { useCandidateMutations } from './useRecruitmentCandidateMutations';
+import { RecruitmentCandidateFormDialog } from './RecruitmentCandidateFormDialog';
+import { fetchCandidateNotes, createCandidateNote } from './recruitmentCandidateNoteApi';
 import {
     fetchApplicationsByCandidate,
     createApplication,
-    type PipelineStatusKey,
-} from './candidateApplicationApi';
-import { PIPELINE_STATUS_COLOR, pipelineLabel } from './pipelineStatus';
-import { fetchRecruitmentTasks, type RecruitmentTask } from '../recruitment/tasks/recruitmentTaskApi';
-import { INTERVIEW_FEEDBACKS_BY_CANDIDATE_QK } from '../../utils/queryKeys';
-import { fetchInterviewFeedbacks, type Recommendation } from '../interviews/interviewApi';
+    type RecruitmentApplicationStatusKey,
+} from './recruitmentApplicationApi';
+import { PIPELINE_STATUS_COLOR, pipelineLabel } from './recruitmentApplicationStatus';
+import { fetchRecruitmentTasks, type RecruitmentTask } from '../../recruitment/tasks/recruitmentTaskApi';
+import { RECRUITMENT_INTERVIEW_FEEDBACKS_BY_CANDIDATE_QK } from '../../../utils/queryKeys';
+import { fetchInterviewFeedbacks, type Recommendation } from '../interviews/recruitmentInterviewApi';
 import { recommendationLabel } from '../interviews/recommendation';
 
 const fmtDateTime = (v: string): string => dayjs(v).format('DD.MM.YYYY HH:mm');
 
 type Snackbar = { open: boolean; message: string; severity: 'success' | 'error' };
 
-export function CandidateDetailPage() {
+export function RecruitmentCandidateDetailPage() {
     const getString = useString();
     const { candidateId } = useParams({ from: '/candidates/$candidateId/' });
     const id = Number(candidateId);
@@ -58,7 +58,7 @@ export function CandidateDetailPage() {
     const [snackbar, setSnackbar] = useState<Snackbar>({ open: false, message: '', severity: 'success' });
 
     const { data: candidate, isLoading, error } = useQuery({
-        queryKey: [...CANDIDATE_QK, id],
+        queryKey: [...RECRUITMENT_CANDIDATES_QK, id],
         queryFn: () => fetchCandidate(id),
         enabled: Number.isFinite(id),
     });
@@ -67,7 +67,7 @@ export function CandidateDetailPage() {
         setSnackbar,
         onUpdateSuccess: () => {
             setEditOpen(false);
-            qc.invalidateQueries({ queryKey: [...CANDIDATE_QK, id] });
+            qc.invalidateQueries({ queryKey: [...RECRUITMENT_CANDIDATES_QK, id] });
         },
     });
 
@@ -129,7 +129,7 @@ export function CandidateDetailPage() {
                     {tab === 1 && <ApplicationsTab candidateId={id} getString={getString} setSnackbar={setSnackbar} />}
                     {tab === 2 && <FeedbackTab candidateId={id} getString={getString} />}
 
-                    <CandidateFormDialog
+                    <RecruitmentCandidateFormDialog
                         open={editOpen}
                         onClose={() => setEditOpen(false)}
                         createMutation={createMutation}
@@ -164,31 +164,31 @@ function TimelineTab({ candidateId, getString, onError }: TabProps & { onError: 
     const [body, setBody] = useState('');
 
     const { data: notes = [] } = useQuery({
-        queryKey: CANDIDATE_NOTES_QK(candidateId),
+        queryKey: RECRUITMENT_CANDIDATE_NOTES_QK(candidateId),
         queryFn: () => fetchCandidateNotes(candidateId),
     });
     const { data: applications = [] } = useQuery({
-        queryKey: CANDIDATE_APPLICATIONS_BY_CANDIDATE_QK(candidateId),
+        queryKey: RECRUITMENT_APPLICATIONS_BY_CANDIDATE_QK(candidateId),
         queryFn: () => fetchApplicationsByCandidate(candidateId),
     });
 
     const addNote = useMutation({
         mutationFn: createCandidateNote,
         onSuccess: async () => {
-            await qc.invalidateQueries({ queryKey: CANDIDATE_NOTES_QK(candidateId) });
+            await qc.invalidateQueries({ queryKey: RECRUITMENT_CANDIDATE_NOTES_QK(candidateId) });
             setBody('');
         },
         onError: (e: Error) => onError(e.message),
     });
 
     type Entry =
-        | { kind: 'note'; at: string; author: string; text: string }
-        | { kind: 'status'; at: string; author: string; status: PipelineStatusKey; job: string };
+        | { kind: 'note'; at: string; creator: string; text: string }
+        | { kind: 'status'; at: string; creator: string; status: RecruitmentApplicationStatusKey; job: string };
 
     const feed = useMemo<Entry[]>(() => {
         const entries: Entry[] = [];
         for (const n of notes) {
-            entries.push({ kind: 'note', at: n.created_at, author: n.author?.name ?? '', text: n.body });
+            entries.push({ kind: 'note', at: n.created_at, creator: n.creator?.name ?? '', text: n.body });
         }
         for (const app of applications) {
             const job = app.recruitment_task?.job?.name ?? String(app.recruitment_task_id);
@@ -196,8 +196,8 @@ function TimelineTab({ candidateId, getString, onError }: TabProps & { onError: 
                 if (h.status) {
                     entries.push({
                         kind: 'status',
-                        at: h.changed_at,
-                        author: h.changer?.name ?? '',
+                        at: h.created_at,
+                        creator: h.creator?.name ?? '',
                         status: h.status.name,
                         job,
                     });
@@ -249,7 +249,7 @@ function TimelineTab({ candidateId, getString, onError }: TabProps & { onError: 
                                 <Chip size="small" variant="outlined" label={getString('note') || 'Note'} />
                             )}
                             <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
-                                {e.author} · {fmtDateTime(e.at)}
+                                {e.creator} · {fmtDateTime(e.at)}
                                 {e.kind === 'status' ? ` · ${e.job}` : ''}
                             </Typography>
                         </Stack>
@@ -274,7 +274,7 @@ const REC_CHIP_COLOR: Record<Recommendation, 'success' | 'error' | 'warning'> = 
 
 function FeedbackTab({ candidateId, getString }: TabProps) {
     const { data: feedbacks = [], isLoading } = useQuery({
-        queryKey: INTERVIEW_FEEDBACKS_BY_CANDIDATE_QK(candidateId),
+        queryKey: RECRUITMENT_INTERVIEW_FEEDBACKS_BY_CANDIDATE_QK(candidateId),
         queryFn: () => fetchInterviewFeedbacks({ candidate_id: candidateId }),
     });
 
@@ -306,7 +306,7 @@ function FeedbackTab({ candidateId, getString }: TabProps) {
                             />
                         )}
                         <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
-                            {f.author?.name ?? f.author_id} · {fmtDateTime(f.created_at)}
+                            {f.creator?.name ?? f.created_by} · {fmtDateTime(f.created_at)}
                         </Typography>
                     </Stack>
                     <Typography variant="body2" sx={{ mt: 0.5, whiteSpace: 'pre-wrap' }}>
@@ -329,7 +329,7 @@ function ApplicationsTab({
     const [task, setTask] = useState<RecruitmentTask | null>(null);
 
     const { data: applications = [] } = useQuery({
-        queryKey: CANDIDATE_APPLICATIONS_BY_CANDIDATE_QK(candidateId),
+        queryKey: RECRUITMENT_APPLICATIONS_BY_CANDIDATE_QK(candidateId),
         queryFn: () => fetchApplicationsByCandidate(candidateId),
     });
     const { data: tasks = [] } = useQuery({
@@ -353,9 +353,9 @@ function ApplicationsTab({
         mutationFn: createApplication,
         onSuccess: async (res) => {
             await Promise.all([
-                qc.invalidateQueries({ queryKey: CANDIDATE_APPLICATIONS_BY_CANDIDATE_QK(candidateId) }),
-                qc.invalidateQueries({ queryKey: [...CANDIDATE_QK, candidateId] }),
-                qc.invalidateQueries({ queryKey: CANDIDATE_QK }),
+                qc.invalidateQueries({ queryKey: RECRUITMENT_APPLICATIONS_BY_CANDIDATE_QK(candidateId) }),
+                qc.invalidateQueries({ queryKey: [...RECRUITMENT_CANDIDATES_QK, candidateId] }),
+                qc.invalidateQueries({ queryKey: RECRUITMENT_CANDIDATES_QK }),
             ]);
             setTask(null);
             setSnackbar({ open: true, message: res.detail, severity: 'success' });

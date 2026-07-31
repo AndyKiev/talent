@@ -20,10 +20,14 @@ class ReviewSessionEmployeeRepository(BaseRepository):
         selectin cascade (~112 queries). _to_schema needs only: the RSE's own
         columns + the light evaluations list, the session name/status, and the
         employee's personal columns + job.name + main department.name. Everything
-        else — the employee's trainings/role-links/events/person, the job's link
+        else — the employee's trainings/role-links/events, the job's link
         tables, the session's roster — is raiseloaded, so the detail resolves in a
         handful of queries. Nothing in the detail path reads those raiseloaded
-        relationships; if that changes, widen the explicit loaders below."""
+        relationships; if that changes, widen the explicit loaders below.
+
+        `person` is NOT in the raiseloaded set: it stopped being optional when
+        employees.name was dropped, because the display name and the personal
+        facts are now all composed from it."""
         stmt = (
             select(self.model)
             .where(self.model.id == rse_id)
@@ -42,6 +46,10 @@ class ReviewSessionEmployeeRepository(BaseRepository):
                     selectinload(Employee.departments)
                     .joinedload(EmployeeDepartment.department)
                     .raiseload("*"),
+                    # person is REQUIRED, not optional: Employee.name composes
+                    # from it, and .birth_date / .sex / .marital_status are all
+                    # properties that proxy it. One extra batched query.
+                    selectinload(Employee.person).raiseload("*"),
                     raiseload("*"),
                 ),
             )
@@ -50,7 +58,8 @@ class ReviewSessionEmployeeRepository(BaseRepository):
 
     async def list_by_session(self, session_id: int, status: str | None = None):
         """Roster load: RSE rows for a session with the reviewed employee's
-        name/code columns + the light evaluations (score/facts) ONLY. Raiseloads
+        code + person (for the composed name) + the light evaluations
+        (score/facts) ONLY. Raiseloads
         the employee's deep graph, the evaluations' relationships, and the session
         — none of which _to_list_schema reads — so a 33-row roster doesn't hydrate
         33 employees' whole graphs (~1300 queries). The service re-sorts by roster
@@ -59,7 +68,14 @@ class ReviewSessionEmployeeRepository(BaseRepository):
         if status:
             stmt = stmt.where(self.model.status == status)
         stmt = stmt.options(
-            selectinload(self.model.employee).raiseload("*"),
+            selectinload(self.model.employee).options(
+                # Employee.name has no column behind it any more — it composes
+                # the person's parts — so the roster needs person loaded or the
+                # display name raises. selectin batches it into ONE query for
+                # the whole roster, not one per row.
+                selectinload(Employee.person).raiseload("*"),
+                raiseload("*"),
+            ),
             selectinload(self.model.evaluations).raiseload("*"),
             raiseload(self.model.session),
         )

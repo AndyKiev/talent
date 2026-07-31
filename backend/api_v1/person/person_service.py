@@ -1,4 +1,3 @@
-
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,7 +27,7 @@ from backend.api_v1.person.person_schema import (
     PersonUpdate,
 )
 from backend.api_v1.sex.sex_model import SEX_ID_BY_NAME
-from backend.utils.person_names import build_employee_name, normalize_name_part
+from backend.utils.person_names import normalize_name_part
 
 
 class PersonService(BaseService):
@@ -215,27 +214,11 @@ class PersonService(BaseService):
                 PersonNameExists(new_last, new_first)
             )
 
-        if name_changed:
-            await self._sync_employee_names(updated)
-
         schema = self._to_schema(updated)
         detail = await self._resolve_domain_success(
             PersonUpdateSuccess(f"{updated.last_name} {updated.first_name}")
         )
         return MutationResponse(detail=detail, data=schema)
-
-    async def _sync_employee_names(self, person: Person) -> None:
-        """Rebuild the derived employees.name for every linked employee."""
-        if not person.first_name or not person.last_name:
-            return
-        derived = build_employee_name(person.last_name, person.first_name)
-        changed = False
-        for employee in person.employees:
-            if employee.name != derived:
-                employee.name = derived
-                changed = True
-        if changed:
-            await self.session.commit()
 
     async def set_sex(self, person_id: int, sex: str | None) -> Person:
         """Targeted sex update ('male'/'female' -> sex_id) used by

@@ -25,34 +25,34 @@ import { snakeToCamel } from '../../../../utils/helpers.ts';
 import { useDataGridLocale } from '../../../../hooks/useDataGridLocale';
 import { centeredGridCellsSx } from '../../../../utils/dataGridSx';
 import ConfirmDeleteDialog from '../../../ui/ConfirmDeleteDialog';
-import { CANDIDATE_SOURCE_QK } from '../../../../utils/queryKeys';
+import { RECRUITMENT_CANDIDATE_SOURCES_QK } from '../../../../utils/queryKeys';
 import {
     fetchCandidateSources,
     createCandidateSource,
     updateCandidateSource,
     deleteCandidateSource,
-    type CandidateSource,
-} from './candidateSourceApi';
+    type RecruitmentCandidateSource,
+} from './recruitmentCandidateSourceApi';
 
-export function CandidateSourceCrud() {
+export function RecruitmentCandidateSourceCrud() {
     const getString = useString();
     const qc = useQueryClient();
     const localeText = useDataGridLocale();
 
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
     const [formOpen, setFormOpen] = useState(false);
-    const [editing, setEditing] = useState<CandidateSource | null>(null);
+    const [editing, setEditing] = useState<RecruitmentCandidateSource | null>(null);
     const [keyValue, setKeyValue] = useState('');
     const [description, setDescription] = useState('');
     const [sortOrder, setSortOrder] = useState(0);
-    const [pendingDelete, setPendingDelete] = useState<CandidateSource | null>(null);
+    const [pendingDelete, setPendingDelete] = useState<RecruitmentCandidateSource | null>(null);
 
     const { data: sources = [], isLoading, error } = useQuery({
-        queryKey: CANDIDATE_SOURCE_QK,
+        queryKey: RECRUITMENT_CANDIDATE_SOURCES_QK,
         queryFn: fetchCandidateSources,
     });
 
-    const invalidate = () => qc.invalidateQueries({ queryKey: CANDIDATE_SOURCE_QK });
+    const invalidate = () => qc.invalidateQueries({ queryKey: RECRUITMENT_CANDIDATE_SOURCES_QK });
     const ok = (message: string) => setSnackbar({ open: true, message, severity: 'success' });
     const fail = (message: string) => setSnackbar({ open: true, message, severity: 'error' });
 
@@ -79,7 +79,7 @@ export function CandidateSourceCrud() {
         setSortOrder(sources.length);
         setFormOpen(true);
     };
-    const openEdit = (row: CandidateSource) => {
+    const openEdit = (row: RecruitmentCandidateSource) => {
         setEditing(row);
         setKeyValue(row.key);
         setDescription(row.description ?? '');
@@ -97,7 +97,7 @@ export function CandidateSourceCrud() {
 
     const pending = createMutation.isPending || updateMutation.isPending;
 
-    const columns: GridColDef<CandidateSource>[] = [
+    const columns: GridColDef<RecruitmentCandidateSource>[] = [
         {
             field: 'key',
             headerName: getString('key') || 'Key',

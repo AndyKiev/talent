@@ -192,8 +192,11 @@ export function PersonalInfoPanel({
                                                     <MenuItem key={l.id} value={String(l.id)}>
                                                         <Stack direction="row" alignItems="center" spacing={1} sx={{ width: '100%' }}>
                                                             <span>{l.code}{label ? ` · ${label}` : ''}</span>
+                                                            {/* "top", not "right": the icon sits at the right edge of
+                                                                an already-narrow menu, so a right-hand tooltip lands
+                                                                off-screen on a phone. */}
                                                             {hint && (
-                                                                <Tooltip title={hint} placement="right" arrow>
+                                                                <Tooltip title={hint} placement="top" arrow>
                                                                     <InfoOutlinedIcon
                                                                         fontSize="small"
                                                                         sx={{ ml: 'auto', color: t.textMuted, cursor: 'help' }}

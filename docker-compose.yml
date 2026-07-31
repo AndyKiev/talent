@@ -98,8 +98,11 @@ services:
     env_file:
       - stack.env
     environment:
+      # NOTE: no VITE_* here. Vite bakes env at BUILD time (the Dockerfile runs
+      # `npm run build -- --mode $APP_MODE`) and the serve stage is plain nginx,
+      # so a runtime VITE_ var would be silently ignored. The API url lives in
+      # frontend/.env.<mode> and is intentionally EMPTY -> origin-relative.
       - NO_PROXY=${APP_NO_PROXY}
-      - VITE_BACKEND_API_URL=http://${APP_VITE_BACKEND_API_URL}:${APP_CONFIG__RUN__PORT}
     networks:
       talent:
         ipv4_address: 172.24.0.3

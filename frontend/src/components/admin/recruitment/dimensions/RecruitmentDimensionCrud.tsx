@@ -22,7 +22,7 @@ import { RecruitmentDimensionForm } from './RecruitmentDimensionForm';
 import { useArrowReorder } from '../../../../hooks/useArrowReorder';
 import { useDataGridLocale } from '../../../../hooks/useDataGridLocale';
 import { centeredGridCellsSx } from '../../../../utils/dataGridSx';
-import { RECRUITMENT_DIMENSION_QK } from '../../../../utils/queryKeys';
+import { RECRUITMENT_DIMENSIONS_QK } from '../../../../utils/queryKeys';
 import ConfirmDialog from '../../../ui/ConfirmDialog';
 import ConfirmDeleteDialog from '../../../ui/ConfirmDeleteDialog';
 import { AsyncContent } from '../../../ui/AsyncContent';
@@ -37,7 +37,7 @@ export function RecruitmentDimensionCrud() {
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
 
     const { data: rows = [], isLoading, error } = useQuery({
-        queryKey: RECRUITMENT_DIMENSION_QK,
+        queryKey: RECRUITMENT_DIMENSIONS_QK,
         queryFn: fetchRecruitmentDimensions,
         staleTime: 2 * 60 * 1000,
     });
@@ -58,7 +58,7 @@ export function RecruitmentDimensionCrud() {
     const { orderColumn } = useArrowReorder<RecruitmentDimension>({
         rows: sortedRows,
         updateSortOrder: (id, sort_order) => updateRecruitmentDimension({ id, data: { sort_order } }),
-        invalidateKeys: [RECRUITMENT_DIMENSION_QK],
+        invalidateKeys: [RECRUITMENT_DIMENSIONS_QK],
         getString,
         onError: (message) => setSnackbar({ open: true, message, severity: 'error' }),
     });

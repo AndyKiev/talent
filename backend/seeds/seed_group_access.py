@@ -46,6 +46,12 @@ HR_ESSENCES = [
     # Interviews — HRM/HRS schedule them and may write feedback directly.
     "interview",
     "recruitment_interview_feedback",
+    # Person events (surname change today). HRM is additionally narrowed to
+    # their department scope inside PersonEventService — the grant only opens
+    # the endpoint. `apply_due` guards on APPLY and stays admin-only: that one
+    # is the scheduler's sweep, while a single event is applied through the
+    # status PATCH (modify).
+    "person_event",
 ]
 # Read-only reference essences HRM/HRS may VIEW but must not mutate (e.g. pick a
 # department for a recruitment task, or read the fixed pipeline stages).

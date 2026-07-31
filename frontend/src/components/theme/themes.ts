@@ -6,6 +6,7 @@
 // every existing `t.cardBg` / `t.textMid` / `t.rowHover` consumer keeps working.
 //
 // Colour families (pairs — toggle flips bright↔dark within the same family):
+//   graphite:  graphiteLight / graphite — cool steel grey
 //   neutral:   light / dark          — pure greyscale, no hue
 //   blue:      blueLight / blueDark  — former light / dark (blue-slate)
 //   sand:      sand / sandDark       — warm beige / warm dark brown
@@ -14,6 +15,8 @@
 //   cyan:      cyanLight / cyan      — light teal / dark teal
 
 export type ThemeKey =
+  | "graphiteLight"
+  | "graphite"
   | "light"
   | "dark"
   | "blueLight"
@@ -63,6 +66,8 @@ export interface Theme {
 // The toggle button uses this to stay within the same family.
 // ---------------------------------------------------------------------------
 export const THEME_FAMILIES: Record<ThemeKey, ThemeKey> = {
+  graphiteLight: "graphite",
+  graphite: "graphiteLight",
   light: "dark",
   dark: "light",
   blueLight: "blueDark",
@@ -78,6 +83,60 @@ export const THEME_FAMILIES: Record<ThemeKey, ThemeKey> = {
 };
 
 export const themes: Record<ThemeKey, Theme> = {
+  // ── Graphite (cool steel grey) ───────────────────────────────────────
+  graphiteLight: {
+    isDark: false,
+    labelKey: "themeGraphiteLight",
+    appBg: "#f2f3f5",
+    bg: "linear-gradient(135deg, #f2f3f5 0%, #e8eaed 100%)",
+    cardBg: "#ffffff",
+    cardBg2: "#f4f5f7",
+    border: "#cbced4",
+    borderLight: "#e3e5e9",
+    text: "#1d1f23",
+    textSecondary: "#5b6068",
+    textMid: "#33373d",
+    textMuted: "#5b6068",
+    textFaint: "#93989f",
+    inputBg: "#ffffff",
+    inputBgDis: "#e8eaed",
+    rowHover: "#edeff2",
+    rowAlt: "#f7f8f9",
+    rowBase: "#ffffff",
+    pillBg: "#e6e8ec",
+    headerBg: "#e8eaed",
+    headerText: "#464b53",
+    accent: "#4b5563",
+    disabledText: "#71767e",
+    disabledBg: "#e8eaed",
+  },
+  graphite: {
+    isDark: true,
+    labelKey: "themeGraphite",
+    appBg: "#16181c",
+    bg: "linear-gradient(135deg, #16181c 0%, #1c1f24 100%)",
+    cardBg: "#202429",
+    cardBg2: "#252a30",
+    border: "#3d434c",
+    borderLight: "#2f343b",
+    text: "#e6e8ec",
+    textSecondary: "#98a0ab",
+    textMid: "#c7ccd4",
+    textMuted: "#98a0ab",
+    textFaint: "#626a75",
+    inputBg: "#202429",
+    inputBgDis: "#1a1d21",
+    rowHover: "#282d34",
+    rowAlt: "#1e2126",
+    rowBase: "#202429",
+    pillBg: "#2e343c",
+    headerBg: "#1b1e23",
+    headerText: "#a7b0bb",
+    accent: "#8b95a3",
+    disabledText: "#7b828c",
+    disabledBg: "#1a1d21",
+  },
+
   // ── Neutral (greyscale) ──────────────────────────────────────────────
   light: {
     isDark: false,

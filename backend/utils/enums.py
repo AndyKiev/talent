@@ -66,6 +66,7 @@ class EssenceName(str, Enum):
 
     # ── HR core ──────────────────────────────────────────────────────────────
     PERSON = "person"
+    PERSON_EVENT = "person_event"
     EMPLOYEE = "employee"
     EMPLOYEE_STATUS = "employee_status"
     DEPARTMENT = "department"

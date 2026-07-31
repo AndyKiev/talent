@@ -41,7 +41,7 @@ import { EMPLOYEE_SELECT_TARGET_OPTIONS } from '../employees/employeeLandingTarg
 import { MENUS_MY_QK } from '../../utils/queryKeys';
 import cfl from '../../utils/helpers.ts';
 import type { GetStringFn } from '../../types/getStringFn';
-import { groupForKey, SETTINGS_GROUP_BY_KEY, GENERAL_GROUP_KEY } from '../developer/settings/settingsGroups';
+import { groupForKey, SETTINGS_GROUP_BY_KEY, GENERAL_GROUP_KEY, SURNAME_FIRST_KEY } from '../developer/settings/settingsGroups';
 import { UserGridColumnsPanel } from '../user_grid_columns/UserGridColumnsPanel';
 import { ReorderableList } from '../people-review/ReorderableList';
 import {
@@ -308,19 +308,23 @@ export function UserSettingsGroupView({ groupKey }: { groupKey: string }) {
 
     // Refresh both the page payload AND the per-user effective list every consumer
     // hook reads, so an override takes effect across the app immediately.
-    const invalidate = () => {
+    const invalidate = (key?: string) => {
         qc.invalidateQueries({ queryKey: USER_SETTINGS_EFFECTIVE_QK });
         qc.invalidateQueries({ queryKey: EFFECTIVE_SETTINGS_QK });
+        // Display names are composed SERVER-side per request, so every cached
+        // payload carrying a name is stale the moment the order flips. Nothing
+        // short of a full refetch fixes them.
+        if (key === SURNAME_FIRST_KEY) qc.invalidateQueries();
     };
 
     const saveMut = useMutation({
         mutationFn: setUserSetting,
-        onSuccess: async (res) => { await invalidate(); notify(res.detail); },
+        onSuccess: async (res, vars) => { await invalidate(vars.key); notify(res.detail); },
         onError: (err: Error) => notify(err.message, 'error'),
     });
     const resetMut = useMutation({
         mutationFn: resetUserSetting,
-        onSuccess: async () => { await invalidate(); notify(getString('userSettingDeleteSuccess')); },
+        onSuccess: async (_res, key) => { await invalidate(key); notify(getString('userSettingDeleteSuccess')); },
         onError: (err: Error) => notify(err.message, 'error'),
     });
 

@@ -30,7 +30,7 @@ import { UserGridTable } from '../../../utils/userGridTables';
 import { useRecruitmentViewStore } from '../../../store/recruitmentViewStore';
 import { centeredGridCellsSx } from '../../../utils/dataGridSx';
 import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
-import { RECRUITMENT_TASK_QK } from '../../../utils/queryKeys';
+import { RECRUITMENT_TASKS_QK } from '../../../utils/queryKeys';
 import { fetchRecruitmentTasks, type RecruitmentStatusKey, type RecruitmentTask } from './recruitmentTaskApi';
 import { useRecruitmentTaskColumns } from './useRecruitmentTaskColumns';
 import { useRecruitmentTaskMutations } from './useRecruitmentTaskMutations';
@@ -50,7 +50,7 @@ export function RecruitmentTasksPage() {
     const setView = useRecruitmentViewStore((s) => s.setView);
 
     const { data: rows = [], isLoading, error } = useQuery({
-        queryKey: RECRUITMENT_TASK_QK,
+        queryKey: RECRUITMENT_TASKS_QK,
         queryFn: fetchRecruitmentTasks,
         staleTime: 30 * 1000,
     });

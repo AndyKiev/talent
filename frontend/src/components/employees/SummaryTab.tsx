@@ -10,6 +10,12 @@ import useString from '../../hooks/useString';
 import str from '../../strings/str';
 import { useClipboard } from '../../hooks/useClipboard';
 import cfl from '../../utils/helpers.ts';
+import { useAuthStore } from '../../store/authStore';
+import LastNameHistoryPanel from '../person_events/LastNameHistoryPanel';
+
+// Groups allowed to record a surname change. The backend enforces the same list
+// (and narrows HRM to their department scope) — this only hides the buttons.
+const SURNAME_EDIT_GROUPS = ['admin', 'dev', 'hrm', 'hrs'];
 
 function Field({
     label,
@@ -55,6 +61,12 @@ export function SummaryTab() {
         onSuccess: (message) => setSnackbar({ open: true, message, severity: 'success' }),
         onError: (message) => setSnackbar({ open: true, message, severity: 'error' }),
     });
+
+    const canEditSurname = useAuthStore((s) =>
+        (s.user?.groups ?? []).some((g) =>
+            SURNAME_EDIT_GROUPS.includes(g.trim().toLowerCase()),
+        ),
+    );
 
     const { data: employee } = useQuery({
         queryKey: ['employee', id],
@@ -113,6 +125,16 @@ export function SummaryTab() {
                             ? extraDepts.map((d) => <DeptRow key={d.id} dept={d} />)
                             : <Typography variant="body1">—</Typography>}
                     </Box>
+                </Grid>
+
+                {/* Surname history: a person-level fact, so it is keyed by the
+                    person, not this employee record. */}
+                <Grid size={12}>
+                    <LastNameHistoryPanel
+                        personId={employee?.person_id ?? null}
+                        currentLastName={employee?.person?.last_name ?? null}
+                        canEdit={canEditSurname}
+                    />
                 </Grid>
             </Grid>
 

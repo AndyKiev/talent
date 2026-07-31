@@ -53,9 +53,7 @@ class AppSettingValueBelowMin(DomainError):
 
     def __init__(self, minimum: int = 1) -> None:
         self.template_vars = {"min": minimum}
-        self.fallback = (
-            f"A user-overridable numeric setting must be at least {minimum}"
-        )
+        self.fallback = f"A user-overridable numeric setting must be at least {minimum}"
         DomainError.__init__(self, self.fallback)
 
 

@@ -65,7 +65,7 @@ import type { GetStringFn } from '../../../types/getStringFn';
 import type { MenuVisibilityMode } from '../../developer/security/menus/menuAdminApi';
 import { deriveMode, modeToFlags, MODE_LABEL_KEY } from '../../developer/security/menus/menuVisibility';
 import { fetchUserGroups, type UserGroup } from '../../admin/user_groups/userGroupApi';
-import { groupForSetting, SETTINGS_GROUP_BY_KEY, GENERAL_GROUP_KEY } from './settingsGroups';
+import { groupForSetting, SETTINGS_GROUP_BY_KEY, GENERAL_GROUP_KEY, SURNAME_FIRST_KEY } from './settingsGroups';
 import { EMPLOYEE_SELECT_TARGET_OPTIONS } from '../../employees/employeeLandingTarget';
 import { UserGridColumnsPanel } from '../../user_grid_columns/UserGridColumnsPanel';
 
@@ -614,11 +614,15 @@ export function SettingsGroupView({ groupKey }: { groupKey: string }) {
     // Refresh both the settings list AND every per-key consumer (useBooleanSetting
     // etc.), so toggling a flag here updates gated UI (e.g. avatars) immediately.
     // My-menus too: the training master shows/hides the 'training' menu item.
-    const invalidate = () => {
+    const invalidate = (key?: string) => {
         qc.invalidateQueries({ queryKey: APP_SETTINGS_QK });
         qc.invalidateQueries({ queryKey: APP_SETTING_BY_KEY_QK });
         qc.invalidateQueries({ queryKey: EFFECTIVE_SETTINGS_QK });
         qc.invalidateQueries({ queryKey: MENUS_MY_QK });
+        // Display names are composed SERVER-side, so changing the global order
+        // makes every cached payload carrying a name stale for anyone without
+        // a personal override — only a full refetch fixes them.
+        if (key === SURNAME_FIRST_KEY) qc.invalidateQueries();
     };
 
     // Turning the training master OFF while its delete child is ON must pass
@@ -633,7 +637,7 @@ export function SettingsGroupView({ groupKey }: { groupKey: string }) {
 
     const updateMut = useMutation({
         mutationFn: updateAppSetting,
-        onSuccess: async (res) => { await invalidate(); notify(res.detail); },
+        onSuccess: async (res) => { await invalidate(res.data?.key); notify(res.detail); },
         onError: (err: Error) => notify(err.message, 'error'),
     });
     const createMut = useMutation({

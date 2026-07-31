@@ -6,6 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin
+from backend.utils.crypto.types import EncryptedString
 
 if TYPE_CHECKING:
     from backend.api_v1.recruitment_application.recruitment_application_model import (
@@ -25,8 +26,12 @@ if TYPE_CHECKING:
 class RecruitmentCandidate(IntIdPkMixin, Base):
     __tablename__ = "recruitment_candidates"
 
-    first_name: Mapped[str] = mapped_column(String(128), nullable=False)
-    last_name: Mapped[str] = mapped_column(String(128), nullable=False)
+    # ENCRYPTED AT REST (see backend/utils/crypto/registry.py). Candidates are
+    # people outside the company who never consented to an HR system holding
+    # their name. Length is capped in the Pydantic schema, not here: ciphertext
+    # is longer than the plaintext it replaces.
+    first_name: Mapped[str] = mapped_column(EncryptedString, nullable=False)
+    last_name: Mapped[str] = mapped_column(EncryptedString, nullable=False)
     email: Mapped[str | None] = mapped_column(String(128), unique=True, nullable=True)
     # Where the candidate came from (optional — set on the create form).
     candidate_source_id: Mapped[int | None] = mapped_column(

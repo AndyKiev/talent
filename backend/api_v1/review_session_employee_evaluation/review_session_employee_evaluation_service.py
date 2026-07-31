@@ -1,4 +1,3 @@
-
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import raiseload
@@ -6,6 +5,18 @@ from sqlalchemy.orm import raiseload
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.employee.employee_schema import EmployeeSchema
+from backend.api_v1.employee_fact.employee_fact_repository import EmployeeFactRepository
+from backend.api_v1.employee_fact.employee_fact_schema import (
+    EmployeeFact as EmployeeFactSchema,
+)
+from backend.api_v1.employee_fact.employee_fact_service import EmployeeFactService
+from backend.api_v1.employee_fact_type.employee_fact_type_model import FACT, IMPROVEMENT
+from backend.api_v1.employee_fact_type.employee_fact_type_repository import (
+    EmployeeFactTypeRepository,
+)
+from backend.api_v1.employee_fact_type.employee_fact_type_service import (
+    EmployeeFactTypeService,
+)
 from backend.api_v1.review_session_criterion.review_session_criterion_model import (
     ReviewSessionCriterion,
 )
@@ -68,8 +79,24 @@ class ReviewSessionEmployeeEvaluationService(BaseService):
             raise await self._resolve_domain_error(exc)
         return result
 
-    def _to_schema(self, record) -> EvaluationSchema:
+    def _fact_service(self) -> EmployeeFactService:
+        return EmployeeFactService(
+            repository=EmployeeFactRepository(session=self.session),
+            user=self.user,
+            session=self.session,
+        )
+
+    def _to_schema(
+        self, record, facts: list[EmployeeFactSchema] | None = None
+    ) -> EvaluationSchema:
         schema = EvaluationSchema.model_validate(record)
+        # SYNCHRONOUS on purpose — the fact rows are passed in PRE-LOADED (one
+        # query for every competence on the page), never fetched per record.
+        for fact in facts or []:
+            if fact.employee_fact_type_key == IMPROVEMENT:
+                schema.improvements.append(fact)
+            else:
+                schema.facts.append(fact)
         if record.dimension:
             schema.dimension_name = record.dimension.name
             schema.dimension_key = record.dimension.key
@@ -98,9 +125,12 @@ class ReviewSessionEmployeeEvaluationService(BaseService):
         frozen_by_dim = await self._frozen_criteria_by_dimension(
             review_session_employee_id
         )
+        facts_by_eval = await self._fact_service().facts_by_evaluation(
+            [r.id for r in records]
+        )
         schemas = []
         for r in records:
-            schema = self._to_schema(r)
+            schema = self._to_schema(r, facts_by_eval.get(r.id))
             schema.criteria = frozen_by_dim.get(r.dimension_id, [])
             schemas.append(schema)
         return schemas
@@ -156,7 +186,8 @@ class ReviewSessionEmployeeEvaluationService(BaseService):
             raise await self._resolve_domain_error(EvaluationNotEditable())
 
         updated = await self.update(orm_record, eval_update, partial=True)
-        schema = self._to_schema(updated)
+        facts_by_eval = await self._fact_service().facts_by_evaluation([updated.id])
+        schema = self._to_schema(updated, facts_by_eval.get(updated.id))
         detail = await self._resolve_domain_success(EvaluationSaveSuccess())
         return MutationResponse(detail=detail, data=schema)
 
@@ -172,12 +203,6 @@ class ReviewSessionEmployeeEvaluationService(BaseService):
                 raise await self._resolve_domain_error(EvaluationNotEditable())
             if rse and rse.session and rse.session.status != "open":
                 raise await self._resolve_domain_error(EvaluationNotEditable())
-
-            sent = upd.model_dump(exclude_unset=True)
-            if "facts" in sent:
-                orm_record.facts = upd.facts
-            if "improvement" in sent:
-                orm_record.improvement = upd.improvement
 
             if upd.criterion_scores is not None:
                 # Replace the descriptor scores wholesale, then recompute the
@@ -207,7 +232,10 @@ class ReviewSessionEmployeeEvaluationService(BaseService):
         for r in results:
             await self.session.refresh(r)
 
-        schemas = [self._to_schema(r) for r in results]
+        facts_by_eval = await self._fact_service().facts_by_evaluation(
+            [r.id for r in results]
+        )
+        schemas = [self._to_schema(r, facts_by_eval.get(r.id)) for r in results]
         detail = await self._resolve_domain_success(EvaluationSaveSuccess())
         return MutationResponse(detail=detail, data=schemas)
 
@@ -266,11 +294,16 @@ class ReviewSessionEmployeeEvaluationService(BaseService):
                 orm_record.mean_score = None
                 orm_record.score = None
 
-            # 2) Clear the leaving side's dimension column.
-            if leaving_type.key == STRONG:
-                orm_record.facts = None
-            else:
-                orm_record.improvement = None
+            # 2) Clear the leaving side's numbered list. Was "NULL the matching
+            #    text column"; the rows are deleted now, same destructive effect.
+            fact_service = self._fact_service()
+            leaving_key = FACT if leaving_type.key == STRONG else IMPROVEMENT
+            fact_type = await EmployeeFactTypeService(
+                repository=EmployeeFactTypeRepository(session=self.session),
+                user=self.user,
+                session=self.session,
+            ).get_by_key(leaving_key)
+            await fact_service.delete_linked_facts(orm_record.id, fact_type.id)
 
             # 3) Drop the competence from the leaving side of the RSE summary.
             #    The comment rows go with it via ON DELETE CASCADE.
@@ -292,6 +325,7 @@ class ReviewSessionEmployeeEvaluationService(BaseService):
             raise
 
         await self.session.refresh(orm_record)
-        schema = self._to_schema(orm_record)
+        facts_by_eval = await self._fact_service().facts_by_evaluation([orm_record.id])
+        schema = self._to_schema(orm_record, facts_by_eval.get(orm_record.id))
         detail = await self._resolve_domain_success(EvaluationSaveSuccess())
         return MutationResponse(detail=detail, data=schema)

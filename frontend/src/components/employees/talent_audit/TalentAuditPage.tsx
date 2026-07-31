@@ -348,15 +348,20 @@ export function TalentAuditPage() {
                   onClose={() => setAddJobOpen(false)}
                   onSuccess={(msg) => showNotification(msg)}
               />
-              <TalentAuditInterviewDialog
-                  open={addInterviewOpen}
-                  talentAuditId={audit.id}
-                  interviewsQK={ivQKey}
-                  auditJobsQK={jobsQKey}
-                  onClose={() => setAddInterviewOpen(false)}
-                  onSuccess={(msg) => showNotification(msg)}
-                  onError={(msg) => showNotification(msg, 'error')}
-              />
+              {/* Mount-fresh: unmounting on close resets the form and the
+                  discrepancy-confirmation state, so the dialog needs no
+                  reset-on-close effect. */}
+              {addInterviewOpen && (
+                  <TalentAuditInterviewDialog
+                      open
+                      talentAuditId={audit.id}
+                      interviewsQK={ivQKey}
+                      auditJobsQK={jobsQKey}
+                      onClose={() => setAddInterviewOpen(false)}
+                      onSuccess={(msg) => showNotification(msg)}
+                      onError={(msg) => showNotification(msg, 'error')}
+                  />
+              )}
               <TalentAuditJobStatusDialog
                   open={!!statusTarget}
                   auditJobId={statusTarget?.auditJobId ?? null}

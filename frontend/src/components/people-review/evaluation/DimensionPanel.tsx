@@ -17,6 +17,7 @@ import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import EditIcon from '@mui/icons-material/Edit';
 import DoneIcon from '@mui/icons-material/Done';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import MoveToInboxIcon from '@mui/icons-material/MoveToInbox';
 import type { GetStringFn } from '../../../types/getStringFn';
 import { useTheme } from '../../theme/useTheme';
 import { InlineEditField } from './InlineEditField';
@@ -34,7 +35,6 @@ import {
 
 interface Props {
     visibleEvals: LocalEval[];
-    localEvals: LocalEval[];
     activeTab: number;
     setActiveTab: Dispatch<SetStateAction<number>>;
     isEditable: boolean;
@@ -63,11 +63,15 @@ interface Props {
     isDevelopPicked: (key: string) => boolean;
     copyFactToStrong: (key: string, text: string) => void;
     copyImprovementToDevelop: (key: string, text: string) => void;
+    /** Send a line back to the employee's unlinked pool — the link row goes, the
+     *  authored text stays. */
+    unlinkFact: (evalId: number, index: number) => void;
+    unlinkImprovement: (evalId: number, index: number) => void;
 }
 
 /** The per-competence dimension tabs with behaviour scoring, facts and improvement. */
 export function DimensionPanel({
-    visibleEvals, localEvals, activeTab, setActiveTab, isEditable, getString,
+    visibleEvals, activeTab, setActiveTab, isEditable, getString,
     draggedItem, setDraggedItem, dragOverTab, setDragOverTab,
     dragOverFactIndex, setDragOverFactIndex, setPendingMove,
     newFactTexts, setNewFactTexts,
@@ -75,6 +79,7 @@ export function DimensionPanel({
     setCriterion, addFact, removeFact, editFact, reorderFact,
     addImprovement, removeImprovement, editImprovement, reorderImprovement,
     isStrongPicked, isDevelopPicked, copyFactToStrong, copyImprovementToDevelop,
+    unlinkFact, unlinkImprovement,
 }: Props) {
     const { t } = useTheme();
 
@@ -142,15 +147,13 @@ export function DimensionPanel({
                         ev.preventDefault();
                         setDragOverTab(null);
                         if (!draggedItem || draggedItem.evalId === e.id) { setDraggedItem(null); return; }
-                        const src = localEvals.find(le => le.id === draggedItem.evalId);
-                        const list = draggedItem.kind === DragItemKind.Fact ? src?.facts : src?.improvements;
-                        const text = list?.[draggedItem.index];
-                        if (text == null) { setDraggedItem(null); return; }
                         setPendingMove({
                             kind: draggedItem.kind,
+                            // null = the item came from the unlinked pool.
                             fromEvalId: draggedItem.evalId,
                             index: draggedItem.index,
-                            text,
+                            text: draggedItem.text,
+                            factId: draggedItem.factId,
                             toEvalId: e.id,
                             toTabIndex: idx,
                             toName: competenceName(getString, e.dimension_key, e.dimension_name),
@@ -160,7 +163,7 @@ export function DimensionPanel({
                 } as const,
             };
         }),
-    [visibleEvals, activeTab, draggedItem, dragOverTab, getString, t.textMuted, localEvals, setDraggedItem, setDragOverTab, setPendingMove]);
+    [visibleEvals, activeTab, draggedItem, dragOverTab, getString, t.textMuted, setDraggedItem, setDragOverTab, setPendingMove]);
 
     return (
         <Box sx={{ border: `1px solid ${t.borderLight}`, borderRadius: '12px', overflow: 'hidden', background: t.cardBg }}>
@@ -266,10 +269,22 @@ export function DimensionPanel({
                             <Box sx={{ mb: 1.5 }}>
                                 {activeEval.facts.map((fact, idx) => (
                                     <Stack
-                                        key={`fact-${idx}`}
+                                        key={fact.id}
                                         direction="row"
                                         alignItems="flex-start"
                                         spacing={0.5}
+                                        draggable={factsEditing}
+                                        onDragStart={(e) => {
+                                            e.dataTransfer.effectAllowed = 'move';
+                                            setDraggedItem({
+                                                kind: DragItemKind.Fact,
+                                                evalId: activeEval.id,
+                                                index: idx,
+                                                factId: fact.id,
+                                                text: fact.text,
+                                            });
+                                        }}
+                                        onDragEnd={() => setDraggedItem(null)}
                                         onDragOver={(e) => {
                                             if (draggedItem?.kind !== DragItemKind.Fact || draggedItem.evalId !== activeEval.id) return;
                                             e.preventDefault();
@@ -300,7 +315,7 @@ export function DimensionPanel({
                                                     {idx + 1}.
                                                 </Typography>
                                                 <InlineEditField
-                                                    initialValue={fact}
+                                                    initialValue={fact.text}
                                                     color={activeColor}
                                                     getString={getString}
                                                     onSave={(text) => { editFact(activeEval.id, idx, text); setEditingFact(null); }}
@@ -319,16 +334,27 @@ export function DimensionPanel({
                                                         if (isEditable) setEditingFact({ id: activeEval.id, index: idx });
                                                     }}
                                                 >
-                                                    {fact}
+                                                    {fact.text}
                                                 </Typography>
                                                 {isStrongPicked(activeEval.dimension_key) && (
-                                                    <Tooltip title={getString(factsEditing ? 'copyFactToStrongSummary' : '')}>
+                                                    <Tooltip title={getString('copyFactToStrongSummary')}>
                                                         <IconButton
                                                             size="small"
-                                                            onClick={() => copyFactToStrong(activeEval.dimension_key, fact)}
+                                                            onClick={() => copyFactToStrong(activeEval.dimension_key, fact.text)}
                                                             sx={{ p: 0.25, mt: '-2px' }}
                                                         >
                                                             <KeyboardDoubleArrowUpIcon sx={{ fontSize: 15 }} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                )}
+                                                {factsEditing && (
+                                                    <Tooltip title={getString('moveFactToUnlinked')}>
+                                                        <IconButton
+                                                            size="small"
+                                                            onClick={() => unlinkFact(activeEval.id, idx)}
+                                                            sx={{ p: 0.25, mt: '-2px' }}
+                                                        >
+                                                            <MoveToInboxIcon sx={{ fontSize: 15 }} />
                                                         </IconButton>
                                                     </Tooltip>
                                                 )}
@@ -411,10 +437,22 @@ export function DimensionPanel({
                                 <Box sx={{ mb: 1.5 }}>
                                     {activeEval.improvements.map((imp, idx) => (
                                         <Stack
-                                            key={`imp-${idx}`}
+                                            key={imp.id}
                                             direction="row"
                                             alignItems="flex-start"
                                             spacing={0.5}
+                                            draggable={impEditing}
+                                            onDragStart={(e) => {
+                                                e.dataTransfer.effectAllowed = 'move';
+                                                setDraggedItem({
+                                                    kind: DragItemKind.Improvement,
+                                                    evalId: activeEval.id,
+                                                    index: idx,
+                                                    factId: imp.id,
+                                                    text: imp.text,
+                                                });
+                                            }}
+                                            onDragEnd={() => setDraggedItem(null)}
                                             onDragOver={(e) => {
                                                 if (draggedItem?.kind !== DragItemKind.Improvement || draggedItem.evalId !== activeEval.id) return;
                                                 e.preventDefault();
@@ -442,7 +480,7 @@ export function DimensionPanel({
                                                         {idx + 1}.
                                                     </Typography>
                                                     <InlineEditField
-                                                        initialValue={imp}
+                                                        initialValue={imp.text}
                                                         color={activeColor}
                                                         getString={getString}
                                                         onSave={(text) => { editImprovement(activeEval.id, idx, text); setEditingImp(null); }}
@@ -461,16 +499,27 @@ export function DimensionPanel({
                                                             if (isEditable) setEditingImp({ id: activeEval.id, index: idx });
                                                         }}
                                                     >
-                                                        {imp}
+                                                        {imp.text}
                                                     </Typography>
                                                     {isDevelopPicked(activeEval.dimension_key) && (
                                                         <Tooltip title={getString('copyImprovementToDevelopSummary')}>
                                                             <IconButton
                                                                 size="small"
-                                                                onClick={() => copyImprovementToDevelop(activeEval.dimension_key, imp)}
+                                                                onClick={() => copyImprovementToDevelop(activeEval.dimension_key, imp.text)}
                                                                 sx={{ p: 0.25, mt: '-2px' }}
                                                             >
                                                                 <KeyboardDoubleArrowUpIcon sx={{ fontSize: 15 }} />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    )}
+                                                    {impEditing && (
+                                                        <Tooltip title={getString('moveImprovementToUnlinked')}>
+                                                            <IconButton
+                                                                size="small"
+                                                                onClick={() => unlinkImprovement(activeEval.id, idx)}
+                                                                sx={{ p: 0.25, mt: '-2px' }}
+                                                            >
+                                                                <MoveToInboxIcon sx={{ fontSize: 15 }} />
                                                             </IconButton>
                                                         </Tooltip>
                                                     )}

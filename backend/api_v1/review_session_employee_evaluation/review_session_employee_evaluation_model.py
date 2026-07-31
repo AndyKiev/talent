@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint, ForeignKey, Integer, Numeric, Text
+from sqlalchemy import CheckConstraint, ForeignKey, Integer, Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.api_v1.base.base_model import Base
@@ -42,8 +42,18 @@ class ReviewSessionEmployeeEvaluation(IntIdPkMixin, TimestampMixin, Base):
     # the cause — average criterion_scores, don't trust mean_score. See memory
     # `tempo-competence-value-source`.
     mean_score: Mapped[float | None] = mapped_column(Numeric(3, 2), nullable=True)
-    facts: Mapped[str | None] = mapped_column(Text, nullable=True)
-    improvement: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # The two numbered lists (facts / directions for improvement) used to be Text
+    # columns here, with "1. …\n2. …" baked into the text. They are rows now:
+    # `employee_facts` (owned by the EMPLOYEE, so a fact can be registered before
+    # anyone knows which competence it proves) attached through
+    # `employee_fact_evaluation_links`, whose sort_order carries the numbering.
+    # Reached via EmployeeFactService, never as a relationship — the review page
+    # loads them for every competence in one query.
+    #
+    # The move was THREE revisions (create tables / data script / drop columns),
+    # never two: a single upgrade that both created and dropped would have
+    # destroyed every existing value. 1947 lines were migrated; the pre-drop text
+    # is in `backups/evaluation_facts_pre_drop.json`.
 
     __table_args__ = (
         CheckConstraint(

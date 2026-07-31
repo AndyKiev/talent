@@ -20,6 +20,7 @@ from backend.auth.permission_errors import PermissionDeniedSet
 from backend.auth.permission_resolvers import resolve_user_is_bypass
 from backend.database.db_helper import db_helper
 from backend.utils.enums import EssenceName, OperationTypes, OperationVerb
+from backend.utils.name_order import resolve_surname_first, set_surname_first
 
 # No import from user_dependency — that module imports us, so importing it
 # here would create a circular dependency.
@@ -65,6 +66,9 @@ async def get_current_auth_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
         )
+    # Park this viewer's name order for the request BEFORE anything composes a
+    # display name (Employee.name is a sync property and cannot await).
+    set_surname_first(await resolve_surname_first(session, orm_user.id))
     schema = await service._to_auth_schema(orm_user)
     # Superadmin bypass flag — computed from the same selectin-loaded user-group
     # relationships the permission resolvers use. (Ported from talent-test.)
@@ -221,7 +225,6 @@ async def register_employee(
     from backend.api_v1.person.person_model import Person
     from backend.api_v1.person.person_repository import PersonRepository
     from backend.utils.person_names import (
-        build_employee_name,
         normalize_name_part,
         split_employee_full_name,
     )
@@ -243,12 +246,10 @@ async def register_employee(
         )
     )
 
-    derived_name = build_employee_name(last, first)
     try:
         orm_user = await service.create(
             EmployeeCreate(
                 code=code,
-                name=derived_name,
                 email=email,
                 is_active=True,
                 job_id=None,

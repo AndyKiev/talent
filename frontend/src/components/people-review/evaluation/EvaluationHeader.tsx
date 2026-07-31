@@ -22,6 +22,7 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import type { GetStringFn } from '../../../types/getStringFn';
@@ -58,6 +59,10 @@ interface Props {
     // Reviewer notes.
     showCommentsButton: boolean;
     commentsCount: number;
+    /** Hidden in presentation mode: unattached lines are not part of the review. */
+    showUnlinkedFactsButton: boolean;
+    unlinkedFactsCount: number;
+    onOpenUnlinkedFacts: () => void;
     onOpenComments: () => void;
     // Oversight-manager picker (own record only).
     isOwnRecord: boolean;
@@ -99,6 +104,7 @@ export function EvaluationHeader({
     onOpenTempoPdf, onOpenTempoHtml,
     viewOnly, onRefresh, refreshing,
     showCommentsButton, commentsCount, onOpenComments,
+    showUnlinkedFactsButton, unlinkedFactsCount, onOpenUnlinkedFacts,
     isOwnRecord,
     isEditable, presentationMode, setPresentationMode,
     sectionReorderMode, setSectionReorderMode,
@@ -261,6 +267,25 @@ export function EvaluationHeader({
                                     sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, fontSize: 12 }}
                                 >
                                     {getString('reviewComments')}
+                                </Button>
+                            </Badge>
+                        </Tooltip>
+                    )}
+
+                    {/* Quick fact registration + the pool of lines not yet attached
+                        to a competence. The badge is the pool's size, so an
+                        unprocessed fact stays visible until it is filed. */}
+                    {showUnlinkedFactsButton && (
+                        <Tooltip title={getString('unlinkedFactsTooltip')}>
+                            <Badge badgeContent={unlinkedFactsCount} color="warning" overlap="circular">
+                                <Button
+                                    size="small"
+                                    variant="outlined"
+                                    startIcon={<NoteAddIcon sx={{ fontSize: 16 }} />}
+                                    onClick={onOpenUnlinkedFacts}
+                                    sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, fontSize: 12 }}
+                                >
+                                    {getString('unlinkedFacts')}
                                 </Button>
                             </Badge>
                         </Tooltip>

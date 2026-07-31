@@ -29,7 +29,7 @@ import cfl from '../../../utils/helpers.ts';
 import { DATE_FORMAT } from '../../../utils/eNums.ts';
 import { formatToUkrDate } from '../../../utils/dateFormatter';
 import type { GetStringFn } from '../../../types/getStringFn';
-import { RECRUITMENT_TASK_QK, JOB_REQUIREMENT_GROUPS_QK, DEPARTMENT_FLAT_QK } from '../../../utils/queryKeys';
+import { RECRUITMENT_TASKS_QK, JOB_REQUIREMENT_GROUPS_QK, DEPARTMENT_FLAT_QK } from '../../../utils/queryKeys';
 import { fetchDepartmentsFlat } from '../../admin/departments/departmentApi';
 import {
     fetchRecruitmentTask,
@@ -57,7 +57,7 @@ function useTaskId(): number {
 
 function useTaskQuery(id: number) {
     return useQuery({
-        queryKey: [...RECRUITMENT_TASK_QK, id],
+        queryKey: [...RECRUITMENT_TASKS_QK, id],
         queryFn: () => fetchRecruitmentTask(id),
         enabled: Number.isFinite(id),
     });
@@ -133,7 +133,7 @@ function TaskDetailsForm({
 }) {
     const [comment, setComment] = useState(task.comment ?? '');
     const [deadline, setDeadline] = useState(task.target_deadline ?? '');
-    const [groupId, setGroupId] = useState<number | ''>(task.requirement_group_id ?? '');
+    const [groupId, setGroupId] = useState<number | ''>(task.job_requirement_group_id ?? '');
     const [departmentId, setDepartmentId] = useState<number | null>(task.department_id);
     const [openings, setOpenings] = useState(task.openings ?? 1);
 
@@ -152,7 +152,7 @@ function TaskDetailsForm({
             data: {
                 comment: comment.trim() || null,
                 target_deadline: deadline || null,
-                requirement_group_id: groupId === '' ? null : groupId,
+                job_requirement_group_id: groupId === '' ? null : groupId,
                 department_id: departmentId,
                 openings: Math.max(1, openings),
             },

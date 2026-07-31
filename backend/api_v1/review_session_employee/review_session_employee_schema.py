@@ -4,12 +4,14 @@ from pydantic import BaseModel, ConfigDict
 
 
 class EvaluationInRSE(BaseModel):
+    """The light evaluation rows carried on the review record. No facts here:
+    they are rows in `employee_facts` now, loaded per competence by the
+    evaluations endpoint — the roster must never pay for them."""
+
     model_config = ConfigDict(from_attributes=True)
     id: int
     dimension_id: int
     score: int | None = None
-    facts: str | None = None
-    improvement: str | None = None
 
 
 class RseDimensionItem(BaseModel):

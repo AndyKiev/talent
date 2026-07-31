@@ -39,6 +39,9 @@ export interface EmployeePerson {
 export interface Employee {
     id: number;
     code: string;
+    // Read-only. There is no employees.name column: the backend composes this
+    // from the person's parts in THIS user's preferred order
+    // (`surname_first_in_names`), so it changes when that setting changes.
     name: string;
     email: string | null;
     is_active: boolean;
@@ -57,8 +60,7 @@ export interface Employee {
     responsibility_departments: MainDepartment[];
 }
 
-// NOTE: no `name` — employees.name is derived from the person (rename via
-// PATCH /persons/{id}; the backend rebuilds 'LAST FIRST').
+// NOTE: no `name` — it is never an input. Rename via PATCH /persons/{id}.
 export interface EmployeeUpdate {
     email?: string | null;
     is_active?: boolean;

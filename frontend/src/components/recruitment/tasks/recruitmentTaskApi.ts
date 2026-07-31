@@ -44,7 +44,7 @@ export interface TopOrgUnitMini {
 export interface RecruitmentTask {
     id: number;
     job_id: number;
-    requirement_group_id: number | null;
+    job_requirement_group_id: number | null;
     department_id: number | null;
     openings: number;
     status_id: number;
@@ -71,7 +71,7 @@ export interface RecruitmentTaskStatusRow {
 
 export interface RecruitmentTaskCreate {
     job_id: number;
-    requirement_group_id?: number | null;
+    job_requirement_group_id?: number | null;
     department_id?: number | null;
     openings?: number;
     comment?: string | null;
@@ -79,7 +79,7 @@ export interface RecruitmentTaskCreate {
 }
 
 export interface RecruitmentTaskUpdate {
-    requirement_group_id?: number | null;
+    job_requirement_group_id?: number | null;
     department_id?: number | null;
     openings?: number;
     comment?: string | null;

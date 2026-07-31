@@ -17,6 +17,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api_v1.base.models import Base
+from backend.utils.crypto.registry import is_encrypted_column
 
 ModelType = TypeVar("ModelType", bound=Base)
 
@@ -220,6 +221,14 @@ class BaseRepository:
 
         def add_order_clause(field: str, direction: SortDirection = SortDirection.ASC):
             """Add order clause for a field with direction."""
+            # Encryption is randomized, so ORDER BY on an encrypted column sorts
+            # random bytes and silently returns a wrong order. Refuse instead:
+            # the caller must sort in Python after decryption.
+            if is_encrypted_column(self.model.__tablename__, field):
+                raise ValueError(
+                    f"Cannot sort by '{self.model.__tablename__}.{field}': it is "
+                    "encrypted at rest. Sort in Python after loading."
+                )
             if direction == SortDirection.ASC:
                 order_by_clauses.append(asc(getattr(self.model, field)))
             else:

@@ -23,8 +23,13 @@ from backend.api_v1.recruitment_application.recruitment_application_state_machin
     RecruitmentApplicationStatusKey,
     can_transition,
 )
-from backend.api_v1.employee.employee_minis import fetch_employee_minis
+from backend.api_v1.employee.employee_minis import (
+    EMPLOYEE_NAME_COLUMNS,
+    compose_row_name,
+    fetch_employee_minis,
+)
 from backend.api_v1.employee.employee_model import Employee
+from backend.api_v1.person.person_model import Person
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.recruitment_interview.recruitment_interview_messages import (
     RecruitmentInterviewCreateSuccess,
@@ -275,7 +280,8 @@ class RecruitmentInterviewService(BaseService):
         session = self.repository.session
         rows = (
             await session.execute(
-                select(Employee.id, Employee.name, Employee.code)
+                select(Employee.id, Employee.code, *EMPLOYEE_NAME_COLUMNS)
+                .join(Person, Person.id == Employee.person_id)
                 .join(
                     JobJobCategoryLink,
                     JobJobCategoryLink.job_id == Employee.job_id,
@@ -285,13 +291,18 @@ class RecruitmentInterviewService(BaseService):
                     JobCategory.id == JobJobCategoryLink.job_category_id,
                 )
                 .where(JobCategory.key == "manager", Employee.is_active.is_(True))
-                .order_by(Employee.name)
             )
         ).all()
-        return [
-            RecruitmentInterviewEmployeeMini(id=r[0], name=r[1], code=r[2])
+        # Sorted in Python: the name parts are encrypted, so ORDER BY would sort
+        # ciphertext.
+        out = [
+            RecruitmentInterviewEmployeeMini(
+                id=r[0], name=compose_row_name(r[2], r[3]), code=r[1]
+            )
             for r in rows
         ]
+        out.sort(key=lambda e: e.name)
+        return out
 
     # ── Mutations ─────────────────────────────────────────────────────────────
 

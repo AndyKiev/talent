@@ -75,6 +75,20 @@ class EmployeeEmailTaken(AlreadyExistsError):
         super().__init__("Employee", "email", email)
 
 
+class EmployeePersonRequired(DomainError):
+    """An employee cannot exist without a person: the name parts live there and
+    the display name is composed from them. Callers create the person first
+    (POST /employees/with_activation and self-registration both do) and pass its
+    id — there is no name string left to synthesize one from."""
+
+    message_key = "employeePersonRequired"
+
+    def __init__(self) -> None:
+        self.template_vars = {}
+        self.fallback = "person_id is required: create the person first"
+        super().__init__(self.fallback)
+
+
 class EmployeeAlreadyInGroup(RelationshipError):
     message_key = "employeeAlreadyInGroup"
 

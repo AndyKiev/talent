@@ -316,24 +316,33 @@ class DepartmentJobTargetService(BaseService):
         }
         if not pending_by_id:
             return []
+        from backend.api_v1.employee.employee_minis import (
+            EMPLOYEE_NAME_COLUMNS,
+            compose_row_name,
+        )
         from backend.api_v1.employee.employee_model import Employee
+        from backend.api_v1.person.person_model import Person
 
         rows = (
             await self.session.execute(
-                select(Employee.id, Employee.code, Employee.name)
+                select(Employee.id, Employee.code, *EMPLOYEE_NAME_COLUMNS)
+                .join(Person, Person.id == Employee.person_id)
                 .where(Employee.id.in_(list(pending_by_id.keys())))
-                .order_by(Employee.name)
             )
         ).all()
-        return [
+        # Sorted in Python: the name columns are encrypted, so ORDER BY would
+        # order ciphertext.
+        out = [
             FactEmployee(
-                id=r.id,
-                code=r.code,
-                name=r.name,
-                is_pending=pending_by_id.get(r.id, False),
+                id=r[0],
+                code=r[1],
+                name=compose_row_name(r[2], r[3]),
+                is_pending=pending_by_id.get(r[0], False),
             )
             for r in rows
         ]
+        out.sort(key=lambda e: e.name)
+        return out
 
     async def get_organigram(
         self, department_id: int, on_date: date
@@ -353,7 +362,14 @@ class DepartmentJobTargetService(BaseService):
         from backend.api_v1.department_type.department_type_model import (
             DepartmentType,
         )
+        from types import SimpleNamespace
+
+        from backend.api_v1.employee.employee_minis import (
+            EMPLOYEE_NAME_COLUMNS,
+            compose_row_name,
+        )
         from backend.api_v1.employee.employee_model import Employee
+        from backend.api_v1.person.person_model import Person
         from backend.api_v1.job.job_model import Job
 
         dept_repo = DepartmentRepository(session=self.repository.session)
@@ -492,13 +508,15 @@ class DepartmentJobTargetService(BaseService):
                 .all()
             )
         occupied_job_ids = {j for by_job in placements.values() for j in by_job}
+        # Name composed in Python (encrypted columns); the consumer below reads
+        # .code / .name and already sorts in Python.
         emp_by_id = {
-            r.id: r
+            r[0]: SimpleNamespace(code=r[1], name=compose_row_name(r[2], r[3]))
             for r in (
                 await self.session.execute(
-                    select(Employee.id, Employee.code, Employee.name).where(
-                        Employee.id.in_(emp_ids)
-                    )
+                    select(Employee.id, Employee.code, *EMPLOYEE_NAME_COLUMNS)
+                    .join(Person, Person.id == Employee.person_id)
+                    .where(Employee.id.in_(emp_ids))
                 )
             ).all()
         } if emp_ids else {}

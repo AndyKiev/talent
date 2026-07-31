@@ -71,7 +71,10 @@ from backend.api_v1.employee_events.employee_event.employee_event_repository imp
 from backend.api_v1.employee_events.employee_event.employee_event_service import (
     EmployeeEventService,
 )
+from backend.api_v1.person.person_model import Person
+from backend.api_v1.person.person_repository import PersonRepository
 from backend.database.db_helper import db_helper
+from backend.utils.person_names import normalize_name_part
 from sqlalchemy import text
 
 # ── Config ────────────────────────────────────────────────────────────────────
@@ -313,14 +316,30 @@ async def main(argv: list[str] | None = None) -> None:
         names = build_name_pool(len(pairs))
         counter = [1]
 
+        person_repo = PersonRepository(session=session)
         for idx, pair in enumerate(pairs):
             full_name = names[idx]
+            first, surname = full_name.split()[0], full_name.split()[-1]
             code = next_code(used_nums, counter)
             email = make_email(full_name, used_emails)
 
+            # The person carries the name parts; the employee has no name column.
+            person = await person_repo.create(
+                Person(
+                    first_name=normalize_name_part(first),
+                    last_name=normalize_name_part(surname),
+                    name_dedupe_no=await person_repo.get_next_dedupe_no(
+                        normalize_name_part(first), normalize_name_part(surname)
+                    ),
+                )
+            )
             employee = await employee_service.create_user(
                 EmployeeCreate(
-                    code=code, name=full_name, email=email, is_active=True, lang_id=LANG_ID
+                    code=code,
+                    email=email,
+                    is_active=True,
+                    lang_id=LANG_ID,
+                    person_id=person.id,
                 )
             )
             await event_service.create_activation_for_employee(

@@ -1,10 +1,11 @@
 from datetime import date
 
-from sqlalchemy import Date, ForeignKey
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
+from backend.utils.crypto.types import EncryptedDate
 
 
 class EmployeeChild(IntIdPkMixin, TimestampMixin, Base):
@@ -18,4 +19,6 @@ class EmployeeChild(IntIdPkMixin, TimestampMixin, Base):
     person_id: Mapped[int] = mapped_column(
         ForeignKey("persons.id", ondelete="CASCADE"), nullable=False
     )
-    birth_date: Mapped[date] = mapped_column(Date, nullable=False)
+    # ENCRYPTED AT REST (see backend/utils/crypto/registry.py). A child's date
+    # of birth is personal data about a third party who is not even an employee.
+    birth_date: Mapped[date] = mapped_column(EncryptedDate, nullable=False)

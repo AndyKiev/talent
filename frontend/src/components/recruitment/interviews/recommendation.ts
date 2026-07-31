@@ -1,5 +1,5 @@
-import type { GetStringFn } from '../../types/getStringFn';
-import type { Recommendation } from './interviewApi';
+import type { GetStringFn } from '../../../types/getStringFn';
+import type { Recommendation } from './recruitmentInterviewApi';
 
 export const RECOMMENDATION_COLOR: Record<Recommendation, 'success' | 'error' | 'warning'> = {
     hire: 'success',

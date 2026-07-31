@@ -28,7 +28,6 @@ from backend.api_v1.person.person_schema import PersonCreate
 from backend.api_v1.person.person_service import PersonService
 from backend.auth.guards import Guard
 from backend.utils.enums import EssenceName, OperationVerb
-from backend.utils.person_names import build_employee_name, normalize_name_part
 
 router = APIRouter(
     prefix="/employees",
@@ -177,15 +176,12 @@ async def create_employee_with_activation(
         )
     ).data
 
-    # 2) Create the employee with the derived 'LAST FIRST' name.
+    # 2) Create the employee. The display name is composed from the person on
+    #    read — nothing to store here.
     try:
         employee = await employee_service.create_user(
             EmployeeCreate(
                 code=payload.code,
-                name=build_employee_name(
-                    normalize_name_part(payload.last_name),
-                    normalize_name_part(payload.first_name),
-                ),
                 email=payload.email,
                 is_active=payload.is_active,
                 lang_id=payload.lang_id,

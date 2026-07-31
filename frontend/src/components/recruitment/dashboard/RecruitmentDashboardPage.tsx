@@ -23,7 +23,7 @@ import RecentActorsRounded from '@mui/icons-material/RecentActorsRounded';
 import ForumRounded from '@mui/icons-material/ForumRounded';
 import dayjs from 'dayjs';
 import useString from '../../../hooks/useString';
-import { RECRUITMENT_TASK_QK } from '../../../utils/queryKeys';
+import { RECRUITMENT_TASKS_QK } from '../../../utils/queryKeys';
 import { formatToUkrDate } from '../../../utils/dateFormatter';
 import DateWheelDialog from '../../employees/headcount_plan/DateWheelDialog';
 import { fetchRecruitmentTasks, type RecruitmentStatusKey } from '../tasks/recruitmentTaskApi';
@@ -48,7 +48,7 @@ export function RecruitmentDashboardPage() {
     const [pick, setPick] = useState<'start' | 'end' | null>(null);
 
     const { data: tasks = [], isLoading } = useQuery({
-        queryKey: RECRUITMENT_TASK_QK,
+        queryKey: RECRUITMENT_TASKS_QK,
         queryFn: fetchRecruitmentTasks,
         staleTime: 30 * 1000,
     });

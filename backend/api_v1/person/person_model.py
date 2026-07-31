@@ -1,11 +1,13 @@
 from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Date, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import ForeignKey, Integer, String, UniqueConstraint, event
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models import IntIdPkMixin, TimestampMixin
+from backend.utils.crypto.blind_index import name_blind_index
+from backend.utils.crypto.types import EncryptedDate, EncryptedString
 
 if TYPE_CHECKING:
     from backend.api_v1.employee.employee_model import Employee
@@ -22,17 +24,27 @@ class Person(IntIdPkMixin, TimestampMixin, Base):
 
     __tablename__ = "persons"
     __table_args__ = (
+        # Uniqueness moved off (last_name, first_name) onto the blind index when
+        # the name columns were encrypted: randomized ciphertext differs for
+        # every row, so a constraint over it would never fire again. name_hash
+        # is deterministic, so this enforces exactly the old rule.
         UniqueConstraint(
-            "last_name",
-            "first_name",
+            "name_hash",
             "name_dedupe_no",
-            name="uq_persons_last_first_dedupe",
+            name="uq_persons_name_hash_dedupe",
         ),
     )
 
-    first_name: Mapped[str] = mapped_column(String(64), nullable=False)
-    last_name: Mapped[str] = mapped_column(String(64), nullable=False)
-    patronymic: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # ENCRYPTED AT REST (see backend/utils/crypto/registry.py). Nothing in SQL
+    # may compare, sort or search these — use name_hash for equality.
+    first_name: Mapped[str] = mapped_column(EncryptedString, nullable=False)
+    last_name: Mapped[str] = mapped_column(EncryptedString, nullable=False)
+    patronymic: Mapped[str | None] = mapped_column(EncryptedString, nullable=True)
+    # Deterministic HMAC of (last_name, first_name) — the ONLY way to look a
+    # person up by name now. Maintained by the mapper event at the bottom of
+    # this file, never by hand: a writer that forgot it would silently break
+    # namesake detection rather than fail.
+    name_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     # Sex lookup (1=male, 2=female). API keeps exchanging the 'male'/'female'
     # string via the `sex` property below.
     sex_id: Mapped[int | None] = mapped_column(
@@ -43,7 +55,10 @@ class Person(IntIdPkMixin, TimestampMixin, Base):
     marital_status_id: Mapped[int | None] = mapped_column(
         ForeignKey("marital_statuses.id"), nullable=True, default=None
     )
-    birth_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # ENCRYPTED AT REST (see backend/utils/crypto/registry.py). Stored as
+    # encrypted ISO text, so it is a `date` in Python and opaque in SQL —
+    # nothing may sort or range-filter it in the database.
+    birth_date: Mapped[date | None] = mapped_column(EncryptedDate, nullable=True)
     name_dedupe_no: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, server_default="0"
     )
@@ -79,3 +94,15 @@ class Person(IntIdPkMixin, TimestampMixin, Base):
             f"<Person(id={self.id}, last_name='{self.last_name}', "
             f"first_name='{self.first_name}', dedupe={self.name_dedupe_no})>"
         )
+
+
+# The blind index is derived state, so it is maintained HERE rather than by each
+# caller. Person names are written from many places — the admin CRUD, employee
+# registration with activation, self-registration, seeds, and the surname-change
+# person event — and a single one of them forgetting to recompute the hash would
+# not raise: it would just stop finding that person by name, and let a duplicate
+# through the unique constraint. A mapper event cannot be forgotten.
+@event.listens_for(Person, "before_insert")
+@event.listens_for(Person, "before_update")
+def _sync_name_hash(mapper, connection, target: "Person") -> None:
+    target.name_hash = name_blind_index(target.first_name, target.last_name)

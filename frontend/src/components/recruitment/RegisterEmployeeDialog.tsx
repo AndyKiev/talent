@@ -31,7 +31,7 @@ import { axiosInstance } from '../../api/axiosInstance';
 import { BASE_URL, DATE_FORMAT } from '../../utils/eNums.ts';
 import { DEPARTMENT_FLAT_QK } from '../../utils/queryKeys';
 import { fetchDepartmentsFlat } from '../admin/departments/departmentApi';
-import type { CandidateApplication } from '../candidates/candidateApplicationApi';
+import type { RecruitmentApplication } from './candidates/recruitmentApplicationApi';
 
 interface RegisterPayload {
     code: string;
@@ -54,7 +54,7 @@ const registerEmployee = async (payload: RegisterPayload): Promise<{ code: strin
 
 interface Props {
     open: boolean;
-    application: CandidateApplication | null;
+    application: RecruitmentApplication | null;
     /** The task's department (prefill) — the picker stays editable. */
     departmentId?: number | null;
     onClose: () => void;

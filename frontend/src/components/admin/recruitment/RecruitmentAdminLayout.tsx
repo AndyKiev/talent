@@ -9,8 +9,8 @@ import { PageBreadcrumbs } from '../../ui/PageBreadcrumbs';
 // Single sub-screen for now (dimensions); kept as a tabbed layout so more
 // recruitment-admin lookups can be added later without restructuring.
 const TABS = [
-    { to: '/admin/recruitment/dimensions', labelKey: 'recruitmentDimensions', fallback: 'Recruitment dimensions' },
-    { to: '/admin/recruitment/sources', labelKey: 'candidateSources', fallback: 'Candidate sources' },
+    { to: '/admin/recruitment/recruitment_dimensions', labelKey: 'recruitmentDimensions', fallback: 'Recruitment dimensions' },
+    { to: '/admin/recruitment/recruitment_candidate_sources', labelKey: 'candidateSources', fallback: 'Candidate sources' },
 ] as const;
 
 export function RecruitmentAdminLayout() {

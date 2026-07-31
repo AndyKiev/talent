@@ -18,6 +18,7 @@ import {
 import { axiosInstance } from '../../../api/axiosInstance';
 import { BASE_URL } from '../../../utils/eNums';
 import { DepartmentTypeSelectTree } from './DepartmentTypeSelectTree';
+import { TALENT_PAIR_FIELD_WIDTH } from './talentFieldWidths';
 import { DEPT_TYPE_JOB_LINK_QK, TSPL_QK } from '../../../utils/queryKeys';
 import useString from '../../../hooks/useString';
 
@@ -124,11 +125,12 @@ export function TalentTargetJobPicker({
                 ))}
             </TextField>
 
-            {/* 3. Talent status & period (talent level) */}
+            {/* 3. Talent status & period (talent level) — sized to its short codes,
+                not to the dialog. */}
             <TextField
                 select
-                fullWidth
                 variant="outlined"
+                sx={{ width: TALENT_PAIR_FIELD_WIDTH }}
                 label={getString('talentStatusPeriod')}
                 value={talentLinkId === '' ? '' : String(talentLinkId)}
                 onChange={(e) => {

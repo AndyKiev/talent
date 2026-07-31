@@ -61,6 +61,22 @@ export const ThemeProvider: FC<{ children: ReactNode }> = ({ children }) => {
                         },
                     },
                     MuiSelect: { styleOverrides: { select: { paddingTop: "9px", paddingBottom: "9px" } } },
+                    // Tooltips are portaled to <body>, so one that resolves past the
+                    // right edge WIDENS the document and leaves the page scrolling
+                    // sideways into empty background — the hint icons inside narrow
+                    // menus did exactly that on a phone. Keep every tooltip inside
+                    // the viewport and cap its width so a long hint wraps instead.
+                    MuiTooltip: {
+                        defaultProps: {
+                            PopperProps: {
+                                modifiers: [
+                                    { name: "preventOverflow", options: { boundary: "viewport", padding: 8 } },
+                                    { name: "flip", options: { fallbackPlacements: ["top", "bottom", "left"] } },
+                                ],
+                            },
+                        },
+                        styleOverrides: { tooltip: { maxWidth: 280 } },
+                    },
                     MuiMenuItem: { styleOverrides: { root: { whiteSpace: "normal", wordBreak: "break-word" } } },
                     MuiDataGrid: {
                         defaultProps: { columnHeaderHeight: 44 },

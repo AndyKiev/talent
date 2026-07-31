@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PageBreadcrumbs } from '../ui/PageBreadcrumbs';
+import { PageBreadcrumbs } from '../../ui/PageBreadcrumbs';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import {
@@ -21,26 +21,26 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PhoneIcon from '@mui/icons-material/Phone';
 import EmailIcon from '@mui/icons-material/Email';
-import useString from '../../hooks/useString';
-import cfl from '../../utils/helpers.ts';
-import { snakeToCamel } from '../../utils/helpers.ts';
-import ConfirmDeleteDialog from '../ui/ConfirmDeleteDialog';
-import { CANDIDATE_QK } from '../../utils/queryKeys';
-import { fetchCandidates, type Candidate } from './candidateApi';
-import { useCandidateMutations } from './useCandidateMutations';
-import { CandidateFormDialog } from './CandidateFormDialog';
-import { PIPELINE_STATUS_COLOR, pipelineLabel } from './pipelineStatus';
-import type { PipelineStatusKey } from './candidateApplicationApi';
+import useString from '../../../hooks/useString';
+import cfl from '../../../utils/helpers.ts';
+import { snakeToCamel } from '../../../utils/helpers.ts';
+import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
+import { RECRUITMENT_CANDIDATES_QK } from '../../../utils/queryKeys';
+import { fetchCandidates, type RecruitmentCandidate } from './recruitmentCandidateApi';
+import { useCandidateMutations } from './useRecruitmentCandidateMutations';
+import { RecruitmentCandidateFormDialog } from './RecruitmentCandidateFormDialog';
+import { PIPELINE_STATUS_COLOR, pipelineLabel } from './recruitmentApplicationStatus';
+import type { RecruitmentApplicationStatusKey } from './recruitmentApplicationApi';
 
-export function CandidatesPage() {
+export function RecruitmentCandidatesPage() {
     const getString = useString();
     const navigate = useNavigate();
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
     const [createOpen, setCreateOpen] = useState(false);
-    const [pendingDelete, setPendingDelete] = useState<Candidate | null>(null);
+    const [pendingDelete, setPendingDelete] = useState<RecruitmentCandidate | null>(null);
 
     const { data: candidates = [], isLoading, error } = useQuery({
-        queryKey: CANDIDATE_QK,
+        queryKey: RECRUITMENT_CANDIDATES_QK,
         queryFn: fetchCandidates,
         staleTime: 30 * 1000,
     });
@@ -92,7 +92,7 @@ export function CandidatesPage() {
                 }}
             >
                 {candidates.map((c) => {
-                    const stage = c.furthest_stage as PipelineStatusKey | null;
+                    const stage = c.furthest_stage as RecruitmentApplicationStatusKey | null;
                     return (
                         <Card key={c.id} variant="outlined" sx={{ position: 'relative' }}>
                             <CardActionArea
@@ -157,7 +157,7 @@ export function CandidatesPage() {
                 })}
             </Box>
 
-            <CandidateFormDialog
+            <RecruitmentCandidateFormDialog
                 open={createOpen}
                 onClose={() => setCreateOpen(false)}
                 createMutation={createMutation}

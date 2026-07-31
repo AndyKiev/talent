@@ -54,7 +54,7 @@ function CreateForm({ onClose, createMutation }: Omit<Props, 'open'>) {
         if (depJob.jobId == null) return;
         createMutation.mutate({
             job_id: depJob.jobId,
-            requirement_group_id: groupId === '' ? null : groupId,
+            job_requirement_group_id: groupId === '' ? null : groupId,
             department_id: depJob.departmentId,
             openings: Math.max(1, openings),
             comment: comment.trim() || null,

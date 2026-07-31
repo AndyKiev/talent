@@ -1,5 +1,6 @@
 import { useState, type Dispatch, type SetStateAction } from 'react';
 import { flipCompetence, type RseDimensionType } from '../../peopleReviewApi';
+import { deleteEmployeeFact } from '../../employeeFactApi';
 import type { GetStringFn } from '../../../../types/getStringFn';
 import type { EvaluationDraft } from '../../peopleReviewStore';
 import {
@@ -42,6 +43,12 @@ interface Args {
     flushAutosave: () => Promise<void>;
     setActiveTab: Dispatch<SetStateAction<number>>;
     onError: (message: string) => void;
+    /** Non-error feedback (the copy-to-summary hints). */
+    onNotice: (message: string) => void;
+    /** The comment-input drafts, read side — the copy needs them to refuse a
+     *  duplicate line rather than stacking it up invisibly. */
+    strongDrafts: Record<string, string>;
+    developDrafts: Record<string, string>;
 }
 
 /**
@@ -69,7 +76,14 @@ export function useRseDimensions({
     setLocalEvals, setDevelopOptions, setStrongDrafts, setDevelopDrafts,
     setSummaryFullCompetenceList,
     summaryMinOptions, dimensionTypes, getString, flushAutosave, setActiveTab, onError,
+    onNotice, strongDrafts, developDrafts,
 }: Args) {
+    // Which summary card is CURRENTLY open for editing on each side, reported up
+    // by the section. The copy-to-summary buttons live in the competence panel
+    // below, so without this they append into an input nobody can see — which is
+    // exactly how the same line ended up copied five times.
+    const [strongOpenCard, setStrongOpenCard] = useState<string | null>(null);
+    const [developOpenCard, setDevelopOpenCard] = useState<string | null>(null);
     // A star re-rating held back because it would flip a competence to the
     // opposite summary list — confirmed via a dialog, then applied atomically.
     const [pendingFlip, setPendingFlip] = useState<PendingFlip | null>(null);
@@ -81,10 +95,39 @@ export function useRseDimensions({
     // Push a line into the comment-input draft of one summary side. Facts prove
     // STRONG competences, so they copy only into the strong summary; the directions
     // for improvement feed only the to-develop summary. Each side has its own button.
-    const appendDraft = (setter: Dispatch<SetStateAction<Record<string, string>>>, key: string, text: string) =>
-        setter(prev => ({ ...prev, [key]: prev[key] ? `${prev[key]}\n${text}` : text }));
-    const copyFactToStrong = (key: string, text: string) => appendDraft(setStrongDrafts, key, text);
-    const copyImprovementToDevelop = (key: string, text: string) => appendDraft(setDevelopDrafts, key, text);
+    //
+    // Two refusals, both learned from the same report: the input only EXISTS
+    // while that competence's card is open for editing, so copying into a closed
+    // card writes into nothing visible; and a line already in the card (saved or
+    // still in the input) must not be appended again.
+    const copyToSummary = (side: DimensionSide, key: string, text: string) => {
+        const isStrong = side === DimensionSide.Strong;
+        const openCard = isStrong ? strongOpenCard : developOpenCard;
+        const name = competenceLabel(key);
+        if (openCard !== key) {
+            onNotice(getString('openSummaryEditFirst', { competence: name }));
+            return;
+        }
+        const trimmed = text.trim();
+        if (!trimmed) return;
+        const options = isStrong ? strongOptions : developOptions;
+        const draft = (isStrong ? strongDrafts : developDrafts)[key] ?? '';
+        const saved = options.find(o => o.dimension_key === key)?.comments ?? [];
+        const present = [
+            ...saved.map(c => c.trim()),
+            ...draft.split('\n').map(l => l.trim()),
+        ];
+        if (present.includes(trimmed)) {
+            onNotice(getString('alreadyInSummary', { competence: name }));
+            return;
+        }
+        const setter = isStrong ? setStrongDrafts : setDevelopDrafts;
+        setter(prev => ({ ...prev, [key]: prev[key] ? `${prev[key]}\n${trimmed}` : trimmed }));
+    };
+    const copyFactToStrong = (key: string, text: string) =>
+        copyToSummary(DimensionSide.Strong, key, text);
+    const copyImprovementToDevelop = (key: string, text: string) =>
+        copyToSummary(DimensionSide.Develop, key, text);
 
     // Summary select candidates, excluding already-picked ones. Default: the
     // top/bottom scored shortlist; full-list mode: every competence (page order).
@@ -135,6 +178,17 @@ export function useRseDimensions({
             for (const k of keys) delete next[k];
             return next;
         };
+        // The lists are rows now: clearing them in the draft is not enough, since
+        // nothing writes them back any more. Delete the rows explicitly, the same
+        // way flip_competence does server-side for a single competence.
+        for (const e of localEvals) {
+            if (strongDrop.has(e.dimension_key)) {
+                for (const f of e.facts) void deleteEmployeeFact(f.id).catch(() => {});
+            }
+            if (developDrop.has(e.dimension_key)) {
+                for (const f of e.improvements) void deleteEmployeeFact(f.id).catch(() => {});
+            }
+        }
         updateEvalDraft(rid, (d) => ({
             ...d,
             localEvals: d.localEvals.map(e => {
@@ -281,6 +335,7 @@ export function useRseDimensions({
     return {
         strongCandidates, developCandidates,
         copyFactToStrong, copyImprovementToDevelop,
+        setStrongOpenCard, setDevelopOpenCard,
         activateCompetenceTab,
         addDimensionOption, removeDimensionOption, removeDevelopOption,
         addDimensionComment, removeDimensionComment, editDimensionComment, reorderDimensionOption,

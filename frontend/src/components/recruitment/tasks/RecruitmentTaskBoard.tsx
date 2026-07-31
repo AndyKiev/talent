@@ -20,19 +20,19 @@ import useString from '../../../hooks/useString';
 import type { GetStringFn } from '../../../types/getStringFn';
 import { useEffectiveBooleanSetting } from '../../../hooks/useAppSetting';
 import {
-    CANDIDATE_APPLICATIONS_BY_TASK_QK,
-    CANDIDATE_QK,
-    PIPELINE_STATUS_QK,
+    RECRUITMENT_APPLICATIONS_BY_TASK_QK,
+    RECRUITMENT_CANDIDATES_QK,
+    RECRUITMENT_APPLICATION_STATUSES_QK,
 } from '../../../utils/queryKeys';
-import { fetchPipelineStatuses } from '../../candidates/candidateApi';
+import { fetchPipelineStatuses } from '../candidates/recruitmentCandidateApi';
 import {
     fetchApplicationsByTask,
     changeApplicationStatus,
-    type CandidateApplication,
-    type PipelineStatusKey,
-} from '../../candidates/candidateApplicationApi';
-import { PIPELINE_ORDER, PIPELINE_STATUS_COLOR, canMove, pipelineLabel } from '../../candidates/pipelineStatus';
-import { InterviewScheduleDialog } from '../../interviews/InterviewScheduleDialog';
+    type RecruitmentApplication,
+    type RecruitmentApplicationStatusKey,
+} from '../candidates/recruitmentApplicationApi';
+import { PIPELINE_ORDER, PIPELINE_STATUS_COLOR, canMove, pipelineLabel } from '../candidates/recruitmentApplicationStatus';
+import { RecruitmentInterviewScheduleDialog } from '../interviews/RecruitmentInterviewScheduleDialog';
 import { RegisterEmployeeDialog } from '../RegisterEmployeeDialog';
 
 interface Props {
@@ -44,25 +44,25 @@ interface Props {
     departmentId?: number | null;
 }
 
-type DragState = { appId: number; from: PipelineStatusKey } | null;
-type PendingMove = { app: CandidateApplication; to: PipelineStatusKey; backward: boolean } | null;
+type DragState = { appId: number; from: RecruitmentApplicationStatusKey } | null;
+type PendingMove = { app: RecruitmentApplication; to: RecruitmentApplicationStatusKey; backward: boolean } | null;
 
 export function RecruitmentTaskBoard({ taskId, getString, openings, departmentId }: Props) {
     const qc = useQueryClient();
     const { enabled: confirmOnDrag } = useEffectiveBooleanSetting('pipeline_drag_confirm');
 
     const [drag, setDrag] = useState<DragState>(null);
-    const [dragOverCol, setDragOverCol] = useState<PipelineStatusKey | null>(null);
+    const [dragOverCol, setDragOverCol] = useState<RecruitmentApplicationStatusKey | null>(null);
     const [pendingMove, setPendingMove] = useState<PendingMove>(null);
     // Dropping a card onto `interview` opens the scheduling dialog instead of a
     // direct move — creating the interview advances the card server-side.
-    const [scheduleFor, setScheduleFor] = useState<CandidateApplication | null>(null);
+    const [scheduleFor, setScheduleFor] = useState<RecruitmentApplication | null>(null);
     // Hired card → register the candidate as an employee.
-    const [registerFor, setRegisterFor] = useState<CandidateApplication | null>(null);
+    const [registerFor, setRegisterFor] = useState<RecruitmentApplication | null>(null);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
     const { data: applications = [], isLoading, error } = useQuery({
-        queryKey: CANDIDATE_APPLICATIONS_BY_TASK_QK(taskId),
+        queryKey: RECRUITMENT_APPLICATIONS_BY_TASK_QK(taskId),
         queryFn: () => fetchApplicationsByTask(taskId),
         staleTime: 15 * 1000,
     });
@@ -71,22 +71,22 @@ export function RecruitmentTaskBoard({ taskId, getString, openings, departmentId
     // the seeded statuses ever change; falls back to the static order while
     // the lookup loads.
     const { data: statusRows = [] } = useQuery({
-        queryKey: PIPELINE_STATUS_QK,
+        queryKey: RECRUITMENT_APPLICATION_STATUSES_QK,
         queryFn: fetchPipelineStatuses,
         staleTime: 5 * 60 * 1000,
     });
-    const columnKeys = useMemo<PipelineStatusKey[]>(
+    const columnKeys = useMemo<RecruitmentApplicationStatusKey[]>(
         () =>
             statusRows.length
                 ? [...statusRows]
                       .sort((a, b) => a.sort_order - b.sort_order)
-                      .map((s) => s.name as PipelineStatusKey)
+                      .map((s) => s.name as RecruitmentApplicationStatusKey)
                 : PIPELINE_ORDER,
         [statusRows],
     );
 
     const byStage = useMemo(() => {
-        const map = new Map<PipelineStatusKey, CandidateApplication[]>();
+        const map = new Map<RecruitmentApplicationStatusKey, RecruitmentApplication[]>();
         for (const key of columnKeys) map.set(key, []);
         for (const app of applications) {
             const key = app.status?.name;
@@ -95,7 +95,7 @@ export function RecruitmentTaskBoard({ taskId, getString, openings, departmentId
         return map;
     }, [applications, columnKeys]);
 
-    const boardQK = CANDIDATE_APPLICATIONS_BY_TASK_QK(taskId);
+    const boardQK = RECRUITMENT_APPLICATIONS_BY_TASK_QK(taskId);
 
     const statusMutation = useMutation({
         mutationFn: changeApplicationStatus,
@@ -104,14 +104,14 @@ export function RecruitmentTaskBoard({ taskId, getString, openings, departmentId
         // navigates away — the cache already reflects the move).
         onMutate: async ({ id, statusKey }) => {
             await qc.cancelQueries({ queryKey: boardQK });
-            const prev = qc.getQueryData<CandidateApplication[]>(boardQK);
+            const prev = qc.getQueryData<RecruitmentApplication[]>(boardQK);
             // Take the optimistic sort_order from the DB stage set (the same
             // source the columns are ordered by); the static PIPELINE_ORDER is
             // only the fallback while the lookup loads.
             const optimisticOrder =
                 statusRows.find((s) => s.name === statusKey)?.sort_order ??
                 PIPELINE_ORDER.indexOf(statusKey);
-            qc.setQueryData<CandidateApplication[]>(boardQK, (old) =>
+            qc.setQueryData<RecruitmentApplication[]>(boardQK, (old) =>
                 (old ?? []).map((a) =>
                     a.id === id && a.status
                         ? { ...a, status: { ...a.status, name: statusKey, sort_order: optimisticOrder } }
@@ -127,7 +127,7 @@ export function RecruitmentTaskBoard({ taskId, getString, openings, departmentId
         onSuccess: (res) => setSnackbar({ open: true, message: res.detail, severity: 'success' }),
         onSettled: () => {
             qc.invalidateQueries({ queryKey: boardQK });
-            qc.invalidateQueries({ queryKey: CANDIDATE_QK });
+            qc.invalidateQueries({ queryKey: RECRUITMENT_CANDIDATES_QK });
         },
     });
 
@@ -135,10 +135,10 @@ export function RecruitmentTaskBoard({ taskId, getString, openings, departmentId
         (a) => a.status?.name === 'offer' || a.status?.name === 'hired',
     ).length;
 
-    const doMove = (app: CandidateApplication, to: PipelineStatusKey) =>
+    const doMove = (app: RecruitmentApplication, to: RecruitmentApplicationStatusKey) =>
         statusMutation.mutate({ id: app.id, statusKey: to });
 
-    const handleDrop = (to: PipelineStatusKey) => {
+    const handleDrop = (to: RecruitmentApplicationStatusKey) => {
         setDragOverCol(null);
         const d = drag;
         setDrag(null);
@@ -315,7 +315,7 @@ export function RecruitmentTaskBoard({ taskId, getString, openings, departmentId
                 </DialogActions>
             </Dialog>
 
-            <InterviewScheduleDialog
+            <RecruitmentInterviewScheduleDialog
                 open={scheduleFor !== null}
                 application={scheduleFor}
                 onClose={() => setScheduleFor(null)}

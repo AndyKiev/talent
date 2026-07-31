@@ -21,6 +21,7 @@ from backend.api_v1.employee.employee_messages import (
     EmployeeHasReferencesError,
     EmployeeNotFound,
     EmployeeNotFoundByCode,
+    EmployeePersonRequired,
 )
 from backend.api_v1.employee.employee_repository import EmployeeRepository
 from backend.api_v1.employee.employee_schema import (
@@ -362,49 +363,18 @@ class EmployeeService(BaseService):
             exc = EmployeeEmailTaken(user_in.email)
             raise await self._resolve_domain_error(exc)
 
-        # employees.person_id is NOT NULL: callers that didn't create a person
-        # themselves (plain POST /employees, legacy seeds) get one derived from
-        # the single name string (LAST FIRST [PATRONYMIC] split, best-effort).
-        created_person_id: int | None = None
+        # employees.person_id is NOT NULL and the name parts live ONLY on the
+        # person, so there is no name string left to synthesize one from: every
+        # caller creates the person first (POST /employees/with_activation and
+        # self-registration both do, and both run the namesake check on the way).
         if user_in.person_id is None:
-            from backend.api_v1.person.person_model import Person
-            from backend.api_v1.person.person_repository import PersonRepository
-            from backend.utils.person_names import (
-                normalize_name_part,
-                split_employee_full_name,
-            )
-
-            last_raw, first_raw, patronymic_raw = split_employee_full_name(user_in.name)
-            last = normalize_name_part(last_raw)
-            first = normalize_name_part(first_raw)
-            person_repo = PersonRepository(session=self.repository.session)
-            dedupe_no = (
-                await person_repo.get_next_dedupe_no(first, last)
-                if first and last
-                else 0
-            )
-            person = await person_repo.create(
-                Person(
-                    first_name=first or user_in.name,
-                    last_name=last or user_in.name,
-                    patronymic=normalize_name_part(patronymic_raw),
-                    name_dedupe_no=dedupe_no,
-                )
-            )
-            created_person_id = person.id
-            user_in.person_id = person.id
+            raise await self._resolve_domain_error(EmployeePersonRequired())
 
         try:
             orm_user = await self.create(user_in)
             return await self._to_schema(orm_user)
         except IntegrityError:
-            if created_person_id is not None:
-                from backend.api_v1.person.person_repository import PersonRepository
-
-                await self.repository.session.rollback()
-                await PersonRepository(session=self.repository.session).delete_by_id(
-                    created_person_id
-                )
+            await self.repository.session.rollback()
             exc = EmployeeCodeTaken(user_in.code)
             raise await self._resolve_domain_error(exc)
 

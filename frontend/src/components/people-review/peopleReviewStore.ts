@@ -14,7 +14,6 @@ import {
     competenceHint,
     competenceName,
     parseDescriptors,
-    parseFacts,
     dimensionOptionsForType,
 } from './evaluation/evaluationHelpers';
 
@@ -114,8 +113,8 @@ function buildLocalEvals(evaluations: Evaluation[], getString: GetStringFn): Loc
             dimension_sort_order: e.dimension_sort_order,
             descriptors,
             criterionScores,
-            facts: parseFacts(e.facts),
-            improvements: parseFacts(e.improvement),
+            facts: e.facts,
+            improvements: e.improvements,
         };
     });
 }

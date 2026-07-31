@@ -5,7 +5,12 @@ from sqlalchemy.orm import raiseload
 
 from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.base.mutation_response import MutationResponse
+from backend.api_v1.employee.employee_minis import (
+    EMPLOYEE_NAME_COLUMNS,
+    compose_row_name,
+)
 from backend.api_v1.employee.employee_model import Employee
+from backend.api_v1.person.person_model import Person
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.review_session_employee.review_session_employee_messages import (
     ReviewSessionEmployeeNotFound,
@@ -160,9 +165,11 @@ class ReviewSessionEmployeeCommentService(BaseService):
         if not author_ids:
             return {}
         rows = await self.session.execute(
-            select(Employee.id, Employee.name).where(Employee.id.in_(author_ids))
+            select(Employee.id, *EMPLOYEE_NAME_COLUMNS)
+            .join(Person, Person.id == Employee.person_id)
+            .where(Employee.id.in_(author_ids))
         )
-        return {row[0]: row[1] for row in rows.all()}
+        return {row[0]: compose_row_name(row[1], row[2]) for row in rows.all()}
 
     async def list_comments(self, rse_id: int) -> list[ReviewCommentSchema]:
         # Guard visibility (out-of-scope -> 404), then load ONLY the reviewee id —

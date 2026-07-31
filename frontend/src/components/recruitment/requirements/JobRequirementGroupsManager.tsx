@@ -25,7 +25,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { JOB_REQUIREMENT_GROUPS_QK, RECRUITMENT_DIMENSION_QK } from '../../../utils/queryKeys';
+import { JOB_REQUIREMENT_GROUPS_QK, RECRUITMENT_DIMENSIONS_QK } from '../../../utils/queryKeys';
 import type { GetStringFn } from '../../../types/getStringFn';
 import { JobRequirementItemsGrid } from './JobRequirementItemsGrid';
 import {
@@ -64,7 +64,7 @@ export function JobRequirementGroupsManager({ jobId, getString }: Props) {
     });
 
     const { data: dimensions = [] } = useQuery({
-        queryKey: RECRUITMENT_DIMENSION_QK,
+        queryKey: RECRUITMENT_DIMENSIONS_QK,
         queryFn: fetchActiveRecruitmentDimensions,
         staleTime: 2 * 60 * 1000,
     });

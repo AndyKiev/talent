@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PageBreadcrumbs } from '../ui/PageBreadcrumbs';
+import { PageBreadcrumbs } from '../../ui/PageBreadcrumbs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
     Alert,
@@ -20,16 +20,16 @@ import {
 import PlaceIcon from '@mui/icons-material/Place';
 import EventIcon from '@mui/icons-material/Event';
 import dayjs from 'dayjs';
-import useString from '../../hooks/useString';
-import cfl from '../../utils/helpers.ts';
-import type { GetStringFn } from '../../types/getStringFn';
-import { INTERVIEWS_QK } from '../../utils/queryKeys';
+import useString from '../../../hooks/useString';
+import cfl from '../../../utils/helpers.ts';
+import type { GetStringFn } from '../../../types/getStringFn';
+import { RECRUITMENT_INTERVIEWS_QK } from '../../../utils/queryKeys';
 import {
     fetchInterviews,
     createInterviewFeedback,
-    type Interview,
+    type RecruitmentInterview,
     type Recommendation,
-} from './interviewApi';
+} from './recruitmentInterviewApi';
 import { RECOMMENDATION_COLOR as REC_COLOR, recommendationLabel } from './recommendation';
 
 const fmtDateTime = (v: string): string => dayjs(v).format('DD.MM.YYYY HH:mm');
@@ -54,7 +54,7 @@ function FeedbackForm({
         mutationFn: createInterviewFeedback,
         onSuccess: async (res) => {
             await qc.invalidateQueries({ queryKey: ['interviews'] });
-            await qc.invalidateQueries({ queryKey: ['interview_feedbacks'] });
+            await qc.invalidateQueries({ queryKey: ['recruitment_interview_feedbacks'] });
             setBody('');
             setRec('');
             onDone(res.detail);
@@ -114,13 +114,13 @@ function FeedbackForm({
 }
 
 // ── One interview card ────────────────────────────────────────────────────────
-function InterviewCard({
+function RecruitmentInterviewCard({
     interview,
     getString,
     onDone,
     onError,
 }: {
-    interview: Interview;
+    interview: RecruitmentInterview;
     getString: GetStringFn;
     onDone: (detail: string) => void;
     onError: (message: string) => void;
@@ -163,7 +163,7 @@ function InterviewCard({
                                 />
                             )}
                             <Typography variant="caption" color="text.secondary">
-                                {f.author?.name ?? f.author_id} · {fmtDateTime(f.created_at)}
+                                {f.creator?.name ?? f.created_by} · {fmtDateTime(f.created_at)}
                             </Typography>
                         </Stack>
                         <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
@@ -180,7 +180,7 @@ function InterviewCard({
     );
 }
 
-export function InterviewsPage() {
+export function RecruitmentInterviewsPage() {
     const getString = useString();
     // Default OFF so HR/admin immediately see interviews they scheduled;
     // interviewers can flip it to filter to their own.
@@ -188,7 +188,7 @@ export function InterviewsPage() {
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
     const { data: interviews = [], isLoading, error } = useQuery({
-        queryKey: INTERVIEWS_QK('list', mineOnly ? 'mine' : 'all'),
+        queryKey: RECRUITMENT_INTERVIEWS_QK('list', mineOnly ? 'mine' : 'all'),
         queryFn: () => fetchInterviews({ mine: mineOnly }),
         staleTime: 30 * 1000,
     });
@@ -229,7 +229,7 @@ export function InterviewsPage() {
 
             <Stack spacing={2}>
                 {interviews.map((iv) => (
-                    <InterviewCard key={iv.id} interview={iv} getString={getString} onDone={ok} onError={fail} />
+                    <RecruitmentInterviewCard key={iv.id} interview={iv} getString={getString} onDone={ok} onError={fail} />
                 ))}
             </Stack>
 

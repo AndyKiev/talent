@@ -27,6 +27,8 @@ interface Props {
     setPendingMove: Dispatch<SetStateAction<PendingMove | null>>;
     moveFact: (fromEvalId: number, index: number, toEvalId: number) => void;
     moveImprovement: (fromEvalId: number, index: number, toEvalId: number) => void;
+    /** The dragged line came from the unlinked pool (no source competence). */
+    linkFromPoolById: (factId: number, toEvalId: number) => void;
     setActiveTab: Dispatch<SetStateAction<number>>;
     // Star re-rating flip.
     pendingFlip: PendingFlip | null;
@@ -47,7 +49,7 @@ interface Props {
  */
 export function EvaluationConfirmDialogs({
     getString,
-    pendingMove, setPendingMove, moveFact, moveImprovement, setActiveTab,
+    pendingMove, setPendingMove, moveFact, moveImprovement, linkFromPoolById, setActiveTab,
     pendingFlip, setPendingFlip, confirmFlip,
     pendingSummaryReconcile, setPendingSummaryReconcile, confirmSummaryReconcile,
 }: Props) {
@@ -78,7 +80,11 @@ export function EvaluationConfirmDialogs({
                         variant="contained"
                         onClick={() => {
                             if (pendingMove) {
-                                if (pendingMove.kind === DragItemKind.Improvement) {
+                                if (pendingMove.fromEvalId == null) {
+                                    // Straight out of the unlinked pool: there is no
+                                    // source list to remove it from.
+                                    linkFromPoolById(pendingMove.factId, pendingMove.toEvalId);
+                                } else if (pendingMove.kind === DragItemKind.Improvement) {
                                     moveImprovement(pendingMove.fromEvalId, pendingMove.index, pendingMove.toEvalId);
                                 } else {
                                     moveFact(pendingMove.fromEvalId, pendingMove.index, pendingMove.toEvalId);

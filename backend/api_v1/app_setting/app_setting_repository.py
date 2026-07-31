@@ -10,9 +10,7 @@ from backend.api_v1.table_relationship_links.app_setting_user_group_link_model i
 class AppSettingRepository(BaseRepository):
     model = AppSetting
 
-    async def set_group_links(
-        self, app_setting_id: int, group_ids: list[int]
-    ) -> None:
+    async def set_group_links(self, app_setting_id: int, group_ids: list[int]) -> None:
         """Replace a setting's group links with exactly `group_ids` (by id)."""
         await self.session.execute(
             delete(AppSettingUserGroupLink).where(

@@ -8,8 +8,10 @@ from backend.api_v1.department.department_org_units import TopOrgUnit
 
 
 class EmployeeBase(BaseModel):
+    # No `name` here: employees have no name column. It is a read-only derived
+    # value (see EmployeeSchema.name) composed from the person's parts in the
+    # requesting user's preferred order, so it is never an input field.
     code: str = Field(..., max_length=10)
-    name: str = Field(..., max_length=100)
     email: str | None = Field(None, max_length=100)
     is_active: bool = True
     job_id: int | None = Field(default=None)
@@ -26,11 +28,9 @@ class EmployeeWithActivationCreate(EmployeeBase):
     """
     One-shot employee creation with an activation event.
     Reuses EmployeeBase for employee fields; adds activation fields.
-    A person is created under the hood from the split name fields;
-    `name` is derived server-side ('LAST FIRST') and thus optional here.
+    A person is created under the hood from the split name fields.
     """
 
-    name: str | None = Field(None, max_length=100)
     first_name: str = Field(..., max_length=64)
     last_name: str = Field(..., max_length=64)
     patronymic: str | None = Field(None, max_length=64)
@@ -87,6 +87,9 @@ class EmployeePersonSlim(BaseModel):
 class EmployeeSchema(EmployeeBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
+    # Read-only — mirrors Employee.name @property: composed from the person's
+    # parts in THIS viewer's order (surname_first_in_names). Never an input.
+    name: str = ""
     created_at: datetime
     person_id: int | None = None
     person: EmployeePersonSlim | None = None

@@ -122,8 +122,8 @@ import { Route as AdminReviewersHoldersIndexRouteImport } from './routes/admin/r
 import { Route as AdminReviewersEmployeesIndexRouteImport } from './routes/admin/reviewers/employees/index'
 import { Route as AdminReview_setupLevelsIndexRouteImport } from './routes/admin/review_setup/levels/index'
 import { Route as AdminReview_setupDimensionsIndexRouteImport } from './routes/admin/review_setup/dimensions/index'
-import { Route as AdminRecruitmentSourcesIndexRouteImport } from './routes/admin/recruitment/sources/index'
-import { Route as AdminRecruitmentDimensionsIndexRouteImport } from './routes/admin/recruitment/dimensions/index'
+import { Route as AdminRecruitmentRecruitment_dimensionsIndexRouteImport } from './routes/admin/recruitment/recruitment_dimensions/index'
+import { Route as AdminRecruitmentRecruitment_candidate_sourcesIndexRouteImport } from './routes/admin/recruitment/recruitment_candidate_sources/index'
 import { Route as AdminPlanning_setupPlan_session_statusIndexRouteImport } from './routes/admin/planning_setup/plan_session_status/index'
 import { Route as AdminPlanning_setupPlan_scope_defaultsIndexRouteImport } from './routes/admin/planning_setup/plan_scope_defaults/index'
 import { Route as AdminPlanning_setupPlan_category_defaultsIndexRouteImport } from './routes/admin/planning_setup/plan_category_defaults/index'
@@ -787,16 +787,16 @@ const AdminReview_setupDimensionsIndexRoute =
     path: '/',
     getParentRoute: () => AdminReview_setupDimensionsRouteRoute,
   } as any)
-const AdminRecruitmentSourcesIndexRoute =
-  AdminRecruitmentSourcesIndexRouteImport.update({
-    id: '/sources/',
-    path: '/sources/',
+const AdminRecruitmentRecruitment_dimensionsIndexRoute =
+  AdminRecruitmentRecruitment_dimensionsIndexRouteImport.update({
+    id: '/recruitment_dimensions/',
+    path: '/recruitment_dimensions/',
     getParentRoute: () => AdminRecruitmentRouteRoute,
   } as any)
-const AdminRecruitmentDimensionsIndexRoute =
-  AdminRecruitmentDimensionsIndexRouteImport.update({
-    id: '/dimensions/',
-    path: '/dimensions/',
+const AdminRecruitmentRecruitment_candidate_sourcesIndexRoute =
+  AdminRecruitmentRecruitment_candidate_sourcesIndexRouteImport.update({
+    id: '/recruitment_candidate_sources/',
+    path: '/recruitment_candidate_sources/',
     getParentRoute: () => AdminRecruitmentRouteRoute,
   } as any)
 const AdminPlanning_setupPlan_session_statusIndexRoute =
@@ -1113,8 +1113,8 @@ export interface FileRoutesByFullPath {
   '/admin/planning_setup/plan_category_defaults': typeof AdminPlanning_setupPlan_category_defaultsIndexRoute
   '/admin/planning_setup/plan_scope_defaults': typeof AdminPlanning_setupPlan_scope_defaultsIndexRoute
   '/admin/planning_setup/plan_session_status': typeof AdminPlanning_setupPlan_session_statusIndexRoute
-  '/admin/recruitment/dimensions': typeof AdminRecruitmentDimensionsIndexRoute
-  '/admin/recruitment/sources': typeof AdminRecruitmentSourcesIndexRoute
+  '/admin/recruitment/recruitment_candidate_sources': typeof AdminRecruitmentRecruitment_candidate_sourcesIndexRoute
+  '/admin/recruitment/recruitment_dimensions': typeof AdminRecruitmentRecruitment_dimensionsIndexRoute
   '/admin/review_setup/dimensions/': typeof AdminReview_setupDimensionsIndexRoute
   '/admin/review_setup/levels/': typeof AdminReview_setupLevelsIndexRoute
   '/admin/reviewers/employees': typeof AdminReviewersEmployeesIndexRoute
@@ -1238,8 +1238,8 @@ export interface FileRoutesByTo {
   '/admin/planning_setup/plan_category_defaults': typeof AdminPlanning_setupPlan_category_defaultsIndexRoute
   '/admin/planning_setup/plan_scope_defaults': typeof AdminPlanning_setupPlan_scope_defaultsIndexRoute
   '/admin/planning_setup/plan_session_status': typeof AdminPlanning_setupPlan_session_statusIndexRoute
-  '/admin/recruitment/dimensions': typeof AdminRecruitmentDimensionsIndexRoute
-  '/admin/recruitment/sources': typeof AdminRecruitmentSourcesIndexRoute
+  '/admin/recruitment/recruitment_candidate_sources': typeof AdminRecruitmentRecruitment_candidate_sourcesIndexRoute
+  '/admin/recruitment/recruitment_dimensions': typeof AdminRecruitmentRecruitment_dimensionsIndexRoute
   '/admin/review_setup/dimensions': typeof AdminReview_setupDimensionsIndexRoute
   '/admin/review_setup/levels': typeof AdminReview_setupLevelsIndexRoute
   '/admin/reviewers/employees': typeof AdminReviewersEmployeesIndexRoute
@@ -1392,8 +1392,8 @@ export interface FileRoutesById {
   '/admin/planning_setup/plan_category_defaults/': typeof AdminPlanning_setupPlan_category_defaultsIndexRoute
   '/admin/planning_setup/plan_scope_defaults/': typeof AdminPlanning_setupPlan_scope_defaultsIndexRoute
   '/admin/planning_setup/plan_session_status/': typeof AdminPlanning_setupPlan_session_statusIndexRoute
-  '/admin/recruitment/dimensions/': typeof AdminRecruitmentDimensionsIndexRoute
-  '/admin/recruitment/sources/': typeof AdminRecruitmentSourcesIndexRoute
+  '/admin/recruitment/recruitment_candidate_sources/': typeof AdminRecruitmentRecruitment_candidate_sourcesIndexRoute
+  '/admin/recruitment/recruitment_dimensions/': typeof AdminRecruitmentRecruitment_dimensionsIndexRoute
   '/admin/review_setup/dimensions/': typeof AdminReview_setupDimensionsIndexRoute
   '/admin/review_setup/levels/': typeof AdminReview_setupLevelsIndexRoute
   '/admin/reviewers/employees/': typeof AdminReviewersEmployeesIndexRoute
@@ -1547,8 +1547,8 @@ export interface FileRouteTypes {
     | '/admin/planning_setup/plan_category_defaults'
     | '/admin/planning_setup/plan_scope_defaults'
     | '/admin/planning_setup/plan_session_status'
-    | '/admin/recruitment/dimensions'
-    | '/admin/recruitment/sources'
+    | '/admin/recruitment/recruitment_candidate_sources'
+    | '/admin/recruitment/recruitment_dimensions'
     | '/admin/review_setup/dimensions/'
     | '/admin/review_setup/levels/'
     | '/admin/reviewers/employees'
@@ -1672,8 +1672,8 @@ export interface FileRouteTypes {
     | '/admin/planning_setup/plan_category_defaults'
     | '/admin/planning_setup/plan_scope_defaults'
     | '/admin/planning_setup/plan_session_status'
-    | '/admin/recruitment/dimensions'
-    | '/admin/recruitment/sources'
+    | '/admin/recruitment/recruitment_candidate_sources'
+    | '/admin/recruitment/recruitment_dimensions'
     | '/admin/review_setup/dimensions'
     | '/admin/review_setup/levels'
     | '/admin/reviewers/employees'
@@ -1825,8 +1825,8 @@ export interface FileRouteTypes {
     | '/admin/planning_setup/plan_category_defaults/'
     | '/admin/planning_setup/plan_scope_defaults/'
     | '/admin/planning_setup/plan_session_status/'
-    | '/admin/recruitment/dimensions/'
-    | '/admin/recruitment/sources/'
+    | '/admin/recruitment/recruitment_candidate_sources/'
+    | '/admin/recruitment/recruitment_dimensions/'
     | '/admin/review_setup/dimensions/'
     | '/admin/review_setup/levels/'
     | '/admin/reviewers/employees/'
@@ -2730,18 +2730,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminReview_setupDimensionsIndexRouteImport
       parentRoute: typeof AdminReview_setupDimensionsRouteRoute
     }
-    '/admin/recruitment/sources/': {
-      id: '/admin/recruitment/sources/'
-      path: '/sources'
-      fullPath: '/admin/recruitment/sources'
-      preLoaderRoute: typeof AdminRecruitmentSourcesIndexRouteImport
+    '/admin/recruitment/recruitment_dimensions/': {
+      id: '/admin/recruitment/recruitment_dimensions/'
+      path: '/recruitment_dimensions'
+      fullPath: '/admin/recruitment/recruitment_dimensions'
+      preLoaderRoute: typeof AdminRecruitmentRecruitment_dimensionsIndexRouteImport
       parentRoute: typeof AdminRecruitmentRouteRoute
     }
-    '/admin/recruitment/dimensions/': {
-      id: '/admin/recruitment/dimensions/'
-      path: '/dimensions'
-      fullPath: '/admin/recruitment/dimensions'
-      preLoaderRoute: typeof AdminRecruitmentDimensionsIndexRouteImport
+    '/admin/recruitment/recruitment_candidate_sources/': {
+      id: '/admin/recruitment/recruitment_candidate_sources/'
+      path: '/recruitment_candidate_sources'
+      fullPath: '/admin/recruitment/recruitment_candidate_sources'
+      preLoaderRoute: typeof AdminRecruitmentRecruitment_candidate_sourcesIndexRouteImport
       parentRoute: typeof AdminRecruitmentRouteRoute
     }
     '/admin/planning_setup/plan_session_status/': {
@@ -3309,14 +3309,16 @@ const AdminPlanning_setupRouteRouteWithChildren =
 
 interface AdminRecruitmentRouteRouteChildren {
   AdminRecruitmentIndexRoute: typeof AdminRecruitmentIndexRoute
-  AdminRecruitmentDimensionsIndexRoute: typeof AdminRecruitmentDimensionsIndexRoute
-  AdminRecruitmentSourcesIndexRoute: typeof AdminRecruitmentSourcesIndexRoute
+  AdminRecruitmentRecruitment_candidate_sourcesIndexRoute: typeof AdminRecruitmentRecruitment_candidate_sourcesIndexRoute
+  AdminRecruitmentRecruitment_dimensionsIndexRoute: typeof AdminRecruitmentRecruitment_dimensionsIndexRoute
 }
 
 const AdminRecruitmentRouteRouteChildren: AdminRecruitmentRouteRouteChildren = {
   AdminRecruitmentIndexRoute: AdminRecruitmentIndexRoute,
-  AdminRecruitmentDimensionsIndexRoute: AdminRecruitmentDimensionsIndexRoute,
-  AdminRecruitmentSourcesIndexRoute: AdminRecruitmentSourcesIndexRoute,
+  AdminRecruitmentRecruitment_candidate_sourcesIndexRoute:
+    AdminRecruitmentRecruitment_candidate_sourcesIndexRoute,
+  AdminRecruitmentRecruitment_dimensionsIndexRoute:
+    AdminRecruitmentRecruitment_dimensionsIndexRoute,
 }
 
 const AdminRecruitmentRouteRouteWithChildren =

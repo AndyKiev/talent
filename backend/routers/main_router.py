@@ -186,6 +186,9 @@ from backend.api_v1.permission_manifest.permission_manifest_views import (
     router as permission_manifest_router,
 )
 from backend.api_v1.person.person_views import router as person_router
+from backend.api_v1.person_events.person_event.person_event_views import (
+    router as person_event_router,
+)
 from backend.api_v1.recruitment_application_status.recruitment_application_status_views import (
     router as pipeline_status_router,
 )
@@ -389,6 +392,7 @@ router.include_router(department_job_target_router)
 router.include_router(department_category_router)
 router.include_router(job_router)
 router.include_router(person_router)
+router.include_router(person_event_router)
 router.include_router(employee_router)
 router.include_router(employee_department_router)
 router.include_router(employee_responsibility_department_router)

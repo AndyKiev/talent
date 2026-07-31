@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import useString from '../../../hooks/useString';
 import cfl from '../../../utils/helpers.ts';
-import { RECRUITMENT_TASK_QK } from '../../../utils/queryKeys';
+import { RECRUITMENT_TASKS_QK } from '../../../utils/queryKeys';
 import { fetchRecruitmentTasks } from '../tasks/recruitmentTaskApi';
 import { RecruitmentTaskBoard } from '../tasks/RecruitmentTaskBoard';
 import { statusLabel } from '../tasks/recruitmentStatus';
@@ -30,7 +30,7 @@ export function RecruitmentBoardPage() {
     const [taskId, setTaskId] = useState<number | ''>('');
 
     const { data: tasks = [], isLoading, error } = useQuery({
-        queryKey: RECRUITMENT_TASK_QK,
+        queryKey: RECRUITMENT_TASKS_QK,
         queryFn: fetchRecruitmentTasks,
         staleTime: 30 * 1000,
     });

@@ -16,22 +16,22 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
-import useString from '../../hooks/useString';
-import { snakeToCamel } from '../../utils/helpers.ts';
-import { CANDIDATE_SOURCE_QK } from '../../utils/queryKeys';
+import useString from '../../../hooks/useString';
+import { snakeToCamel } from '../../../utils/helpers.ts';
+import { RECRUITMENT_CANDIDATE_SOURCES_QK } from '../../../utils/queryKeys';
 import {
     fetchCandidateSources,
-    type Candidate,
-    type CandidateCreate,
-    type CandidateUpdate,
+    type RecruitmentCandidate,
+    type RecruitmentCandidateCreate,
+    type RecruitmentCandidateUpdate,
     type MutationResponse,
-} from './candidateApi';
+} from './recruitmentCandidateApi';
 
-type CreateMutation = UseMutationResult<MutationResponse<Candidate>, Error, CandidateCreate>;
+type CreateMutation = UseMutationResult<MutationResponse<RecruitmentCandidate>, Error, RecruitmentCandidateCreate>;
 type UpdateMutation = UseMutationResult<
-    MutationResponse<Candidate>,
+    MutationResponse<RecruitmentCandidate>,
     Error,
-    { id: number; data: CandidateUpdate }
+    { id: number; data: RecruitmentCandidateUpdate }
 >;
 
 interface Props {
@@ -39,23 +39,23 @@ interface Props {
     onClose: () => void;
     createMutation: CreateMutation;
     updateMutation: UpdateMutation;
-    editing?: Candidate | null;
+    editing?: RecruitmentCandidate | null;
 }
 
 // Inner form mounts fresh each time the dialog opens, so useState initializers
 // provide the reset / prefill — no setState-in-effect needed.
-function CandidateForm({ onClose, createMutation, updateMutation, editing }: Omit<Props, 'open'>) {
+function RecruitmentCandidateForm({ onClose, createMutation, updateMutation, editing }: Omit<Props, 'open'>) {
     const getString = useString();
     const [firstName, setFirstName] = useState(editing?.first_name ?? '');
     const [lastName, setLastName] = useState(editing?.last_name ?? '');
     const [email, setEmail] = useState(editing?.email ?? '');
-    const [sourceId, setSourceId] = useState<number | ''>(editing?.source_id ?? '');
+    const [sourceId, setSourceId] = useState<number | ''>(editing?.candidate_source_id ?? '');
     const [phones, setPhones] = useState<string[]>(
         editing && editing.phones.length ? editing.phones.map((p) => p.phone) : [''],
     );
 
     const { data: sources = [] } = useQuery({
-        queryKey: CANDIDATE_SOURCE_QK,
+        queryKey: RECRUITMENT_CANDIDATE_SOURCES_QK,
         queryFn: fetchCandidateSources,
     });
 
@@ -81,7 +81,7 @@ function CandidateForm({ onClose, createMutation, updateMutation, editing }: Omi
             first_name: firstName.trim(),
             last_name: lastName.trim(),
             email: email.trim() || null,
-            source_id: sourceId === '' ? null : sourceId,
+            candidate_source_id: sourceId === '' ? null : sourceId,
         };
         if (editing) {
             updateMutation.mutate({ id: editing.id, data: { ...base, phones: cleanPhones } });
@@ -185,7 +185,7 @@ function CandidateForm({ onClose, createMutation, updateMutation, editing }: Omi
     );
 }
 
-export function CandidateFormDialog({ open, onClose, createMutation, updateMutation, editing }: Props) {
+export function RecruitmentCandidateFormDialog({ open, onClose, createMutation, updateMutation, editing }: Props) {
     const getString = useString();
     return (
         <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -195,7 +195,7 @@ export function CandidateFormDialog({ open, onClose, createMutation, updateMutat
                     : getString('createCandidate') || 'New candidate'}
             </DialogTitle>
             {open && (
-                <CandidateForm
+                <RecruitmentCandidateForm
                     onClose={onClose}
                     createMutation={createMutation}
                     updateMutation={updateMutation}

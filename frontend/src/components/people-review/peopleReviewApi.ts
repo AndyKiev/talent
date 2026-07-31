@@ -2,6 +2,7 @@ import { axiosInstance } from '../../api/axiosInstance';
 import { BASE_URL } from "../../utils/eNums.ts"
 import type { MutationResponse } from '../../types/mutationResponse';
 import type { PersonSex } from '../admin/persons/personApi';
+import type { EmployeeFact } from './employeeFactApi';
 export type { MutationResponse };
 
 // Maximum grade an evaluation score can take (must match the backend MAX_GRADE).
@@ -81,8 +82,12 @@ export interface Evaluation {
     dimension_id: number;
     score: number | null;
     mean_score: number | null;
-    facts: string | null;
-    improvement: string | null;
+    // The competence's two numbered lists. Rows of `employee_facts` attached to
+    // this evaluation, already in display order — READ-ONLY here: every write
+    // goes through employeeFactApi (each line records who wrote it, so a
+    // full-list replace on autosave would delete authored rows).
+    facts: EmployeeFact[];
+    improvements: EmployeeFact[];
     criterion_scores: CriterionScore[];
     // Frozen descriptors for this dimension (display order). Empty for sessions
     // opened before the freeze existed — the store then falls back to the hint.
@@ -208,7 +213,16 @@ export interface ReviewSessionEmployee {
     // Per-review opt-in for the full competence list in the summary selects (see
     // the backend column). Only honoured when the global setting allows it.
     summary_full_competence_list: boolean;
-    evaluations: Evaluation[];
+    // The LIGHT rows the review record carries — not the full Evaluation the
+    // evaluations endpoint returns. No facts here: they are rows now, and the
+    // roster must never pay for them.
+    evaluations: EvaluationInRSE[];
+}
+
+export interface EvaluationInRSE {
+    id: number;
+    dimension_id: number;
+    score: number | null;
 }
 
 export interface RSEFieldsUpdate {
@@ -685,10 +699,10 @@ export const fetchEvaluations = async (rseId: number): Promise<Evaluation[]> => 
     return res.data ?? [];
 };
 
+// Scores only. The numbered lists left this payload when they became rows —
+// see employeeFactApi.ts.
 export interface EvaluationBulkUpdate {
     id: number;
-    facts?: string | null;
-    improvement?: string | null;
     criterion_scores?: CriterionScore[];
 }
 
@@ -700,8 +714,8 @@ export const bulkUpdateEvaluations = async (
 };
 
 // Atomically re-rate a competence so it moves to the opposite summary list:
-// in ONE backend transaction the descriptor score is set, the leaving side's dim
-// column (facts for "strong", improvement for "develop") is cleared, and the
+// in ONE backend transaction the descriptor score is set, the leaving side's
+// numbered list (facts for "strong", improvements for "develop") is cleared, and the
 // competence's summary row is DELETED (its comments cascade). Rolls back on failure.
 // `leaving_type_id` is a review_session_employee_dimension_types id — the side is data, not a literal.
 export interface EvaluationFlipCompetence {

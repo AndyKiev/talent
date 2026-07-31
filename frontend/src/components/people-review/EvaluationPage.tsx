@@ -54,6 +54,8 @@ import { useFrozenBooleanSetting } from './useFrozenSetting';
 import { EmployeeDataTabs } from './evaluation/EmployeeDataTabs';
 import { DevelopmentPlanSection } from './evaluation/DevelopmentPlanSection';
 import { DimensionPanel } from './evaluation/DimensionPanel';
+import { UnlinkedFactsDrawer } from './evaluation/UnlinkedFactsDrawer';
+import ConfirmDeleteDialog from '../ui/ConfirmDeleteDialog';
 import { useEvaluationAutosave } from './evaluation/useEvaluationAutosave';
 import BusyBackdrop from '../ui/BusyBackdrop';
 import { useOnlyMeMode } from './useOnlyMeMode';
@@ -94,7 +96,9 @@ export function EvaluationPage() {
     // When ON, an employee with no current level gets the base level persisted.
     const { enabled: persistDefaultLevel } = useBooleanSetting('employee_default_level_persist');
 
-    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+    // 'info' is for guidance, not failure — the copy-to-summary hints (target
+    // card not open / line already there) are refusals, not errors.
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' | 'info' });
     const [activeTab, setActiveTab] = useState(0);
     // Presentation mode: hide every editing affordance for a clean read-only view
     // even while the record is technically editable (job done, just presenting).
@@ -115,6 +119,7 @@ export function EvaluationPage() {
         siblings, evaluations, evalLoading,
         langLevels, employeeId, langProfile, langLoading,
         dimensionTypes, dimensionTypesUnavailable, feedbackTypes,
+        factTypes, unlinkedFacts, refetchUnlinkedFacts,
         comments, allLevels, sessionLevels, proposedLevel,
         refreshPersonData, refreshing, realignTargetId,
     } = useEvaluationQueries(sid, eid);
@@ -160,6 +165,9 @@ export function EvaluationPage() {
 
     // --- Reviewer notes (comments) ---
     const [commentsOpen, setCommentsOpen] = useState(false);
+    // The pool of facts registered without a competence. Non-modal drawer: the
+    // competence tabs behind it stay visible and are the drop targets.
+    const [unlinkedFactsOpen, setUnlinkedFactsOpen] = useState(false);
 
     // --- Personal data (birth date / age, hire date / tenure, job-assigned date) ---
     const [birthDateOpen, setBirthDateOpen] = useState(false);
@@ -342,6 +350,17 @@ export function EvaluationPage() {
     const strongAccent = pickSideAccent(DimensionSide.Strong, usedCompetenceColors);
     const developAccent = pickSideAccent(DimensionSide.Develop, usedCompetenceColors);
 
+    // Targets of the drawer's "file into…" menu — the click path that stands in
+    // for dragging where drag cannot work (touch, or the drawer covering the tabs).
+    // Plain map, not memoized: `competenceLabel` / `competenceColor` are redefined
+    // each render, so a useMemo here would recompute anyway — and the list is one
+    // entry per competence.
+    const drawerCompetences = visibleEvals.map(e => ({
+        evalId: e.id,
+        name: competenceLabel(e.dimension_key),
+        color: competenceColor(e.dimension_key),
+    }));
+
     // A competence is "picked" if it appears in the matching summary section.
     const isStrongPicked = (key: string) => strongOptions.some(o => o.dimension_key === key);
     const isDevelopPicked = (key: string) => developOptions.some(o => o.dimension_key === key);
@@ -354,6 +373,7 @@ export function EvaluationPage() {
     const {
         strongCandidates, developCandidates,
         copyFactToStrong, copyImprovementToDevelop, activateCompetenceTab,
+        setStrongOpenCard, setDevelopOpenCard,
         addDimensionOption, removeDimensionOption, removeDevelopOption,
         addDimensionComment, removeDimensionComment, editDimensionComment, reorderDimensionOption,
         handleSummaryFullListToggle, confirmSummaryReconcile,
@@ -367,7 +387,9 @@ export function EvaluationPage() {
         setLocalEvals, setDevelopOptions, setStrongDrafts, setDevelopDrafts,
         setSummaryFullCompetenceList,
         summaryMinOptions, dimensionTypes, getString, flushAutosave, setActiveTab,
+        strongDrafts, developDrafts,
         onError: (message) => setSnackbar({ open: true, message, severity: 'error' }),
+        onNotice: (message) => setSnackbar({ open: true, message, severity: 'info' }),
     });
 
     // --- Facts / directions-for-improvement handlers --------------------------
@@ -381,7 +403,14 @@ export function EvaluationPage() {
         addFact, removeFact, editFact, reorderFact,
         addImprovement, removeImprovement, editImprovement, reorderImprovement,
         moveFact, moveImprovement,
-    } = useDimensionFacts({ setLocalEvals });
+        linkFromPool, unlinkFact, unlinkImprovement,
+        createPoolFact, editPoolFact, changePoolFactType,
+        requestDeleteFromPool, pendingFactDelete, setPendingFactDelete, confirmFactDelete,
+    } = useDimensionFacts({
+        employeeId, factTypes, localEvals, setLocalEvals,
+        onError: (message) => setSnackbar({ open: true, message, severity: 'error' }),
+        onPoolChanged: () => { void refetchUnlinkedFacts(); },
+    });
 
     // Scope switched and the URL employee fell out of it — the queries hook is
     // redirecting to the first in-scope employee; show a spinner meanwhile
@@ -500,6 +529,9 @@ export function EvaluationPage() {
                             showCommentsButton={showCommentsButton}
                             commentsCount={comments.length}
                             onOpenComments={() => setCommentsOpen(true)}
+                            showUnlinkedFactsButton={!presentationMode}
+                            unlinkedFactsCount={unlinkedFacts.length}
+                            onOpenUnlinkedFacts={() => setUnlinkedFactsOpen(true)}
                             isOwnRecord={isOwnRecord}
                             isEditable={isEditable}
                             presentationMode={presentationMode}
@@ -675,6 +707,7 @@ export function EvaluationPage() {
                                                     onEditComment={(key, idx, text) => editDimensionComment(setStrongOptions, key, idx, text)}
                                                     onReorderOption={(from, to) => reorderDimensionOption(setStrongOptions, from, to)}
                                                     onSelectDimension={activateCompetenceTab}
+                                                    onOpenCardChange={setStrongOpenCard}
                                                 />
                                                 <RseDimensionSection
                                                     title={getString('competencesToDevelop')}
@@ -694,6 +727,7 @@ export function EvaluationPage() {
                                                     onEditComment={(key, idx, text) => editDimensionComment(setDevelopOptions, key, idx, text)}
                                                     onReorderOption={(from, to) => reorderDimensionOption(setDevelopOptions, from, to)}
                                                     onSelectDimension={activateCompetenceTab}
+                                                    onOpenCardChange={setDevelopOpenCard}
                                                 />
                                             </Box>
                                           </>
@@ -728,7 +762,6 @@ export function EvaluationPage() {
                         {visibleEvals.length > 0 && (
                             <DimensionPanel
                                 visibleEvals={visibleEvals}
-                                localEvals={localEvals}
                                 activeTab={activeTab}
                                 setActiveTab={setActiveTab}
                                 isEditable={showEditing}
@@ -757,6 +790,8 @@ export function EvaluationPage() {
                                 isDevelopPicked={isDevelopPicked}
                                 copyFactToStrong={copyFactToStrong}
                                 copyImprovementToDevelop={copyImprovementToDevelop}
+                                unlinkFact={unlinkFact}
+                                unlinkImprovement={unlinkImprovement}
                             />
                         )}
                         </Box>
@@ -783,6 +818,39 @@ export function EvaluationPage() {
                 myAuthorRole={myAuthorRole}
                 myEmployeeId={myEmployeeId}
                 setSnackbar={setSnackbar}
+            />
+
+            {/* Mounted only while open. A persistent drawer left mounted keeps its
+                paper parked off-screen at translateX(100%), which is what put a
+                horizontal scrollbar on the page and made the header slide about. */}
+            {unlinkedFactsOpen && !presentationMode && (
+            <UnlinkedFactsDrawer
+                open
+                onClose={() => setUnlinkedFactsOpen(false)}
+                getString={getString}
+                facts={unlinkedFacts}
+                factTypes={factTypes}
+                isEditable={showEditing}
+                onCreate={createPoolFact}
+                onEdit={editPoolFact}
+                onChangeType={changePoolFactType}
+                onDelete={requestDeleteFromPool}
+                setDraggedItem={setDraggedItem}
+                competences={drawerCompetences}
+                onFileInto={linkFromPool}
+            />
+            )}
+
+            {/* Deleting a line is final — it is NOT the same as sending it back to
+                the unfiled pool — so both places it can be deleted from route
+                through the shared confirm dialog. */}
+            <ConfirmDeleteDialog
+                open={pendingFactDelete != null}
+                title={getString('deleteFactTitle')}
+                message={getString('areYouSureDeleteFact')}
+                itemLabel={pendingFactDelete?.text}
+                onConfirm={confirmFactDelete}
+                onClose={() => setPendingFactDelete(null)}
             />
 
             {/* TEMPO album PDF viewer — image in a wide dialog (the seed of the
@@ -896,6 +964,7 @@ export function EvaluationPage() {
             <EvaluationConfirmDialogs
                 getString={getString}
                 pendingMove={pendingMove}
+                linkFromPoolById={linkFromPool}
                 setPendingMove={setPendingMove}
                 moveFact={moveFact}
                 moveImprovement={moveImprovement}

@@ -15,19 +15,19 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import dayjs from 'dayjs';
-import useString from '../../hooks/useString';
-import { useIntegerSetting } from '../../hooks/useAppSetting';
-import { AVAILABLE_INTERVIEWERS_QK } from '../../utils/queryKeys';
+import useString from '../../../hooks/useString';
+import { useIntegerSetting } from '../../../hooks/useAppSetting';
+import { AVAILABLE_INTERVIEWERS_QK } from '../../../utils/queryKeys';
 import {
     createInterview,
     fetchAvailableInterviewers,
-    type InterviewEmployeeMini,
-} from './interviewApi';
-import type { CandidateApplication } from '../candidates/candidateApplicationApi';
+    type RecruitmentInterviewEmployeeMini,
+} from './recruitmentInterviewApi';
+import type { RecruitmentApplication } from '../candidates/recruitmentApplicationApi';
 
 interface Props {
     open: boolean;
-    application: CandidateApplication | null;
+    application: RecruitmentApplication | null;
     onClose: () => void;
     /** Called after the interview is created (the card auto-advances server-side). */
     onScheduled: (detail: string) => void;
@@ -41,7 +41,7 @@ function ScheduleForm({ application, onClose, onScheduled, onError }: Omit<Props
     const { value: maxInterviewers } = useIntegerSetting('interview_max_interviewers', 3);
     const [when, setWhen] = useState<string>(''); // ISO datetime
     const [location, setLocation] = useState('');
-    const [interviewers, setInterviewers] = useState<InterviewEmployeeMini[]>([]);
+    const [interviewers, setInterviewers] = useState<RecruitmentInterviewEmployeeMini[]>([]);
 
     const { data: available = [], isLoading } = useQuery({
         queryKey: AVAILABLE_INTERVIEWERS_QK,
@@ -52,7 +52,7 @@ function ScheduleForm({ application, onClose, onScheduled, onError }: Omit<Props
     const createMutation = useMutation({
         mutationFn: createInterview,
         onSuccess: async (res) => {
-            await qc.invalidateQueries({ queryKey: ['candidate_applications'] });
+            await qc.invalidateQueries({ queryKey: ['recruitment_applications'] });
             await qc.invalidateQueries({ queryKey: ['interviews'] });
             onScheduled(res.detail);
         },
@@ -141,7 +141,7 @@ function ScheduleForm({ application, onClose, onScheduled, onError }: Omit<Props
     );
 }
 
-export function InterviewScheduleDialog({ open, application, onClose, onScheduled, onError }: Props) {
+export function RecruitmentInterviewScheduleDialog({ open, application, onClose, onScheduled, onError }: Props) {
     const getString = useString();
     const candidateName = application?.candidate
         ? `${application.candidate.first_name} ${application.candidate.last_name}`

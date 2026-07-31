@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import type { GetStringFn } from '../../../types/getStringFn';
 import type { RseDimensionItem } from '../peopleReviewApi';
+import { FACT_KEY_IMPROVEMENT, type EmployeeFact } from '../employeeFactApi';
 
 /**
  * Which side a dimension is singled out on for this employee: a strength, or
@@ -198,42 +199,57 @@ export interface LocalEval {
     descriptors: string[];
     // criterion_index -> score (1..MAX_GRADE). Sparse: unrated descriptors are absent.
     criterionScores: Record<number, number>;
-    facts: string[];
-    // Directions for improvement — a numbered list (stored serialized like facts).
-    improvements: string[];
+    // The two numbered lists. Rows, not strings: each line is an `employee_facts`
+    // row with its own id, so it can be edited, reordered, sent back to the
+    // unlinked pool and brought back without losing its authorship. The visible
+    // "1., 2., 3." is the array position — no number is ever stored in the text.
+    facts: EmployeeFact[];
+    improvements: EmployeeFact[];
 }
 
-/** An item being dragged: its list (kind), competence (evalId) and row index. */
+/** An item being dragged: its list (kind), competence (evalId) and row index.
+ *  `evalId` is null when the item is being dragged OUT of the unlinked pool. */
 export interface DraggedItem {
     kind: DragItemKind;
-    evalId: number;
+    evalId: number | null;
     index: number;
+    factId: number;
+    text: string;
 }
 
 /** An item pending confirmation to move into another competence tab. */
 export interface PendingMove {
     kind: DragItemKind;
-    fromEvalId: number;
+    fromEvalId: number | null;
     index: number;
     text: string;
+    factId: number;
     toEvalId: number;
     toTabIndex: number;
     toName: string;
 }
 
-/** Split a stored facts string (e.g. "1. fact one\n2. fact two") into an array, stripping numbering. */
-export function parseFacts(raw: string | null): string[] {
-    if (!raw) return [];
-    return raw
-        .split('\n')
-        .map(line => line.replace(/^\d+\.\s*/, '').trim())
-        .filter(line => line.length > 0);
+/**
+ * A line held back for delete confirmation. Deleting is not "move back to the
+ * pool" — the row goes for good — so it always passes through the shared
+ * ConfirmDeleteDialog, from either place a line is shown.
+ */
+export interface PendingFactDelete {
+    text: string;
+    /** 'list' = under a competence (identified by evalId+kind+index);
+     *  'pool'  = in the unfiled drawer (identified by factId). */
+    source: 'list' | 'pool';
+    evalId: number | null;
+    kind: DragItemKind | null;
+    index: number | null;
+    factId: number | null;
 }
 
-/** Serialize a facts array back to a numbered string for storage. */
-export function serializeFacts(facts: string[]): string {
-    if (facts.length === 0) return '';
-    return facts.map((f, i) => `${i + 1}. ${f}`).join('\n');
+/** Which of a competence's two lists a fact kind maps to. */
+export function factKindOf(fact: EmployeeFact): DragItemKind {
+    return fact.employee_fact_type_key === FACT_KEY_IMPROVEMENT
+        ? DragItemKind.Improvement
+        : DragItemKind.Fact;
 }
 
 /** Split a competence hint (•-bulleted, newline-joined) into individual behaviour descriptors. */

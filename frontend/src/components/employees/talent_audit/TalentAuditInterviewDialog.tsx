@@ -1,5 +1,5 @@
 // src/components/employees/talent_audit/TalentAuditInterviewDialog.tsx
-import { useEffect, useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -28,6 +28,7 @@ import {
   type TalentAuditInterviewCreate,
 } from './talentAuditApi';
 import { axiosInstance } from '../../../api/axiosInstance';
+import { TALENT_PAIR_FIELD_WIDTH } from './talentFieldWidths';
 import { BASE_URL, DATE_FORMAT } from '../../../utils/eNums';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
@@ -66,6 +67,13 @@ interface Props {
   onError: (detail: string) => void;
 }
 
+/**
+ * Shell: owns the lookups and the loading/empty states. The form itself lives
+ * in InterviewFormBody, which is mounted only once the free jobs are in hand —
+ * so its defaultValues are built from real data and no effect has to backfill
+ * them. The parent mounts this dialog fresh per open, so nothing needs
+ * resetting on close either.
+ */
 export function TalentAuditInterviewDialog({
   open,
   talentAuditId,
@@ -76,9 +84,6 @@ export function TalentAuditInterviewDialog({
   onError,
 }: Props) {
   const getString = useString({ str });
-  const qc = useQueryClient();
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [pendingValues, setPendingValues] = useState<FormValues | null>(null);
 
   // Fetch free audit jobs (already sorted by qty_months from backend)
   const { data: freeJobs = [], isLoading: freeJobsLoading } = useQuery<FreeAuditJob[]>({
@@ -104,6 +109,75 @@ export function TalentAuditInterviewDialog({
     staleTime: 5 * 60 * 1000,
   });
 
+  const loading = freeJobsLoading || pairsLoading;
+  const noFreeJobs = !loading && freeJobs.length === 0;
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>{getString('addInterview') || 'Add Interview'}</DialogTitle>
+
+      {loading || noFreeJobs ? (
+        <>
+          <DialogContent>
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              {loading && <CircularProgress size={24} sx={{ alignSelf: 'center' }} />}
+              {noFreeJobs && (
+                <Alert severity="info">
+                  {getString('noFreeJobsForInterview') ||
+                    "No available jobs with 'created' status for interview"}
+                </Alert>
+              )}
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={onClose}>{getString('cancel') || 'Cancel'}</Button>
+            <Button variant="contained" disabled>
+              {getString('add') || 'Add'}
+            </Button>
+          </DialogActions>
+        </>
+      ) : (
+        <InterviewFormBody
+          talentAuditId={talentAuditId}
+          freeJobs={freeJobs}
+          pairs={pairs}
+          interviewsQK={interviewsQK}
+          auditJobsQK={auditJobsQK}
+          onClose={onClose}
+          onSuccess={onSuccess}
+          onError={onError}
+        />
+      )}
+    </Dialog>
+  );
+}
+
+interface BodyProps {
+  talentAuditId: number;
+  freeJobs: FreeAuditJob[];
+  pairs: StatusPeriodOption[];
+  interviewsQK: readonly unknown[];
+  auditJobsQK: readonly unknown[];
+  onClose: () => void;
+  onSuccess: (detail: string) => void;
+  onError: (detail: string) => void;
+}
+
+function InterviewFormBody({
+  talentAuditId,
+  freeJobs,
+  pairs,
+  interviewsQK,
+  auditJobsQK,
+  onClose,
+  onSuccess,
+  onError,
+}: BodyProps) {
+  const getString = useString({ str });
+  const qc = useQueryClient();
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [pendingValues, setPendingValues] = useState<FormValues | null>(null);
+
   const pairsMap = useMemo(() => {
     const m = new Map<number, StatusPeriodOption>();
     for (const p of pairs) m.set(p.id, p);
@@ -113,49 +187,26 @@ export function TalentAuditInterviewDialog({
   const {
     control,
     handleSubmit,
-    reset,
     formState: { errors },
   } = useForm<FormValues>({
-    defaultValues: { interview_date: '', jobs: [] },
+    // Mounted only once freeJobs has resolved, so one row per job right away.
+    defaultValues: {
+      interview_date: '',
+      jobs: freeJobs.map((fj) => ({
+        talent_audit_job_id: fj.id,
+        job_name: fj.job_name,
+        hrm_status_period_label: fj.hrm_status_period_label,
+        hrm_qty_months: fj.hrm_qty_months ?? 0,
+        hrm_status_key: fj.hrm_status_key ?? '',
+        hrm_talent_status_period_link_id: fj.hrm_talent_status_period_link_id ?? 0,
+        talent_status_period_link_id: '',
+      })),
+    },
   });
 
   const { fields } = useFieldArray({ control, name: 'jobs' });
   const watchedJobs = useWatch({ control, name: 'jobs' });
 
-  // Populate job rows when free jobs load
-  const freeJobsCount = freeJobs.length;
-  useEffect(() => {
-    if (open && freeJobsCount > 0) {
-      reset({
-        interview_date: '',
-        jobs: freeJobs.map((fj) => ({
-          talent_audit_job_id: fj.id,
-          job_name: fj.job_name,
-          hrm_status_period_label: fj.hrm_status_period_label,
-          hrm_qty_months: fj.hrm_qty_months ?? 0,
-          hrm_status_key: fj.hrm_status_key ?? '',
-          hrm_talent_status_period_link_id: fj.hrm_talent_status_period_link_id ?? 0,
-          talent_status_period_link_id: '',
-        })),
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, freeJobsCount]);
-
-
-  // Close-reset: this dialog stays mounted across opens, so the confirmation
-  // state has to be cleared here rather than by remounting. The setState calls
-  // run only on the closing render, never in a loop.
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (!open) {
-      reset({ interview_date: '', jobs: [] });
-      setShowConfirmation(false);
-      setPendingValues(null);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-  /* eslint-enable react-hooks/set-state-in-effect */
   // ── Validation helpers ──────────────────────────────────────────────────────
 
   const getValidationError = (): string | null => {
@@ -271,135 +322,117 @@ export function TalentAuditInterviewDialog({
     setPendingValues(null);
   };
 
-  const loading = freeJobsLoading || pairsLoading;
-  const noFreeJobs = !loading && freeJobs.length === 0;
-
   return (
     <>
-      <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-        <DialogTitle>{getString('addInterview') || 'Add Interview'}</DialogTitle>
-        <DialogContent>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Stack spacing={2} sx={{ mt: 1 }}>
-              {mutation.isError && (
-                <Alert severity="error">
-                  {getString('createFailed') || 'Failed to save'}
-                </Alert>
+      <DialogContent>
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {mutation.isError && (
+              <Alert severity="error">
+                {getString('createFailed') || 'Failed to save'}
+              </Alert>
+            )}
+
+            {validationError && (
+              <Alert severity="warning">{validationError}</Alert>
+            )}
+
+            {/* Interview date */}
+            <Controller
+              name="interview_date"
+              control={control}
+              rules={{ required: true }}
+              render={({ field }) => (
+                <DatePicker
+                  label={getString('interviewDate') || 'Interview Date'}
+                  format={DATE_FORMAT}
+                  value={field.value ? dayjs(field.value) : null}
+                  onChange={(v) => {
+                    const d = v ? dayjs(v) : null;
+                    field.onChange(d && d.isValid() ? d.format('YYYY-MM-DD') : '');
+                  }}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      error: !!errors.interview_date,
+                      helperText: errors.interview_date
+                        ? getString('fieldRequired') || 'Required'
+                        : '',
+                    },
+                  }}
+                />
               )}
+            />
 
-              {noFreeJobs && (
-                <Alert severity="info">
-                  {getString('noFreeJobsForInterview') ||
-                    "No available jobs with 'created' status for interview"}
-                </Alert>
-              )}
+            <Divider />
 
-              {validationError && (
-                <Alert severity="warning">{validationError}</Alert>
-              )}
+            <Typography variant="caption" color="text.secondary" fontWeight={600}>
+              {getString('hrsStatusPeriod') || 'Status/Period (HRS)'} —{' '}
+              {getString('perJob') || 'per job'}
+            </Typography>
 
-              {loading && <CircularProgress size={24} sx={{ alignSelf: 'center' }} />}
+            {fields.map((field, index) => (
+              <Box
+                key={field.id}
+                sx={{
+                  p: 1.5,
+                  borderRadius: 1,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
+                <Typography variant="body2" fontWeight={600} gutterBottom>
+                  {field.job_name}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" gutterBottom>
+                  {getString('hrmStatusPeriod') || 'HRM'}: {field.hrm_status_period_label}
+                </Typography>
 
-              {!loading && !noFreeJobs && (
-                <>
-                  {/* Interview date */}
-                  <Controller
-                    name="interview_date"
-                    control={control}
-                    rules={{ required: true }}
-                    render={({ field }) => (
-                      <DatePicker
-                        label={getString('interviewDate') || 'Interview Date'}
-                        format={DATE_FORMAT}
-                        value={field.value ? dayjs(field.value) : null}
-                        onChange={(v) => {
-                          const d = v ? dayjs(v) : null;
-                          field.onChange(d && d.isValid() ? d.format('YYYY-MM-DD') : '');
-                        }}
-                        slotProps={{
-                          textField: {
-                            fullWidth: true,
-                            error: !!errors.interview_date,
-                            helperText: errors.interview_date
-                              ? getString('fieldRequired') || 'Required'
-                              : '',
-                          },
-                        }}
-                      />
-                    )}
-                  />
-
-                  <Divider />
-
-                  <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                    {getString('hrsStatusPeriod') || 'Status/Period (HRS)'} —{' '}
-                    {getString('perJob') || 'per job'}
-                  </Typography>
-
-                  {fields.map((field, index) => (
-                    <Box
-                      key={field.id}
-                      sx={{
-                        p: 1.5,
-                        borderRadius: 1,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                      }}
+                <Controller
+                  name={`jobs.${index}.talent_status_period_link_id`}
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field: selectField }) => (
+                    <TextField
+                      {...selectField}
+                      select
+                      size="small"
+                      label={getString('hrsStatusPeriod') || 'HRS Status & Period'}
+                      error={!!errors.jobs?.[index]?.talent_status_period_link_id}
+                      helperText={
+                        errors.jobs?.[index]?.talent_status_period_link_id
+                          ? getString('fieldRequired') || 'Required'
+                          : ''
+                      }
+                      // Short codes ("PO - 12") — sized to the content, not the
+                      // dialog, so it does not read as an empty box.
+                      sx={{ mt: 1, width: TALENT_PAIR_FIELD_WIDTH }}
                     >
-                      <Typography variant="body2" fontWeight={600} gutterBottom>
-                        {field.job_name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" gutterBottom>
-                        {getString('hrmStatusPeriod') || 'HRM'}: {field.hrm_status_period_label}
-                      </Typography>
-
-                      <Controller
-                        name={`jobs.${index}.talent_status_period_link_id`}
-                        control={control}
-                        rules={{ required: true }}
-                        render={({ field: selectField }) => (
-                          <TextField
-                            {...selectField}
-                            select
-                            fullWidth
-                            size="small"
-                            label={getString('hrsStatusPeriod') || 'HRS Status & Period'}
-                            error={!!errors.jobs?.[index]?.talent_status_period_link_id}
-                            helperText={
-                              errors.jobs?.[index]?.talent_status_period_link_id
-                                ? getString('fieldRequired') || 'Required'
-                                : ''
-                            }
-                            sx={{ mt: 1 }}
-                          >
-                            {pairs.map((p) => (
-                              <MenuItem key={p.id} value={p.id}>
-                                {p.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
-                        )}
-                      />
-                    </Box>
-                  ))}
-                </>
-              )}
-            </Stack>
-          </LocalizationProvider>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose} disabled={mutation.isPending}>
-            {getString('cancel') || 'Cancel'}
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmit(onSubmit)}
-            disabled={mutation.isPending || loading || noFreeJobs || !!validationError}
-          >
-            {mutation.isPending ? <CircularProgress size={18} /> : getString('add') || 'Add'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+                      {pairs.map((p) => (
+                        <MenuItem key={p.id} value={p.id}>
+                          {p.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  )}
+                />
+              </Box>
+            ))}
+          </Stack>
+        </LocalizationProvider>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={mutation.isPending}>
+          {getString('cancel') || 'Cancel'}
+        </Button>
+        <Button
+          variant="contained"
+          onClick={handleSubmit(onSubmit)}
+          disabled={mutation.isPending || !!validationError}
+        >
+          {mutation.isPending ? <CircularProgress size={18} /> : getString('add') || 'Add'}
+        </Button>
+      </DialogActions>
 
       {/* Discrepancy confirmation dialog */}
       <Dialog open={showConfirmation} onClose={handleCancelConfirm} maxWidth="xs" fullWidth>

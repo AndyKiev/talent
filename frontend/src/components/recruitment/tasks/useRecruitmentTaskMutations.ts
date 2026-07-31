@@ -5,7 +5,7 @@ import {
     changeRecruitmentTaskStatus,
     deleteRecruitmentTask,
 } from './recruitmentTaskApi';
-import { RECRUITMENT_TASK_QK } from '../../../utils/queryKeys';
+import { RECRUITMENT_TASKS_QK } from '../../../utils/queryKeys';
 import { useCrudMutations } from '../../../hooks/useCrudMutations';
 
 type Snackbar = { open: boolean; message: string; severity: 'success' | 'error' };
@@ -17,10 +17,10 @@ interface Props {
 
 export function useRecruitmentTaskMutations({ setSnackbar, onCreateSuccess }: Props) {
     const qc = useQueryClient();
-    const invalidate = () => qc.invalidateQueries({ queryKey: RECRUITMENT_TASK_QK });
+    const invalidate = () => qc.invalidateQueries({ queryKey: RECRUITMENT_TASKS_QK });
 
     const { createMutation, updateMutation, deleteMutation } = useCrudMutations({
-        queryKey: RECRUITMENT_TASK_QK,
+        queryKey: RECRUITMENT_TASKS_QK,
         createFn: createRecruitmentTask,
         updateFn: updateRecruitmentTask,
         deleteFn: deleteRecruitmentTask,

@@ -18,7 +18,6 @@ import {
     type RseFeedbackType,
 } from '../peopleReviewApi';
 import {
-    serializeFacts,
     FOREIGN_LANGUAGES,
     DimensionSide,
     type DimensionOption,
@@ -81,12 +80,11 @@ function buildEvalUpdates(localEvals: EvaluationDraft['localEvals']): Evaluation
             const s = le.criterionScores[i];
             if (s != null) criterion_scores.push({ criterion_index: i, score: s });
         });
-        return {
-            id: le.id,
-            facts: serializeFacts(le.facts) || null,
-            improvement: serializeFacts(le.improvements) || null,
-            criterion_scores,
-        };
+        // Scores only. The two numbered lists are rows with their own CRUD now:
+        // sending them here as a full desired state would delete an authored row
+        // whenever an unrelated edit fired the debounce before the draft had
+        // learned about a fact linked from the unlinked pool.
+        return { id: le.id, criterion_scores };
     });
 }
 

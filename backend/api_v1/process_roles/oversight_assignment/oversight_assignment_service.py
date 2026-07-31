@@ -8,7 +8,12 @@ from backend.api_v1.base.base_service import BaseService
 from backend.api_v1.department.department_messages import DepartmentNotFound
 from backend.api_v1.department.department_model import Department
 from backend.api_v1.department.department_repository import DepartmentRepository
+from backend.api_v1.employee.employee_minis import (
+    EMPLOYEE_NAME_COLUMNS,
+    compose_row_name,
+)
 from backend.api_v1.employee.employee_model import Employee
+from backend.api_v1.person.person_model import Person
 from backend.api_v1.employee.employee_schema import EmployeeSchema
 from backend.api_v1.employee_department.employee_department_model import (
     EmployeeDepartment,
@@ -151,9 +156,10 @@ class OversightAssignmentService(BaseService):
                 select(
                     Employee.id,
                     Employee.code,
-                    Employee.name,
+                    *EMPLOYEE_NAME_COLUMNS,
                     EmployeeDepartment.department_id,
                 )
+                .join(Person, Person.id == Employee.person_id)
                 .join(
                     ReviewSessionEmployee,
                     ReviewSessionEmployee.employee_id == Employee.id,
@@ -194,7 +200,10 @@ class OversightAssignmentService(BaseService):
         rows: list[OversightAssignmentResultRow] = []
         counts = {"assigned": 0, "overwritten": 0, "already_assigned": 0, "failed": 0}
 
-        for emp_id, emp_code, emp_name, main_dept_id in targets:
+        # (id, code, first_name, last_name, main_dept_id) — the name is composed
+        # here rather than in SQL because the parts are encrypted at rest.
+        for emp_id, emp_code, emp_first, emp_last, main_dept_id in targets:
+            emp_name = compose_row_name(emp_first, emp_last)
             dept_row = dept_info.get(main_dept_id)
             row = OversightAssignmentResultRow(
                 employee_id=emp_id,
@@ -405,7 +414,8 @@ class OversightAssignmentService(BaseService):
                 break
             found = (
                 await self.session.execute(
-                    select(Employee.id, Employee.code, Employee.name)
+                    select(Employee.id, Employee.code, *EMPLOYEE_NAME_COLUMNS)
+                    .join(Person, Person.id == Employee.person_id)
                     .join(
                         EmployeeDepartment,
                         EmployeeDepartment.employee_id == Employee.id,
@@ -421,7 +431,12 @@ class OversightAssignmentService(BaseService):
             trace.append(
                 _SearchLevel(
                     department_id=dept_id,
-                    candidates=[_Candidate(*row) for row in found],
+                    # (id, code, first_name, last_name) -> composed in Python,
+                    # the name parts being encrypted.
+                    candidates=[
+                        _Candidate(r[0], r[1], compose_row_name(r[2], r[3]))
+                        for r in found
+                    ],
                 )
             )
             dept_id = dept_row.parent_id

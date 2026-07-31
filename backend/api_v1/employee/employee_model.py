@@ -1,3 +1,4 @@
+import logging
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, ForeignKey, String
@@ -5,6 +6,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.api_v1.base.base_model import Base
 from backend.api_v1.base.models.utils.mixins import IntIdPkMixin, TimestampMixin
+from backend.utils.name_order import current_surname_first
+from backend.utils.person_names import compose_display_name
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from backend.api_v1.employee_department.employee_department_model import (
@@ -37,7 +42,6 @@ if TYPE_CHECKING:
 class Employee(IntIdPkMixin, TimestampMixin, Base):
     # __tablename__ = "employees"
     code: Mapped[str] = mapped_column(String(10), unique=True, nullable=False)
-    name: Mapped[str] = mapped_column(String(128), nullable=False)
     email: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     status_id: Mapped[int] = mapped_column(
@@ -100,12 +104,38 @@ class Employee(IntIdPkMixin, TimestampMixin, Base):
         uselist=False,
     )
 
-    # Physical person (names, sex, birth date). employees.name stays as a
-    # derived 'Last First' (title-case) mirror until the column is removed.
+    # Physical person (names, sex, birth date). The ONLY place name parts live.
     person: Mapped["Person | None"] = relationship(
         back_populates="employees",
         lazy="selectin",
     )
+
+    @property
+    def name(self) -> str:
+        """Display name composed from the person's parts, in the order the
+        CURRENT VIEWER prefers (surname_first_in_names, per-user overridable).
+
+        There is no employees.name column: this property is what every schema
+        with a `name` / `employee_name` / `author_name` field reads, so flipping
+        the setting changes the whole UI without touching any data.
+
+        person_id is NOT NULL, so a missing `person` always means the
+        relationship was not loaded (a noload path) — never absent data. That
+        renders as the employee code rather than an empty string, so a blank
+        name can never reach an audit entry unnoticed.
+        """
+        if self.person is None:
+            logger.warning(
+                "Employee.name read with person unloaded (id=%s): "
+                "the query needs selectinload(Employee.person)",
+                self.id,
+            )
+            return self.code or ""
+        return compose_display_name(
+            self.person.first_name,
+            self.person.last_name,
+            current_surname_first(),
+        )
 
     origin: Mapped["EmployeeOrigin"] = relationship(
         back_populates="employees",

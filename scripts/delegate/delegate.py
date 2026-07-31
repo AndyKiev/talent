@@ -10,14 +10,26 @@ you run this, and Claude reviews the final diff.
 
 Usage
 -----
-    python scripts/delegate/delegate.py brief.md            # dry run, writes nothing
-    python scripts/delegate/delegate.py brief.md --apply    # writes files, runs validation
+    python scripts/delegate/delegate.py brief.md                    # dry run, writes nothing
+    python scripts/delegate/delegate.py brief.md --apply            # writes files, runs validation
+    python scripts/delegate/delegate.py brief.md --model flash      # cheap tier, one-off
+
+Model tiers: `.env` holds the default id in DEEPSEEK_MODEL and an alias registry in
+DEEPSEEK_MODELS ("pro=deepseek-v4-pro,flash=deepseek-v4-flash"). Anywhere a model is
+named you may write an alias OR a literal id — an unknown value is passed through
+verbatim, so a new DeepSeek model works without touching this file. Precedence:
+--model  >  the brief's "model"  >  DEEPSEEK_MODEL.
+
+`escalate_to` (brief key or --escalate-to) swaps in a stronger model for the LAST
+iteration when the cheap tier has not converged — so a flash run that is going to
+fail spends its final shot on pro instead of a fourth identical failure.
 
 Brief format: markdown, with a ```json fence as the FIRST fenced block:
 
     ```json
     {
-      "model": "deepseek-chat",
+      "model": "flash",
+      "escalate_to": "pro",
       "max_iterations": 4,
       "allow_paths": ["backend/api_v1/thing/"],
       "validate": ["cd backend && poetry run python -m py_compile api_v1/thing/thing_model.py"]
@@ -49,7 +61,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 RUNS_DIR = REPO_ROOT / ".deepseek" / "runs"
 API_URL = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com") + "/chat/completions"
-DEFAULT_MODEL = "deepseek-chat"
+DEFAULT_MODEL = "deepseek-v4-pro"
 DEFAULT_ITERATIONS = 4
 
 # Paths the model may never write to, whatever the brief says.
@@ -99,6 +111,28 @@ def read_env_value(key):
         if k.strip() == key:
             found = v.strip().strip('"').strip("'")  # last one wins, like dotenv
     return found
+
+
+def model_aliases():
+    """DEEPSEEK_MODELS="pro=deepseek-v4-pro,flash=deepseek-v4-flash" -> dict."""
+    raw = read_env_value("DEEPSEEK_MODELS")
+    aliases = {}
+    for pair in (raw or "").split(","):
+        alias, sep, target = pair.partition("=")
+        if sep and alias.strip() and target.strip():
+            aliases[alias.strip()] = target.strip()
+    return aliases
+
+
+def resolve_model(value):
+    """Expand an alias; anything unknown is a literal model id and passes through.
+
+    Returns (model_id, alias_or_None) so the run log can show both.
+    """
+    aliases = model_aliases()
+    if value in aliases:
+        return aliases[value], value
+    return value, None
 
 
 # --------------------------------------------------------------------------- brief
@@ -231,6 +265,16 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("brief", help="path to the markdown brief")
     parser.add_argument("--apply", action="store_true", help="actually write files")
+    parser.add_argument(
+        "--model",
+        help="alias from DEEPSEEK_MODELS (e.g. flash) or a literal model id; "
+             "wins over the brief and over DEEPSEEK_MODEL",
+    )
+    parser.add_argument(
+        "--escalate-to",
+        help="model (alias or id) to use for the LAST iteration if the cheap tier "
+             "has not converged; wins over the brief's escalate_to",
+    )
     args = parser.parse_args(argv)
 
     api_key = read_env_value("DEEPSEEK_API_KEY")
@@ -238,7 +282,14 @@ def main(argv=None):
         sys.exit("[ERR] DEEPSEEK_API_KEY not found in the environment or .env")
 
     config, task = parse_brief(args.brief)
-    model = config.get("model", read_env_value("DEEPSEEK_MODEL") or DEFAULT_MODEL)
+    # CLI is the ad-hoc escape hatch, so it wins over the brief; the brief wins
+    # over the .env default. Each may be an alias or a literal id.
+    requested = args.model or config.get("model") or read_env_value("DEEPSEEK_MODEL") or DEFAULT_MODEL
+    model, alias = resolve_model(requested)
+    escalate_requested = args.escalate_to or config.get("escalate_to")
+    escalate_model, escalate_alias = (
+        resolve_model(escalate_requested) if escalate_requested else (None, None)
+    )
     max_iterations = int(config.get("max_iterations", DEFAULT_ITERATIONS))
     allow_paths = config.get("allow_paths") or []
     validate = config.get("validate") or []
@@ -247,12 +298,24 @@ def main(argv=None):
         print("[WARN] no validate commands — the loop cannot self-correct, it will run once")
         max_iterations = 1
 
+    if escalate_model and max_iterations < 2:
+        print("[WARN] escalate_to needs at least 2 iterations — ignoring it")
+        escalate_model = None
+    if escalate_model == model:
+        escalate_model = None  # nothing to escalate to
+
     run_dir = RUNS_DIR / datetime.now().strftime("%Y%m%d-%H%M%S")
     run_dir.mkdir(parents=True, exist_ok=True)
 
     print("[BRIEF] %s" % args.brief)
-    print("[MODEL] %s   iterations<=%d   %s" % (
-        model, max_iterations, "APPLY" if args.apply else "DRY RUN (nothing is written)"))
+    print("[MODEL] %s%s   iterations<=%d   %s" % (
+        model,
+        " (alias %s)" % alias if alias else "",
+        max_iterations,
+        "APPLY" if args.apply else "DRY RUN (nothing is written)"))
+    if escalate_model:
+        print("[ESCAL] last iteration falls back to %s%s" % (
+            escalate_model, " (alias %s)" % escalate_alias if escalate_alias else ""))
     print("[ALLOW] %s" % (", ".join(allow_paths) or "(none — every file will be skipped)"))
     print("[RUN]   %s\n" % run_dir)
 
@@ -261,9 +324,11 @@ def main(argv=None):
         {"role": "user", "content": task},
     ]
     total_tokens = 0
+    iterations = []  # per-iteration model, so summary.json cannot claim one model
 
     for attempt in range(1, max_iterations + 1):
-        print("=== iteration %d/%d — asking DeepSeek..." % (attempt, max_iterations))
+        print("=== iteration %d/%d — asking %s..." % (attempt, max_iterations, model))
+        iterations.append({"iteration": attempt, "model": model})
         reply, usage = call_deepseek(api_key, model, messages)
         total_tokens += usage.get("total_tokens", 0)
         (run_dir / ("reply-%d.md" % attempt)).write_text(reply, encoding="utf-8")
@@ -297,6 +362,12 @@ def main(argv=None):
         feedback = "\n\n".join(
             "Command failed: %s\n\n%s" % (cmd, out) for cmd, out in failures
         )
+        # One shot left and the cheap tier has not converged — spend it on the
+        # stronger model rather than on a fourth identical failure.
+        if escalate_model and attempt == max_iterations - 1:
+            print("  [ESCALATE] %s -> %s for the final iteration" % (model, escalate_model))
+            model = escalate_model
+
         messages.append({"role": "assistant", "content": reply})
         messages.append({
             "role": "user",
@@ -306,7 +377,7 @@ def main(argv=None):
 
     summary = {
         "brief": str(args.brief),
-        "model": model,
+        "iterations": iterations,  # the model can change mid-run (escalate_to)
         "applied": args.apply,
         "total_tokens": total_tokens,
         "run_dir": str(run_dir),

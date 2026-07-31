@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from backend.config.api_prefix import ApiPrefix
 from backend.config.auth_jwt import AuthJWT
 from backend.config.cors_config import CORSConfig
+from backend.config.crypto import CryptoConfig
 from backend.config.database import TalentDatabaseConfig
 from backend.config.email_param_config import (
     LoaderErrorMailConfig,
@@ -41,6 +42,7 @@ class Settings(BaseSettings):
     log_config: LogConfig
     ssh_tunnel: SshTunnelConfig
     auth_jwt: AuthJWT
+    crypto: CryptoConfig = CryptoConfig()
     exc_desc: ExceptionDescription = ExceptionDescription()
     api_prefix: ApiPrefix = ApiPrefix()
     local_smtp: LocalSmtpConfig

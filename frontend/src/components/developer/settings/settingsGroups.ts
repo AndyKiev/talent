@@ -86,6 +86,10 @@ export const SETTINGS_GROUP_BY_KEY: Record<string, SettingsGroup> =
 // Top-level setting key -> group key. Children are NOT listed here — they
 // inherit the parent's group in groupForSetting(). Any key missing from this
 // map lands in `general`.
+/** Name-order setting. Flipping it restyles every display name in the app, so
+ *  consumers invalidate their whole cache rather than one query. */
+export const SURNAME_FIRST_KEY = 'surname_first_in_names';
+
 export const SETTING_GROUP_BY_KEY: Record<string, string> = {
     // ── Employees ────────────────────────────────────────────────────────────
     employee_default_level_persist: 'employees',
@@ -139,6 +143,8 @@ export const SETTING_GROUP_BY_KEY: Record<string, string> = {
     // ── General (not tied to a single menu) ──────────────────────────────────
     self_registration_enabled: 'general',
     default_menu: 'general',
+    surname_first_in_names: 'general',
+    person_last_name_change_female_only: 'admin',
 };
 
 /**
