@@ -46,7 +46,10 @@ CHILD_MENUS = [
         "key": "headcount_plan",
         "label_key": "headcountPlan",
         "path": "/employees/headcount_plan",
-        "icon": "insights",
+        # NOT "insights" — that belongs to the top-level Planning menu, and two
+        # menu items rendering the same glyph are indistinguishable in the bar.
+        # Headcount planning is about how MANY people a unit should have.
+        "icon": "headcount",
         "sort_order": 20,
         "visible_to_all_groups": False,
         "group_names": HEADCOUNT_GROUP_NAMES,
