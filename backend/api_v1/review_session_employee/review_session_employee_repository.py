@@ -6,6 +6,7 @@ from backend.api_v1.employee.employee_model import Employee
 from backend.api_v1.employee_department.employee_department_model import (
     EmployeeDepartment,
 )
+from backend.api_v1.person.person_model import Person
 from backend.api_v1.review_session.review_session_model import ReviewSession
 from backend.api_v1.review_session_employee.review_session_employee_model import (
     ReviewSessionEmployee,
@@ -49,7 +50,14 @@ class ReviewSessionEmployeeRepository(BaseRepository):
                     # person is REQUIRED, not optional: Employee.name composes
                     # from it, and .birth_date / .sex / .marital_status are all
                     # properties that proxy it. One extra batched query.
-                    selectinload(Employee.person).raiseload("*"),
+                    selectinload(Employee.person).options(
+                        # .sex / .marital_status are properties over these two
+                        # lookups — without them the wildcard below raises.
+                        joinedload(Person.sex_ref).raiseload("*"),
+                        joinedload(Person.marital_status_ref).raiseload("*"),
+                        raiseload("*"),
+                    ),
+                    selectinload(Employee.personal_data).raiseload("*"),
                     raiseload("*"),
                 ),
             )
