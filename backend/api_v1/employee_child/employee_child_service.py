@@ -10,6 +10,7 @@ from backend.api_v1.employee_child.employee_child_messages import (
     EmployeeChildDeleteSuccess,
     EmployeeChildNotFound,
 )
+from backend.api_v1.employee_child.employee_child_model import EmployeeChild
 from backend.api_v1.employee_child.employee_child_repository import (
     EmployeeChildRepository,
 )
@@ -30,7 +31,7 @@ class EmployeeChildService(BaseService):
     ):
         super().__init__(repository, user=user, session=session)
 
-    async def get_by_id(self, id: int):
+    async def get_by_id(self, id: int) -> EmployeeChild:
         result = await self.repository.get_by_id(id)
         if not result:
             exc = EmployeeChildNotFound(id)
@@ -52,11 +53,11 @@ class EmployeeChildService(BaseService):
 
     async def list_by_employee(self, employee_id: int) -> list[EmployeeChildSchema]:
         person_id = await self._person_id_for_employee(employee_id)
-        records = await self.get_all(
-            params={"person_id": person_id},
-            sort_json='{"birth_date": "desc"}',
-        )
-        return [EmployeeChildSchema.model_validate(r) for r in records]
+        records = await self.get_all(params={"person_id": person_id})
+        # birth_date is encrypted at rest, so SQL cannot ORDER BY it — sort here.
+        schemas = [EmployeeChildSchema.model_validate(r) for r in records]
+        schemas.sort(key=lambda c: c.birth_date, reverse=True)
+        return schemas
 
     async def create_child(
         self, child_in: EmployeeChildCreate
@@ -74,7 +75,7 @@ class EmployeeChildService(BaseService):
         return MutationResponse(detail=detail, data=schema)
 
     async def delete_child(self, child_id: int) -> None:
-        record = await self.get_by_id(child_id)
+        record: EmployeeChild = await self.get_by_id(child_id)
         await self.delete_by_id(
             child_id,
             name=str(record.birth_date),
