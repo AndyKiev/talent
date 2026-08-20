@@ -557,7 +557,7 @@ class DepartmentJobTargetService(BaseService):
                         employees=sorted(
                             (
                                 FactEmployee(
-                                    id=e.id,
+                                    id=emp_id,
                                     code=e.code,
                                     name=e.name,
                                     is_pending=pending,
