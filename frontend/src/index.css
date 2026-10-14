@@ -10,7 +10,9 @@ html {
 
 #root {
   width: 100%;
-  margin: 10px;
+  /* No top margin: the AppBar is sticky and must sit flush at the viewport
+     top — a top gap would scroll away and shift the bar. Side/bottom gutters stay. */
+  margin: 0 10px 10px;
   min-height: 100svh;
   display: flex;
   flex-direction: column;

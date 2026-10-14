@@ -347,7 +347,9 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
     );
 
     return (
-        <Box sx={{ minHeight: "100vh", overflowX: "hidden", background: t.bg, transition: "background 0.3s" }}>
+        <Box sx={{ minHeight: "100vh", overflowX: "clip", background: t.bg, transition: "background 0.3s" }}>
+            {/* overflowX is clip, NOT hidden: hidden makes this Box a scroll
+                container and silently breaks the AppBar's sticky below. */}
             <AppBar
                 position="sticky"
                 elevation={0}
@@ -360,7 +362,7 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
                     color: t.text,
                 }}
             >
-                <Toolbar ref={toolbarRef} sx={{ gap: 1, minHeight: "56px !important", px: { xs: 2, sm: 3 } }}>
+                <Toolbar ref={toolbarRef} sx={{ gap: 1, minHeight: "42px !important", px: { xs: 2, sm: 3 } }}>
                     {/* Brand */}
                     <Stack ref={brandRef} direction="row" alignItems="center" spacing={1} mr={3}>
                         <Box
