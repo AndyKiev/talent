@@ -35,6 +35,7 @@ interface Params {
   onGroupsClick: (row: Job) => void;       // user-groups dialog
   onJobGroupsClick: (row: Job) => void;    // job-groups dialog (new)
   onProcessRoleClick: (row: Job) => void;  // process-role dialog
+  onDepartmentTypesClick: (row: Job) => void;  // staffing department-types dialog
   onTrainingTypesClick: (row: Job) => void;  // recommended-trainings dialog
   onRequirementsClick: (row: Job) => void;  // recruitment requirement-groups dialog
   onDeleteClick: (row: Job) => void;
@@ -44,7 +45,7 @@ interface Params {
   setCategoryIsPending: boolean;
   trainingModuleOn: boolean;  // training_module_enabled master switch
   recruitmentModuleOn: boolean;  // recruitment_module_enabled master switch
-  editMode: boolean;          // OFF = read-only grid (no inline edits/toggles/delete)
+  editMode: boolean;          // OFF = read-only grid; only recommended trainings stay editable
 }
 
 export function useJobColumns({
@@ -59,6 +60,7 @@ export function useJobColumns({
                                  onGroupsClick,
                                  onJobGroupsClick,
                                  onProcessRoleClick,
+                                 onDepartmentTypesClick,
                                  onTrainingTypesClick,
                                  onRequirementsClick,
                                  onDeleteClick,
@@ -107,6 +109,12 @@ export function useJobColumns({
     };
   }
 
+  // Chip-cell click → dialog, but only in edit mode (view mode is read-only).
+  const editOnly = (open: (row: Job) => void, row: Job) => ({
+    onClick: editMode ? () => open(row) : undefined,
+    cursor: editMode ? 'pointer' : 'default',
+  });
+
   return [
     textEditCol('name', 'name', 200, 1.5, 260),
 
@@ -127,8 +135,8 @@ export function useJobColumns({
         const groups: string[] = row.groups ?? [];
         return (
             <Box
-                sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', py: 0.5, cursor: 'pointer' }}
-                onClick={() => onGroupsClick(row)}
+                sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', py: 0.5, cursor: editOnly(onGroupsClick, row).cursor }}
+                onClick={editOnly(onGroupsClick, row).onClick}
             >
               {groups.length === 0 ? (
                   <Chip
@@ -137,7 +145,7 @@ export function useJobColumns({
                       variant="outlined"
                       color="default"
                       icon={<GroupsIcon />}
-                      onClick={() => onGroupsClick(row)}
+                      onClick={editOnly(onGroupsClick, row).onClick}
                   />
               ) : (
                   groups.map((g) => (
@@ -165,8 +173,8 @@ export function useJobColumns({
         const jobGroups: string[] = row.job_group_names ?? [];
         return (
             <Box
-                sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', py: 0.5, cursor: 'pointer' }}
-                onClick={() => onJobGroupsClick(row)}
+                sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', py: 0.5, cursor: editOnly(onJobGroupsClick, row).cursor }}
+                onClick={editOnly(onJobGroupsClick, row).onClick}
             >
               {jobGroups.length === 0 ? (
                   <Chip
@@ -175,7 +183,7 @@ export function useJobColumns({
                       variant="outlined"
                       color="default"
                       icon={<WorkspacesIcon />}
-                      onClick={() => onJobGroupsClick(row)}
+                      onClick={editOnly(onJobGroupsClick, row).onClick}
                   />
               ) : (
                   jobGroups.map((g) => (
@@ -203,8 +211,8 @@ export function useJobColumns({
         const links: ProcessRoleLinkInfo[] = row.process_role_links_info ?? [];
         return (
             <Box
-                sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', py: 0.5, cursor: 'pointer' }}
-                onClick={() => onProcessRoleClick(row)}
+                sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', py: 0.5, cursor: editOnly(onProcessRoleClick, row).cursor }}
+                onClick={editOnly(onProcessRoleClick, row).onClick}
             >
               {links.length === 0 ? (
                   <Chip
@@ -213,7 +221,7 @@ export function useJobColumns({
                       variant="outlined"
                       color="default"
                       icon={<BadgeIcon />}
-                      onClick={() => onProcessRoleClick(row)}
+                      onClick={editOnly(onProcessRoleClick, row).onClick}
                   />
               ) : (
                   links.map((link) => {
@@ -281,7 +289,8 @@ export function useJobColumns({
         ]
       : []),
 
-    // New: department-types column (chip color reflects the link's is_active)
+    // Staffing department types (chip color reflects the link's is_active);
+    // edit mode → click opens JobDepartmentTypesDialog.
     {
       field: 'department_type_links',
       headerName: cfl(getString('departmentTypes')) || 'Department Types',
@@ -292,7 +301,8 @@ export function useJobColumns({
         const links = row.department_type_links ?? [];
         return (
             <Box
-                sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', py: 0.5 }}
+                sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', py: 0.5, cursor: editOnly(onDepartmentTypesClick, row).cursor }}
+                onClick={editOnly(onDepartmentTypesClick, row).onClick}
             >
               {links.length === 0 ? (
                   <Chip
@@ -301,6 +311,7 @@ export function useJobColumns({
                       variant="outlined"
                       color="default"
                       icon={<AccountTreeIcon />}
+                      onClick={editOnly(onDepartmentTypesClick, row).onClick}
                   />
               ) : (
                   links.map((link, i) => (
@@ -408,7 +419,7 @@ export function useJobColumns({
       disableColumnMenu: true,
       renderCell: (params: GridRenderCellParams<Job>) => (
           <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-            {recruitmentModuleOn && (
+            {recruitmentModuleOn && editMode && (
                 <Tooltip title={cfl(getString('jobRequirements')) || 'Job requirements'}>
                   <span>
                     <IconButton

@@ -33,6 +33,7 @@ import { JobForm } from './JobForm';
 import { JobGroupsDialog } from './JobGroupsDialog';
 import { JobJobGroupsDialog } from './JobJobGroupsDialog';
 import { JobProcessRoleDialog } from './JobProcessRoleDialog';
+import { JobDepartmentTypesDialog } from './JobDepartmentTypesDialog';
 import { JobRecommendedTrainingsDialog } from './JobRecommendedTrainingsDialog';
 import { JobRequirementGroupsDialog } from '../../recruitment/requirements/JobRequirementGroupsDialog';
 import useString from '../../../hooks/useString';
@@ -74,7 +75,9 @@ export function JobCrud() {
   const [deptTypeFilter, setDeptTypeFilter] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<ActiveFilterValue>('all');
 
-  // ── Edit mode: OFF (default) = read-only grid ─────────────────────────────
+  // ── Edit mode: OFF (default) = read-only grid; only the recommended-
+  //     trainings dialog stays usable. ON = everything else (add, bulk upload,
+  //     inline edits, link dialogs, requirements, delete).
   const [editMode, setEditMode] = useState(false);
 
   // ── User-groups dialog (existing) ─────────────────────────────────────────
@@ -85,6 +88,9 @@ export function JobCrud() {
 
   // ── Process-role dialog ──────────────────────────────────────────────────
   const [processRoleJob, setProcessRoleJob] = useState<Job | null>(null);
+
+  // ── Staffing department-types dialog ─────────────────────────────────────
+  const [deptTypesJob, setDeptTypesJob] = useState<Job | null>(null);
 
   // ── Recommended-trainings dialog ─────────────────────────────────────────
   const [trainingTypesJob, setTrainingTypesJob] = useState<Job | null>(null);
@@ -196,6 +202,7 @@ export function JobCrud() {
   const handleGroupsClick = (row: Job) => setGroupsJob(row);
   const handleJobGroupsClick = (row: Job) => setJobGroupsJob(row);
   const handleProcessRoleClick = (row: Job) => setProcessRoleJob(row);
+  const handleDepartmentTypesClick = (row: Job) => setDeptTypesJob(row);
   const handleTrainingTypesClick = (row: Job) => {
     if (!trainingModuleOn) return;
     setTrainingTypesJob(row);
@@ -222,6 +229,7 @@ export function JobCrud() {
     onGroupsClick: handleGroupsClick,
     onJobGroupsClick: handleJobGroupsClick,
     onProcessRoleClick: handleProcessRoleClick,
+    onDepartmentTypesClick: handleDepartmentTypesClick,
     onTrainingTypesClick: handleTrainingTypesClick,
     onRequirementsClick: handleRequirementsClick,
     onDeleteClick: crud.handleDeleteClick,
@@ -257,36 +265,38 @@ export function JobCrud() {
             </Typography>
           }
         />
-        <>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".xlsx"
-            style={{ display: 'none' }}
-            onChange={handleFileSelected}
-          />
-          <Button
-            variant="outlined"
-            size="medium"
-            startIcon={
-              bulkUploadMutation.isPending
-                ? <CircularProgress size={16} color="inherit" />
-                : <UploadFileIcon />
-            }
-            disabled={bulkUploadMutation.isPending}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {getString('bulkUpload') || 'Bulk Upload'}
-          </Button>
-        </>
-        <Button
-          variant="contained"
-          size="medium"
-          startIcon={<AddIcon />}
-          onClick={() => crud.setFormOpen(true)}
-        >
-          {cfl(getString('addJob')) || 'Add Job'}
-        </Button>
+        {editMode && (
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx"
+              style={{ display: 'none' }}
+              onChange={handleFileSelected}
+            />
+            <Button
+              variant="outlined"
+              size="medium"
+              startIcon={
+                bulkUploadMutation.isPending
+                  ? <CircularProgress size={16} color="inherit" />
+                  : <UploadFileIcon />
+              }
+              disabled={bulkUploadMutation.isPending}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {getString('bulkUpload') || 'Bulk Upload'}
+            </Button>
+            <Button
+              variant="contained"
+              size="medium"
+              startIcon={<AddIcon />}
+              onClick={() => crud.setFormOpen(true)}
+            >
+              {cfl(getString('addJob')) || 'Add Job'}
+            </Button>
+          </>
+        )}
       </Box>
 
       <AsyncContent isLoading={crud.isLoading} error={crud.error}>
@@ -376,6 +386,7 @@ export function JobCrud() {
         open={crud.formOpen}
         onClose={() => crud.setFormOpen(false)}
         createMutation={crud.createMutation}
+        setSnackbar={crud.setSnackbar}
       />
 
       <CrudDialogs
@@ -409,6 +420,12 @@ export function JobCrud() {
         addLinkMutation={addProcessRoleLinkMutation}
         removeLinkMutation={removeProcessRoleLinkMutation}
         onClose={() => setProcessRoleJob(null)}
+      />
+
+      <JobDepartmentTypesDialog
+        job={deptTypesJob}
+        setSnackbar={crud.setSnackbar}
+        onClose={() => setDeptTypesJob(null)}
       />
 
       {trainingModuleOn && (

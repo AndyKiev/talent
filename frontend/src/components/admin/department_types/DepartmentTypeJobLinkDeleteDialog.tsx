@@ -17,6 +17,8 @@ interface Props {
     open: boolean;
     linkId: number;
     jobName: string;
+    /** Overrides the default (department-type-side) confirm text. */
+    message?: string;
     getString: GetStringFn;
     onClose: () => void;
     onConfirm: () => void;
@@ -27,6 +29,7 @@ export function DepartmentTypeJobLinkDeleteDialog({
     open,
     linkId,
     jobName,
+    message,
     getString,
     onClose,
     onConfirm,
@@ -47,7 +50,7 @@ export function DepartmentTypeJobLinkDeleteDialog({
         <ConfirmDeleteDialog
             open={open}
             title={getString('removeLink')}
-            message={getString('removeJobLinkConfirm', { jobName })}
+            message={message ?? getString('removeJobLinkConfirm', { jobName })}
             isDeleting={isPending}
             onConfirm={onConfirm}
             onClose={onClose}

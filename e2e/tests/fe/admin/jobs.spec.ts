@@ -33,6 +33,12 @@ test("create, edit, delete a job", async ({ page, cleanup }) => {
     await page.goto(ROUTE);
     await waitForGridLoaded(page, 60000);
 
+    // The jobs grid is read-only until the edit-mode switch (the first
+    // switch on the page, above the grid) is turned ON - it gates the
+    // Add / Bulk Upload buttons, the inline-edit pencils, the link dialogs
+    // and the row delete button (only recommended trainings stay editable).
+    await page.locator('input[role="switch"]').first().check();
+
     // CREATE via the Add-button form dialog
     await page.locator('button:has(svg[data-testid="AddIcon"])').click();
     await expect(dialog(page)).toBeVisible();
@@ -58,11 +64,6 @@ test("create, edit, delete a job", async ({ page, cleanup }) => {
       .fill(name);
     const row = rowByCellText(page, "name", name);
     await expect(row).toBeVisible();
-
-    // The jobs grid is read-only until the edit-mode switch (the first
-    // switch on the page, above the grid) is turned ON - it gates the
-    // inline-edit pencils and the row delete button.
-    await page.locator('input[role="switch"]').first().check();
 
     // EDIT the description inline. NOTE: JobCrud has
     // REQUIRE_EDIT_CONFIRMATION = false - the check click saves IMMEDIATELY,

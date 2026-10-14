@@ -49,6 +49,16 @@ export const fetchDepartmentTypeJobLinks = async (
     return res.data ?? [];
 };
 
+/** Fetch all department-type links of ONE job (any is_active) — job-side view */
+export const fetchDepartmentTypeJobLinksByJob = async (
+    jobId: number,
+): Promise<DepartmentTypeJobLink[]> => {
+    const res = await axiosInstance.get<DepartmentTypeJobLink[]>(BASE, {
+        params: { job_id: jobId },
+    });
+    return res.data ?? [];
+};
+
 /** Fetch all jobs linked to a department type (active only by default) */
 export const fetchJobsByDepartmentType = async (
     departmentTypeId: number,
