@@ -188,7 +188,15 @@ export function PlanSessionsCrud({ onEditPlan, onShowReport }: Props) {
                         getRowHeight={() => 'auto'}
                         localeText={localeText}
                         hideFooterSelectedRowCount
-                        sx={{ height: '100%', '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 } }}
+                        // Row click opens the session's scope view; the actions cell keeps its own buttons.
+                        onCellClick={(params) => {
+                            if (params.field !== '_actions') onEditPlan(params.row);
+                        }}
+                        sx={{
+                            height: '100%',
+                            '& .MuiDataGrid-cell': { alignItems: 'center', py: 1 },
+                            '& .MuiDataGrid-row': { cursor: 'pointer' },
+                        }}
                     />
                 </Paper>
             )}
@@ -202,7 +210,12 @@ export function PlanSessionsCrud({ onEditPlan, onShowReport }: Props) {
                             const st = row.status;
                             const statusLabel = st ? getString(`planSessionStatus_${st.key}`) || st.name : '—';
                             return (
-                                <Card key={row.id} variant="outlined">
+                                <Card
+                                    key={row.id}
+                                    variant="outlined"
+                                    onClick={() => onEditPlan(row)}
+                                    sx={{ cursor: 'pointer', '&:hover': { borderColor: 'primary.main' } }}
+                                >
                                     <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
                                         <Stack direction="row" alignItems="flex-start" spacing={1}>
                                             <Typography fontSize={14} fontWeight={600} sx={{ flex: 1 }}>
@@ -222,13 +235,16 @@ export function PlanSessionsCrud({ onEditPlan, onShowReport }: Props) {
                                             {cfl(getString('createdAt')) || 'Created'}: {formatToUkrDate(row.created_at)}
                                         </Typography>
                                         <Divider sx={{ my: 1 }} />
-                                        <PlanSessionActions
-                                            row={row}
-                                            getString={getString}
-                                            {...actionHandlers}
-                                            showSync={false}
-                                            showDelete={false}
-                                        />
+                                        {/* Action buttons must not also trigger the card's navigation. */}
+                                        <Box onClick={(e) => e.stopPropagation()}>
+                                            <PlanSessionActions
+                                                row={row}
+                                                getString={getString}
+                                                {...actionHandlers}
+                                                showSync={false}
+                                                showDelete={false}
+                                            />
+                                        </Box>
                                     </CardContent>
                                 </Card>
                             );
