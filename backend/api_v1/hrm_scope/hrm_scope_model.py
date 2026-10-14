@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Date, ForeignKey, Index
+from sqlalchemy import Date, ForeignKey, Index, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.api_v1.base.base_model import Base
@@ -41,6 +41,10 @@ class HrmScope(IntIdPkMixin, TimestampMixin, Base):
     responsibility": that models where an employee *works*; this models which
     departments an HRM may *supervise*. Overlapping date windows for the same
     (link, department) pair are intentionally allowed -- no uniqueness constraint.
+
+    ``sort_order`` is the HRM's PRIORITY among their scopes (0 = highest). The
+    first ACTIVE scope in this order is the default department of the
+    employees list (``GET /employees/priority_department``).
     """
 
     __tablename__ = "hrm_scopes"
@@ -69,6 +73,9 @@ class HrmScope(IntIdPkMixin, TimestampMixin, Base):
     )
     start_date: Mapped[date] = mapped_column(Date, nullable=False)
     end_date: Mapped[date] = mapped_column(Date, nullable=False)
+    sort_order: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
 
     # -- Relationships --------------------------------------------------------
     employee_user_group_link: Mapped[EmployeeUserGroupLink] = relationship(

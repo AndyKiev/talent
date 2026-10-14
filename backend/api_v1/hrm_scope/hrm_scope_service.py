@@ -88,6 +88,8 @@ class HrmScopeService(BaseService):
             start_date=scope_in.start_date,
             end_date=scope_in.end_date,
             employee_user_group_link_id=link.id,
+            # New scope = lowest priority (appended after the existing ones).
+            sort_order=await self.repository.count_by_employee(scope_in.employee_id),
         )
         created = await self.create(internal)
         record = await self.repository.get_by_id_with_rels(created.id)
@@ -109,7 +111,8 @@ class HrmScopeService(BaseService):
         if new_start > new_end:
             raise await self._resolve_domain_error(HrmScopeStartAfterEnd())
 
-        updated = await self.update(scope_id, scope_in)
+        # BaseService.update takes the ORM instance (already loaded above).
+        updated = await self.update(record, scope_in)
         record = await self.repository.get_by_id_with_rels(updated.id)
         schema = self._to_schema(record)
         detail = await self._resolve_domain_success(

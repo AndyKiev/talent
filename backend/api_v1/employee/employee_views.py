@@ -15,6 +15,7 @@ from backend.api_v1.employee.employee_schema import (
     EmployeeSchema,
     EmployeeUpdate,
     EmployeeWithActivationCreate,
+    PriorityDepartment,
 )
 from backend.api_v1.employee.employee_service import EmployeeService, SyncUserResult
 from backend.api_v1.employee_events.employee_event.employee_event_dependencies import (
@@ -85,6 +86,19 @@ async def get_scope_departments(
     admin/HRS/dev get all; HRM gets their active responsibility departments; others []
     """
     return await service.get_scope_select_departments()
+
+
+@router.get(
+    "/priority_department",
+    response_model=PriorityDepartment,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.EMPLOYEE)],
+)
+async def get_priority_department(
+    service: Annotated[EmployeeService, Depends(get_employee_service)],
+):
+    """The current user's highest-priority active HRM scope department —
+    the employees list opens filtered to it. department_id=None → no default."""
+    return await service.get_priority_department()
 
 
 class ResponsibilityTypeOption(BaseModel):

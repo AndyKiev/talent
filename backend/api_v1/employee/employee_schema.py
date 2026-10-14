@@ -164,6 +164,13 @@ class MainDepartmentSchema(BaseModel):
     department_category_sort_order: int = 0
 
 
+class PriorityDepartment(BaseModel):
+    """Default department of the employees list: the current user's
+    highest-priority ACTIVE HRM scope (None → no default, show all)."""
+
+    department_id: int | None = None
+
+
 # ── Late imports to avoid circular references ─────────────────────────────────
 from backend.api_v1.job.job_schema import Job  # noqa: E402
 from backend.api_v1.lang.lang_schema import Lang  # noqa: E402

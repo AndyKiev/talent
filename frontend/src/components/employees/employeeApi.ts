@@ -128,6 +128,17 @@ export const fetchScopeDepartments = async (): Promise<ScopeDepartment[]> => {
     return res.data ?? [];
 };
 
+// Current user's highest-priority ACTIVE HRM scope department — the employees
+// list opens filtered to it. department_id null → no default (show all).
+export interface PriorityDepartment {
+    department_id: number | null;
+}
+
+export const fetchPriorityDepartment = async (): Promise<PriorityDepartment> => {
+    const res = await axiosInstance.get<PriorityDepartment>(`${BASE}/priority_department`);
+    return res.data ?? { department_id: null };
+};
+
 // Employees filtered to one department's subtree (intersected with caller scope).
 export const fetchEmployeesByDepartment = async (
     departmentId: number,

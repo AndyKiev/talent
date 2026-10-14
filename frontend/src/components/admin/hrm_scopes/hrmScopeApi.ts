@@ -24,6 +24,7 @@ export interface HrmScope {
     department_id: number;
     start_date: string; // ISO date (YYYY-MM-DD)
     end_date: string;   // ISO date (YYYY-MM-DD)
+    sort_order: number; // priority among the HRM's scopes (0 = highest)
     created_at: string;
     employee_code: string | null;
     employee_name: string | null;
@@ -44,6 +45,7 @@ export interface HrmScopeUpdate {
     department_id?: number;
     start_date?: string;
     end_date?: string;
+    sort_order?: number;
 }
 
 // ── Calls ──────────────────────────────────────────────────────────────────

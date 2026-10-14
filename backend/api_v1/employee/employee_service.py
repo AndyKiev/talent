@@ -30,6 +30,7 @@ from backend.api_v1.employee.employee_schema import (
     EmployeeSchema,
     EmployeeUpdate,
     MainDepartmentSchema,
+    PriorityDepartment,
 )
 from backend.auth.permission_resolvers import (
     has_authorisation_group,
@@ -301,6 +302,24 @@ class EmployeeService(BaseService):
             store_key=STORE_CATEGORY_KEY,
             directorate_key=DIRECTORATE_CATEGORY_KEY,
         )
+
+    async def get_priority_department(self) -> PriorityDepartment:
+        """
+        Default department of the employees list: the current user's first
+        ACTIVE HRM scope by priority (hrm_scopes.sort_order). Independent of
+        bypass — an admin who also holds scopes still gets their own default.
+        """
+        from datetime import date
+
+        from backend.api_v1.hrm_scope.hrm_scope_repository import HrmScopeRepository
+
+        if self.user is None:
+            return PriorityDepartment()
+        hrm_repo = HrmScopeRepository(session=self.repository.session)
+        department_id = await hrm_repo.get_priority_active_department_id(
+            self.user.id, date.today()
+        )
+        return PriorityDepartment(department_id=department_id)
 
     async def _resolve_scope_select_allowed_ids(self) -> set[int] | None:
         """

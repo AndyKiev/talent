@@ -12,10 +12,13 @@ import cfl from '../../../utils/helpers.ts';
 interface Params {
     getString: GetStringFn;
     onDelete: (row: HrmScope) => void;
+    /** Priority (▲▼) column from useArrowReorder — first column. */
+    orderColumn: GridColDef<HrmScope>;
 }
 
-export function useHrmScopeColumns({ getString, onDelete }: Params): GridColDef<HrmScope>[] {
+export function useHrmScopeColumns({ getString, onDelete, orderColumn }: Params): GridColDef<HrmScope>[] {
     return [
+        orderColumn,
         {
             field: 'department_category_name',
             headerName: cfl(getString('category')) || 'Category',

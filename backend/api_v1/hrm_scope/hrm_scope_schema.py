@@ -24,16 +24,18 @@ class HrmScopeCreate(HrmScopeBase):
 
 
 class HrmScopeCreateInternal(HrmScopeBase):
-    """Service-only create payload: adds the resolved HRM-link FK before the
-    row is handed to BaseService.create()."""
+    """Service-only create payload: adds the resolved HRM-link FK and the
+    append-at-end priority before the row is handed to BaseService.create()."""
 
     employee_user_group_link_id: int
+    sort_order: int = 0
 
 
 class HrmScopeUpdate(BaseModel):
     department_id: int | None = None
     start_date: date | None = None
     end_date: date | None = None
+    sort_order: int | None = None
 
 
 class HrmScopeSchema(HrmScopeBase):
@@ -41,6 +43,7 @@ class HrmScopeSchema(HrmScopeBase):
     id: int
     created_at: datetime
     employee_user_group_link_id: int | None = None
+    sort_order: int = 0
 
     # Read-only enrichments (populated via setattr in the service _to_schema).
     employee_code: str | None = None

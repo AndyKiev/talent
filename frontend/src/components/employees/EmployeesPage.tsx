@@ -1,5 +1,5 @@
 // src/components/employees/EmployeesPage.tsx
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { PageBreadcrumbs } from '../ui/PageBreadcrumbs';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -39,7 +39,13 @@ import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import type { EmployeesSearch } from '../../routes/employees/index';
 import AppShell from '../layout/AppShell';
-import { fetchEmployees, fetchEmployeesByDepartment, type Employee } from './employeeApi';
+import {
+    fetchEmployees,
+    fetchEmployeesByDepartment,
+    fetchPriorityDepartment,
+    type Employee,
+} from './employeeApi';
+import { HRM_SCOPE_PRIORITY_QK } from '../../utils/queryKeys';
 import { useEmployeeColumns } from './useEmployeeColumns';
 import { useEmployeeMutations, EMPLOYEES_QK } from './useEmployeeMutations';
 import { SelectScopeDepartment } from './SelectScopeDepartment';
@@ -96,7 +102,34 @@ export function EmployeesPage() {
 
     // Selected department in the filter Select (undefined = all visible to the user).
     const selectedDeptId = search.dept ?? null;
-    const setSelectedDeptId = (id: number | null) => setSearch({ dept: id ?? undefined });
+    // Clearing the filter is an explicit "all departments" (all=1), so the
+    // priority default below does not re-apply.
+    const setSelectedDeptId = (id: number | null) =>
+        setSearch(id == null ? { dept: undefined, all: true } : { dept: id, all: undefined });
+
+    // ── Default department = the user's priority HRM scope ───────────────────
+    // Entering the page without ?dept and without ?all opens it on the first
+    // ACTIVE scope by priority (admin → HRM scopes), instead of loading everyone.
+    const needsDefault = search.dept == null && !search.all;
+    const { data: priority, isFetched: priorityFetched } = useQuery({
+        queryKey: HRM_SCOPE_PRIORITY_QK,
+        queryFn: fetchPriorityDepartment,
+        enabled: needsDefault,
+        staleTime: 5 * 60 * 1000,
+    });
+    const priorityDeptId = priority?.department_id ?? null;
+    useEffect(() => {
+        if (needsDefault && priorityDeptId != null) {
+            void navigate({
+                to: '/employees',
+                search: { ...search, dept: priorityDeptId },
+                replace: true,
+            });
+        }
+    }, [needsDefault, priorityDeptId, navigate, search]);
+    // Hold the list query until the default is known — otherwise the full
+    // list is fetched first and thrown away.
+    const listReady = !needsDefault || (priorityFetched && priorityDeptId == null);
 
     // ── Client-side column filters (like SelectScopeDepartment, atop each column) ──
     const statusFilter = search.status ?? null;
@@ -131,6 +164,7 @@ export function EmployeesPage() {
             selectedDeptId == null
                 ? fetchEmployees()
                 : fetchEmployeesByDepartment(selectedDeptId),
+        enabled: listReady,
         staleTime: 2 * 60 * 1000,
     });
 

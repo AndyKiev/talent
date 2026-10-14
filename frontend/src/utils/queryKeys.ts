@@ -90,6 +90,9 @@ export const DEPT_TYPE_JOB_LINK_QK = ['department_type_job_links'] as const;
 export const EMPLOYEE_USER_GROUP_QK = ['employee_user_groups'] as const;
 export const HRM_EMPLOYEE_QK = ['hrm_employees'] as const;
 export const HRM_SCOPE_QK = ['hrm_scopes'] as const;
+// Current user's highest-priority active scope department (employees-list default).
+// key[0] = 'hrm_scopes' so any HRM_SCOPE_QK invalidation (reorder, add, delete) refreshes it.
+export const HRM_SCOPE_PRIORITY_QK = ['hrm_scopes', 'priority_department'] as const;
 export const REGION_QK = ['regions'] as const;
 
 // ── Developer tools ──────────────────────────────────────────────────────────

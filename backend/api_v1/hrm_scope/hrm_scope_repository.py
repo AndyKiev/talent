@@ -42,7 +42,7 @@ class HrmScopeRepository(BaseRepository):
                     Department.department_category
                 ),
             )
-            .order_by(HrmScope.start_date.desc())
+            .order_by(HrmScope.sort_order, HrmScope.id)
         )
         result = await self.session.scalars(stmt)
         return result.all()
@@ -90,18 +90,19 @@ class HrmScopeRepository(BaseRepository):
         result = await self.session.scalars(stmt)
         return set(result.all())
 
-    async def get_active_scope_department_ids(
-        self, employee_id: int, on_date
-    ) -> set[int]:
-        """
-        Department IDs this HRM is actively scoped to on `on_date`
-        (start_date <= on_date <= end_date). These are the scope roots; the
-        service expands them to ancestor-or-self subtrees for visibility.
-        """
-        stmt = select(HrmScope.department_id).where(
-            HrmScope.employee_id == employee_id,
-            HrmScope.start_date <= on_date,
-            HrmScope.end_date >= on_date,
+    async def get_priority_active_department_id(
+        self, employee_id: int, on_date: date
+    ) -> int | None:
+        """Department of this HRM's highest-priority (lowest sort_order) scope
+        that is ACTIVE on ``on_date``; None when no scope is active."""
+        stmt = (
+            select(HrmScope.department_id)
+            .where(
+                HrmScope.employee_id == employee_id,
+                HrmScope.start_date <= on_date,
+                HrmScope.end_date >= on_date,
+            )
+            .order_by(HrmScope.sort_order, HrmScope.id)
+            .limit(1)
         )
-        result = await self.session.scalars(stmt)
-        return set(result.all())
+        return (await self.session.execute(stmt)).scalar_one_or_none()

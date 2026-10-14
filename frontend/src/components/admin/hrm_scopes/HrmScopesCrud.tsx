@@ -18,6 +18,7 @@ import {
     fetchScopesByEmployee,
     type HrmEmployeeRow,
     type HrmScope,
+    updateHrmScope,
 } from './hrmScopeApi';
 import { useHrmEmployeeColumns } from './useHrmEmployeeColumns';
 import { useHrmScopeColumns } from './useHrmScopeColumns';
@@ -26,6 +27,7 @@ import { HrmScopeForm } from './HrmScopeForm';
 import { HrmScopeDeleteDialog } from './HrmScopeDeleteDialog';
 import { HRM_EMPLOYEE_QK, HRM_SCOPE_QK } from '../../../utils/queryKeys.ts';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
+import { useArrowReorder } from '../../../hooks/useArrowReorder';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import cfl from '../../../utils/helpers.ts';
@@ -49,7 +51,11 @@ export function HrmScopesCrud() {
         staleTime: 60 * 1000,
     });
 
-    const { data: scopes = [], isLoading: scopesLoading } = useQuery({
+    const {
+        data: scopes = [],
+        isLoading: scopesLoading,
+        isFetching: scopesFetching,
+    } = useQuery({
         queryKey: [...HRM_SCOPE_QK, selected?.id],
         queryFn: () => fetchScopesByEmployee(selected!.id),
         enabled: !!selected,
@@ -61,10 +67,27 @@ export function HrmScopesCrud() {
         deleteSuccessMessage: getString('hrmScopeRemoved') || 'Department removed from scope',
     });
 
+    // Priority order: the first ACTIVE scope is the HRM's default department
+    // on the employees list.
+    const sortedScopes = useMemo(
+        () => [...scopes].sort((a, b) => (a.sort_order - b.sort_order) || (a.id - b.id)),
+        [scopes],
+    );
+    const { orderColumn, isReordering } = useArrowReorder<HrmScope>({
+        rows: sortedScopes,
+        updateSortOrder: (id, sort_order) => updateHrmScope(id, { sort_order }),
+        // HRM_SCOPE_QK prefix also refreshes HRM_SCOPE_PRIORITY_QK.
+        invalidateKeys: [HRM_SCOPE_QK],
+        getString,
+        onError: (message) => setSnackbar({ open: true, message, severity: 'error' }),
+        headerName: cfl(getString('priority')),
+    });
+
     const empColumns = useHrmEmployeeColumns({ getString });
     const scopeColumns = useHrmScopeColumns({
         getString,
         onDelete: (row) => setToDelete(row),
+        orderColumn,
     });
 
     const selectedName = useMemo(() => selected?.name ?? '', [selected]);
@@ -150,10 +173,18 @@ export function HrmScopesCrud() {
 
                         {selected ? (
                             <DataGrid
-                                rows={scopes}
+                                rows={sortedScopes}
                                 columns={scopeColumns}
                                 getRowId={(r) => r.id}
-                                loading={scopesLoading}
+                                // Reorder = PATCHes + refetch; keep rows visible
+                                // under a progress bar until the new order lands.
+                                loading={scopesLoading || isReordering || scopesFetching}
+                                slotProps={{
+                                    loadingOverlay: {
+                                        variant: 'linear-progress',
+                                        noRowsVariant: 'skeleton',
+                                    },
+                                }}
                                 localeText={localeText}
                                 disableRowSelectionOnClick
                                 initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
