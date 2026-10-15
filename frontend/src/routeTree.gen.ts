@@ -152,6 +152,7 @@ import { Route as AdminPeople_reviewReviewersEmployeesIndexRouteImport } from '.
 import { Route as AdminPeople_reviewReviewersAuto_assignmentIndexRouteImport } from './routes/admin/people_review/reviewers/auto_assignment/index'
 import { Route as AdminPeople_reviewReview_setupLevelsIndexRouteImport } from './routes/admin/people_review/review_setup/levels/index'
 import { Route as AdminPeople_reviewReview_setupDimensionsIndexRouteImport } from './routes/admin/people_review/review_setup/dimensions/index'
+import { Route as AdminDepartments_groupDepartment_typesOrganigramIndexRouteImport } from './routes/admin/departments_group/department_types/organigram/index'
 import { Route as AdminDepartments_groupDepartment_typesListIndexRouteImport } from './routes/admin/departments_group/department_types/list/index'
 import { Route as AdminDepartments_groupDepartment_typesJob_links_boardIndexRouteImport } from './routes/admin/departments_group/department_types/job_links_board/index'
 import { Route as AdminDepartments_groupDepartment_typesJob_linksIndexRouteImport } from './routes/admin/departments_group/department_types/job_links/index'
@@ -967,6 +968,12 @@ const AdminPeople_reviewReview_setupDimensionsIndexRoute =
     path: '/',
     getParentRoute: () => AdminPeople_reviewReview_setupDimensionsRouteRoute,
   } as any)
+const AdminDepartments_groupDepartment_typesOrganigramIndexRoute =
+  AdminDepartments_groupDepartment_typesOrganigramIndexRouteImport.update({
+    id: '/organigram/',
+    path: '/organigram/',
+    getParentRoute: () => AdminDepartments_groupDepartment_typesRouteRoute,
+  } as any)
 const AdminDepartments_groupDepartment_typesListIndexRoute =
   AdminDepartments_groupDepartment_typesListIndexRouteImport.update({
     id: '/list/',
@@ -1155,6 +1162,7 @@ export interface FileRoutesByFullPath {
   '/admin/departments_group/department_types/job_links': typeof AdminDepartments_groupDepartment_typesJob_linksIndexRoute
   '/admin/departments_group/department_types/job_links_board': typeof AdminDepartments_groupDepartment_typesJob_links_boardIndexRoute
   '/admin/departments_group/department_types/list': typeof AdminDepartments_groupDepartment_typesListIndexRoute
+  '/admin/departments_group/department_types/organigram': typeof AdminDepartments_groupDepartment_typesOrganigramIndexRoute
   '/admin/people_review/review_setup/dimensions/': typeof AdminPeople_reviewReview_setupDimensionsIndexRoute
   '/admin/people_review/review_setup/levels/': typeof AdminPeople_reviewReview_setupLevelsIndexRoute
   '/admin/people_review/reviewers/auto_assignment': typeof AdminPeople_reviewReviewersAuto_assignmentIndexRoute
@@ -1280,6 +1288,7 @@ export interface FileRoutesByTo {
   '/admin/departments_group/department_types/job_links': typeof AdminDepartments_groupDepartment_typesJob_linksIndexRoute
   '/admin/departments_group/department_types/job_links_board': typeof AdminDepartments_groupDepartment_typesJob_links_boardIndexRoute
   '/admin/departments_group/department_types/list': typeof AdminDepartments_groupDepartment_typesListIndexRoute
+  '/admin/departments_group/department_types/organigram': typeof AdminDepartments_groupDepartment_typesOrganigramIndexRoute
   '/admin/people_review/review_setup/dimensions': typeof AdminPeople_reviewReview_setupDimensionsIndexRoute
   '/admin/people_review/review_setup/levels': typeof AdminPeople_reviewReview_setupLevelsIndexRoute
   '/admin/people_review/reviewers/auto_assignment': typeof AdminPeople_reviewReviewersAuto_assignmentIndexRoute
@@ -1434,6 +1443,7 @@ export interface FileRoutesById {
   '/admin/departments_group/department_types/job_links/': typeof AdminDepartments_groupDepartment_typesJob_linksIndexRoute
   '/admin/departments_group/department_types/job_links_board/': typeof AdminDepartments_groupDepartment_typesJob_links_boardIndexRoute
   '/admin/departments_group/department_types/list/': typeof AdminDepartments_groupDepartment_typesListIndexRoute
+  '/admin/departments_group/department_types/organigram/': typeof AdminDepartments_groupDepartment_typesOrganigramIndexRoute
   '/admin/people_review/review_setup/dimensions/': typeof AdminPeople_reviewReview_setupDimensionsIndexRoute
   '/admin/people_review/review_setup/levels/': typeof AdminPeople_reviewReview_setupLevelsIndexRoute
   '/admin/people_review/reviewers/auto_assignment/': typeof AdminPeople_reviewReviewersAuto_assignmentIndexRoute
@@ -1589,6 +1599,7 @@ export interface FileRouteTypes {
     | '/admin/departments_group/department_types/job_links'
     | '/admin/departments_group/department_types/job_links_board'
     | '/admin/departments_group/department_types/list'
+    | '/admin/departments_group/department_types/organigram'
     | '/admin/people_review/review_setup/dimensions/'
     | '/admin/people_review/review_setup/levels/'
     | '/admin/people_review/reviewers/auto_assignment'
@@ -1714,6 +1725,7 @@ export interface FileRouteTypes {
     | '/admin/departments_group/department_types/job_links'
     | '/admin/departments_group/department_types/job_links_board'
     | '/admin/departments_group/department_types/list'
+    | '/admin/departments_group/department_types/organigram'
     | '/admin/people_review/review_setup/dimensions'
     | '/admin/people_review/review_setup/levels'
     | '/admin/people_review/reviewers/auto_assignment'
@@ -1867,6 +1879,7 @@ export interface FileRouteTypes {
     | '/admin/departments_group/department_types/job_links/'
     | '/admin/departments_group/department_types/job_links_board/'
     | '/admin/departments_group/department_types/list/'
+    | '/admin/departments_group/department_types/organigram/'
     | '/admin/people_review/review_setup/dimensions/'
     | '/admin/people_review/review_setup/levels/'
     | '/admin/people_review/reviewers/auto_assignment/'
@@ -2940,6 +2953,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPeople_reviewReview_setupDimensionsIndexRouteImport
       parentRoute: typeof AdminPeople_reviewReview_setupDimensionsRouteRoute
     }
+    '/admin/departments_group/department_types/organigram/': {
+      id: '/admin/departments_group/department_types/organigram/'
+      path: '/organigram'
+      fullPath: '/admin/departments_group/department_types/organigram'
+      preLoaderRoute: typeof AdminDepartments_groupDepartment_typesOrganigramIndexRouteImport
+      parentRoute: typeof AdminDepartments_groupDepartment_typesRouteRoute
+    }
     '/admin/departments_group/department_types/list/': {
       id: '/admin/departments_group/department_types/list/'
       path: '/list'
@@ -3109,6 +3129,7 @@ interface AdminDepartments_groupDepartment_typesRouteRouteChildren {
   AdminDepartments_groupDepartment_typesJob_linksIndexRoute: typeof AdminDepartments_groupDepartment_typesJob_linksIndexRoute
   AdminDepartments_groupDepartment_typesJob_links_boardIndexRoute: typeof AdminDepartments_groupDepartment_typesJob_links_boardIndexRoute
   AdminDepartments_groupDepartment_typesListIndexRoute: typeof AdminDepartments_groupDepartment_typesListIndexRoute
+  AdminDepartments_groupDepartment_typesOrganigramIndexRoute: typeof AdminDepartments_groupDepartment_typesOrganigramIndexRoute
 }
 
 const AdminDepartments_groupDepartment_typesRouteRouteChildren: AdminDepartments_groupDepartment_typesRouteRouteChildren =
@@ -3123,6 +3144,8 @@ const AdminDepartments_groupDepartment_typesRouteRouteChildren: AdminDepartments
       AdminDepartments_groupDepartment_typesJob_links_boardIndexRoute,
     AdminDepartments_groupDepartment_typesListIndexRoute:
       AdminDepartments_groupDepartment_typesListIndexRoute,
+    AdminDepartments_groupDepartment_typesOrganigramIndexRoute:
+      AdminDepartments_groupDepartment_typesOrganigramIndexRoute,
   }
 
 const AdminDepartments_groupDepartment_typesRouteRouteWithChildren =

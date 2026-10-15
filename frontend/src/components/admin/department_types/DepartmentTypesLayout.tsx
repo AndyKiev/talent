@@ -8,6 +8,7 @@ import str from '../../../strings/str';
 const SUB_TABS = [
     { label: 'list',      path: '/admin/departments_group/department_types/list' },
     { label: 'hierarchy', path: '/admin/departments_group/department_types/hierarchy' },
+    { label: 'deptTypeOrgTab', path: '/admin/departments_group/department_types/organigram' },
     { label: 'jobLinks',  path: '/admin/departments_group/department_types/job_links' },
     { label: 'jobLinksBoard', path: '/admin/departments_group/department_types/job_links_board' },
 ] as const;

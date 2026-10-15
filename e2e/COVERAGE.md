@@ -10,7 +10,7 @@ Levels: **FULL** = smoke + happy-path CRUD/flow · **SMOKE** = page-load only ·
 | app shell / main menu | / (default-menu forward) | tests/fe/smoke/app_shell.spec.ts | — | SMOKE | 2026-07-18 |
 | all static pages (breadcrumb + render sweep) | 47 static routes, see the spec's ROUTES list | tests/fe/smoke/pages.spec.ts | — | SMOKE | 2026-07-29 |
 | admin / department_categories | /admin/department_categories | tests/fe/admin/department_categories.spec.ts | backend/tests/api/test_department_categories.py | FULL | 2026-07-18 |
-| admin / department_types | /admin/department_types | tests/fe/admin/department_types.spec.ts | backend/tests/api/test_department_types.py | FULL | 2026-07-20 |
+| admin / department_types | /admin/department_types | tests/fe/admin/department_types.spec.ts | backend/tests/api/test_department_types.py | FULL (+ parental link cycle guard; organigram tab manual) | 2026-10-15 |
 | admin / jobs | /admin/jobs_group/jobs | tests/fe/admin/jobs.spec.ts | backend/tests/api/test_jobs.py | FULL | 2026-07-20 |
 | admin / job_groups | /admin/jobs_group/job_groups | tests/fe/admin/job_groups.spec.ts | backend/tests/api/test_job_groups.py | FULL | 2026-07-20 |
 | admin / job_group_types | /admin/jobs_group/job_group_types | tests/fe/admin/job_group_types.spec.ts | backend/tests/api/test_job_group_types.py | FULL | 2026-07-20 |

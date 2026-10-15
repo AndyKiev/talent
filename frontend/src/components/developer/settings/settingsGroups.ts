@@ -140,6 +140,7 @@ export const SETTING_GROUP_BY_KEY: Record<string, string> = {
     employee_photo_max_mb: 'admin',
     employee_photo_max_dimension: 'admin',
     employee_photo_jpeg_quality: 'admin',
+    department_type_organigram_depth: 'admin',
     // ── General (not tied to a single menu) ──────────────────────────────────
     self_registration_enabled: 'general',
     default_menu: 'general',

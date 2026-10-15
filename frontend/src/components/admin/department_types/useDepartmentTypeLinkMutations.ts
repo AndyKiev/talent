@@ -5,6 +5,10 @@ import {
     updateParentalLink,
     deleteParentalLink,
 } from './departmentTypeParentalLinkApi.ts';
+import {
+    DEPARTMENT_TYPE_CHILD_MAP_QK,
+    DEPARTMENT_TYPE_PARENTAL_LINKS_QK,
+} from '../../../utils/queryKeys.ts';
 
 type Snackbar = { open: boolean; message: string; severity: 'success' | 'error' };
 
@@ -41,11 +45,22 @@ export function useDepartmentTypeLinkMutations({
 }: Props) {
     const qc = useQueryClient();
 
+    // Whole-graph views (organigram, department tree child map) read every
+    // link at once — refresh them on any link change.
+    const invalidateGraph = () =>
+        Promise.all([
+            qc.invalidateQueries({ queryKey: DEPARTMENT_TYPE_PARENTAL_LINKS_QK }),
+            qc.invalidateQueries({ queryKey: DEPARTMENT_TYPE_CHILD_MAP_QK }),
+        ]);
+
     const createLinkMutation = useMutation({
         mutationFn: createParentalLink,
         onSuccess: async (res, variables) => {
             // Invalidate the children list for the parent that just got a new child
-            await qc.invalidateQueries({ queryKey: deptTypeChildrenQK(variables.parent_id) });
+            await Promise.all([
+                qc.invalidateQueries({ queryKey: deptTypeChildrenQK(variables.parent_id) }),
+                invalidateGraph(),
+            ]);
             setSnackbar({ open: true, message: res.detail, severity: 'success' });
             onCreateSuccess?.();
         },
@@ -63,6 +78,7 @@ export function useDepartmentTypeLinkMutations({
             await Promise.all([
                 qc.invalidateQueries({ queryKey: deptTypeChildrenQK(variables.oldParentId) }),
                 qc.invalidateQueries({ queryKey: deptTypeChildrenQK(variables.newParentId) }),
+                invalidateGraph(),
             ]);
             setSnackbar({ open: true, message: res.detail, severity: 'success' });
             onUpdateSuccess?.();
@@ -77,7 +93,10 @@ export function useDepartmentTypeLinkMutations({
         mutationFn: ({ linkId, isActive }: ToggleLinkVars) =>
             updateParentalLink({ linkId, data: { is_active: isActive } }),
         onSuccess: async (res, variables) => {
-            await qc.invalidateQueries({ queryKey: deptTypeChildrenQK(variables.parentId) });
+            await Promise.all([
+                qc.invalidateQueries({ queryKey: deptTypeChildrenQK(variables.parentId) }),
+                invalidateGraph(),
+            ]);
             setSnackbar({ open: true, message: res.detail, severity: 'success' });
             onToggleSuccess?.();
         },
@@ -90,7 +109,10 @@ export function useDepartmentTypeLinkMutations({
         mutationFn: ({ linkId }: { linkId: number; parentId: number }) =>
             deleteParentalLink(linkId),
         onSuccess: async (res, variables) => {
-            await qc.invalidateQueries({ queryKey: deptTypeChildrenQK(variables.parentId) });
+            await Promise.all([
+                qc.invalidateQueries({ queryKey: deptTypeChildrenQK(variables.parentId) }),
+                invalidateGraph(),
+            ]);
             setSnackbar({ open: true, message: res.detail, severity: 'success' });
             onDeleteSuccess?.();
         },

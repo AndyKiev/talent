@@ -1,4 +1,3 @@
-
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -7,6 +6,7 @@ from backend.api_v1.base.mutation_response import MutationResponse
 from backend.api_v1.department_type_parental_links.department_type_parental_link_messages import (
     DepartmentTypeParentalLinkAlreadyExists,
     DepartmentTypeParentalLinkCreateSuccess,
+    DepartmentTypeParentalLinkCycleError,
     DepartmentTypeParentalLinkDeleteError,
     DepartmentTypeParentalLinkDeleteSuccess,
     DepartmentTypeParentalLinkNotFound,
@@ -48,6 +48,24 @@ class DepartmentTypeParentalLinkService(BaseService):
         request instead of one per parent type."""
         return await self.repository.get_active_child_map()
 
+    async def _ensure_no_cycle(self, child_id: int, parent_id: int) -> None:
+        """Reject a link that would make the type graph cyclic: parent ==
+        child, or the child already reaches the parent downward. Walks ALL
+        links (inactive ones can be re-activated later)."""
+        child_map = await self.repository.get_child_map()
+        seen: set[int] = set()
+        stack = [child_id]
+        while stack:
+            node = stack.pop()
+            if node == parent_id:
+                raise await self._resolve_domain_error(
+                    DepartmentTypeParentalLinkCycleError(child_id, parent_id)
+                )
+            if node in seen:
+                continue
+            seen.add(node)
+            stack.extend(child_map.get(node, []))
+
     async def get_links(
         self,
         child_id: int | None = None,
@@ -68,6 +86,7 @@ class DepartmentTypeParentalLinkService(BaseService):
     async def create_link(
         self, link_in: DepartmentTypeParentalLinkCreate
     ) -> MutationResponse[DepartmentTypeParentalLinkSchema]:
+        await self._ensure_no_cycle(link_in.child_id, link_in.parent_id)
         try:
             # Call base service create method
             record = await self.create(link_in)
@@ -89,6 +108,10 @@ class DepartmentTypeParentalLinkService(BaseService):
     ) -> MutationResponse[DepartmentTypeParentalLinkSchema]:
         # Get existing record first (for name formatting and conflict check)
         record = await self.get_by_id(link_id)
+        new_child = link_update.child_id or record.child_id
+        new_parent = link_update.parent_id or record.parent_id
+        if (new_child, new_parent) != (record.child_id, record.parent_id):
+            await self._ensure_no_cycle(new_child, new_parent)
         try:
             # Call base service update method
             updated = await self.update(record, link_update, partial=True)

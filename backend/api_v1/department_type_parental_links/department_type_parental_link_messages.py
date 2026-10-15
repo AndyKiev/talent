@@ -34,6 +34,17 @@ class DepartmentTypeParentalLinkAlreadyExists(AlreadyExistsError):
         )
 
 
+class DepartmentTypeParentalLinkCycleError(DomainError):
+    message_key = "departmentTypeParentalLinkCycleError"
+
+    def __init__(self, child_id: int, parent_id: int) -> None:
+        self.template_vars = {"childId": child_id, "parentId": parent_id}
+        self.fallback = (
+            f"Linking type {child_id} under {parent_id} would create a cycle"
+        )
+        DomainError.__init__(self, self.fallback)
+
+
 class DepartmentTypeParentalLinkDeleteError(DeleteError):
     message_key = "departmentTypeParentalLinkDeleteError"
 

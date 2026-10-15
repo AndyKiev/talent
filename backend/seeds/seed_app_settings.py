@@ -94,6 +94,17 @@ APP_SETTINGS = [
         "visible_to_regular": True,
     },
     {
+        # Default number of levels the department-types organigram draws below
+        # its top row (roots, or the focused type). The page offers a per-browser
+        # override picker (2..6); this is only the starting value. App-only.
+        "key": "department_type_organigram_depth",
+        "value": 3,
+        "value_type_key": "integer",
+        "label_key": "settingDepartmentTypeOrganigramDepth",
+        "description_key": "settingDepartmentTypeOrganigramDepthDesc",
+        "user_override_allowed": False,
+    },
+    {
         # Max KPIs a single development mission may carry. Enforced in
         # employee_mission_service (create) and employee_mission_kpi_service
         # (add-one); the FE hides "Add KPI" at the cap. App-only.
