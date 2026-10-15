@@ -11,15 +11,17 @@
 // visible — an "up" strip lists the focused type's parent(s) as chips, and a
 // breadcrumb holds the clicked path from the top. The path lives in the URL (?path=1_5_12) so browser Back works too.
 //
-// Drag mode (header switch):
-//   - drop a card on another card  -> MOVE its link to that parent;
-//   - Ctrl + drop                  -> ADD that card as an extra parent;
-//   - drop on the Unlink bay       -> remove the link it hangs on;
-//   - drag a chip from the types panel (DepartmentTypePalette — every type,
-//     with filter, unused-only, sort and find-next) or a top card
-//                                  -> always ADDS a link.
-// Every drop is confirmed in a dialog. Cycles and duplicate pairs are not
-// droppable (the backend rejects them too).
+// Mode selector (header): VIEW / TYPES (blue) / JOBS (green) — one kind of
+// link is edited at a time.
+//   TYPES: drop a card on another card -> MOVE its link to that parent;
+//          Ctrl + drop -> ADD that card as an extra parent; the Unlink bay
+//          removes the link; a types-panel chip or a top card always ADDS.
+//          Cycles and duplicate pairs are not droppable (backend rejects too).
+//   JOBS:  the job-count chip opens a card's job box (in any mode); in JOBS
+//          mode its rows drag: drop on a card = move the job link there,
+//          Ctrl = link it there too, Unlink bay = remove; a jobs-panel chip
+//          always ADDS (useOrganigramJobs).
+// Every drop is confirmed in a dialog.
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
@@ -46,8 +48,12 @@ import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import AlignHorizontalLeftIcon from '@mui/icons-material/AlignHorizontalLeft';
 import AlignVerticalTopIcon from '@mui/icons-material/AlignVerticalTop';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
-import LinkOffIcon from '@mui/icons-material/LinkOff';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import WorkOutlineIcon from '@mui/icons-material/WorkOutline';
 import VerticalAlignTopIcon from '@mui/icons-material/VerticalAlignTop';
 
 import { fetchDepartmentTypes, type DepartmentType } from '../departmentTypeApi';
@@ -55,13 +61,18 @@ import { fetchParentalLinks } from '../departmentTypeParentalLinkApi';
 import { useDepartmentTypeLinkMutations } from '../useDepartmentTypeLinkMutations';
 import { buildDeptTypeGraph, buildSubtree, chainTo, type TypeTreeNode } from './buildDeptTypeGraph';
 import {
+    startDrag,
     type DragSource,
     type DropAction,
     type HoverTarget,
     type OrgCtx,
 } from './organigramDrag';
 import { DepartmentTypeOrganigramTree } from './DepartmentTypeOrganigramTree';
-import { DepartmentTypePalette, type FindState } from './DepartmentTypePalette';
+import { OrganigramPalette, type FindState, type PaletteItem } from './OrganigramPalette';
+import { OrganigramDragHint, OrganigramUnlinkBay } from './OrganigramDragOverlays';
+import { useOrganigramJobs } from './useOrganigramJobs';
+import { MODE_COLOR, OrganigramMode, organigramModeLabel } from './organigramMode';
+import { JobBoxPlacement, jobBoxPlacementLabel } from './jobBoxPlacement';
 import { MAX_DEPTH, MIN_DEPTH, useDeptTypeOrganigramDepth } from './useDeptTypeOrganigramDepth';
 import { useDeptTypeOrganigramStore } from '../../../../store/deptTypeOrganigramStore';
 import {
@@ -70,8 +81,21 @@ import {
 } from '../../../organigram/organigramOrientation';
 import ConfirmDialog from '../../../ui/ConfirmDialog';
 import useString from '../../../../hooks/useString';
-import cfl from '../../../../utils/helpers.ts';
 import { DEPARTMENT_TYPE_PARENTAL_LINKS_QK, DEPARTMENT_TYPE_QK } from '../../../../utils/queryKeys.ts';
+
+const MODE_BUTTONS = [
+    { value: OrganigramMode.VIEW, Icon: VisibilityOutlinedIcon, color: 'standard' },
+    { value: OrganigramMode.TYPES, Icon: AccountTreeOutlinedIcon, color: 'info' },
+    { value: OrganigramMode.JOBS, Icon: WorkOutlineIcon, color: 'success' },
+] as const;
+
+// Where a job box opens, relative to its card.
+const BOX_PLACEMENT_BUTTONS = [
+    { value: JobBoxPlacement.RIGHT, Icon: ArrowForwardIcon },
+    { value: JobBoxPlacement.LEFT, Icon: ArrowBackIcon },
+    { value: JobBoxPlacement.TOP, Icon: ArrowUpwardIcon },
+    { value: JobBoxPlacement.BOTTOM, Icon: ArrowDownwardIcon },
+] as const;
 
 const ROUTE_ID = '/admin/departments_group/department_types/organigram/';
 const ROUTE_PATH = '/admin/departments_group/department_types/organigram';
@@ -96,8 +120,19 @@ export function DepartmentTypeOrganigram() {
     const setHideInactive = useDeptTypeOrganigramStore((s) => s.setHideInactive);
     const orientation = useDeptTypeOrganigramStore((s) => s.orientation);
     const setOrientation = useDeptTypeOrganigramStore((s) => s.setOrientation);
+    const paletteUsage = useDeptTypeOrganigramStore((s) => s.paletteUsage);
+    const setPaletteUsage = useDeptTypeOrganigramStore((s) => s.setPaletteUsage);
+    const paletteSort = useDeptTypeOrganigramStore((s) => s.paletteSort);
+    const setPaletteSort = useDeptTypeOrganigramStore((s) => s.setPaletteSort);
+    const jobPaletteUsage = useDeptTypeOrganigramStore((s) => s.jobPaletteUsage);
+    const setJobPaletteUsage = useDeptTypeOrganigramStore((s) => s.setJobPaletteUsage);
+    const jobPaletteSort = useDeptTypeOrganigramStore((s) => s.jobPaletteSort);
+    const setJobPaletteSort = useDeptTypeOrganigramStore((s) => s.setJobPaletteSort);
+    const jobBoxPlacement = useDeptTypeOrganigramStore((s) => s.jobBoxPlacement);
+    const setJobBoxPlacement = useDeptTypeOrganigramStore((s) => s.setJobBoxPlacement);
 
-    const [dragMode, setDragMode] = useState(false);
+    const [mode, setMode] = useState<OrganigramMode>(OrganigramMode.VIEW);
+    const dragMode = mode === OrganigramMode.TYPES;
     const [dragging, setDragging] = useState<DragSource | null>(null);
     const [hover, setHover] = useState<HoverTarget | null>(null);
     const [unlinkHovered, setUnlinkHovered] = useState(false);
@@ -136,6 +171,7 @@ export function DepartmentTypeOrganigram() {
 
     const setPath = (next: number[]) => {
         setFind(null);
+        jobsLayer.clearFind();
         return navigate({
             to: ROUTE_PATH,
             search: { path: next.length > 0 ? next.join('_') : undefined },
@@ -159,10 +195,19 @@ export function DepartmentTypeOrganigram() {
     const focusParents = focusId == null ? [] : (graph.parentLinks.get(focusId) ?? []);
     // Types panel data: visible types, and where each one is drawn (tree
     // order) for the find-next navigation.
-    const visibleTypes = useMemo(
-        () => [...graph.typeById.values()].filter((t) => !hideInactive || t.is_active),
+    const typeItems: PaletteItem[] = useMemo(
+        () =>
+            [...graph.typeById.values()]
+                .filter((t) => !hideInactive || t.is_active)
+                .map((t) => ({
+                    id: t.id,
+                    name: t.name,
+                    isActive: t.is_active,
+                    used: graph.childLinks.has(t.id) || graph.parentLinks.has(t.id),
+                })),
         [graph, hideInactive],
     );
+    const tops = useMemo(() => (focusNode ? [focusNode] : rootNodes), [focusNode, rootNodes]);
     const occurrences = useMemo(() => {
         const map = new Map<number, string[]>();
         const walk = (n: TypeTreeNode) => {
@@ -171,19 +216,38 @@ export function DepartmentTypeOrganigram() {
             else map.set(n.type.id, [n.key]);
             n.children.forEach(walk);
         };
-        (focusNode ? [focusNode] : rootNodes).forEach(walk);
+        tops.forEach(walk);
         return map;
-    }, [focusNode, rootNodes]);
-    const highlightKey = find ? (occurrences.get(find.typeId)?.[find.index] ?? null) : null;
+    }, [tops]);
     const onFind = (typeId: number, step: 1 | -1) => {
         const n = occurrences.get(typeId)?.length ?? 0;
         if (n === 0) return;
         setFind((prev) =>
-            prev?.typeId === typeId
-                ? { typeId, index: (prev.index + step + n) % n }
-                : { typeId, index: step === 1 ? 0 : n - 1 },
+            prev?.id === typeId
+                ? { id: typeId, index: (prev.index + step + n) % n }
+                : { id: typeId, index: step === 1 ? 0 : n - 1 },
         );
     };
+
+    const nameOf = (id: number) => graph.typeById.get(id)?.name ?? `#${id}`;
+
+    const jobsLayer = useOrganigramJobs({
+        active: mode === OrganigramMode.JOBS,
+        hideInactive,
+        tops,
+        typeName: nameOf,
+        getString,
+        setSnackbar,
+    });
+
+    // The panel on screen follows the mode (jobs in JOBS mode, else types),
+    // and so does the find-next highlight.
+    const highlightKey =
+        mode === OrganigramMode.JOBS
+            ? jobsLayer.highlightKey
+            : find
+              ? (occurrences.get(find.id)?.[find.index] ?? null)
+              : null;
 
     const resetDrag = () => {
         setDragging(null);
@@ -194,6 +258,7 @@ export function DepartmentTypeOrganigram() {
     const ctx: OrgCtx = {
         getString,
         graph,
+        mode,
         dragMode,
         dragging,
         hover,
@@ -211,14 +276,13 @@ export function DepartmentTypeOrganigram() {
             if (dragging) setPending({ kind: action, src: dragging, to });
             resetDrag();
         },
+        jobs: jobsLayer.ctx,
     };
 
     const goUp = (parentId: number) => {
         if (path.length >= 2 && path[path.length - 2] === parentId) setPath(path.slice(0, -1));
         else setPath(chainTo(graph, parentId));
     };
-
-    const nameOf = (id: number) => graph.typeById.get(id)?.name ?? `#${id}`;
 
     const confirmPending = () => {
         if (!pending) return;
@@ -257,15 +321,24 @@ export function DepartmentTypeOrganigram() {
               };
     };
 
+    // The job layer never blocks the tree (see useOrganigramJobs).
     const isLoading = typesQuery.isLoading || linksQuery.isLoading;
-    const error = typesQuery.error ?? linksQuery.error;
+    const error = typesQuery.error ?? linksQuery.error ?? jobsLayer.error;
+    const modeColor = MODE_COLOR[mode];
     const isMutating =
         createLinkMutation.isPending || updateLinkMutation.isPending || deleteLinkMutation.isPending;
     const { title: pendingTitle, message: pendingMessage } = pendingText();
 
     return (
-        <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', p: 1.5 }}>
-            {/* ── Header: title, orientation, depth, hide inactive, drag mode */}
+        <Paper
+            elevation={0}
+            sx={{
+                border: '1px solid',
+                borderColor: modeColor === 'inherit' ? 'divider' : `${modeColor}.main`,
+                p: 1.5,
+            }}
+        >
+            {/* ── Header: title, orientation, depth, hide inactive, mode ──── */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1, flexWrap: 'wrap' }}>
                 <AccountTreeOutlinedIcon color="action" sx={{ fontSize: 18 }} />
                 <Typography variant="subtitle2" fontWeight={600} sx={{ flex: 1 }}>
@@ -283,6 +356,21 @@ export function DepartmentTypeOrganigram() {
                     ].map(({ value, icon }) => (
                         <ToggleButton key={value} value={value} sx={{ py: 0.5 }}>
                             <Tooltip title={organigramOrientationLabel(value, getString)}>{icon}</Tooltip>
+                        </ToggleButton>
+                    ))}
+                </ToggleButtonGroup>
+                <ToggleButtonGroup
+                    size="small"
+                    exclusive
+                    color="success"
+                    value={jobBoxPlacement}
+                    onChange={(_, v: JobBoxPlacement | null) => v && setJobBoxPlacement(v)}
+                >
+                    {BOX_PLACEMENT_BUTTONS.map(({ value, Icon }) => (
+                        <ToggleButton key={value} value={value} sx={{ py: 0.5, px: 0.75 }}>
+                            <Tooltip title={jobBoxPlacementLabel(value, getString)}>
+                                <Icon sx={{ fontSize: 16 }} />
+                            </Tooltip>
                         </ToggleButton>
                     ))}
                 </ToggleButtonGroup>
@@ -314,19 +402,26 @@ export function DepartmentTypeOrganigram() {
                     }
                     label={<Typography variant="body2">{getString('deptTypeOrgHideInactive')}</Typography>}
                 />
-                <FormControlLabel
-                    control={
-                        <Switch
-                            size="small"
-                            checked={dragMode}
-                            onChange={(e) => {
-                                setDragMode(e.target.checked);
-                                resetDrag();
-                            }}
-                        />
-                    }
-                    label={<Typography variant="body2">{cfl(getString('organigramDragMode'))}</Typography>}
-                />
+                <ToggleButtonGroup
+                    size="small"
+                    exclusive
+                    value={mode}
+                    onChange={(_, v: OrganigramMode | null) => {
+                        if (!v) return;
+                        setMode(v);
+                        resetDrag();
+                        jobsLayer.resetDrag();
+                    }}
+                >
+                    {MODE_BUTTONS.map(({ value, Icon, color }) => (
+                        <ToggleButton key={value} value={value} color={color} sx={{ py: 0.5, gap: 0.5 }}>
+                            <Icon fontSize="small" />
+                            <Typography variant="caption" sx={{ textTransform: 'none' }}>
+                                {organigramModeLabel(value, getString)}
+                            </Typography>
+                        </ToggleButton>
+                    ))}
+                </ToggleButtonGroup>
             </Box>
 
             {/* ── Breadcrumb: the clicked path from the top ───────────────── */}
@@ -422,18 +517,59 @@ export function DepartmentTypeOrganigram() {
                 </Box>
             )}
 
-            {/* ── Types panel: filter / unused-only / sort, find-next, drag ── */}
-            <DepartmentTypePalette
-                types={visibleTypes}
-                graph={graph}
-                occurrences={occurrences}
-                dragMode={dragMode}
-                find={find}
-                onFind={onFind}
-                onDragStart={setDragging}
-                onDragEnd={resetDrag}
-                getString={getString}
-            />
+            {/* ── Panel: jobs in JOBS mode, otherwise types ─────────────── */}
+            {mode === OrganigramMode.JOBS ? (
+                <OrganigramPalette
+                    items={jobsLayer.items}
+                    occurrences={jobsLayer.occurrences}
+                    usage={jobPaletteUsage}
+                    onUsageChange={setJobPaletteUsage}
+                    sort={jobPaletteSort}
+                    onSortChange={setJobPaletteSort}
+                    accent="success"
+                    title={
+                        jobsLayer.jobsLoading
+                            ? getString('deptTypeOrgJobsLoading')
+                            : getString('deptTypeOrgJobsPanel', { count: jobsLayer.items.length })
+                    }
+                    filterPlaceholder={getString('deptTypeOrgFilterJobs')}
+                    emptyText={getString('deptTypeOrgNoMatchingJobs')}
+                    hint={getString('deptTypeOrgJobPalette')}
+                    usedHint={(count) => getString('deptTypeOrgJobUsedHint', { count })}
+                    unusedHint={getString('deptTypeOrgJobUnusedHint')}
+                    draggable
+                    find={jobsLayer.find}
+                    onFind={jobsLayer.onFind}
+                    onItemDragStart={jobsLayer.onPaletteDragStart}
+                    onDragEnd={jobsLayer.resetDrag}
+                    getString={getString}
+                />
+            ) : (
+                <OrganigramPalette
+                    items={typeItems}
+                    occurrences={occurrences}
+                    usage={paletteUsage}
+                    onUsageChange={setPaletteUsage}
+                    sort={paletteSort}
+                    onSortChange={setPaletteSort}
+                    accent="info"
+                    title={getString('deptTypeOrgTypesPanel', { count: typeItems.length })}
+                    filterPlaceholder={getString('filterByDepartmentTypeName')}
+                    emptyText={getString('noMatchingDepartmentTypes')}
+                    hint={getString(dragMode ? 'deptTypeOrgPalette' : 'deptTypeOrgFindHint')}
+                    usedHint={(count) => getString('deptTypeOrgUsedHint', { count })}
+                    unusedHint={getString('deptTypeOrgUnusedHint')}
+                    draggable={dragMode}
+                    find={find}
+                    onFind={onFind}
+                    onItemDragStart={(e, id) => {
+                        const t = graph.typeById.get(id);
+                        if (t) startDrag(e, { type: t, link: null }, setDragging);
+                    }}
+                    onDragEnd={resetDrag}
+                    getString={getString}
+                />
+            )}
 
             {isLoading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
@@ -455,82 +591,43 @@ export function DepartmentTypeOrganigram() {
                 />
             )}
 
-            {/* ── Unlink bay (bottom-left) — only for a card hanging on a link */}
+            {/* ── TYPES drag overlays: Unlink bay + corner hint ─────────── */}
             {dragMode && dragging?.link && (
-                <Paper
-                    elevation={6}
-                    onDragOver={(e) => {
-                        e.preventDefault();
-                        e.dataTransfer.dropEffect = 'move';
-                        setHover(null);
-                        if (!unlinkHovered) setUnlinkHovered(true);
+                <OrganigramUnlinkBay
+                    label={getString('deptTypeOrgUnlinkBay', { from: nameOf(dragging.link.parent_id) })}
+                    hovered={unlinkHovered}
+                    onHover={(h) => {
+                        setUnlinkHovered(h);
+                        if (h) setHover(null);
                     }}
-                    onDragLeave={() => setUnlinkHovered(false)}
-                    onDrop={(e) => {
-                        e.preventDefault();
+                    onDrop={() => {
                         setPending({ kind: 'unlink', src: dragging });
                         resetDrag();
                     }}
-                    sx={{
-                        position: 'fixed',
-                        bottom: 16,
-                        left: 16,
-                        zIndex: (theme) => theme.zIndex.snackbar,
-                        p: 1.5,
-                        maxWidth: 280,
-                        border: '2px dashed',
-                        borderColor: unlinkHovered ? 'warning.main' : 'divider',
-                        bgcolor: unlinkHovered ? 'action.hover' : 'background.paper',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                    }}
-                >
-                    <LinkOffIcon fontSize="small" color={unlinkHovered ? 'warning' : 'action'} />
-                    <Typography variant="body2">
-                        {getString('deptTypeOrgUnlinkBay', { from: nameOf(dragging.link.parent_id) })}
-                    </Typography>
-                </Paper>
+                />
+            )}
+            {dragMode && dragging && (
+                <OrganigramDragHint
+                    title={dragging.type.name}
+                    action={
+                        unlinkHovered
+                            ? getString('deptTypeOrgActionUnlink')
+                            : hover
+                              ? getString(hover.action === 'add' ? 'deptTypeOrgActionAdd' : 'deptTypeOrgActionMove')
+                              : null
+                    }
+                    actionColor={unlinkHovered ? 'warning' : 'info'}
+                    text={
+                        hover
+                            ? hover.type.name
+                            : getString(dragging.link ? 'deptTypeOrgDropHintIdle' : 'deptTypeOrgDropHintIdleNew')
+                    }
+                    muted={!hover}
+                />
             )}
 
-            {/* ── Corner hint while dragging (never obstructs the drag) ────── */}
-            {dragMode && dragging && (
-                <Paper
-                    elevation={6}
-                    sx={{
-                        position: 'fixed',
-                        bottom: 16,
-                        right: 16,
-                        zIndex: (theme) => theme.zIndex.snackbar,
-                        p: 1.5,
-                        maxWidth: 320,
-                        pointerEvents: 'none',
-                    }}
-                >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                        <Typography variant="subtitle2" fontWeight={700} sx={{ flex: 1 }}>
-                            {dragging.type.name}
-                        </Typography>
-                        {hover && (
-                            <Chip
-                                size="small"
-                                label={getString(
-                                    hover.action === 'add' ? 'deptTypeOrgActionAdd' : 'deptTypeOrgActionMove',
-                                )}
-                                color={hover.action === 'add' ? 'success' : 'info'}
-                            />
-                        )}
-                        {unlinkHovered && (
-                            <Chip size="small" label={getString('deptTypeOrgActionUnlink')} color="warning" />
-                        )}
-                    </Box>
-                    <Typography variant="body2" color={hover ? 'text.primary' : 'text.secondary'}>
-                        {hover
-                            ? hover.type.name
-                            : getString(dragging.link ? 'deptTypeOrgDropHintIdle' : 'deptTypeOrgDropHintIdleNew')}
-                    </Typography>
-                </Paper>
-            )}
+            {/* ── JOBS drag overlays + job drop dialog ──────────────────── */}
+            {jobsLayer.overlays}
 
             <ConfirmDialog
                 open={pending != null}

@@ -2,6 +2,9 @@ export const DEPARTMENT_ROOTS_QK = ['department_roots'] as const;
 export const DEPARTMENT_TREE_QK = ['department_tree'] as const;
 export const DEPARTMENT_TYPE_CHILD_MAP_QK = ['department_type_child_map'] as const;
 export const DEPARTMENT_TYPE_PARENTAL_LINKS_QK = ['department_type_parental_links'] as const;
+// key[0] is shared with DEPARTMENT_TYPE_JOB_LINK_BY_JOB_QK, so the job-link
+// mutations' prefix invalidation refreshes this whole-table list too.
+export const DEPARTMENT_TYPE_JOB_LINKS_QK = ['department_type_job_links'] as const;
 export const DEPARTMENT_FLAT_QK = ['departments_flat'] as const;
 export const USER_GROUP_QK = ['user_groups'] as const;
 export const USER_GROUP_TYPE_QK = ['user_group_types'] as const;

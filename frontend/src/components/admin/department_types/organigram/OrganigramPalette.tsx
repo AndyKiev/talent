@@ -1,15 +1,18 @@
-// src/components/admin/department_types/organigram/DepartmentTypePalette.tsx
+// src/components/admin/department_types/organigram/OrganigramPalette.tsx
 //
-// The organigram's TYPES PANEL: every (visible) department type as a chip.
-//   - colour: a type already in some link is "used" (tinted); a type in no
-//     link at all is dashed — a 3-way toggle lists all / used / unused;
-//   - the number on a chip = how many times the type is DRAWN in the current
-//     tree (a type may hang under several parents);
-//   - click = find next place in the tree (scrolled to + outlined, like
-//     Ctrl+F → next), Shift+click = previous; the chip then shows k/N;
-//   - in drag mode a chip is a drag source — dropping it on a card links it.
+// The organigram's side PANEL of chips — one generic component for both the
+// department types and the jobs:
+//   - colour: an item already in some link is "used" (tinted in the panel's
+//     accent); an item in no link at all is dashed and muted — a 3-way toggle
+//     lists all / used / unused;
+//   - the number on a chip = how many cards of the CURRENT drawn tree carry
+//     the item (a type drawn under several parents; a job linked to several
+//     types);
+//   - click = find next such card (scrolled to + outlined, like Ctrl+F →
+//     next), Shift+click = previous; the chip then shows k/N;
+//   - when `draggable`, a chip is a drag source — dropping it on a card links.
 // A text filter and a sort (name / usage) sit on top. Collapsed by default,
-// always open in drag mode.
+// always open while draggable.
 import { useMemo, useState } from 'react';
 import {
     Box,
@@ -31,16 +34,12 @@ import SearchIcon from '@mui/icons-material/Search';
 import AllInclusiveIcon from '@mui/icons-material/AllInclusive';
 import LinkIcon from '@mui/icons-material/Link';
 import LinkOffIcon from '@mui/icons-material/LinkOff';
-import type { DepartmentType } from '../departmentTypeApi';
-import type { DeptTypeGraph } from './buildDeptTypeGraph';
-import { startDrag, type DragSource } from './organigramDrag';
 import {
     TypePaletteSort,
     TypePaletteUsage,
     typePaletteSortLabel,
     typePaletteUsageLabel,
 } from './typePaletteOptions';
-import { useDeptTypeOrganigramStore } from '../../../../store/deptTypeOrganigramStore';
 import type { GetStringFn } from '../../../../types/getStringFn';
 
 const USAGE_ICONS = [
@@ -49,53 +48,75 @@ const USAGE_ICONS = [
     { value: TypePaletteUsage.UNUSED, Icon: LinkOffIcon },
 ] as const;
 
+export interface PaletteItem {
+    id: number;
+    name: string;
+    isActive: boolean;
+    /** In at least one link. */
+    used: boolean;
+}
+
 export interface FindState {
-    typeId: number;
+    id: number;
     index: number;
 }
 
 interface Props {
-    types: DepartmentType[];
-    graph: DeptTypeGraph;
-    /** type id -> keys of its cards in the drawn tree, in tree order. */
+    items: PaletteItem[];
+    /** item id -> keys of the drawn cards carrying it, in tree order. */
     occurrences: Map<number, string[]>;
-    dragMode: boolean;
+    usage: TypePaletteUsage;
+    onUsageChange: (usage: TypePaletteUsage) => void;
+    sort: TypePaletteSort;
+    onSortChange: (sort: TypePaletteSort) => void;
+    /** Panel accent: types blue (info), jobs green (success). */
+    accent: 'info' | 'success';
+    /** Already-resolved texts. */
+    title: string;
+    filterPlaceholder: string;
+    emptyText: string;
+    hint: string;
+    usedHint: (count: number) => string;
+    unusedHint: string;
+    draggable: boolean;
     find: FindState | null;
-    onFind: (typeId: number, step: 1 | -1) => void;
-    onDragStart: (src: DragSource) => void;
+    onFind: (id: number, step: 1 | -1) => void;
+    onItemDragStart: (e: React.DragEvent, id: number) => void;
     onDragEnd: () => void;
     getString: GetStringFn;
 }
 
-export function DepartmentTypePalette({
-    types,
-    graph,
+export function OrganigramPalette({
+    items,
     occurrences,
-    dragMode,
+    usage,
+    onUsageChange,
+    sort,
+    onSortChange,
+    accent,
+    title,
+    filterPlaceholder,
+    emptyText,
+    hint,
+    usedHint,
+    unusedHint,
+    draggable,
     find,
     onFind,
-    onDragStart,
+    onItemDragStart,
     onDragEnd,
     getString,
 }: Props) {
-    const usage = useDeptTypeOrganigramStore((s) => s.paletteUsage);
-    const setUsage = useDeptTypeOrganigramStore((s) => s.setPaletteUsage);
-    const sort = useDeptTypeOrganigramStore((s) => s.paletteSort);
-    const setSort = useDeptTypeOrganigramStore((s) => s.setPaletteSort);
     const [open, setOpen] = useState(false);
     const [filter, setFilter] = useState('');
-
-    const isUsed = (id: number) => graph.childLinks.has(id) || graph.parentLinks.has(id);
-    const countOf = (id: number) => occurrences.get(id)?.length ?? 0;
 
     const shown = useMemo(() => {
         const q = filter.trim().toLowerCase();
         const count = (id: number) => occurrences.get(id)?.length ?? 0;
-        const used = (id: number) => graph.childLinks.has(id) || graph.parentLinks.has(id);
-        return types
+        return items
             .filter(
                 (t) =>
-                    (usage === TypePaletteUsage.ALL || used(t.id) === (usage === TypePaletteUsage.USED)) &&
+                    (usage === TypePaletteUsage.ALL || t.used === (usage === TypePaletteUsage.USED)) &&
                     (!q || t.name.toLowerCase().includes(q)),
             )
             .sort((a, b) =>
@@ -103,26 +124,27 @@ export function DepartmentTypePalette({
                     ? count(b.id) - count(a.id) || a.name.localeCompare(b.name)
                     : a.name.localeCompare(b.name),
             );
-    }, [types, graph, occurrences, usage, filter, sort]);
+    }, [items, occurrences, usage, filter, sort]);
 
-    const expanded = open || dragMode;
+    const expanded = open || draggable;
 
     return (
         <Box sx={{ mb: 1 }}>
             <Button
                 size="small"
-                disabled={dragMode}
+                color={accent}
+                disabled={draggable}
                 onClick={() => setOpen((o) => !o)}
                 endIcon={expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                 sx={{ textTransform: 'none' }}
             >
-                {getString('deptTypeOrgTypesPanel', { count: types.length })}
+                {title}
             </Button>
             {expanded && (
                 <Box
                     sx={{
                         border: '1px solid',
-                        borderColor: 'divider',
+                        borderColor: draggable ? `${accent}.main` : 'divider',
                         borderRadius: 1,
                         p: 1,
                         mt: 0.5,
@@ -133,7 +155,7 @@ export function DepartmentTypePalette({
                             size="small"
                             value={filter}
                             onChange={(e) => setFilter(e.target.value)}
-                            placeholder={getString('filterByDepartmentTypeName')}
+                            placeholder={filterPlaceholder}
                             sx={{ minWidth: 260, flex: '0 1 360px' }}
                             InputProps={{
                                 startAdornment: (
@@ -146,8 +168,9 @@ export function DepartmentTypePalette({
                         <ToggleButtonGroup
                             size="small"
                             exclusive
+                            color={accent}
                             value={usage}
-                            onChange={(_, v: TypePaletteUsage | null) => v && setUsage(v)}
+                            onChange={(_, v: TypePaletteUsage | null) => v && onUsageChange(v)}
                         >
                             {USAGE_ICONS.map(({ value, Icon }) => (
                                 <ToggleButton key={value} value={value} sx={{ py: 0.5 }}>
@@ -163,7 +186,7 @@ export function DepartmentTypePalette({
                                 variant="outlined"
                                 size="small"
                                 value={sort}
-                                onChange={(e) => setSort(e.target.value as TypePaletteSort)}
+                                onChange={(e) => onSortChange(e.target.value as TypePaletteSort)}
                             >
                                 {Object.values(TypePaletteSort).map((v) => (
                                     <MenuItem key={v} value={v}>
@@ -173,37 +196,24 @@ export function DepartmentTypePalette({
                             </Select>
                         </Box>
                         <Typography variant="caption" color="text.secondary" sx={{ flex: 1, minWidth: 200 }}>
-                            {getString(dragMode ? 'deptTypeOrgPalette' : 'deptTypeOrgFindHint')}
+                            {hint}
                         </Typography>
                     </Box>
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            gap: 0.75,
-                            flexWrap: 'wrap',
-                            maxHeight: 180,
-                            overflowY: 'auto',
-                        }}
-                    >
+                    <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', maxHeight: 180, overflowY: 'auto' }}>
                         {shown.length === 0 && (
                             <Typography variant="body2" color="text.secondary">
-                                {getString('noMatchingDepartmentTypes')}
+                                {emptyText}
                             </Typography>
                         )}
                         {shown.map((t) => {
-                            const n = countOf(t.id);
-                            const active = find?.typeId === t.id;
+                            const n = occurrences.get(t.id)?.length ?? 0;
+                            const active = find?.id === t.id;
                             return (
-                                <Tooltip
-                                    key={t.id}
-                                    title={getString(isUsed(t.id) ? 'deptTypeOrgUsedHint' : 'deptTypeOrgUnusedHint', {
-                                        count: n,
-                                    })}
-                                >
+                                <Tooltip key={t.id} title={t.used ? usedHint(n) : unusedHint}>
                                     <Chip
                                         size="small"
                                         variant={active ? 'filled' : 'outlined'}
-                                        color={active ? 'warning' : isUsed(t.id) ? 'primary' : 'default'}
+                                        color={active ? 'warning' : t.used ? accent : 'default'}
                                         label={
                                             <>
                                                 {t.name}
@@ -216,24 +226,20 @@ export function DepartmentTypePalette({
                                             </>
                                         }
                                         onClick={n > 0 ? (e) => onFind(t.id, e.shiftKey ? -1 : 1) : undefined}
-                                        draggable={dragMode}
-                                        onDragStart={
-                                            dragMode
-                                                ? (e) => startDrag(e, { type: t, link: null }, onDragStart)
-                                                : undefined
-                                        }
-                                        onDragEnd={dragMode ? onDragEnd : undefined}
+                                        draggable={draggable}
+                                        onDragStart={draggable ? (e) => onItemDragStart(e, t.id) : undefined}
+                                        onDragEnd={draggable ? onDragEnd : undefined}
                                         sx={{
-                                            cursor: dragMode ? 'grab' : n > 0 ? 'pointer' : 'default',
+                                            cursor: draggable ? 'grab' : n > 0 ? 'pointer' : 'default',
                                             // Used = tinted solid chip; unused = dashed, muted.
                                             ...(!active &&
-                                                (isUsed(t.id)
+                                                (t.used
                                                     ? {
                                                           bgcolor: (theme) =>
-                                                              alpha(theme.palette.primary.main, 0.18),
+                                                              alpha(theme.palette[accent].main, 0.18),
                                                       }
                                                     : { borderStyle: 'dashed', color: 'text.secondary' })),
-                                            ...(!t.is_active && { opacity: 0.5 }),
+                                            ...(!t.isActive && { opacity: 0.5 }),
                                         }}
                                     />
                                 </Tooltip>
