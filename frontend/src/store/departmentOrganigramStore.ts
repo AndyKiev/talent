@@ -4,7 +4,7 @@
 // kept apart from deptTypeOrganigramStore: its layout overrides are keyed by
 // DEPARTMENT id, the type organigram's by TYPE id, so one store would collide.
 // Depth override (null = app setting `department_type_organigram_depth`),
-// hide inactive, global orientation + per-branch overrides, the types (find)
+// hide inactive (on by default), global orientation + per-branch overrides, the types (find)
 // panel's and the jobs panel's usage filter + sort, and where job boxes open. Persisted via zustand.
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -27,6 +27,9 @@ interface DepartmentOrganigramState {
     jobPaletteUsage: TypePaletteUsage;
     jobPaletteSort: TypePaletteSort;
     jobBoxPlacement: JobBoxPlacement;
+    /** Header filter: department category whose instances the jump-to list
+     *  offers (null = the default main category, key 'store'). */
+    categoryId: number | null;
     setDepth: (depth: number | null) => void;
     setHideInactive: (hide: boolean) => void;
     setOrientation: (orientation: OrganigramOrientation) => void;
@@ -37,13 +40,14 @@ interface DepartmentOrganigramState {
     setJobPaletteUsage: (usage: TypePaletteUsage) => void;
     setJobPaletteSort: (sort: TypePaletteSort) => void;
     setJobBoxPlacement: (placement: JobBoxPlacement) => void;
+    setCategoryId: (id: number | null) => void;
 }
 
 export const useDepartmentOrganigramStore = create<DepartmentOrganigramState>()(
     persist(
         (set) => ({
             depth: null,
-            hideInactive: false,
+            hideInactive: true,
             orientation: OrganigramOrientation.TOP_DOWN,
             layoutOverrides: {},
             paletteUsage: TypePaletteUsage.ALL,
@@ -51,6 +55,7 @@ export const useDepartmentOrganigramStore = create<DepartmentOrganigramState>()(
             jobPaletteUsage: TypePaletteUsage.ALL,
             jobPaletteSort: TypePaletteSort.NAME,
             jobBoxPlacement: JobBoxPlacement.RIGHT,
+            categoryId: null,
             setDepth: (depth) => set({ depth }),
             setHideInactive: (hideInactive) => set({ hideInactive }),
             setOrientation: (orientation) => set({ orientation, layoutOverrides: {} }),
@@ -66,7 +71,17 @@ export const useDepartmentOrganigramStore = create<DepartmentOrganigramState>()(
             setJobPaletteUsage: (jobPaletteUsage) => set({ jobPaletteUsage }),
             setJobPaletteSort: (jobPaletteSort) => set({ jobPaletteSort }),
             setJobBoxPlacement: (jobBoxPlacement) => set({ jobBoxPlacement }),
+            setCategoryId: (categoryId) => set({ categoryId }),
         }),
-        { name: 'department_organigram_view' },
+        {
+            name: 'department_organigram_view',
+            // v1: "hide inactive" became the default — reset it once for
+            // browsers that persisted the old default.
+            version: 1,
+            migrate: (persisted, version) => {
+                const state = persisted as DepartmentOrganigramState;
+                return version < 1 ? { ...state, hideInactive: true } : state;
+            },
+        },
     ),
 );

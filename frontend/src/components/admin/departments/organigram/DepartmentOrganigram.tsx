@@ -1,12 +1,18 @@
 // src/components/admin/departments/organigram/DepartmentOrganigram.tsx
 //
-// Organigram of department INSTANCES (the real structure) — same look and
+// Organigram of department INSTANCES (the real structure) вЂ” same look and
 // navigation as the department-TYPES organigram, no people. Instances start
 // from the type structure (generate subtree) but may deviate from it: a
 // department can be re-parented anywhere (no cycles). Whether a department
 // still follows the type structure is decided by the BACKEND
 // (`matches_type_structure` on every tree node; `move_check` before a move)
-// and only shown here — never computed on the frontend.
+// and only shown here вЂ” never computed on the frontend.
+//
+// Header filters: a MAIN department category (default key 'store' = the
+// hypermarkets) and the jump-to list of its instances (resettable). Picking
+// a category alone changes nothing; picking an instance FOCUSES it (it
+// becomes the top of the tree) вЂ” the same as a double-click. The list obeys
+// the "hide inactive" switch (on by default).
 //
 // Top view: every root department heads its tree, N rows deep (N = app
 // setting `department_type_organigram_depth`, overridable per browser).
@@ -29,6 +35,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import {
     Alert,
+    Autocomplete,
     Box,
     Breadcrumbs,
     Button,
@@ -41,6 +48,7 @@ import {
     Select,
     Snackbar,
     Switch,
+    TextField,
     ToggleButton,
     ToggleButtonGroup,
     Tooltip,
@@ -67,6 +75,10 @@ import { DepartmentDeleteDialog } from '../DepartmentDeleteDialog';
 import { DepartmentGenerateSubtreeDialog } from '../DepartmentGenerateSubtreeDialog';
 import { fetchDepartmentTypes } from '../../department_types/departmentTypeApi';
 import {
+    fetchDepartmentCategories,
+    type DepartmentCategory,
+} from '../../department_categories/departmentCategoryApi';
+import {
     OrganigramPalette,
     type FindState,
     type PaletteItem,
@@ -83,7 +95,8 @@ import {
 import { useDepartmentOrganigramStore } from '../../../../store/departmentOrganigramStore';
 import { useIntegerSetting } from '../../../../hooks/useAppSetting';
 import useString from '../../../../hooks/useString';
-import { DEPARTMENT_TREE_QK, DEPARTMENT_TYPE_QK } from '../../../../utils/queryKeys';
+import { DEPARTMENT_CATEGORY_QK, DEPARTMENT_TREE_QK, DEPARTMENT_TYPE_QK } from '../../../../utils/queryKeys';
+import cfl from '../../../../utils/helpers.ts';
 import {
     buildDepartmentGraph,
     buildDeptSubtree,
@@ -98,6 +111,8 @@ import { DEPT_MODE_COLOR, DeptOrganigramMode, deptOrganigramModeLabel } from './
 const ROUTE_ID = '/admin/departments_group/structure/organigram/';
 const ROUTE_PATH = '/admin/departments_group/structure/organigram';
 const DEFAULT_DEPTH = 3;
+// Default category of the header filter (category key = code contract).
+const DEFAULT_CATEGORY_KEY = 'store';
 
 const MODE_BUTTONS = [
     { value: DeptOrganigramMode.VIEW, Icon: VisibilityOutlinedIcon, color: 'standard' },
@@ -141,6 +156,8 @@ export function DepartmentOrganigram() {
     const setJobPaletteSort = useDepartmentOrganigramStore((s) => s.setJobPaletteSort);
     const boxPlacement = useDepartmentOrganigramStore((s) => s.jobBoxPlacement);
     const setBoxPlacement = useDepartmentOrganigramStore((s) => s.setJobBoxPlacement);
+    const storedCategoryId = useDepartmentOrganigramStore((s) => s.categoryId);
+    const setCategoryId = useDepartmentOrganigramStore((s) => s.setCategoryId);
 
     const [mode, setMode] = useState<DeptOrganigramMode>(DeptOrganigramMode.VIEW);
     const editMode = mode === DeptOrganigramMode.STRUCTURE;
@@ -160,7 +177,7 @@ export function DepartmentOrganigram() {
         severity: 'success' as 'success' | 'error',
     });
 
-    // ── Data ─────────────────────────────────────────────────────────────
+    // в”Ђв”Ђ Data в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
     const treeQuery = useQuery({
         queryKey: DEPARTMENT_TREE_QK,
         queryFn: fetchDepartmentTree,
@@ -170,6 +187,12 @@ export function DepartmentOrganigram() {
         queryKey: DEPARTMENT_TYPE_QK,
         queryFn: () => fetchDepartmentTypes(),
         staleTime: 2 * 60 * 1000,
+    });
+
+    const categoriesQuery = useQuery({
+        queryKey: DEPARTMENT_CATEGORY_QK,
+        queryFn: () => fetchDepartmentCategories(),
+        staleTime: 5 * 60 * 1000,
     });
 
     const { createMutation, updateMutation, deleteMutation, generateSubtreeMutation } =
@@ -191,11 +214,38 @@ export function DepartmentOrganigram() {
         [treeQuery.data, hideInactive],
     );
 
-    // ── Focus (single parent: the breadcrumb is the parent chain) ─────────
+    // в”Ђв”Ђ Focus (single parent: the breadcrumb is the parent chain) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
     const focusDept = search.focus != null ? (graph.deptById.get(search.focus) ?? null) : null;
     const chain = useMemo(() => (focusDept ? deptChain(graph, focusDept.id) : []), [graph, focusDept]);
     const focusParent =
         focusDept?.parent_id != null ? (graph.deptById.get(focusDept.parent_id) ?? null) : null;
+
+    // в”Ђв”Ђ Header filters: main category в†’ jump-to instance в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+    const mainCategories = useMemo(
+        () =>
+            (categoriesQuery.data ?? [])
+                .filter((c) => c.is_main && c.is_active)
+                .sort((a, b) => a.name.localeCompare(b.name)),
+        [categoriesQuery.data],
+    );
+    const category: DepartmentCategory | null =
+        mainCategories.find((c) => c.id === storedCategoryId) ??
+        mainCategories.find((c) => c.key === DEFAULT_CATEGORY_KEY) ??
+        null;
+    const categoryInstances = useMemo(
+        () =>
+            category == null
+                ? []
+                : [...graph.deptById.values()]
+                      .filter(
+                          (d) =>
+                              d.department_category_id === category.id && (!hideInactive || d.is_active),
+                      )
+                      .sort((a, b) => a.name.localeCompare(b.name)),
+        [graph, category, hideInactive],
+    );
+    // The jump-to value mirrors the focus while it is one of the listed ones.
+    const pickedInstance = categoryInstances.find((d) => d.id === focusDept?.id) ?? null;
 
     const setFocus = (id: number | null) => {
         setFind(null);
@@ -211,7 +261,7 @@ export function DepartmentOrganigram() {
         [graph, focusDept, depth],
     );
 
-    // ── Types panel: find every drawn department of a type ───────────────
+    // в”Ђв”Ђ Types panel: find every drawn department of a type в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
     const occurrences = useMemo(() => {
         const map = new Map<number, string[]>();
         const walk = (n: DeptTreeNode) => {
@@ -238,7 +288,7 @@ export function DepartmentOrganigram() {
                 : { id: typeId, index: step === 1 ? 0 : n - 1 },
         );
     };
-    // ── Jobs layer (links live on the TYPE of each card) ──────────────────
+    // в”Ђв”Ђ Jobs layer (links live on the TYPE of each card) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
     const typeNameById = useMemo(
         () => new Map((typesQuery.data ?? []).map((t) => [t.id, t.name])),
         [typesQuery.data],
@@ -272,7 +322,7 @@ export function DepartmentOrganigram() {
           ? (occurrences.get(find.id)?.[find.index] ?? null)
           : null;
 
-    // ── Drag ─────────────────────────────────────────────────────────────
+    // в”Ђв”Ђ Drag в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
     const resetDrag = () => {
         setDragging(null);
         setHoverKey(null);
@@ -330,12 +380,38 @@ export function DepartmentOrganigram() {
                 p: 1.5,
             }}
         >
-            {/* ── Header ──────────────────────────────────────────────────── */}
+            {/* в”Ђв”Ђ Header в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1, flexWrap: 'wrap' }}>
                 <AccountTreeOutlinedIcon color="action" sx={{ fontSize: 18 }} />
-                <Typography variant="subtitle2" fontWeight={600} sx={{ flex: 1 }}>
+                <Typography variant="subtitle2" fontWeight={600}>
                     {getString('deptOrgTitle')}
                 </Typography>
+                <Autocomplete
+                    size="small"
+                    options={mainCategories}
+                    value={category}
+                    onChange={(_, c) => setCategoryId(c?.id ?? null)}
+                    getOptionLabel={(c) => c.name}
+                    isOptionEqualToValue={(a, b) => a.id === b.id}
+                    disableClearable={category != null}
+                    sx={{ width: 190 }}
+                    renderInput={(params) => (
+                        <TextField {...params} label={cfl(getString('departmentCategory'))} />
+                    )}
+                />
+                <Autocomplete
+                    size="small"
+                    options={categoryInstances}
+                    value={pickedInstance}
+                    onChange={(_, d) => setFocus(d?.id ?? null)}
+                    getOptionLabel={(d) => d.name}
+                    getOptionKey={(d) => d.id}
+                    isOptionEqualToValue={(a, b) => a.id === b.id}
+                    disabled={category == null}
+                    sx={{ width: 240 }}
+                    renderInput={(params) => <TextField {...params} label={cfl(getString('department'))} />}
+                />
+                <Box sx={{ flex: 1 }} />
                 <ToggleButtonGroup
                     size="small"
                     exclusive
@@ -414,7 +490,7 @@ export function DepartmentOrganigram() {
                 </ToggleButtonGroup>
             </Box>
 
-            {/* ── Breadcrumb: the focused department's parent chain ───────── */}
+            {/* в”Ђв”Ђ Breadcrumb: the focused department's parent chain в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, minHeight: 32 }}>
                 <Breadcrumbs sx={{ flex: 1 }}>
                     {focusDept == null ? (
@@ -459,7 +535,7 @@ export function DepartmentOrganigram() {
                 )}
             </Box>
 
-            {/* ── Up strip: the focused department's parent ───────────────── */}
+            {/* в”Ђв”Ђ Up strip: the focused department's parent в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ */}
             {focusDept != null && (
                 <Box
                     sx={{
@@ -498,7 +574,7 @@ export function DepartmentOrganigram() {
                 </Box>
             )}
 
-            {/* ── Panel: jobs in JOBS mode, otherwise types (find) ───────── */}
+            {/* в”Ђв”Ђ Panel: jobs in JOBS mode, otherwise types (find) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ */}
             {jobsMode ? (
                 <OrganigramPalette
                     items={jobsLayer.items}
@@ -583,10 +659,10 @@ export function DepartmentOrganigram() {
                 />
             )}
 
-            {/* ── JOBS drag overlays + job drop dialog ──────────────────── */}
+            {/* в”Ђв”Ђ JOBS drag overlays + job drop dialog в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ */}
             {jobsLayer.overlays}
 
-            {/* ── Dialogs (mounted only while open) ───────────────────────── */}
+            {/* в”Ђв”Ђ Dialogs (mounted only while open) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ */}
             {pendingMove && (
                 <DepartmentMoveDialog
                     dept={pendingMove.dept}
