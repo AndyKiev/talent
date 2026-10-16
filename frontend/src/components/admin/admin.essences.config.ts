@@ -167,20 +167,20 @@ export const ESSENCES: RawEssenceConfig[] = [
   },
   {
     parent: 'admin',
-    key: 'department_categories',
-    labelKey: 'departmentCategories',
-    descriptionKey: 'departmentCategoriesDesc',
-    Icon: ApartmentIcon,
-    color: '#f43f5e',
-    parentGroup: 'departments_group',
-  },
-  {
-    parent: 'admin',
     key: 'department_types',
     labelKey: 'departmentTypes',
     descriptionKey: 'departmentTypesDesc',
     Icon: AccountTreeIcon,
     color: '#14b8a6',
+    parentGroup: 'departments_group',
+  },
+  {
+    parent: 'admin',
+    key: 'department_categories',
+    labelKey: 'departmentCategories',
+    descriptionKey: 'departmentCategoriesDesc',
+    Icon: ApartmentIcon,
+    color: '#f43f5e',
     parentGroup: 'departments_group',
   },
 
@@ -349,5 +349,15 @@ export const ESSENCES: RawEssenceConfig[] = [
     Icon: CategoryIcon,
     color: '#f59e0b',
     parentGroup: 'recruitment',
+  },
+
+  // ── Testing (coverage report, developer tool) ───────────────────────────
+  {
+    parent: 'admin',
+    key: 'testing',
+    labelKey: 'testing',
+    descriptionKey: 'testingDesc',
+    Icon: FactCheckIcon,
+    color: '#8b5cf6',
   },
 ];

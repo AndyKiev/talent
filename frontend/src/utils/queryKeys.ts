@@ -1,5 +1,8 @@
 export const DEPARTMENT_ROOTS_QK = ['department_roots'] as const;
 export const DEPARTMENT_TREE_QK = ['department_tree'] as const;
+// Move preview (does the move keep the department-type structure?).
+export const DEPARTMENT_MOVE_CHECK_QK = (departmentId: number, parentId: number) =>
+    ['departments', 'move_check', departmentId, parentId] as const;
 export const DEPARTMENT_TYPE_CHILD_MAP_QK = ['department_type_child_map'] as const;
 export const DEPARTMENT_TYPE_PARENTAL_LINKS_QK = ['department_type_parental_links'] as const;
 // key[0] is shared with DEPARTMENT_TYPE_JOB_LINK_BY_JOB_QK, so the job-link
@@ -167,3 +170,7 @@ export const MISSION_DIMENSION_OPTIONS_QK = ['mission_dimension_options'] as con
 // Person events (surname history). key[0] is the table name; the person id is
 // appended by the consumer so one person's list invalidates alone.
 export const PERSON_EVENTS_QK = ['person_events'] as const;
+
+// Testing coverage report (read-only, developer tool). key[0] is the essence
+// name; the report is repo-derived so one cache entry serves the whole page.
+export const TESTING_COVERAGE_QK = ['testing_coverage'] as const;

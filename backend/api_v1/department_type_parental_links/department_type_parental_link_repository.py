@@ -1,6 +1,7 @@
 from sqlalchemy import select
 
 from backend.api_v1.base.base_repository import BaseRepository
+from backend.api_v1.department_type.department_type_model import DepartmentType
 from backend.api_v1.department_type_parental_links.department_type_parental_link_model import (
     DepartmentTypeParentalLink,
 )
@@ -32,3 +33,23 @@ class DepartmentTypeParentalLinkRepository(BaseRepository):
         for parent_id, child_id in result.all():
             child_map.setdefault(parent_id, []).append(child_id)
         return child_map
+
+    async def get_active_parent_types(self) -> dict[int, list[tuple[int, str]]]:
+        """{child_type_id: [(parent_type_id, parent_type_name), ...]} over
+        ACTIVE links, by parent name — where the type structure expects an
+        instance of each type to hang (the organigram mismatch hint)."""
+        stmt = (
+            select(
+                DepartmentTypeParentalLink.child_id,
+                DepartmentType.id,
+                DepartmentType.name,
+            )
+            .join(DepartmentType, DepartmentType.id == DepartmentTypeParentalLink.parent_id)
+            .where(DepartmentTypeParentalLink.is_active.is_(True))
+            .order_by(DepartmentType.name)
+        )
+        result = await self.session.execute(stmt)
+        parent_map: dict[int, list[tuple[int, str]]] = {}
+        for child_id, parent_id, parent_name in result.all():
+            parent_map.setdefault(child_id, []).append((parent_id, parent_name))
+        return parent_map

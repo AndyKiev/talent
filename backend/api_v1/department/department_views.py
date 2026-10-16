@@ -13,6 +13,7 @@ from backend.api_v1.department.department_schema import (
 from backend.api_v1.department.department_schema import (
     DepartmentCreate,
     DepartmentFlat,
+    DepartmentMoveCheck,
     DepartmentSubtreeGenerateResult,
     DepartmentTopResolution,
     DepartmentUpdate,
@@ -111,6 +112,20 @@ async def get_department_subtree(
 ):
     """Full subtree rooted at department_id."""
     return await service.get_department_tree_node(department_id)
+
+
+@router.get(
+    "/{department_id}/move_check",
+    response_model=DepartmentMoveCheck,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.DEPARTMENT)],
+)
+async def check_department_move(
+    department_id: int,
+    parent_id: Annotated[int, Query()],
+    service: Annotated[DepartmentService, Depends(get_department_service)],
+):
+    """Does re-parenting under `parent_id` keep the department-type structure?"""
+    return await service.check_move(department_id, parent_id)
 
 
 @router.post(

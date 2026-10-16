@@ -6,6 +6,7 @@ import {
     deleteParentalLink,
 } from './departmentTypeParentalLinkApi.ts';
 import {
+    DEPARTMENT_TREE_QK,
     DEPARTMENT_TYPE_CHILD_MAP_QK,
     DEPARTMENT_TYPE_PARENTAL_LINKS_QK,
 } from '../../../utils/queryKeys.ts';
@@ -46,11 +47,15 @@ export function useDepartmentTypeLinkMutations({
     const qc = useQueryClient();
 
     // Whole-graph views (organigram, department tree child map) read every
-    // link at once — refresh them on any link change.
+    // link at once — refresh them on any link change. The department tree's
+    // backend `matches_type_structure` flags and move checks depend on the
+    // links too.
     const invalidateGraph = () =>
         Promise.all([
             qc.invalidateQueries({ queryKey: DEPARTMENT_TYPE_PARENTAL_LINKS_QK }),
             qc.invalidateQueries({ queryKey: DEPARTMENT_TYPE_CHILD_MAP_QK }),
+            qc.invalidateQueries({ queryKey: DEPARTMENT_TREE_QK }),
+            qc.invalidateQueries({ queryKey: ['departments', 'move_check'] }),
         ]);
 
     const createLinkMutation = useMutation({

@@ -21,9 +21,13 @@ export interface DragSource {
 
 export type DropAction = 'move' | 'add';
 
+/** What a drop lands on: a department TYPE (the department organigram
+ *  drops a job on a department card = on that department's type). */
+export type JobDropTarget = Pick<DepartmentType, 'id' | 'name'>;
+
 export interface HoverTarget {
     key: string;
-    type: DepartmentType;
+    type: JobDropTarget;
     action: DropAction;
 }
 
@@ -55,7 +59,7 @@ export interface JobCtx {
     onDragStart: (src: JobDragSource) => void;
     onDragEnd: () => void;
     onHover: (target: HoverTarget | null) => void;
-    onDrop: (target: DepartmentType, action: DropAction) => void;
+    onDrop: (target: JobDropTarget, action: DropAction) => void;
 }
 
 export interface OrgCtx {

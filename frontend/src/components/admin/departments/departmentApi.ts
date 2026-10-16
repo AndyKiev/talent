@@ -33,8 +33,25 @@ export interface DepartmentFlat {
     created_at: string;
 }
 
+export interface ExpectedParentType {
+    id: number;
+    name: string;
+}
+
 export interface DepartmentNode extends DepartmentFlat {
+    /** Backend-computed: this department's type is an active child type of
+     *  its parent's type (false = deviates from the type structure). */
+    matches_type_structure: boolean;
+    /** Only when matches_type_structure is false: the parent types the type
+     *  structure designates for this department's type. */
+    expected_parent_types: ExpectedParentType[];
     children: DepartmentNode[];
+}
+
+export interface DepartmentMoveCheck {
+    department_id: number;
+    parent_id: number;
+    matches_type_structure: boolean;
 }
 
 export interface DepartmentCreate {
@@ -120,6 +137,18 @@ export const generateDepartmentSubtree = async (
     const res = await axiosInstance.post<DepartmentSubtreeGenerateResult>(
         `${BASE}/${id}/generate_subtree`,
     );
+    return res.data;
+};
+
+/** Would `id` still follow the department-TYPE structure under `parentId`?
+ *  Read-only preview for the move confirm (the move itself is never blocked). */
+export const checkDepartmentMove = async (
+    id: number,
+    parentId: number,
+): Promise<DepartmentMoveCheck> => {
+    const res = await axiosInstance.get<DepartmentMoveCheck>(`${BASE}/${id}/move_check`, {
+        params: { parent_id: parentId },
+    });
     return res.data;
 };
 

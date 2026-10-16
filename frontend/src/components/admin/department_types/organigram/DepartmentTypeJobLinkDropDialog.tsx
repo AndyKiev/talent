@@ -27,6 +27,8 @@ interface Props {
     kind: JobDropKind | null;
     title: string;
     message: string;
+    /** Optional scope note (e.g. how many departments the change affects). */
+    note?: string | null;
     /** The link that will be DELETED (move / unlink), for the cascade warning. */
     deletedLinkId: number | null;
     isPending: boolean;
@@ -39,6 +41,7 @@ export function DepartmentTypeJobLinkDropDialog({
     kind,
     title,
     message,
+    note = null,
     deletedLinkId,
     isPending,
     onConfirm,
@@ -58,6 +61,11 @@ export function DepartmentTypeJobLinkDropDialog({
             <DialogTitle>{title}</DialogTitle>
             <DialogContent>
                 <DialogContentText>{message}</DialogContentText>
+                {note && (
+                    <Alert severity="info" sx={{ mt: 2 }}>
+                        {note}
+                    </Alert>
+                )}
                 {cascade > 0 && (
                     <Alert severity="warning" sx={{ mt: 2 }}>
                         {getString('planRowsCascadeWarning', { count: cascade })}

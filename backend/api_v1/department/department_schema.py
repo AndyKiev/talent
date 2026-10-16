@@ -33,6 +33,13 @@ class DepartmentUpdate(BaseModel):
     department_type_id: int | None = None
 
 
+class ExpectedParentType(BaseModel):
+    """A department type the type structure allows as this instance's parent."""
+
+    id: int
+    name: str
+
+
 class Department(DepartmentBase):
     """
     Full department node — includes nested children (recursive tree).
@@ -48,6 +55,12 @@ class Department(DepartmentBase):
     created_at: datetime
     department_category: DepartmentCategorySchema | None = None
     department_type: DepartmentTypeSchema | None = None
+    # Backend-computed: is this instance's type an ACTIVE child type of its
+    # parent's type? False = the instance deviates from the type structure.
+    matches_type_structure: bool = True
+    # Filled only when matches_type_structure is False: the parent types the
+    # type structure designates for this department's type (active links).
+    expected_parent_types: list[ExpectedParentType] = []
     children: list[Department] = []
 
 
@@ -89,3 +102,12 @@ class DepartmentTopResolution(BaseModel):
 
     department_id: int
     top: TopOrgUnit | None = None
+
+
+class DepartmentMoveCheck(BaseModel):
+    """GET /departments/{id}/move_check?parent_id=X — would the department
+    still follow the department-TYPE structure under that parent?"""
+
+    department_id: int
+    parent_id: int
+    matches_type_structure: bool

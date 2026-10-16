@@ -1,4 +1,3 @@
-
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,9 +24,11 @@ from backend.api_v1.department.department_schema import (
 from backend.api_v1.department.department_schema import (
     DepartmentCreate,
     DepartmentFlat,
+    DepartmentMoveCheck,
     DepartmentSubtreeGenerateResult,
     DepartmentTopResolution,
     DepartmentUpdate,
+    ExpectedParentType,
 )
 from backend.api_v1.department_category.department_category_model import (
     DepartmentCategory,
@@ -100,78 +101,108 @@ class DepartmentService(BaseService):
             for did in department_ids
         ]
 
-    async def get_tree(self) -> list[DepartmentSchema]:
-        """Return full tree as a list of root departments with nested children."""
+    async def _load_tree_maps(self):
+        """All departments (eager rels) + id map + parent -> children map +
+        the ACTIVE type graph used for the type-structure match flag (child
+        map) and its mismatch hint (child type -> expected parent types)."""
         all_depts = await self.repository.get_all_with_rels()
-
         dept_map = {d.id: d for d in all_depts}
         children_map = {d.id: [] for d in all_depts}
         for dept in all_depts:
             if dept.parent_id is not None and dept.parent_id in dept_map:
                 children_map[dept.parent_id].append(dept)
+        link_repo = DepartmentTypeParentalLinkRepository(session=self.session)
+        child_type_map = await link_repo.get_active_child_map()
+        parent_type_map = await link_repo.get_active_parent_types()
+        return all_depts, dept_map, children_map, (child_type_map, parent_type_map)
 
-        roots = [dept for dept in all_depts if dept.parent_id is None]
+    @staticmethod
+    def _matches_type_structure(
+        type_id: int, parent_type_id: int | None, child_type_map: dict[int, list[int]]
+    ) -> bool:
+        """An instance follows the type structure when its type is an ACTIVE
+        child type of its parent's type. A root (no parent) always matches."""
+        if parent_type_id is None:
+            return True
+        return type_id in child_type_map.get(parent_type_id, [])
 
-        def build_schema(dept):
-            return DepartmentSchema(
-                id=dept.id,
-                name=dept.name,
-                is_active=dept.is_active,
-                parent_id=dept.parent_id,
-                department_category_id=dept.department_category_id,
-                department_type_id=dept.department_type_id,
-                created_at=dept.created_at,
-                department_category=(
-                    DepartmentCategorySchema.model_validate(dept.department_category)
-                    if dept.department_category
-                    else None
-                ),
-                department_type=(
-                    DepartmentTypeSchema.model_validate(dept.department_type)
-                    if dept.department_type
-                    else None
-                ),
-                children=[build_schema(child) for child in children_map[dept.id]],
-            )
+    def _build_tree_schema(
+        self, dept, dept_map, children_map, type_maps
+    ) -> DepartmentSchema:
+        child_type_map, parent_type_map = type_maps
+        parent = dept_map.get(dept.parent_id) if dept.parent_id is not None else None
+        matches = self._matches_type_structure(
+            dept.department_type_id,
+            parent.department_type_id if parent else None,
+            child_type_map,
+        )
+        return DepartmentSchema(
+            id=dept.id,
+            name=dept.name,
+            is_active=dept.is_active,
+            parent_id=dept.parent_id,
+            department_category_id=dept.department_category_id,
+            department_type_id=dept.department_type_id,
+            created_at=dept.created_at,
+            department_category=(
+                DepartmentCategorySchema.model_validate(dept.department_category)
+                if dept.department_category
+                else None
+            ),
+            department_type=(
+                DepartmentTypeSchema.model_validate(dept.department_type)
+                if dept.department_type
+                else None
+            ),
+            matches_type_structure=matches,
+            expected_parent_types=(
+                []
+                if matches
+                else [
+                    ExpectedParentType(id=pid, name=pname)
+                    for pid, pname in parent_type_map.get(dept.department_type_id, [])
+                ]
+            ),
+            children=[
+                self._build_tree_schema(child, dept_map, children_map, type_maps)
+                for child in children_map[dept.id]
+            ],
+        )
 
-        return [build_schema(root) for root in roots]
+    async def get_tree(self) -> list[DepartmentSchema]:
+        """Return full tree as a list of root departments with nested children."""
+        all_depts, dept_map, children_map, type_maps = await self._load_tree_maps()
+        return [
+            self._build_tree_schema(d, dept_map, children_map, type_maps)
+            for d in all_depts
+            if d.parent_id is None
+        ]
 
     async def get_department_tree_node(self, department_id: int) -> DepartmentSchema:
         """Return subtree rooted at department_id."""
-        all_depts = await self.repository.get_all_with_rels()
-        dept_map = {d.id: d for d in all_depts}
-        children_map = {d.id: [] for d in all_depts}
-        for dept in all_depts:
-            if dept.parent_id is not None and dept.parent_id in dept_map:
-                children_map[dept.parent_id].append(dept)
-
+        _, dept_map, children_map, type_maps = await self._load_tree_maps()
         node = dept_map.get(department_id)
         if not node:
             raise await self._resolve_domain_error(DepartmentNotFound(department_id))
+        return self._build_tree_schema(node, dept_map, children_map, type_maps)
 
-        def build_schema(dept):
-            return DepartmentSchema(
-                id=dept.id,
-                name=dept.name,
-                is_active=dept.is_active,
-                parent_id=dept.parent_id,
-                department_category_id=dept.department_category_id,
-                department_type_id=dept.department_type_id,
-                created_at=dept.created_at,
-                department_category=(
-                    DepartmentCategorySchema.model_validate(dept.department_category)
-                    if dept.department_category
-                    else None
-                ),
-                department_type=(
-                    DepartmentTypeSchema.model_validate(dept.department_type)
-                    if dept.department_type
-                    else None
-                ),
-                children=[build_schema(child) for child in children_map[dept.id]],
-            )
-
-        return build_schema(node)
+    async def check_move(
+        self, department_id: int, parent_id: int
+    ) -> DepartmentMoveCheck:
+        """Preview of re-parenting `department_id` under `parent_id`: whether
+        the result still follows the department-TYPE structure. Read-only; the
+        move itself is never blocked by a type mismatch (instances may differ)."""
+        dept = await self.get_by_id(department_id)
+        parent = await self.get_by_id(parent_id)
+        link_repo = DepartmentTypeParentalLinkRepository(session=self.session)
+        child_type_map = await link_repo.get_active_child_map()
+        return DepartmentMoveCheck(
+            department_id=department_id,
+            parent_id=parent_id,
+            matches_type_structure=self._matches_type_structure(
+                dept.department_type_id, parent.department_type_id, child_type_map
+            ),
+        )
 
     async def _assert_no_circular_reference(
         self, department_id: int, new_parent_id: int, name: str

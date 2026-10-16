@@ -46,7 +46,8 @@ export function DepartmentTypeJobBox({
     getString,
 }: {
     links: DepartmentTypeJobLink[];
-    jobs: JobCtx;
+    // Only what the box reads (the department organigram passes a read-only one).
+    jobs: Pick<JobCtx, 'jobById' | 'highlightJobId' | 'onDragStart' | 'onDragEnd'>;
     /** JOBS mode: rows can be dragged. */
     draggable: boolean;
     placement: JobBoxPlacement;

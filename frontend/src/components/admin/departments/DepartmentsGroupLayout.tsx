@@ -8,9 +8,9 @@ import cfl from '../../../utils/helpers.ts';
 import useString from '../../../hooks/useString';
 
 const TOP_TABS = [
-    { label: 'departmentCategories', path: '/admin/departments_group/department_categories' },
     { label: 'structure',            path: '/admin/departments_group/structure' },
     { label: 'departmentTypes',      path: '/admin/departments_group/department_types' },
+    { label: 'departmentCategories', path: '/admin/departments_group/department_categories' },
     { label: 'regions',              path: '/admin/departments_group/regions' },
 ] as const;
 

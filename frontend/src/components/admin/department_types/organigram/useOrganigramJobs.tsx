@@ -1,6 +1,8 @@
 // src/components/admin/department_types/organigram/useOrganigramJobs.tsx
 //
-// The JOBS layer of the department-types organigram, kept out of the page:
+// The JOBS layer of an organigram (department TYPES or department instances —
+// generic over the drawn node; `typeIdOf` says which type a card stands for,
+// since job links always live on the type), kept out of the page:
 // job data (all jobs + all department-type ↔ job links, one request each),
 // which job boxes are open, the jobs panel (items, where each job is drawn,
 // find-next), the JOBS-mode drag (state, Unlink bay, corner hint) and the
@@ -14,14 +16,13 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchJobs, type Job } from '../../jobs/jobApi';
 import { fetchDepartmentTypeJobLinks, type DepartmentTypeJobLink } from '../departmentTypeJobLinkApi';
 import { useDepartmentTypeJobLinkMutations } from '../useDepartmentTypeJobLinkMutations';
-import type { DepartmentType } from '../departmentTypeApi';
-import type { TypeTreeNode } from './buildDeptTypeGraph';
 import {
     startJobDrag,
     type DropAction,
     type HoverTarget,
     type JobCtx,
     type JobDragSource,
+    type JobDropTarget,
 } from './organigramDrag';
 import type { FindState, PaletteItem } from './OrganigramPalette';
 import { OrganigramDragHint, OrganigramUnlinkBay } from './OrganigramDragOverlays';
@@ -32,21 +33,40 @@ import type { GetStringFn } from '../../../../types/getStringFn';
 type Snackbar = { open: boolean; message: string; severity: 'success' | 'error' };
 
 type PendingJobAction =
-    | { kind: DropAction; src: JobDragSource; to: DepartmentType }
+    | { kind: DropAction; src: JobDragSource; to: JobDropTarget }
     | { kind: 'unlink'; src: JobDragSource };
 
-interface Args {
+interface OrgNode<N> {
+    key: string;
+    children: N[];
+}
+
+interface Args<N extends OrgNode<N>> {
     /** JOBS mode active (drag on). */
     active: boolean;
     hideInactive: boolean;
     /** Top nodes of the drawn tree (focus or roots). */
-    tops: TypeTreeNode[];
+    tops: N[];
+    /** The department type a drawn card stands for (its job links). */
+    typeIdOf: (node: N) => number;
     typeName: (id: number) => string;
+    /** Extra line in the confirm dialog for a change to this type's links
+     *  (the department organigram: how many departments it affects). */
+    scopeNote?: (typeId: number) => string | null;
     getString: GetStringFn;
     setSnackbar: (s: Snackbar) => void;
 }
 
-export function useOrganigramJobs({ active, hideInactive, tops, typeName, getString, setSnackbar }: Args) {
+export function useOrganigramJobs<N extends OrgNode<N>>({
+    active,
+    hideInactive,
+    tops,
+    typeIdOf,
+    typeName,
+    scopeNote,
+    getString,
+    setSnackbar,
+}: Args<N>) {
     const [openKeys, setOpenKeys] = useState<Set<string>>(() => new Set());
 
     // Neither request blocks the tree: the link rows (job counts on the cards)
@@ -95,8 +115,8 @@ export function useOrganigramJobs({ active, hideInactive, tops, typeName, getStr
     // job id -> drawn cards whose type carries it (tree order).
     const occurrences = useMemo(() => {
         const map = new Map<number, string[]>();
-        const walk = (n: TypeTreeNode) => {
-            for (const l of linksByType.get(n.type.id) ?? []) {
+        const walk = (n: N) => {
+            for (const l of linksByType.get(typeIdOf(n)) ?? []) {
                 const list = map.get(l.job_id);
                 if (list) list.push(n.key);
                 else map.set(l.job_id, [n.key]);
@@ -105,7 +125,7 @@ export function useOrganigramJobs({ active, hideInactive, tops, typeName, getStr
         };
         tops.forEach(walk);
         return map;
-    }, [tops, linksByType]);
+    }, [tops, linksByType, typeIdOf]);
 
     const items: PaletteItem[] = useMemo(
         () =>
@@ -203,6 +223,19 @@ export function useOrganigramJobs({ active, hideInactive, tops, typeName, getStr
               };
     };
     const { title, message } = dialogText();
+    // Every type whose links the pending action changes.
+    const touchedTypes = !pending
+        ? []
+        : pending.kind === 'unlink'
+          ? [pending.src.link?.department_type_id]
+          : [pending.to.id, pending.kind === 'move' ? pending.src.link?.department_type_id : undefined];
+    const note = scopeNote
+        ? touchedTypes
+              .filter((id): id is number => id != null)
+              .map(scopeNote)
+              .filter((t): t is string => !!t)
+              .join(' ')
+        : '';
 
     const overlays: ReactNode = (
         <>
@@ -243,6 +276,7 @@ export function useOrganigramJobs({ active, hideInactive, tops, typeName, getStr
                 kind={pending?.kind ?? null}
                 title={title}
                 message={message}
+                note={note || null}
                 deletedLinkId={pending && pending.kind !== 'add' ? (pending.src.link?.id ?? null) : null}
                 isPending={createLinkMutation.isPending || deleteLinkMutation.isPending}
                 onConfirm={confirm}

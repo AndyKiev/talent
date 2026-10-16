@@ -104,6 +104,8 @@ type PendingAction =
     | { kind: DropAction; src: DragSource; to: DepartmentType }
     | { kind: 'unlink'; src: DragSource };
 
+const typeIdOfNode = (n: TypeTreeNode) => n.type.id;
+
 const parsePath = (raw: string | undefined): number[] =>
     (raw ?? '')
         .split('_')
@@ -235,6 +237,7 @@ export function DepartmentTypeOrganigram() {
         active: mode === OrganigramMode.JOBS,
         hideInactive,
         tops,
+        typeIdOf: typeIdOfNode,
         typeName: nameOf,
         getString,
         setSnackbar,
