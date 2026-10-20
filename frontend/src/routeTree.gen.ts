@@ -29,6 +29,7 @@ import { Route as DeveloperIndexRouteImport } from './routes/developer/index'
 import { Route as CandidatesIndexRouteImport } from './routes/candidates/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as People_reviewMyRouteImport } from './routes/people_review/my'
+import { Route as EmployeesTalent_employeesRouteImport } from './routes/employees/talent_employees'
 import { Route as EmployeesHeadcount_planRouteImport } from './routes/employees/headcount_plan'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as RecruitmentTaskIdRouteRouteImport } from './routes/recruitment/$taskId/route'
@@ -267,6 +268,12 @@ const People_reviewMyRoute = People_reviewMyRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const EmployeesHeadcount_planRoute = EmployeesHeadcount_planRouteImport.update({
+const EmployeesTalent_employeesRoute =
+  EmployeesTalent_employeesRouteImport.update({
+    id: '/employees/talent_employees',
+    path: '/employees/talent_employees',
+    getParentRoute: () => rootRouteImport,
+  } as any)
   id: '/employees/headcount_plan',
   path: '/employees/headcount_plan',
   getParentRoute: () => rootRouteImport,
@@ -1068,6 +1075,7 @@ export interface FileRoutesByFullPath {
   '/developer': typeof DeveloperIndexRoute
   '/employees': typeof EmployeesIndexRoute
   '/interviews/': typeof InterviewsIndexRoute
+  '/employees/talent_employees': typeof EmployeesTalent_employeesRoute
   '/people_review': typeof People_reviewIndexRoute
   '/planning': typeof PlanningIndexRoute
   '/recruitment/': typeof RecruitmentIndexRoute
@@ -1204,6 +1212,7 @@ export interface FileRoutesByTo {
   '/employees': typeof EmployeesIndexRoute
   '/interviews': typeof InterviewsIndexRoute
   '/people_review': typeof People_reviewIndexRoute
+  '/employees/talent_employees': typeof EmployeesTalent_employeesRoute
   '/planning': typeof PlanningIndexRoute
   '/recruitment': typeof RecruitmentIndexRoute
   '/recruitment_board': typeof Recruitment_boardIndexRoute
@@ -1354,6 +1363,7 @@ export interface FileRoutesById {
   '/interviews/': typeof InterviewsIndexRoute
   '/people_review/': typeof People_reviewIndexRoute
   '/planning/': typeof PlanningIndexRoute
+  '/employees/talent_employees': typeof EmployeesTalent_employeesRoute
   '/recruitment/': typeof RecruitmentIndexRoute
   '/recruitment_board/': typeof Recruitment_boardIndexRoute
   '/recruitment_dashboard/': typeof Recruitment_dashboardIndexRoute
@@ -1513,6 +1523,7 @@ export interface FileRouteTypes {
     | '/people_review'
     | '/planning'
     | '/recruitment/'
+    | '/employees/talent_employees'
     | '/recruitment_board/'
     | '/recruitment_dashboard/'
     | '/settings'
@@ -1649,6 +1660,7 @@ export interface FileRouteTypes {
     | '/planning'
     | '/recruitment'
     | '/recruitment_board'
+    | '/employees/talent_employees'
     | '/recruitment_dashboard'
     | '/settings'
     | '/training'
@@ -1798,6 +1810,7 @@ export interface FileRouteTypes {
     | '/recruitment/'
     | '/recruitment_board/'
     | '/recruitment_dashboard/'
+    | '/employees/talent_employees'
     | '/settings/'
     | '/training/'
     | '/admin/departments_group/department_types'
@@ -1955,6 +1968,7 @@ export interface RootRouteChildren {
   AdminDepartment_typesIndexRoute: typeof AdminDepartment_typesIndexRoute
   AdminEmployee_eventsIndexRoute: typeof AdminEmployee_eventsIndexRoute
   AdminJob_group_typesIndexRoute: typeof AdminJob_group_typesIndexRoute
+  EmployeesTalent_employeesRoute: typeof EmployeesTalent_employeesRoute
   AdminJob_groupsIndexRoute: typeof AdminJob_groupsIndexRoute
   AdminJobsIndexRoute: typeof AdminJobsIndexRoute
   AdminPersonsIndexRoute: typeof AdminPersonsIndexRoute
@@ -2129,6 +2143,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/login'
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof rootRouteImport
+    '/employees/talent_employees': {
+      id: '/employees/talent_employees'
+      path: '/employees/talent_employees'
+      fullPath: '/employees/talent_employees'
+      preLoaderRoute: typeof EmployeesTalent_employeesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     }
     '/recruitment/$taskId': {
       id: '/recruitment/$taskId'
@@ -3692,6 +3713,7 @@ const rootRouteChildren: RootRouteChildren = {
   DeveloperDb_tablesIndexRoute: DeveloperDb_tablesIndexRoute,
   DeveloperEvent_applyIndexRoute: DeveloperEvent_applyIndexRoute,
   DeveloperSettingsIndexRoute: DeveloperSettingsIndexRoute,
+  EmployeesTalent_employeesRoute: EmployeesTalent_employeesRoute,
   DeveloperTranslationsIndexRoute: DeveloperTranslationsIndexRoute,
   People_reviewSessionIdIndexRoute: People_reviewSessionIdIndexRoute,
   PlanningSessionIdIndexRoute: PlanningSessionIdIndexRoute,

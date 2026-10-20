@@ -206,22 +206,9 @@ class EmployeeService(BaseService):
         department_id: int | None = None,
         **kwargs,
     ) -> list[EmployeeSchema]:
-        # Resolve the current user's visibility restriction based on their groups
-        # and active HRM scopes. None = unrestricted; a set (possibly empty)
-        # restricts to employees whose MAIN department is in that set.
-        main_department_ids = await self._resolve_visible_main_department_ids()
-
-        # Optional in-grid filter: narrow to one chosen department's subtree
-        # (ancestor-or-self). Intersected with the user's visible set so an HRM
-        # can never widen beyond their scope.
-        if department_id is not None:
-            dept_repo = DepartmentRepository(session=self.repository.session)
-            chosen = await dept_repo.get_subtree_ids({department_id})
-            if main_department_ids is None:
-                main_department_ids = chosen
-            else:
-                main_department_ids = main_department_ids & chosen
-
+        main_department_ids = await self.resolve_visible_main_department_ids(
+            department_id
+        )
         users = await self.repository.get_all(
             filters=params, main_department_ids=main_department_ids
         )
@@ -345,6 +332,26 @@ class EmployeeService(BaseService):
         return await hrm_repo.get_active_scope_department_ids(
             self.user.id, date.today()
         )
+
+    async def resolve_visible_main_department_ids(
+        self, department_id: int | None = None
+    ) -> set[int] | None:
+        """
+        The current user's visible MAIN department ids (None = unrestricted),
+        optionally narrowed to one chosen department's subtree (ancestor-or-
+        self). Intersected with the user's visible set so an HRM can never
+        widen beyond their scope. Shared by the employees list and the talent
+        employees roster so both lists show exactly the same people.
+        """
+        main_department_ids = await self._resolve_visible_main_department_ids()
+        if department_id is not None:
+            dept_repo = DepartmentRepository(session=self.repository.session)
+            chosen = await dept_repo.get_subtree_ids({department_id})
+            if main_department_ids is None:
+                main_department_ids = chosen
+            else:
+                main_department_ids = main_department_ids & chosen
+        return main_department_ids
 
     async def _resolve_visible_main_department_ids(self) -> set[int] | None:
         """

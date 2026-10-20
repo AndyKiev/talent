@@ -199,16 +199,24 @@ class MenuService(BaseService):
                     "interviews",
                 )
             ]
-        # Headcount-plan flag: with the feature off BOTH children under
-        # 'employees' are dropped, so 'employees' becomes childless again and
-        # renders as a plain clickable item (parents with children only open
-        # a dropdown in AppShell, they never navigate).
+        # Headcount-plan flag: with the feature off 'headcount_plan' is dropped.
         if not await get_bool_setting(
             self.session, HEADCOUNT_PLAN_ENABLED_KEY, default=False
         ):
-            records = [
-                m for m in records if m.key not in ("headcount_plan", "employees_list")
-            ]
+            records = [m for m in records if m.key != "headcount_plan"]
+        # 'employees_list' only exists so the list stays reachable once
+        # 'employees' has children (parents with children only open a dropdown
+        # in AppShell, they never navigate). With no other VISIBLE sibling
+        # (headcount_plan / talent_employees) it is dropped, so 'employees'
+        # renders as a plain clickable item again.
+        list_item = next((m for m in records if m.key == "employees_list"), None)
+        if list_item is not None and not any(
+            m.parent_id == list_item.parent_id
+            and m.id != list_item.id
+            and item_visible(m)
+            for m in records
+        ):
+            records = [m for m in records if m.id != list_item.id]
         visible_ids = {m.id for m in records if item_visible(m)}
         return [
             MenuSchema.model_validate(m)

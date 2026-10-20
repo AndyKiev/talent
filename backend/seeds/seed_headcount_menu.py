@@ -1,15 +1,16 @@
 """
-Seed the headcount-plan sub-menu: two children under the existing 'employees'
-menu item. With children present, 'employees' renders as a dropdown (parents
-with children never navigate in AppShell), so the employees LIST page moves to
-its own child row:
+Seed the 'employees' sub-menu children. With children present, 'employees'
+renders as a dropdown (parents with children never navigate in AppShell), so
+the employees LIST page moves to its own child row:
 
   employees
-  ├── employees_list  /employees                 (all groups — mirrors parent)
-  └── headcount_plan  /employees/headcount_plan  (dev / admin / HRS / HRM only)
+  ├── employees_list    /employees                    (all groups — mirrors parent)
+  ├── talent_employees  /employees/talent_employees   (dev / admin / HRS / HRM only)
+  └── headcount_plan    /employees/headcount_plan     (dev / admin / HRS / HRM only)
 
 When the headcount_plan_enabled setting is OFF, MenuService.get_my_menus drops
-BOTH children and 'employees' behaves exactly as before. Idempotent.
+headcount_plan; employees_list is dropped whenever it has no other visible
+sibling, so 'employees' then behaves as a plain item. Idempotent.
 """
 
 import sys
@@ -41,6 +42,15 @@ CHILD_MENUS = [
         "sort_order": 10,
         "visible_to_all_groups": True,
         "group_names": None,
+    },
+    {
+        "key": "talent_employees",
+        "label_key": "talentEmployees",
+        "path": "/employees/talent_employees",
+        "icon": "talent",
+        "sort_order": 15,
+        "visible_to_all_groups": False,
+        "group_names": HEADCOUNT_GROUP_NAMES,
     },
     {
         "key": "headcount_plan",

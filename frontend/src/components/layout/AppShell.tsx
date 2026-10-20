@@ -29,7 +29,7 @@ import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
 import ExpandLessRounded from '@mui/icons-material/ExpandLessRounded';
 import MenuRounded from '@mui/icons-material/MenuRounded';
 import MoreHorizRounded from '@mui/icons-material/MoreHorizRounded';
-import { PeopleAltRounded, AdminPanelSettingsRounded, RateReviewRounded, SchoolRounded, PersonSearchRounded, RecentActorsRounded, ForumRounded, LogoutRounded, GroupsRounded } from "@mui/icons-material";
+import { PeopleAltRounded, StarsRounded, AdminPanelSettingsRounded, RateReviewRounded, SchoolRounded, PersonSearchRounded, RecentActorsRounded, ForumRounded, LogoutRounded, GroupsRounded } from "@mui/icons-material";
 import { useTheme as useAppTheme } from '../theme/useTheme';
 import { useAuthStore } from "../../store/authStore";
 import UserMenu from "./UserMenu";
@@ -48,6 +48,8 @@ const MENU_ICONS: Record<string, ReactNode> = {
     // Headcount planning ("how many people per unit") — deliberately NOT
     // `insights`, which the top-level Planning menu already uses.
     headcount: <GroupsRounded sx={{ fontSize: 16 }} />,
+    // Employees → Talent employees.
+    talent: <StarsRounded sx={{ fontSize: 16 }} />,
     review: <RateReviewRounded sx={{ fontSize: 16 }} />,
     school: <SchoolRounded sx={{ fontSize: 16 }} />,
     recruitment: <PersonSearchRounded sx={{ fontSize: 16 }} />,

@@ -100,6 +100,11 @@ export const HRM_SCOPE_QK = ['hrm_scopes'] as const;
 // Current user's highest-priority active scope department (employees-list default).
 // key[0] = 'hrm_scopes' so any HRM_SCOPE_QK invalidation (reorder, add, delete) refreshes it.
 export const HRM_SCOPE_PRIORITY_QK = ['hrm_scopes', 'priority_department'] as const;
+// Employees → Talent employees roster. Prefix-invalidate TALENT_AUDIT_ROSTER_QK
+// after any talent mutation; the params object is the last key element.
+export const TALENT_AUDIT_ROSTER_QK = ['talent_audit', 'roster'] as const;
+export const TALENT_AUDIT_ROSTER_OPTIONS_QK = (departmentId: number | null) =>
+    ['talent_audit', 'roster_options', departmentId] as const;
 export const REGION_QK = ['regions'] as const;
 
 // ── Developer tools ──────────────────────────────────────────────────────────

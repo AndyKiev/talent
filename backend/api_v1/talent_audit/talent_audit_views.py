@@ -14,6 +14,8 @@ from backend.api_v1.talent_audit.talent_audit_schema import (
 from backend.api_v1.talent_audit.talent_audit_schema import (
     TalentAuditCreate,
     TalentAuditUpdate,
+    TalentRosterOptions,
+    TalentRosterPage,
 )
 from backend.api_v1.talent_audit.talent_audit_service import TalentAuditService
 from backend.auth.guards import Guard
@@ -39,6 +41,61 @@ async def get_talent_audits(
     ),
 ):
     return await service.get_talent_audits(sort=sort)
+
+
+# Static paths before /{talent_audit_id}.
+@router.get(
+    "/roster",
+    response_model=TalentRosterPage,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT)],
+)
+async def get_talent_roster(
+    service: Annotated[TalentAuditService, Depends(get_talent_audit_service)],
+    page: int = Query(0, ge=0),
+    page_size: int = Query(25, ge=1, le=500),
+    department_id: int | None = None,
+    subdepartment_id: int | None = None,
+    job_id: int | None = None,
+    status_id: int | None = None,
+    employee_id: int | None = None,
+    q: str | None = None,
+    has_talent: bool | None = Query(
+        None, description="true = with talents, false = without, omit = all"
+    ),
+    talent_status_id: int | None = None,
+    talent_period_id: int | None = None,
+    sort_field: str = "name",
+    sort_desc: bool = False,
+):
+    """Talent employees list: one row per visible employee with all talents."""
+    return await service.get_roster(
+        page=page,
+        page_size=page_size,
+        department_id=department_id,
+        subdepartment_id=subdepartment_id,
+        job_id=job_id,
+        status_id=status_id,
+        employee_id=employee_id,
+        q=q,
+        has_talent=has_talent,
+        talent_status_id=talent_status_id,
+        talent_period_id=talent_period_id,
+        sort_field=sort_field,
+        sort_desc=sort_desc,
+    )
+
+
+@router.get(
+    "/roster_options",
+    response_model=TalentRosterOptions,
+    dependencies=[Guard(OperationVerb.VIEW, EssenceName.TALENT_AUDIT)],
+)
+async def get_talent_roster_options(
+    service: Annotated[TalentAuditService, Depends(get_talent_audit_service)],
+    department_id: int | None = None,
+):
+    """Filter options (employees / departments / jobs / statuses) in scope."""
+    return await service.get_roster_options(department_id)
 
 
 @router.get(

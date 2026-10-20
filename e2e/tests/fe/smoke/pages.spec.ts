@@ -48,6 +48,7 @@ const ROUTES = [
   "/developer/translations",
   "/employees",
   "/employees/headcount_plan",
+  "/employees/talent_employees",
   "/interviews",
   "/people_review",
   "/people_review/my",
