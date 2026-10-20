@@ -14,6 +14,7 @@ import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import type { GetStringFn } from '../../../types/getStringFn';
 import type { EmployeeEventFlat } from './employeeEventApi';
 import { formatToUkrDate } from '../../../utils/dateFormatter';
+import { eventTypeLabel } from './eventLabels';
 import cfl from '../../../utils/helpers.ts';
 import { revertTargetOf } from './employeeEventStatus';
 
@@ -50,7 +51,7 @@ export function EmployeeEventRevertDialog({
 
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                             <Typography variant="body2" fontWeight={600}>
-                                {event.event_type?.name ?? `#${event.id}`}
+                                {eventTypeLabel(getString, event.event_type?.code)}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
                                 ({formatToUkrDate(event.effective_date)})

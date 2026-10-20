@@ -16,7 +16,7 @@ class EmployeeStatus(IntIdPkMixin, TimestampMixin, Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     employees: Mapped[list["Employee"]] = relationship(
         back_populates="status",
-        lazy="selectin",
+        lazy="noload",  # back-ref only: selectin loaded EVERY employee per lookup read
     )
 
     def __repr__(self) -> str:

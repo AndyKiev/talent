@@ -39,7 +39,7 @@ class EmployeeEventDirectionType(IntIdPkMixin, Base):
     )
     event_changes: Mapped[list["EmployeeEventChange"]] = relationship(
         back_populates="direction_type",
-        lazy="selectin",
+        lazy="noload",  # back-ref only: selectin loaded EVERY event per lookup read
     )
 
     def __repr__(self) -> str:

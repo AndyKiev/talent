@@ -80,7 +80,7 @@ export interface EmployeeEventCreate {
     status_id: number;
     effective_date: string;
     description?: string | null;
-    changes?: unknown[];
+    changes?: EmployeeEventChangeCreate[];
 }
 
 export interface EmployeeEventUpdate {
@@ -144,7 +144,8 @@ export const createEmployeeEvent = async (
     payload: EmployeeEventCreate,
 ): Promise<EmployeeEventFlat> => {
     const res = await axiosInstance.post(base(employeeId), payload);
-    return res.data.record ?? res.data;
+    // MutationResponse wraps the record as { detail, data }.
+    return res.data.data ?? res.data.record ?? res.data;
 };
 
 export const updateEmployeeEvent = async (
@@ -156,7 +157,8 @@ export const updateEmployeeEvent = async (
         `${base(employeeId)}/${eventId}`,
         payload,
     );
-    return res.data.record ?? res.data;
+    // MutationResponse wraps the record as { detail, data }.
+    return res.data.data ?? res.data.record ?? res.data;
 };
 
 export const deleteEmployeeEvent = async (

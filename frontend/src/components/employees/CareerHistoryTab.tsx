@@ -34,6 +34,7 @@ import useString from '../../hooks/useString';
 import str from '../../strings/str';
 import cfl from '../../utils/helpers.ts';
 import { formatToUkrDate } from '../../utils/dateFormatter';
+import { eventTypeLabel } from './employee_events/eventLabels';
 
 interface JobHistoryRow {
     eventId: number;
@@ -116,7 +117,7 @@ export function CareerHistoryTab() {
                 out.push({
                     eventId: ev.id,
                     date: ev.effective_date,
-                    eventType: ev.event_type?.name ?? `#${ev.event_type_id}`,
+                    eventType: eventTypeLabel(getString, ev.event_type?.code),
                     jobName: curJobName,
                     prevJobName: jobChange ? prevJobName : null,
                     jobChanged: !!jobChange,
@@ -129,7 +130,7 @@ export function CareerHistoryTab() {
 
         // Newest first for display.
         return out.reverse();
-    }, [appliedEvents, details]);
+    }, [appliedEvents, details, getString]);
 
     // 4) Resolve top-level (main) department for the departments that appear.
     const deptIds = useMemo(() => {

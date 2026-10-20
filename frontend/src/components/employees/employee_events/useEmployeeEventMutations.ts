@@ -1,13 +1,12 @@
 // src/components/employees/employee_events/useEmployeeEventMutations.ts
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+// Page-level event mutations (apply / delete / revert). Create (+ apply) lives in
+// EmployeeEventCreateDialog; change rows of an existing event in the drawer.
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-    createEmployeeEvent,
-    updateEmployeeEvent,
-    deleteEmployeeEvent,
     applyEmployeeEvent,
+    deleteEmployeeEvent,
+    fetchEmployeeEventStatuses,
     revertEmployeeEvent,
-    type EmployeeEventCreate,
-    type EmployeeEventUpdate,
 } from './employeeEventApi';
 
 export const employeeEventsQK = (employeeId: number) => ['employee-events', employeeId];
@@ -15,53 +14,44 @@ export const employeeEventsQK = (employeeId: number) => ['employee-events', empl
 interface Options {
     employeeId: number;
     setSnackbar: (s: { open: boolean; message: string; severity: 'success' | 'error' }) => void;
-    onCreateSuccess?: () => void;
-    onUpdateSuccess?: () => void;
-    onDeleteSuccess?: () => void;
     onApplySuccess?: () => void;
+    onDeleteSuccess?: () => void;
     onRevertSuccess?: () => void;
 }
 
 export function useEmployeeEventMutations({
     employeeId,
     setSnackbar,
-    onCreateSuccess,
-    onUpdateSuccess,
-    onDeleteSuccess,
     onApplySuccess,
+    onDeleteSuccess,
     onRevertSuccess,
 }: Options) {
     const qc = useQueryClient();
     const qk = employeeEventsQK(employeeId);
 
-    const invalidate = () => qc.invalidateQueries({ queryKey: qk });
-
-    const createMutation = useMutation({
-        mutationFn: (payload: EmployeeEventCreate) =>
-            createEmployeeEvent(employeeId, payload),
-        onSuccess: () => {
-            invalidate();
-            onCreateSuccess?.();
-        },
-        onError: (err: unknown) => {
-            const msg = (err as { response?: { data?: { detail?: string } } })
-                ?.response?.data?.detail ?? 'Error creating event';
-            setSnackbar({ open: true, message: msg, severity: 'error' });
-        },
+    const { data: eventStatuses = [] } = useQuery({
+        queryKey: ['employee-event-statuses'],
+        queryFn: fetchEmployeeEventStatuses,
+        staleTime: 10 * 60 * 1000,
     });
 
-    const updateMutation = useMutation({
-        mutationFn: ({ eventId, payload }: { eventId: number; payload: EmployeeEventUpdate }) =>
-            updateEmployeeEvent(employeeId, eventId, payload),
-        onSuccess: () => {
-            invalidate();
-            onUpdateSuccess?.();
+    const invalidate = () => qc.invalidateQueries({ queryKey: qk });
+    // axiosInstance rejects with Error(detail) when the backend sent one.
+    const showError = (err: unknown, fallback: string) =>
+        setSnackbar({ open: true, message: (err as Error).message || fallback, severity: 'error' });
+
+    const applyMutation = useMutation({
+        mutationFn: (eventId: number) => {
+            const applied = eventStatuses.find((s) => s.name === 'applied');
+            if (!applied) throw new Error('Applied status not found');
+            return applyEmployeeEvent(employeeId, eventId, applied.id);
         },
-        onError: (err: unknown) => {
-            const msg = (err as { response?: { data?: { detail?: string } } })
-                ?.response?.data?.detail ?? 'Error updating event';
-            setSnackbar({ open: true, message: msg, severity: 'error' });
+        // Awaited so the row's spinner stays until the list shows "applied".
+        onSuccess: async () => {
+            await invalidate();
+            onApplySuccess?.();
         },
+        onError: (err: unknown) => showError(err, 'Error applying event'),
     });
 
     const deleteMutation = useMutation({
@@ -70,25 +60,7 @@ export function useEmployeeEventMutations({
             invalidate();
             onDeleteSuccess?.();
         },
-        onError: (err: unknown) => {
-            const msg = (err as { response?: { data?: { detail?: string } } })
-                ?.response?.data?.detail ?? 'Error deleting event';
-            setSnackbar({ open: true, message: msg, severity: 'error' });
-        },
-    });
-
-    const applyMutation = useMutation({
-        mutationFn: ({ eventId, appliedStatusId }: { eventId: number; appliedStatusId: number }) =>
-            applyEmployeeEvent(employeeId, eventId, appliedStatusId),
-        onSuccess: () => {
-            invalidate();
-            onApplySuccess?.();
-        },
-        onError: (err: unknown) => {
-            const msg = (err as { response?: { data?: { detail?: string } } })
-                ?.response?.data?.detail ?? 'Error applying event';
-            setSnackbar({ open: true, message: msg, severity: 'error' });
-        },
+        onError: (err: unknown) => showError(err, 'Error deleting event'),
     });
 
     const revertMutation = useMutation({
@@ -97,12 +69,8 @@ export function useEmployeeEventMutations({
             invalidate();
             onRevertSuccess?.();
         },
-        onError: (err: unknown) => {
-            const msg = (err as { response?: { data?: { detail?: string } } })
-                ?.response?.data?.detail ?? 'Error reverting event';
-            setSnackbar({ open: true, message: msg, severity: 'error' });
-        },
+        onError: (err: unknown) => showError(err, 'Error reverting event'),
     });
 
-    return { createMutation, updateMutation, deleteMutation, applyMutation, revertMutation };
+    return { applyMutation, deleteMutation, revertMutation };
 }

@@ -8,6 +8,7 @@ import {
     Card,
     CardContent,
     Chip,
+    CircularProgress,
     Divider,
     IconButton,
     Paper,
@@ -21,8 +22,11 @@ import {
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import NorthEastIcon from '@mui/icons-material/NorthEast';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import DeleteIcon from '@mui/icons-material/Delete';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import UndoIcon from '@mui/icons-material/Undo';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
@@ -32,7 +36,6 @@ import {
     fetchEmployeeEvents,
     type EmployeeEventFlat,
     type EmployeeEventFull,
-    type EmployeeEventCreate,
 } from './employeeEventApi';
 import { departmentMapById, departmentPathLabel } from '../../../utils/departmentPath';
 import { employeeEventsQK, useEmployeeEventMutations } from './useEmployeeEventMutations';
@@ -40,6 +43,7 @@ import { EmployeeEventDeleteDialog } from './EmployeeEventDeleteDialog';
 import { EmployeeEventRevertDialog } from './EmployeeEventRevertDialog';
 import { EmployeeEventCreateDialog } from './EmployeeEventCreateDialog';
 import { EmployeeEventDrawer } from './EmployeeEventDrawer';
+import { eventTypeLabel } from './eventLabels';
 import useString from '../../../hooks/useString';
 import str from '../../../strings/str';
 import cfl from '../../../utils/helpers.ts';
@@ -47,8 +51,13 @@ import { formatToUkrDate } from '../../../utils/dateFormatter';
 import { useDataGridStyles } from '../../../hooks/useDataGridStyles';
 import { useDataGridLocale } from '../../../hooks/useDataGridLocale';
 import { useEmployeeEventsViewStore } from '../../../store/employeeEventsViewStore';
+import { useElementWidth } from '../../../hooks/useElementWidth';
 
 import { eventStatusColor, revertTargetOf } from './employeeEventStatus';
+
+// Card chain layout: min card width + the gap that holds the arrow between cards.
+const CARD_MIN_WIDTH = 300;
+const CHAIN_GAP = 32;
 
 export function EmployeeEventsPage() {
     const { employeeId: employeeIdStr } = useParams({
@@ -91,10 +100,16 @@ export function EmployeeEventsPage() {
     const deptById = useMemo(() => departmentMapById(departmentsFlat), [departmentsFlat]);
 
     // ── Mutations ─────────────────────────────────────────────────────────────
-    const { createMutation, deleteMutation, revertMutation } = useEmployeeEventMutations({
+    const { applyMutation, deleteMutation, revertMutation } = useEmployeeEventMutations({
         employeeId,
         setSnackbar,
-        onCreateSuccess: () => setCreateOpen(false),
+        onApplySuccess: () => {
+            setSnackbar({ open: true, message: cfl(getString('eventApplied') || 'Event applied'), severity: 'success' });
+            // Applying writes status/job/department to the employee.
+            qc.invalidateQueries({ queryKey: ['employee'] });
+            qc.invalidateQueries({ queryKey: ['employee_departments'] });
+            qc.invalidateQueries({ queryKey: ['employees'] });
+        },
         onDeleteSuccess: () => {
             setEventToDelete(null);
             // Deleting the latest event reprojects job + main department on the
@@ -125,6 +140,11 @@ export function EmployeeEventsPage() {
             }, null),
         [events],
     );
+
+    // Cards view draws a chain: each card points (←) at the next-newer event.
+    // Column count is needed to know which card starts a row (its arrow turns ↗).
+    const { ref: cardsRef, width: cardsWidth } = useElementWidth<HTMLDivElement>();
+    const cardColumns = Math.max(1, Math.floor((cardsWidth + CHAIN_GAP) / (CARD_MIN_WIDTH + CHAIN_GAP)));
 
     // Cards mirror the grid's default sort (effective_date desc, then id desc).
     const sortedEvents = useMemo(
@@ -159,9 +179,40 @@ export function EmployeeEventsPage() {
         if (eventToRevert) revertMutation.mutate(eventToRevert.id);
     };
 
-    const handleCreate = (payload: EmployeeEventCreate) => {
-        createMutation.mutate(payload);
-    };
+    // Ready events get an inline Apply action (no need to open the drawer).
+    const applyingId = applyMutation.isPending ? applyMutation.variables : null;
+    const applyEvent = applyMutation.mutate;
+    const renderApply = useCallback(
+        (row: EmployeeEventFlat) =>
+            row.status?.name === 'ready' ? (
+                <Tooltip title={cfl(getString('applyEvent') || 'Apply event')}>
+                    <span>
+                        <IconButton
+                            size="small"
+                            color="success"
+                            aria-label={cfl(getString('applyEvent') || 'Apply event')}
+                            disabled={applyingId != null}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                applyEvent(row.id);
+                            }}
+                        >
+                            {applyingId === row.id ? (
+                                <CircularProgress size={18} color="inherit" />
+                            ) : (
+                                <CheckCircleIcon fontSize="small" />
+                            )}
+                        </IconButton>
+                    </span>
+                </Tooltip>
+            ) : null,
+        [getString, applyingId, applyEvent],
+    );
+
+    const notify = useCallback(
+        (message: string, severity: 'success' | 'error') => setSnackbar({ open: true, message, severity }),
+        [],
+    );
 
     // ── Columns ───────────────────────────────────────────────────────────────
     // Memoized: rebuilding the array (new renderCell closures) on every render
@@ -179,7 +230,7 @@ export function EmployeeEventsPage() {
             headerName: cfl(getString('eventType') || 'Event type'),
             flex: 1,
             minWidth: 160,
-            valueGetter: (_v, row) => row.event_type?.name ?? `#${row.event_type_id}`,
+            valueGetter: (_v, row) => eventTypeLabel(getString, row.event_type?.code),
         },
         {
             // The job this event sets (JOB_CHANGE row), when affected.
@@ -288,7 +339,7 @@ export function EmployeeEventsPage() {
         {
             field: '_actions',
             headerName: '',
-            width: 100,
+            width: 130,
             sortable: false,
             disableColumnMenu: true,
             renderCell: ({ row }) => {
@@ -298,6 +349,7 @@ export function EmployeeEventsPage() {
                 const canRevert = isLast && !!revertTarget;
                 return (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, height: '100%' }}>
+                        {renderApply(row)}
                         <Tooltip
                             title={
                                 !isLast
@@ -345,7 +397,7 @@ export function EmployeeEventsPage() {
                 );
             },
         },
-    ], [getString, lastEvent, handleDeleteClick, handleRevertClick]);
+    ], [getString, lastEvent, handleDeleteClick, handleRevertClick, renderApply]);
 
     // ── Render (no AppShell / breadcrumbs — provided by the card layout) ───────
     return (
@@ -415,8 +467,18 @@ export function EmployeeEventsPage() {
             {!isLoading && !error && events.length > 0 && view === 'cards' && (
                 // Card grid: SAME events as the DataGrid (sorted newest-first), one card
                 // per event carrying every grid column; click the body to open the drawer.
-                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 2 }}>
-                    {sortedEvents.map((row) => {
+                // Left padding gives row-start cards room for their wrap arrow.
+                <Box
+                    ref={cardsRef}
+                    sx={{
+                        display: 'grid',
+                        gridTemplateColumns: `repeat(auto-fill, minmax(${CARD_MIN_WIDTH}px, 1fr))`,
+                        columnGap: `${CHAIN_GAP}px`,
+                        rowGap: 2,
+                        pl: sortedEvents.length > 1 ? `${CHAIN_GAP}px` : 0,
+                    }}
+                >
+                    {sortedEvents.map((row, index) => {
                         const newJob = row.changes?.find((c) => c.direction_type?.code === 'JOB_CHANGE')?.new_job?.name ?? '';
                         const deptChange = row.changes?.find((c) => c.direction_type?.code === 'MAIN_DEPT_CHANGE');
                         const newDept = deptChange
@@ -426,113 +488,132 @@ export function EmployeeEventsPage() {
                         const isLast = lastEvent?.id === row.id;
                         const revertTarget = revertTargetOf(statusName);
                         const canRevert = isLast && !!revertTarget;
+                        // Older card → newer one (previous in this newest-first list).
+                        const ChainIcon = index % cardColumns === 0 ? NorthEastIcon : ArrowBackIcon;
                         return (
-                            <Card key={row.id} variant="outlined">
-                                <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-                                    <Box sx={{ cursor: 'pointer' }} onClick={() => setDrawerEvent(row as EmployeeEventFlat)}>
-                                        <Stack direction="row" alignItems="flex-start" spacing={1}>
-                                            <Box sx={{ flex: 1 }}>
-                                                <Typography fontSize={14} fontWeight={600}>
-                                                    {row.event_type?.name ?? `#${row.event_type_id}`}
+                            <Box key={row.id} sx={{ position: 'relative' }}>
+                                {index > 0 && (
+                                    <ChainIcon
+                                        fontSize="small"
+                                        color="action"
+                                        sx={{
+                                            position: 'absolute',
+                                            left: -CHAIN_GAP,
+                                            width: CHAIN_GAP,
+                                            top: index % cardColumns === 0 ? 0 : '50%',
+                                            transform: index % cardColumns === 0 ? 'none' : 'translateY(-50%)',
+                                            pointerEvents: 'none',
+                                        }}
+                                    />
+                                )}
+                                <Card variant="outlined" sx={{ height: '100%' }}>
+                                    <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                                        <Box sx={{ cursor: 'pointer' }} onClick={() => setDrawerEvent(row as EmployeeEventFlat)}>
+                                            <Stack direction="row" alignItems="flex-start" spacing={1}>
+                                                <Box sx={{ flex: 1 }}>
+                                                    <Typography fontSize={14} fontWeight={600}>
+                                                        {eventTypeLabel(getString, row.event_type?.code)}
+                                                    </Typography>
+                                                    <Typography fontSize={12} color="text.secondary">
+                                                        {formatToUkrDate(row.effective_date)}
+                                                    </Typography>
+                                                </Box>
+                                                {statusName && (
+                                                    <Chip
+                                                        label={cfl(getString(statusName) || statusName)}
+                                                        color={eventStatusColor(statusName)}
+                                                        size="small"
+                                                        variant="outlined"
+                                                    />
+                                                )}
+                                            </Stack>
+                                            <Stack spacing={0.4} sx={{ mt: 1 }}>
+                                                {newJob && (
+                                                    <Typography fontSize={12.5}>
+                                                        <Box component="span" sx={{ color: 'text.secondary' }}>{cfl(getString('eventNewJob') || 'New job')}: </Box>
+                                                        {newJob}
+                                                    </Typography>
+                                                )}
+                                                {newDept && (
+                                                    <Typography fontSize={12.5}>
+                                                        <Box component="span" sx={{ color: 'text.secondary' }}>{cfl(getString('eventNewDepartment') || 'New department')}: </Box>
+                                                        {newDept}
+                                                    </Typography>
+                                                )}
+                                                {row.description && (
+                                                    <Typography fontSize={12.5} color="text.secondary">
+                                                        {row.description}
+                                                    </Typography>
+                                                )}
+                                                <Typography fontSize={11.5} color="text.disabled">
+                                                    {cfl(getString('createdAt') || 'Created at')}:{' '}
+                                                    {row.created_at
+                                                        ? new Date(row.created_at).toLocaleString('uk-UA', { dateStyle: 'short', timeStyle: 'short' })
+                                                        : '—'}
                                                 </Typography>
-                                                <Typography fontSize={12} color="text.secondary">
-                                                    {formatToUkrDate(row.effective_date)}
-                                                </Typography>
-                                            </Box>
-                                            {statusName && (
-                                                <Chip
-                                                    label={cfl(getString(statusName) || statusName)}
-                                                    color={eventStatusColor(statusName)}
-                                                    size="small"
-                                                    variant="outlined"
-                                                />
-                                            )}
-                                        </Stack>
-                                        <Stack spacing={0.4} sx={{ mt: 1 }}>
-                                            {newJob && (
-                                                <Typography fontSize={12.5}>
-                                                    <Box component="span" sx={{ color: 'text.secondary' }}>{cfl(getString('eventNewJob') || 'New job')}: </Box>
-                                                    {newJob}
-                                                </Typography>
-                                            )}
-                                            {newDept && (
-                                                <Typography fontSize={12.5}>
-                                                    <Box component="span" sx={{ color: 'text.secondary' }}>{cfl(getString('eventNewDepartment') || 'New department')}: </Box>
-                                                    {newDept}
-                                                </Typography>
-                                            )}
-                                            {row.description && (
-                                                <Typography fontSize={12.5} color="text.secondary">
-                                                    {row.description}
-                                                </Typography>
-                                            )}
-                                            <Typography fontSize={11.5} color="text.disabled">
-                                                {cfl(getString('createdAt') || 'Created at')}:{' '}
-                                                {row.created_at
-                                                    ? new Date(row.created_at).toLocaleString('uk-UA', { dateStyle: 'short', timeStyle: 'short' })
-                                                    : '—'}
-                                            </Typography>
-                                        </Stack>
-                                    </Box>
-                                    <Divider sx={{ my: 1 }} />
-                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.25 }}>
-                                        <Tooltip
-                                            title={
-                                                !isLast
-                                                    ? cfl(getString('onlyLastEventRevertable') || 'Only the latest event can be reverted')
-                                                    : !revertTarget
-                                                        ? cfl(getString('nothingToRevert') || 'Nothing to revert (already a draft)')
-                                                        : `${cfl(getString('revert') || 'Revert')} → ${cfl(getString(revertTarget) || revertTarget)}`
-                                            }
-                                        >
-                                            <span>
-                                                <IconButton
-                                                    size="small"
-                                                    color="warning"
-                                                    aria-label={cfl(getString('revert') || 'Revert')}
-                                                    disabled={!canRevert}
-                                                    onClick={(e) => handleRevertClick(e, row)}
-                                                >
-                                                    <UndoIcon fontSize="small" />
-                                                </IconButton>
-                                            </span>
-                                        </Tooltip>
-                                        <Tooltip
-                                            title={
-                                                isLast
-                                                    ? cfl(getString('delete') || 'Delete')
-                                                    : cfl(getString('onlyLastEventDeletable') || 'Only the latest event (by date) can be deleted')
-                                            }
-                                        >
-                                            <span>
-                                                <IconButton
-                                                    size="small"
-                                                    color="error"
-                                                    aria-label={cfl(getString('delete') || 'Delete')}
-                                                    disabled={!isLast}
-                                                    onClick={(e) => handleDeleteClick(e, row)}
-                                                >
-                                                    <DeleteIcon fontSize="small" />
-                                                </IconButton>
-                                            </span>
-                                        </Tooltip>
-                                    </Box>
-                                </CardContent>
-                            </Card>
+                                            </Stack>
+                                        </Box>
+                                        <Divider sx={{ my: 1 }} />
+                                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.25 }}>
+                                            {renderApply(row)}
+                                            <Tooltip
+                                                title={
+                                                    !isLast
+                                                        ? cfl(getString('onlyLastEventRevertable') || 'Only the latest event can be reverted')
+                                                        : !revertTarget
+                                                            ? cfl(getString('nothingToRevert') || 'Nothing to revert (already a draft)')
+                                                            : `${cfl(getString('revert') || 'Revert')} → ${cfl(getString(revertTarget) || revertTarget)}`
+                                                }
+                                            >
+                                                <span>
+                                                    <IconButton
+                                                        size="small"
+                                                        color="warning"
+                                                        aria-label={cfl(getString('revert') || 'Revert')}
+                                                        disabled={!canRevert}
+                                                        onClick={(e) => handleRevertClick(e, row)}
+                                                    >
+                                                        <UndoIcon fontSize="small" />
+                                                    </IconButton>
+                                                </span>
+                                            </Tooltip>
+                                            <Tooltip
+                                                title={
+                                                    isLast
+                                                        ? cfl(getString('delete') || 'Delete')
+                                                        : cfl(getString('onlyLastEventDeletable') || 'Only the latest event (by date) can be deleted')
+                                                }
+                                            >
+                                                <span>
+                                                    <IconButton
+                                                        size="small"
+                                                        color="error"
+                                                        aria-label={cfl(getString('delete') || 'Delete')}
+                                                        disabled={!isLast}
+                                                        onClick={(e) => handleDeleteClick(e, row)}
+                                                    >
+                                                        <DeleteIcon fontSize="small" />
+                                                    </IconButton>
+                                                </span>
+                                            </Tooltip>
+                                        </Box>
+                                    </CardContent>
+                                </Card>
+                            </Box>
                         );
                     })}
                 </Box>
             )}
 
-            <EmployeeEventCreateDialog
-                open={createOpen}
-                onClose={() => setCreateOpen(false)}
-                onSubmit={handleCreate}
-                isPending={createMutation.isPending}
-                getString={getString}
-                hasAnyEvent={events.length > 0}
-                existingDates={events.map((e) => e.effective_date)}
-            />
+            {createOpen && (
+                <EmployeeEventCreateDialog
+                    employeeId={employeeId}
+                    events={events}
+                    onClose={() => setCreateOpen(false)}
+                    onNotify={notify}
+                    getString={getString}
+                />
+            )}
             <EmployeeEventDeleteDialog
                 event={eventToDelete}
                 isPending={deleteMutation.isPending}
@@ -548,9 +629,12 @@ export function EmployeeEventsPage() {
                 getString={getString}
             />
             <EmployeeEventDrawer
+                key={drawerEvent?.id}
                 event={drawerEvent}
                 employeeId={employeeId}
+                otherEventDates={events.filter((e) => e.id !== drawerEvent?.id).map((e) => e.effective_date)}
                 onClose={() => setDrawerEvent(null)}
+                onNotify={notify}
                 getString={getString}
             />
             <Snackbar

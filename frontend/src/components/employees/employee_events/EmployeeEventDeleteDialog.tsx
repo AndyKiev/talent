@@ -2,6 +2,7 @@
 import type { GetStringFn } from '../../../types/getStringFn';
 import type { EmployeeEventFlat } from './employeeEventApi';
 import { formatToUkrDate } from '../../../utils/dateFormatter';
+import { eventTypeLabel } from './eventLabels';
 import cfl from '../../../utils/helpers.ts';
 import ConfirmDeleteDialog from '../../ui/ConfirmDeleteDialog';
 
@@ -28,7 +29,7 @@ export function EmployeeEventDeleteDialog({
                 event ? (
                     <>
                         {getString('deleteEventConfirm') || 'Are you sure you want to delete this event?'}{' '}
-                        <strong>{event.event_type?.name ?? `#${event.id}`}</strong>{' '}
+                        <strong>{eventTypeLabel(getString, event.event_type?.code)}</strong>{' '}
                         ({formatToUkrDate(event.effective_date)})
                     </>
                 ) : undefined

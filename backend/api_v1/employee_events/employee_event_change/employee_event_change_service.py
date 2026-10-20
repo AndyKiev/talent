@@ -1,4 +1,3 @@
-
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -99,7 +98,8 @@ class EmployeeEventChangeService(BaseService):
         if not target_status:
             return  # status row missing; leave as-is rather than crash
 
-        event.status_id = target_status.id
+        # Relationship, not just status_id (expire_on_commit=False keeps the old row).
+        event.status = target_status
         await self.session.commit()
 
     # ── Reads ─────────────────────────────────────────────────────────────────────

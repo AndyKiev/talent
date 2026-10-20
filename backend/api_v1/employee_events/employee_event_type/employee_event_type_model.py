@@ -37,7 +37,7 @@ class EmployeeEventType(IntIdPkMixin, TimestampMixin, Base):
     )
     events: Mapped[list["EmployeeEvent"]] = relationship(
         back_populates="event_type",
-        lazy="selectin",
+        lazy="noload",  # back-ref only: selectin loaded EVERY event per lookup read
     )
 
     def __repr__(self) -> str:

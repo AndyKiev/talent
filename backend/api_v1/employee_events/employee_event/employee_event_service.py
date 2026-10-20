@@ -211,9 +211,7 @@ class EmployeeEventService(BaseService):
         dept_change = changes_by_code.get("MAIN_DEPT_CHANGE")
         if dept_change is not None and dept_change.new_department_id is not None:
             # Delete all responsibility links on transfer.
-            resp_repo = EmployeeResponsibilityDepartmentRepository(
-                session=self.session
-            )
+            resp_repo = EmployeeResponsibilityDepartmentRepository(session=self.session)
             await resp_repo.delete_all_by_employee(employee.id)
 
             existing_main = await dept_repo.get_main_by_employee(employee.id)
@@ -371,7 +369,10 @@ class EmployeeEventService(BaseService):
         target_status = await status_repo.get_by_field("name", target_name)
         if not target_status:
             return
-        event.status_id = target_status.id
+        # Assign the relationship, not just status_id: with expire_on_commit=False
+        # the loaded `status` would stay the old row, and create's response then
+        # reported 'draft' for a ready event (the UI skipped "apply now").
+        event.status = target_status
         await self.session.commit()
 
     # ── Orchestration: create activation for a new employee ───────────────────
@@ -777,15 +778,26 @@ class EmployeeEventService(BaseService):
     ) -> MutationResponse[EmployeeEventSchema]:
         orm_record = await self.get_by_id(event_id)
 
-        # Guard: only draft events may be patched
-        if orm_record.status and orm_record.status.name != "draft":
-            raise await self._resolve_domain_error(EmployeeEventNotDraft(event_id))
+        # Guard: any not-yet-applied (draft / ready) event may be patched
+        if orm_record.status and orm_record.status.name not in self.OPEN_STATUSES:
+            raise await self._resolve_domain_error(
+                EmployeeEventAlreadyApplied(event_id)
+            )
 
         # Capture old values of the fields being changed BEFORE the update
         # (and before any expire), for the audit diff.
         update_fields = event_update.model_dump(exclude_unset=True)
         old_values = {f: getattr(orm_record, f, None) for f in update_fields}
         employee_id = orm_record.employee_id
+
+        # A new effective_date must stay unique among the employee's events.
+        new_date = update_fields.get("effective_date")
+        if new_date is not None and new_date != orm_record.effective_date:
+            others = await self.repository.get_all(filters={"employee_id": employee_id})
+            if any(e.id != event_id and e.effective_date == new_date for e in others):
+                raise await self._resolve_domain_error(
+                    EmployeeEventDateTaken(employee_id, new_date)
+                )
 
         run = await self._change_session_service.start_session(
             source=ChangeSource.MANUAL,
@@ -1168,10 +1180,9 @@ class EmployeeEventService(BaseService):
         Only the LATEST event may be reverted (same rule as delete).
 
         Side effects mirror delete's unwind, but the event row is KEPT:
-          • applied -> ready : un-apply — reproject job + main department
-            (excluding this now-unapplied event) and restore the talent-audit-job
-            statuses this event's apply changed. The employee status is left
-            untouched, exactly like delete.
+          • applied -> ready : un-apply — reproject status + job + main
+            department (excluding this now-unapplied event) and restore the
+            talent-audit-job statuses this event's apply changed, like delete.
           • ready -> draft   : pure status change, no side effects.
           • draft            : nothing to revert -> error.
         """
@@ -1339,13 +1350,17 @@ class EmployeeEventService(BaseService):
         `exclude_event_id` (the one being deleted).
 
         Mirrors the writes in _apply_status_transition:
+          - status_id := new_status_id of the LAST applied STATUS_CHANGE
+            (else 'pending' — the pre-activation status)
           - job_id := new_job_id of the LAST applied JOB_CHANGE (else None)
           - main department := new_department_id of the LAST applied
             MAIN_DEPT_CHANGE (else the main link is removed entirely)
           - responsibility set: MAIN_DEPT_CHANGE clears it (transfer),
             RESPONSIBILITY_DEPTS_CHANGE replaces it with its dept_changes
 
-        The employee status is intentionally left untouched.
+        Status is replayed too: leaving it untouched after an un-applied
+        TEMPORARY_LEAVE kept the employee on leave, so re-applying the same
+        leave then failed the SM (maternity -> maternity).
         """
         # Drop cached ORM state so re-reads see current rows + fresh selectin loads.
         self.session.expire_all()
@@ -1355,6 +1370,7 @@ class EmployeeEventService(BaseService):
             key=lambda e: (e.effective_date, e.id),
         )
 
+        final_status_id: int | None = None
         final_job_id: int | None = None
         final_main_dept_id: int | None = None
         final_resp_dept_ids: set[int] = set()
@@ -1369,6 +1385,9 @@ class EmployeeEventService(BaseService):
                 for change in (ev.changes or [])
                 if change.direction_type
             }
+            status_change = changes_by_code.get("STATUS_CHANGE")
+            if status_change is not None and status_change.new_status_id is not None:
+                final_status_id = status_change.new_status_id
             job_change = changes_by_code.get("JOB_CHANGE")
             if job_change is not None and job_change.new_job_id is not None:
                 final_job_id = job_change.new_job_id
@@ -1387,6 +1406,12 @@ class EmployeeEventService(BaseService):
         employee = await self._employee_repo.get_by_id(employee_id)
         if not employee:
             return
+
+        # Status — replayed value, or 'pending' when no status change remains.
+        if final_status_id is None:
+            final_status_id = await self._status_repo.get_id_by_field("name", "pending")
+        if final_status_id is not None:
+            employee.status_id = final_status_id
 
         # Job — restore to the replayed value (or clear when no job change remains).
         employee.job_id = final_job_id
