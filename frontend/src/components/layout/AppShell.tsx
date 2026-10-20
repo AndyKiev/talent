@@ -60,6 +60,18 @@ const MENU_ICONS: Record<string, ReactNode> = {
     settings: <SettingsRounded sx={{ fontSize: 16 }} />,
 };
 
+// The ONE sub-menu child to highlight: the longest path that matches the URL
+// by whole segments. A plain startsWith would light up both '/employees'
+// (list) and '/employees/talent_employees' on the talent page.
+const activeChildId = (kids: MenuItem[], currentPath: string): number | null => {
+    let best: MenuItem | null = null;
+    for (const k of kids) {
+        const hit = currentPath === k.path || currentPath.startsWith(`${k.path}/`);
+        if (hit && (!best || k.path.length > best.path.length)) best = k;
+    }
+    return best?.id ?? null;
+};
+
 const menuIcon = (icon: string | null): ReactNode =>
     (icon && MENU_ICONS[icon]) || <MenuRounded sx={{ fontSize: 16 }} />;
 
@@ -199,10 +211,10 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
             anchorEl={submenuAnchor?.anchor ?? null}
             onClose={() => setSubmenuAnchor(null)}
         >
-            {(submenuAnchor ? childrenOf(submenuAnchor.parentId) : []).map((child) => (
+            {(submenuAnchor ? childrenOf(submenuAnchor.parentId) : []).map((child, _i, kids) => (
                 <MuiMenuItem
                     key={child.id}
-                    selected={currentPath.startsWith(child.path)}
+                    selected={child.id === activeChildId(kids, currentPath)}
                     onClick={() => {
                         setSubmenuAnchor(null);
                         setOverflowAnchor(null);
@@ -309,7 +321,7 @@ const AppShell: FC<AppShellProps> = ({ children }) => {
                                             <ListItemButton
                                                 key={child.id}
                                                 sx={{ pl: 5 }}
-                                                selected={currentPath.startsWith(child.path)}
+                                                selected={child.id === activeChildId(kids, currentPath)}
                                                 onClick={() => {
                                                     setMobileDrawerOpen(false);
                                                     navigate({ to: child.path as "/" });
